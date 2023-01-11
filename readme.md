@@ -1,5 +1,4 @@
 # DIGINEXT CLI & BUILD SERVER
----
 
 **A BUILD SERVER** that run on your infrastructure and its **Command Line Interface (CLI)** with developer-friendly commands - a **must-have tool** of DevOps engineers. 
 
@@ -14,7 +13,6 @@
 ---
 
 ## Installation
----
 
 ### Prerequisites
 
@@ -27,9 +25,7 @@
 -   Install `gcloud`: https://cloud.google.com/sdk/docs/install#installation_instructions
 -   Install `doctl`: https://docs.digitalocean.com/reference/doctl/
 
-
 ### Getting Started
----
 
 ```bash
 npm i diginext -g
@@ -43,29 +39,25 @@ dx server up
 # the build server will be available at: http://localhost:6969
 ```
 
+---
 
 ## Documentation
----
+
 - Visit our docs [here](docs/docs.md)
 
 ## Changelog
----
+
 - Visit our [changelog here](CHANGELOG.md)
 
 ## Contributing
----
 
 *(To be updated)*
 
-
 ## Build server
----
 
 -   **Diginext** requires a MongoDB database to run the build server.
 
-
 ## Community and Support:
----
 
 Join our community on [Discord]()!
 

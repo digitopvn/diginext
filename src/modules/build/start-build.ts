@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import dayjs from "dayjs";
-import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import type { ExecaChildProcess } from "execa";
 import execa from "execa";
 import fs, { existsSync } from "fs";
 import humanizeDuration from "humanize-duration";
@@ -21,6 +22,28 @@ import AppService from "@/services/AppService";
 import { fetchApi } from "../api";
 import { verifySSH } from "../git";
 import { createReleaseFromBuild, queueKubeApply, sendMessage, updateBuildStatus } from "./index";
+
+type IProcessCommand = {
+	[key: string]: ExecaChildProcess;
+};
+
+const processes: IProcessCommand = {};
+
+/**
+ * Stop the build process.
+ */
+export const stopBuild = async (appSlug: string, buildSlug: string) => {
+	// console.log("processes :>> ", processes);
+	try {
+		processes[buildSlug].cancel();
+		processes[buildSlug].kill("SIGTERM", { forceKillAfterTimeout: 2000 });
+		await updateBuildStatus(appSlug, buildSlug, "failed");
+		delete processes[buildSlug];
+		logSuccess(`Build process of "${buildSlug}" has been stopped.`);
+	} catch (e) {
+		logWarn(`Can't kill the build command of "${buildSlug}": ${e}`);
+	}
+};
 
 /**
  * Start build the app with {InputOptions}
@@ -247,7 +270,14 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} .`;
 		// log(`Build command: "${buildCmd}"`);
 
+		// add to process collection so we can kill it if needed:
+		// const abort = new AbortController();
 		stream = execa.command(buildCmd, cliOpts);
+		// const args = ["buildx", "build", "--platform=linux/x86_64", "-f", dockerFile, "--push", "-t", IMAGE_NAME];
+		// if (latestBuild) args.push("--cache-from", `type=registry,ref=${latestBuild.image}`);
+		// stream = execa("docker", args, { ...cliOpts, killSignal: abort.signal });
+		processes[SOCKET_ROOM] = stream;
+
 		// stream = execa("docker", ["build", "--platform=linux/x86_64", "-t", IMAGE_NAME, "-f", dockerFile, "."]);
 		stream.stdio.forEach((_stdio) => {
 			if (_stdio) {

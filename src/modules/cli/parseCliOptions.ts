@@ -21,6 +21,7 @@ const cliHeader =
 const argvOptions = {
 	// version: { describe: "Show version number.", alias: "v" },
 	debug: { describe: "Show debug logs while executing the command.", alias: "D" },
+	tail: { describe: "Follow the output of the command until it's finished" },
 	"show-options": { describe: "Show current input options [for debugging].", alias: "s" },
 	local: { describe: "[TEST] For testing CLI & BUILD SERVER on local machine" },
 	input: { describe: "Input string", alias: "i" },
@@ -106,6 +107,8 @@ const userInputOptions = {
 };
 
 const deployOptions = {
+	debug: argvOptions.debug,
+	tail: argvOptions.tail,
 	targetDir: argvOptions.targetDir,
 	overwrite: argvOptions.overwrite,
 	projectName: argvOptions.projectName,
@@ -327,6 +330,7 @@ export function parseCliOptions() {
 
 		// definitions
 		isDebugging: argv.debug ?? false,
+		isTail: argv.tail ?? false,
 		isLocal: argv.local ?? false,
 		overwrite: argv.overwrite ?? false,
 		git: argv.git ?? true,

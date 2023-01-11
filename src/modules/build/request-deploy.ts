@@ -123,7 +123,7 @@ export async function requestDeploy(options: InputOptions) {
 	log(`-> Check build status here: ${buildServerUrl}/build/${SOCKET_ROOM} `);
 	if (env == "prod") log(chalk.red(`⚠️⚠️⚠️ REMEMBER TO CREATE PULL REQUEST TO "master" (or "main") BRANCH ⚠️⚠️⚠️`));
 
-	if (options.isDebugging) {
+	if (options.isTail) {
 		let socketURL = buildServerUrl.replace(/https/gi, "wss");
 		socketURL = buildServerUrl.replace(/http/gi, "ws");
 		const socket = io(socketURL, { transports: ["websocket"] });
@@ -158,8 +158,8 @@ export async function requestDeploy(options: InputOptions) {
 				}
 			});
 
-			// Max build duration: 15 mins
-			setTimeout(reject, 15 * 60 * 1000);
+			// Max build duration: 30 mins
+			setTimeout(reject, 30 * 60 * 1000);
 		});
 	} else {
 		return true;

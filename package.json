@@ -4,8 +4,8 @@
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
-		"di": "./dist/index.js",
-		"dx": "./dist/index.js"
+		"dx": "./dist/index.js",
+		"di": "./dist/index.js"
 	},
 	"files": [
 		"dist/**",
@@ -44,7 +44,8 @@
 	"homepage": "https://diginext.site",
 	"author": {
 		"name": "TOP GROUP (a.k.a Digitop)",
-		"email": "dev@wearetopgroup.com"
+		"email": "dev@wearetopgroup.com",
+		"url": "https://github.com/mrgoonie"
 	},
 	"license": "GPL",
 	"engines": {

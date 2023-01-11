@@ -197,7 +197,7 @@ export class ClusterManager {
 
 	static async switchTo(clusterShortName: string, kubeConfigFile?: string) {
 		let cluster;
-		log("[CLUSTER MANAGER] switchTo() > clusterShortName :>> ", clusterShortName);
+		// log("[CLUSTER MANAGER] switchTo() > clusterShortName :>> ", clusterShortName);
 
 		// Find in kubectl context, if it's existed, no need to auth
 		const kubeConfig = await ClusterManager.getKubeConfig();
