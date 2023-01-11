@@ -1,0 +1,42 @@
+{
+	"env": {
+		"browser": true,
+		"es2021": true,
+		"node": true
+	},
+	"parserOptions": {
+		"parser": "@typescript-eslint/parser",
+		"project": "./tsconfig.json",
+		"ecmaFeatures": {
+			"jsx": true
+		},
+		"ecmaVersion": 13,
+		"sourceType": "module"
+	},
+	"parser": "@typescript-eslint/parser",
+	"plugins": ["@typescript-eslint", "unused-imports", "simple-import-sort"],
+	"extends": ["airbnb-typescript", "plugin:prettier/recommended", "plugin:import/recommended", "plugin:import/typescript"],
+	"rules": {
+		"react/destructuring-assignment": "off", // Vscode doesn't support automatically destructuring, it's a pain to add a new variable
+		"react/require-default-props": "off", // Allow non-defined react props as undefined
+		"react-hooks/exhaustive-deps": "off",
+		"react/jsx-props-no-spreading": "off", // _app.tsx uses spread operator and also, react-hook-form
+		"react/jsx-filename-extension": "off", //
+		"react/no-unescaped-entities": "off",
+		"react/display-name": "off",
+		"@typescript-eslint/naming-convention": "off",
+		"@typescript-eslint/comma-dangle": "off", // Avoid conflict rule between Eslint and Prettier
+		"@typescript-eslint/consistent-type-imports": "error", // Ensure `import type` is used when it's necessary
+		"import/prefer-default-export": "off", // Named export is easier to refactor automatically
+		"simple-import-sort/imports": "error", // Import configuration for `eslint-plugin-simple-import-sort`
+		"simple-import-sort/exports": "error", // Export configuration for `eslint-plugin-simple-import-sort`
+		"@typescript-eslint/no-unused-vars": "off",
+		"unused-imports/no-unused-imports": "error",
+		// "unused-imports/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+		"unused-imports/no-unused-vars": "off",
+		"import/extensions": ["error", "always", { "": "never", "ts": "never", "js": "never" }], // This is problem about airbnb -> override with this
+		"import/no-unresolved": "off",
+		"import/no-named-as-default-member": "off",
+		"import/no-named-as-default": "off"
+	}
+}

@@ -1,0 +1,4 @@
+node_modules/
+deploy/
+# .env.dev
+yarn.lock

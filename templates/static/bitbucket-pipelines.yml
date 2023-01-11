@@ -1,0 +1,70 @@
+# This is a sample build configuration for Docker.
+# Check our guides at https://confluence.atlassian.com/x/O1toN for more examples.
+# Only use spaces to indent your .yaml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: atlassian/default-image:2
+
+pipelines:
+  branches:
+    prod:
+      - step:
+          name: Deploy on TOP GROUP GKE (PROD)
+          image: google/cloud-sdk:latest
+          services:
+            - docker
+          caches:
+            - docker
+          script:
+            # Configure container image & service
+            - DEPLOYMENT_FILE=deployment/deployment.yaml
+            - APP_NAME=${BITBUCKET_REPO_SLUG}-${BITBUCKET_BRANCH}
+            - IMAGE_NAME=${GCLOUD_DOCKER_GCR_URL}/${GCLOUD_PROJECT_ID}/${APP_NAME}:${BITBUCKET_BUILD_NUMBER}
+            # GCLOUD Credentials Authentication
+            - echo $GCLOUD_API_KEYFILE > gcloud-api-key.json
+            - gcloud auth activate-service-account --key-file gcloud-api-key.json
+            - gcloud container clusters get-credentials $GCLOUD_K8S_CLUSTER --zone=$GCLOUD_ZONE --project=$GCLOUD_PROJECT_ID
+            - docker login -u _json_key --password-stdin https://$GCLOUD_DOCKER_GCR_URL < gcloud-api-key.json
+            # Build Docker Image & push to ASIA.GCR.IO repository
+            - docker build -t $IMAGE_NAME --build-arg NEXT_PUBLIC_ENV=production -f deployment/Dockerfile .
+            - docker push $IMAGE_NAME
+            # Start deploying
+            - sed -i "s|{{image_name}}|$IMAGE_NAME|g" $DEPLOYMENT_FILE
+            - echo "$(<$DEPLOYMENT_FILE)"
+            - kubectl apply -f $DEPLOYMENT_FILE
+    staging:
+      - step:
+          name: Deploy on TOP GROUP GKE (STAGING)
+          image: google/cloud-sdk:latest
+          services:
+            - docker
+          caches:
+            - docker
+          script:
+            # install yaml modifier tool
+            - apt update
+            - apt install -y jq
+            # Configure container image & service
+            - DEPLOYMENT_FILE=deployment/deployment_dev.yaml
+            - APP_NAME=${BITBUCKET_REPO_SLUG}-${BITBUCKET_BRANCH}
+            - IMAGE_NAME=${GCLOUD_DOCKER_GCR_URL}/${GCLOUD_PROJECT_ID}/${APP_NAME}:${BITBUCKET_BUILD_NUMBER}
+            # GCLOUD Credentials Authentication
+            - echo $GCLOUD_API_KEYFILE > gcloud-api-key.json
+            - gcloud auth activate-service-account --key-file gcloud-api-key.json
+            - gcloud container clusters get-credentials $GCLOUD_K8S_CLUSTER --zone=$GCLOUD_ZONE --project=$GCLOUD_PROJECT_ID
+            - docker login -u _json_key --password-stdin https://$GCLOUD_DOCKER_GCR_URL < gcloud-api-key.json
+            # Build Docker Image & push to ASIA.GCR.IO repository
+            - BASE_URL="https://dev5.digitop.vn/selfie-everywhere"
+            - docker build -t $IMAGE_NAME --build-arg BASE_URL=$BASE_URL --build-arg NEXT_PUBLIC_ENV=staging --build-arg BASE_PATH=selfie-everywhere -f deployment/Dockerfile .
+            - docker push $IMAGE_NAME
+            # config: https://dev5.digitop.vn/selfie-everywhere
+            - SVC_NAME=selfie-everywhere-svc
+            - export SVC_COUNT=$(kubectl get svc -n dev5 -o json | jq "[.items[].metadata | select(.name | contains(\"$SVC_NAME\"))] | length")
+            - echo $SVC_COUNT
+            - if [[ $SVC_COUNT < 1 ]]; then
+            -   kubectl -n dev5 patch ingress dev5-ingress --type json --patch "$(cat deployment/dev5_ingress_patch.json)"
+            - fi
+            # Start deploying
+            - sed -i "s|{{image_name}}|$IMAGE_NAME|g" $DEPLOYMENT_FILE
+            - echo "$(<$DEPLOYMENT_FILE)"
+            - kubectl apply -f $DEPLOYMENT_FILE

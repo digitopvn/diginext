@@ -1,0 +1,372 @@
+import chalk from "chalk";
+import dayjs from "dayjs";
+import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
+import execa from "execa";
+import fs, { existsSync } from "fs";
+import humanizeDuration from "humanize-duration";
+import { ObjectId } from "mongodb";
+import path from "path";
+import { simpleGit } from "simple-git";
+
+import { isServerMode } from "@/app.config";
+import { cliOpts, getCliConfig } from "@/config/config";
+import type { App, Build, Project, Release, User } from "@/entities";
+import type { InputOptions } from "@/interfaces/InputOptions";
+import { fetchDeployment } from "@/modules/deploy/fetch-deployment";
+import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger } from "@/plugins";
+import { getIO } from "@/server";
+import { BuildService, ContainerRegistryService, ProjectService, UserService } from "@/services";
+import AppService from "@/services/AppService";
+
+import { fetchApi } from "../api";
+import { verifySSH } from "../git";
+import { createReleaseFromBuild, queueKubeApply, sendMessage, updateBuildStatus } from "./index";
+
+/**
+ * Start build the app with {InputOptions}
+ */
+export async function startBuild(options: InputOptions, addition: { shouldRollout?: boolean } = {}) {
+	const { shouldRollout = true } = addition;
+	const startTime = dayjs();
+
+	const { env = "dev", buildNumber, buildImage, projectName, gitBranch, username = "Anonymous", projectSlug, slug: appSlug } = options;
+
+	const BUILD_NUMBER = buildNumber;
+	const IMAGE_NAME = buildImage;
+	const SOCKET_ROOM = `${projectSlug}-${appSlug}-${BUILD_NUMBER}`;
+
+	const logger = new Logger(SOCKET_ROOM);
+	options.SOCKET_ROOM = SOCKET_ROOM;
+
+	// Emit socket message to request the BUILD SERVER to start building...
+	let socketServer = getIO();
+	if (socketServer) socketServer.to(SOCKET_ROOM).emit("message", { action: "start" });
+
+	/**
+	 * Specify BUILD DIRECTORY to pull source code:
+	 * on build server, this is gonna be --> /mnt/build/{TARGET_DIRECTORY}/{REPO_BRANCH_NAME}
+	 * /mnt/build/ -> additional disk (300GB) which mounted to this server on Digital Ocean.
+	 */
+	let buildDir = options.targetDirectory;
+	// log(`BUILD_DIR >`, buildDir);
+
+	// ! nếu build trên máy local thì ko cần GIT pull
+	if (process.env.PROJECT_DIR) {
+		const dirName = `${options.projectSlug}-${options.slug}`;
+		buildDir = path.resolve(process.env.PROJECT_DIR, dirName, gitBranch);
+		options.targetDirectory = buildDir;
+
+		// detect "gitProvider":
+		const gitProvider = getGitProviderFromRepoSSH(options.remoteSSH);
+
+		// verify SSH before pulling files...
+		try {
+			await verifySSH({ gitProvider });
+		} catch (e) {
+			throw new Error(e);
+		}
+
+		// Git SSH verified -> start pulling now...
+		sendMessage({ SOCKET_ROOM, logger, message: `"${buildDir}" -> Pulling latest files...` });
+
+		if (existsSync(buildDir)) {
+			try {
+				await execa.command(`cd ${buildDir} && git checkout -f && git pull --rebase`, cliOpts);
+			} catch (e) {
+				fs.rmSync(buildDir, { recursive: true, force: true });
+				await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
+			}
+		} else {
+			try {
+				await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
+			} catch (e) {
+				sendMessage({ SOCKET_ROOM, logger, message: `Failed to pull branch "${gitBranch}" to "${buildDir}": ${e}` });
+			}
+		}
+
+		// emit socket message to "digirelease" app:
+		sendMessage({ SOCKET_ROOM, logger, message: `Finished pulling latest files of "${gitBranch}"...` });
+	}
+
+	const git = simpleGit(buildDir, { binary: "git" });
+	const gitStatus = await git.status(["-s"]);
+	options.gitBranch = gitStatus.current;
+	options.buildDir = buildDir;
+
+	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
+
+	const appConfig = getAppConfig(options.targetDirectory);
+
+	// [SYNC] apply "appConfig" -> "options"
+	options.remoteSSH = appConfig.git.repoSSH;
+	options.remoteURL = appConfig.git.repoURL;
+	options.projectSlug = projectSlug;
+	options.slug = appSlug;
+
+	// log(`startBuild > appConfig.environment[${env}] :>>`, appConfig.environment[env]);
+
+	// [SYNC] apply "appConfig" -> "options"
+	options.gitProvider = appConfig.git.provider;
+	options.shouldInherit = appConfig.environment[env].shouldInherit;
+	options.redirect = appConfig.environment[env].redirect;
+	options.provider = appConfig.environment[env].provider;
+	options.cluster = appConfig.environment[env].cluster;
+	options.zone = appConfig.environment[env].zone;
+	options.replicas = appConfig.environment[env].replicas;
+	options.size = appConfig.environment[env].size;
+	options.port = appConfig.environment[env].port;
+	options.ssl = appConfig.environment[env].ssl != "none";
+	options.namespace = appConfig.environment[env].namespace;
+
+	// log("options :>>", options);
+
+	// back-end service
+
+	let latestBuild, app, project, author;
+	let appSvc, buildSvc, projectSvc, userSvc;
+
+	if (isServerMode) {
+		appSvc = new AppService();
+		buildSvc = new BuildService();
+		projectSvc = new ProjectService();
+		userSvc = new UserService();
+		// const clusterSvc = new ClusterService();
+		const registrySvc = new ContainerRegistryService();
+
+		latestBuild = await buildSvc.findOne({ appSlug, projectSlug, status: "success" });
+		app = await appSvc.findOne({ slug: appSlug });
+		project = await projectSvc.findOne({ slug: projectSlug });
+		author = await userSvc.findOne({ id: new ObjectId(options.userId) });
+	} else {
+		const { data: builds } = await fetchApi<Build>({ url: `/api/v1/build?appSlug=${appSlug}&projectSlug=${projectSlug}&status=success` });
+		latestBuild = builds[0];
+
+		const { data: apps } = await fetchApi<App>({ url: `/api/v1/app?slug=${appSlug}` });
+		app = apps[0];
+
+		const { data: projects } = await fetchApi<Project>({ url: `/api/v1/project?slug=${projectSlug}` });
+		project = projects[0];
+
+		const { data: user } = await fetchApi<User>({ url: `/api/v1/user?id=${options.userId}` });
+		author = user;
+	}
+
+	log(`latestBuild :>>`, latestBuild);
+	log(`app :>>`, app);
+	log(`project :>>`, project);
+	log("author :>> ", author);
+
+	options.appSlug = appSlug;
+	options.projectName = project.name;
+	options.name = app.name;
+
+	// log(`startBuild > options :>>`, options);
+
+	let message = "";
+	let stream;
+
+	// create new build on build server:
+	let newBuild;
+	try {
+		const buildData = {
+			name: `[${options.env.toUpperCase()}] ${IMAGE_NAME}`,
+			slug: SOCKET_ROOM,
+			tag: buildNumber,
+			status: "building" as "start" | "building" | "failed" | "success",
+			env,
+			createdBy: username,
+			projectSlug,
+			appSlug,
+			image: IMAGE_NAME,
+			app: app._id,
+			project: project._id,
+			owner: options.userId,
+			workspace: options.workspace._id,
+		};
+
+		if (isServerMode) {
+			newBuild = await buildSvc.create(buildData);
+		} else {
+			const { data } = await fetchApi<Build>({
+				url: "/api/v1/build",
+				method: "POST",
+				data: buildData,
+			});
+			// log(`startBuild > create build :>>`, data);
+			newBuild = data as Build;
+		}
+
+		message = "[SUCCESS] created new build on Digirelease!";
+		sendMessage({ SOCKET_ROOM, logger, message });
+	} catch (e) {
+		logError(e);
+		message = "[FAILED] can't create a new build in database: " + e.toString();
+		sendMessage({ SOCKET_ROOM, logger, message });
+	}
+
+	// return;
+
+	const appDirectory = options.buildDir;
+
+	// Prepare deployment YAML files:
+	const DEPLOYMENT_FILE = path.resolve(appDirectory, `deployment/deployment.${env}.yaml`);
+	const DEPLOYMENT_YAML = fs.readFileSync(DEPLOYMENT_FILE, "utf8");
+	const PRERELEASE_DEPLOYMENT_FILE = path.resolve(appDirectory, "deployment/deployment.prerelease.yaml");
+	const PRERELEASE_DEPLOYMENT_YAML = fs.readFileSync(PRERELEASE_DEPLOYMENT_FILE, "utf8");
+	const deploymentData = fetchDeployment(DEPLOYMENT_FILE, options);
+
+	// TODO: authenticate container registry?
+
+	// build the app with Docker:
+	try {
+		sendMessage({ SOCKET_ROOM, logger, message: `Start building the Docker image...` });
+
+		// check if using framework version >= 1.3.6
+		let dockerFile = path.resolve(appDirectory, `deployment/Dockerfile.${env}`);
+		if (!existsSync(dockerFile)) {
+			message = `[ERROR] Missing "${appDirectory}/deployment/Dockerfile.${env}" file, please create one.`;
+			sendMessage({ SOCKET_ROOM, logger, message: message });
+			logError(message);
+		}
+
+		/**
+		 * ! Change current working directory to the root of this project repository
+		 **/
+		process.chdir(buildDir);
+
+		/**
+		 * ! BUILD CACHING
+		 * Activate the "docker-container" driver before using "buildx"
+		 * use "buildx" with cache to increase build speed
+		 * docker buildx build -f deployment/Dockerfile.dev --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
+		 **/
+		// activate docker build (with "buildx" driver)...
+		execCmd(`docker buildx create --driver docker-container --name ${projectSlug}-${appSlug.toLowerCase()}`);
+
+		const cacheCmd = latestBuild ? ` --cache-from type=registry,ref=${latestBuild.image}` : "";
+		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} .`;
+		// log(`Build command: "${buildCmd}"`);
+
+		stream = execa.command(buildCmd, cliOpts);
+		// stream = execa("docker", ["build", "--platform=linux/x86_64", "-t", IMAGE_NAME, "-f", dockerFile, "."]);
+		stream.stdio.forEach((_stdio) => {
+			if (_stdio) {
+				_stdio.on("data", (data) => {
+					message = data.toString();
+					// send messages to CLI client:
+					sendMessage({ SOCKET_ROOM, logger, message });
+				});
+			}
+		});
+		await stream;
+
+		// update build status as "success"
+		await updateBuildStatus(appSlug, SOCKET_ROOM, "success");
+
+		message = `✌️ Built a Docker image & pushed to container registry (${appConfig.environment[env].registry}) successfully!`;
+		sendMessage({ SOCKET_ROOM, logger, message });
+
+		// Update deployment data to app:
+		const updateData = {};
+		updateData[`environment.${env}`] = appConfig.environment[env];
+		const updatedApp = await appSvc.update({ id: app._id }, updateData);
+		log(`Updated deploy environment (${env}) to "${appSlug}" app:`, updatedApp);
+	} catch (e) {
+		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+		sendMessage({ SOCKET_ROOM, logger, message: e.toString() });
+		logError(e);
+		return;
+	}
+
+	// docker push $IMAGE_NAME
+	// message = `Pushing the image to Google Container Registry...`;
+	// sendMessage({ SOCKET_ROOM, logger, message });
+	// const buildSpin = ora(message).start();
+	// try {
+	// 	stream = execa("docker", ["push", IMAGE_NAME], cliOpts);
+	// 	stream.stdio.forEach((_stdio) => {
+	// 		if (_stdio) {
+	// 			_stdio.on("data", (data) => {
+	// 				// send messages to CLI client:
+	// 				message = data.toString();
+	// 				log(message);
+	// 				sendMessage({ SOCKET_ROOM, logger, message });
+	// 			});
+	// 		}
+	// 	});
+	// 	await stream;
+	// 	message = `Pushed image to Google Container Registry successfully!`;
+	// 	sendMessage({ SOCKET_ROOM, logger, message });
+	// 	// buildSpin.stopAndPersist({ symbol: "✌️ ", text: message });
+	// } catch (e) {
+	// 	updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+	// 	sendMessage({ SOCKET_ROOM, logger, message: e.toString() });
+	// 	// buildSpin.stop();
+	// 	return false;
+	// }
+	/**
+	 * ! If this is a Next.js project, upload ".next/static" to CDN:
+	 */
+	// TODO: enable upload cdn while building source code:
+	// const nextStaticDir = path.resolve(options.targetDirectory, ".next/static");
+	// if (existsSync(nextStaticDir) && diginext.environment[env].cdn) {
+	// 	options.secondAction = "push";
+	// 	options.thirdAction = nextStaticDir;
+	// 	await execCDN(options);
+	// }
+	if (!shouldRollout) {
+		const buildDuration = dayjs().diff(startTime, "millisecond");
+		let buildFinishMsg = chalk.green(`🎉 FINISHED BUILDING AFTER ${humanizeDuration(buildDuration)} 🎉`);
+		buildFinishMsg += `\n  - Image: ${IMAGE_NAME}`;
+		logSuccess(buildFinishMsg);
+
+		return true;
+	}
+
+	/**
+	 * !!! IMPORTANT NOTE !!!
+	 * ! Sử dụng QUEUE để apply deployment lên từng cluster một,
+	 * ! không để tình trạng concurrent deploy làm deploy lên nhầm lẫn cluster
+	 */
+	await queueKubeApply(options);
+
+	// Insert this build record to Digirelease:
+	// let projectId;
+	let prereleaseDeploymentData = fetchDeployment(PRERELEASE_DEPLOYMENT_FILE, options);
+	let releaseId;
+
+	try {
+		const newRelease = await createReleaseFromBuild(newBuild, { author: author as User });
+		// log("Created new Release successfully:", newRelease);
+
+		releaseId = (newRelease as Release)._id;
+
+		message = `Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.`;
+		sendMessage({ SOCKET_ROOM, logger, message });
+	} catch (e) {
+		sendMessage({ SOCKET_ROOM, logger, message: `[ERROR] ${e.message}` });
+		// return;
+	}
+
+	// Print success:
+	const deployDuration = dayjs().diff(startTime, "millisecond");
+
+	let msg = chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanizeDuration(deployDuration)} 🎉`);
+
+	if (env == "prod") {
+		const { buildServerUrl } = getCliConfig();
+		msg += chalk.bold(chalk.yellow(`\n -> Preview at: ${prereleaseDeploymentData.endpoint}`));
+		msg += chalk.bold(chalk.yellow(`\n -> Review & publish at: ${buildServerUrl}/release/${projectSlug}`));
+		msg += chalk.bold(chalk.yellow(`\n -> Roll out with CLI command:`), `$ di rollout ${releaseId}`);
+	} else {
+		msg += chalk.bold(chalk.yellow(`\n -> Preview at: ${deploymentData.endpoint}`));
+	}
+
+	sendMessage({ SOCKET_ROOM, logger, message: msg });
+
+	// disconnect CLI client:
+	if (socketServer) socketServer.to(SOCKET_ROOM).emit("message", { action: "end" });
+
+	// logSuccess(msg);
+	return true;
+}

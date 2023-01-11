@@ -1,0 +1,78 @@
+# node modules & cache
+.idea/
+
+# package,json
+package-old.json
+package-new.json
+yarn.lock
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.yarn
+.yarnrc
+.yarnrc.yaml
+
+# dependencies
+node_modules/
+optimizer/node_modules/
+optimizer/yarn.lock
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# build
+/out/
+out/
+.next
+.next/
+dist/
+fw/
+.fw/
+
+# misc / macos
+.DS_Store
+
+# IDEs and code editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Storage
+storage
+./storage
+storage/**/*
+# public/uploads
+./redis_data/*
+redis_data/
+public/
+redis_data/
+# /public.__image-compressed__
+!public/assets/images/nextjs-starter-banner.png
+
+# credentials
+keys
+# diginext-new.json
+# di.json
+
+# local env files
+.env.dev
+# .env
+# .env.local
+# .env.development.local
+# .env.test.local
+# .env.production.local
+
+deployment.yaml
+docker-compose*.yaml

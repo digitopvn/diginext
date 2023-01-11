@@ -1,0 +1,12 @@
+apiVersion: skaffold/v4beta1
+kind: Config
+metadata:
+    name: diginext-cli
+build:
+    artifacts:
+        - image: mrgoonie/diginext-cli
+          docker:
+              dockerfile: Dockerfile
+manifests:
+    rawYaml:
+        - deployment.yaml

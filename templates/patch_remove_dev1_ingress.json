@@ -1,0 +1,6 @@
+[
+	{
+		"op": "remove",
+		"path": "/spec/rules/0/http/paths/${i}"
+	}
+]

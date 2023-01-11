@@ -1,0 +1,27 @@
+# Ignore artifacts:
+dist
+coverage
+src/libs/typeorm
+thunder-tests
+redis_data
+storage
+**/storage/**
+
+.next
+**/.next
+node_modules
+**/node_modules
+.yarn
+.out
+**/.out
+.turbo
+
+**/.git
+
+*.js
+
+*.yaml
+*.yaml
+**/*.yaml
+**/*.yaml
+**/templates/**

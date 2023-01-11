@@ -1,0 +1,49 @@
+#!/bin/bash
+
+set -e
+
+# Config vars:
+PACKAGE_PATH=./package.json
+PACKAGE_CONTENT=$(cat $PACKAGE_PATH 2>/dev/null)
+PACKAGE_VERSION=$(jq -r '.version' <<<$PACKAGE_CONTENT)
+GCLOUD_DOCKER_GCR_URL=asia.gcr.io
+SERVICE_ACCOUNT_PATH=./keys/gcloud-service-account.json
+
+# get current version & build -> add 1
+IFS='-' read -ra VARRAY <<< "$PACKAGE_VERSION"
+BUILD=$((${VARRAY[2]}+1))
+VER=${VARRAY[0]}
+
+# new version & build
+VERSION="${VER}-beta-${BUILD}"
+IMAGE_NAME="${GCLOUD_DOCKER_GCR_URL}/top-group-k8s/framework/diginext-cli"
+DOCKER_IMAGE_PATH="$IMAGE_NAME:$VERSION"
+
+# write new "version-build" to "package.json"
+tmp=$(mktemp)
+jq --arg a "$VERSION" '.version = $a' $PACKAGE_PATH > "$tmp" && mv "$tmp" $PACKAGE_PATH
+
+echo "--------------------------------------"
+echo "BETA Releasing:"
+echo "--------------------------------------"
+echo "- Version: $VERSION"
+echo "- Build: ${BUILD}"
+echo "- Image name: $IMAGE_NAME"
+echo "--------------------------------------"
+
+# Build docker image:
+if [ ! -f $SERVICE_ACCOUNT_PATH ]; then
+    echo "Không tìm thấy thông tin truy cập GCloud Container Registry, vui lòng liên hệ ADMIN <duynguyen@wearetopgroup.com>!"
+fi
+docker login -u _json_key --password-stdin https://$GCLOUD_DOCKER_GCR_URL < $SERVICE_ACCOUNT_PATH
+docker build -t $DOCKER_IMAGE_PATH -f Dockerfile .
+docker push $DOCKER_IMAGE_PATH
+
+# delete old tag:
+# git tag -d $VERSION
+# git push origin :refs/tags/$VERSION
+# tag new version:
+git tag $VERSION
+git push origin $VERSION
+# git push --force origin refs/tags/"$VERSION":refs/tags/"$VERSION"
+

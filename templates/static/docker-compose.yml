@@ -1,0 +1,24 @@
+version: "3"
+services:
+  diginext-framework:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile
+      args:
+        NEXT_PUBLIC_ENV: "development"
+        NEXT_PUBLIC_BASE_PATH: "diginext"
+        NEXT_PUBLIC_BASE_URL: "dev5.digitop.vn/diginext"
+        # NEXT_PUBLIC_API_BASE_PATH: https://diginext.zii.vn
+        NEXT_PUBLIC_CDN_BASE_PATH: "storage.googleapis.com/digitop-cdn-sg/diginext/dev"
+        BACKEND_DOMAIN: "diginext.zii.vn"
+        IRON_SESSION_SECRET: "SHPfrs9nuSdutAw2mn8trxCVG93YVGVR"
+    ports:
+      - 3000:3000
+    environment:
+      - NEXT_PUBLIC_ENV=development
+      - NEXT_PUBLIC_BASE_PATH=diginext
+      - IRON_SESSION_SECRET=SHPfrs9nuSdutAw2mn8trxCVG93YVGVR
+      - BACKEND_DOMAIN="diginext.zii.vn"
+      - NEXT_PUBLIC_BASE_URL="dev5.digitop.vn/diginext"
+    # volumes:
+    # - .:/usr/app

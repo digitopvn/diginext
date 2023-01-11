@@ -1,0 +1,92 @@
+# This is a sample build configuration for Docker.
+# Check our guides at https://confluence.atlassian.com/x/O1toN for more examples.
+# Only use spaces to indent your .yaml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: atlassian/default-image:2
+
+pipelines:
+  branches:
+    prod:
+      - step:
+          name: Build docker image & deploy on GCLOUD Kubernetes of TOP GROUP (PROD)
+          image: google/cloud-sdk:latest
+          services:
+            - docker
+          caches:
+            - docker
+          script:
+            # Change to your real domain (without https://)
+            - export DOMAIN={{production_domain}}
+            # Change to your project namespace (SHOULD BE EQUALIVENT WITH OTHER SERVICE - eg. front-end)
+            - export CLUSTER={{cluster_name}} # default: $GCLOUD_K8S_CLUSTER
+            - export NAMESPACE={{project_namespace}} 
+            - export DEPLOYMENT_FILE=deployment/deployment.yaml
+            # Configure container image & service variables
+            - export APP_NAME=${BITBUCKET_REPO_SLUG}-${BITBUCKET_BRANCH}
+            - export SVC_NAME=${APP_NAME}-svc
+            - export IMAGE_NAME=${GCLOUD_DOCKER_GCR_URL}/${GCLOUD_PROJECT_ID}/${APP_NAME}:${BITBUCKET_BUILD_NUMBER}
+            # GCLOUD Credentials Authentication
+            - echo $GCLOUD_API_KEYFILE > gcloud-frontend-key.json
+            - gcloud auth activate-service-account --key-file gcloud-frontend-key.json
+            - docker login -u _json_key --password-stdin https://$GCLOUD_DOCKER_GCR_URL < gcloud-frontend-key.json
+            # Build Docker Image & push to ASIA.GCR.IO repository
+            - docker build -t ${IMAGE_NAME} ./ -f ./docker/Dockerfile
+            - docker push $IMAGE_NAME
+            # Start deploying
+            - gcloud container clusters get-credentials $GCLOUD_K8S_CLUSTER --zone=$GCLOUD_ZONE --project=$GCLOUD_PROJECT_ID
+            # Replace new image repo url
+            - sed -i "s|{{namespace}}|$NAMESPACE|g" $DEPLOYMENT_FILE
+            - sed -i "s|{{image_name}}|$IMAGE_NAME|g" $DEPLOYMENT_FILE
+            - sed -i "s|{{app_name}}|$APP_NAME|g" $DEPLOYMENT_FILE
+            - sed -i "s|{{svc_name}}|$SVC_NAME|g" $DEPLOYMENT_FILE
+            - sed -i "s|{{domain}}|$DOMAIN|g" $DEPLOYMENT_FILE
+            - echo "$(<$DEPLOYMENT_FILE)"
+            # KUBECTL
+            - kubectl apply -f $DEPLOYMENT_FILE
+
+
+    staging:
+      - step:
+          name: Deploy on TOP GROUP GKE (STAGING)
+          image: google/cloud-sdk:latest
+          services:
+            - docker
+          caches:
+            - docker
+          script:
+            # install yaml modifier tool
+            - apt update
+            - apt install -y jq
+            # Configure container image & service
+            - DEPLOYMENT_FILE=deployment/deployment_dev.yaml
+            - APP_NAME=${BITBUCKET_REPO_SLUG}-${BITBUCKET_BRANCH}
+            - IMAGE_NAME=${GCLOUD_DOCKER_GCR_URL}/${GCLOUD_PROJECT_ID}/${APP_NAME}:${BITBUCKET_BUILD_NUMBER}
+            # GCLOUD Credentials Authentication
+            - echo $GCLOUD_API_KEYFILE > gcloud-api-key.json
+            - gcloud auth activate-service-account --key-file gcloud-api-key.json
+            - gcloud container clusters get-credentials $GCLOUD_K8S_CLUSTER --zone=$GCLOUD_ZONE --project=$GCLOUD_PROJECT_ID
+            - docker login -u _json_key --password-stdin https://$GCLOUD_DOCKER_GCR_URL < gcloud-api-key.json
+            # Build Docker Image & push to ASIA.GCR.IO repository
+            - BASE_URL="https://dev5.digitop.vn/yamaha-ride-the-next-level-api"
+            - IRON_SESSION_SECRET="SHPfrs9nuSdutAw2mn8trxCVG93YVGVR"
+            - docker build -t $IMAGE_NAME --build-arg NEXT_PUBLIC_BASE_URL=$BASE_URL --build-arg NEXT_PUBLIC_ENV=staging --build-arg NEXT_PUBLIC_BASE_PATH=yamaha-ride-the-next-level-api --build-arg IRON_SESSION_SECRET=$IRON_SESSION_SECRET -f deployment/Dockerfile .
+            # Add health check
+            - curl -X POST "https://api.health-check.digitop.vn/api/v1/jobs/links" -H  "Content-Type:application/json" -d "{"name":"yamaha-ride-the-next-level-api","link":"https://dev5.digitop.vn/yamaha-ride-the-next-level-api"}"
+            - docker push $IMAGE_NAME
+            # config: https://dev5.digitop.vn/yamaha-ride-the-next-level-api
+            - SVC_NAME=yamaha-ride-the-next-level-api-svc
+            - export SVC_COUNT=$(kubectl get svc -n dev5 -o json | jq "[.items[].metadata | select(.name | contains(\"$SVC_NAME\"))] | length")
+            - echo $SVC_COUNT
+            - if [[ $SVC_COUNT < 1 ]]; then
+            -   kubectl -n dev5 patch ingress dev5-ingress --type json --patch "$(cat deployment/dev5_ingress_patch.json)"
+            - fi
+            # Start deploying
+            - sed -i "s|{{image_name}}|$IMAGE_NAME|g" $DEPLOYMENT_FILE
+            - echo "$(<$DEPLOYMENT_FILE)"
+            - kubectl apply -f $DEPLOYMENT_FILE
+            
+definitions:
+  services:
+    docker:
+      memory: 3072
