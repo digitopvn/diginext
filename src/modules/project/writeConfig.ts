@@ -48,7 +48,7 @@ export function generateAppConfig(options: InputOptions) {
 export async function writeConfig(appConfig: AppConfig, options?: InputOptions) {
 	// const appConfig = generateAppConfig(options);
 
-	// write di.json
+	// write dx.json
 	if (!fs.existsSync(options.targetDirectory)) fs.mkdirSync(options.targetDirectory);
 	saveAppConfig(appConfig, { create: true, directory: options.targetDirectory });
 

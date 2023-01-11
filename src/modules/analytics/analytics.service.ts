@@ -44,7 +44,7 @@ export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
 	let websiteUrl = url || (diginext.environment[env].domains && diginext[env].domains[0]);
 	if (typeof websiteUrl == "undefined" && env == "dev") websiteUrl = `https://dev3.digitop.vn/${diginext.slug}`;
 
-	if (!websiteUrl) logError(`[${env.toUpperCase()}] Website URL is required, double check domain name in your "di.json".`);
+	if (!websiteUrl) logError(`[${env.toUpperCase()}] Website URL is required, double check domain name in your "dx.json".`);
 
 	const account = await getAnalyticsAccount();
 	// await analyticsAdminClient.updateAccount({ account: account });

@@ -252,7 +252,7 @@ export function printHelp(options?: InputOptions) {
 	console.info("  diginext deploy --gcloud --project=top-group-k8s --cluster=digitop-cluster");
 
 	console.info(chalk.yellowBright("\n  Generate deployment YAML for different environments:"));
-	console.info(chalk.gray.italic(`  # This command will take the "di.json" configuration and`));
+	console.info(chalk.gray.italic(`  # This command will take the "dx.json" configuration and`));
 	console.info(chalk.gray.italic(`  # the according ENV files in "deployment" directory to generate K8S deployment YAML:`));
 	console.info("  diginext deploy generate --prod");
 	console.info("  diginext deploy generate --staging");
@@ -427,21 +427,21 @@ type SaveOpts = {
 	 */
 	directory?: string;
 	/**
-	 * Set to `TRUE` will create new `di.json` file if not existed.
+	 * Set to `TRUE` will create new `dx.json` file if not existed.
 	 */
 	create?: boolean;
 	ignoreIfNotExisted?: boolean;
 };
 
 /**
- * Get object of project configuration from "di.json"
+ * Get object of project configuration from "dx.json"
  * @param  {String} [directory] - Absolute path to project directory
  */
 export const getAppConfig = (directory?: string) => {
-	const filePath = path.resolve(directory || process.cwd(), "di.json");
+	const filePath = path.resolve(directory || process.cwd(), "dx.json");
 
 	if (!fs.existsSync(filePath)) {
-		logError(`Không tìm thấy "di.json"`);
+		logError(`Không tìm thấy "dx.json"`);
 		return;
 	}
 
@@ -450,18 +450,18 @@ export const getAppConfig = (directory?: string) => {
 };
 
 /**
- * Save object of project configuration to "di.json"
+ * Save object of project configuration to "dx.json"
  * @param  {Object} _config - Object data of the config
  * @param  {SaveOpts} [options] - Save options
  * @param  {String} [options.directory] - Absolute path to project directory
  * @param  {Boolean} [options.create] - TRUE will create new file if not existed.
  */
 export const saveAppConfig = (_config: AppConfig, options?: SaveOpts) => {
-	// TODO: change "di.json" to "di.json" to avoid conflicts
+	// TODO: change "dx.json" to "dx.json" to avoid conflicts
 	const { directory } = options;
-	const filePath = path.resolve(directory || process.cwd(), "di.json");
+	const filePath = path.resolve(directory || process.cwd(), "dx.json");
 
-	if (!options.create && !fs.existsSync(filePath)) logError(`Không tìm thấy "di.json"`);
+	if (!options.create && !fs.existsSync(filePath)) logError(`Không tìm thấy "dx.json"`);
 
 	const content = JSON.stringify(_config, null, 2);
 	fs.writeFileSync(filePath, content, "utf8");
@@ -470,7 +470,7 @@ export const saveAppConfig = (_config: AppConfig, options?: SaveOpts) => {
 };
 
 /**
- * Update values of app config ("di.json")
+ * Update values of app config ("dx.json")
  * @param updatedData - updated data
  */
 export const updateDiginextConfig = (updatedData: AppConfig, options?: SaveOpts) => {
@@ -623,7 +623,7 @@ export const isUsingStaticHtmlFramework = (options) => {
 	const { error, appDirectory } = checkMonorepo(options);
 	if (error) return val;
 
-	const frameworkConfigPath = path.resolve(appDirectory || process.cwd(), "di.json");
+	const frameworkConfigPath = path.resolve(appDirectory || process.cwd(), "dx.json");
 
 	if (fs.existsSync(frameworkConfigPath)) {
 		const frameworkConfig = require(frameworkConfigPath);

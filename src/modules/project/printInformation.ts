@@ -20,7 +20,7 @@ export function printInformation(finalConfig: AppConfig) {
 	console.log(chalk.yellow("-----------------------------------------------------------"));
 	console.log(chalk.green.bold("To deploy DEV  : ") + chalk.cyan(`di deploy`));
 	console.log(chalk.green.bold("To deploy PROD : "));
-	console.log(chalk.green("  1 - Add your domain to according `environment` in `di.json`"));
+	console.log(chalk.green("  1 - Add your domain to according `environment` in `dx.json`"));
 	console.log(chalk.green("  2 - Create/modify ENV variables at: ") + chalk.cyan(`deployment/.env.<environment>`));
 	console.log(chalk.green("  3 - Deploy to server with: ") + chalk.cyan(`di deploy --env=<environment>`));
 	console.log(chalk.green("      (Use flag " + chalk.cyan("--debug") + " if you want to see the build progress)"));

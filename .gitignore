@@ -64,7 +64,7 @@ redis_data/
 # credentials
 keys
 # diginext-new.json
-# di.json
+# dx.json
 
 # local env files
 .env.dev

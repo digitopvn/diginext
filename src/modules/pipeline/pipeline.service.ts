@@ -83,7 +83,7 @@ export function generatePipeline(options: InputOptions) {
 	// 		];
 	// 	}
 	// } else {
-	// 	// logWarn(`Không có branch nào đang cần cấu hình pipeline, kích hoạt tại "di.json" > pipeline`);
+	// 	// logWarn(`Không có branch nào đang cần cấu hình pipeline, kích hoạt tại "dx.json" > pipeline`);
 	// 	// process.exit(1);
 	// }
 

@@ -45,7 +45,7 @@ export async function execInitApp(options: InputOptions) {
 	if (!status) logError(messages);
 	const newApp = data as App;
 
-	// to make sure it write down the correct app "slug" in "di.json"
+	// to make sure it write down the correct app "slug" in "dx.json"
 	options.slug = newApp.slug;
 	options.name = newApp.name;
 	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`;
@@ -68,7 +68,7 @@ export async function execInitApp(options: InputOptions) {
 	if (!remoteSSH) await initalizeAndCreateDefaultBranches(options);
 	if (options.git && !remoteSSH) await initializeGitRemote(options);
 
-	// write "di.json"
+	// write "dx.json"
 	const appConfig = generateAppConfig(options);
 	await writeConfig(appConfig, options);
 

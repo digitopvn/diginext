@@ -34,6 +34,14 @@
 		"deploy docker",
 		"run k8s"
 	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/digitopvn/diginext.git"
+	},
+	"bugs": {
+		"url": "https://github.com/digitopvn/diginext/issues"
+	},
+	"homepage": "https://diginext.site",
 	"author": {
 		"name": "TOP GROUP (a.k.a Digitop)",
 		"email": "dev@wearetopgroup.com"

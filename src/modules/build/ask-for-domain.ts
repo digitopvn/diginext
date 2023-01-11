@@ -23,7 +23,7 @@ export const askForDomain = async (options: InputOptions) => {
 
 	// xử lý domains
 	if (typeof appConfig.environment[env].domains != "undefined" && appConfig.environment[env].domains.length > 0) {
-		// lấy domain trong "di.json"
+		// lấy domain trong "dx.json"
 		domains = appConfig.environment[env].domains;
 	} else {
 		logWarn(`No domains were found in this environment (${env})`);
@@ -31,7 +31,7 @@ export const askForDomain = async (options: InputOptions) => {
 		const { useGeneratedDomain } = await inquirer.prompt({
 			name: "useGeneratedDomain",
 			type: "confirm",
-			message: `Do you want to use our generated domain: ${chalk.green(generatedDomain)}? (You can update it anytime in your "di.json" file)`,
+			message: `Do you want to use our generated domain: ${chalk.green(generatedDomain)}? (You can update it anytime in your "dx.json" file)`,
 			default: true,
 		});
 
@@ -55,7 +55,7 @@ export const askForDomain = async (options: InputOptions) => {
 
 			logSuccess(`Great! Domain "${generatedDomain}" has been created and pointed to this IP address: ${ip}`);
 		} else {
-			// logError(`You need a domain to deploy this app. Please add one in "di.json" at path ".environment.${env}.domains[]"`);
+			// logError(`You need a domain to deploy this app. Please add one in "dx.json" at path ".environment.${env}.domains[]"`);
 		}
 	}
 

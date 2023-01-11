@@ -119,8 +119,8 @@ export async function startUpload(options: InputOptions, onComplete?: UploadComp
 	const { version = "", env = "dev" } = options;
 	// check for diginext config:
 
-	let configFile = path.resolve("di.json");
-	let isFrameworkConfigExisted = fs.existsSync(path.resolve("di.json"));
+	let configFile = path.resolve("dx.json");
+	let isFrameworkConfigExisted = fs.existsSync(path.resolve("dx.json"));
 	if (!isFrameworkConfigExisted) {
 		await logError(
 			"Diginext has't been initialized yet. Run `diginext new` to create new project or `diginext init` to initialize current directory."
@@ -228,8 +228,8 @@ export function enableCDN(options) {
 
 	loadVersionCacheCDNFromEnv(options);
 
-	let configFile = path.resolve("di.json");
-	let isFrameworkConfigExisted = fs.existsSync(path.resolve("di.json"));
+	let configFile = path.resolve("dx.json");
+	let isFrameworkConfigExisted = fs.existsSync(path.resolve("dx.json"));
 	if (!isFrameworkConfigExisted) {
 		console.error("Diginext has't been initialized yet. Run `diginext new {project_name}` or `diginext init`.");
 		return;
@@ -245,8 +245,8 @@ export function enableCDN(options) {
 
 export function disableCDN(options) {
 	const { env } = options;
-	let configFile = path.resolve("di.json");
-	let isFrameworkConfigExisted = fs.existsSync(path.resolve("di.json"));
+	let configFile = path.resolve("dx.json");
+	let isFrameworkConfigExisted = fs.existsSync(path.resolve("dx.json"));
 	if (!isFrameworkConfigExisted) {
 		console.error("Diginext has't been initialized yet. Run `diginext new {project_name}` or `diginext init`.");
 		return;

@@ -31,12 +31,12 @@ describe("Create new project", function () {
 
 		const dirExisted = fs.existsSync(targetDir);
 		const gitDirExisted = fs.existsSync(path.resolve(targetDir, ".git"));
-		const cliConfigFileExisted = fs.existsSync(path.resolve(targetDir, "di.json"));
+		const cliConfigFileExisted = fs.existsSync(path.resolve(targetDir, "dx.json"));
 		// const envFileExisted = fs.existsSync(path.resolve(targetDir, "deployment/.env.dev"));
 
 		expect(dirExisted).to.be.equal(true, "Project directory was not created.");
 
-		expect(cliConfigFileExisted).to.be.equal(true, `"${projectSlug}/di.json" is not existed.`);
+		expect(cliConfigFileExisted).to.be.equal(true, `"${projectSlug}/dx.json" is not existed.`);
 
 		expect(gitDirExisted).to.be.equal(true, "GIT was not initialized properly.");
 

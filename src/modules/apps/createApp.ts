@@ -67,7 +67,7 @@ export default async function createApp(options: InputOptions) {
 	const newApp = data as App;
 	// log({ newApp });
 
-	// to make sure it write down the correct app "slug" in "di.json"
+	// to make sure it write down the correct app "slug" in "dx.json"
 	options.slug = newApp.slug;
 	options.name = newApp.name;
 	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`;
@@ -84,7 +84,7 @@ export default async function createApp(options: InputOptions) {
 
 	if (options.git) await initializeGitRemote(options);
 
-	// write "di.json"
+	// write "dx.json"
 	const appConfig = generateAppConfig(options);
 	await writeConfig(appConfig, options);
 

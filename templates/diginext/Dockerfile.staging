@@ -17,7 +17,7 @@ RUN rm -rf ./plugins/
 RUN rm -rf ./components/
 RUN rm -rf ./.next/
 RUN rm -rf ./next.config.js
-RUN rm -rf ./di.json
+RUN rm -rf ./dx.json
 RUN rm -rf ./package.json
 RUN rm -rf ./package-lock.json
 

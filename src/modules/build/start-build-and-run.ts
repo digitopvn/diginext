@@ -24,7 +24,7 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	domains = await askForDomain(options);
 	if (domains.length < 1) {
 		logWarn(
-			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "di.json" to expose this app to the internet anytime.`
+			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "dx.json" to expose this app to the internet anytime.`
 		);
 	}
 	appConfig.environment[env].domains = domains;

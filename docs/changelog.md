@@ -111,7 +111,7 @@
 
 -   [FIX] Cập nhật phần quản lý database (MongoDB) trên DEV3: `diginext db new <db-name> --do`
 -   [FIX] MONGGODB: Tạo database mới hoặc tạo default user cho một database nào đó thì sẽ dùng random password.
--   [FIX] Thêm cấu hình SSL secret trong `di.json`:
+-   [FIX] Thêm cấu hình SSL secret trong `dx.json`:
     ```json
     {
         ...
@@ -240,7 +240,7 @@
 
 -   [HOTFIX] Build URL bị dính `projectSlug`.
 -   [NEW] Thêm các nhánh `tools` của framework vào lúc tạo project mới.
--   [NEW] Làm gọn lại lệnh analytics: `diginext analytics new` (tự lấy name và url trong `di.json`)
+-   [NEW] Làm gọn lại lệnh analytics: `diginext analytics new` (tự lấy name và url trong `dx.json`)
 -   [NEW] Update version `NodeJS` trong `Dockerfile` lên `14.17.3`.
 -   [IMPROVED] Highlight lỗi khi deploy với flag `--debug`.
 -   [FIXED] Khi cập nhật `diginext upgrade` thì loại trừ các tag `beta`.
@@ -295,7 +295,7 @@
 
 -   [NEW] Thêm flag `--inherit` cho phép thừa kế lại các custom config trong deployment YAML.
 -   [NEW] Thêm flag `--no-ssl` cho phép **không** cấu hình SSL đối với deployment (thường là API BACKEND chung domain với FRONTEND thì ko cần SSL vì FRONTEND đã cấu hình rồi).
--   [IMPROVE] Lưu thông tin cấu hình deploy trước đó vào `di.json` để thừa kế cấu hình cho lần deploy kế tiếp.
+-   [IMPROVE] Lưu thông tin cấu hình deploy trước đó vào `dx.json` để thừa kế cấu hình cho lần deploy kế tiếp.
 -   [IMPROVE] Cải thiện `diginext update` và thông báo version mới.
 -   [FIXED] Sửa lỗi deploy cho Diginest framework (API)
 
@@ -332,7 +332,7 @@
 -   [NEW] Quản lý database -> `diginext db <command>`.
 -   [NEW] Quản lý analytics tracking code -> `diginext analytics <command>`.
 -   [NEW] Hiển thị trạng thái khi đang pull framework về.
--   [NEW] Cấu hình `NAMESPACE` cho từng môi trường trong `di.json` bằng: `{ ... "namespace": { "dev": "ABC", "prod": "DEF" } ... }` (Nhánh nào ko cấu hình NAMESPACE thì CLI **sẽ tự generate theo project name**)
+-   [NEW] Cấu hình `NAMESPACE` cho từng môi trường trong `dx.json` bằng: `{ ... "namespace": { "dev": "ABC", "prod": "DEF" } ... }` (Nhánh nào ko cấu hình NAMESPACE thì CLI **sẽ tự generate theo project name**)
 -   [IMPROVE] Cố định base image version của `diginext` framework trong `deployment/*.Dockerfile`.
 -   [FIXED] Sửa lỗi push lên CDN.
 -   [FIXED] Sửa vài lỗi nhỏ khác (và có thể tạo ra thêm vài lỗi mới).
@@ -425,7 +425,7 @@
 
 ### 2020-12-23
 
--   [NEW] Thêm `--redirect` để redirect toàn bộ domain phụ về domain chính trong `di.json`.
+-   [NEW] Thêm `--redirect` để redirect toàn bộ domain phụ về domain chính trong `dx.json`.
 -   [FIXED] Sửa lỗi `bitbucket-pipelines.yaml`.
 -   [FIXED] Sửa lỗi `kubectl` trên windows.
 -   [FIXED] Sửa lỗi `{{image_name}}` khi `diginext deploy generate --prod`.

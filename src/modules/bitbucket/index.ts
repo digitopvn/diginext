@@ -276,7 +276,7 @@ export const patchResources = async (all = true) => {
 
 export const writeConfigFiles = async (diginextContent, packageContent) => {
 	await writeFile(path.resolve("package.json"), JSON.stringify(packageContent, null, 2), "utf8");
-	await writeFile(path.resolve("di.json"), JSON.stringify(diginextContent, null, 2), "utf8");
+	await writeFile(path.resolve("dx.json"), JSON.stringify(diginextContent, null, 2), "utf8");
 };
 
 export const installPackages = async () => {
@@ -507,8 +507,8 @@ export const upgradeFramework = async (options) => {
 	// 		process.exit(1);
 	// 		return;
 	// 	}
-	// 	// Check di.json & đây có phải Diginext project hay không
-	// 	const fwConfigExisted = fs.existsSync("di.json");
+	// 	// Check dx.json & đây có phải Diginext project hay không
+	// 	const fwConfigExisted = fs.existsSync("dx.json");
 	// 	if (!fwConfigExisted) {
 	// 		logError("Thư mục dự án này không phải được tạo từ Diginext CLI, không thể nâng cấp được");
 	// 		process.exit(1);
@@ -528,8 +528,8 @@ export const upgradeFramework = async (options) => {
 	// 	options.framework = framework;
 	// 	options.frameworkVersion = latestVersion;
 	// 	await pullingLatestFrameworkVersion(options);
-	// 	// cập nhật di.json
-	// 	const fwConf = require(path.resolve("di.json"));
+	// 	// cập nhật dx.json
+	// 	const fwConf = require(path.resolve("dx.json"));
 	// 	fwConf.version = latestVersion;
 	// 	fwConf["diginext-cli"] = pkg.version;
 	// 	// log(fwConf);
@@ -561,7 +561,7 @@ export const upgradeFramework = async (options) => {
 	// 	});
 	// 	// cập nhật tài nguyên mới (all or individually):
 	// 	await patchResources(upgradeAllStrategy.value);
-	// 	// write patched files (package.json & di.json):
+	// 	// write patched files (package.json & dx.json):
 	// 	await writeConfigFiles(fwConf, patchedPackage);
 	// 	// cài đặt các package mới
 	// 	await installPackages();

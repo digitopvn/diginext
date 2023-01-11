@@ -38,7 +38,7 @@ describe("Deploy the project", function () {
 
 	it('Generate deployment for "PROD" environment', async function () {
 		// add test domain
-		const diginextPath = path.resolve(targetDir, "di.json");
+		const diginextPath = path.resolve(targetDir, "dx.json");
 		// console.log("diginextPath :>> ", diginextPath);
 
 		let diginext = readJson(diginextPath);

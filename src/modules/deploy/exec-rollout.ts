@@ -20,7 +20,7 @@ export const execRollOut = async (options?: InputOptions) => {
 		const appConfig = getAppConfig(targetDirectory);
 
 		if (!appConfig) {
-			logError(`Not found "di.json" in the directory. Try: "di rollout --dir=/path/to/dir"`);
+			logError(`Not found "dx.json" in the directory. Try: "di rollout --dir=/path/to/dir"`);
 			return;
 		}
 
