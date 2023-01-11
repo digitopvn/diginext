@@ -1,0 +1,114 @@
+# INGRESS CONFIGURATION
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-ingress
+  namespace: "{{namespace}}"
+  labels:
+    project: example
+    owner: topgroup
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/session-cookie-name: route
+    nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    # nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+spec:
+  tls:
+    - hosts:
+        - example.com
+      secretName: prod-secret-example-com # this must be unique
+    - hosts:
+        - www.example.com
+      secretName: prod-secret-www-example-com # this must be unique
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /
+            backend:
+              service:
+                name: example-svc
+                port: 
+                  number: 80
+    - host: www.example.com
+      http:
+        paths:
+          - path: /
+            backend:
+              service:
+                name: example-svc
+                port: 
+                  number: 80
+---
+# SERVICE CONFIGURATION
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-svc
+  namespace: "{{namespace}}"
+  labels:
+    app: example
+    # project label
+    project: example
+    owner: topgroup
+spec:
+  # type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: example
+---
+# POD DEPLOYMENT CONFIGURATION
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example
+  namespace: "{{namespace}}"
+  labels:
+    project: example
+    owner: topgroup
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: example
+  template:
+    metadata:
+      labels:
+        owner: topgroup
+        app: example
+        # project label
+        project: example
+    spec:
+      containers:
+        - name: example
+          image: "{{image_name}}"
+          ports:
+            - containerPort: 80
+          # resource quotas
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 512Mi
+          # environment variables
+          env:
+            - name: NEXT_PUBLIC_ENV
+              value: production
+            - name: NEXT_PUBLIC_BASE_PATH
+              value: example
+            - name: NEXT_PUBLIC_BASE_URL
+              value: "https://example.com"
+            - name: NEXT_PUBLIC_API_BASE_PATH
+              value: "https://api.example.com"
+            - name: NEXT_PUBLIC_CDN_BASE_PATH
+              value: >-
+                https://google-cdn.digitop.vn/example/prod
+            - name: IRON_SESSION_SECRET
+              value: "SHPfrs9nuSdutexampleAw2mn8trxCVG93YVGVR"
+          # ==================================
