@@ -6,6 +6,7 @@ import path from "path";
 import type { ParsedQs } from "qs";
 
 import { CLI_DIR } from "@/config/const";
+import { stopBuild } from "@/modules/build";
 import BuildService from "@/services/BuildService";
 
 import BaseController from "./BaseController";
@@ -28,5 +29,22 @@ export default class BuildController extends BaseController<BuildService> {
 		const logs = fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf8") : "No data.";
 
 		return ApiResponse.succeed(res, logs);
+	}
+
+	async stopBuild(
+		req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>,
+		res: Response<any, Record<string, any>>,
+		next: NextFunction
+	): Promise<Response<any, Record<string, any>>> {
+		const { slug } = req.query;
+
+		if (!slug) return ApiResponse.failed(res, "slug is required.");
+
+		const build = await this.service.findOne({ slug });
+		if (!build) return ApiResponse.failed(res, `Build "${slug}" not found.`);
+
+		await stopBuild(build.appSlug, slug.toString());
+
+		return ApiResponse.succeed(res, {});
 	}
 }

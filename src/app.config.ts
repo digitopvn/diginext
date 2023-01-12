@@ -61,7 +61,7 @@ export class Config {
 	static grab = (key: string, defaultValue: any = "") => process.env[key] ?? defaultValue;
 
 	static get ENV() {
-		return EnvName[process.env.NODE_ENV.toUpperCase()] ?? EnvName.DEVELOPMENT;
+		return EnvName[this.grab("NODE_ENV", "development").toUpperCase()] ?? EnvName.DEVELOPMENT;
 	}
 
 	static get BASE_PATH() {

@@ -8,6 +8,10 @@ export type InputOptions = {
 	 * For testing purpose
 	 */
 	isDebugging?: boolean;
+	/**
+	 * Follow the output logs until the command is finished.
+	 */
+	isTail?: boolean;
 
 	/**
 	 * Print the logs and keep watching until the end

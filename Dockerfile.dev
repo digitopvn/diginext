@@ -6,7 +6,7 @@ RUN apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 
 # Node.js, Git, kubectl & Open SSH
 RUN apt-get update --allow-releaseinfo-change -yq \
-  && apt-get install curl gnupg wget -yq \
+  && apt-get install curl gnupg wget ca-certificates -yq \
   && curl -sL https://deb.nodesource.com/setup_18.x | bash \
   && apt-get install nodejs git sed jq kubectl openssh-client -yq \
   && apt-get clean -y
@@ -37,7 +37,7 @@ RUN yarn install
 # COPY ./ ./
 
 # COPY ./dist ./dist
-COPY ./shells ./shells
+# COPY ./scripts ./scripts
 # COPY ./.env ./.env
 # COPY ./.env.dev ./.env.dev
 
@@ -50,7 +50,7 @@ RUN groupadd docker
 RUN usermod -aG docker $(whoami)
 
 # RUN chmod -R +x /usr/diginext-cli/dist
-# RUN chmod -R +x /usr/diginext-cli/shells
+# RUN chmod -R +x /usr/diginext-cli/scripts
 RUN npm link
 
 EXPOSE 8080

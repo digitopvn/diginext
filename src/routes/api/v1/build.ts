@@ -25,6 +25,12 @@ router
 		// authorize,
 		controller.getLogs.bind(controller)
 	)
+	.get(
+		"/stop",
+		authenticate,
+		// authorize,
+		controller.stopBuild.bind(controller)
+	)
 	.post(
 		"/",
 		authenticate,

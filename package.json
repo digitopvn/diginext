@@ -1,6 +1,6 @@
 {
-	"name": "diginext-cli",
-	"version": "0.2.5",
+	"name": "@topgroup/diginext",
+	"version": "0.1.0",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -44,7 +44,8 @@
 	"homepage": "https://diginext.site",
 	"author": {
 		"name": "TOP GROUP (a.k.a Digitop)",
-		"email": "dev@wearetopgroup.com"
+		"email": "dev@wearetopgroup.com",
+		"url": "https://github.com/mrgoonie"
 	},
 	"license": "GPL",
 	"engines": {
@@ -67,8 +68,8 @@
 		"test": "yarn lint && yarn build && mocha --require @babel/register test/**/*.test.js",
 		"format": "prettier 'src/**/*.{js,ts,tsx,json,yaml}' --write && yarn lint",
 		"commit": "git add . && cz && git push origin",
-		"prepare": "husky install",
-		"postinstall": "husky install"
+		"release": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall && npm publish --access=public && npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
+		"prepare": "husky install"
 	},
 	"config": {
 		"commitizen": {

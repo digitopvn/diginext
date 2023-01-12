@@ -12,7 +12,7 @@ import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { CloudProvider, ContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
-import { execCmd } from "@/plugins";
+import { execCmd, wait } from "@/plugins";
 import { CloudProviderService } from "@/services";
 
 import type { DomainRecord } from "../../interfaces/DomainRecord";
@@ -78,11 +78,24 @@ export const authenticate = async (options?: InputOptions) => {
 	API_ACCESS_TOKEN = options.key ? options.key : options.input;
 
 	// authenticate Docker with this container registry
+	let shouldRetry = false;
 	try {
-		await execa.command(`doctl auth init -t ${API_ACCESS_TOKEN}`);
+		await execa.command(`doctl auth init --access-token ${API_ACCESS_TOKEN}`);
+		shouldRetry = false;
 	} catch (e) {
-		logError(e);
-		return false;
+		logWarn(e);
+		shouldRetry = true;
+	}
+
+	if (shouldRetry) {
+		// wait 5s and retry (sometime the API on DO is unreachable)
+		await wait(5 * 1000);
+		try {
+			await execa.command(`doctl auth init --access-token ${API_ACCESS_TOKEN}`);
+		} catch (e) {
+			logError(e);
+			return false;
+		}
 	}
 
 	// Check if this cloud provider is existed:

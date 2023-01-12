@@ -167,11 +167,14 @@ function initialize() {
 		app.use(cookieParser());
 		app.use(
 			session({
-				secret: Config.grab(`SESSION_SECRET`),
-				name: Config.grab(`SESSION_NAME`) || `diginext-cli`,
+				name: Config.grab(`SESSION_NAME`, `diginext-cli`),
+				secret: Config.grab(`JWT_SECRET`),
 				proxy: true,
 				resave: true,
 				saveUninitialized: true,
+				cookie: {
+					maxAge: 1000 * 60 * 100,
+				},
 			})
 		);
 
