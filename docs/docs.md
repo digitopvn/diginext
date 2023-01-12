@@ -1,14 +1,14 @@
 # Danh sách các lệnh trong CLI:
 
-## Diginext Project Helper
+## Project & App Helper
 
--   Tạo dự án mới:
+-   Create new project:
 
     ```bash
     dx new
     ```
 
--   **[!!! DANGER !!!]** Bắt buộc tạo dự án mới **(ghi đè lên thư mục & git repo hiện tại nếu có)**:
+-   **[!!! DANGER !!!]** Forcefully create new project **(overwriting current directory & git repo if any)**:
 
     ```bash
     dx new --overwrite
@@ -17,337 +17,130 @@
     dx new -o
     ```
 
--   Khởi tạo Diginext framework trong thư mục có sẵn hiện tại:
+-   Initialize a framework in the current app directory:
 
     ```bash
     cd /path/to/current/app
     dx init
     ```
 
--   **[!!! DANGER !!!]** Cập nhật Framework lên version mới (có thể lựa chọn cập nhật tất cả hoặc chọn từng folder):
-    (\*) Việc cập nhật tự động rất dễ xảy ra tình trạng mất code / ghi đè code, tốt nhất là cập nhật bằng tay (manual).
+-   Update **Diginext** to new version:
 
     ```bash
-    dx upgrade
+    npm i diginext@latest -g
     ```
 
--   Cập nhật **Diginext CLI** lên version mới:
+## Deployment
 
-    ```bash
-    dx --update
-    dx -U
-    ```
-
-    Hoặc có thể cập nhật manually: **(AN TOÀN HƠN)**
-
-    ```bash
-    cd /path/to/di-cli
-    git checkout master
-    git fetch --all
-    git pull --rebase
-    npm install && npm link
-    ```
-
-## Deployment Helper
-
--   Authenticate Google Cloud với Service Account:
+-   Authenticate Google Cloud with Service Account:
 
     ```bash
     dx gcloud auth -f /path/to/service-account.json
     ```
 
--   Authenticate Digital Ocean với API access token:
+-   Authenticate Digital Ocean with API access token:
 
     ```bash
     dx do auth --key=<DO_API_ACCESS_TOKEN>
     ```
 
--   Connect Docker với Google Container Registry:
+-   Connect Docker with Google Container Registry:
 
     ```bash
     # [Authentication required] `dx gcloud auth -f /path/to/service-account.json`
     dx gcloud registry connect --host=<GOOGLE_CONTAINER_REGISTRY_URL>
     ```
 
--   Connect Docker với Digital Ocean Container Registry:
+-   Connect Docker with Digital Ocean Container Registry:
 
     ```bash
     # [Authentication required] `dx do auth --key=<DO_API_ACCESS_TOKEN>`
     dx do registry connect
     ```
 
--   Build dự án trên máy của bạn & push image lên Container Registry:
+-   Build the application on your computer & push that Docker image to the Container Registry:
 
     ```bash
     # cần authenticate provider & connect to registry trước (xem ở trên)
-    # build môi trường DEV
+    # build & push to DEV environment
     dx build
-    # build môi trường PROD
+    # build & push to PROD environment
     dx build --prod
     ```
 
--   Generate file cấu hình deployment cho các môi trường:
-
-    ```bash
-    # Tạo ra file "deployment/.env.dev" và "deployment/deployment.dev.yaml"
-    dx deploy generate [--inherit=false]
-    # Flag "--inherit=false" để tắt việc thừa kế cấu hình deployment từ lần trước đó, chỉ dùng cấu hình deployment mặc định.
-
-    # Các câu lệnh generate cho môi trường khác
-    dx deploy generate [--prod] [--redirect] [--template] [--inherit=false]
-    dx deploy generate --env=canary [--redirect] [--template] [--inherit=false]
-    ```
-
--   Deploy web lên **môi trường DEV** tại **Digital Ocean** (`dev3.digitop.vn` / Digital Ocean / dev3-digitop-vn):
+-   Deploy your web app to **DEV environment**:
 
     ```bash
     dx deploy
-    # tương đương với
-    dx deploy --dev --provider=digitalocean --cluster=dev3-digitop-vn
+    # is equalivent with
+    dx deploy --dev
     ```
 
--   Deploy to any GKE clusters:
+-   Deploy to **DEV environment** at any K8S clusters:
 
     ```bash
-    dx deploy --provider=gcloud --cluster=<CLUSTER_NAME> --project=<GOOGLE_PROJECT_ID>
+    dx deploy --dev --select-cluster
     ```
 
--   Deploy to any Digital Ocean clusters:
-
-    ```bash
-    dx deploy --prod --provider=digitalocean --cluster=<CLUSTER_NAME>
-    ```
-
--   Deploy web lên **môi trường PRODUCTION** (DEV5.DIGITOP.VN / Google Cloud / CLUSTER **"digitop-cluster"** / PROJECT_ID **"top-group-k8s"**):
+-   Deploy to **PRODUCTION environment**:
 
     ```bash
     dx deploy --prod
 
-    # tương đương với
-    dx deploy --prod --provider=gcloud --cluster=digitop-cluster --project=top-group-k8s
-
-    # nếu muốn chạy PRODUCTION trên DEV3.DIGITOP.VN (DO):
-    dx deploy --prod --provider=digitalocean --cluster=dev3-digitop-vn
-
-    # nếu muốn chạy PRODUCTION trên K8S cluster "my-client-cluster" tại Digital Ocean (DO):
-    dx deploy --prod --provider=digitalocean --cluster=my-client-cluster
-
-    # nếu muốn chạy PRODUCTION trên K8S cluster "my-client-cluster", project "my-client-project" tại Google Cloud:
-    dx deploy --prod --provider=gcloud --cluster=my-client-cluster --project=my-client-project
+    # to any other clusters
+    dx deploy --prod --select-cluster
     ```
 
-    Sau đó truy cập vào [DIGIRELEASE](https://digirelease.digitop.vn) để xem bản preview (pre-release), và ROLL OUT để go live.
+    **New deployment of PROD environment will not be rolled out immediately like other environments.**
 
-    -   Chỉ có 1 số tài khoản nhất định có thể roll out:
+    After the build process finished, access [Diginext Admin](https://app.diginext.site) to preview the deployment, if everything is okay, you can process ROLLING OUT within the Admin UI.
 
-        -   duynguyen@wearetopgroup.com
-        -   khuongdinh@wearetopgroup.com
-        -   sachle@wearetopgroup.com
-        -   anhnguyen@wearetopgroup.com
-        -   thinhnguyen@wearetopgroup.com
-
--   Deploy web lên **môi trường bất kỳ**:
+-   Deploy to **any enviroments**:
 
     ```bash
-    # Sử dụng cấu hình "deployment/.env.canary" và "deployment/deployment.canary.yaml" để deploy:
-    # (Nếu chưa có 2 files này, dùng lệnh ở trên để generate: `dx deploy generate --env=canary`)
-    dx deploy --env=canary --provider=gcloud --project=top-group-k8s --cluster=digitop-cluster
+    dx deploy --env=canary
     ```
 
--   Deploy **MONOREPO** >> thêm flag `--app={APP_NAME}`
+### App Deployment Configuration File Explain - `dx.json` 
 
-    ```bash
-    # Deploy lên DEV3.DIGITOP.VN (Digital Ocean)
-    dx deploy --app=di-examples
-    ```
+-   Add new domain to **DEVELOPMENT environment**:
+    - Open `dx.json` & add your domain to "environment > dev > domains"
+    - (eg: `{ dev: { domains: ["example.com"] } }`)
 
--   Một số lưu ý cho cấu hình `dx.json`:
+-   Add new domain to **PRODUCTION environment**:
+    - Open `dx.json` &  add your domain to "environment > dev > domains"
+    - (eg: `{ prod: { domains: ["example.com"] } }`)
 
-    -   Cách thêm domain vào môi trường **DEVELOPMENT**:
+-   Do the same for other environments.
 
-        -   Mở `dx.json` và thêm vào domain vào mảng "cdn > staging"
-            (VD: `{ cdn: { staging: ["example.com"] }, prod: [] }`)
-        -   Chạy lệnh `dx deploy generate`
+## Build
 
-    -   Cách thêm domain vào môi trường **STAGING**:
+(TBU)
 
-        -   Mở `dx.json` và thêm vào domain vào mảng "cdn > staging"
-            (VD: `{ cdn: { staging: ["example.com"] }, prod: [] }`)
-        -   Chạy lệnh `dx deploy generate --staging`
+## Framework
 
-    -   Cách thêm domain vào môi trường **PRODUCTION**:
+(TBU)
 
-        -   Mở `dx.json` và thêm vào domain vào mảng "cdn > prod"
-            (VD: `{ cdn: { staging: [], prod: ["example.com"] } }`)
-        -   Chạy lệnh `dx deploy generate --prod`
-        -   Tạo pull request từ `nhánh-của-bạn` -> `master` -> `prod`
+## Cluster
 
-    -   Cách thêm domain vào môi trường **BẤT KỲ**: (giả sử: `canary`)
-        -   Mở `dx.json` và thêm vào domain vào mảng "cdn > prod"
-            (VD: `{ cdn: { staging: [], prod: [], canary: ["example.com"] } }`)
-        -   Chạy lệnh `dx deploy generate --env=canary`
-        -   Kiểm tra và chỉnh sửa file ENV nếu cần: "deployment/.env.canary"
-        -   Tạo pull request từ `nhánh-của-bạn` -> `master` -> `canary`
+(TBU)
 
-## Google CDN Helper
+## Workspace
 
--   Đẩy toàn bộ files trong thư mục "public" của dự án lên CDN (staging):
+(TBU)
 
-    ```
-    dx cdn push
-    ```
+## Storage
 
-    hoặc upload thư mục bất kỳ với lệnh:
+(TBU)
 
-    ```
-    dx cdn push <directory_path>
-    ```
+## Database
 
--   Đẩy toàn bộ files trong thư mục "public" lên CDN (production):
+(TBU)
 
-    ```
-    dx cdn push --prod
-    ```
+## Tracking (GA4/GTAG)
 
-    hoặc upload thư mục bất kỳ với lệnh:
+(TBU)
 
-    ```
-    dx cdn push <directory_path> --prod
-    ```
+## Git Provider
 
--   Xoá cache CDN (staging):
-
-    ```
-    dx cdn purge
-    ```
-
--   Xoá cache CDN (production):
-
-    ```
-    dx cdn purge --prod
-    ```
-
--   Kích hoạt CDN cho dự án (staging):
-
-    ```
-    dx cdn enable
-    ```
-
--   Kích hoạt CDN cho dự án (production):
-
-    ```
-    dx cdn enable --prod
-    ```
-
--   Bỏ kích hoạt CDN cho dự án (staging):
-
-    ```
-    dx cdn disable
-    ```
-
--   Bỏ kích hoạt CDN cho dự án (production):
-    ```
-    dx cdn disable --prod
-    ```
-
-## DATABASE Helper (MongoDB)
-
--   Tạo database mới (DEV):
-
-    ```
-    # DEV3 MongoDB
-    dx db new --dev --do
-
-    # DEV1 MongoDB
-    dx db new
-    dx db new --dev
-    ```
-
--   Tạo database mới (PROD):
-
-    ```
-    dx db new --prod
-    dx db new --env=prod
-    ```
-
--   Tạo auth user cho 1 database bất kỳ:
-
-    ```
-    dx db add-user <database> <username> <password> --do
-    dx db add-user <database> <username> <password> --prod
-    ```
-
--   **(!!! DANGER !!!)** Tạo default auth user cho 1 database bất kỳ với user/pass là `admin/Top@123#`
-
-    ```
-    dx db add-default-user <database>
-    ```
-
-## ANALYTICS Helper (GA4/GTAG)
-
--   Tạo mã tracking GTAG:
-
-    ```
-    dx analytics new
-
-    // Examples:
-    dx analytics new --prod
-    dx analytics new --env=canary
-    ```
-
-## Bibucket Helper
-
--   Đăng nhập Bitbucket:
-
-    ```
-    dx git login
-    ```
-
--   Đăng xuất Bitbucket:
-
-    ```
-    dx git logout
-    ```
-
--   Kiểm tra tài khoản Bitbucket đang đăng nhập:
-
-    ```
-    dx git profile
-    ```
-
--   **Tạo Pull Request**: (DESTINATION_BRANCH = optional, default là nhánh "master")
-
-    từ current working branch tới master (hoặc nhánh nào đó)
-
-    ```
-    dx git pr <DESTINATION_BRANCH=master>
-    ```
-
-    hoặc từ FROM_BRANCH tới TO_BRANCH:
-
-    ```
-    dx git pr <FROM_BRANCH> <TO_BRANCH>
-    ```
-
-    tạo PR tới nhiều branch (dùng dấu phẩy):
-
-    ```
-    dx git pr <FROM_BRANCH> BRANCH_1,BRANCH_2,BRANCH_3
-    ```
-
-    tạo PR & auto merge (nếu ko conflicted - **ONLY ADMINISTRATOR LEVEL CAN DO THIS**):
-
-    ```
-    dx git pr <FROM_BRANCH> <TO_BRANCH> --merge
-    ```
-
--   Kích hoạt **Bitbucket Pipeline** cho dự án:
-
-    ```
-    dx pipeline enable
-    ```
-
--   Bỏ kích hoạt **Bitbucket Pipeline** cho dự án:
-    ```
-    dx pipeline disable
-    ```
+(TBU)

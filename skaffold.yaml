@@ -4,7 +4,7 @@ metadata:
     name: diginext-cli
 build:
     artifacts:
-        - image: mrgoonie/diginext-cli
+        - image: digitop/diginext-cli
           docker:
               dockerfile: Dockerfile
 manifests:

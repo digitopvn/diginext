@@ -2,6 +2,7 @@ keys/
 src/
 redis_data/
 shells/
+scripts/
 thunder-tests/
 test/
 .husky

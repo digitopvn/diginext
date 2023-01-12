@@ -46,7 +46,7 @@ RUN yarn install
 # COPY ./ ./
 
 COPY ./dist ./dist
-COPY ./shells ./shells
+# COPY ./scripts ./scripts
 COPY ./public ./public
 # COPY ./.env ./.env
 # COPY ./.env.dev ./.env.dev
@@ -60,7 +60,7 @@ RUN groupadd docker
 RUN usermod -aG docker $(whoami)
 
 # RUN chmod -R +x /usr/diginext-cli/dist
-# RUN chmod -R +x /usr/diginext-cli/shells
+# RUN chmod -R +x /usr/diginext-cli/scripts
 RUN npm link
 
 EXPOSE 8080
@@ -73,7 +73,7 @@ EXPOSE 8080
 
 # CMD [ "node", "/usr/diginext-cli/dist/server.js" ]
 
-ENTRYPOINT [ "/usr/diginext-cli/shells/entry.sh" ]
+ENTRYPOINT [ "/usr/diginext-cli/scripts/entry.sh" ]
 
 # CMD gcloud version && kubectl version && docker version
 # CMD yarn start
