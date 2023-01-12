@@ -83,7 +83,3 @@ docker-compose*.yaml
 # dev api
 thunder-tests/
 thunder-tests/**
-
-# dev scripts
-shells/
-scripts/
