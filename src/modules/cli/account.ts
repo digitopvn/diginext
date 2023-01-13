@@ -21,6 +21,7 @@ export const cliLogin = async (options: InputOptions) => {
 	const cliConfig = saveCliConfig({ buildServerUrl: trimEnd(buildServerUrl, "/") });
 
 	// open login page of build server:
+	// open(`${buildServerUrl}/cli?workspace=top-group`);
 	open(`${cliConfig.buildServerUrl}/auth/google?redirect_url=${cliConfig.buildServerUrl}/auth/profile`);
 
 	const { access_token } = await inquirer.prompt([
@@ -52,7 +53,7 @@ export const cliLogin = async (options: InputOptions) => {
 	// "access_token" is VALID -> save it to local machine!
 	saveCliConfig({ access_token });
 
-	const { workspaces = [] } = currentUser;
+	const { workspaces = [], activeWorkspace } = currentUser;
 	let currentWorkspace;
 	// console.log({ workspaces });
 
@@ -118,7 +119,7 @@ export const cliLogin = async (options: InputOptions) => {
 		currentWorkspace = workspace;
 	} else {
 		// This user has only 1 workspace, select it !
-		currentWorkspace = workspaces[0];
+		currentWorkspace = activeWorkspace;
 	}
 
 	// console.log({ currentWorkspace, currentUser });

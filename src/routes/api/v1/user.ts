@@ -36,6 +36,12 @@ router
 		authenticate,
 		// authorize,
 		controller.empty.bind(controller)
+	)
+	.patch(
+		"/join-workspace",
+		authenticate,
+		// authorize,
+		controller.joinWorkspace.bind(controller)
 	);
 
 export default router;
