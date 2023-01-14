@@ -69,8 +69,8 @@
 		"test": "yarn lint && yarn build && mocha --require @babel/register test/**/*.test.js",
 		"format": "prettier 'src/**/*.{js,ts,tsx,json,yaml}' --write && yarn lint",
 		"commit": "git add . && cz && git push origin",
-		"release": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall && npm publish --access=public && npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
-		"release-publish": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall && yarn semantic-release --no-ci && npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
+		"release": "yarn build && npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall && npm publish --access=public && npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
+		"prerelease": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall && yarn semantic-release --no-ci && npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
 		"prepare": "husky install",
 		"postinstall": "husky install"
 	},
