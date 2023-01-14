@@ -79,11 +79,11 @@ deployment.yaml
 !templates/deployment.yaml
 docker-compose*.yaml
 !templates/docker-compose*.yaml
+01-cert-secret.yaml
+02-cert-issuer.yaml
+04-certificate.yaml
+gcloud-secret.yaml
 
 # dev api
 thunder-tests/
 thunder-tests/**
-
-# dev scripts
-shells/
-scripts/

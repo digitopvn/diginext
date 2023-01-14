@@ -4,7 +4,7 @@ import generatePassword from "diginext-utils/dist/string/generatePassword";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import type { Request } from "express";
 
-import type { DeepPartial, EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeorm";
+import type { EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeorm";
 import type { MongoFindManyOptions } from "@/libs/typeorm/find-options/mongodb/MongoFindManyOptions";
 import { manager, query } from "@/modules/AppDatabase";
 import { isValidObjectId } from "@/plugins/mongodb";
@@ -31,7 +31,7 @@ export default class BaseService<E extends ObjectLiteral> {
 		return this.query.count({ ...filter, ...options });
 	}
 
-	async create(data: DeepPartial<E & { slug?: string; metadata?: any }>) {
+	async create(data: E & { slug?: string; metadata?: any; error?: any }) {
 		try {
 			// generate slug (if needed)
 			if (!data.slug && data.name) {
@@ -51,7 +51,7 @@ export default class BaseService<E extends ObjectLiteral> {
 
 			const item = await this.query.create(data);
 
-			return (await manager.save(item)) as DeepPartial<E & { slug?: string; metadata?: any }>;
+			return (await manager.save(item)) as E & { slug?: string; metadata?: any };
 		} catch (e) {
 			logError(e);
 			return { error: e };
@@ -124,12 +124,13 @@ export default class BaseService<E extends ObjectLiteral> {
 		// log(`update :>>`, { data });
 
 		// generate slug (if needed)
-		if (!data.slug && data.name) {
-			let slug = makeSlug(data.name);
-			const count = await this.count({ slug });
-			if (count > 0) slug = makeSlug(data.name) + "-" + generatePassword(4, false).toLowerCase();
-			data.slug = slug;
-		}
+		// ! danger: when update "name" only -> it generates new slug !
+		// if (!data.slug && data.name) {
+		// 	let slug = makeSlug(data.name);
+		// 	const count = await this.count({ slug });
+		// 	if (count > 0) slug = makeSlug(data.name) + "-" + generatePassword(4, false).toLowerCase();
+		// 	data.slug = slug;
+		// }
 
 		// generate metadata (for searching)
 		// TODO: update metadata instead of create new
@@ -140,10 +141,10 @@ export default class BaseService<E extends ObjectLiteral> {
 		// 		data.metadata[key] = clearUnicodeCharacters(value.toString());
 		// }
 
-		// log(`Service > UPDATE :>>`, { filter }, { data });
+		console.log(`Service > UPDATE :>>`, { filter }, { data });
 
 		const updateRes = await this.query.updateMany(filter, { $set: data });
-		// log(`update :>>`, { updateRes });
+		console.log(`Service > UPDATE :>>`, { updateRes });
 		if (updateRes.matchedCount > 0) {
 			const results = await this.find(filter, options);
 			return results;

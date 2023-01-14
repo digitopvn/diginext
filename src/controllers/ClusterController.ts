@@ -21,7 +21,7 @@ export default class ClusterController extends BaseController<ClusterService> {
 	): Promise<Response<any, Record<string, any>>> {
 		const result: { status: number; messages: string[]; data: any } = { status: 1, messages: [], data: {} };
 
-		const options = { userId: (req.user as User)._id as string, workspaceId: (req.user as User).workspaces[0] as string };
+		const options = { userId: (req.user as User)._id as string, workspaceId: (req.user as User).activeWorkspace as string };
 		// console.log("options :>> ", options);
 
 		const { slug } = req.query;

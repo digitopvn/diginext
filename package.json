@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -58,10 +58,11 @@
 		"build_custom": "rm -rf dist && tsc -p tsconfig.build.json",
 		"startup": "pm2 startup",
 		"unstartup": "pm2 unstartup",
-		"start": "CLI_MODE=server pm2 start dist/server.js --name diginext-build-server && pm2 save",
+		"serve": "CLI_MODE=server pm2 start dist/server.js --name diginext-build-server && pm2 save",
 		"stop": "pm2 stop diginext-build-server",
 		"restruct": "ncp dist/src dist && rimraf dist/src dist/package.json",
 		"dev": "CLI_MODE=server ts-node-dev -r tsconfig-paths/register src/server.ts --debug --respawn --exit-child --watch src",
+		"start": "CLI_MODE=server ts-node src/server.ts",
 		"check-types": "tsc --noEmit --pretty -p tsconfig.json",
 		"lint": "eslint \"src/**/*.ts\" --fix && yarn check-types",
 		"clean": "rimraf .yarn/cache node_modules yarn.lock dist && touch yarn.lock",
@@ -69,7 +70,9 @@
 		"format": "prettier 'src/**/*.{js,ts,tsx,json,yaml}' --write && yarn lint",
 		"commit": "git add . && cz && git push origin",
 		"release": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall && npm publish --access=public && npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
-		"prepare": "husky install"
+		"release-publish": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall && yarn semantic-release --no-ci && npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
+		"prepare": "husky install",
+		"postinstall": "husky install"
 	},
 	"config": {
 		"commitizen": {
@@ -78,20 +81,12 @@
 	},
 	"release": {
 		"branches": [
-			"main",
-			"master"
+			"prerelease"
 		],
 		"plugins": [
 			"@semantic-release/commit-analyzer",
 			"@semantic-release/release-notes-generator",
-			"@semantic-release/changelog",
-			[
-				"@semantic-release/npm",
-				{
-					"npmPublish": true
-				}
-			],
-			"@semantic-release/git"
+			"@semantic-release/changelog"
 		]
 	},
 	"dependencies": {

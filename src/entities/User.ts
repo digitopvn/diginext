@@ -86,6 +86,12 @@ export default class User extends Base<User> {
 	@ObjectIdColumn({ name: "workspaces", array: true, default: [] })
 	workspaces?: ObjectID[] | Workspace[] | string[];
 
+	/**
+	 * Active workspace of a user
+	 */
+	@ObjectIdColumn({ name: "workspaces" })
+	activeWorkspace?: ObjectID | Workspace | string;
+
 	constructor(data?: User) {
 		super();
 		Object.assign(this, data);

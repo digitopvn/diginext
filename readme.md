@@ -36,8 +36,13 @@ After installing, you can use the CLI command `dx` and spin up a build server wi
 ```bash
 export MONGODB_CONNECTION_STRING=<YOUR_MONGODB_CONNECTION_STRING>
 dx server up
-# the build server will be available at: http://localhost:6969
 ```
+
+The build server will be available at: http://localhost:6969
+
+Access the admin to configure your new workspace, add some cluster accessing information.
+
+To deploy your project, use this command: `dx deploy`
 
 ---
 

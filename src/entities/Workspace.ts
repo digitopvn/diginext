@@ -31,6 +31,12 @@ export default class Workspace extends Base<Workspace> {
 	slug?: string;
 
 	/**
+	 * Is this a `public` workspace that anyone can join, otherwise it's a `private` workspace that needs approval on joining request.
+	 */
+	@Column({ type: "boolean", default: false })
+	public?: boolean;
+
+	/**
 	 * Workspace profile picture
 	 */
 	@Column()
