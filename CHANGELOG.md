@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/digitopvn/diginext/compare/v1.0.0...v1.0.1) (2023-01-14)
+
+
+### Bug Fixes
+
+* **remove unnecessary warnings:** remove unnecessary warnings ([363975d](https://github.com/digitopvn/diginext/commit/363975d643dd56205e0cea59d96ef10d391ac3c2))
+
 # 1.0.0 (2023-01-14)
 
 
