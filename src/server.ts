@@ -168,7 +168,7 @@ function initialize() {
 		app.use(
 			session({
 				name: Config.grab(`SESSION_NAME`, `diginext-cli`),
-				secret: Config.grab(`JWT_SECRET`),
+				secret: Config.grab(`JWT_SECRET`, "123"),
 				proxy: true,
 				resave: true,
 				saveUninitialized: true,

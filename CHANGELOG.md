@@ -1,3 +1,26 @@
+## [1.0.1](https://github.com/digitopvn/diginext/compare/v1.0.0...v1.0.1) (2023-01-14)
+
+
+### Bug Fixes
+
+* **remove unnecessary warnings:** remove unnecessary warnings ([363975d](https://github.com/digitopvn/diginext/commit/363975d643dd56205e0cea59d96ef10d391ac3c2))
+
+# 1.0.0 (2023-01-14)
+
+
+### Bug Fixes
+
+* **active workspace:** correct the active workspace when doing cli login ([bfb69be](https://github.com/digitopvn/diginext/commit/bfb69be7f9c64f475036906296ba4db0fe5bdcfd))
+* **hotfix jwt:** add default secret ([aae1f3d](https://github.com/digitopvn/diginext/commit/aae1f3d5b5e98d067a23969f4e82bcdf67feb46e))
+* **stop build:** try to implement stop build process but failed ([75c6eed](https://github.com/digitopvn/diginext/commit/75c6eede71b8e78d0729d30fb3784000ea2893e9))
+* **use dx as main command:** change from di to dx as primary command ([3071c87](https://github.com/digitopvn/diginext/commit/3071c873f792f074f89511f907efedac4a7b2380))
+
+
+### Features
+
+* **automation scripts:** install docker, node, yarn, gcloud, doctl, jq, kubectl, k3s ([f2497e8](https://github.com/digitopvn/diginext/commit/f2497e86dd9c3d02987f868353e5c4f6bce095d0))
+* **workspace:** join a workspace, add user to workspace, auth user with a workspace ([189a028](https://github.com/digitopvn/diginext/commit/189a02853324c93118972036c47c01c07f622b08))
+
 # 1.0.0 (2023-01-14)
 
 
