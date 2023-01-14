@@ -1,6 +1,8 @@
 # DEBIAN - Base on offical Google Cloud SDK Slim image -> Google Cloud CLI
 FROM gcr.io/google.com/cloudsdktool/cloud-sdk:slim
 
+RUN apt-get clean
+
 # Kubernetes Gcloud Authentication plugin
 RUN apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 
@@ -46,7 +48,7 @@ RUN yarn install
 # COPY ./ ./
 
 COPY ./dist ./dist
-# COPY ./scripts ./scripts
+COPY ./scripts ./scripts
 COPY ./public ./public
 # COPY ./.env ./.env
 # COPY ./.env.dev ./.env.dev
@@ -60,10 +62,10 @@ RUN groupadd docker
 RUN usermod -aG docker $(whoami)
 
 # RUN chmod -R +x /usr/diginext-cli/dist
-# RUN chmod -R +x /usr/diginext-cli/scripts
+RUN chmod -R +x /usr/diginext-cli/scripts
 RUN npm link
 
-EXPOSE 8080
+EXPOSE 6969
 
 # ENV CLI_MODE=server
 
