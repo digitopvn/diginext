@@ -31,7 +31,7 @@ export const generateJWT = (userId: string, options?: JWTOptions) => {
 			expiresIn,
 			// exp: Math.floor(Date.now() / 1000) + 2 * 24 * 60 * 60, // 2d
 		},
-		Config.grab("JWT_SECRET", "C273LSjuaQwX8vDVhQELEgzeI3I02qz27dDFnFRY6kkNuGIO13StO0sxj28DVVwv"),
+		Config.grab("JWT_SECRET", "b15af072d38ae5484ca71796a31c139d14ed72ab13041d2dda972032b27badab"),
 		{
 			algorithm: "HS512",
 			expiresIn,
@@ -44,7 +44,7 @@ export const refreshAccessToken = () => {};
 
 export const jwtStrategy = new Strategy(
 	{
-		secretOrKey: Config.grab("JWT_SECRET"),
+		secretOrKey: Config.grab("JWT_SECRET", "b15af072d38ae5484ca71796a31c139d14ed72ab13041d2dda972032b27badab"),
 		jwtFromRequest: ExtractJwt.fromExtractors([
 			ExtractJwt.fromAuthHeaderAsBearerToken(),
 			ExtractJwt.fromUrlQueryParameter("access_token"),

@@ -14,7 +14,7 @@ import { execCmd } from "@/plugins";
 // import userRouter from "./user";
 import { io } from "@/server";
 
-const CLI_MODE = Config.grab("CLI_MODE");
+const CLI_MODE = Config.grab("CLI_MODE", "client");
 
 dayjs.extend(localizedFormat);
 
