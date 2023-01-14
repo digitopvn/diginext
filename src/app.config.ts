@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import Table from "cli-table";
-import { logWarn } from "diginext-utils/dist/console/log";
 import xobject from "diginext-utils/dist/object";
 import dotenv from "dotenv";
 import fs from "fs";
@@ -16,7 +15,7 @@ if (fs.existsSync(path.resolve(CLI_DIR, ".env.dev"))) {
 } else if (fs.existsSync(path.resolve(CLI_DIR, ".env"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env") });
 } else {
-	logWarn(`No ENV file detected, Diginext CLI will not work properly.`);
+	// logWarn(`No ENV file detected, Diginext CLI will not work properly.`);
 }
 
 // dev mode?
