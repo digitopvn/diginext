@@ -1,3 +1,11 @@
+## [1.0.2](https://github.com/digitopvn/diginext/compare/v1.0.1...v1.0.2) (2023-01-15)
+
+
+### Bug Fixes
+
+* **cli:** bugs of create new app ([973cbd1](https://github.com/digitopvn/diginext/commit/973cbd10fd02d39b7d795f2fc6c242a917f2a68f))
+* **expose secrets:** expose secrets ([8d5d8ed](https://github.com/digitopvn/diginext/commit/8d5d8ed4016000efd92dc55455b48c5ef94043b2))
+
 ## [1.0.1](https://github.com/digitopvn/diginext/compare/v1.0.0...v1.0.1) (2023-01-14)
 
 
