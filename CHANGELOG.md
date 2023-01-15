@@ -1,3 +1,25 @@
+## [1.0.4](https://github.com/digitopvn/diginext/compare/v1.0.3...v1.0.4) (2023-01-15)
+
+
+### Bug Fixes
+
+* **app init:** bugs of incorrect git data when init app ([7e27b86](https://github.com/digitopvn/diginext/commit/7e27b86c7d3942e7acafa5c956246033eb042d12))
+* **logs:** turn off some logs ([9585b8f](https://github.com/digitopvn/diginext/commit/9585b8f03a22a8a6779a58521e0ac101511f2be7))
+
+## [1.0.3](https://github.com/digitopvn/diginext/compare/v1.0.2...v1.0.3) (2023-01-15)
+
+
+### Bug Fixes
+
+* **init app:** bugs in update env when initialize app ([eaace6f](https://github.com/digitopvn/diginext/commit/eaace6f19f0b41c0e0966eec1f405380257d5910))
+
+## [1.0.3](https://github.com/digitopvn/diginext/compare/v1.0.2...v1.0.3) (2023-01-15)
+
+
+### Bug Fixes
+
+* **init app:** bugs in update env when initialize app ([eaace6f](https://github.com/digitopvn/diginext/commit/eaace6f19f0b41c0e0966eec1f405380257d5910))
+
 ## [1.0.2](https://github.com/digitopvn/diginext/compare/v1.0.1...v1.0.2) (2023-01-15)
 
 

@@ -176,11 +176,18 @@ export async function execDeploy(options: InputOptions) {
 	updatedApp.lastUpdatedBy = options.username;
 	// console.log("updatedApp :>> ", updatedApp);
 
-	const { status, data: app } = await fetchApi<App>({
+	const {
+		status,
+		data: app,
+		messages,
+	} = await fetchApi<App>({
 		url: `/api/v1/app?slug=${appConfig.slug}`,
 		method: "PATCH",
 		data: updatedApp,
 	});
+
+	// logWarn({ app });
+	// logWarn({ messages });
 
 	if (!status) return logError(`Can't update new app config.`);
 

@@ -14,10 +14,6 @@ import { printInformation } from "../project/printInformation";
 import { generateAppConfig, writeConfig } from "../project/writeConfig";
 
 export async function execInitApp(options: InputOptions) {
-	// TODO: add init app
-
-	console.log(options.username);
-
 	// create new app form:
 	await askAppInitQuestions(options);
 
@@ -25,22 +21,20 @@ export async function execInitApp(options: InputOptions) {
 	options.skipCreatingDirectory = true;
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
 
-	// Save this app to database
 	if (!options.project) return logError(`Project is required for creating new app.`);
 
+	// Create new app in the database
+	const newData = {
+		name: options.name,
+		createdBy: options.username,
+		owner: options.userId,
+		project: options.project._id,
+		workspace: options.workspaceId,
+	};
 	const { status, data, messages } = await fetchApi<App>({
 		url: `/api/v1/app`,
 		method: "POST",
-		data: {
-			name: options.name,
-			git: options.git,
-			framework: options.framework,
-			environment: {},
-			createdBy: options.username,
-			owner: options.userId,
-			project: options.project._id,
-			workspace: options.workspaceId,
-		},
+		data: newData,
 	});
 	if (!status) logError(messages);
 	const newApp = data as App;
@@ -64,9 +58,33 @@ export async function execInitApp(options: InputOptions) {
 	}
 	options.repoURL = options.remoteURL;
 
-	// git
+	// git setup
 	if (!remoteSSH) await initalizeAndCreateDefaultBranches(options);
 	if (options.git && !remoteSSH) await initializeGitRemote(options);
+
+	// update GIT info in the database
+	const updateData = {};
+	updateData["framework[name]"] = options.framework.name;
+	updateData["framework[slug]"] = options.framework.slug;
+	updateData["framework[repoURL]"] = options.framework.repoURL;
+	updateData["framework[repoSSH]"] = options.framework.repoSSH;
+
+	if (options.git) {
+		updateData["git[provider]"] = options.gitProvider;
+		updateData["git[repoURL]"] = options.remoteURL;
+		updateData["git[repoSSH]"] = options.remoteSSH;
+	}
+
+	const {
+		status: updateStatus,
+		data: updatedApp,
+		messages: updateMessages,
+	} = await fetchApi<App>({
+		url: `/api/v1/app?slug=${newApp.slug}`,
+		method: "PATCH",
+		data: newData,
+	});
+	if (!updateStatus) logError(updateMessages);
 
 	// write "dx.json"
 	const appConfig = generateAppConfig(options);

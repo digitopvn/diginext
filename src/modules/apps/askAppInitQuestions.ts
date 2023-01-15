@@ -1,7 +1,7 @@
 import { logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 
-import { getCliConfig, saveCliConfig } from "@/config/config";
+import { saveCliConfig } from "@/config/config";
 import Framework from "@/entities/Framework";
 import type GitProvider from "@/entities/GitProvider";
 import type Project from "@/entities/Project";
@@ -77,8 +77,8 @@ export async function askAppInitQuestions(options?: InputOptions) {
 	options.frameworkVersion = "unknown";
 
 	if (options.git) {
-		if (options.gitProvider) {
-			let currentGitProvider;
+		let currentGitProvider;
+		if (!options.gitProvider) {
 			const { status, data, messages } = await fetchApi<GitProvider>({
 				url: `/api/v1/git`,
 			});
@@ -110,9 +110,15 @@ export async function askAppInitQuestions(options?: InputOptions) {
 				options.git = false;
 			}
 		} else {
-			// select default git provider
-			const { currentGitProvider } = getCliConfig();
-			if (currentGitProvider) options.gitProvider = currentGitProvider.slug;
+			// search for this git provider
+			const { status, data, messages } = await fetchApi<GitProvider>({
+				url: `/api/v1/git?slug=${options.gitProvider}`,
+			});
+			if (!status) return logError(messages);
+			currentGitProvider = data[0] as GitProvider;
+
+			// set this git provider to default:
+			saveCliConfig({ currentGitProvider });
 		}
 	}
 
