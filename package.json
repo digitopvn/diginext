@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "1.0.5",
+	"version": "1.1.0",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -69,8 +69,14 @@
 		"test": "yarn lint && yarn build && mocha --require @babel/register test/**/*.test.js",
 		"format": "prettier 'src/**/*.{js,ts,tsx,json,yaml}' --write && yarn lint",
 		"commit": "git add . && cz && git push origin",
-		"release": "yarn build && npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall && npm publish --access=public && npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
-		"prerelease": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall && yarn semantic-release --no-ci && npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install' && git add . && git commit -m 'build(prerelease): generate changelog to publish' && git push -u origin",
+		"commit-build": "git add . && git commit -m 'build(prerelease): generate changelog to publish' && git push -u origin",
+		"pkg-version": "npm pkg set version=$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-)",
+		"npm-publish": "npm publish --access=public",
+		"release": "run-s build prerelease husky-hide npm-publish husky-show pull-request",
+		"prerelease": "yarn semantic-release --no-ci && run-s pkg-version commit-build",
+		"pull-request": "open-cli https://github.com/digitopvn/diginext/compare/main...$(echo $(git rev-parse --abbrev-ref HEAD))",
+		"husky-hide": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall",
+		"husky-show": "npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
 		"prepare": "husky install",
 		"postinstall": "husky install"
 	},
@@ -211,6 +217,8 @@
 		"husky": "^8.0.0",
 		"lint-staged": "^13.0.4",
 		"mocha": "^10.1.0",
+		"npm-run-all": "^4.1.5",
+		"open-cli": "^7.1.0",
 		"prettier": "^2.5.1",
 		"rimraf": "^3.0.2",
 		"semantic-release": "^19.0.5",
