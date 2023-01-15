@@ -49,40 +49,46 @@ export default async function createApp(options: InputOptions) {
 
 	// const { currentUser, currentWorkspace } = getCliConfig();
 
-	const { status, data, messages } = await fetchApi<App>({
-		url: `/api/v1/app`,
-		method: "POST",
-		data: {
-			name: options.name,
-			git: options.git,
-			framework: options.framework,
-			environment: {},
-			createdBy: options.username,
-			owner: options.userId,
-			project: options.project._id,
-			workspace: options.workspaceId,
-		},
-	});
-	if (!status) logError(messages);
-	const newApp = data as App;
-	// log({ newApp });
+	const appData = {} as any;
+	appData["framework[name]"] = options.framework.name;
+	appData["framework[slug]"] = options.framework.slug;
+	appData["framework[repoURL]"] = options.framework.repoURL;
+	appData["framework[repoSSH]"] = options.framework.repoSSH;
 
-	// to make sure it write down the correct app "slug" in "dx.json"
-	options.slug = newApp.slug;
-	options.name = newApp.name;
+	const { status, data, messages } = await fetchApi<App>({
+		url: `/api/v1/app?slug=${options.slug}`,
+		method: "PATCH",
+		data: appData,
+	});
+
+	if (!status) {
+		logError(messages);
+		return;
+	}
+
+	// setup git:
 	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`;
 
 	const { currentGitProvider } = getCliConfig();
+	// log({ currentGitProvider });
 	if (currentGitProvider?.gitWorkspace) {
 		options.remoteSSH = getRepoSSH(options.gitProvider, `${currentGitProvider.gitWorkspace}/${options.repoSlug}`);
 		options.repoURL = getRepoURL(options.gitProvider, `${currentGitProvider.gitWorkspace}/${options.repoSlug}`);
 		options.remoteURL = options.repoURL;
 	}
 
-	// git
 	await initalizeAndCreateDefaultBranches(options);
 
-	if (options.git) await initializeGitRemote(options);
+	if (options.git) {
+		await initializeGitRemote(options);
+
+		// update git info to database
+		const { data: updatedApp } = await fetchApi<App>({
+			url: `/api/v1/app?slug=${options.slug}`,
+			method: "PATCH",
+			data: { "git[provider]": options.gitProvider, "git[repoURL]": options.remoteURL, "git[repoSSH]": options.remoteSSH },
+		});
+	}
 
 	// write "dx.json"
 	const appConfig = generateAppConfig(options);

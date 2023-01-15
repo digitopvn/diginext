@@ -2,7 +2,8 @@ import { logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import { getCliConfig, saveCliConfig } from "@/config/config";
+import { saveCliConfig } from "@/config/config";
+import type { App } from "@/entities";
 import Framework from "@/entities/Framework";
 import type GitProvider from "@/entities/GitProvider";
 import type Project from "@/entities/Project";
@@ -75,7 +76,7 @@ export async function askAppQuestions(options?: InputOptions) {
 	}
 
 	// "kind of" unique slug
-	// options.slug = makeSlug(options.name) + "-" + generatePassword(4, true);
+	// options.slug = (makeSlug(options.name) + "-" + generatePassword(6, true)).toLowerCase();
 
 	let curFramework;
 	if (!options.framework) {
@@ -113,8 +114,8 @@ export async function askAppQuestions(options?: InputOptions) {
 	options.frameworkVersion = frameworkVersion;
 
 	if (options.git) {
-		if (options.gitProvider) {
-			let currentGitProvider;
+		let currentGitProvider;
+		if (!options.gitProvider) {
 			const { status, data, messages } = await fetchApi<GitProvider>({
 				url: `/api/v1/git`,
 			});
@@ -146,11 +147,46 @@ export async function askAppQuestions(options?: InputOptions) {
 				options.git = false;
 			}
 		} else {
-			// select default git provider
-			const { currentGitProvider } = getCliConfig();
-			if (currentGitProvider) options.gitProvider = currentGitProvider.slug;
+			// search for this git provider
+			const { status, data, messages } = await fetchApi<GitProvider>({
+				url: `/api/v1/git?slug=${options.gitProvider}`,
+			});
+			if (!status) return logError(messages);
+			currentGitProvider = data[0] as GitProvider;
+
+			// set this git provider to default:
+			saveCliConfig({ currentGitProvider });
 		}
 	}
+
+	// API to create new app
+	const appData = {
+		name: options.name,
+		createdBy: options.username,
+		owner: options.userId,
+		project: options.project._id,
+		workspace: options.workspaceId,
+	} as any;
+
+	if (options.git) appData["git[provider]"] = options.gitProvider;
+
+	const {
+		status,
+		data,
+		messages = [],
+	} = await fetchApi<App>({
+		url: `/api/v1/app`,
+		method: "POST",
+		data: appData,
+	});
+
+	if (!status) throw new Error(`Can't create new app: ${messages.join(". ")}`);
+
+	const newApp = data as App;
+
+	// to make sure it write down the correct app "slug" in "dx.json"
+	options.slug = newApp.slug;
+	options.name = newApp.name;
 
 	return options;
 }
