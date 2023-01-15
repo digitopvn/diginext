@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/digitopvn/diginext/compare/v1.0.4...v1.1.0) (2023-01-15)
+
+
+### Features
+
+* **admin:** add front-end admin ui ([5bbc4fc](https://github.com/digitopvn/diginext/commit/5bbc4fc20b0da5fd567fa0a42096af80fa0354d7))
+
 ## [1.0.4](https://github.com/digitopvn/diginext/compare/v1.0.3...v1.0.4) (2023-01-15)
 
 

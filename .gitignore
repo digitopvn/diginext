@@ -56,7 +56,7 @@ storage/**/*
 # public/uploads
 ./redis_data/*
 redis_data/
-public/
+public/logs
 redis_data/
 # /public.__image-compressed__
 !public/assets/images/nextjs-starter-banner.png
