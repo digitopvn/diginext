@@ -14,10 +14,6 @@ import { printInformation } from "../project/printInformation";
 import { generateAppConfig, writeConfig } from "../project/writeConfig";
 
 export async function execInitApp(options: InputOptions) {
-	// TODO: add init app
-
-	console.log(options.username);
-
 	// create new app form:
 	await askAppInitQuestions(options);
 
@@ -30,7 +26,6 @@ export async function execInitApp(options: InputOptions) {
 	// Create new app in the database
 	const newData = {
 		name: options.name,
-		git: options.git,
 		createdBy: options.username,
 		owner: options.userId,
 		project: options.project._id,
@@ -73,6 +68,13 @@ export async function execInitApp(options: InputOptions) {
 	updateData["framework[slug]"] = options.framework.slug;
 	updateData["framework[repoURL]"] = options.framework.repoURL;
 	updateData["framework[repoSSH]"] = options.framework.repoSSH;
+
+	if (options.git) {
+		updateData["git[provider]"] = options.gitProvider;
+		updateData["git[repoURL]"] = options.remoteURL;
+		updateData["git[repoSSH]"] = options.remoteSSH;
+	}
+
 	const {
 		status: updateStatus,
 		data: updatedApp,
