@@ -1,4 +1,4 @@
-import { log, logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 
@@ -49,7 +49,6 @@ export default async function createProject(options: InputOptions) {
 	if (!status) logError(messages);
 
 	const newProject = data as Project;
-	log({ newProject });
 
 	options.project = newProject;
 	options.projectSlug = newProject.slug;

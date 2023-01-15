@@ -1,3 +1,17 @@
+## [1.0.3](https://github.com/digitopvn/diginext/compare/v1.0.2...v1.0.3) (2023-01-15)
+
+
+### Bug Fixes
+
+* **init app:** bugs in update env when initialize app ([eaace6f](https://github.com/digitopvn/diginext/commit/eaace6f19f0b41c0e0966eec1f405380257d5910))
+
+## [1.0.3](https://github.com/digitopvn/diginext/compare/v1.0.2...v1.0.3) (2023-01-15)
+
+
+### Bug Fixes
+
+* **init app:** bugs in update env when initialize app ([eaace6f](https://github.com/digitopvn/diginext/commit/eaace6f19f0b41c0e0966eec1f405380257d5910))
+
 ## [1.0.2](https://github.com/digitopvn/diginext/compare/v1.0.1...v1.0.2) (2023-01-15)
 
 

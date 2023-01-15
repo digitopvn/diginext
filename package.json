@@ -81,7 +81,8 @@
 	},
 	"release": {
 		"branches": [
-			"prerelease"
+			"prerelease",
+			"dev/goon"
 		],
 		"plugins": [
 			"@semantic-release/commit-analyzer",
