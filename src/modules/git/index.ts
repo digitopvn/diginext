@@ -89,23 +89,24 @@ export async function initializeGitRemote(options: InputOptions) {
 	// Create new remote repository
 	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`.toLowerCase();
 
-	// log("currentGitProvider :>> ", currentGitProvider);
-	// log("options.repoSlug :>> ", options.repoSlug);
 	// log(`options.git >>`, options.git);
-	// log(`options.repoURL >>`, options.repoURL);
+	// log("options.gitProvider :>> ", options.gitProvider);
+	// log("options.repoSlug :>> ", options.repoSlug);
+	// log(`options.remoteURL >>`, options.remoteURL);
 	// log(`options.remoteSSH >>`, options.remoteSSH);
+	// log(`options.repoURL >>`, options.repoURL);
 
 	if (options.git && options.gitProvider == "bitbucket") await createBitbucketRepo(options);
 	// TODO: Create new repo on "github"
 	// TODO: Create new repo on "gitlab"
 
+	log(`Created new repository on ${options.gitProvider}`);
+
 	if (options.git) {
 		// add git origin:
 		const git = simpleGit(options.targetDirectory, { binary: "git" });
-		// await execa.command(`cd ${options.targetDirectory} && git remote add origin ${options.remoteURL} && git push origin --all`);
-
 		await git.addRemote("origin", options.remoteSSH);
-		await git.push("origin", "master");
+		await git.push("origin", "main");
 
 		return true;
 	}
