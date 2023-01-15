@@ -132,14 +132,15 @@ export const cliLogin = async (options: InputOptions) => {
 	saveCliConfig({ currentWorkspace });
 
 	// set active workspace:
-	const { data: updatedUser } = await fetchApi<User>({
+	const { status: updateStatus, data: updatedUser } = await fetchApi<User>({
 		url: `/api/v1/user?id=${currentUser._id}`,
 		method: "PATCH",
 		data: { activeWorkspace: currentWorkspace._id },
 	});
-	// console.log("updatedUser :>> ", updatedUser);
+	console.log("updatedUser :>> ", updatedUser);
 
-	currentUser = updatedUser as User;
+	if (updateStatus) currentUser = updatedUser as User;
+
 	saveCliConfig({ currentUser });
 
 	logSuccess(`Congrats, ${currentUser.name}! You're logged into "${currentWorkspace.name}" workspace.`);

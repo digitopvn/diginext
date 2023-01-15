@@ -382,13 +382,7 @@ export const generateDeployment = async (options: InputOptions) => {
 				doc.spec.template.spec.containers[0].env = containerEnvs;
 
 				// ! PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
-				doc.spec.template.spec.containers[0].ports = [{ containerPort: parseInt(defaultEnvs.PORT) || 3000 }];
-
-				if (options.port) {
-					doc.spec.template.spec.containers[0].ports = [
-						{ containerPort: typeof options.port == "string" ? parseInt(options.port) : options.port },
-					];
-				}
+				doc.spec.template.spec.containers[0].ports = [{ containerPort: appConfig.environment[env].port || 3000 }];
 
 				// clone deployment to prerelease:
 				prereleaseDeployDoc = _.cloneDeep(doc);
