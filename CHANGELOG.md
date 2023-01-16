@@ -1,3 +1,12 @@
+## [1.1.1](https://github.com/digitopvn/diginext/compare/v1.1.0...v1.1.1) (2023-01-16)
+
+
+### Bug Fixes
+
+* **build:** fix stop build, not sure why it still not working ([d9dc90f](https://github.com/digitopvn/diginext/commit/d9dc90ff387ddec4d09c24e1e39560710bbc3097))
+* **deploy:** fix incorrect mapping port when generate deployment files ([dc205eb](https://github.com/digitopvn/diginext/commit/dc205eb996b29fbadb5ea8f4502cfecae883e69b))
+* **deploy:** improve roll out on dev environment ([33b8988](https://github.com/digitopvn/diginext/commit/33b898858e0a3d57e29f1dac50d43ce3a750d344))
+
 # [1.1.0](https://github.com/digitopvn/diginext/compare/v1.0.4...v1.1.0) (2023-01-15)
 
 
