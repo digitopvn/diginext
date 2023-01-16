@@ -93,7 +93,7 @@ export const cliLogin = async (options: InputOptions) => {
 
 		// update workspaceId to this user:
 		const { data: updatedUser, messages: updateUserMsgs } = await fetchApi<User>({
-			url: `/api/v1/user`,
+			url: `/api/v1/user?populate=workspaces`,
 			method: "PATCH",
 			data: { "workspaces[]": currentWorkspace._id },
 		});
@@ -104,7 +104,6 @@ export const cliLogin = async (options: InputOptions) => {
 		}
 
 		// TODO: seed default data: frameworks, git ?
-
 		currentUser = updatedUser[0];
 	} else if (workspaces.length > 1) {
 		// if this user is already has a few workspaces, let them select one:
@@ -132,18 +131,18 @@ export const cliLogin = async (options: InputOptions) => {
 	saveCliConfig({ currentWorkspace });
 
 	// set active workspace:
-	const { status: updateStatus, data: updatedUser } = await fetchApi<User>({
-		url: `/api/v1/user?id=${currentUser._id}`,
+	const { data: updatedUser } = await fetchApi<User>({
+		url: `/api/v1/user?id=${currentUser._id}&populate=workspaces`,
 		method: "PATCH",
 		data: { activeWorkspace: currentWorkspace._id },
 	});
-	console.log("updatedUser :>> ", updatedUser);
+	// console.log("updatedUser :>> ", updatedUser[0]);
 
-	if (updateStatus) currentUser = updatedUser as User;
+	if (updatedUser) currentUser = updatedUser[0] as User;
 
 	saveCliConfig({ currentUser });
 
-	logSuccess(`Congrats, ${currentUser.name}! You're logged into "${currentWorkspace.name}" workspace.`);
+	logSuccess(`Hello, ${currentUser.name}! You're logged into "${currentWorkspace.name}" workspace.`);
 
 	return currentUser;
 };

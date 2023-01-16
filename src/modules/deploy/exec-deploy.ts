@@ -104,6 +104,18 @@ export async function execDeploy(options: InputOptions) {
 		appConfig.environment[env].imageURL = `${registry.imageBaseURL}/${imageSlug}`;
 	}
 
+	// check for container port:
+	if (options.port) appConfig.environment[env].port = options.port;
+	if (!appConfig.environment[env].port) {
+		const { selectedPort } = await inquirer.prompt({
+			type: "number",
+			name: "selectedPort",
+			message: "Which port do you use for this app?",
+			default: 3000,
+		});
+		appConfig.environment[env].port = options.port = selectedPort;
+	}
+
 	if (isEmpty(appConfig.environment[env].cdn)) appConfig.environment[env].cdn = false;
 
 	// update deploy config:
@@ -112,7 +124,6 @@ export async function execDeploy(options: InputOptions) {
 	appConfig.environment[env].replicas = options.replicas ?? appConfig.environment[env].replicas ?? 1;
 	appConfig.environment[env].zone = options.zone ?? appConfig.environment[env].zone ?? "";
 	appConfig.environment[env].size = options.size ?? appConfig.environment[env].size ?? "none";
-	appConfig.environment[env].port = options.port ?? appConfig.environment[env].port ?? 3000;
 
 	// for Google Cloud project
 	if (options.providerProject) appConfig.environment[env].project = options.providerProject;

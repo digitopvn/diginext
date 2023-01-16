@@ -335,7 +335,6 @@ export type InputOptions = {
 
 	/**
 	 * @type {Number}
-	 * @default 3000
 	 */
 	port?: number;
 
