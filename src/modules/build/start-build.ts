@@ -15,7 +15,7 @@ import { cliOpts, getCliConfig } from "@/config/config";
 import type { App, Build, Project, Release, User } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeployment } from "@/modules/deploy/fetch-deployment";
-import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger } from "@/plugins";
+import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, wait } from "@/plugins";
 import { getIO } from "@/server";
 import { BuildService, ContainerRegistryService, ProjectService, UserService } from "@/services";
 import AppService from "@/services/AppService";
@@ -39,7 +39,13 @@ export let queue = new PQueue({ concurrency: 1 });
 export const stopBuild = async (appSlug: string, buildSlug: string) => {
 	// console.log("processes :>> ", processes);
 	try {
+		// TODO: not working properly, not sure why...
 		processes[buildSlug].cancel();
+		await wait(1000);
+		processes[buildSlug].cancel();
+		await wait(1000);
+		processes[buildSlug].kill();
+		await wait(1000);
 		processes[buildSlug].kill("SIGTERM", { forceKillAfterTimeout: 2000 });
 		await updateBuildStatus(appSlug, buildSlug, "failed");
 		delete processes[buildSlug];
