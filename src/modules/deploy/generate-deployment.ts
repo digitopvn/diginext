@@ -105,33 +105,6 @@ export const generateDeployment = async (options: InputOptions) => {
 	// Ghi đè lên file .env hiện tại trong "deployment/":
 	if (shouldCreateEnv) await copy(cliEnvTemplatePath, currentEnvFile, { overwrite: true });
 
-	// Thay thế các placeholders trong ENV nếu có:
-	// try {
-	// 	const scanPath = _.trimEnd(DEPLOYMENT_DIR, "/") + "/**/*.*";
-	// 	const files = await globby(scanPath);
-	// 	const replaceInFiles = await Promise.all(
-	// 		files.map((filePath) =>
-	// 			replaceInFile(currentEnvFile, [
-	// 				{ keyword: /{{port}}/gi, replacement: PORT },
-	// 				{ keyword: /{{env}}/gi, replacement: env },
-	// 				{ keyword: /{{env_long}}/gi, replacement: getLongEnv(env) },
-	// 				{ keyword: /{{project}}|{{project_slug}}/gi, replacement: projectSlug },
-	// 				{ keyword: /{{namespace}}|{{ns}}/gi, replacement: nsName },
-	// 				{ keyword: /{{service}}|{{svc}}/gi, replacement: svcName },
-	// 				{ keyword: /{{ingress}}|{{ing}}/gi, replacement: ingName },
-	// 				{ keyword: /{{app}}|{{app_slug}}|{{app_name}}/gi, replacement: appName },
-	// 				{ keyword: /{{image}}|{{image_name}}/gi, replacement: IMAGE_NAME },
-	// 				{ keyword: /{{build}}|{{build_number}}/gi, replacement: BUILD_NUMBER },
-	// 				{ keyword: /{{base_path}}/gi, replacement: basePath },
-	// 				{ keyword: /{{base_url}}/gi, replacement: BASE_URL },
-	// 			])
-	// 		)
-	// 	);
-	// 	log(`Replaced ${replaceInFiles.length} path templates in deployment files`);
-	// } catch (e) {
-	// 	logWarn(`Can't replace template placeholders in deployment files.\n`, e);
-	// }
-
 	let defaultEnvs = dotenv.parse(fs.readFileSync(currentEnvFile));
 
 	// Lấy BASE_PATH hoặc NEXT_PUBLIC_BASE_PATH từ user config ENV:
@@ -382,13 +355,7 @@ export const generateDeployment = async (options: InputOptions) => {
 				doc.spec.template.spec.containers[0].env = containerEnvs;
 
 				// ! PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
-				doc.spec.template.spec.containers[0].ports = [{ containerPort: parseInt(defaultEnvs.PORT) || 3000 }];
-
-				if (options.port) {
-					doc.spec.template.spec.containers[0].ports = [
-						{ containerPort: typeof options.port == "string" ? parseInt(options.port) : options.port },
-					];
-				}
+				doc.spec.template.spec.containers[0].ports = [{ containerPort: appConfig.environment[env].port || 3000 }];
 
 				// clone deployment to prerelease:
 				prereleaseDeployDoc = _.cloneDeep(doc);

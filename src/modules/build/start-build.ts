@@ -6,6 +6,7 @@ import execa from "execa";
 import fs, { existsSync } from "fs";
 import humanizeDuration from "humanize-duration";
 import { ObjectId } from "mongodb";
+import PQueue from "p-queue";
 import path from "path";
 import { simpleGit } from "simple-git";
 
@@ -14,14 +15,15 @@ import { cliOpts, getCliConfig } from "@/config/config";
 import type { App, Build, Project, Release, User } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeployment } from "@/modules/deploy/fetch-deployment";
-import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger } from "@/plugins";
+import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, wait } from "@/plugins";
 import { getIO } from "@/server";
 import { BuildService, ContainerRegistryService, ProjectService, UserService } from "@/services";
 import AppService from "@/services/AppService";
 
 import { fetchApi } from "../api";
 import { verifySSH } from "../git";
-import { createReleaseFromBuild, queueKubeApply, sendMessage, updateBuildStatus } from "./index";
+import ClusterManager from "../k8s";
+import { createReleaseFromBuild, sendMessage, updateBuildStatus } from "./index";
 
 type IProcessCommand = {
 	[key: string]: ExecaChildProcess;
@@ -29,13 +31,21 @@ type IProcessCommand = {
 
 const processes: IProcessCommand = {};
 
+export let queue = new PQueue({ concurrency: 1 });
+
 /**
  * Stop the build process.
  */
 export const stopBuild = async (appSlug: string, buildSlug: string) => {
 	// console.log("processes :>> ", processes);
 	try {
+		// TODO: not working properly, not sure why...
 		processes[buildSlug].cancel();
+		await wait(1000);
+		processes[buildSlug].cancel();
+		await wait(1000);
+		processes[buildSlug].kill();
+		await wait(1000);
 		processes[buildSlug].kill("SIGTERM", { forceKillAfterTimeout: 2000 });
 		await updateBuildStatus(appSlug, buildSlug, "failed");
 		delete processes[buildSlug];
@@ -308,32 +318,6 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		return;
 	}
 
-	// docker push $IMAGE_NAME
-	// message = `Pushing the image to Google Container Registry...`;
-	// sendMessage({ SOCKET_ROOM, logger, message });
-	// const buildSpin = ora(message).start();
-	// try {
-	// 	stream = execa("docker", ["push", IMAGE_NAME], cliOpts);
-	// 	stream.stdio.forEach((_stdio) => {
-	// 		if (_stdio) {
-	// 			_stdio.on("data", (data) => {
-	// 				// send messages to CLI client:
-	// 				message = data.toString();
-	// 				log(message);
-	// 				sendMessage({ SOCKET_ROOM, logger, message });
-	// 			});
-	// 		}
-	// 	});
-	// 	await stream;
-	// 	message = `Pushed image to Google Container Registry successfully!`;
-	// 	sendMessage({ SOCKET_ROOM, logger, message });
-	// 	// buildSpin.stopAndPersist({ symbol: "✌️ ", text: message });
-	// } catch (e) {
-	// 	updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
-	// 	sendMessage({ SOCKET_ROOM, logger, message: e.toString() });
-	// 	// buildSpin.stop();
-	// 	return false;
-	// }
 	/**
 	 * ! If this is a Next.js project, upload ".next/static" to CDN:
 	 */
@@ -344,6 +328,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	// 	options.thirdAction = nextStaticDir;
 	// 	await execCDN(options);
 	// }
+
 	if (!shouldRollout) {
 		const buildDuration = dayjs().diff(startTime, "millisecond");
 		let buildFinishMsg = chalk.green(`🎉 FINISHED BUILDING AFTER ${humanizeDuration(buildDuration)} 🎉`);
@@ -352,13 +337,6 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 		return true;
 	}
-
-	/**
-	 * !!! IMPORTANT NOTE !!!
-	 * ! Sử dụng QUEUE để apply deployment lên từng cluster một,
-	 * ! không để tình trạng concurrent deploy làm deploy lên nhầm lẫn cluster
-	 */
-	await queueKubeApply(options);
 
 	// Insert this build record to Digirelease:
 	// let projectId;
@@ -376,6 +354,21 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	} catch (e) {
 		sendMessage({ SOCKET_ROOM, logger, message: `[ERROR] ${e.message}` });
 		// return;
+	}
+
+	// rolling out
+	/**
+	 * !!! IMPORTANT NOTE !!!
+	 * ! Sử dụng QUEUE để apply deployment lên từng cluster một,
+	 * ! không để tình trạng concurrent deploy làm deploy lên nhầm lẫn cluster
+	 */
+	// await queueKubeApply(options);
+	if (releaseId) {
+		try {
+			await queue.add(() => ClusterManager.rollout(releaseId));
+		} catch (e) {
+			log(`Queue job failed -> ClusterManager.rollout() -> ${e.message}:`, { options });
+		}
 	}
 
 	// Print success:

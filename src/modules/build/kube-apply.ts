@@ -12,8 +12,8 @@ import { ClusterService } from "@/services";
 
 import { fetchApi } from "../api";
 import { ClusterManager } from "../k8s";
-import { queue } from "./build";
 import { sendMessage } from "./send-log-message";
+import { queue } from "./start-build";
 import { updateBuildStatus } from "./update-build-status";
 
 /**

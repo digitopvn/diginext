@@ -141,10 +141,10 @@ export default class BaseService<E extends ObjectLiteral> {
 		// 		data.metadata[key] = clearUnicodeCharacters(value.toString());
 		// }
 
-		console.log(`Service > UPDATE :>>`, { filter }, { data });
+		// console.log(`Service > UPDATE :>>`, { filter }, { data });
 
 		const updateRes = await this.query.updateMany(filter, { $set: data });
-		console.log(`Service > UPDATE :>>`, { updateRes });
+		// console.log(`Service > UPDATE :>>`, { updateRes });
 		if (updateRes.matchedCount > 0) {
 			const results = await this.find(filter, options);
 			return results;

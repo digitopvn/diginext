@@ -1,9 +1,9 @@
 import { log } from "diginext-utils/dist/console/log";
-import PQueue from "p-queue";
 
+// import PQueue from "p-queue";
 import { getIO } from "@/server";
 
-export let queue = new PQueue({ concurrency: 1 });
+// export let queue = new PQueue({ concurrency: 1 });
 
 export async function testBuild() {
 	// let spawn = require("child_process").spawn;

@@ -10,7 +10,7 @@ import path from "path";
 
 import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
-import { CLI_CONFIG_DIR } from "@/config/const";
+import { CLI_CONFIG_DIR, CLI_DIR } from "@/config/const";
 import type { App, Cluster, ContainerRegistry, Release } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces/DeployEnvironment";
 import type { IResourceQuota } from "@/interfaces/IKube";
@@ -509,7 +509,7 @@ export class ClusterManager {
 
 		const { slug: releaseSlug, cluster, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData as Release;
 
-		log(`Rolling out the release "${releaseSlug}" (${id})...`);
+		log(`Preview the release: "${releaseSlug}" (${id})...`);
 
 		// authenticate cluster's provider & switch kubectl to that cluster:
 		try {
@@ -567,7 +567,7 @@ export class ClusterManager {
 	 */
 	static async rollout(id: string) {
 		// let releaseData: Release;
-		log(`ClusterManager > rollout > Release ID >>`, id);
+		// log(`ClusterManager > rollout > Release ID >>`, id);
 		// log(`ClusterManager > rollout > releaseApiPath >>`, releaseApiPath);
 
 		let releaseData, releaseSvc;
@@ -583,25 +583,25 @@ export class ClusterManager {
 		// log(`ClusterManager > rollout > data >>`, data);
 		// log(`ClusterManager > rollout > releaseData >>`, releaseData);
 
-		if (isEmpty(releaseData)) return { error: `Release not found.` };
+		if (isEmpty(releaseData)) return { error: `Release" ${id}" not found.` };
 
 		const {
 			slug: releaseSlug,
-			// diginext, // appConfig
-			projectSlug, // ! This is not PROJECT_ID on the cloud provider
-			// provider,
+			projectSlug, // ! This is not PROJECT_ID of Google Cloud provider
 			cluster,
-			// providerProjectId,
-			// projectSlug,
 			appSlug,
 			preYaml: prereleaseYaml,
 			deploymentYaml,
-			productionUrl: productionDomain,
+			endpoint: endpointUrl,
 			namespace,
 			env,
+			// diginext, // <--- appConfig
+			// provider, // <--- cloud provider
+			// providerProjectId, // <--- this is PROJECT_ID of Google Cloud project
+			// projectSlug,
 		} = releaseData as Release;
 
-		log(`Rolling out the release: "${releaseSlug}"`);
+		log(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
 
 		// authenticate cluster's provider & switch kubectl to that cluster:
 		try {
@@ -611,7 +611,7 @@ export class ClusterManager {
 			return { error: e.message };
 		}
 
-		const tmpDir = path.resolve(`storage/releases/${releaseSlug}`);
+		const tmpDir = path.resolve(CLI_DIR, `storage/releases/${releaseSlug}`);
 		if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
 		// ! NEW WAY -> LESS DOWNTIME WHEN ROLLING OUT NEW DEPLOYMENT !
@@ -624,6 +624,8 @@ export class ClusterManager {
 			log(`Namespace "${namespace}" not found, creating one...`);
 			await execCmd(`kubectl create namespace ${namespace}`);
 		}
+
+		// log(`1`, { isNsExisted });
 
 		/**
 		 * Check if there is "imagePullSecrets" within prod namespace, if not -> create one
@@ -643,48 +645,55 @@ export class ClusterManager {
 			}
 		}
 
+		// log(`2`, { isImagePullSecretExisted });
+
 		/**
-		 * 1. Create PRODUCTION SERVICE & INGRESS
+		 * 1. Create SERVICE & INGRESS
 		 */
 
-		let prodReplicas = 1,
-			envProd: { [key: string]: any } = {},
+		let replicas = 1,
+			envVars: { [key: string]: any } = {},
 			resourceQuota: IResourceQuota = {},
-			prodSvc,
-			prodSvcName,
-			prodIngress,
-			prodIngressName;
+			service,
+			svcName,
+			ingress,
+			ingressName,
+			deployment,
+			deploymentName;
 
 		yaml.loadAll(deploymentYaml, (doc) => {
 			if (doc && doc.kind == "Ingress") {
-				prodIngress = doc;
-				prodIngressName = doc.metadata.name;
+				ingress = doc;
+				ingressName = doc.metadata.name;
 			}
 
 			if (doc && doc.kind == "Service") {
-				prodSvc = doc;
-				prodSvcName = doc.metadata.name;
+				service = doc;
+				svcName = doc.metadata.name;
 			}
 
 			if (doc && doc.kind == "Deployment") {
-				prodReplicas = doc.spec.replicas;
-				envProd = doc.spec.template.spec.containers[0].env;
+				replicas = doc.spec.replicas;
+				envVars = doc.spec.template.spec.containers[0].env;
 				resourceQuota = doc.spec.template.spec.containers[0].resources;
+				deployment = doc;
+				deploymentName = doc.metadata.name;
 			}
 		});
+		// log(`3`, { appSlug, service, svcName, ingress, ingressName, deploymentName });
 
 		const mainAppName = appSlug;
-		const appName = appSlug;
 
-		// create new PROD service if it's not existed
-		const prodServices = await this.getAllServices(namespace, `phase=live,main-app=${appSlug}`);
-		if (!isEmpty(prodServices)) {
-			// The PROD service is existed
-			prodSvc = prodServices[0];
+		// create new service if it's not existed
+		const currentServices = await this.getAllServices(namespace, `phase=live,main-app=${mainAppName}`);
+
+		if (!isEmpty(currentServices)) {
+			// The service is existed
+			service = currentServices[0];
 		} else {
 			// Create new PROD service
-			const SVC_FILE = path.resolve(tmpDir, `service.prod.yaml`);
-			let SVC_CONTENT = objectToDeploymentYaml(prodSvc);
+			const SVC_FILE = path.resolve(tmpDir, `service.${env}.yaml`);
+			let SVC_CONTENT = objectToDeploymentYaml(service);
 			fs.writeFileSync(SVC_FILE, SVC_CONTENT, "utf8");
 
 			try {
@@ -694,15 +703,16 @@ export class ClusterManager {
 				log(e);
 			}
 		}
+		// log(`4`, { currentServices });
 
 		// create new PROD ingress if it's not existed
-		const getProdIngRes = await this.getIngress(prodIngressName, namespace);
-		if (!getProdIngRes.error) {
-			prodIngress = getProdIngRes;
+		const getIngressResult = await this.getIngress(ingressName, namespace);
+		if (!getIngressResult.error) {
+			ingress = getIngressResult;
 		} else {
 			// Create new ingress
-			const ING_FILE = path.resolve(tmpDir, `ingress.prod.yaml`);
-			let ING_CONTENT = objectToDeploymentYaml(prodIngress);
+			const ING_FILE = path.resolve(tmpDir, `ingress.${env}.yaml`);
+			let ING_CONTENT = objectToDeploymentYaml(ingress);
 			fs.writeFileSync(ING_FILE, ING_CONTENT, "utf8");
 
 			try {
@@ -712,115 +722,127 @@ export class ClusterManager {
 				log(e);
 			}
 		}
+		// log(`5`);
 
 		let prereleaseApp, prereleaseAppName;
-		yaml.loadAll(prereleaseYaml, function (doc) {
-			if (doc && doc.kind == "Service") prereleaseAppName = doc.spec.selector.app;
-			if (doc && doc.kind == "Deployment") prereleaseApp = doc;
-		});
+		if (env === "prod") {
+			yaml.loadAll(prereleaseYaml, function (doc) {
+				if (doc && doc.kind == "Service") prereleaseAppName = doc.spec.selector.app;
+				if (doc && doc.kind == "Deployment") prereleaseApp = doc;
+			});
 
-		if (!prereleaseAppName) return { error: `"prereleaseAppName" is invalid.` };
-		log(`prereleaseAppName =`, prereleaseAppName);
+			if (!prereleaseAppName) return { error: `"prereleaseAppName" is invalid.` };
+			log(`prereleaseAppName =`, prereleaseAppName);
+
+			deploymentName = prereleaseAppName;
+			deployment = prereleaseApp;
+		}
 
 		/**
 		 * 2. Delete prerelease app if it contains "prerelease" (OLD WAY)
 		 * and apply new app for production
 		 */
 
-		const oldDeploys = await this.getAllDeploys(namespace, "phase!=prerelease,main-app=" + appSlug);
+		const oldDeploys = await this.getAllDeploys(namespace, "phase!=prerelease,main-app=" + mainAppName);
 		log(
-			`oldDeploys >>`,
+			`Current app deployments (to be deleted later on) >>`,
 			oldDeploys.map((d) => d.metadata.name)
 		);
 
-		const createNewDeployment = async () => {
-			// assign new name without "prerelease"
-			// prereleaseAppName = `${appSlug}-${dayjs().format("YYYY-MM-DD-HH-mm-ss")}`;
-
-			prereleaseApp.metadata.name = prereleaseAppName;
+		const createNewDeployment = async (appDoc) => {
+			const newApp = appDoc;
+			// newApp.metadata.name = prereleaseAppName;
+			const newAppName = newApp.metadata.name;
 
 			// labels
-			prereleaseApp.metadata.labels.phase = "live"; // mark this app as "live" phase (not prerelease anymore)
-			prereleaseApp.metadata.labels.project = projectSlug;
-			prereleaseApp.metadata.labels.app = prereleaseAppName;
-			prereleaseApp.metadata.labels["main-app"] = appSlug;
+			newApp.metadata.labels.phase = "live"; // mark this app as "live" phase
+			newApp.metadata.labels.project = projectSlug;
+			newApp.metadata.labels.app = newAppName;
+			newApp.metadata.labels["main-app"] = mainAppName;
 
-			prereleaseApp.spec.template.metadata.labels.phase = "live";
-			prereleaseApp.spec.template.metadata.labels.app = prereleaseAppName;
-			prereleaseApp.spec.template.metadata.labels["main-app"] = appSlug;
+			newApp.spec.template.metadata.labels.phase = "live";
+			newApp.spec.template.metadata.labels.app = newAppName;
+			newApp.spec.template.metadata.labels["main-app"] = mainAppName;
 
 			// envs & quotas
-			prereleaseApp.spec.template.spec.containers[0].env = envProd;
-			prereleaseApp.spec.template.spec.containers[0].resources = resourceQuota;
+			newApp.spec.template.spec.containers[0].env = envVars;
+			newApp.spec.template.spec.containers[0].resources = resourceQuota;
 
 			// selector
-			prereleaseApp.spec.selector.matchLabels.app = prereleaseAppName;
+			newApp.spec.selector.matchLabels.app = newAppName;
 
-			const APP_FILE = path.resolve(tmpDir, `deploy.prod.yaml`);
-			let APP_CONTENT = objectToDeploymentYaml(prereleaseApp);
+			const APP_FILE = path.resolve(tmpDir, `deploy.${env === "prod" ? "prerelease" : env}.yaml`);
+			let APP_CONTENT = objectToDeploymentYaml(newApp);
 			fs.writeFileSync(APP_FILE, APP_CONTENT, "utf8");
 
 			await execCmd(`kubectl apply -f ${APP_FILE} -n ${namespace}`);
 
-			log(`Deployments are not existed -> Created new one: "deployment/${prereleaseAppName}" successfully.`);
+			log(`Created new deployment: "deployment/${newAppName}" successfully.`);
+
+			return newApp;
 		};
 
-		if (prereleaseAppName.indexOf("prerelease") > -1 || isEmpty(oldDeploys)) {
+		if (deploymentName.indexOf("prerelease") > -1 || isEmpty(oldDeploys)) {
 			// ! if "prerelease" was deployed in OLD WAY or there are no old deployments
-			await createNewDeployment();
+			await createNewDeployment(deployment);
 		} else {
 			// ! if "prerelease" was deployed in NEW WAY -> add label "phase" = "live"
 			try {
 				await execa(
 					`kubectl`,
-					["patch", "deploy", prereleaseAppName, "-n", namespace, "--patch", `'{ "metadata": { "labels": { "phase": "live" } } }'`],
+					["patch", "deploy", deploymentName, "-n", namespace, "--patch", `'{ "metadata": { "labels": { "phase": "live" } } }'`],
 					cliOpts
 				);
 			} catch (e) {
 				// log(`Patch "deployment" failed >>`, e.message);
-				await createNewDeployment();
+				await createNewDeployment(deployment);
 			}
 		}
 
 		/**
-		 * 3. Update ENV variables to PRODUCTION values
+		 * 3. [ONLY PROD DEPLOY] Update ENV variables to PRODUCTION values
 		 */
-		let envListStr = "";
-		envProd.map(({ name, value }) => {
-			// only replace the domain from PRERELEASE DOMAIN to PRODUCTION DOMAIN:
-			if (isString(value) && value.indexOf(productionDomain) > -1) {
-				envListStr += `${name}=${value} `;
-			}
-		});
-		log(`envListStr:`, envListStr);
+		if (env === "prod") {
+			let envListStr = "";
+			envVars.map(({ name, value }) => {
+				// only replace the domain from PRERELEASE DOMAIN to PRODUCTION DOMAIN:
+				if (isString(value) && value.indexOf(endpointUrl) > -1) {
+					envListStr += `${name}=${value} `;
+				}
+			});
+			log(`envListStr:`, envListStr);
 
-		if (envListStr != "") {
-			envListStr = trimEnd(" ");
-			let envCommand = `kubectl set env deployment/${prereleaseAppName} ${envListStr} -n ${namespace}`;
-			try {
-				await execa.command(envCommand, cliOpts);
-				log(`Patched ENV to "deployment/${prereleaseAppName}" successfully.`);
-			} catch (e) {
-				log(`Command failed: ${envCommand}`);
-				log(`Patch deployment's environment variables failed >>`, e.message);
+			if (envListStr != "") {
+				envListStr = trimEnd(" ");
+				let envCommand = `kubectl set env deployment/${prereleaseAppName} ${envListStr} -n ${namespace}`;
+				try {
+					await execa.command(envCommand, cliOpts);
+					log(`Patched ENV to "deployment/${prereleaseAppName}" successfully.`);
+				} catch (e) {
+					log(`Command failed: ${envCommand}`);
+					log(`Patch deployment's environment variables failed >>`, e.message);
+				}
 			}
 		}
 
 		// Wait until the deployment is ready!
 		const isNewDeploymentReady = async () => {
-			const newDeploys = await ClusterManager.getAllDeploys(namespace, "phase=live,app=" + prereleaseAppName);
+			const newDeploys = await ClusterManager.getAllDeploys(namespace, "phase=live,app=" + deploymentName);
 			// log(`newDeploys :>>`, newDeploys);
 
 			let isDeploymentReady = false;
 			newDeploys.forEach((deploy) => {
-				log(`deploy.status.replicas =`, deploy.status.replicas);
+				// log(`deploy.status.replicas =`, deploy.status.replicas);
 				if (deploy.status.readyReplicas >= 1) isDeploymentReady = true;
 			});
 
 			log(`[INTERVAL] Checking new deployment's status -> Is Ready:`, isDeploymentReady);
 			return isDeploymentReady;
 		};
-		await waitUntil(isNewDeploymentReady, 10, 5 * 60);
+		const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 5 * 60);
+		if (!isReallyReady) {
+			return { error: `New app deployment stucked or crashed.` };
+		}
 
 		/**
 		 * 4. Update "selector" of PRODUCTION SERVICE to select PRERELEASE APP NAME
@@ -828,12 +850,12 @@ export class ClusterManager {
 		try {
 			await execa(
 				`kubectl`,
-				[`patch`, "service", prodSvcName, "-n", namespace, "--patch", `'{ "spec": { "selector": { "app": "${prereleaseAppName}" } } }'`],
+				[`patch`, "service", svcName, "-n", namespace, "--patch", `'{ "spec": { "selector": { "app": "${deploymentName}" } } }'`],
 				cliOpts
 			);
-			log(`Patched "${prodSvcName}" service successfully >> new deployment:`, prereleaseAppName);
+			log(`Patched "${svcName}" service successfully >> new deployment:`, deploymentName);
 		} catch (e) {
-			log(`Patched "${prodSvcName}" service unsuccessful >>`, e.message);
+			log(`Patched "${svcName}" service unsuccessful >>`, e.message);
 			// return { error: e.message };
 		}
 
@@ -841,10 +863,10 @@ export class ClusterManager {
 		 * 5. Scale replicas to PRODUCTION config
 		 */
 		try {
-			await execa("kubectl", ["scale", `--replicas=${prodReplicas}`, `deploy`, prereleaseAppName, `-n`, namespace], cliOpts);
-			log(`Scaled "${prereleaseAppName}" replicas to ${prodReplicas} successfully`);
+			await execa("kubectl", ["scale", `--replicas=${replicas}`, `deploy`, deploymentName, `-n`, namespace], cliOpts);
+			log(`Scaled "${deploymentName}" replicas to ${replicas} successfully`);
 		} catch (e) {
-			log(`Scaled "${prereleaseAppName}" replicas to ${prodReplicas} unsuccessful >>`, e.message);
+			log(`Scaled "${deploymentName}" replicas to ${replicas} unsuccessful >>`, e.message);
 		}
 
 		/**
@@ -852,10 +874,10 @@ export class ClusterManager {
 		 */
 		if (resourceQuota && resourceQuota.limits && resourceQuota.requests) {
 			const resourcesStr = `--limits=cpu=${resourceQuota.limits.cpu},memory=${resourceQuota.limits.memory} --requests=cpu=${resourceQuota.requests.cpu},memory=${resourceQuota.requests.memory}`;
-			const resouceCommand = `kubectl set resources deployment/${prereleaseAppName} ${resourcesStr} -n ${namespace}`;
+			const resouceCommand = `kubectl set resources deployment/${deploymentName} ${resourcesStr} -n ${namespace}`;
 			try {
 				await execa.command(resouceCommand);
-				log(`Applied resource quotas to ${prereleaseAppName} successfully`);
+				log(`Applied resource quotas to ${deploymentName} successfully`);
 			} catch (e) {
 				log(`Command failed: ${resouceCommand}`);
 				log(`Applied "resources" quotas failed >>`, e.message);
@@ -863,7 +885,7 @@ export class ClusterManager {
 		}
 
 		// Print success:
-		const prodUrlInCLI = chalk.bold(`https://${productionDomain}`);
+		const prodUrlInCLI = chalk.bold(`https://${endpointUrl}`);
 		logSuccess(`🎉 PUBLISHED AT: ${prodUrlInCLI} 🎉`);
 
 		// Filter previous releases:
@@ -893,42 +915,52 @@ export class ClusterManager {
 		}
 
 		/**
-		 * 5. Clean up > Delete PRERELEASE Ingress, Service & old PRODUCTION APP
-		 *    -> free up server resource for optimization
+		 * 5. Clean up > Delete old deployments
 		 */
 
 		if (isArray(oldDeploys) && oldDeploys.length > 0) {
-			const waitTime = 5 * 60 * 1000;
+			const waitTime = 2 * 60 * 1000;
 			const oldDeploysCleanUpCommands = oldDeploys
-				.filter((d) => d.metadata.name != prereleaseAppName)
+				.filter((d) => d.metadata.name != deploymentName)
 				.map((deploy) => {
 					const deployName = deploy.metadata.name;
 					return execa.command(`kubectl delete deploy ${deployName} -n ${namespace}`, cliOpts);
 				});
 
-			setTimeout(
-				async function (_commands) {
-					try {
-						await Promise.all(_commands);
-					} catch (e) {
-						logWarn(e.toString());
-					}
-				},
-				waitTime,
-				oldDeploysCleanUpCommands
-			);
+			if (isServerMode) {
+				setTimeout(
+					async function (_commands) {
+						try {
+							await Promise.all(_commands);
+							log(`Deleted ${_commands.length} app deployments.`);
+						} catch (e) {
+							logWarn(e.toString());
+						}
+					},
+					waitTime,
+					oldDeploysCleanUpCommands
+				);
+			} else {
+				try {
+					await Promise.all(oldDeploysCleanUpCommands);
+					log(`Deleted ${oldDeploysCleanUpCommands.length} app deployments.`);
+				} catch (e) {
+					logWarn(e.toString());
+				}
+			}
 		}
 
 		/**
-		 * 6. AFTER 5 MINUTES > Clean up prerelease deployments (to optimize cluster resource quotas)
+		 * 6. [ONLY PROD DEPLOY] Clean up prerelease deployments (to optimize cluster resource quotas)
 		 */
-		this.cleanUp(releaseData)
-			.then(({ error }) => {
-				if (error) throw new Error(`Unable to clean up PRERELEASE of release id [${id}]`);
-				logSuccess(`Clean up PRERELEASE of release id [${id}] SUCCESSFULLY.`);
-			})
-			.catch((e) => logError(`Unable to clean up PRERELEASE of release id [${id}]:`, e));
-
+		if (env === "prod") {
+			this.cleanUp(releaseData)
+				.then(({ error }) => {
+					if (error) throw new Error(`Unable to clean up PRERELEASE of release id [${id}]`);
+					logSuccess(`Clean up PRERELEASE of release id [${id}] SUCCESSFULLY.`);
+				})
+				.catch((e) => logError(`Unable to clean up PRERELEASE of release id [${id}]:`, e));
+		}
 		return { error: null, data: releaseData };
 	}
 
@@ -966,6 +998,7 @@ export class ClusterManager {
 		const namespace = releaseData.namespace;
 		// const projectSlug = releaseData.projectSlug;
 		const appSlug = releaseData.appSlug;
+		const mainAppName = appSlug;
 
 		// Clean up Prerelease YAML
 		const cleanUpCommands = [];
@@ -981,10 +1014,10 @@ export class ClusterManager {
 		});
 
 		// Delete Prerelease SERVICE to optimize cluster
-		cleanUpCommands.push(execa.command(`kubectl delete service -n ${namespace} -l phase=prerelease,main-app=${appSlug}`, cliOpts));
+		cleanUpCommands.push(execa.command(`kubectl delete service -n ${namespace} -l phase=prerelease,main-app=${mainAppName}`, cliOpts));
 
 		// Clean up Prerelease Deployments
-		cleanUpCommands.push(execa.command(`kubectl delete deployment -n ${namespace} -l phase=prerelease,main-app=${appSlug}`, cliOpts));
+		cleanUpCommands.push(execa.command(`kubectl delete deployment -n ${namespace} -l phase=prerelease,main-app=${mainAppName}`, cliOpts));
 
 		// Clean up immediately & just ignore if any errors
 		cleanUpCommands.forEach(async (cmd) => {
