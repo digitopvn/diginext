@@ -1,3 +1,11 @@
+## [1.1.2](https://github.com/digitopvn/diginext/compare/v1.1.1...v1.1.2) (2023-01-31)
+
+
+### Bug Fixes
+
+* **cli login:** fix first time workspace login issue ([7da48a8](https://github.com/digitopvn/diginext/commit/7da48a8c921f37a3a6ff1134f1039554732cb8e4))
+* **workspace join:** fix issue of joining new workspace ([ba0bfb2](https://github.com/digitopvn/diginext/commit/ba0bfb224ebd283f7f446636984af6661e381a38))
+
 ## [1.1.1](https://github.com/digitopvn/diginext/compare/v1.1.0...v1.1.1) (2023-01-16)
 
 
