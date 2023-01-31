@@ -14,38 +14,16 @@
 
 ---
 
-## Installation
+## Getting Started
 
-### Docker Compose (Recommendation)
-
-For fastest installation, we recommend to use our `docker-compose.yaml`, you will need to fill in some environment variables:
-
-```bash
-...
-  # Add your credentials so you can use Google Sign-in to authenticate with your workspace later on:
-  - GOOGLE_CLIENT_ID=
-  - GOOGLE_CLIENT_SECRET=
-```
-
-Then spin up the build server with: `docker compose up`, it will be available at: `http://localhost:6969`
-
-### Manual installation
+### If you are a developer and you just want to deploy your app immediately)
 
 #### Required
 
 -   Install `Docker` on your computer: https://docs.docker.com/engine/install/ 
 -   Install `jq` on your computer: https://stedolan.github.io/jq/download/
 
-#### Optional (if you want to run your own build server)
-
--   Install `kubectl`: [https://docs.docker.com/engine/install/](https://kubernetes.io/docs/tasks/tools/)
--   Install `MongoDB`: https://www.mongodb.com/docs/manual/installation/
--   Install `gcloud`: https://cloud.google.com/sdk/docs/install#installation_instructions
--   Install `doctl`: https://docs.digitalocean.com/reference/doctl/
-
-## Getting Started
-
-### If you are a developer and you just want to deploy your app immediately
+#### Installation
 
 Install the package globally:
 
@@ -84,6 +62,26 @@ dx new
 ```
 
 ### If you want to run a build server for your own / team / organization
+
+#### Run your server with Docker Compose (Recommendation)
+
+For fastest installation, we recommend to use our `docker-compose.yaml`, you will need to fill in some environment variables:
+
+```bash
+...
+  # Add your credentials so you can use Google Sign-in to authenticate with your workspace later on:
+  - GOOGLE_CLIENT_ID=
+  - GOOGLE_CLIENT_SECRET=
+```
+
+Then spin up the build server with: `docker compose up`, it will be available at: `http://localhost:6969`
+
+#### Manual installation
+
+-   Install `kubectl`: [https://docs.docker.com/engine/install/](https://kubernetes.io/docs/tasks/tools/)
+-   Install `MongoDB`: https://www.mongodb.com/docs/manual/installation/
+-   Install `gcloud`: https://cloud.google.com/sdk/docs/install#installation_instructions
+-   Install `doctl`: https://docs.digitalocean.com/reference/doctl/
 
 Install the package globally:
 
