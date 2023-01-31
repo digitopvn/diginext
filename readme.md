@@ -16,23 +16,79 @@
 
 ## Installation
 
-### Prerequisites
+### Docker Compose (Recommendation)
 
-#### Requires
--   Install `jq` on your computer: https://stedolan.github.io/jq/download/
+For fastest installation, we recommend to use our `docker-compose.yaml`, you will need to fill in some environment variables:
+
+```bash
+...
+  # Add your credentials so you can use Google Sign-in to authenticate with your workspace later on:
+  - GOOGLE_CLIENT_ID=
+  - GOOGLE_CLIENT_SECRET=
+```
+
+Then spin up the build server with: `docker compose up`, it will be available at: `http://localhost:6969`
+
+### Manual installation
+
+#### Required
+
 -   Install `Docker` on your computer: https://docs.docker.com/engine/install/ 
--   Install `kubectl` on your computer: [https://docs.docker.com/engine/install/](https://kubernetes.io/docs/tasks/tools/)
+-   Install `jq` on your computer: https://stedolan.github.io/jq/download/
 
-#### Optional
+#### Optional (if you want to run your own build server)
+
+-   Install `kubectl`: [https://docs.docker.com/engine/install/](https://kubernetes.io/docs/tasks/tools/)
+-   Install `MongoDB`: https://www.mongodb.com/docs/manual/installation/
 -   Install `gcloud`: https://cloud.google.com/sdk/docs/install#installation_instructions
 -   Install `doctl`: https://docs.digitalocean.com/reference/doctl/
 
 ## Getting Started
 
-### With your own server
+### If you are a developer and you just want to deploy your app immediately
+
+Install the package globally:
 
 ```bash
-npm i diginext -g
+npm i @topgroup/diginext --location=global
+```
+
+Login to our build server:
+
+```bash
+dx login https://app.diginext.site
+cd /path/to/your/app
+dx init
+dx deploy
+```
+
+That's it!
+
+---
+
+Or login to your team's build server:
+
+```bash
+dx login https://buildserverdomain.example
+cd /path/to/your/app
+dx init
+dx deploy
+```
+
+---
+
+Start a new app from scratch:
+
+```bash
+dx new
+```
+
+### If you want to run a build server for your own / team / organization
+
+Install the package globally:
+
+```bash
+npm i @topgroup/diginext --location=global
 ```
 
 After installing, you can use the CLI command `dx` and spin up a build server with:
@@ -55,19 +111,6 @@ dx init
 # complete the form, then use the command below to deploy:
 dx deploy
 ```
-
-### With our build server
-
-Login to our build server:
-
-```bash
-dx login https://app.diginext.site
-cd /path/to/your/project
-dx init
-dx deploy
-```
-
-That's it!
 
 ---
 
