@@ -1,0 +1,52 @@
+version: "3"
+services:
+    redis:
+        image: "redis"
+        container_name: diginext-redis
+        restart: always
+        volumes:
+            - ./redis_data:/data
+    mongo:
+        ports:
+            - '27017:27017'
+        container_name: diginext-mongo
+        restart: always
+        logging:
+            options:
+                max-size: 1g
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=root
+            - MONGO_INITDB_ROOT_PASSWORD=diginextcli
+        image: mongo
+        volumes:
+            - ./storage/mongo:/data/db
+    diginext:
+        image: "digitop/diginext-cli"
+        container_name: diginext
+        working_dir: /usr/app/
+        ports:
+            - "6969:6969"
+        restart: unless-stopped
+        depends_on:
+        - redis
+        - mongo
+        privileged: true
+        volumes:
+            # HOST:CONTAINER
+            - "/var/run/docker.sock:/var/run/docker.sock"
+            - /mnt/build:/usr/app/deploy
+            - ./public:/usr/diginext-cli/public
+        environment:
+            - NODE_ENV=development
+            - PORT=6969
+            - BASE_URL=http://localhost:6969
+            - SOCKET_BASE_URL=ws://localhost:6969
+            - MONGODB_CONNECTION_STRING=mongodb://root:diginextcli@mongo:27017/digirelease?authSource=admin
+            - CLI_MODE=server
+            - JWT_SECRET=
+            - JWT_EXPIRE_TIME=48h
+            - PROJECT_DIR=/usr/app/deploy
+            - STORAGE=/var/app/storage
+            # Add your credentials
+            - GOOGLE_CLIENT_ID=
+            - GOOGLE_CLIENT_SECRET=

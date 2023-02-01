@@ -2,11 +2,12 @@ import { isBooleanString, isJSON } from "class-validator";
 import { iterate, toBool, toInt } from "diginext-utils/dist/object";
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Request, Response } from "express";
-import { isEmpty, isNull, isString, trim } from "lodash";
+import { isEmpty, isString, trim } from "lodash";
 import { ObjectId } from "mongodb";
 
 import { Config } from "@/app.config";
 import type { FindManyOptions, FindOptionsWhere, ObjectLiteral } from "@/libs/typeorm";
+import { ObjectID } from "@/libs/typeorm";
 import { isValidObjectId } from "@/plugins/mongodb";
 
 import type { IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
@@ -220,7 +221,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			} else if (key == "id" || key == "_id") {
 				_filter.id = isValidObjectId(val) ? new ObjectId(val) : val;
 			} else if (isValidObjectId(val)) {
-				_filter[key] = new ObjectId(val);
+				_filter[key] = new ObjectID(val);
 			} else if (isJSON(val)) {
 				_filter[key] = JSON.parse(val);
 			}
@@ -255,7 +256,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 		}
 
 		// * remove "id" in filter if undefined
-		if (isNull(_filter.id)) {
+		if (isEmpty(_filter.id)) {
 			delete _filter.id;
 		} else {
 			// * if it's existed, convert to mongo's style -> _id

@@ -78,6 +78,7 @@ keys
 deployment.yaml
 !templates/deployment.yaml
 docker-compose*.yaml
+!docker-compose.example.yaml
 !templates/docker-compose*.yaml
 01-cert-secret.yaml
 02-cert-issuer.yaml
