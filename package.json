@@ -76,9 +76,7 @@
 		"prerelease": "yarn semantic-release --no-ci && run-s pkg-version commit-build",
 		"pull-request": "open-cli https://github.com/digitopvn/diginext/compare/main...$(echo $(git rev-parse --abbrev-ref HEAD))",
 		"husky-hide": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall",
-		"husky-show": "npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
-		"prepare": "husky install",
-		"postinstall": "husky install"
+		"husky-show": "npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'"
 	},
 	"config": {
 		"commitizen": {
