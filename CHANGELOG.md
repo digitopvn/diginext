@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/digitopvn/diginext/compare/v1.1.2...v1.1.3) (2023-02-01)
+
+
+### Bug Fixes
+
+* **cli login:** select active workspace when login with cli ([66246c3](https://github.com/digitopvn/diginext/commit/66246c34b5365bdc9a00502b653017295d9a5c46))
+
 ## [1.1.2](https://github.com/digitopvn/diginext/compare/v1.1.1...v1.1.2) (2023-01-31)
 
 
