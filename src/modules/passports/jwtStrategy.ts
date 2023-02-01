@@ -95,7 +95,7 @@ export const jwtStrategy = new Strategy(
 		}
 
 		const userSvc = new UserService();
-		let user = await userSvc.findOne({ _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces"] });
+		let user = await userSvc.findOne({ _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces", "activeWorkspace"] });
 
 		if (user) return done(null, user);
 

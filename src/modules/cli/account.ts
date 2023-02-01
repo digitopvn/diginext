@@ -91,11 +91,11 @@ export const cliLogin = async (options: InputOptions) => {
 
 		currentWorkspace = newWorkspace as Workspace;
 
-		// update workspaceId to this user:
+		// update workspaceId to this user and set it as an active workspace:
 		const { data: updatedUser, messages: updateUserMsgs } = await fetchApi<User>({
-			url: `/api/v1/user?populate=workspaces`,
+			url: `/api/v1/user?populate=workspaces,activeWorkspace`,
 			method: "PATCH",
-			data: { "workspaces[]": currentWorkspace._id },
+			data: { "workspaces[]": currentWorkspace._id, activeWorkspace: currentWorkspace._id },
 		});
 
 		if (isEmpty(updatedUser)) {
@@ -105,42 +105,18 @@ export const cliLogin = async (options: InputOptions) => {
 
 		// TODO: seed default data: frameworks, git ?
 		currentUser = updatedUser[0];
-	} else if (workspaces.length > 1) {
-		// if this user is already has a few workspaces, let them select one:
-		const { workspace } = await inquirer.prompt([
-			{
-				type: "list",
-				name: "workspace",
-				message: "Select your workspace:",
-				choices: workspaces.map((w) => {
-					return { name: `${w.name} (${w.slug})`, value: w };
-				}),
-			},
-		]);
-
-		currentWorkspace = workspace;
 	} else {
-		// This user has only 1 workspace, select it !
-		currentWorkspace = workspaces[0];
+		currentWorkspace = activeWorkspace;
 	}
 
 	if (!currentUser.token) currentUser.token = {};
 	currentUser.token.access_token = access_token;
 
 	// save this user & workspace to CLI config
-	saveCliConfig({ currentWorkspace });
+	saveCliConfig({ currentUser, currentWorkspace });
 
-	// set active workspace:
-	const { data: updatedUser } = await fetchApi<User>({
-		url: `/api/v1/user?id=${currentUser._id}&populate=workspaces`,
-		method: "PATCH",
-		data: { activeWorkspace: currentWorkspace._id },
-	});
 	// console.log("updatedUser :>> ", updatedUser[0]);
-
-	if (updatedUser) currentUser = updatedUser[0] as User;
-
-	saveCliConfig({ currentUser });
+	// if (updatedUser) currentUser = updatedUser[0] as User;
 
 	logSuccess(`Hello, ${currentUser.name}! You're logged into "${currentWorkspace.name}" workspace.`);
 
