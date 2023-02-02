@@ -16,7 +16,7 @@ export class Logger {
 		this.name = name;
 		this.fileName = name + ".txt";
 
-		this.dir = path.resolve(CLI_DIR, "public/logs");
+		this.dir = process.env.LOG_DIR ?? path.resolve(CLI_DIR, "public/logs");
 		if (!fs.existsSync(this.dir)) fs.mkdirSync(this.dir, { recursive: true });
 
 		this.filePath = path.resolve(this.dir, this.fileName);
