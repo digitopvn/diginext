@@ -7,7 +7,6 @@ import { logInfo, logSuccess } from "../plugins/utils";
 export async function listImages() {
 	const logger = new Logger(`server-images-${makeDaySlug()}`);
 
-	// const { stdout } = await execa("docker", ["images", "--format", `"{{json . }}"`, "|", "jq", "--slurp"]);
 	const { stdout } = await execa.command(`docker images`);
 
 	logInfo(`---> SERVER LIST IMAGES`);
