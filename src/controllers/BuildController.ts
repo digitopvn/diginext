@@ -25,8 +25,9 @@ export default class BuildController extends BaseController<BuildService> {
 
 		if (!slug) return ApiResponse.failed(res, "slug is required.");
 
-		const logPath = path.resolve(CLI_DIR, `public/logs/${slug}.txt`);
-		const logs = fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf8") : "No data.";
+		const LOG_DIR = process.env.LOG_DIR ? path.resolve(process.env.LOG_DIR, `${slug}.txt`) : path.resolve(CLI_DIR, `public/logs/${slug}.txt`);
+		// const logPath = path.resolve(CLI_DIR, `public/logs/${slug}.txt`);
+		const logs = fs.existsSync(LOG_DIR) ? fs.readFileSync(LOG_DIR, "utf8") : "No data.";
 
 		return ApiResponse.succeed(res, logs);
 	}

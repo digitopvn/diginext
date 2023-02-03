@@ -50,11 +50,14 @@ export default class UserService extends BaseService<User> {
 
 		console.log("user.workspaces :>> ", user.workspaces);
 		if (!isUserJoinedThisWorkspace) {
-			if (user.workspaces) {
-				updatedUser = await this.update({ _id: userId }, { $push: { workspaces: wsId } });
-			} else {
-				updatedUser = await this.update({ _id: userId }, { workspaces: [wsId] });
-			}
+			const workspaces = (user.workspaces as ObjectID[]) || [];
+			workspaces.push(wsId);
+			updatedUser = await this.update({ _id: userId }, { workspaces });
+			// if (user.workspaces) {
+			// 	updatedUser = await this.update({ _id: userId }, { $push: { workspaces: wsId } });
+			// } else {
+			// 	updatedUser = await this.update({ _id: userId }, { workspaces: [wsId] });
+			// }
 		}
 		console.log("[1] updatedUser :>> ", updatedUser[0]);
 

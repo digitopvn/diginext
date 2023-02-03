@@ -7,7 +7,6 @@ import { ObjectId } from "mongodb";
 
 import { Config } from "@/app.config";
 import type { FindManyOptions, FindOptionsWhere, ObjectLiteral } from "@/libs/typeorm";
-import { ObjectID } from "@/libs/typeorm";
 import { isValidObjectId } from "@/plugins/mongodb";
 
 import type { IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
@@ -219,9 +218,9 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			if (val == null || val == undefined) {
 				_filter[key] = null;
 			} else if (key == "id" || key == "_id") {
-				_filter.id = isValidObjectId(val) ? new ObjectId(val) : val;
+				_filter._id = isValidObjectId(val) ? new ObjectId(val) : val;
 			} else if (isValidObjectId(val)) {
-				_filter[key] = new ObjectID(val);
+				_filter[key] = new ObjectId(val);
 			} else if (isJSON(val)) {
 				_filter[key] = JSON.parse(val);
 			}

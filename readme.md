@@ -61,9 +61,13 @@ Start a new app from scratch:
 dx new
 ```
 
+## Build server
+
+-   **Diginext** requires a MongoDB database to run the build server.
+
 ### If you want to run a build server for your own / team / organization
 
-#### Run your server with Docker Compose (Recommendation)
+#### Run your server with Docker Compose (Recommended)
 
 For fastest installation, we recommend to use our `docker-compose.yaml`, you will need to fill in some environment variables:
 
@@ -75,6 +79,12 @@ For fastest installation, we recommend to use our `docker-compose.yaml`, you wil
 ```
 
 Then spin up the build server with: `docker compose up`, it will be available at: `http://localhost:6969`
+
+Access the admin (`http://localhost:6969`) to configure your new workspace, add some cluster access information.
+
+On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx deploy`.
+
+Read the [docs here](docs/docs.md).
 
 #### Manual installation
 
@@ -100,7 +110,9 @@ The build server will be available at: http://localhost:6969
 
 Access the admin to configure your new workspace, add some cluster access information.
 
-To deploy your project:
+On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx deploy`.
+
+For example, to deploy your project:
 
 ```bash
 cd /path/to/your/project
@@ -109,6 +121,8 @@ dx init
 # complete the form, then use the command below to deploy:
 dx deploy
 ```
+
+Read the [docs here](docs/docs.md).
 
 ---
 
@@ -132,9 +146,6 @@ We welcome all contributions. Please read our [CONTRIBUTING.md](CONTRIBUTING.md)
 
 If you are a collaborator, please follow our [Pull Request principle](https://github.com/digitopvn/diginext/wiki/PR-principle) to create a Pull Request with [collaborator template](https://github.com/digitopvn/diginext/compare?expand=1&template=collaborator.md).
 
-## Build server
-
--   **Diginext** requires a MongoDB database to run the build server.
 
 ## Community and Support:
 

@@ -703,6 +703,14 @@ export class ClusterManager {
 				log(e);
 			}
 		}
+		// Apply "BASE_PATH" when neccessary
+		if (typeof envVars.BASE_PATH !== "undefined") {
+			const basePathResult = await execCmd(
+				`kubectl -n ${namespace} patch ingress ${ingressName} --type='json' -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"${envVars.BASE_PATH}"}]'`
+			);
+			console.log("[INGRESS] basePathResult :>> ", basePathResult);
+		}
+
 		// log(`4`, { currentServices });
 
 		// create new PROD ingress if it's not existed
