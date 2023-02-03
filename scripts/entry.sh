@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# CLI_MODE=client di git ssh register --provider bitbucket
+# CLI_MODE=client dx git ssh register --provider bitbucket
 
 # /usr/diginext-cli/shells/auth.sh
 

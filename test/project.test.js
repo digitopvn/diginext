@@ -26,7 +26,7 @@ describe("Create new project", function () {
 	});
 
 	it("with 'Diginext' framework & create Bitbucket repository", async function () {
-		const newProjectCommand = `di new --force --install=false --git=false --fw=${newProject.framework} --namespace=\"${projectSlug}\" --projectName=\"${newProject.name}\" --projectSlug=\"${projectSlug}\" --targetDir=${targetDir}`;
+		const newProjectCommand = `dx new --force --install=false --git=false --fw=${newProject.framework} --namespace=\"${projectSlug}\" --projectName=\"${newProject.name}\" --projectSlug=\"${projectSlug}\" --targetDir=${targetDir}`;
 		await execCmd(newProjectCommand);
 
 		const dirExisted = fs.existsSync(targetDir);

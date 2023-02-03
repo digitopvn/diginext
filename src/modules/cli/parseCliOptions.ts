@@ -15,7 +15,7 @@ const cliHeader =
 	chalk.yellow("\ndi") +
 	" --help\n\n---" +
 	chalk.gray("\n\n  # also type -h or --help to see the command usage:") +
-	chalk.yellow("\ndi [command]") +
+	chalk.yellow("\ndx [command]") +
 	" --help";
 
 const argvOptions = {

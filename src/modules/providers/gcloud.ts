@@ -195,16 +195,16 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	if (shouldCreateSecretInNamespace && namespace == "default") {
 		logWarn(
 			`You are creating "imagePullSecrets" in "default" namespace, if you want to create in other namespaces:`,
-			chalk.cyan("\n  di registry allow --create --provider=<REGISTRY_PROVIDER> --namespace=") + "<CLUSTER_NAMESPACE_NAME>",
+			chalk.cyan("\n  dx registry allow --create --provider=<REGISTRY_PROVIDER> --namespace=") + "<CLUSTER_NAMESPACE_NAME>",
 			chalk.gray(`\n  # Examples / alias:`),
-			"\n  di registry allow --create --provider=gcloud --namespace=my-website-namespace",
-			"\n  di registry allow --create --gcloud create -n my-website-namespace"
+			"\n  dx registry allow --create --provider=gcloud --namespace=my-website-namespace",
+			"\n  dx registry allow --create --gcloud create -n my-website-namespace"
 		);
 	}
 
 	// const namespace = options.namespace ?? "default";
 
-	// return logError(`No container registries found. \nPlease create new one with: "di registry connect --provider=gcloud [--host=asia.gcr.io]"`);
+	// return logError(`No container registries found. \nPlease create new one with: "dx registry connect --provider=gcloud [--host=asia.gcr.io]"`);
 
 	let secretValue;
 	const secretName = `${providerShortName}-docker-registry-key`;

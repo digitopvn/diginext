@@ -34,10 +34,10 @@ export async function fetchApi<T = any>(options: AxiosRequestConfig & { access_t
 	const { buildServerUrl = process.env.BASE_URL, currentUser, access_token: cachedAccessToken } = getCliConfig();
 
 	if (!buildServerUrl) {
-		logError(`"BUILD SERVER URL" not found. Please login with: "di login <BUILD_SERVER_URL>"`);
+		logError(`"BUILD SERVER URL" not found. Please login with: "dx login <BUILD_SERVER_URL>"`);
 		return {
 			status: 0,
-			messages: [`"BUILD SERVER URL" not found. Please login with: "di login <BUILD_SERVER_URL>"`],
+			messages: [`"BUILD SERVER URL" not found. Please login with: "dx login <BUILD_SERVER_URL>"`],
 			data: null,
 		} as FetchApiResponse<T>;
 	}

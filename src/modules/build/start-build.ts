@@ -380,7 +380,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		const { buildServerUrl } = getCliConfig();
 		msg += chalk.bold(chalk.yellow(`\n -> Preview at: ${prereleaseDeploymentData.endpoint}`));
 		msg += chalk.bold(chalk.yellow(`\n -> Review & publish at: ${buildServerUrl}/release/${projectSlug}`));
-		msg += chalk.bold(chalk.yellow(`\n -> Roll out with CLI command:`), `$ di rollout ${releaseId}`);
+		msg += chalk.bold(chalk.yellow(`\n -> Roll out with CLI command:`), `$ dx rollout ${releaseId}`);
 	} else {
 		msg += chalk.bold(chalk.yellow(`\n -> Preview at: ${deploymentData.endpoint}`));
 	}
