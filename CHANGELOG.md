@@ -1,3 +1,15 @@
+## [1.1.4](https://github.com/digitopvn/diginext/compare/v1.1.3...v1.1.4) (2023-02-03)
+
+
+### Bug Fixes
+
+* **admin:** fixed login redirect ([f94bd67](https://github.com/digitopvn/diginext/commit/f94bd67ed1c5455a01c765521905c3d852c5c9dc))
+* **base controller:** fix object id type ([bb5f407](https://github.com/digitopvn/diginext/commit/bb5f4077336e1377506adc78c3469fb5cc003592))
+* **dashboard:** fixed empty content of log detail ([c28a8d6](https://github.com/digitopvn/diginext/commit/c28a8d617fd486522f7195f128e5fec5bea5ecf0))
+* **logs:** correct directory path of logs ([c3a8446](https://github.com/digitopvn/diginext/commit/c3a84464785834230e0ab7baaaa11cd61c1adfe4))
+* **logs:** correct log file path ([7b78729](https://github.com/digitopvn/diginext/commit/7b78729d86eb013f4f0d15812ae1c80ef0839c0c))
+* **logs:** fix correct logs directory ([3f1a2d3](https://github.com/digitopvn/diginext/commit/3f1a2d3b5b8f5a764c5d2a71d63c993766740fef))
+
 ## [1.1.3](https://github.com/digitopvn/diginext/compare/v1.1.2...v1.1.3) (2023-02-01)
 
 
