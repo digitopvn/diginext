@@ -261,9 +261,7 @@ export class ClusterManager {
 			app = apps[0];
 		}
 
-		if (!app) {
-			throw new Error(`App "${appSlug}" not found.`);
-		}
+		if (!app) throw new Error(`App "${appSlug}" not found.`);
 
 		const deployEnvironment = (isJSON(app.environment[env]) ? JSON.parse(app.environment[env] as string) : {}) as DeployEnvironment;
 		if (isEmpty(deployEnvironment)) {
@@ -281,9 +279,7 @@ export class ClusterManager {
 			registry = registries[0];
 		}
 
-		if (!registry) {
-			throw new Error(`Container Registry (${regSlug}) of "${appSlug}" app not found.`);
-		}
+		if (!registry) throw new Error(`Container Registry (${regSlug}) of "${appSlug}" app not found.`);
 
 		try {
 			let imagePullSecret;
@@ -540,11 +536,13 @@ export class ClusterManager {
 			const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
 			if (imagePullSecret) isImagePullSecretExisted = true;
 		}
+
+		log(`isImagePullSecretExisted :>>`, isImagePullSecretExisted);
 		if (!isImagePullSecretExisted) {
 			try {
 				await this.createImagePullSecretsInNamespace(appSlug, env, namespace);
 			} catch (e) {
-				throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
+				throw new Error(e.message);
 				return;
 			}
 		}

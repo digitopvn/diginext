@@ -200,11 +200,6 @@ function initialize() {
 		app.use("*", route404_handler);
 
 		/**
-		 * LIST ENDPOINTS
-		 */
-		// console.log("listEndpoints >>", listEndpoints(app));
-
-		/**
 		 * SERVER HANDLING
 		 */
 		function onConnect() {

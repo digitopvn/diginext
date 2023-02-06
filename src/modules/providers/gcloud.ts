@@ -239,6 +239,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 				"imagePullingSecret[name]": secretName,
 				"imagePullingSecret[value]": secretValue,
 			};
+
 		if (isServerMode) {
 			updatedRegistry = await registrySvc.update({ provider: providerShortName }, updateData);
 		} else {
@@ -250,12 +251,13 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			if (!status) return;
 			updatedRegistry = data[0];
 			// const [updatedRegistry] = data as ContainerRegistry[];
+
+			// save registry to local config:
+			saveCliConfig({ currentRegistry: updatedRegistry });
 		}
 
-		// save registry to local config:
-		saveCliConfig({ currentRegistry: updatedRegistry });
-
 		// console.log(JSON.stringify(updatedRegistry.imagePullingSecret, null, 2));
+		log(`gcloud.createImagePullingSecret() :>>`, { updatedRegistry });
 
 		return updatedRegistry.imagePullingSecret;
 	} catch (e) {
