@@ -105,7 +105,7 @@ function initialize() {
 		/**
 		 * Websocket / SOCKET.IO
 		 */
-		io = new SocketServer(server);
+		io = new SocketServer(server, { transports: ["websocket"] });
 		io.on("connection", (socket) => {
 			console.log("a user connected");
 

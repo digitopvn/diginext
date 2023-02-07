@@ -22,6 +22,12 @@ export class Logger {
 		this.filePath = path.resolve(this.dir, this.fileName);
 	}
 
+	static getLogs(slug: string) {
+		const dir = process.env.LOG_DIR ?? path.resolve(CLI_DIR, "public/logs");
+		const filePath = path.resolve(dir, `${slug}.txt`);
+		return fs.readFileSync(filePath, "utf8");
+	}
+
 	read() {
 		if (fs.existsSync(this.filePath)) {
 			return fs.readFileSync(this.filePath, "utf8");

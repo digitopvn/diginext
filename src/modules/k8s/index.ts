@@ -321,7 +321,9 @@ export class ClusterManager {
 				message = `Created "imagePullSecret" named "${imagePullSecret.name}" successfully.`;
 				log(message);
 			} else {
-				throw new Error(`Something is wrong. Create "imagePullSecrets" failed.`);
+				const errMsg = `Something is wrong. Create "imagePullSecrets" failed.`;
+				logError(errMsg);
+				throw new Error(errMsg);
 			}
 
 			return imagePullSecret;

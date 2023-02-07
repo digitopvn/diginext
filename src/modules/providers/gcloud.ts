@@ -241,7 +241,8 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			};
 
 		if (isServerMode) {
-			updatedRegistry = await registrySvc.update({ provider: providerShortName }, updateData);
+			const updatedRegistries = await registrySvc.update({ provider: providerShortName }, updateData);
+			if (updatedRegistries && updatedRegistries.length > 0) updatedRegistry = updatedRegistries[0];
 		} else {
 			const { status, data } = await fetchApi<ContainerRegistry>({
 				url: `/api/v1/registry?provider=${providerShortName}`,
@@ -250,7 +251,6 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			});
 			if (!status) return;
 			updatedRegistry = data[0];
-			// const [updatedRegistry] = data as ContainerRegistry[];
 
 			// save registry to local config:
 			saveCliConfig({ currentRegistry: updatedRegistry });

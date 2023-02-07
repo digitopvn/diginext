@@ -42,6 +42,9 @@ export default class Build extends Base<Build> {
 	@Column({ type: "string" })
 	appSlug?: string;
 
+	@Column({ type: "string" })
+	logs?: string;
+
 	/**
 	 * ID of the app
 	 *

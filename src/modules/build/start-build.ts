@@ -23,7 +23,7 @@ import AppService from "@/services/AppService";
 import { fetchApi } from "../api";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
-import { createReleaseFromBuild, sendMessage, updateBuildStatus } from "./index";
+import { createReleaseFromBuild, saveLogs, sendMessage, updateBuildStatus } from "./index";
 
 type IProcessCommand = {
 	[key: string]: ExecaChildProcess;
@@ -311,10 +311,17 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		updateData[`environment.${env}`] = appConfig.environment[env];
 		const updatedApp = await appSvc.update({ id: app._id }, updateData);
 		log(`Updated deploy environment (${env}) to "${appSlug}" app:`, updatedApp);
+
+		// save logs to database
+		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
 	} catch (e) {
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
 		sendMessage({ SOCKET_ROOM, logger, message: e.toString() });
 		logError(e);
+
+		// save logs to database
+		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
+
 		return;
 	}
 
