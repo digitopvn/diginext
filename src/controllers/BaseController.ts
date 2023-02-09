@@ -207,6 +207,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 		if (skip) options.skip = skip;
 
 		this.options = options;
+		// console.log(`this.options :>>`, this.options);
 
 		// filter
 		const _filter: { [key: string]: any } = { id, ...filter };
