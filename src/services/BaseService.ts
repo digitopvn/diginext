@@ -67,7 +67,7 @@ export default class BaseService<E extends ObjectLiteral> {
 		const findOptions: MongoFindManyOptions<ObjectLiteral> = {};
 
 		// console.log({ filter });
-		console.log(`BaseService.find :>>`, { options });
+		console.log(`BaseService.find :>>`, { filter, options });
 
 		if (filter) findOptions.where = filter;
 		if (options?.order) findOptions.order = options.order;

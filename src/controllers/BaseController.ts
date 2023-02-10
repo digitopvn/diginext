@@ -220,15 +220,12 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 				_filter[key] = null;
 			} else if (key == "id" || key == "_id") {
 				_filter._id = isValidObjectId(val) ? new ObjectId(val) : val;
+				delete _filter.id;
 			} else if (isValidObjectId(val)) {
 				_filter[key] = new ObjectId(val);
 			} else if (isJSON(val)) {
 				_filter[key] = JSON.parse(val);
-			}
-			// else if (isBooleanString(val)) {
-			// 	_filter[key] = toBool(val);
-			// }
-			else {
+			} else {
 				_filter[key] = val;
 			}
 		});
@@ -256,13 +253,13 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 		}
 
 		// * remove "id" in filter if undefined
-		if (isEmpty(_filter.id)) {
-			delete _filter.id;
-		} else {
-			// * if it's existed, convert to mongo's style -> _id
-			_filter._id = _filter.id;
-			delete _filter.id;
-		}
+		// if (isEmpty(_filter.id)) {
+		// 	delete _filter.id;
+		// } else {
+		// 	// * if it's existed, convert to mongo's style -> _id
+		// 	_filter._id = _filter.id;
+		// 	delete _filter.id;
+		// }
 
 		// save to local storage of response
 		this.filter = _filter as IQueryOptions & FindManyOptions<any>;
