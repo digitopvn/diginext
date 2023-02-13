@@ -1,3 +1,18 @@
+## [1.1.5](https://github.com/digitopvn/diginext/compare/v1.1.4...v1.1.5) (2023-02-13)
+
+
+### Bug Fixes
+
+* **base controller:** mongodb convert id to _id ([dfa4c98](https://github.com/digitopvn/diginext/commit/dfa4c9883fe089e36dbbe2077b3cc1bc66e88368))
+* **build status:** fixed update latest build to project and app ([2e7de51](https://github.com/digitopvn/diginext/commit/2e7de51316c05995a00c69a0092f847afbb4dcb1))
+* **cli:** update di command to dx command ([283fc86](https://github.com/digitopvn/diginext/commit/283fc86dcdb73dab4d472009f98532d5df1724b3))
+* **deploy:** fix build log url when request deploy ([53ceaf2](https://github.com/digitopvn/diginext/commit/53ceaf2e6aad556dda0aed7603a187d56f40a402))
+* **deploy:** fix generate ssl error when domain is longer than 64 characters ([bd1ea58](https://github.com/digitopvn/diginext/commit/bd1ea58b0cd62697fecea61022ec6e2e0cd874f6))
+* **deploy:** fixed deploy issue on new app ([072b073](https://github.com/digitopvn/diginext/commit/072b0733cd2cf45b7dbd46336f5b7700d329b63f))
+* **init app:** fixed issue of get git remote url when initializing app ([85c929a](https://github.com/digitopvn/diginext/commit/85c929a6c67f4010cbbe9d6987c85c8fee6647c5))
+* **logs:** add logs to base service ([850df37](https://github.com/digitopvn/diginext/commit/850df37675af8091611503fdf650da2255ba46ef))
+* **typeorm:** fix typeorm query with skip and take to do pagination ([7efadb5](https://github.com/digitopvn/diginext/commit/7efadb5c7f5f118301da19a0fb584a5c48a6c8df))
+
 ## [1.1.4](https://github.com/digitopvn/diginext/compare/v1.1.3...v1.1.4) (2023-02-03)
 
 
