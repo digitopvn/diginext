@@ -120,7 +120,7 @@ export async function requestDeploy(options: InputOptions) {
 		return;
 	}
 
-	log(`-> Check build status here: ${buildServerUrl}/build/logs?slug=${SOCKET_ROOM} `);
+	log(`-> Check build status here: ${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM} `);
 	if (env == "prod") log(chalk.red(`⚠️⚠️⚠️ REMEMBER TO CREATE PULL REQUEST TO "master" (or "main") BRANCH ⚠️⚠️⚠️`));
 
 	if (options.isTail) {
