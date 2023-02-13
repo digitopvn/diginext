@@ -9,6 +9,7 @@ import session from "express-session";
 import * as fs from "fs";
 import type { Server } from "http";
 import { createServer } from "http";
+import cronjob from "node-cron";
 import passport from "passport";
 import path from "path";
 import { Server as SocketServer } from "socket.io";
@@ -18,6 +19,7 @@ import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
 import { Config } from "./app.config";
+import { cleanUp } from "./build/system";
 import { CLI_CONFIG_DIR } from "./config/const";
 /**
  * CUSTOM MIDDLEWARES
@@ -33,7 +35,6 @@ import { connect } from "./modules/registry";
 import { logInfo } from "./plugins";
 import main from "./routes/main";
 import { CloudProviderService, ClusterService, ContainerRegistryService } from "./services";
-
 /**
  * ENVIRONMENT CONFIG
  */
@@ -90,6 +91,14 @@ async function startupScripts() {
 			);
 		});
 	}
+
+	// cronjobs
+	cronjob.schedule("0 0 */3 * *", () => {
+		/**
+		 * Schedule a clean up task every 3 days at 00:00 AM
+		 */
+		cleanUp();
+	});
 }
 
 function initialize() {
