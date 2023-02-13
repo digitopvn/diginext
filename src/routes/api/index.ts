@@ -3,11 +3,10 @@ import localizedFormat from "dayjs/plugin/localizedFormat";
 import { log, logWarn } from "diginext-utils/dist/console/log";
 import { Response } from "diginext-utils/dist/response";
 import express from "express";
-import cronjob from "node-cron";
 
 import pkg from "@/../package.json";
 import { Config } from "@/app.config";
-import { cleanUp, listImages } from "@/build/system";
+import { listImages } from "@/build/system";
 import { sendMessage } from "@/modules/build";
 import { testBuild } from "@/modules/build/build";
 import { startBuild } from "@/modules/build/start-build";
@@ -100,11 +99,6 @@ if (CLI_MODE == "server") {
 
 		res.status(200).json({ status: 1 });
 	});
-
-	/**
-	 * Schedule a clean up task every 3 days at 00:00 AM
-	 */
-	cronjob.schedule("0 0 */3 * *", () => cleanUp());
 }
 
 export default router;
