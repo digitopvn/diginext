@@ -22,7 +22,7 @@ export const authenticate = async (options?: InputOptions) => {
 	const kubeConfigPath = options.filePath;
 
 	if (!fs.existsSync(kubeConfigPath)) {
-		logError(`KUBECONFIG file not found. Try: "di custom auth -f /path/to/your-kube-config.yaml"`);
+		logError(`KUBECONFIG file not found. Try: "dx custom auth -f /path/to/your-kube-config.yaml"`);
 		return;
 	}
 

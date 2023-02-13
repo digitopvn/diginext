@@ -1,9 +1,10 @@
-import { logError } from "diginext-utils/dist/console/log";
+import { log, logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
-import generatePassword from "diginext-utils/dist/string/generatePassword";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import type { Request } from "express";
 
+import type { User } from "@/entities";
 import type { EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeorm";
 import type { MongoFindManyOptions } from "@/libs/typeorm/find-options/mongodb/MongoFindManyOptions";
 import { manager, query } from "@/modules/AppDatabase";
@@ -37,7 +38,7 @@ export default class BaseService<E extends ObjectLiteral> {
 			if (!data.slug && data.name) {
 				let slug = makeSlug(data.name);
 				const count = await this.count({ slug });
-				if (count > 0) slug = makeSlug(data.name) + "-" + generatePassword(4, false).toLowerCase();
+				if (count > 0) slug = makeSlug(data.name) + "-" + makeDaySlug();
 
 				data.slug = slug;
 			}
@@ -66,8 +67,6 @@ export default class BaseService<E extends ObjectLiteral> {
 		// log("pagination >>", pagination);
 		const findOptions: MongoFindManyOptions<ObjectLiteral> = {};
 
-		// console.log({ filter });
-
 		if (filter) findOptions.where = filter;
 		if (options?.order) findOptions.order = options.order;
 		if (options?.select && options.select.length > 0) findOptions.select = options.select;
@@ -84,6 +83,12 @@ export default class BaseService<E extends ObjectLiteral> {
 
 		const [results, totalItems] = await Promise.all([this.query.find(findOptions), this.query.count(filter)]);
 		// log(`results >>`, results);
+
+		// LOG this for further investigation:
+		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+		const author = `${user.name} (ID: ${user._id})`;
+		log(author, `- BaseService.find :>>`, { filter, options });
+		// console.log("BaseService.find > this.req :>> ", this.req);
 
 		if (pagination) {
 			pagination.total_items = totalItems || results.length;
@@ -141,10 +146,10 @@ export default class BaseService<E extends ObjectLiteral> {
 		// 		data.metadata[key] = clearUnicodeCharacters(value.toString());
 		// }
 
-		console.log(`Service > UPDATE :>>`, { filter }, { data });
+		// console.log(`Service > UPDATE :>>`, { filter }, { data });
 
 		const updateRes = await this.query.updateMany(filter, { $set: data });
-		// console.log(`Service > UPDATE :>>`, { updateRes });
+		console.log(`Service > UPDATE :>>`, { filter }, { data }, { updateRes });
 		if (updateRes.matchedCount > 0) {
 			const results = await this.find(filter, options);
 			return results;

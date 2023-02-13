@@ -76,13 +76,16 @@ keys
 
 # deployment config
 deployment.yaml
+deployment-*.yaml
 !templates/deployment.yaml
 docker-compose*.yaml
 !docker-compose.example.yaml
 !templates/docker-compose*.yaml
+00-namespace.yaml
 01-cert-secret.yaml
 02-cert-issuer.yaml
-04-certificate.yaml
+03-certificate.yaml
+04-ingress.yaml
 gcloud-secret.yaml
 
 # dev api

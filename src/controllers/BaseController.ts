@@ -131,11 +131,14 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 
 	parseDateRange(req: Request, res: Response, next: NextFunction) {
 		// TODO: process date range filter: from_date, to_date, from_time, to_time, date
+		this.service.req = req;
+
 		next();
 	}
 
 	parseBody(req: Request, res: Response, next: NextFunction) {
 		// log("req.body [1] >>", req.body);
+		this.service.req = req;
 
 		req.body = iterate(req.body, (obj, key, val) => {
 			// log(`key, val =>`, key, val);
@@ -207,6 +210,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 		if (skip) options.skip = skip;
 
 		this.options = options;
+		// console.log(`this.options :>>`, this.options);
 
 		// filter
 		const _filter: { [key: string]: any } = { id, ...filter };
@@ -219,15 +223,12 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 				_filter[key] = null;
 			} else if (key == "id" || key == "_id") {
 				_filter._id = isValidObjectId(val) ? new ObjectId(val) : val;
+				delete _filter.id;
 			} else if (isValidObjectId(val)) {
 				_filter[key] = new ObjectId(val);
 			} else if (isJSON(val)) {
 				_filter[key] = JSON.parse(val);
-			}
-			// else if (isBooleanString(val)) {
-			// 	_filter[key] = toBool(val);
-			// }
-			else {
+			} else {
 				_filter[key] = val;
 			}
 		});
@@ -254,15 +255,6 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			});
 		}
 
-		// * remove "id" in filter if undefined
-		if (isEmpty(_filter.id)) {
-			delete _filter.id;
-		} else {
-			// * if it's existed, convert to mongo's style -> _id
-			_filter._id = _filter.id;
-			delete _filter.id;
-		}
-
 		// save to local storage of response
 		this.filter = _filter as IQueryOptions & FindManyOptions<any>;
 		// log({ filter: this.filter });
@@ -271,6 +263,8 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 	}
 
 	async parsePagination(req: Request, res: Response, next: NextFunction) {
+		this.service.req = req;
+
 		let total_items = 0,
 			total_pages = 0,
 			current_page = 1,

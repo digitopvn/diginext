@@ -23,12 +23,12 @@ describe("Deploy the project", function () {
 
 	before(async function () {
 		// create new test project
-		// const newProjectCommand = `di new --overwrite --install=false --framework=${newProject.framework} --projectName=\"${newProject.name}\" --projectSlug=${projectSlug} --namespace=${projectSlug}-ns --targetDir=${targetDir}`;
+		// const newProjectCommand = `dx new --overwrite --install=false --framework=${newProject.framework} --projectName=\"${newProject.name}\" --projectSlug=${projectSlug} --namespace=${projectSlug}-ns --targetDir=${targetDir}`;
 		// await execa.command(newProjectCommand);
 	});
 
 	it('Generate deployment for "DEV" environment', async function () {
-		const cmdGenerate = `cd ${targetDir} && di deploy generate`;
+		const cmdGenerate = `cd ${targetDir} && dx deploy generate`;
 		await execa.command(cmdGenerate);
 
 		// check if file was generated successfully
@@ -47,7 +47,7 @@ describe("Deploy the project", function () {
 		// console.log("diginext :>> ", diginext);
 
 		// generate prod deployment
-		const cmdGenerate = `di deploy generate --prod --targetDir=${targetDir}`;
+		const cmdGenerate = `dx deploy generate --prod --targetDir=${targetDir}`;
 		await execa.command(cmdGenerate, cliOpts);
 
 		// check if file was generated successfully

@@ -784,15 +784,7 @@ class MongoEntityManager extends EntityManager_1.EntityManager {
                 pipeline.push(selectWithProjectPipeline);
                 // console.log(selectWithProjectPipeline)
             }
-            if (optionsOrConditions.skip)
-                pipeline.push({ $skip: optionsOrConditions.skip });
-            if (optionsOrConditions.take)
-                pipeline.push({ $limit: optionsOrConditions.take });
-            if (optionsOrConditions.order) {
-                pipeline.push({
-                    $sort: this.convertFindOptionsOrderToOrderCriteria(optionsOrConditions.order),
-                });
-            }
+            
             if (deleteDateColumn && !optionsOrConditions.withDeleted) {
                 if (firstPipeline) {
                     if (firstPipeline.$match) {
@@ -844,6 +836,18 @@ class MongoEntityManager extends EntityManager_1.EntityManager {
                 },
             });
         }
+
+        if (optionsOrConditions.order) {
+            pipeline.push({
+                $sort: this.convertFindOptionsOrderToOrderCriteria(optionsOrConditions.order),
+            });
+        }
+
+        if (optionsOrConditions.skip)
+            pipeline.push({ $skip: optionsOrConditions.skip });
+        if (optionsOrConditions.take)
+            pipeline.push({ $limit: optionsOrConditions.take });
+            
         // console.dir(pipeline, { depth: null })
         results = await this.aggregateEntity(entityClassOrName, pipeline).toArray();
         

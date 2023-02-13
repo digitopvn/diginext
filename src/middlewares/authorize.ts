@@ -26,16 +26,15 @@ export function authorize(req: Request, res: Response, next: NextFunction) {
 
 	let isAllowed = false;
 
+	// if the user doesn't have roles, reject the request!
+	if (!user || !user.roles || user.roles.length == 0) return ApiResponse.rejected(res);
+
 	/**
 	 * authorization logic here!
 	 */
-	if (!user || !user.roles || user.roles.length == 0) return ApiResponse.rejected(res);
-
 	const { roles } = user;
 
 	// get "routes" -> find "key" as route & "value" as IRole
-	if (!roles || roles.length == 0) return ApiResponse.rejected(res);
-
 	roles.map((role) =>
 		role.routes
 			.filter((routeRole) => routeRole.route == "*" || routeRole.route == route)

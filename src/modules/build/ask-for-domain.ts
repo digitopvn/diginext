@@ -15,10 +15,13 @@ export const askForDomain = async (options: InputOptions) => {
 
 	let projectSlug = appConfig.project;
 	let appSlug = appConfig.slug.toLowerCase();
-	let subdomainName = `${projectSlug}-${appSlug}.${env}`;
+	let subdomainName = `${appSlug}.${env}`;
 	let domains: string[] = [];
 
-	const generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
+	let generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
+	if (generatedDomain.length > 60) {
+		throw new Error(`This app's domain is too long, you probably need to run "dx init" and rename the app to something shorter.`);
+	}
 	const clusterShortName = appConfig.environment[env].cluster;
 
 	// xử lý domains

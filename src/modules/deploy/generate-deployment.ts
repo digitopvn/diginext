@@ -74,7 +74,7 @@ export const generateDeployment = async (options: InputOptions) => {
 	// log({ imagePullingSecret });
 
 	// prerelease:
-	const prereleaseSubdomainName = `${projectSlug}-${mainAppName}.prerelease`;
+	const prereleaseSubdomainName = `${mainAppName}.prerelease`;
 	let prereleaseSvcName = appName;
 	let prereleaseAppName = appName;
 	let prereleaseIngressDoc, prereleaseSvcDoc, prereleaseDeployDoc;

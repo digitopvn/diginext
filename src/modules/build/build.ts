@@ -1,9 +1,11 @@
 import { log } from "diginext-utils/dist/console/log";
 
-// import PQueue from "p-queue";
+import { isServerMode } from "@/app.config";
+import type { Build } from "@/entities";
 import { getIO } from "@/server";
+import { BuildService } from "@/services";
 
-// export let queue = new PQueue({ concurrency: 1 });
+import { fetchApi } from "../api";
 
 export async function testBuild() {
 	// let spawn = require("child_process").spawn;
@@ -11,4 +13,17 @@ export async function testBuild() {
 	// temp.stdio.forEach((io) => io.on("data", (data) => log(data.toString())));
 	let socketServer = getIO();
 	log("socketServer:", socketServer);
+}
+
+export async function saveLogs(buildSlug: string, logs: string) {
+	if (!buildSlug) throw new Error(`Build's slug is required, it's empty now.`);
+	if (isServerMode) {
+		const buildSvc = new BuildService();
+		const build = await buildSvc.update({ slug: buildSlug }, { logs });
+		return build;
+	} else {
+		const { data: updatedBuilds } = await fetchApi<Build>({ url: `/api/v1/build?slug=${buildSlug}`, data: { logs } });
+		const updatedBuild = updatedBuilds && (updatedBuilds as Build[]).length > 0 ? updatedBuilds[0] : undefined;
+		return updatedBuild;
+	}
 }

@@ -28,7 +28,7 @@ export const fetchDeploymentFromContent = (content: string) => {
 		if (doc && doc.kind == "Ingress") {
 			INGRESS_NAME = doc.metadata.name;
 
-			const protocol = typeof doc.spec.tls != "undefined" ? "http" : "https";
+			const protocol = typeof doc.spec.tls != "undefined" ? "https" : "http";
 			endpoint += protocol + "://" + doc.spec.rules[0].host + doc.spec.rules[0].http.paths[0].path;
 
 			doc.spec.rules.map((rule) => domains.push(rule.host));

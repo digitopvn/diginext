@@ -8,11 +8,11 @@ import cronjob from "node-cron";
 import pkg from "@/../package.json";
 import { Config } from "@/app.config";
 import { cleanUp, listImages } from "@/build/system";
+import { sendMessage } from "@/modules/build";
 import { testBuild } from "@/modules/build/build";
 import { startBuild } from "@/modules/build/start-build";
 import { execCmd } from "@/plugins";
 // import userRouter from "./user";
-import { io } from "@/server";
 
 const CLI_MODE = Config.grab("CLI_MODE", "client");
 
@@ -61,8 +61,12 @@ if (CLI_MODE == "server") {
 	});
 
 	router.get("/send-message", (req, res) => {
-		log(io);
-		io.to("2021-08-18-18-33-20").emit("message", { action: "start", message: "Hello" });
+		const { room, message } = req.query;
+		// log(io);
+		// io.to("2021-08-18-18-33-20").emit("message", { action: "start", message: "Hello" });
+
+		sendMessage({ SOCKET_ROOM: room.toString(), message: message.toString() });
+
 		res.send("done");
 	});
 

@@ -143,7 +143,13 @@ export async function execDeploy(options: InputOptions) {
 	saveAppConfig(appConfig, { directory: targetDirectory });
 
 	// ask for generated domains:
-	domains = await askForDomain(options);
+	try {
+		domains = await askForDomain(options);
+	} catch (e) {
+		logError(e);
+		domains = [];
+	}
+
 	if (domains.length < 1) {
 		logWarn(
 			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "dx.json" to expose this app to the internet anytime.`

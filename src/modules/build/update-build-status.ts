@@ -16,12 +16,12 @@ export async function updateBuildStatus(appSlug: string, buildSlug: string, buil
 		return;
 	}
 
-	let app, appSvc;
+	let app, appSvc: AppService;
 	if (isServerMode) {
 		appSvc = new AppService();
-		app = await appSvc.findOne({ slug: appSlug });
+		app = await appSvc.findOne({ slug: appSlug }, { populate: ["project"] });
 	} else {
-		const { data: apps } = await fetchApi<App>({ url: `/api/v1/app?slug=${appSlug}` });
+		const { data: apps } = await fetchApi<App>({ url: `/api/v1/app?slug=${appSlug}&populate=project` });
 		app = apps[0];
 	}
 

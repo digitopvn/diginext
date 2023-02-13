@@ -336,9 +336,7 @@ type ErrorCallback = (e: string) => void;
 export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCallback = "") {
 	try {
 		let { stdout } = await execa.command(cmd, cliOpts);
-
 		// console.log(`[execCmd]`, { stdout });
-
 		return stdout;
 	} catch (e) {
 		if (typeof errorMsgOrCallback == "string") {
@@ -537,12 +535,17 @@ export const savePackageConfig = (_config, options: SaveOpts) => {
  * @returns
  */
 export const getCurrentRepoURIs = async (dir = process.cwd()) => {
-	const remoteSSH = await execCmd(`git remote get-url origin`);
-	if (!remoteSSH) return;
-	const slug = remoteSSH.split(":")[1];
-	const provider = remoteSSH.split(":")[0].split("@")[1].split(".")[0];
-	const remoteURL = getRepoURL(provider, slug);
-	return { remoteSSH, remoteURL, provider };
+	try {
+		const { stdout: remoteSSH } = await execa.command(`git remote get-url origin`);
+		if (!remoteSSH) return;
+
+		const slug = remoteSSH.split(":")[1];
+		const provider = remoteSSH.split(":")[0].split("@")[1].split(".")[0];
+		const remoteURL = getRepoURL(provider, slug);
+		return { remoteSSH, remoteURL, provider };
+	} catch (e) {
+		return;
+	}
 };
 
 export const getGitProviderFromRepoSSH = (repoSSH: string) => {

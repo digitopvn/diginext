@@ -216,10 +216,10 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	if (shouldCreateSecretInNamespace && namespace == "default") {
 		logWarn(
 			`You are creating "imagePullSecrets" in "default" namespace, if you want to create in other namespaces:`,
-			chalk.cyan("\n  di registry allow --create --provider=digitalocean --namespace=") + "<CLUSTER_NAMESPACE_NAME>",
+			chalk.cyan("\n  dx registry allow --create --provider=digitalocean --namespace=") + "<CLUSTER_NAMESPACE_NAME>",
 			chalk.gray(`\n  # Examples / alias:`),
-			"\n  di registry allow --create --provider=digitalocean --namespace=my-website-namespace",
-			"\n  di registry allow --create --do create -n my-website-namespace"
+			"\n  dx registry allow --create --provider=digitalocean --namespace=my-website-namespace",
+			"\n  dx registry allow --create --do create -n my-website-namespace"
 		);
 	}
 

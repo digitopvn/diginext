@@ -4,14 +4,14 @@ import type { Logger } from "@/plugins";
 import { getIO } from "@/server";
 
 type LogMessageOpts = {
-	logger: Logger;
+	logger?: Logger;
 	SOCKET_ROOM: string;
 	message: string;
 };
 
 export function sendMessage(options: LogMessageOpts) {
 	const { logger, SOCKET_ROOM, message } = options;
-	logger.append(message);
+	if (logger) logger.append(message);
 	log(message);
 
 	let socketServer = getIO();

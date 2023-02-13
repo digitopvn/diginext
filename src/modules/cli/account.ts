@@ -14,7 +14,7 @@ export const cliLogin = async (options: InputOptions) => {
 
 	let buildServerUrl = url ?? secondAction;
 	if (!buildServerUrl) {
-		logError(`Please provide your build server URL: "di login <workspace_url>" or "di login --help". Eg. https://build.example.com`);
+		logError(`Please provide your build server URL: "dx login <workspace_url>" or "dx login --help". Eg. https://build.example.com`);
 		return;
 	}
 
@@ -138,7 +138,7 @@ export async function cliAuthenticate(options: InputOptions) {
 	const { currentWorkspace, access_token: currentAccessToken, buildServerUrl } = getCliConfig();
 	accessToken = currentAccessToken;
 	workspace = currentWorkspace;
-	// if (isEmpty(access_token) || isEmpty(currentWorkspace) || isEmpty(currentUser)) return logError(`Please login first: "di login <workspace_url>"`);
+	// if (isEmpty(access_token) || isEmpty(currentWorkspace) || isEmpty(currentUser)) return logError(`Please login first: "dx login <workspace_url>"`);
 
 	const continueToLoginStep = async (url) => {
 		options.url = url;

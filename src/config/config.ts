@@ -12,13 +12,15 @@ import type User from "@/entities/User";
 import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 
-import { log, logInfo, readJson, saveJson, showDocs } from "../plugins";
+import { isWin, log, logInfo, readJson, saveJson, showDocs } from "../plugins";
 import { CLI_CONFIG_DIR, CLI_CONFIG_FILE, CLI_DIR } from "./const";
 
-export const cliOpts: execa.Options = {
-	// stdio: "inherit",
-	shell: "bash",
-};
+export const cliOpts: execa.Options = isWin()
+	? {}
+	: {
+			// stdio: "inherit",
+			shell: "bash",
+	  };
 
 export const getContainerResourceBySize = (size: "none" | "1x" | "2x" | "3x" | "4x" | "5x" | "6x" | "7x" | "8x" | "9x" | "10x") => {
 	if (size == "none") return {};

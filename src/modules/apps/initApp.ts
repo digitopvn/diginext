@@ -45,6 +45,7 @@ export async function execInitApp(options: InputOptions) {
 	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`;
 
 	const { remoteSSH, remoteURL, provider: gitProvider } = await getCurrentRepoURIs(options.targetDirectory);
+	// console.log("{remoteSSH, remoteURL} :>> ", { remoteSSH, remoteURL });
 	if (remoteSSH && remoteURL) {
 		options.remoteSSH = remoteSSH;
 		options.remoteURL = remoteURL;

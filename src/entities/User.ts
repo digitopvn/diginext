@@ -70,6 +70,7 @@ export default class User extends Base<User> {
 
 	/**
 	 * User's roles
+	 * TODO: Thêm "workspace" cho "roles" vì mỗi workspace sẽ có roles khác nhau, trong khi mỗi user có thể nằm trong nhiều workspace
 	 */
 	@ObjectIdColumn({ name: "roles", array: true, default: [] })
 	roles?: ObjectID[] | Role[] | string[];
