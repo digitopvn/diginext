@@ -96,6 +96,9 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		try {
 			await verifySSH({ gitProvider });
 		} catch (e) {
+			// save logs to database
+			saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
+
 			throw new Error(e);
 		}
 
@@ -114,6 +117,11 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 				await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
 			} catch (e) {
 				sendMessage({ SOCKET_ROOM, logger, message: `Failed to pull branch "${gitBranch}" to "${buildDir}": ${e}` });
+
+				// save logs to database
+				saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
+
+				throw new Error(e);
 			}
 		}
 
@@ -235,6 +243,11 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		logError(e);
 		message = "[FAILED] can't create a new build in database: " + e.toString();
 		sendMessage({ SOCKET_ROOM, logger, message });
+
+		// save logs to database
+		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
+
+		return;
 	}
 
 	// return;
@@ -260,6 +273,11 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 			message = `[ERROR] Missing "${appDirectory}/deployment/Dockerfile.${env}" file, please create one.`;
 			sendMessage({ SOCKET_ROOM, logger, message: message });
 			logError(message);
+
+			// save logs to database
+			saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
+
+			return;
 		}
 
 		/**
@@ -274,7 +292,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		 * docker buildx build -f deployment/Dockerfile.dev --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
 		 **/
 		// activate docker build (with "buildx" driver)...
-		execCmd(`docker buildx create --driver docker-container --name ${projectSlug}-${appSlug.toLowerCase()}`);
+		execCmd(`docker buildx create --driver docker-container --name ${appSlug.toLowerCase()}`);
 
 		const cacheCmd = latestBuild ? ` --cache-from type=registry,ref=${latestBuild.image}` : "";
 		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} .`;
@@ -342,6 +360,9 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		buildFinishMsg += `\n  - Image: ${IMAGE_NAME}`;
 		logSuccess(buildFinishMsg);
 
+		// save logs to database
+		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
+
 		return true;
 	}
 
@@ -393,6 +414,9 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	}
 
 	sendMessage({ SOCKET_ROOM, logger, message: msg });
+
+	// save logs to database
+	saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
 
 	// disconnect CLI client:
 	if (socketServer) socketServer.to(SOCKET_ROOM).emit("message", { action: "end" });

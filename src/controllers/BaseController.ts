@@ -131,11 +131,14 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 
 	parseDateRange(req: Request, res: Response, next: NextFunction) {
 		// TODO: process date range filter: from_date, to_date, from_time, to_time, date
+		this.service.req = req;
+
 		next();
 	}
 
 	parseBody(req: Request, res: Response, next: NextFunction) {
 		// log("req.body [1] >>", req.body);
+		this.service.req = req;
 
 		req.body = iterate(req.body, (obj, key, val) => {
 			// log(`key, val =>`, key, val);
@@ -260,6 +263,8 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 	}
 
 	async parsePagination(req: Request, res: Response, next: NextFunction) {
+		this.service.req = req;
+
 		let total_items = 0,
 			total_pages = 0,
 			current_page = 1,

@@ -23,10 +23,18 @@ export default class BuildController extends BaseController<BuildService> {
 	): Promise<Response<any, Record<string, any>>> {
 		const { slug } = req.query;
 
+		// validation
 		if (!slug) return ApiResponse.failed(res, "slug is required.");
 
+		// Attempt [1]: get logs from the database
+		const build = await this.service.findOne({ slug });
+		if (build) {
+			const logContent = build.logs;
+			if (logContent) return ApiResponse.succeed(res, logContent);
+		}
+
+		// Attempt [2]: get logs from files
 		const LOG_DIR = process.env.LOG_DIR ? path.resolve(process.env.LOG_DIR, `${slug}.txt`) : path.resolve(CLI_DIR, `public/logs/${slug}.txt`);
-		// const logPath = path.resolve(CLI_DIR, `public/logs/${slug}.txt`);
 		const logs = fs.existsSync(LOG_DIR) ? fs.readFileSync(LOG_DIR, "utf8") : "No data.";
 
 		return ApiResponse.succeed(res, logs);
