@@ -93,6 +93,7 @@ async function startupScripts() {
 	}
 
 	// cronjobs
+	log(`Cronjob of system clean up has been scheduled every 3 days at 00:00 AM`);
 	cronjob.schedule("0 0 */3 * *", () => {
 		/**
 		 * Schedule a clean up task every 3 days at 00:00 AM

@@ -347,6 +347,18 @@ export class ClusterManager {
 	}
 
 	/**
+	 * Delete a namespace
+	 */
+	static async deleteNamespace(namespace: string) {
+		try {
+			await execCmd(`kubectl delete namespace ${namespace}`);
+			return { namespace };
+		} catch (e) {
+			throw new Error(e.message);
+		}
+	}
+
+	/**
 	 * Check whether this namespace was existed
 	 */
 	static async isNamespaceExisted(namespace: string) {

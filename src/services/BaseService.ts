@@ -158,7 +158,7 @@ export default class BaseService<E extends ObjectLiteral> {
 		}
 	}
 
-	async softDelete(filter?: IQueryFilter) {
+	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {
 		// Manually update "deleteAt" to database since TypeORM MongoDB doesn't support "softDelete" yet
 		const deleteRes = await this.query.updateMany(filter, { $set: { deletedAt: new Date() } });
 		return { ok: deleteRes.matchedCount };
