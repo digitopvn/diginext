@@ -252,15 +252,6 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			});
 		}
 
-		// * remove "id" in filter if undefined
-		// if (isEmpty(_filter.id)) {
-		// 	delete _filter.id;
-		// } else {
-		// 	// * if it's existed, convert to mongo's style -> _id
-		// 	_filter._id = _filter.id;
-		// 	delete _filter.id;
-		// }
-
 		// save to local storage of response
 		this.filter = _filter as IQueryOptions & FindManyOptions<any>;
 		// log({ filter: this.filter });

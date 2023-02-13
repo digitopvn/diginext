@@ -1,9 +1,10 @@
-import { logError } from "diginext-utils/dist/console/log";
+import { log, logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import generatePassword from "diginext-utils/dist/string/generatePassword";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import type { Request } from "express";
 
+import type { User } from "@/entities";
 import type { EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeorm";
 import type { MongoFindManyOptions } from "@/libs/typeorm/find-options/mongodb/MongoFindManyOptions";
 import { manager, query } from "@/modules/AppDatabase";
@@ -66,8 +67,10 @@ export default class BaseService<E extends ObjectLiteral> {
 		// log("pagination >>", pagination);
 		const findOptions: MongoFindManyOptions<ObjectLiteral> = {};
 
-		// console.log({ filter });
-		console.log(`BaseService.find :>>`, { filter, options });
+		// LOG this for further investigation:
+		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+		const author = `${user.name} (ID: ${user._id})`;
+		log(author, `- BaseService.find :>>`, { filter, options });
 
 		if (filter) findOptions.where = filter;
 		if (options?.order) findOptions.order = options.order;
