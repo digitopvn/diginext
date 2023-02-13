@@ -161,12 +161,10 @@ export function parseCliOptions() {
 				.command("cluster", "View/add/remove kubernetes cluster")
 				.demandCommand(1)
 		)
-		// .usage("$0 config [get|provider|cluster]", "Configurate your CLI")
 		// command: update
 		.command("update", "Update your CLI version")
-		// .usage("$0 update", "Update your CLI to latest version")
-		// .usage("$0 update <version>", "Update your CLI to specific version")
-		// .example("$0 update", "Update CLI to latest version")
+		.usage("$0 update", "Update your CLI to latest version")
+		.usage("$0 update <version>", "Update your CLI to specific version")
 		// command: new
 		.command("new", "Create new project & application", newProjectOptions)
 		// .usage("$0 new", "Create new project")

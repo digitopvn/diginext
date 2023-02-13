@@ -28,6 +28,7 @@ import { freeUp, getOS, logInfo, logVersion } from "@/plugins";
 
 import { execInitApp } from "./modules/apps/initApp";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
+import { updateCli } from "./modules/cli/update-cli";
 import { execRollOut } from "./modules/deploy/exec-rollout";
 
 /**
@@ -96,9 +97,9 @@ export async function processCLI(options?: InputOptions) {
 			await execConfig(options);
 			break;
 
-		// case "update":
-		// 	await updateCli(newVersion || options.secondAction);
-		// 	break;
+		case "update":
+			await updateCli();
+			break;
 
 		case "new":
 			await cliAuthenticate(options);

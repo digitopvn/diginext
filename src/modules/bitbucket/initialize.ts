@@ -1,8 +1,8 @@
 import { logWarn } from "diginext-utils/dist/console/log";
+import simpleGit from "simple-git";
 
 import { getCliConfig } from "../../config/config";
 import type { InputOptions } from "../../interfaces/InputOptions";
-import { git } from "../../main";
 import { logBitbucketError } from "../../plugins/utils";
 import { bitbucket, signInBitbucket } from ".";
 import { applyBranchPermissions } from "./permissions";
@@ -97,6 +97,7 @@ export async function initializeBitbucket(options: InputOptions) {
 	if (options.git) {
 		// add git origin:
 		// await execa.command(`cd ${options.targetDirectory} && git remote add origin ${options.remoteURL} && git push origin --all`);
+		const git = simpleGit(options.targetDirectory, { binary: "git" });
 		await git.addRemote("origin", options.remoteURL);
 		await git.push("origin", "master");
 		await applyBranchPermissions(options, "master", "pull-request-only", "push", []);
