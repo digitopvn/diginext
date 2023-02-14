@@ -173,6 +173,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			sort, // @example: -updatedAt,-createdAt
 			order, // @example: -updatedAt,-createdAt
 			search = false,
+			raw = false,
 			where = {},
 			...filter
 		} = req.query as any;
@@ -199,6 +200,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			select: _select == "" ? [] : _select.indexOf(",") > -1 ? _select.split(",") : [_select],
 		};
 		if (!isEmpty(sortOptions)) options.order = sortOptions;
+		if (raw === "true" || raw === true) options.raw = true;
 
 		// pagination
 		if (this.pagination.page_size) {
@@ -213,7 +215,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 		// console.log(`this.options :>>`, this.options);
 
 		// filter
-		const _filter: { [key: string]: any } = { id, ...filter };
+		const _filter: { [key: string]: any } = id ? { id, ...filter } : filter;
 
 		// convert search to boolean
 		// log("search >>", search);
@@ -232,6 +234,8 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 				_filter[key] = val;
 			}
 		});
+
+		if (!_filter.id) delete _filter.id;
 
 		// manipulate "$or" & "$and" filter:
 		if (_filter.or) {
