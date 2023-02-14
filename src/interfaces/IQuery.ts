@@ -17,6 +17,11 @@ export interface IQueryOptions extends IQueryParams {
 	order?: { [key: string]: string };
 	search?: boolean;
 	download?: boolean;
+	/**
+	 * Disable the default `{$set: data}` of "update" query & update `{data}` directly to the items
+	 * @default false
+	 */
+	raw?: boolean;
 }
 
 export interface IQueryPagination extends IQueryParams {

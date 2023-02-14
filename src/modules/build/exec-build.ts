@@ -1,4 +1,5 @@
 import { logWarn } from "diginext-utils/dist/console/log";
+import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 
 import type InputOptions from "@/interfaces/InputOptions";
@@ -38,7 +39,7 @@ export async function execBuild(options: InputOptions) {
 		});
 		selectedSSL = askSSL.selectedSSL;
 	}
-	selectedSecretName = `tls-secret-${selectedSSL}-${appConfig.project}-${appConfig.slug}`;
+	selectedSecretName = `tls-secret-${selectedSSL}-${makeSlug(appConfig.environment[env].domains[0])}`;
 
 	// if they select "custom" SSL certificate -> ask for secret name:
 	if (selectedSSL == "custom") {

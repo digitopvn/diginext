@@ -1,25 +1,26 @@
 import chalk from "chalk";
 // import { auth } from "./index.js";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import type { SimpleGit } from "simple-git";
 import { simpleGit } from "simple-git";
 
 import type { InputOptions } from "@/interfaces/InputOptions";
 
-import { git } from "../../main";
 import { parseRepoSlugFromUrl } from "../../plugins/utils";
 import { bitbucket } from ".";
 
-let _git;
+let git: SimpleGit;
 let auth = { username: "" };
 
-async function processCreatingPullRequest(repoSlug, fromBranch, destBranch, options) {
+async function processCreatingPullRequest(repoSlug, fromBranch, destBranch, options: InputOptions) {
+	if (!git) git = simpleGit(options.targetDirectory || "./", { binary: "git" });
 	// merge origin/DEST_BRANCH with FROM_BRANCH
 	try {
-		await _git.add("./*");
-		await _git.commit("Commit all files to create PR");
-		await _git.push();
+		await git.add("./*");
+		await git.commit("Commit all files to create PR");
+		await git.push();
 		if (fromBranch != "master" || fromBranch != "staging" || fromBranch != "prod") {
-			await _git.mergeFromTo("origin/" + destBranch, fromBranch);
+			await git.mergeFromTo("origin/" + destBranch, fromBranch);
 		}
 	} catch (e) {
 		log(e.toString());
@@ -82,13 +83,12 @@ export const createPullRequest = async (options: InputOptions) => {
 	auth.username = options.username;
 
 	// diginext git pr master
-	_git = git;
-	if (!git) _git = simpleGit("./", { binary: "git" });
-	const gitStatus = await _git.status(["-s"]);
+	if (!git) git = simpleGit(options.targetDirectory || "./", { binary: "git" });
+	const gitStatus = await git.status(["-s"]);
 
 	// get repo URL & repo slug
 	const commands = ["config", "--get", "remote.origin.url"];
-	const repoURL = await _git.raw(commands);
+	const repoURL = await git.raw(commands);
 	const repoSlug = parseRepoSlugFromUrl(repoURL);
 
 	if (!gitStatus.current) {

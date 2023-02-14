@@ -19,9 +19,10 @@ const writeFile = util.promisify(fs.writeFile);
 
 import { simpleGit } from "simple-git";
 
+import { conf } from "@/index";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
-import { conf } from "../../main";
+// import { conf } from "../cli/update-cli";
 import { deleteFolderRecursive, execCmd, logBitbucketError } from "../../plugins";
 
 export let bitbucket, workspaceId;

@@ -1,16 +1,17 @@
+import { log, logSuccess } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import execa from "execa";
 
 import { Logger } from "../plugins/logger";
-import { logInfo, logSuccess } from "../plugins/utils";
+import { execCmd } from "../plugins/utils";
 
 export async function listImages() {
 	const logger = new Logger(`server-images-${makeDaySlug()}`);
 
 	const { stdout } = await execa.command(`docker images`);
 
-	logInfo(`---> SERVER LIST IMAGES`);
-	logInfo(stdout);
+	log(`---> SERVER LIST IMAGES`);
+	log(stdout);
 
 	logger.append(stdout);
 
@@ -27,14 +28,22 @@ export async function listImages() {
 export async function cleanUp() {
 	const logger = new Logger(`server-cleanup-${makeDaySlug()}`);
 
-	const { stdout } = await execa("docker", ["image", "prune", "-af", "--filter", "until=72h"]);
+	// Clean up docker images
+	const result = await execCmd("docker image prune -af --filter until=72h");
+	log(`>>> DOCKER IMAGES HAVE BEEN CLEANED UP:`);
+	log(result);
+	logger.append(result);
 
-	logInfo(`---> SERVER CLEAN UP`);
-	logInfo(stdout);
+	logger.append(`-------------------------`);
+	logger.append(`-------------------------`);
 
-	logger.append(stdout);
+	// Clean up docker build cache
+	const cleanCache = await execCmd(`docker builder prune -af --filter until=72h`);
+	log(`>>> DOCKER BUILD CACHE HAS BEEN CLEANED UP:`);
+	log(cleanCache);
+	logger.append(cleanCache);
 
+	// log success message:
 	logSuccess(`Cleaned up build server successfully.`);
-
 	return true;
 }

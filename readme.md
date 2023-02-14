@@ -126,6 +126,10 @@ Read the [docs here](docs/docs.md).
 
 ---
 
+## Update
+
+- To update your CLI to the latest version: `dx update` or `npm update @topgroup/diginext --global`.
+
 ## Documentation
 
 - Visit our [docs here](docs/docs.md)

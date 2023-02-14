@@ -1,4 +1,4 @@
-import { log, logError } from "diginext-utils/dist/console/log";
+import { log, logError, logFull } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
@@ -148,8 +148,13 @@ export default class BaseService<E extends ObjectLiteral> {
 
 		// console.log(`Service > UPDATE :>>`, { filter }, { data });
 
-		const updateRes = await this.query.updateMany(filter, { $set: data });
-		console.log(`Service > UPDATE :>>`, { filter }, { data }, { updateRes });
+		const updateData = options?.raw ? data : { $set: data };
+
+		const updateRes = await this.query.updateMany(filter, updateData);
+
+		log(`BaseService > UPDATE :>>`);
+		logFull({ filter, updateData, updateRes });
+
 		if (updateRes.matchedCount > 0) {
 			const results = await this.find(filter, options);
 			return results;
@@ -158,7 +163,7 @@ export default class BaseService<E extends ObjectLiteral> {
 		}
 	}
 
-	async softDelete(filter?: IQueryFilter) {
+	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {
 		// Manually update "deleteAt" to database since TypeORM MongoDB doesn't support "softDelete" yet
 		const deleteRes = await this.query.updateMany(filter, { $set: { deletedAt: new Date() } });
 		return { ok: deleteRes.matchedCount };

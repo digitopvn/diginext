@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "1.1.5",
+	"version": "1.2.0",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -193,6 +193,7 @@
 		"@types/lodash": "^4.14.191",
 		"@types/marked": "^4.0.7",
 		"@types/mocha": "^10.0.0",
+		"@types/node-cron": "^3.0.7",
 		"@types/passport": "^1.0.11",
 		"@types/redis": "^4.0.11",
 		"@typescript-eslint/eslint-plugin": "^5.45.0",

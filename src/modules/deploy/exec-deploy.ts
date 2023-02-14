@@ -168,7 +168,8 @@ export async function execDeploy(options: InputOptions) {
 		});
 		selectedSSL = askSSL.selectedSSL;
 	}
-	selectedSecretName = `tls-secret-${selectedSSL}-${appConfig.project}-${appConfig.slug}`;
+	selectedSecretName = `tls-secret-${selectedSSL}-${makeSlug(appConfig.environment[env].domains[0])}`;
+	// console.log("selectedSecretName :>> ", selectedSecretName);
 
 	// if they select "custom" SSL certificate -> ask for secret name:
 	if (selectedSSL == "custom") {
@@ -206,7 +207,7 @@ export async function execDeploy(options: InputOptions) {
 	// logWarn({ app });
 	// logWarn({ messages });
 
-	if (!status) return logError(`Can't update new app config.`);
+	if (!status) return logError(`Can't update new app config:`, messages);
 
 	// request build server to build & deploy:
 	await requestDeploy(options);
