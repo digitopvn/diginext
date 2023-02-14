@@ -726,22 +726,22 @@ export class ClusterManager {
 		// log(`4`, { currentServices });
 
 		// create new PROD ingress if it's not existed
-		const getIngressResult = await this.getIngress(ingressName, namespace);
-		if (!getIngressResult.error) {
-			ingress = getIngressResult;
-		} else {
-			// Create new ingress
-			const ING_FILE = path.resolve(tmpDir, `ingress.${env}.yaml`);
-			let ING_CONTENT = objectToDeploymentYaml(ingress);
-			fs.writeFileSync(ING_FILE, ING_CONTENT, "utf8");
+		// const getIngressResult = await this.getIngress(ingressName, namespace);
+		// if (!getIngressResult.error) {
+		// 	ingress = getIngressResult;
+		// } else {
+		// ! ALWAYS Create new ingress
+		const ING_FILE = path.resolve(tmpDir, `ingress.${env}.yaml`);
+		let ING_CONTENT = objectToDeploymentYaml(ingress);
+		fs.writeFileSync(ING_FILE, ING_CONTENT, "utf8");
 
-			try {
-				await execa.command(`kubectl apply -f ${ING_FILE} -n ${namespace}`, cliOpts);
-				log(`Created new production ingress named "${appSlug}".`);
-			} catch (e) {
-				log(e);
-			}
+		try {
+			await execa.command(`kubectl apply -f ${ING_FILE} -n ${namespace}`, cliOpts);
+			log(`Created new production ingress named "${appSlug}".`);
+		} catch (e) {
+			log(e);
 		}
+		// }
 		// log(`5`);
 
 		let prereleaseApp, prereleaseAppName;
