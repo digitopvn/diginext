@@ -76,7 +76,7 @@ export async function requestDeploy(options: InputOptions) {
 
 	log(`Requesting BUILD SERVER to deploy this app: "${projectSlug}/${slug}"`);
 
-	const SOCKET_ROOM = `${options.projectSlug}-${options.slug}-${BUILD_NUMBER}`;
+	const SOCKET_ROOM = `${options.slug}-${BUILD_NUMBER}`;
 
 	// additional params:
 	options.namespace = nsName;

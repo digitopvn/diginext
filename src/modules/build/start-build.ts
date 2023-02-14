@@ -66,7 +66,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 	const BUILD_NUMBER = buildNumber;
 	const IMAGE_NAME = buildImage;
-	const SOCKET_ROOM = `${projectSlug}-${appSlug}-${BUILD_NUMBER}`;
+	const SOCKET_ROOM = `${appSlug}-${BUILD_NUMBER}`;
 
 	const logger = new Logger(SOCKET_ROOM);
 	options.SOCKET_ROOM = SOCKET_ROOM;

@@ -206,7 +206,7 @@ export async function execDeploy(options: InputOptions) {
 	// logWarn({ app });
 	// logWarn({ messages });
 
-	if (!status) return logError(`Can't update new app config.`);
+	if (!status) return logError(`Can't update new app config:`, messages);
 
 	// request build server to build & deploy:
 	await requestDeploy(options);
