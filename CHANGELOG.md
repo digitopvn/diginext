@@ -1,3 +1,11 @@
+## [1.2.1](https://github.com/digitopvn/diginext/compare/v1.2.0...v1.2.1) (2023-02-15)
+
+
+### Bug Fixes
+
+* **jwt and logs:** parse access token in url and print more logs to debug on server ([6cf251f](https://github.com/digitopvn/diginext/commit/6cf251f9354c51d532ff5a22b64a357c50c9f7ee))
+* **package.json:** remove mrgoonie typeorm ([2356c30](https://github.com/digitopvn/diginext/commit/2356c30716774e2770f40457317081b286f4a1f4))
+
 # [1.2.0](https://github.com/digitopvn/diginext/compare/v1.1.5...v1.2.0) (2023-02-14)
 
 
