@@ -200,12 +200,6 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 
 	// delete unneccessary files
 	if (fs.existsSync(".fw/.git")) await deleteFolderRecursive(".fw/.git");
-	if (fs.existsSync(".fw/deployment")) await deleteFolderRecursive(".fw/deployment");
-	if (fs.existsSync(".fw/bitbucket-pipelines.yaml")) fs.unlinkSync(".fw/bitbucket-pipelines.yaml");
-	if (fs.existsSync(".fw/pages/dashkit")) await deleteFolderRecursive(".fw/pages/dashkit");
-	if (fs.existsSync(".fw/pages/examples")) await deleteFolderRecursive(".fw/pages/examples");
-	if (fs.existsSync(".fw/release")) fs.unlinkSync(".fw/release");
-	if (fs.existsSync(".fw/beta")) fs.unlinkSync(".fw/beta");
 	if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
 	if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
 	if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
