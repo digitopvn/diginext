@@ -7,12 +7,12 @@ import type { InputOptions } from "@/interfaces/InputOptions";
 
 const cliHeader =
 	chalk.bold.underline.green(`Diginext CLI USAGE - VERSION ${pkg.version}`.toUpperCase()) +
-	chalk.redBright("\n\n  [TIPS] You can use 'di' as an alias of 'diginext' command (for faster typing):") +
+	chalk.redBright("\n\n  [TIPS] You can use 'dx' as an alias of 'diginext' command (for faster typing):") +
 	chalk.gray("\n\n  # This command:") +
 	chalk.yellow("\ndiginext") +
 	" --help" +
 	chalk.gray("\n  # is equivalent with:") +
-	chalk.yellow("\ndi") +
+	chalk.yellow("\ndx") +
 	" --help\n\n---" +
 	chalk.gray("\n\n  # also type -h or --help to see the command usage:") +
 	chalk.yellow("\ndx [command]") +

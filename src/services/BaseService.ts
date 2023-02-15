@@ -35,7 +35,7 @@ export default class BaseService<E extends ObjectLiteral> {
 		return this.query.count({ ...filter, ...options });
 	}
 
-	async create(data: E & { slug?: string; metadata?: any; error?: any }) {
+	async create(data: E & { slug?: string; metadata?: any; error?: any; owner?: any; workspace?: any }) {
 		try {
 			// generate slug (if needed)
 			if (!data.slug && data.name) {
@@ -51,6 +51,14 @@ export default class BaseService<E extends ObjectLiteral> {
 			for (const [key, value] of Object.entries(data)) {
 				if (key != "_id" && key != "metadata" && key != "slug" && !isValidObjectId(value) && value)
 					data.metadata[key] = clearUnicodeCharacters(value.toString());
+			}
+
+			// assign item authority:
+			if (this.req?.user) {
+				data.owner = (this.req?.user as User)._id;
+				data.workspace = ((this.req?.user as User).activeWorkspace as any)._id
+					? ((this.req?.user as User).activeWorkspace as any)._id
+					: ((this.req?.user as User).activeWorkspace as any);
 			}
 
 			const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };

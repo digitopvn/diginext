@@ -1,3 +1,15 @@
+## [1.2.2](https://github.com/digitopvn/diginext/compare/v1.2.1...v1.2.2) (2023-02-15)
+
+
+### Bug Fixes
+
+* **admin:** cluster crud ([87981ae](https://github.com/digitopvn/diginext/commit/87981ae1eeac636543442ef02062c48c17e7d579))
+* **base service:** assign item authority when create new item ([092eb1b](https://github.com/digitopvn/diginext/commit/092eb1b4a463f496900359a7a327c081fcd60818))
+* **bitbucket:** do not remove dockerfile when pulling framework ([264c353](https://github.com/digitopvn/diginext/commit/264c3533897326c452438afc44aa20e6815191d6))
+* **deploy:** check for Dockerfile before request deploying ([32ab91d](https://github.com/digitopvn/diginext/commit/32ab91d666d825fc99d7d59a49f06214282e5a80))
+* **dockerfile:** use node 16.x to avoid ts build path alias error ([1c5524c](https://github.com/digitopvn/diginext/commit/1c5524c99a7c2259bc30f087d95d4446078b3825))
+* **typeorm:** fix typeorm build error by install xml2js app-root-path sha.js ([17be31a](https://github.com/digitopvn/diginext/commit/17be31ae3d44c72f8d550968b23a3faf3a3c0d3a))
+
 ## [1.2.1](https://github.com/digitopvn/diginext/compare/v1.2.0...v1.2.1) (2023-02-15)
 
 
