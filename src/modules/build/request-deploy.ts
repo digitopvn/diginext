@@ -1,5 +1,7 @@
 import chalk from "chalk";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { existsSync } from "fs";
+import path from "path";
 import simpleGit from "simple-git";
 import { io } from "socket.io-client";
 
@@ -37,6 +39,14 @@ export async function requestDeploy(options: InputOptions) {
 		log(`CURRENT_WORKING_DIR = ${process.cwd()}`);
 		log(`BUILD_SERVER_URL=${BUILD_SERVER_URL}`);
 		log(`DEPLOY_API_PATH=${DEPLOY_API_PATH}`);
+	}
+
+	// check Dockerfile
+	let dockerFile = path.resolve(appDirectory, `deployment/Dockerfile.${env}`);
+	if (!existsSync(dockerFile)) {
+		const message = `Missing "${appDirectory}/deployment/Dockerfile.${env}" file, please create one.`;
+		logError(message);
+		return;
 	}
 
 	// Increase build version in "package.json"

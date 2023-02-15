@@ -197,11 +197,11 @@ export function printHelp(options?: InputOptions) {
 	console.info(chalk.yellow(`[Diginext CLI - v${pkg.version}] USAGE DOCUMENTATION:`));
 	console.info(pkg.description);
 
-	console.info(chalk.redBright("\n  [TIPS] Alternatively you can use 'di' as an alias of 'diginext' command (for faster typing):"));
+	console.info(chalk.redBright("\n  [TIPS] Alternatively you can use 'dx' as an alias of 'diginext' command (for faster typing):"));
 	console.info("\n" + chalk.gray("  # This command:"));
 	console.info(" ", chalk.yellow("diginext"), "--help");
 	console.info(chalk.gray("  # is equivalent with:"));
-	console.info(" ", chalk.yellow("di"), "--help");
+	console.info(" ", chalk.yellow("dx"), "--help");
 
 	console.info(chalk.yellowBright("\n  Create new project:"));
 	console.info("  diginext new");
