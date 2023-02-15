@@ -56,6 +56,7 @@ export const jwtStrategy = new Strategy(
 	},
 	async function (req, payload, done) {
 		// log(`req.headers :>>`, req.headers);
+		log(`req.query.access_token :>>`, req.query.access_token);
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		// log(`access_token >>:`, access_token);
 		// log(`JWT callback >>:`, payload);
@@ -96,6 +97,7 @@ export const jwtStrategy = new Strategy(
 
 		const userSvc = new UserService();
 		let user = await userSvc.findOne({ _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces", "activeWorkspace"] });
+		user.token = req.token;
 
 		if (user) return done(null, user);
 

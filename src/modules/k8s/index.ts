@@ -733,13 +733,15 @@ export class ClusterManager {
 		// ! ALWAYS Create new ingress
 		const ING_FILE = path.resolve(tmpDir, `ingress.${env}.yaml`);
 		let ING_CONTENT = objectToDeploymentYaml(ingress);
+		if (fs.existsSync(ING_FILE)) fs.unlinkSync(ING_FILE);
 		fs.writeFileSync(ING_FILE, ING_CONTENT, "utf8");
 
 		try {
 			await execa.command(`kubectl apply -f ${ING_FILE} -n ${namespace}`, cliOpts);
 			log(`Created new production ingress named "${appSlug}".`);
 		} catch (e) {
-			log(e);
+			logError(`[INGRESS CREATING ERROR]`, e);
+			logError(`[INGRESS CREATING ERROR]`, { ING_CONTENT });
 		}
 		// }
 		// log(`5`);

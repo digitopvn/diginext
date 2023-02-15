@@ -3,10 +3,10 @@ import { Response } from "diginext-utils/dist/response";
 import isEmpty from "lodash/isEmpty";
 import passport from "passport";
 
-const jwt_auth = (req, res, next) => {
-	// log(req.query.access_token);
-	const authentication = passport.authenticate("jwt", { session: false }, function (err, user, info) {
-		// log(err, user, info);
+const jwt_auth = (req, res, next) =>
+	passport.authenticate("jwt", { session: false }, function (err, user, info) {
+		// console.log(err, user, info);
+		// console.log(req);
 
 		if (err || !user || isEmpty(user)) {
 			/**
@@ -27,16 +27,15 @@ const jwt_auth = (req, res, next) => {
 			 * We can extract token from cookie / user (check "jwtStrategy.ts")
 			 * Then re-assign it into the HTTP response
 			 */
-			if (user.token) {
-				res.cookie("x-auth-cookie", user.token.access_token);
-				res.header("Authorization", `Bearer ${user.token.access_token}`);
+			if (req.token?.access_token) {
+				res.cookie("x-auth-cookie", req.token.access_token);
+				res.header("Authorization", `Bearer ${req.token.access_token}`);
 			}
+
+			// console.log(req);
 
 			return next();
 		}
 	})(req, res, next);
-
-	return authentication;
-};
 
 export default jwt_auth;
