@@ -131,11 +131,12 @@ function initialize() {
 
 		/**
 		 * CORS MIDDLEWARE
+		 * Access-Control-Allow-Headers
 		 */
 		app.use((req, res, next) => {
 			res.header("Access-Control-Allow-Origin", "*");
 			res.header("Access-Control-Allow-Methods", "GET, PATCH, POST, DELETE");
-			res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+			res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control");
 			res.header("X-Powered-By", "TOP GROUP");
 			next();
 		});

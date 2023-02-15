@@ -29,6 +29,9 @@ export default class BaseService<E extends ObjectLiteral> {
 	}
 
 	async count(filter?: IQueryFilter, options?: IQueryOptions) {
+		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+		const author = `${user.name} (ID: ${user._id})`;
+		if (user.name !== "Unknown") log(author, `- BaseService.count :>>`, { filter, options });
 		return this.query.count({ ...filter, ...options });
 	}
 
@@ -50,6 +53,10 @@ export default class BaseService<E extends ObjectLiteral> {
 					data.metadata[key] = clearUnicodeCharacters(value.toString());
 			}
 
+			const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+			const author = `${user.name} (ID: ${user._id})`;
+			if (user.name !== "Unknown") log(author, `- BaseService.create :>>`, { data });
+
 			const item = await this.query.create(data);
 
 			return (await manager.save(item)) as E & { slug?: string; metadata?: any };
@@ -59,7 +66,7 @@ export default class BaseService<E extends ObjectLiteral> {
 		}
 	}
 
-	async find(filter?: IQueryFilter, options?: IQueryOptions, pagination?: IQueryPagination): Promise<E[]> {
+	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<E[]> {
 		// log(`Service > find :>> filter:`, filter);
 		// const query = this.query;
 		// let results;
@@ -70,8 +77,10 @@ export default class BaseService<E extends ObjectLiteral> {
 		if (filter) findOptions.where = filter;
 		if (options?.order) findOptions.order = options.order;
 		if (options?.select && options.select.length > 0) findOptions.select = options.select;
-		if (pagination?.page_size) findOptions.take = pagination.page_size;
-		if (pagination?.current_page > 0 && pagination.page_size > 0) findOptions.skip = (pagination.current_page - 1) * pagination.page_size;
+		// if (pagination?.page_size) findOptions.take = pagination.page_size;
+		// if (pagination?.current_page > 0 && pagination.page_size > 0) findOptions.skip = (pagination.current_page - 1) * pagination.page_size;
+		if (options?.skip) findOptions.skip = options.skip;
+		if (options?.limit) findOptions.take = options.limit;
 
 		if (options?.populate && options?.populate.length > 0) {
 			findOptions.relations = {};
@@ -87,7 +96,7 @@ export default class BaseService<E extends ObjectLiteral> {
 		// LOG this for further investigation:
 		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
 		const author = `${user.name} (ID: ${user._id})`;
-		log(author, `- BaseService.find :>>`, { filter, options });
+		if (user.name !== "Unknown") log(author, `- BaseService.find :>>`, { filter, options, pagination });
 		// console.log("BaseService.find > this.req :>> ", this.req);
 
 		if (pagination) {
@@ -122,6 +131,10 @@ export default class BaseService<E extends ObjectLiteral> {
 		// log(`findOne > filter :>>`, filter);
 		const results = await this.find(filter, options);
 
+		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+		const author = `${user.name} (ID: ${user._id})`;
+		if (user.name !== "Unknown") log(author, `- BaseService.findOne :>>`, { filter, options });
+
 		return results.length > 0 ? results[0] : null;
 	}
 
@@ -152,7 +165,9 @@ export default class BaseService<E extends ObjectLiteral> {
 
 		const updateRes = await this.query.updateMany(filter, updateData);
 
-		log(`BaseService > UPDATE :>>`);
+		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+		const author = `${user.name} (ID: ${user._id})`;
+		if (user.name !== "Unknown") log(author, `- BaseService > UPDATE :>>`);
 		logFull({ filter, updateData, updateRes });
 
 		if (updateRes.matchedCount > 0) {
@@ -166,6 +181,11 @@ export default class BaseService<E extends ObjectLiteral> {
 	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {
 		// Manually update "deleteAt" to database since TypeORM MongoDB doesn't support "softDelete" yet
 		const deleteRes = await this.query.updateMany(filter, { $set: { deletedAt: new Date() } });
+
+		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+		const author = `${user.name} (ID: ${user._id})`;
+		if (user.name !== "Unknown") log(author, `- BaseService.softDelete :>>`, { filter });
+
 		return { ok: deleteRes.matchedCount };
 
 		/**
@@ -179,11 +199,17 @@ export default class BaseService<E extends ObjectLiteral> {
 
 	async delete(filter?: IQueryFilter) {
 		const deleteRes = await this.query.deleteMany(filter);
+		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+		const author = `${user.name} (ID: ${user._id})`;
+		if (user.name !== "Unknown") log(author, `- BaseService.delete :>>`, { filter });
 		return deleteRes.result;
 	}
 
 	async empty(filter?: IQueryFilter) {
 		if (filter?.pass != EMPTY_PASS_PHRASE) return { ok: 0, n: 0, error: "[DANGER] You need a password to process this, buddy!" };
+		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+		const author = `${user.name} (ID: ${user._id})`;
+		if (user.name !== "Unknown") log(author, `- BaseService.empty :>>`, { filter });
 		const deleteRes = await this.query.deleteMany({});
 		return { ...deleteRes.result, error: null };
 	}

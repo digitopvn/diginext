@@ -175,6 +175,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			search = false,
 			raw = false,
 			where = {},
+			access_token,
 			...filter
 		} = req.query as any;
 
@@ -204,7 +205,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 
 		// pagination
 		if (this.pagination.page_size) {
-			options.skip = (this.pagination.current_page ?? 1) * this.pagination.page_size;
+			options.skip = ((this.pagination.current_page ?? 1) - 1) * this.pagination.page_size;
 			options.limit = this.pagination.page_size;
 		}
 
@@ -285,6 +286,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			select,
 			sort = "createdAt",
 			search = false,
+			access_token,
 			...filter
 		} = req.query;
 
