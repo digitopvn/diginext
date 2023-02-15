@@ -9,7 +9,7 @@ RUN apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 # Node.js, Git, kubectl & Open SSH
 RUN apt-get update --allow-releaseinfo-change -yq \
   && apt-get install curl gnupg wget ca-certificates -yq \
-  && curl -sL https://deb.nodesource.com/setup_18.x | bash \
+  && curl -sL https://deb.nodesource.com/setup_16.x | bash \
   && apt-get install nodejs git sed jq kubectl openssh-client -yq \
   && apt-get clean -y
 
@@ -72,7 +72,6 @@ EXPOSE 6969
 # Run npm start script when container starts
 # CMD [ "npm", "start" ]
 # CMD [ "yarn", "start" ]
-
 # CMD [ "node", "/usr/diginext-cli/dist/server.js" ]
 
 ENTRYPOINT [ "/usr/diginext-cli/scripts/entry.sh" ]
