@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "1.2.2",
+	"version": "1.3.0",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -73,7 +73,7 @@
 		"pkg-version": "npm pkg set version=$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-)",
 		"npm-publish": "npm publish --access=public",
 		"release": "run-s build prerelease husky-hide npm-publish husky-show pull-request",
-		"prerelease": "pnpm semantic-release --no-ci && run-s pkg-version commit-build",
+		"prerelease": "npx semantic-release --no-ci && npm run pkg-version && npm run commit-build",
 		"pull-request": "open-cli https://github.com/digitopvn/diginext/compare/main...$(echo $(git rev-parse --abbrev-ref HEAD))",
 		"husky-hide": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall",
 		"husky-show": "npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
