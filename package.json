@@ -72,7 +72,7 @@
 		"commit-build": "git add . && git commit -m 'build(prerelease): generate changelog to publish' && git push -u origin",
 		"pkg-version": "npm pkg set version=$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-)",
 		"npm-publish": "npm publish --access=public",
-		"release": "run-s build prerelease husky-hide npm-publish husky-show pull-request",
+		"release": "npm run build && npm run prerelease && npm run husky-hide && npm run npm-publish && npm run husky-show && npm run pull-request",
 		"prerelease": "npx semantic-release --no-ci && npm run pkg-version && npm run commit-build",
 		"pull-request": "open-cli https://github.com/digitopvn/diginext/compare/main...$(echo $(git rev-parse --abbrev-ref HEAD))",
 		"husky-hide": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall",
