@@ -1,3 +1,16 @@
+# [1.3.0](https://github.com/digitopvn/diginext/compare/v1.2.2...v1.3.0) (2023-02-16)
+
+
+### Bug Fixes
+
+* **admin:** add framework crud and fix some bugs ([dc40b46](https://github.com/digitopvn/diginext/commit/dc40b46c704fe5e161335c9d6e67919d01f7f84a))
+* **typeorm:** error when populate unexpected fields ([71c1bd5](https://github.com/digitopvn/diginext/commit/71c1bd52501db7c8358d9a503ef20b73fc4d7acf))
+
+
+### Features
+
+* **admin ui:** add crud to framework, cluster, git, cloud registry ([72b65ca](https://github.com/digitopvn/diginext/commit/72b65ca66b142758dac0d5e7720274a30294ef94))
+
 ## [1.2.2](https://github.com/digitopvn/diginext/compare/v1.2.1...v1.2.2) (2023-02-15)
 
 

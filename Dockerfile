@@ -25,8 +25,9 @@ RUN cd ~ \
   && tar xf ~/doctl-1.78.0-linux-amd64.tar.gz \
   && mv ~/doctl /usr/local/bin
 
-# Install yarn package manager & pm2
-RUN npm install -g yarn
+# Install PNPM (instead of YARN as the previous version)
+# RUN npm install -g yarn
+RUN npm install -g pnpm
 
 # Set working directory
 WORKDIR /usr/diginext-cli
@@ -39,8 +40,9 @@ COPY ./package*.json ./
 # RUN yarn set version berry
 
 # Install dependencies
-RUN touch yarn.lock
-RUN yarn install
+# RUN touch yarn.lock
+# RUN yarn install
+RUN pnpm i
 
 # RUN yarn add esm
 

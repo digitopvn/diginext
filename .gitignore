@@ -12,6 +12,8 @@ yarn-error.log*
 .yarn
 .yarnrc
 .yarnrc.yaml
+.yarnrc.yml
+pnpm-lock.yaml
 
 # dependencies
 node_modules/
