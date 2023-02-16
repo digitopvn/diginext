@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://diginext.site
+
+# Sitemaps
+Sitemap: https://diginext.site/sitemap.xml
