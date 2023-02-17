@@ -45,15 +45,18 @@ export default class BuildController extends BaseController<BuildService> {
 		res: Response<any, Record<string, any>>,
 		next: NextFunction
 	): Promise<Response<any, Record<string, any>>> {
-		const { slug } = req.query;
+		const { slug } = req.body;
+		console.log("slug :>> ", slug);
+		// return ApiResponse.failed(res, `${slug}`);
 
-		if (!slug) return ApiResponse.failed(res, "slug is required.");
+		if (!slug) return ApiResponse.failed(res, `Build "slug" is required.`);
 
 		const build = await this.service.findOne({ slug });
 		if (!build) return ApiResponse.failed(res, `Build "${slug}" not found.`);
 
-		await stopBuild(build.appSlug, slug.toString());
+		const stoppedBuild = await stopBuild(build.appSlug, slug.toString());
+		if ((stoppedBuild as { error: string }).error) return ApiResponse.failed(res, (stoppedBuild as { error: string }).error);
 
-		return ApiResponse.succeed(res, {});
+		return ApiResponse.succeed(res, stoppedBuild);
 	}
 }

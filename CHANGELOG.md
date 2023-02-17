@@ -1,3 +1,12 @@
+## [1.3.1](https://github.com/digitopvn/diginext/compare/v1.3.0...v1.3.1) (2023-02-17)
+
+
+### Bug Fixes
+
+* **admin ui:** fix build sort and be able stop build ([c8b2888](https://github.com/digitopvn/diginext/commit/c8b28886ee42c7a959a26ffa9bf10d8fe714ae23))
+* **build:** can be able to stop build and sort by updated at ([7e989ae](https://github.com/digitopvn/diginext/commit/7e989ae6d26a7e5f3f7c359e58446afa443fcf37))
+* **generate deployment:** fix generate prerelease domain ([c3d1910](https://github.com/digitopvn/diginext/commit/c3d19107541addc35ade89399d211483d9077c5a))
+
 # [1.3.0](https://github.com/digitopvn/diginext/compare/v1.2.2...v1.3.0) (2023-02-16)
 
 
