@@ -78,7 +78,10 @@
 		"husky-hide": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall",
 		"husky-show": "npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
 		"prepare": "husky install",
-		"postinstall": "husky install"
+		"postinstall": "husky install",
+		"docker-driver": "docker buildx create --driver docker-container --name diginext-cli-builder",
+		"docker-build": "docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile --push -t digitop/diginext-cli:$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-) -t digitop/diginext-cli:latest --builder=diginext-cli-builder --cache-to type=registry,ref=digitop/diginext-cli:latest --cache-from type=registry,ref=digitop/diginext-cli:latest .",
+		"docker-release": "pnpm build && pnpm docker-build"
 	},
 	"config": {
 		"commitizen": {

@@ -29,47 +29,50 @@ export async function updateBuildStatus(appSlug: string, buildSlug: string, buil
 
 	// update latest build to current project
 	let projectSlug = (app.project as Project).slug;
+	let updatedProject;
 	if (isServerMode) {
 		const projectSvc = new ProjectService();
-		await projectSvc.update({ slug: projectSlug }, { latestBuild: buildSlug });
+		const projects = await projectSvc.update({ slug: projectSlug }, { latestBuild: buildSlug });
+		if (projects.length > 0) updatedProject = projects[0];
 	} else {
-		await fetchApi<Project>({
+		const { data: projects } = await fetchApi<Project>({
 			url: "/api/v1/project?slug=" + projectSlug,
 			method: "PATCH",
 			data: { latestBuild: buildSlug },
 		});
+		if ((projects as Project[]).length > 0) updatedProject = projects[0];
 	}
-	// log(`updateBuildStatus >`, { project });
+	log(`updateBuildStatus >`, { updatedProject });
 
 	// update latest build to current app
 	if (isServerMode) {
-		await appSvc.update({ slug: appSlug }, { latestBuild: buildSlug });
+		await appSvc.update({ slug: appSlug }, { latestBuild: buildSlug }, { populate: ["project"] });
 	} else {
 		await fetchApi<App>({
-			url: "/api/v1/app?slug=" + appSlug,
+			url: `/api/v1/app?slug=${appSlug}&populate=project`,
 			method: "PATCH",
 			data: { latestBuild: buildSlug },
 		});
 	}
 	// log(`updateBuildStatus >`, { updatedApp });
 
-	// update build's status on Digirelease
-	let updatedBuild;
+	// update build's status on server
+	let updatedBuild: Build[];
 	if (isServerMode) {
-		updatedBuild = await buildSvc.update({ slug: buildSlug }, { status: buildStatus });
+		updatedBuild = await buildSvc.update({ slug: buildSlug }, { status: buildStatus }, { populate: ["project"] });
 	} else {
 		const res = await fetchApi<Build>({
-			url: "/api/v1/build?slug=" + buildSlug,
+			url: `/api/v1/build?slug=${buildSlug}&populate=project`,
 			method: "PATCH",
 			data: { status: buildStatus },
 		});
-		updatedBuild = res.data;
+		updatedBuild = res.data as Build[];
 	}
 	// log(`updateBuildStatus >> res:`, res);
 
 	if (updatedBuild && updatedBuild.length > 0) {
-		log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> ${buildStatus}`);
-		return updatedBuild[0] ?? updatedBuild;
+		log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> new status: ${buildStatus.toUpperCase()}`);
+		return updatedBuild[0];
 	} else {
 		logError(`updateBuildStatus >> error!`);
 		return { error: "Something is wrong..." };

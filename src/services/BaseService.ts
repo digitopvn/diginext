@@ -169,6 +169,9 @@ export default class BaseService<E extends ObjectLiteral> {
 
 		// console.log(`Service > UPDATE :>>`, { filter }, { data });
 
+		// update new date
+		data.updatedAt = new Date();
+
 		const updateData = options?.raw ? data : { $set: data };
 
 		const updateRes = await this.query.updateMany(filter, updateData);

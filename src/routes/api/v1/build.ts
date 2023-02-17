@@ -25,7 +25,7 @@ router
 		// authorize,
 		controller.getLogs.bind(controller)
 	)
-	.get(
+	.patch(
 		"/stop",
 		authenticate,
 		// authorize,

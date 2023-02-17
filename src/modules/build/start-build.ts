@@ -37,22 +37,39 @@ export let queue = new PQueue({ concurrency: 1 });
  * Stop the build process.
  */
 export const stopBuild = async (appSlug: string, buildSlug: string) => {
-	// console.log("processes :>> ", processes);
-	try {
-		// TODO: not working properly, not sure why...
-		processes[buildSlug].cancel();
-		await wait(1000);
-		processes[buildSlug].cancel();
-		await wait(1000);
-		processes[buildSlug].kill();
-		await wait(1000);
-		processes[buildSlug].kill("SIGTERM", { forceKillAfterTimeout: 2000 });
-		await updateBuildStatus(appSlug, buildSlug, "failed");
-		delete processes[buildSlug];
-		logSuccess(`Build process of "${buildSlug}" has been stopped.`);
-	} catch (e) {
-		logWarn(`Can't kill the build command of "${buildSlug}": ${e}`);
+	let error;
+
+	// Validate...
+	if (!processes[buildSlug]) {
+		error = `[IGNORE] Build "${buildSlug}" not found (it might be stopped already).`;
+		logWarn(error);
+		// return { error };
 	}
+
+	if (!appSlug) {
+		error = `App "${appSlug}" not found.`;
+		logError(error);
+		return { error };
+	}
+
+	// Kill the f*cking build process...
+	try {
+		processes[buildSlug].kill("SIGTERM", { forceKillAfterTimeout: 2000 });
+	} catch (e) {
+		logWarn(`[IGNORE] Cannot stop the build process of "${buildSlug}": ${e}`);
+	}
+
+	// Stop the f*cking buildx driver...
+	await execCmd(`docker buildx stop ${appSlug.toLowerCase()}`);
+	await wait(100);
+
+	// Update the status in the database
+	const stoppedBuild = await updateBuildStatus(appSlug, buildSlug, "failed");
+	delete processes[buildSlug];
+
+	logSuccess(`Build process of "${buildSlug}" has been stopped.`);
+
+	return stoppedBuild;
 };
 
 /**
@@ -237,7 +254,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 			newBuild = data as Build;
 		}
 
-		message = "[SUCCESS] created new build on Digirelease!";
+		message = "[SUCCESS] created new build on server!";
 		sendMessage({ SOCKET_ROOM, logger, message });
 	} catch (e) {
 		logError(e);
@@ -295,7 +312,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		execCmd(`docker buildx create --driver docker-container --name ${appSlug.toLowerCase()}`);
 
 		const cacheCmd = latestBuild ? ` --cache-from type=registry,ref=${latestBuild.image}` : "";
-		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} .`;
+		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} --builder=${appSlug.toLowerCase()} .`;
 		// log(`Build command: "${buildCmd}"`);
 
 		// add to process collection so we can kill it if needed:
@@ -366,8 +383,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		return true;
 	}
 
-	// Insert this build record to Digirelease:
-	// let projectId;
+	// Insert this build record to server:
 	let prereleaseDeploymentData = fetchDeployment(PRERELEASE_DEPLOYMENT_FILE, options);
 	let releaseId;
 
