@@ -9,6 +9,7 @@ import session from "express-session";
 import * as fs from "fs";
 import type { Server } from "http";
 import { createServer } from "http";
+import morgan from "morgan";
 import cronjob from "node-cron";
 import passport from "passport";
 import path from "path";
@@ -24,7 +25,6 @@ import { CLI_CONFIG_DIR } from "./config/const";
 /**
  * CUSTOM MIDDLEWARES
  */
-import logEnabled from "./middlewares/logEnabled";
 import { route404_handler } from "./middlewares/route404";
 // import listEndpoints from "express-list-endpoints";
 // database
@@ -199,7 +199,8 @@ function initialize() {
 		 * LOGGING SYSTEM MIDDLEWARE - ENABLED
 		 * Enable when running on server
 		 */
-		app.use(logEnabled(Config.ENV !== "development"));
+		// app.use(logEnabled(Config.ENV !== "development"));
+		app.use(morgan("tiny"));
 
 		// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
 		app.use(`/${BASE_PATH}`, main);
