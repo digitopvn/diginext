@@ -17,43 +17,43 @@ router
 		"/",
 		authenticate,
 		// authorize,
-		controller.read.bind(controller)
+		controller.apiRespond(controller.read)
 	)
 	.get(
 		"/logs",
 		authenticate,
 		// authorize,
-		controller.getLogs.bind(controller)
+		controller.apiRespond(controller.getLogs)
 	)
 	.patch(
 		"/stop",
 		authenticate,
 		// authorize,
-		controller.stopBuild.bind(controller)
+		controller.apiRespond(controller.stopBuild)
 	)
 	.post(
 		"/",
 		authenticate,
 		// authorize,
-		controller.create.bind(controller)
+		controller.apiRespond(controller.create)
 	)
 	.patch(
 		"/",
 		authenticate,
 		// authorize,
-		controller.update.bind(controller)
+		controller.apiRespond(controller.update)
 	)
 	.delete(
 		"/",
 		authenticate,
 		// authorize,
-		controller.softDelete.bind(controller)
+		controller.apiRespond(controller.delete)
 	)
 	.delete(
 		"/empty",
 		authenticate,
 		// authorize,
-		controller.empty.bind(controller)
+		controller.apiRespond(controller.empty)
 	);
 
 export default router;

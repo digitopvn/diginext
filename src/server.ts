@@ -14,6 +14,7 @@ import cronjob from "node-cron";
 import passport from "passport";
 import path from "path";
 import { Server as SocketServer } from "socket.io";
+import swaggerUi from "swagger-ui-express";
 
 // routes
 import { googleStrategy } from "@/modules/passports/googleStrategy";
@@ -126,10 +127,6 @@ function initialize() {
 		});
 
 		/**
-		 * TODO: Enable SWAGGER for API Docs
-		 */
-
-		/**
 		 * CORS MIDDLEWARE
 		 * Access-Control-Allow-Headers
 		 */
@@ -145,6 +142,20 @@ function initialize() {
 		 * SERVING STATIC FILES
 		 */
 		app.use(express.static(path.resolve(process.cwd(), "public")));
+
+		/**
+		 * TODO: Enable SWAGGER for API Docs
+		 * SWAGGER API DOCS
+		 */
+		app.use(
+			"/docs",
+			swaggerUi.serve,
+			swaggerUi.setup(undefined, {
+				swaggerOptions: {
+					url: "/swagger.json",
+				},
+			})
+		);
 
 		/**
 		 * PASSPORT STRATEGY

@@ -23,7 +23,7 @@ export class RoleRoute {
 }
 
 @Entity({ name: "roles" })
-export default class Role extends Base<Role> {
+export default class Role extends Base {
 	@Column({ length: 250 })
 	@IsNotEmpty({ message: `Role name is required.` })
 	name: string;

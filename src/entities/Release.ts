@@ -7,7 +7,7 @@ import Base from "./Base";
 import type { App, Project, User, Workspace } from "./index";
 
 @Entity({ name: "releases" })
-export default class Release extends Base<Release> {
+export default class Release extends Base {
 	@Column({ length: 250 })
 	@IsNotEmpty({ message: `User name is required.` })
 	name?: string;

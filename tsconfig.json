@@ -1,7 +1,6 @@
 {
 	"compilerOptions": {
 		"strict": false,
-		"baseUrl": ".",
 		"outDir": "dist",
 		"lib": ["es6"],
 		"target": "es6",
@@ -24,12 +23,13 @@
 		"preserveWatchOutput": true,
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
+		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"],
 			"libs/*": ["./libs/*"]
 		}
 	},
-	"files": ["src/index.ts", "src/server.ts"],
+	"files": ["src/index.ts", "src/server.ts", "src/interfaces/ResponseData.ts"],
 	"include": ["./src", "./test", "node_modules/execa/index.d.ts"],
 	"exclude": ["dist", "build", "node_modules", "storage", "./storage"],
 	"ts-node": {

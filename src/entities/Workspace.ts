@@ -14,7 +14,7 @@ export interface IWorkspace extends IBase {
 }
 
 @Entity({ name: "workspaces" })
-export default class Workspace extends Base<Workspace> {
+export default class Workspace extends Base {
 	/**
 	 * Workspace name
 	 */

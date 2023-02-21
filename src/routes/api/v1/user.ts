@@ -11,37 +11,37 @@ router
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))
-	.get("/", authenticate, controller.read.bind(controller))
+	.get("/", authenticate, controller.apiRespond(controller.read))
 	.post(
 		"/",
 		// temporary disable auth
 		// authenticate,
 		// authorize,
-		controller.create.bind(controller)
+		controller.apiRespond(controller.create)
 	)
 	.patch(
 		"/",
 		authenticate,
 		// authorize,
-		controller.update.bind(controller)
+		controller.apiRespond(controller.update)
 	)
 	.delete(
 		"/",
 		authenticate,
 		// authorize,
-		controller.softDelete.bind(controller)
+		controller.apiRespond(controller.delete)
 	)
 	.delete(
 		"/empty",
 		authenticate,
 		// authorize,
-		controller.empty.bind(controller)
+		controller.apiRespond(controller.empty)
 	)
 	.patch(
 		"/join-workspace",
 		authenticate,
 		// authorize,
-		controller.joinWorkspace.bind(controller)
+		controller.apiRespond(controller.joinWorkspace)
 	);
 
 export default router;

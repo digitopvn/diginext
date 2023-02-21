@@ -1,41 +1,61 @@
 import { logError } from "diginext-utils/dist/console/log";
-import type { NextFunction, Request, Response } from "express";
-import type { ParamsDictionary } from "express-serve-static-core";
-import type { ParsedQs } from "qs";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Tags } from "tsoa/dist";
 
-import type { User } from "@/entities";
+import type { Cluster, Project } from "@/entities";
+import type { HiddenBodyKeys } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import type { ResponseData } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
 import ClusterService from "@/services/ClusterService";
 
 import BaseController from "./BaseController";
 
-export default class ClusterController extends BaseController<ClusterService> {
+@Tags("Cluster")
+@Route("cluster")
+export default class ClusterController extends BaseController<Cluster> {
 	constructor() {
 		super(new ClusterService());
 	}
 
-	async connect(
-		req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>,
-		res: Response<any, Record<string, any>>,
-		next: NextFunction
-	): Promise<Response<any, Record<string, any>>> {
-		const result: { status: number; messages: string[]; data: any } = { status: 1, messages: [], data: {} };
+	@Get("/")
+	read(@Queries() queryParams?: IGetQueryParams) {
+		return super.read();
+	}
 
-		const options = { userId: (req.user as User)._id as string, workspaceId: (req.user as User).activeWorkspace as string };
+	@Post("/")
+	create(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		return super.create(body);
+	}
+
+	@Patch("/")
+	update(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		return super.update(body);
+	}
+
+	@Delete("/")
+	delete(@Queries() queryParams?: IDeleteQueryParams) {
+		return super.delete();
+	}
+
+	@Get("/connect")
+	async connect(@Queries() queryParams?: { slug: string }) {
+		const result: ResponseData = { status: 1, messages: [], data: {} };
+
+		// const options = { userId: this.user?._id.toString(), workspaceId: this.user?.activeWorkspace.toString() };
 		// console.log("options :>> ", options);
 
-		const { slug } = req.query;
+		const { slug } = this.filter;
 		if (!slug) {
 			result.status = 0;
-			result.messages = [`Param "slug" is required.`];
-			return res.status(200).json(result);
+			result.messages.push(`Param "slug" is required.`);
+			return result;
 		}
 
 		const cluster = await this.service.findOne({ slug });
 		if (!cluster) {
 			result.status = 0;
-			result.messages = [`Cluster not found: ${slug}.`];
-			return res.status(200).json(result);
+			result.messages.push(`Cluster not found: ${slug}.`);
+			return result;
 		}
 		// console.log("registry :>> ", registry);
 
@@ -44,16 +64,16 @@ export default class ClusterController extends BaseController<ClusterService> {
 			const authResult = await ClusterManager.auth(shortName);
 			if (authResult) {
 				result.status = 1;
-				result.messages = ["Ok"];
+				result.messages.push("Ok");
 			} else {
 				result.status = 0;
-				result.messages = [`Cluster authentication failed.`];
+				result.messages.push(`Cluster authentication failed.`);
 			}
 		} catch (e) {
 			logError(e);
 			result.status = 0;
-			result.messages = [`Cluster authentication failed: ${e}`];
+			result.messages.push(`Cluster authentication failed: ${e}`);
 		}
-		return res.status(200).json(result);
+		return result;
 	}
 }

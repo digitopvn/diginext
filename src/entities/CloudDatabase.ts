@@ -7,7 +7,7 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "cloud_databases" })
-export default class CloudDatabase extends Base<CloudDatabase> {
+export default class CloudDatabase extends Base {
 	@Column()
 	name?: string;
 

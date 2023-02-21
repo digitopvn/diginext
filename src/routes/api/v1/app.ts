@@ -15,37 +15,37 @@ router
 		"/",
 		authenticate,
 		// authorize,
-		controller.read.bind(controller)
+		controller.apiRespond(controller.read)
 	)
 	.post(
 		"/",
 		authenticate,
 		// authorize,
-		controller.create.bind(controller)
+		controller.apiRespond(controller.create)
 	)
 	.patch(
 		"/",
 		authenticate,
 		// authorize,
-		controller.update.bind(controller)
+		controller.apiRespond(controller.update)
 	)
 	.delete(
 		"/",
 		authenticate,
 		// authorize,
-		controller.softDelete.bind(controller)
+		controller.apiRespond(controller.delete)
 	)
 	.delete(
 		"/empty",
 		authenticate,
 		// authorize,
-		controller.empty.bind(controller)
+		controller.apiRespond(controller.empty)
 	)
 	.delete(
 		"/environment",
 		authenticate,
 		// authorize,
-		controller.deleteEnvironment.bind(controller)
+		controller.apiRespond(controller.deleteEnvironment)
 	);
 
 export default router;

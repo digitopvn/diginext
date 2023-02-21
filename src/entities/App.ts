@@ -10,7 +10,7 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "apps" })
-export default class App extends Base<App> {
+export default class App extends Base {
 	@Column({ length: 250 })
 	@IsNotEmpty({ message: `App name is required.` })
 	name?: string;
