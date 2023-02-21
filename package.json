@@ -83,9 +83,9 @@
 		"docker-driver": "docker buildx create --driver docker-container --name diginext-cli-builder",
 		"docker-build": "docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile --push -t digitop/diginext-cli:$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-) -t digitop/diginext-cli:latest --builder=diginext-cli-builder --cache-to type=registry,ref=digitop/diginext-cli:latest --cache-from type=registry,ref=digitop/diginext-cli:latest .",
 		"docker-release": "pnpm build && pnpm docker-build",
+		"swagger": "tsoa spec",
 		"prepare": "husky install",
-		"postinstall": "husky install",
-		"swagger": "tsoa spec"
+		"postinstall": "husky install"
 	},
 	"config": {
 		"commitizen": {
