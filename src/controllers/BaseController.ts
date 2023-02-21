@@ -38,16 +38,21 @@ export default class BaseController<T extends Base> {
 		return async (req: Request, res: Response, next: NextFunction) => {
 			this.user = req.user as User;
 
-			let data = await executor;
+			// console.log("apiRespond > req.body :>> ", req.body);
+			let result = await executor(req.body);
+			// console.log("apiRespond > data :>> ", data);
 
-			let result: any = { status: 1, data };
-			if (!data) result.status = 0;
+			// let result: any = { status: 1, data };
+			// if (!data) result.status = 0;
 
 			return res.status(200).json(result);
 		};
 	}
 
 	async read() {
+		// console.log("this :>> ", this);
+		// console.log("this.filter :>> ", this.filter);
+
 		let data: T | T[];
 		if (this.filter._id) {
 			data = await this.service.findOne(this.filter, this.options);

@@ -11,36 +11,36 @@ router
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))
-	.get("/", controller.apiRespond(controller.read))
+	.get("/", controller.apiRespond(controller.read.bind(controller)))
 	.post(
 		"/",
 		// temporary disable auth
 		// authenticate, authorize,
-		controller.apiRespond(controller.create)
+		controller.apiRespond(controller.create.bind(controller))
 	)
 	.patch(
 		"/",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.update)
+		controller.apiRespond(controller.update.bind(controller))
 	)
 	.delete(
 		"/",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.delete)
+		controller.apiRespond(controller.delete.bind(controller))
 	)
 	.delete(
 		"/empty",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.empty)
+		controller.apiRespond(controller.empty.bind(controller))
 	)
 	.patch(
 		"/add-user",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.addUser)
+		controller.apiRespond(controller.addUser.bind(controller))
 	);
 
 export default router;

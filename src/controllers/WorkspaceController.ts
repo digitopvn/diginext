@@ -19,7 +19,9 @@ export default class WorkspaceController extends BaseController<Workspace> {
 	service: WorkspaceService;
 
 	constructor() {
-		super(new WorkspaceService());
+		const service = new WorkspaceService();
+		super(service);
+		this.service = service;
 	}
 
 	@Get("/")

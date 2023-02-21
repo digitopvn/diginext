@@ -15,14 +15,14 @@ router
 		"/",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.read)
+		controller.apiRespond(controller.read.bind(controller))
 		// controller.read.bind(controller)
 	)
 	.get(
 		"/with-apps",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.getProjectsAndApps)
+		controller.apiRespond(controller.getProjectsAndApps.bind(controller))
 		// controller.getProjectsAndApps.bind(controller)
 	)
 	.post(
@@ -30,28 +30,28 @@ router
 		authenticate,
 		// authorize,
 		// controller.create.bind(controller)
-		controller.apiRespond(controller.create)
+		controller.apiRespond(controller.create.bind(controller))
 	)
 	.patch(
 		"/",
 		authenticate,
 		// authorize,
 		// controller.update.bind(controller)
-		controller.apiRespond(controller.update)
+		controller.apiRespond(controller.update.bind(controller))
 	)
 	.delete(
 		"/",
 		authenticate,
 		// authorize,
 		// controller.softDelete.bind(controller)
-		controller.apiRespond(controller.softDelete)
+		controller.apiRespond(controller.softDelete.bind(controller))
 	)
 	.delete(
 		"/empty",
 		authenticate,
 		// authorize,
 		// controller.empty.bind(controller)
-		controller.apiRespond(controller.empty)
+		controller.apiRespond(controller.empty.bind(controller))
 	);
 
 export default router;

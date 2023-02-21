@@ -15,37 +15,37 @@ router
 		"/",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.read)
+		controller.apiRespond(controller.read.bind(controller))
 	)
 	.get(
 		"/connect",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.connect)
+		controller.apiRespond(controller.connect.bind(controller))
 	)
 	.post(
 		"/",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.create)
+		controller.apiRespond(controller.create.bind(controller))
 	)
 	.patch(
 		"/",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.update)
+		controller.apiRespond(controller.update.bind(controller))
 	)
 	.delete(
 		"/",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.delete)
+		controller.apiRespond(controller.delete.bind(controller))
 	)
 	.delete(
 		"/empty",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.empty)
+		controller.apiRespond(controller.empty.bind(controller))
 	);
 
 export default router;
