@@ -2259,7 +2259,13 @@
 				"description": "Construct a type with the properties of T except for those in type K."
 			}
 		},
-		"securitySchemes": {}
+		"securitySchemes": {
+			"jwt": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "JWT"
+			}
+		}
 	},
 	"info": {
 		"title": "@topgroup/diginext",
@@ -2315,7 +2321,11 @@
 					}
 				},
 				"tags": ["Build"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -2480,7 +2490,11 @@
 					}
 				},
 				"tags": ["Build"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -2561,7 +2575,11 @@
 					}
 				},
 				"tags": ["Build"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -2649,7 +2667,11 @@
 					}
 				},
 				"tags": ["Build"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -2701,7 +2723,11 @@
 					}
 				},
 				"tags": ["Build"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -2743,7 +2769,11 @@
 					}
 				},
 				"tags": ["Build"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -2802,7 +2832,11 @@
 					}
 				},
 				"tags": ["Cluster"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -2967,7 +3001,11 @@
 					}
 				},
 				"tags": ["Cluster"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -3048,7 +3086,11 @@
 					}
 				},
 				"tags": ["Cluster"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -3136,7 +3178,11 @@
 					}
 				},
 				"tags": ["Cluster"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -3175,7 +3221,11 @@
 					}
 				},
 				"tags": ["Cluster"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -3227,7 +3277,11 @@
 					}
 				},
 				"tags": ["Project"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -3392,7 +3446,11 @@
 					}
 				},
 				"tags": ["Project"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -3473,7 +3531,11 @@
 					}
 				},
 				"tags": ["Project"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -3561,7 +3623,11 @@
 					}
 				},
 				"tags": ["Project"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -3616,7 +3682,11 @@
 					}
 				},
 				"tags": ["Project"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -3769,7 +3839,11 @@
 					}
 				},
 				"tags": ["Cloud Provider"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -3934,7 +4008,11 @@
 					}
 				},
 				"tags": ["Cloud Provider"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -4015,7 +4093,11 @@
 					}
 				},
 				"tags": ["Cloud Provider"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -4103,7 +4185,11 @@
 					}
 				},
 				"tags": ["Cloud Provider"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -4165,7 +4251,11 @@
 					}
 				},
 				"tags": ["Container Registry"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -4330,7 +4420,11 @@
 					}
 				},
 				"tags": ["Container Registry"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -4411,7 +4505,11 @@
 					}
 				},
 				"tags": ["Container Registry"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -4499,7 +4597,11 @@
 					}
 				},
 				"tags": ["Container Registry"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -4552,7 +4654,11 @@
 					}
 				},
 				"tags": ["Container Registry"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -4604,7 +4710,11 @@
 					}
 				},
 				"tags": ["Release"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -4769,7 +4879,11 @@
 					}
 				},
 				"tags": ["Release"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -4850,7 +4964,11 @@
 					}
 				},
 				"tags": ["Release"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -4938,7 +5056,11 @@
 					}
 				},
 				"tags": ["Release"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -4990,7 +5112,11 @@
 					}
 				},
 				"tags": ["Release"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -5039,7 +5165,11 @@
 					}
 				},
 				"tags": ["Release"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -5088,7 +5218,11 @@
 					}
 				},
 				"tags": ["Release"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -5147,7 +5281,11 @@
 					}
 				},
 				"tags": ["Role"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -5312,7 +5450,11 @@
 					}
 				},
 				"tags": ["Role"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -5393,7 +5535,11 @@
 					}
 				},
 				"tags": ["Role"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -5481,7 +5627,11 @@
 					}
 				},
 				"tags": ["Role"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -5543,7 +5693,11 @@
 					}
 				},
 				"tags": ["Team"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -5708,7 +5862,11 @@
 					}
 				},
 				"tags": ["Team"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -5789,7 +5947,11 @@
 					}
 				},
 				"tags": ["Team"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -5877,7 +6039,11 @@
 					}
 				},
 				"tags": ["Team"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -5939,7 +6105,11 @@
 					}
 				},
 				"tags": ["User"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -6104,7 +6274,11 @@
 					}
 				},
 				"tags": ["User"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -6185,7 +6359,11 @@
 					}
 				},
 				"tags": ["User"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -6273,7 +6451,11 @@
 					}
 				},
 				"tags": ["User"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -6325,7 +6507,11 @@
 					}
 				},
 				"tags": ["User"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -6543,7 +6729,11 @@
 					}
 				},
 				"tags": ["Workspace"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -6624,7 +6814,11 @@
 					}
 				},
 				"tags": ["Workspace"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -6712,7 +6906,11 @@
 					}
 				},
 				"tags": ["Workspace"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -6767,7 +6965,11 @@
 					}
 				},
 				"tags": ["Workspace"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -6820,7 +7022,11 @@
 					}
 				},
 				"tags": ["App"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -6985,7 +7191,11 @@
 					}
 				},
 				"tags": ["App"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -7066,7 +7276,11 @@
 					}
 				},
 				"tags": ["App"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",
@@ -7154,7 +7368,11 @@
 					}
 				},
 				"tags": ["App"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"description": "Delete one item by `{ObjectID}`",
@@ -7206,7 +7424,11 @@
 					}
 				},
 				"tags": ["App"],
-				"security": [],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "query",

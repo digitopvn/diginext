@@ -1,5 +1,5 @@
 import { logError } from "diginext-utils/dist/console/log";
-import { Body, Delete, Get, Patch, Post, Queries, Route, Tags } from "tsoa/dist";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { Cluster, Project } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
@@ -17,26 +17,31 @@ export default class ClusterController extends BaseController<Cluster> {
 		super(new ClusterService());
 	}
 
+	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("jwt")
 	@Get("/connect")
 	async connect(@Queries() queryParams?: { slug: string }) {
 		const result: ResponseData = { status: 1, messages: [], data: {} };

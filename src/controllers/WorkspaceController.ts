@@ -1,4 +1,4 @@
-import { Body, Delete, Get, Patch, Post, Queries, Route, Tags } from "tsoa/dist";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { User, Workspace } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
@@ -29,21 +29,25 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		return super.read();
 	}
 
+	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<Workspace, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<Workspace, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("jwt")
 	@Patch("/add-user")
 	async addUser(@Body() data: AddUserBody) {
 		const { userId, workspaceId } = data;

@@ -5,9 +5,17 @@
 	"spec": {
 		"basePath": "api/v1",
 		"outputDirectory": "public",
-		"specVersion": 3
+		"specVersion": 3,
+		"securityDefinitions": {
+			"jwt": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "JWT"
+			}
+		}
 	},
 	"routes": {
+		"authenticationModule": "./src/middlewares/swagger_auth.ts",
 		"basePath": "api/v1",
 		"routesDir": "./src",
 		"middleware": "express"

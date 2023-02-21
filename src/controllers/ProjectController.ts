@@ -1,4 +1,4 @@
-import { Body, Delete, Get, Patch, Post, Queries, Route, Tags } from "tsoa/dist";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { Project } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
@@ -16,26 +16,31 @@ export default class ProjectController extends BaseController<Project> {
 		super(new ProjectService());
 	}
 
+	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("jwt")
 	@Get("/with-apps")
 	async getProjectsAndApps(@Queries() queryParams?: IGetQueryParams) {
 		let projects = await this.service.find(this.filter, this.options, this.pagination);

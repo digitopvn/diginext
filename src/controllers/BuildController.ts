@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import path from "path";
-import { Body, Delete, Get, Patch, Post, Queries, Route, Tags } from "tsoa/dist";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import { CLI_DIR } from "@/config/const";
 import type { Build } from "@/entities";
@@ -19,26 +19,31 @@ export default class BuildController extends BaseController<Build> {
 		super(new BuildService());
 	}
 
+	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<Build, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<Build, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("jwt")
 	@Get("/logs")
 	async getLogs(@Queries() queryParams?: { slug: string }) {
 		let result: ResponseData & { data: string } = { status: 1, data: "", messages: [] };
@@ -69,6 +74,7 @@ export default class BuildController extends BaseController<Build> {
 		return result;
 	}
 
+	@Security("jwt")
 	@Patch("/stop")
 	async stopBuild(@Body() body: { slug: string }) {
 		let result: ResponseData & { data: Build } = { status: 1, data: [], messages: [] };

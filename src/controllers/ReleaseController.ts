@@ -1,7 +1,7 @@
 import { isJSON } from "class-validator";
 import { toBool } from "diginext-utils/dist/object";
 import { isEmpty } from "lodash";
-import { Body, Delete, Get, Patch, Post, Queries, Route, Tags } from "tsoa/dist";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { Release } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
@@ -21,11 +21,13 @@ export default class ReleaseController extends BaseController<Release> {
 		super(new ReleaseService());
 	}
 
+	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<Release, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		const { envVars } = body;
@@ -33,16 +35,19 @@ export default class ReleaseController extends BaseController<Release> {
 		return super.create(body);
 	}
 
+	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<Release, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("jwt")
 	@Post("/from-build")
 	async createFromBuild(@Body() body: { build: string }) {
 		let result: ResponseData & { data: Release } = { status: 1, data: {}, messages: [] };
@@ -81,6 +86,7 @@ export default class ReleaseController extends BaseController<Release> {
 		return result;
 	}
 
+	@Security("jwt")
 	@Patch("/rollout")
 	async rollout(@Body() data: { id: string }) {
 		const { id } = data;
@@ -106,6 +112,7 @@ export default class ReleaseController extends BaseController<Release> {
 		return result;
 	}
 
+	@Security("jwt")
 	@Patch("/preview")
 	async previewPrerelease(@Body() data: { id: string }) {
 		const { id } = data;

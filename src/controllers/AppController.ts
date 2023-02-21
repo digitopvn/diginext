@@ -1,5 +1,5 @@
 import { log, logError, logFull, logWarn } from "diginext-utils/dist/console/log";
-import { Body, Delete, Get, Patch, Post, Queries, Route, Tags } from "tsoa/dist";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { App } from "@/entities";
 import type { DeployEnvironment, HiddenBodyKeys } from "@/interfaces";
@@ -17,26 +17,31 @@ export default class AppController extends BaseController<App> {
 		super(new AppService());
 	}
 
+	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("jwt")
 	@Delete("/environment")
 	async deleteEnvironment(@Queries() queryParams?: { _id: string; id: string; slug: string; env: string }) {
 		let result: ResponseData & { data: App } = { status: 1, data: {}, messages: [] };

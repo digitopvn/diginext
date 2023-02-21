@@ -1,4 +1,4 @@
-import { Body, Delete, Get, Patch, Post, Queries } from "tsoa/dist";
+import { Body, Delete, Get, Patch, Post, Queries, Security } from "tsoa/dist";
 
 import type { GitProvider } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
@@ -14,26 +14,31 @@ export default class GitProviderController extends BaseController<GitProvider> {
 		super(new GitProviderService());
 	}
 
+	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<GitProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<GitProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("jwt")
 	@Get("/ssh")
 	async generateSSH() {
 		const result: ResponseData & { publicKey?: string } = { status: 1, messages: [], data: {} };
@@ -50,6 +55,7 @@ export default class GitProviderController extends BaseController<GitProvider> {
 		}
 	}
 
+	@Security("jwt")
 	@Get("/verify-ssh")
 	async verifySSH(@Queries() queryParams?: { ["git-provider"]: string }) {
 		const result: ResponseData & { verified?: boolean } = { status: 1, messages: [], data: {} };
