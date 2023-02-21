@@ -15,7 +15,7 @@ export interface ProviderInfo {
 }
 
 @Entity({ name: "users" })
-export default class User extends Base<User> {
+export default class User extends Base {
 	/**
 	 * User name
 	 */

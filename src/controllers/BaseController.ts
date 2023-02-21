@@ -1,21 +1,26 @@
 import { isBooleanString, isJSON } from "class-validator";
 import { iterate, toBool, toInt } from "diginext-utils/dist/object";
-import { Response as ApiResponse } from "diginext-utils/dist/response";
+// import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Request, Response } from "express";
 import { isEmpty, isString, trim } from "lodash";
 import { ObjectId } from "mongodb";
 
 import { Config } from "@/app.config";
-import type { FindManyOptions, FindOptionsWhere, ObjectLiteral } from "@/libs/typeorm";
+import type { User } from "@/entities";
+import type Base from "@/entities/Base";
+import type { FindManyOptions, FindOptionsWhere } from "@/libs/typeorm";
 import { isValidObjectId } from "@/plugins/mongodb";
+import type { BaseService } from "@/services";
 
 import type { IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
-import type BaseService from "../services/BaseService";
+import type { ResponseData } from "../interfaces/ResponseData";
 
 const DEFAULT_PAGE_SIZE = 100;
 
-export default class BaseController<T extends BaseService<ObjectLiteral>> {
-	service: T;
+export default class BaseController<T extends Base> {
+	user: User;
+
+	service: BaseService<T>;
 
 	filter: IQueryOptions & FindManyOptions<any>;
 
@@ -25,108 +30,117 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 
 	where: FindOptionsWhere<any>;
 
-	constructor(service: T) {
+	constructor(service: BaseService<T>) {
 		this.service = service;
 	}
 
-	async read(req: Request, res: Response, next: NextFunction) {
-		let data;
+	apiRespond(executor) {
+		return async (req: Request, res: Response, next: NextFunction) => {
+			this.user = req.user as User;
+
+			// console.log("apiRespond > req.body :>> ", req.body);
+			let result = await executor(req.body);
+			// console.log("apiRespond > data :>> ", data);
+
+			// let result: any = { status: 1, data };
+			// if (!data) result.status = 0;
+
+			return res.status(200).json(result);
+		};
+	}
+
+	async read() {
+		// console.log("this :>> ", this);
+		// console.log("this.filter :>> ", this.filter);
+
+		let data: T | T[];
 		if (this.filter._id) {
 			data = await this.service.findOne(this.filter, this.options);
 		} else {
 			data = await this.service.find(this.filter, this.options, this.pagination);
 		}
 
-		let result: any = { status: 1, data };
-		if (this.pagination) result = { ...result, ...this.pagination };
+		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
 
 		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		const { token } = req as any;
-		if (token) result.token = token;
+		// const { token } = req as any;
+		// if (token) result.token = token;
 
-		return res.status(200).json(result);
+		return result;
 	}
 
-	async create(req: Request, res: Response, next: NextFunction) {
-		const data = await this.service.create(req.body);
-		let result: any = { status: 1, data };
+	async create(inputData) {
+		const data = await this.service.create(inputData);
 
-		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		const { token } = req as any;
-		if (token) result.token = token;
+		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
 
 		// return ApiResponse.succeed(res, data);
-		return res.status(200).json(result);
+		// return res.status(200).json(result);
+		return result;
 	}
 
-	async update(req: Request, res: Response, next: NextFunction) {
-		const results = await this.service.update(this.filter, req.body, this.options);
-
-		let result: any = { status: 1, data: results };
-
-		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		const { token } = req as any;
-		if (token) result.token = token;
+	async update(updateData) {
+		const data = await this.service.update(this.filter, updateData, this.options);
+		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
+		// let result: any = { status: 1, data: results };
 
 		// if (results.length == 0) return ApiResponse.failed(res, "Items not found.");
-		if (results.length == 0) {
-			result.status = 0;
-			result.messages = ["Items not found."];
-			return res.status(200).json(result);
-		}
+		// if (results.length == 0) {
+		// 	result.status = 0;
+		// 	result.messages = ["Items not found."];
+		// 	return res.status(200).json(result);
+		// }
 
 		// return ApiResponse.succeed(res, results);
-		return res.status(200).json(result);
+		// return res.status(200).json(result);
+		return result;
 	}
 
-	async delete(req: Request, res: Response, next: NextFunction) {
+	async delete() {
 		const data = await this.service.delete(this.filter);
+		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
 		// console.log(`delete result >>`, result);
 
-		let result: any = { status: 1, data };
+		// let result: any = { status: 1, data };
 
-		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		const { token } = req as any;
-		if (token) result.token = token;
-
-		// if (result.ok == 0) return ApiResponse.failed(res, "Items not found.");
-		if (result.ok == 0) {
-			result.status = 0;
-			result.messages = ["Items not found."];
-			return res.status(200).json(result);
-			// return ApiResponse.failed(res, "Items not found.");
-		}
+		// if (data.ok == 0) {
+		// 	result.status = 0;
+		// 	result.messages = ["Items not found."];
+		// 	return res.status(200).json(result);
+		// 	// return ApiResponse.failed(res, "Items not found.");
+		// }
 
 		// return ApiResponse.succeed(res, data);
-		return res.status(200).json(result);
+		// return res.status(200).json(result);
+		return result;
 	}
 
-	async softDelete(req: Request, res: Response, next: NextFunction) {
+	async softDelete() {
 		const data = await this.service.softDelete(this.filter);
 
-		let result: any = { status: 1, data };
+		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
+		// let result: any = { status: 1, data };
 
-		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		const { token } = req as any;
-		if (token) result.token = token;
-
-		return res.status(200).json(result);
+		// return res.status(200).json(result);
 		// return ApiResponse.succeed(res, data);
+		return result;
 	}
 
-	async empty(req: Request, res: Response, next: NextFunction) {
+	async empty() {
+		let data: { ok: number };
+		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
+
 		if (Config.ENV === "development") {
-			const data = await this.service.empty(this.filter);
-			if (data.ok == 0) return ApiResponse.failed(res, data.error);
-			return ApiResponse.succeed(res, data);
+			const emptyRes = await this.service.empty(this.filter);
+			result.data.ok = emptyRes.ok;
+			// if (data.ok == 0) return ApiResponse.failed(res, data.error);
+			// return ApiResponse.succeed(res, data);
 		} else {
-			return ApiResponse.failed(`This function is restricted to use on development environment only.`);
+			result.data = { ok: 0 };
+			result.messages.push(`This function is restricted to use on development environment only.`);
 		}
+
+		return result;
 	}
 
 	parseDateRange(req: Request, res: Response, next: NextFunction) {

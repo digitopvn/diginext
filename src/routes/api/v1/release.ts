@@ -21,50 +21,50 @@ router
 		"/",
 		authenticate,
 		// authorize,
-		controller.read.bind(controller)
+		controller.apiRespond(controller.read.bind(controller))
 	)
 	.post(
 		"/",
 		authenticate,
 		// authorize,
-		controller.create.bind(controller)
+		controller.apiRespond(controller.create.bind(controller))
 	)
 	.patch(
 		"/",
 		authenticate,
 		// authorize,
-		controller.update.bind(controller)
+		controller.apiRespond(controller.update.bind(controller))
 	)
 	.delete(
 		"/",
 		authenticate,
 		// authorize,
-		controller.softDelete.bind(controller)
+		controller.apiRespond(controller.delete.bind(controller))
 	)
 	.delete(
 		"/empty",
 		authenticate,
 		// authorize,
-		controller.empty.bind(controller)
+		controller.apiRespond(controller.empty.bind(controller))
 	)
 	.patch(
 		"/rollout",
 		authenticate,
 		// authorize,
-		controller.rollout.bind(controller)
+		controller.apiRespond(controller.rollout.bind(controller))
 	)
 	.patch(
 		"/preview",
 		authenticate,
 		// authorize,
-		controller.previewPrerelease.bind(controller)
+		controller.apiRespond(controller.previewPrerelease.bind(controller))
 	)
 	// Create new {Release} from {Build} data
 	.post(
 		"/from-build",
 		authenticate,
 		// authorize,
-		controller.createFromBuild.bind(controller)
+		controller.apiRespond(controller.createFromBuild.bind(controller))
 	);
 // Turn this migration off
 // .get("/migrate", authenticate, controller.migrate.bind(controller));

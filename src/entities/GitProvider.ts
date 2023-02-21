@@ -7,7 +7,7 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "git_providers" })
-export default class GitProvider extends Base<GitProvider> {
+export default class GitProvider extends Base {
 	@Column()
 	name?: string;
 

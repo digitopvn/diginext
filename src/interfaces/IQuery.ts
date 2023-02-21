@@ -6,11 +6,64 @@ export interface IQueryPopulate {
 	select: FindOptionsSelect<any>;
 }
 
-export interface IQueryParams {
+export interface IQueryGeneral {
 	[key: string]: any;
 }
 
-export interface IQueryOptions extends IQueryParams {
+export interface IPaginationQueryParams {
+	page?: number;
+	size?: number;
+	limit?: number;
+	skip?: number;
+}
+
+export interface IPostQueryParams {
+	/**
+	 * @example "owner,workspace"
+	 */
+	populate?: string;
+	select?: string;
+	/**
+	 * @example "-updatedAt,-createdAt"
+	 */
+	order?: string;
+	/**
+	 * Disable the default `{$set: body}` of "update" query & update `{body}` directly to the items
+	 * @default false
+	 */
+	raw?: boolean;
+}
+
+export interface IDeleteQueryParams {
+	/**
+	 * Delete one item by `{ObjectID}`
+	 */
+	id?: string;
+	/**
+	 * Delete one item by `{slug}`
+	 */
+	slug?: string;
+}
+
+export interface IGetQueryParams extends IPostQueryParams, IPaginationQueryParams {
+	/**
+	 * Find one item by `{ObjectID}`
+	 */
+	id?: string;
+	_id?: string;
+	/**
+	 * Mark this request as search (return the similar results based on the filter query params)
+	 * @default true
+	 */
+	search?: boolean;
+	/**
+	 * If `true`, return the excel binary file to download.
+	 * @default false
+	 */
+	download?: boolean;
+}
+
+export interface IQueryOptions extends IQueryGeneral {
 	_id?: any;
 	populate?: string[];
 	select?: string[];
@@ -18,13 +71,13 @@ export interface IQueryOptions extends IQueryParams {
 	search?: boolean;
 	download?: boolean;
 	/**
-	 * Disable the default `{$set: data}` of "update" query & update `{data}` directly to the items
+	 * Disable the default `{$set: body}` of "update" query & update `{body}` directly to the items
 	 * @default false
 	 */
 	raw?: boolean;
 }
 
-export interface IQueryPagination extends IQueryParams {
+export interface IQueryPagination extends IQueryGeneral {
 	limit?: number;
 	page?: number;
 	size?: number;
@@ -49,4 +102,15 @@ export interface IResponsePagination {
 	page_size?: number;
 	prev_url?: string;
 	next_url?: string;
+}
+
+export interface HiddenBodyKeys {
+	id?: unknown;
+	_id?: unknown;
+	metadata?: unknown;
+	owner?: unknown;
+	workspace?: unknown;
+	createdAt?: unknown;
+	deletedAt?: unknown;
+	updatedAt?: unknown;
 }

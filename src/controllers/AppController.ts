@@ -1,39 +1,81 @@
 import { log, logError, logFull, logWarn } from "diginext-utils/dist/console/log";
-import { Response as ApiResponse } from "diginext-utils/dist/response";
-import type { NextFunction, Request, Response } from "express";
-import type { ParamsDictionary } from "express-serve-static-core";
-import type { ParsedQs } from "qs";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { DeployEnvironment } from "@/interfaces";
+import type { App } from "@/entities";
+import type { DeployEnvironment, HiddenBodyKeys } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import type { ResponseData } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
 import AppService from "@/services/AppService";
 
 import BaseController from "./BaseController";
 
-export default class AppController extends BaseController<AppService> {
+@Tags("App")
+@Route("app")
+export default class AppController extends BaseController<App> {
 	constructor() {
 		super(new AppService());
 	}
 
-	async deleteEnvironment(
-		req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>,
-		res: Response<any, Record<string, any>>,
-		next: NextFunction
-	): Promise<Response<any, Record<string, any>>> {
+	@Security("jwt")
+	@Get("/")
+	read(@Queries() queryParams?: IGetQueryParams) {
+		return super.read();
+	}
+
+	@Security("jwt")
+	@Post("/")
+	create(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		return super.create(body);
+	}
+
+	@Security("jwt")
+	@Patch("/")
+	update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		return super.update(body);
+	}
+
+	@Security("jwt")
+	@Delete("/")
+	delete(@Queries() queryParams?: IDeleteQueryParams) {
+		return super.delete();
+	}
+
+	@Security("jwt")
+	@Delete("/environment")
+	async deleteEnvironment(@Queries() queryParams?: { _id: string; id: string; slug: string; env: string }) {
+		let result: ResponseData & { data: App } = { status: 1, data: {}, messages: [] };
 		// input validation
-		let { _id, id, slug, env } = req.query;
+		let { _id, id, slug, env } = this.filter;
 		if (!id && _id) id = _id;
-		if (!id && !slug) return ApiResponse.failed(res, `App "id" or "slug" is required.`);
-		if (!env) return ApiResponse.failed(res, `App "env" is required.`);
+		if (!id && !slug) {
+			result.status = 0;
+			result.messages.push(`App "id" or "slug" is required.`);
+			return result;
+		}
+		if (!env) {
+			result.status = 0;
+			result.messages.push(`App "env" is required.`);
+			return result;
+		}
 
 		// find the app
 		const appFilter = typeof id != "undefined" ? { id } : { slug };
 		const app = await this.service.findOne(appFilter);
 
 		// check if the environment is existed
-		if (!app) return ApiResponse.failed(res, `App not found.`);
+		if (!app) {
+			result.status = 0;
+			result.messages.push(`App not found.`);
+			return result;
+		}
+
 		const { environment } = app;
-		if (!environment[env.toString()]) return ApiResponse.failed(res, `App environment "${env}" not found.`);
+		if (!environment[env.toString()]) {
+			result.status = 0;
+			result.messages.push(`App environment "${env}" not found.`);
+			return result;
+		}
 
 		// take down the deploy environment
 		const envConfig = app.environment[env.toString()] as DeployEnvironment;
@@ -59,6 +101,7 @@ export default class AppController extends BaseController<AppService> {
 		logFull({ appFilter });
 
 		// respond the results
-		return ApiResponse.succeed(res, updatedApp);
+		result.data = updatedApp;
+		return result;
 	}
 }

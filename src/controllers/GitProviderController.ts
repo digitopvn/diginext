@@ -1,59 +1,81 @@
-import type { NextFunction, Request, Response } from "express";
-import type { ParamsDictionary } from "express-serve-static-core";
-import type { ParsedQs } from "qs";
+import { Body, Delete, Get, Patch, Post, Queries, Security } from "tsoa/dist";
 
+import type { GitProvider } from "@/entities";
+import type { HiddenBodyKeys } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import type { ResponseData } from "@/interfaces/ResponseData";
 import { generateSSH, verifySSH } from "@/modules/git";
 import GitProviderService from "@/services/GitProviderService";
 
 import BaseController from "./BaseController";
 
-export default class GitProviderController extends BaseController<GitProviderService> {
+export default class GitProviderController extends BaseController<GitProvider> {
 	constructor() {
 		super(new GitProviderService());
 	}
 
-	async generateSSH(
-		req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>,
-		res: Response<any, Record<string, any>>,
-		next: NextFunction
-	): Promise<Response<any, Record<string, any>>> {
-		const result: { status: number; messages: string[]; data: any } = { status: 1, messages: [], data: {} };
+	@Security("jwt")
+	@Get("/")
+	read(@Queries() queryParams?: IGetQueryParams) {
+		return super.read();
+	}
+
+	@Security("jwt")
+	@Post("/")
+	create(@Body() body: Omit<GitProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		return super.create(body);
+	}
+
+	@Security("jwt")
+	@Patch("/")
+	update(@Body() body: Omit<GitProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		return super.update(body);
+	}
+
+	@Security("jwt")
+	@Delete("/")
+	delete(@Queries() queryParams?: IDeleteQueryParams) {
+		return super.delete();
+	}
+
+	@Security("jwt")
+	@Get("/ssh")
+	async generateSSH() {
+		const result: ResponseData & { publicKey?: string } = { status: 1, messages: [], data: {} };
 
 		try {
 			const publicKey = await generateSSH();
 			result.data = { publicKey };
 			result.messages = [`Copy this public key content & add to GIT provider.`];
-			return res.status(200).json(result);
+			return result;
 		} catch (e) {
 			result.status = 0;
 			result.messages = [e.message];
-			return res.status(200).json(result);
+			return result;
 		}
 	}
 
-	async verifySSH(
-		req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>,
-		res: Response<any, Record<string, any>>,
-		next: NextFunction
-	): Promise<Response<any, Record<string, any>>> {
-		const result: { status: number; messages: string[]; data: any } = { status: 1, messages: [], data: {} };
+	@Security("jwt")
+	@Get("/verify-ssh")
+	async verifySSH(@Queries() queryParams?: { ["git-provider"]: string }) {
+		const result: ResponseData & { verified?: boolean } = { status: 1, messages: [], data: {} };
 
-		const gitProvider = req.query["git-provider"] as string;
+		const gitProvider = this.filter["git-provider"] as string;
 		if (!gitProvider) {
 			result.status = 0;
 			result.messages = [`Param "git-provider" is required.`];
-			return res.status(200).json(result);
+			return result;
 		}
 
 		try {
 			const verified = await verifySSH({ gitProvider });
 			result.status = 1;
 			result.data = { verified };
-			return res.status(200).json(result);
+			return result;
 		} catch (e) {
 			result.status = 0;
 			result.messages = [e.message];
-			return res.status(200).json(result);
+			return result;
 		}
 	}
 }

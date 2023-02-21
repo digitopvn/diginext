@@ -6,7 +6,7 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "container_registries" })
-export default class ContainerRegistry extends Base<ContainerRegistry> {
+export default class ContainerRegistry extends Base {
 	@Column()
 	name?: string;
 

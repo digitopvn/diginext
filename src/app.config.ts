@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import Table from "cli-table";
+import { logWarn } from "diginext-utils/dist/console/log";
 import xobject from "diginext-utils/dist/object";
 import dotenv from "dotenv";
 import fs from "fs";
@@ -8,14 +9,16 @@ import path from "path";
 
 import { CLI_DIR } from "./config/const";
 
-// let env: any = {};
+let appEnv: any = {};
 
 if (fs.existsSync(path.resolve(CLI_DIR, ".env.dev"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") });
+	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") }).parsed;
 } else if (fs.existsSync(path.resolve(CLI_DIR, ".env"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env") });
+	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env") }).parsed;
 } else {
-	// logWarn(`No ENV file detected, Diginext CLI will not work properly.`);
+	logWarn(`No ENV file detected.`);
 }
 
 // dev mode?
@@ -33,8 +36,10 @@ const table = new Table();
 if (process.env.CLI_MODE === "server") {
 	console.log(chalk.yellow(`------ process.env ------`));
 	Object.entries(process.env).forEach(([key, val]) => {
-		const value = _.truncate(val.toString(), { length: 60, separator: " " });
-		table.push([key, value]);
+		if (Object.keys(appEnv).includes(key)) {
+			const value = _.truncate(val.toString(), { length: 60, separator: " " });
+			table.push([key, value]);
+		}
 	});
 	console.log(table.toString());
 }

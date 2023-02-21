@@ -7,7 +7,7 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "clusters" })
-export default class Cluster extends Base<Cluster> {
+export default class Cluster extends Base {
 	/**
 	 * Cluster name
 	 */

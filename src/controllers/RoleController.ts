@@ -1,9 +1,40 @@
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
+
+import type { Role } from "@/entities";
+import type { HiddenBodyKeys } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import RoleService from "@/services/RoleService";
 
 import BaseController from "./BaseController";
 
-export default class RoleController extends BaseController<RoleService> {
+@Tags("Role")
+@Route("role")
+export default class RoleController extends BaseController<Role> {
 	constructor() {
 		super(new RoleService());
+	}
+
+	@Security("jwt")
+	@Get("/")
+	read(@Queries() queryParams?: IGetQueryParams) {
+		return super.read();
+	}
+
+	@Security("jwt")
+	@Post("/")
+	create(@Body() body: Omit<Role, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		return super.create(body);
+	}
+
+	@Security("jwt")
+	@Patch("/")
+	update(@Body() body: Omit<Role, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		return super.update(body);
+	}
+
+	@Security("jwt")
+	@Delete("/")
+	delete(@Queries() queryParams?: IDeleteQueryParams) {
+		return super.delete();
 	}
 }

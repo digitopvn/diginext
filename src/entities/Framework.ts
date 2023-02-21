@@ -8,7 +8,7 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "frameworks" })
-export default class Framework extends Base<Framework> {
+export default class Framework extends Base {
 	@Column()
 	name: string;
 

@@ -9,10 +9,12 @@ import session from "express-session";
 import * as fs from "fs";
 import type { Server } from "http";
 import { createServer } from "http";
+import morgan from "morgan";
 import cronjob from "node-cron";
 import passport from "passport";
 import path from "path";
 import { Server as SocketServer } from "socket.io";
+import swaggerUi from "swagger-ui-express";
 
 // routes
 import { googleStrategy } from "@/modules/passports/googleStrategy";
@@ -24,7 +26,6 @@ import { CLI_CONFIG_DIR } from "./config/const";
 /**
  * CUSTOM MIDDLEWARES
  */
-import logEnabled from "./middlewares/logEnabled";
 import { route404_handler } from "./middlewares/route404";
 // import listEndpoints from "express-list-endpoints";
 // database
@@ -126,10 +127,6 @@ function initialize() {
 		});
 
 		/**
-		 * TODO: Enable SWAGGER for API Docs
-		 */
-
-		/**
 		 * CORS MIDDLEWARE
 		 * Access-Control-Allow-Headers
 		 */
@@ -145,6 +142,20 @@ function initialize() {
 		 * SERVING STATIC FILES
 		 */
 		app.use(express.static(path.resolve(process.cwd(), "public")));
+
+		/**
+		 * TODO: Enable SWAGGER for API Docs
+		 * SWAGGER API DOCS
+		 */
+		app.use(
+			"/api-docs",
+			swaggerUi.serve,
+			swaggerUi.setup(undefined, {
+				swaggerOptions: {
+					url: "/swagger.json",
+				},
+			})
+		);
 
 		/**
 		 * PASSPORT STRATEGY
@@ -199,7 +210,8 @@ function initialize() {
 		 * LOGGING SYSTEM MIDDLEWARE - ENABLED
 		 * Enable when running on server
 		 */
-		app.use(logEnabled(Config.ENV !== "development"));
+		// app.use(logEnabled(Config.ENV !== "development"));
+		app.use(morgan("tiny"));
 
 		// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
 		app.use(`/${BASE_PATH}`, main);

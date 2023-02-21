@@ -1,43 +1,67 @@
-import type { NextFunction, Request, Response } from "express";
-import type { ParamsDictionary } from "express-serve-static-core";
 import * as fs from "fs";
 import path from "path";
-import type { ParsedQs } from "qs";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { User } from "@/entities";
+import type { ContainerRegistry, Project } from "@/entities";
+import type { HiddenBodyKeys } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import digitalocean from "@/modules/providers/digitalocean";
 import gcloud from "@/modules/providers/gcloud";
 import ContainerRegistryService from "@/services/ContainerRegistryService";
 
 import BaseController from "./BaseController";
 
-export default class ContainerRegistryController extends BaseController<ContainerRegistryService> {
+@Tags("Container Registry")
+@Route("registry")
+export default class ContainerRegistryController extends BaseController<ContainerRegistry> {
 	constructor() {
 		super(new ContainerRegistryService());
 	}
 
-	async connect(
-		req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>,
-		res: Response<any, Record<string, any>>,
-		next: NextFunction
-	): Promise<Response<any, Record<string, any>>> {
+	@Security("jwt")
+	@Get("/")
+	read(@Queries() queryParams?: IGetQueryParams) {
+		return super.read();
+	}
+
+	@Security("jwt")
+	@Post("/")
+	create(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		return super.create(body);
+	}
+
+	@Security("jwt")
+	@Patch("/")
+	update(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		return super.update(body);
+	}
+
+	@Security("jwt")
+	@Delete("/")
+	delete(@Queries() queryParams?: IDeleteQueryParams) {
+		return super.delete();
+	}
+
+	@Security("jwt")
+	@Get("/connect")
+	async connect(@Queries() queryParams?: { slug: string }) {
 		const result: { status: number; messages: string[]; data: any } = { status: 1, messages: [], data: {} };
 
-		const options = { userId: (req.user as User)._id as string, workspaceId: (req.user as User).activeWorkspace as string };
+		const options = { userId: this.user?._id.toString(), workspaceId: this.user?.activeWorkspace.toString() };
 		// console.log("options :>> ", options);
 
-		const { slug } = req.query;
+		const { slug } = this.filter.query;
 		if (!slug) {
 			result.status = 0;
 			result.messages = [`Param "slug" is required.`];
-			return res.status(200).json(result);
+			return result;
 		}
 
 		const registry = await this.service.findOne({ slug });
 		if (!registry) {
 			result.status = 0;
 			result.messages = [`Container Registry not found: ${slug}.`];
-			return res.status(200).json(result);
+			return result;
 		}
 		// console.log("registry :>> ", registry);
 
@@ -45,8 +69,10 @@ export default class ContainerRegistryController extends BaseController<Containe
 		switch (provider) {
 			case "gcloud":
 				const { serviceAccount } = registry;
+
 				const tmpDir = path.resolve(process.env.STORAGE, `registry`);
 				if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+
 				const tmpFilePath = path.resolve(tmpDir, `gcloud-service-account.json`);
 				fs.writeFileSync(tmpFilePath, serviceAccount, "utf8");
 
@@ -59,7 +85,7 @@ export default class ContainerRegistryController extends BaseController<Containe
 					result.status = 0;
 					result.messages = [`Google Cloud Container Registry authentication failed.`];
 				}
-				return res.status(200).json(result);
+				return result;
 				break;
 
 			case "digitalocean":
@@ -72,13 +98,13 @@ export default class ContainerRegistryController extends BaseController<Containe
 					result.status = 0;
 					result.messages = [`Digital Ocean Container Registry authentication failed.`];
 				}
-				return res.status(200).json(result);
+				return result;
 				break;
 
 			default:
 				result.status = 0;
 				result.messages = [`This container registry is not supported (${provider}), only "gcloud" and "digitalocean" are supported.`];
-				return res.status(200).json(result);
+				return result;
 				break;
 		}
 	}

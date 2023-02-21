@@ -10,7 +10,7 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "builds" })
-export default class Build extends Base<Build> {
+export default class Build extends Base {
 	@Column({ length: 250 })
 	@IsNotEmpty({ message: `Build name is required.` })
 	name?: string;

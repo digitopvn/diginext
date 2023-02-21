@@ -1,3 +1,17 @@
+# [1.4.0](https://github.com/digitopvn/diginext/compare/v1.3.1...v1.4.0) (2023-02-21)
+
+
+### Bug Fixes
+
+* **dependencies:** update dependency versions ([74dc266](https://github.com/digitopvn/diginext/commit/74dc266b3b13221ba98fc96d21345253be53586a))
+* **routes:** fix duplicate response data in all routes ([1a9c673](https://github.com/digitopvn/diginext/commit/1a9c6734b2ddc419e6b082372648f9f95b6a8897))
+* **swagger:** add auth header security to all api routes ([8c3ad37](https://github.com/digitopvn/diginext/commit/8c3ad377b862b85098545738b1b7f7d014690bd2))
+
+
+### Features
+
+* **swagger api:** add swagger api for external integrations ([4789473](https://github.com/digitopvn/diginext/commit/47894738d0bb670fbf59bdb5c9966a568b165cd5))
+
 ## [1.3.1](https://github.com/digitopvn/diginext/compare/v1.3.0...v1.3.1) (2023-02-17)
 
 

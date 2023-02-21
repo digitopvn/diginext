@@ -7,7 +7,7 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "cloud_providers" })
-export default class CloudProvider extends Base<CloudProvider> {
+export default class CloudProvider extends Base {
 	/**
 	 * Cloud provider name
 	 */
