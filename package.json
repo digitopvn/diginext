@@ -66,6 +66,7 @@
 		"dev:spec": "ts-node-dev --respawn --transpile-only -- node_modules/tsoa/dist/cli.js spec",
 		"dev:server": "CLI_MODE=server ts-node-dev -r tsconfig-paths/register src/server.ts --debug --respawn --exit-child --watch src",
 		"start": "CLI_MODE=server ts-node src/server.ts",
+		"start:js": "CLI_MODE=server node dist/server.js",
 		"check-types": "tsc --noEmit --pretty -p tsconfig.json",
 		"lint": "eslint \"src/**/*.ts\" --fix && pnpm check-types",
 		"clean": "rimraf .yarn/cache node_modules yarn.lock pnpm-lock.yaml dist && touch yarn.lock",
