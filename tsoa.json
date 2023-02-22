@@ -12,7 +12,8 @@
 				"scheme": "bearer",
 				"bearerFormat": "JWT"
 			}
-		}
+		},
+		"operationIdTemplate": "{{titleCase method.name}}"
 	},
 	"routes": {
 		"authenticationModule": "./src/middlewares/swagger_auth.ts",

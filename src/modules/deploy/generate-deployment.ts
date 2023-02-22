@@ -22,7 +22,7 @@ export const generateDeployment = async (options: InputOptions) => {
 	const appDirectory = options.targetDirectory;
 	const appConfig = getAppConfig(options.targetDirectory);
 
-	// tạo deployment directory nếu chưa tồn tại:
+	// create "deployment" directory if it's not existed:
 	const deployConfigDir = path.resolve(options.targetDirectory, "deployment");
 	if (!fs.existsSync(deployConfigDir)) fs.mkdirSync(deployConfigDir);
 
