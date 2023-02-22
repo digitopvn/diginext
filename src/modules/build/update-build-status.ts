@@ -24,8 +24,6 @@ export async function updateBuildStatus(appSlug: string, buildSlug: string, buil
 		app = apps[0];
 	}
 
-	// log(`updateBuildStatus >`, { app });
-
 	// update latest build to current project
 	let projectSlug = (app.project as Project).slug;
 	let updatedProject;
@@ -53,7 +51,6 @@ export async function updateBuildStatus(appSlug: string, buildSlug: string, buil
 			data: { latestBuild: buildSlug },
 		});
 	}
-	// log(`updateBuildStatus >`, { updatedApp });
 
 	// update build's status on server
 	let updatedBuild: Build[];
@@ -67,7 +64,6 @@ export async function updateBuildStatus(appSlug: string, buildSlug: string, buil
 		});
 		updatedBuild = res.data as Build[];
 	}
-	// log(`updateBuildStatus >> res:`, res);
 
 	if (updatedBuild && updatedBuild.length > 0) {
 		log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> new status: ${buildStatus.toUpperCase()}`);

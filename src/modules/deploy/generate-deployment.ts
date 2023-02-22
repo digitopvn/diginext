@@ -5,7 +5,6 @@ import dotenv from "dotenv";
 import * as fs from "fs";
 import yaml from "js-yaml";
 import _, { isEmpty } from "lodash";
-import path from "path";
 
 import { isServerMode } from "@/app.config";
 import { getContainerResourceBySize } from "@/config/config";
@@ -14,7 +13,7 @@ import type { App, Cluster, ContainerRegistry } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
-import { getAppConfig, objectToContainerEnv, objectToDeploymentYaml, trimFirstSlash } from "@/plugins";
+import { getAppConfig, objectToContainerEnv, objectToDeploymentYaml, resolveDockerfilePath, trimFirstSlash } from "@/plugins";
 import { AppService } from "@/services";
 
 import fetchApi from "../api/fetchApi";
@@ -24,10 +23,6 @@ export const generateDeployment = async (options: InputOptions) => {
 	const { env, targetDirectory: appDirectory, buildNumber } = options;
 
 	const appConfig = getAppConfig(appDirectory);
-
-	// create "deployment" directory if it's not existed:
-	// const deployConfigDir = path.resolve(appDirectory, "deployment");
-	// if (!fs.existsSync(deployConfigDir)) fs.mkdirSync(deployConfigDir);
 
 	// DEFINE DEPLOYMENT PARTS:
 	const BUILD_NUMBER = buildNumber || makeDaySlug();
@@ -43,14 +38,8 @@ export const generateDeployment = async (options: InputOptions) => {
 	// Prepare for building docker image
 	const { imageURL } = appConfig.environment[env];
 
-	// const DEPLOYMENT_DIR = path.resolve(appDirectory, "deployment");
-	// const NAMESPACE_FILE = path.resolve(DEPLOYMENT_DIR, `namespace.${env}.yaml`);
-	// const DEPLOYMENT_FILE = path.resolve(DEPLOYMENT_DIR, `deployment.${env}.yaml`);
-
 	// TODO: Replace BUILD_NUMBER so it can work with Skaffold
 	const IMAGE_NAME = `${imageURL}:${BUILD_NUMBER}`;
-	// const IMAGE_NAME = `${appConfig.environment[env].imageURL}`;
-	// const DEPLOY_NAME = `${APP_NAME}-${BUILD_NUMBER}`;
 
 	let projectSlug = appConfig.project;
 	let domains = appConfig.environment[env].domains;
@@ -77,7 +66,6 @@ export const generateDeployment = async (options: InputOptions) => {
 
 	// get registry secret as image pulling secret:
 	const { imagePullingSecret } = registry;
-	// log({ imagePullingSecret });
 
 	// prerelease:
 	const prereleaseSubdomainName = `${appName}.prerelease`;
@@ -100,17 +88,11 @@ export const generateDeployment = async (options: InputOptions) => {
 		prereleaseDomain = domain;
 	}
 
-	// Prepare ENV files from templates:
-	// let cliEnvTemplatePath = BUILD_ENV_PATH;
-
 	// Find the relevant ENV file:
-	const currentEnvFile = path.resolve(appDirectory, `.env.${env}`);
-	// let shouldCreateEnv = fs.existsSync(currentEnvFile) === false;
-	// if (options.shouldUseTemplate) shouldCreateEnv = true;
+	const currentEnvFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
 
-	// if (shouldCreateEnv) await copy(cliEnvTemplatePath, currentEnvFile, { overwrite: true });
 	let defaultEnvs: any = {};
-	if (fs.existsSync(currentEnvFile)) {
+	if (currentEnvFile) {
 		defaultEnvs = dotenv.parse(fs.readFileSync(currentEnvFile));
 
 		// Lấy BASE_PATH hoặc NEXT_PUBLIC_BASE_PATH từ user config ENV:
@@ -153,8 +135,6 @@ export const generateDeployment = async (options: InputOptions) => {
 			try {
 				deployData = JSON.parse(app.environment[env] as string);
 				previousDeployment = yaml.loadAll(deployData.deploymentYaml);
-				// previousDeployment = yaml.loadAll(fs.readFileSync(previousDeploymentPath, "utf8"));
-
 				previousDeployment.map((doc, index) => {
 					if (doc && doc.kind == "Ingress") previousIng = doc;
 				});
@@ -175,7 +155,6 @@ export const generateDeployment = async (options: InputOptions) => {
 	namespaceObject.metadata.labels.workspace = options.workspace.slug.toLowerCase();
 
 	namespaceContent = objectToDeploymentYaml(namespaceObject);
-	// fs.writeFileSync(NAMESPACE_FILE, namespaceContent, "utf8");
 
 	// write deployment.[env].yaml (ing, svc, deployment)
 	let deploymentContent = fs.readFileSync(FULL_DEPLOYMENT_TEMPLATE_PATH, "utf8");
@@ -187,16 +166,6 @@ export const generateDeployment = async (options: InputOptions) => {
 			if (doc && doc.metadata && doc.metadata.namespace) {
 				doc.metadata.namespace = nsName;
 			}
-
-			// NAMESPACE
-			// if (doc && doc.kind == "Namespace") {
-			// 	doc.metadata.name = nsName;
-			// 	if (!doc.metadata.labels) doc.metadata.labels = {};
-			// 	doc.metadata.labels.project = projectSlug;
-
-			// 	// pre-release
-			// 	prereleaseNsDoc = _.cloneDeep(doc);
-			// }
 
 			// INGRESS
 			if (doc && doc.kind == "Ingress") {
@@ -418,10 +387,6 @@ export const generateDeployment = async (options: InputOptions) => {
 	 */
 	let prereleaseYamlObject = [prereleaseIngressDoc, prereleaseSvcDoc, prereleaseDeployDoc];
 	let prereleaseDeploymentContent = objectToDeploymentYaml(prereleaseYamlObject);
-
-	// Write down the YAML files
-	// fs.writeFileSync(DEPLOYMENT_FILE, deploymentContent, "utf8");
-	// fs.writeFileSync(path.resolve(DEPLOYMENT_DIR, `deployment.prerelease.yaml`), prereleaseDeploymentContent, "utf8");
 
 	// End point của ứng dụng:
 	let endpoint = `https://${domains[0]}/${basePath}`;

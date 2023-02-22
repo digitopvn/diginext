@@ -327,15 +327,11 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} --builder=${appSlug.toLowerCase()} .`;
 		// log(`Build command: "${buildCmd}"`);
 
-		// add to process collection so we can kill it if needed:
-		// const abort = new AbortController();
 		stream = execa.command(buildCmd, cliOpts);
-		// const args = ["buildx", "build", "--platform=linux/x86_64", "-f", dockerFile, "--push", "-t", IMAGE_NAME];
-		// if (latestBuild) args.push("--cache-from", `type=registry,ref=${latestBuild.image}`);
-		// stream = execa("docker", args, { ...cliOpts, killSignal: abort.signal });
+
+		// add to process collection so we can kill it if needed:
 		processes[SOCKET_ROOM] = stream;
 
-		// stream = execa("docker", ["build", "--platform=linux/x86_64", "-t", IMAGE_NAME, "-f", dockerFile, "."]);
 		stream.stdio.forEach((_stdio) => {
 			if (_stdio) {
 				_stdio.on("data", (data) => {
@@ -352,12 +348,6 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 		message = `✌️ Built a Docker image & pushed to container registry (${appConfig.environment[env].registry}) successfully!`;
 		sendMessage({ SOCKET_ROOM, logger, message });
-
-		// Update deployment data to app:
-		// const updateData = {};
-		// updateData[`environment.${env}`] = appConfig.environment[env];
-		// const updatedApp = await appSvc.update({ id: app._id }, updateData);
-		// log(`Updated deploy environment (${env}) to "${appSlug}" app:`, updatedApp);
 
 		// save logs to database
 		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
