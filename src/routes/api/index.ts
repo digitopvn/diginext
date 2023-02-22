@@ -91,6 +91,21 @@ if (CLI_MODE == "server") {
 
 	router.post("/deploy", (req, res) => {
 		const { options } = req.body;
+
+		// check for version compatibility between CLI & SERVER:
+		const cliVersion = options.version || "0.0.0";
+		const breakingChangeVersionCli = cliVersion.split(".")[0];
+		const serverVersion = pkg.version;
+		const breakingChangeVersionServer = serverVersion.split(".")[0];
+
+		if (breakingChangeVersionCli != breakingChangeVersionServer)
+			res.status(200).json({
+				status: 0,
+				messages: [
+					`Your CLI version (${cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please upgrade: "dx update"`,
+				],
+			});
+
 		const cliOptions = JSON.parse(options);
 		log("[API] cliOptions", cliOptions);
 

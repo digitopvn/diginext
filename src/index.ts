@@ -24,7 +24,7 @@ import DigitalOcean, { execDigitalOcean } from "@/modules/providers/digitalocean
 import GCloud, { execGoogleCloud } from "@/modules/providers/gcloud";
 import { execRegistry } from "@/modules/registry";
 import { execServer } from "@/modules/server";
-import { freeUp, getOS, logVersion } from "@/plugins";
+import { currentVersion, freeUp, getOS, logVersion } from "@/plugins";
 
 import { execInitApp } from "./modules/apps/initApp";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
@@ -38,6 +38,7 @@ export const conf = new Configstore(pkg.name);
 
 export async function processCLI(options?: InputOptions) {
 	// let options = parseArgumentsIntoOptions(args);
+	options.version = currentVersion();
 
 	if (options.isDebugging) {
 		logVersion();

@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/digitopvn/diginext/compare/v2.0.0...v2.0.1) (2023-02-22)
+
+
+### Bug Fixes
+
+* **deploy:** check cli and server compability when deploying app ([41f4907](https://github.com/digitopvn/diginext/commit/41f4907ff8b1b87d46279c0a3b111761c3d3bf3b))
+
 # [2.0.0](https://github.com/digitopvn/diginext/compare/v1.4.0...v2.0.0) (2023-02-22)
 
 
