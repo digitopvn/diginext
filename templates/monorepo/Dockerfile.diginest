@@ -27,9 +27,6 @@ COPY .yarnrc.yaml .
 
 COPY ./apps/diginest/package.json ./apps/diginest/package.json
 
-# COPY ./apps/diginest ./apps/diginest
-# COPY ./apps/diginest/deployment/.env.dev ./apps/diginest/.env
-
 # packages
 COPY ./packages ./packages
 

@@ -15,6 +15,9 @@ export async function testBuild() {
 	log("socketServer:", socketServer);
 }
 
+/**
+ * Save build log content to database
+ */
 export async function saveLogs(buildSlug: string, logs: string) {
 	if (!buildSlug) throw new Error(`Build's slug is required, it's empty now.`);
 	if (isServerMode) {

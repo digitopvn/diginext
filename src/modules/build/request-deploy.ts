@@ -1,8 +1,6 @@
 import chalk from "chalk";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
-import { existsSync } from "fs";
-import path from "path";
 import simpleGit from "simple-git";
 import { io } from "socket.io-client";
 
@@ -11,7 +9,7 @@ import { CLI_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
-import { getAppConfig, getCurrentRepoURIs } from "@/plugins";
+import { getAppConfig, getCurrentRepoURIs, resolveDockerfilePath } from "@/plugins";
 
 /**
  * Request the build server to start building & deploying
@@ -41,12 +39,8 @@ export async function requestDeploy(options: InputOptions) {
 	}
 
 	// check Dockerfile
-	let dockerFile = path.resolve(appDirectory, `Dockerfile`);
-	if (!existsSync(dockerFile)) {
-		const message = `Missing "${appDirectory}/Dockerfile" file, please create one.`;
-		logError(message);
-		return;
-	}
+	let dockerFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
+	if (!dockerFile) return;
 
 	// Increase build version in "package.json"
 	// const pkg = getPackageConfig({ directory: appDirectory, ignoreIfNotExisted: true });

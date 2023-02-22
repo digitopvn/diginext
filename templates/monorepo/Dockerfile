@@ -37,7 +37,6 @@ RUN yarn
 
 # apps
 COPY ./apps/diginext ./apps/diginext
-COPY ./apps/diginext/deployment/.env.dev ./apps/diginext/.env
 
 # Start building
 RUN yarn build:diginext

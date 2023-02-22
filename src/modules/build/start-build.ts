@@ -15,7 +15,7 @@ import { cliOpts, getCliConfig } from "@/config/config";
 import type { App, Build, Project, Release, User } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
-import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, wait } from "@/plugins";
+import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath, wait } from "@/plugins";
 import { getIO } from "@/server";
 import { BuildService, ContainerRegistryService, ProjectService, UserService } from "@/services";
 import AppService from "@/services/AppService";
@@ -298,13 +298,6 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 	const appDirectory = options.buildDir;
 
-	// Prepare deployment YAML files:
-	// const DEPLOYMENT_FILE = path.resolve(appDirectory, `deployment/deployment.${env}.yaml`);
-	// const DEPLOYMENT_YAML = fs.readFileSync(DEPLOYMENT_FILE, "utf8");
-	// const PRERELEASE_DEPLOYMENT_FILE = path.resolve(appDirectory, "deployment/deployment.prerelease.yaml");
-	// const PRERELEASE_DEPLOYMENT_YAML = fs.readFileSync(PRERELEASE_DEPLOYMENT_FILE, "utf8");
-	// const deploymentData = fetchDeployment(DEPLOYMENT_FILE, options);
-
 	// TODO: authenticate container registry?
 
 	// build the app with Docker:
@@ -312,19 +305,9 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		sendMessage({ SOCKET_ROOM, logger, message: `Start building the Docker image...` });
 
 		// check if using framework version >= 1.3.6
-		let dockerFile = path.resolve(appDirectory, `Dockerfile`);
-		if (!existsSync(dockerFile)) {
-			message = `[ERROR] Missing "${appDirectory}/deployment/Dockerfile" file, please create one.`;
-			sendMessage({ SOCKET_ROOM, logger, message: message });
-			logError(message);
-
-			// save logs to database
-			saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
-
-			await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
-
-			return;
-		}
+		// let dockerFile = path.resolve(appDirectory, `Dockerfile`);
+		let dockerFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
+		if (!dockerFile) throw new Error(`Missing "Dockerfile" to build the application, please create one.`);
 
 		/**
 		 * ! Change current working directory to the root of this project repository
@@ -335,7 +318,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		 * ! BUILD CACHING
 		 * Activate the "docker-container" driver before using "buildx"
 		 * use "buildx" with cache to increase build speed
-		 * docker buildx build -f deployment/Dockerfile.dev --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
+		 * docker buildx build -f Dockerfile --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
 		 **/
 		// activate docker build (with "buildx" driver)...
 		execCmd(`docker buildx create --driver docker-container --name ${appSlug.toLowerCase()}`);
@@ -380,6 +363,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
 	} catch (e) {
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+
 		sendMessage({ SOCKET_ROOM, logger, message: e.toString() });
 		logError(e);
 

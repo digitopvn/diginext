@@ -1,8 +1,7 @@
-import { log } from "diginext-utils/dist/console/log";
+import { log, logError } from "diginext-utils/dist/console/log";
 
 import { isServerMode } from "@/app.config";
 import type { App, Build, Project } from "@/entities";
-import { logError } from "@/plugins";
 import { AppService, BuildService, ProjectService } from "@/services";
 
 import { fetchApi } from "../api";

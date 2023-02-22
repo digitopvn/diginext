@@ -18,6 +18,7 @@ import { updateBuildStatus } from "./update-build-status";
 
 /**
  * Use "kubectl apply" command to roll out the deployment
+ * @deprecated
  */
 async function kubectlApply(options: InputOptions) {
 	const { env = "dev", SOCKET_ROOM, namespace, projectSlug, slug: appSlug } = options;

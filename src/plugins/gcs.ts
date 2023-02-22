@@ -1,9 +1,8 @@
 import Axios from "axios";
 import Configstore from "configstore";
+import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 
 import pkg from "@/../package.json";
-
-import { logError, logInfo, logSuccess } from "./utils";
 
 const conf = new Configstore(pkg.name);
 
@@ -47,9 +46,9 @@ export async function uploadFile(filename, destination) {
 			},
 		});
 
-		// logInfo(`${filename} uploaded to ${bucketName}.`);
+		// log(`${filename} uploaded to ${bucketName}.`);
 	} catch (e) {
-		logInfo(`Error when uploading`, filename, "to", destination + ":", e);
+		log(`Error when uploading`, filename, "to", destination + ":", e);
 		// logError(e);
 	}
 }
@@ -58,7 +57,7 @@ export const invalidateCache = async (resourcePath) => {
 	let now = Date.now();
 
 	prevInvalidateTime = conf.get("prevInvalidateTime");
-	// logInfo("prevInvalidateTime", now - prevInvalidateTime);
+	// log("prevInvalidateTime", now - prevInvalidateTime);
 
 	if (prevInvalidateTime) {
 		conf.set("prevInvalidateTime", now);
@@ -74,7 +73,7 @@ export const invalidateCache = async (resourcePath) => {
 	const inputData = { path: resourcePath };
 	try {
 		const { data } = await Axios({ url: cacheApiUrl, data: inputData, method: "post" });
-		logInfo(data);
+		log(data);
 
 		if (data.status == 1) {
 			logSuccess("[CDN]", data.message);

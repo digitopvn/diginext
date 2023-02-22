@@ -75,7 +75,11 @@ export function fetchDeployment(filePath: string, options: InputOptions = { env:
 	const deployFile = `deployment/deployment.${env}.yaml`;
 	const DEPLOYMENT_FILE = filePath ? filePath : path.resolve(appDirectory, deployFile);
 
-	if (!fs.existsSync(DEPLOYMENT_FILE)) logError(`Không tìm thấy "${deployFile}", chạy "diginext deploy generate --env=${env}" để khởi tạo.`);
+	if (!fs.existsSync(DEPLOYMENT_FILE)) {
+		const msg = `Không tìm thấy "${deployFile}", chạy "diginext deploy generate --env=${env}" để khởi tạo.`;
+		logError(msg);
+		throw new Error(msg);
+	}
 
 	let deployContent = fs.readFileSync(DEPLOYMENT_FILE, "utf8");
 

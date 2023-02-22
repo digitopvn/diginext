@@ -1,3 +1,4 @@
+import { log } from "diginext-utils/dist/console/log";
 import type execa from "execa";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import path from "path";
@@ -12,7 +13,7 @@ import type User from "@/entities/User";
 import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 
-import { isWin, log, logInfo, readJson, saveJson, showDocs } from "../plugins";
+import { isWin, readJson, saveJson, showDocs } from "../plugins";
 import { CLI_CONFIG_DIR, CLI_CONFIG_FILE, CLI_DIR } from "./const";
 
 export const cliOpts: execa.Options = isWin()
@@ -95,7 +96,7 @@ export const execConfig = async (options?: InputOptions) => {
 				case "current":
 					try {
 						const curProvider = getCliConfig().currentProvider;
-						logInfo(curProvider.name);
+						log(curProvider.name);
 						return curProvider;
 					} catch (e) {
 						return null;
@@ -104,7 +105,7 @@ export const execConfig = async (options?: InputOptions) => {
 				case "list":
 					try {
 						const list = getCliConfig().gitProviders;
-						logInfo(list.map((item) => item.name));
+						log(list.map((item) => item.name));
 						return list;
 					} catch (e) {
 						return null;

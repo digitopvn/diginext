@@ -108,7 +108,6 @@ export const generateDeployment = async (options: InputOptions) => {
 	// let shouldCreateEnv = fs.existsSync(currentEnvFile) === false;
 	// if (options.shouldUseTemplate) shouldCreateEnv = true;
 
-	// Ghi đè lên file .env hiện tại trong "deployment/":
 	// if (shouldCreateEnv) await copy(cliEnvTemplatePath, currentEnvFile, { overwrite: true });
 	let defaultEnvs: any = {};
 	if (fs.existsSync(currentEnvFile)) {
@@ -138,7 +137,6 @@ export const generateDeployment = async (options: InputOptions) => {
 	// Should inherit the "ingress" config from the previous deployment?
 	let deployData: DeployEnvironment,
 		previousDeployment,
-		// previousDeploymentPath = path.resolve(appDirectory, `deployment/deployment.${env}.yaml`),
 		previousIng: KubeIngress = { metadata: { annotations: {} } };
 
 	if (options.shouldInherit) {
