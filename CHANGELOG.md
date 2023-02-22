@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/digitopvn/diginext/compare/v1.4.0...v2.0.0) (2023-02-22)
+
+
+### Code Refactoring
+
+* **deploy app do not generate yaml files anymore:** build, deploy, run ([dbe89a5](https://github.com/digitopvn/diginext/commit/dbe89a5439453f81cd4ca6d4fbf66d48ecd91979))
+
+
+### BREAKING CHANGES
+
+* **deploy app do not generate yaml files anymore:** cli command build, deploy, run
+
 # [1.4.0](https://github.com/digitopvn/diginext/compare/v1.3.1...v1.4.0) (2023-02-21)
 
 
