@@ -3,11 +3,12 @@ const path = require("path");
 const cliProgress = require("cli-progress");
 
 import { firstElement } from "diginext-utils/dist/array";
+import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 import globby from "globby";
 
 import { DIGITOP_CDN_URL } from "../../config/const";
 import type { InputOptions } from "../../interfaces/InputOptions";
-import { getAppConfig, invalidateCache, logError, logInfo, logSuccess, uploadFile } from "../../plugins";
+import { getAppConfig, invalidateCache, uploadFile } from "../../plugins";
 
 // config
 
@@ -43,7 +44,7 @@ async function purgeDirectory(dirPath, options) {
 	}
 
 	// const command = `gcloud compute url-maps invalidate-cdn-cache digitop-cdn-lb --host google-cdn.digitop.vn --path '${dirPath}' --async`;
-	// logInfo(command);
+	// log(command);
 	// await cliContainerExec(command, options);
 
 	// Use GOOGLE CDN HELPER API:
@@ -153,7 +154,7 @@ export async function startUpload(options: InputOptions, onComplete?: UploadComp
 		uploadPathPattern = `${options.path}/**/*.*`;
 	}
 
-	logInfo(`Uploading "${uploadPathPattern}" to "${DIGITOP_CDN_URL}/${projectName}/${env}"`);
+	log(`Uploading "${uploadPathPattern}" to "${DIGITOP_CDN_URL}/${projectName}/${env}"`);
 
 	const files = await globby(uploadPathPattern);
 	uploadedCount = 0;
@@ -200,7 +201,9 @@ export const loadVersionCacheCDNFromEnv = (options) => {
 	let version = "";
 
 	//load .env.prod
-	const envFilePath = path.resolve(`deployment/.env.${env}`);
+	let envFilePath = path.resolve(`deployment/.env.${env}`);
+	if (!fs.existsSync(envFilePath)) envFilePath = path.resolve(`.env.${env}`);
+	if (!fs.existsSync(envFilePath)) envFilePath = path.resolve(`.env`);
 
 	if (fs.existsSync(envFilePath)) {
 		const rawdata = fs.readFileSync(envFilePath).toString();
@@ -218,6 +221,8 @@ export const loadVersionCacheCDNFromEnv = (options) => {
 		} else {
 			// fs.appendFileSync(envFilePath, `\nNEXT_PUBLIC_VERSION_CDN=${version}`);
 		}
+	} else {
+		version = "latest";
 	}
 
 	return version;

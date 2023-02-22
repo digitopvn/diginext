@@ -1,6 +1,7 @@
 import chalk from "chalk";
 // import { compareVersions } from "compare-versions";
 import dayjs from "dayjs";
+import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import dns from "dns";
 import execa from "execa";
 import * as fs from "fs";
@@ -74,33 +75,6 @@ export async function waitUntil(condition: Function, interval: number = 10, maxW
 		timeWaited += interval;
 	}
 	return false;
-}
-
-function log(...msg) {
-	console.log(...msg);
-}
-
-function logInfo(...msg) {
-	console.log(chalk.green(`[INFO ${nowStr()}]`), ...msg);
-}
-
-async function logError(...msg) {
-	const { error } = msg[0];
-	// console.log("error", error);
-	if (error && error.error && error.error.message) {
-		console.trace(chalk.red(`[ERROR ${nowStr()}]`, error.error.message));
-	} else {
-		console.trace(chalk.red(`[ERROR ${nowStr()}]`, ...msg));
-	}
-
-	await wait(200);
-
-	// process.exit(1);
-	throw new Error(msg[0]);
-}
-
-async function logWarn(...msg) {
-	console.warn(chalk.yellow(`[WARN]`, ...msg));
 }
 
 async function logBitbucket(title, message, delay) {
@@ -360,10 +334,10 @@ export async function checkForUpdate() {
 	// const latestVersion: string = (await getLatestCliVersion()).substr(1);
 	// const _lv = latestVersion.split(".");
 
-	// // logInfo(`isValid >>`, currentVersion, ">>", validate(currentVersion));
-	// // logInfo(`latestVersion >>`, latestVersion);
-	// // logInfo(`currentVersion >>`, currentVersion);
-	// // logInfo(`Should update >>`, compareVersions(latestVersion, currentVersion));
+	// // log(`isValid >>`, currentVersion, ">>", validate(currentVersion));
+	// // log(`latestVersion >>`, latestVersion);
+	// // log(`currentVersion >>`, currentVersion);
+	// // log(`Should update >>`, compareVersions(latestVersion, currentVersion));
 	// const newVersion = compareVersions(latestVersion, curVersion) > 0 ? latestVersion : null;
 
 	// if (newVersion) {
@@ -379,10 +353,6 @@ export async function checkForUpdate() {
 	// TODO: Check for update CLI on NPM
 
 	return "latest";
-}
-
-export function logSuccess(...msg) {
-	console.warn(chalk.green("[SUCCESS]"), ...msg);
 }
 
 async function logBitbucketError(error: any, delay?: number, location?: string, shouldExit = false) {
@@ -653,7 +623,7 @@ export const getCurrentFramework = (options) => {
 export const getImageFromYaml = (docs) => {
 	let value = "";
 	docs.map((doc) => {
-		// logInfo("doc", doc);
+		// log("doc", doc);
 		if (doc && doc.kind == "Deployment") {
 			value = doc.spec.template.spec.containers[0].image;
 		}
@@ -664,7 +634,7 @@ export const getImageFromYaml = (docs) => {
 export const getReplicasFromYaml = (docs) => {
 	let value = 1;
 	docs.map((doc) => {
-		// logInfo("doc", doc);
+		// log("doc", doc);
 		if (doc && doc.kind == "Deployment") {
 			value = doc.spec.replicas;
 		}
@@ -787,6 +757,33 @@ export const sequentialExec = async (array, func) => {
 	}, Promise.resolve([]));
 };
 
+interface ResolveDockerfilePathOptions {
+	targetDirectory?: string;
+	env?: string;
+}
+
+/**
+ * Resolve a location path of the "Dockerfile"
+ */
+export const resolveDockerfilePath = (options: ResolveDockerfilePathOptions) => {
+	const { targetDirectory = process.cwd(), env = "dev" } = options;
+	let dockerFile = path.resolve(targetDirectory, `Dockerfile`);
+	if (!fs.existsSync(dockerFile)) dockerFile = path.resolve(targetDirectory, `Dockerfile.${env}`);
+	if (!fs.existsSync(dockerFile)) dockerFile = path.resolve(targetDirectory, `deployment/Dockerfile`);
+	if (!fs.existsSync(dockerFile)) dockerFile = path.resolve(targetDirectory, `deployment/Dockerfile.${env}`);
+	if (!fs.existsSync(dockerFile)) {
+		const message = `Missing "${targetDirectory}/Dockerfile" file, please create one.`;
+		logError(message);
+		// throw new Error(message);
+		return;
+	}
+	return dockerFile;
+};
+
+/**
+ * Execute an command within a Docker container
+ * @deprecated
+ */
 export const cliContainerExec = async (command, options) => {
 	let getContainerName, cliContainerName;
 
@@ -804,15 +801,15 @@ export const cliContainerExec = async (command, options) => {
 	}
 
 	cliContainerName = getContainerName.stdout;
-	logInfo("[cliContainerExec] cliContainerName:", cliContainerName);
+	log("[cliContainerExec] cliContainerName:", cliContainerName);
 
 	if (cliContainerName) {
 		if (options.isDebugging) {
-			logInfo(chalk.cyan("---------------- DIGINEXT-CLI DOCKER VERSION ------------------"));
+			log(chalk.cyan("---------------- DIGINEXT-CLI DOCKER VERSION ------------------"));
 			await execa("docker", ["exec", "-ti", cliContainerName, "docker", "-v"], { stdio: "inherit" });
-			logInfo(chalk.cyan("---------------- INSIDE DIGINEXT-CLI CONTAINER ----------------"));
+			log(chalk.cyan("---------------- INSIDE DIGINEXT-CLI CONTAINER ----------------"));
 			await execa("docker", ["exec", "-ti", cliContainerName, "ls"], { stdio: "inherit" });
-			logInfo(chalk.cyan("---------------------------------------"));
+			log(chalk.cyan("---------------------------------------"));
 		}
 		const args = command.split(" ");
 		const { stdout } = await execa("docker", ["exec", "-ti", cliContainerName, ...args], {
@@ -900,4 +897,4 @@ export const getCurrentContainerEnvs = async (deployName: string, namespace = "d
 	return deployObj.spec.template.spec.containers[0].env || {};
 };
 
-export { log, logBitbucket, logBitbucketError, logError, logHelp, logInfo, logWarn, toBase64, wait };
+export { logBitbucket, logBitbucketError, logHelp, toBase64, wait };

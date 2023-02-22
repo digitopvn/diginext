@@ -3,7 +3,7 @@ services:
   diginext-framework:
     build:
       context: .
-      dockerfile: deployment/Dockerfile
+      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_ENV: "development"
         NEXT_PUBLIC_BASE_PATH: "diginext"

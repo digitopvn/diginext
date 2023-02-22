@@ -19,13 +19,11 @@ export function printInformation(finalConfig: AppConfig) {
 	// Deploy instruction:
 	console.log(chalk.yellow("-----------------------------------------------------------"));
 	console.log(chalk.green.bold("To deploy DEV  : ") + chalk.cyan(`dx deploy`));
-	console.log(chalk.green.bold("To deploy PROD : "));
-	console.log(chalk.green("  1 - Add your domain to according `environment` in `dx.json`"));
-	console.log(chalk.green("  2 - Create/modify ENV variables at: ") + chalk.cyan(`deployment/.env.<environment>`));
-	console.log(chalk.green("  3 - Deploy to server with: ") + chalk.cyan(`dx deploy --env=<environment>`));
-	console.log(chalk.green("      (Use flag " + chalk.cyan("--debug") + " if you want to see the build progress)"));
-	console.log(chalk.green("  4 - Preview & roll out the deployment at: ") + chalk.cyan(buildServerUrl));
+	console.log(chalk.green.bold("To deploy PROD : ") + chalk.cyan(`dx deploy --prod`));
+	console.log(chalk.green("  - Use flag " + chalk.cyan("--debug") + " if you want to see the build progress"));
+	console.log(chalk.green("  - Preview & roll out the deployment at: ") + chalk.cyan(buildServerUrl));
 	console.log(chalk.yellow("-----------------------------------------------------------"));
 	console.log(chalk.green("More instruction, type: ") + chalk.cyan(`dx --help`));
+	console.log(chalk.green("HAVE FUN!"));
 	console.log(chalk.yellow("-----------------------------------------------------------"));
 }

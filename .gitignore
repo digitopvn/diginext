@@ -89,6 +89,7 @@ docker-compose*.yaml
 03-certificate.yaml
 04-ingress.yaml
 gcloud-secret.yaml
+dx.json
 
 # dev api
 thunder-tests/

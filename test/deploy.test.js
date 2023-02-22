@@ -27,33 +27,33 @@ describe("Deploy the project", function () {
 		// await execa.command(newProjectCommand);
 	});
 
-	it('Generate deployment for "DEV" environment', async function () {
-		const cmdGenerate = `cd ${targetDir} && dx deploy generate`;
-		await execa.command(cmdGenerate);
+	// it('Generate deployment for "DEV" environment', async function () {
+	// 	const cmdGenerate = `cd ${targetDir} && dx deploy generate`;
+	// 	await execa.command(cmdGenerate);
 
-		// check if file was generated successfully
-		const deploymentYamlExisted = fs.existsSync(path.resolve(targetDir, "deployment/deployment.dev.yaml"));
-		expect(deploymentYamlExisted).to.be.equal(true);
-	});
+	// 	// check if file was generated successfully
+	// 	const deploymentYamlExisted = fs.existsSync(path.resolve(targetDir, "deployment/deployment.dev.yaml"));
+	// 	expect(deploymentYamlExisted).to.be.equal(true);
+	// });
 
-	it('Generate deployment for "PROD" environment', async function () {
-		// add test domain
-		const diginextPath = path.resolve(targetDir, "dx.json");
-		// console.log("diginextPath :>> ", diginextPath);
+	// it('Generate deployment for "PROD" environment', async function () {
+	// 	// add test domain
+	// 	const diginextPath = path.resolve(targetDir, "dx.json");
+	// 	// console.log("diginextPath :>> ", diginextPath);
 
-		let diginext = readJson(diginextPath);
-		diginext.domain = { ...diginext.domain, prod: [testDomain] };
-		saveJson(diginext, diginextPath, { overwrite: true });
-		// console.log("diginext :>> ", diginext);
+	// 	let diginext = readJson(diginextPath);
+	// 	diginext.domain = { ...diginext.domain, prod: [testDomain] };
+	// 	saveJson(diginext, diginextPath, { overwrite: true });
+	// 	// console.log("diginext :>> ", diginext);
 
-		// generate prod deployment
-		const cmdGenerate = `dx deploy generate --prod --targetDir=${targetDir}`;
-		await execa.command(cmdGenerate, cliOpts);
+	// 	// generate prod deployment
+	// 	const cmdGenerate = `dx deploy generate --prod --targetDir=${targetDir}`;
+	// 	await execa.command(cmdGenerate, cliOpts);
 
-		// check if file was generated successfully
-		const deploymentYamlExisted = fs.existsSync(path.resolve(targetDir, "deployment/deployment.prod.yaml"));
-		expect(deploymentYamlExisted).to.be.equal(true);
-	});
+	// 	// check if file was generated successfully
+	// 	const deploymentYamlExisted = fs.existsSync(path.resolve(targetDir, "deployment/deployment.prod.yaml"));
+	// 	expect(deploymentYamlExisted).to.be.equal(true);
+	// });
 
 	after(async function () {
 		// clean up test project

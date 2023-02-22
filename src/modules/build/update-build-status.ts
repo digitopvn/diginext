@@ -1,8 +1,7 @@
-import { log } from "diginext-utils/dist/console/log";
+import { log, logError } from "diginext-utils/dist/console/log";
 
 import { isServerMode } from "@/app.config";
 import type { App, Build, Project } from "@/entities";
-import { logError } from "@/plugins";
 import { AppService, BuildService, ProjectService } from "@/services";
 
 import { fetchApi } from "../api";
@@ -24,8 +23,6 @@ export async function updateBuildStatus(appSlug: string, buildSlug: string, buil
 		const { data: apps } = await fetchApi<App>({ url: `/api/v1/app?slug=${appSlug}&populate=project` });
 		app = apps[0];
 	}
-
-	// log(`updateBuildStatus >`, { app });
 
 	// update latest build to current project
 	let projectSlug = (app.project as Project).slug;
@@ -54,7 +51,6 @@ export async function updateBuildStatus(appSlug: string, buildSlug: string, buil
 			data: { latestBuild: buildSlug },
 		});
 	}
-	// log(`updateBuildStatus >`, { updatedApp });
 
 	// update build's status on server
 	let updatedBuild: Build[];
@@ -68,7 +64,6 @@ export async function updateBuildStatus(appSlug: string, buildSlug: string, buil
 		});
 		updatedBuild = res.data as Build[];
 	}
-	// log(`updateBuildStatus >> res:`, res);
 
 	if (updatedBuild && updatedBuild.length > 0) {
 		log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> new status: ${buildStatus.toUpperCase()}`);

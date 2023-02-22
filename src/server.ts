@@ -20,7 +20,7 @@ import swaggerUi from "swagger-ui-express";
 import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
-import { Config } from "./app.config";
+import { Config, IsDev } from "./app.config";
 import { cleanUp } from "./build/system";
 import { CLI_CONFIG_DIR } from "./config/const";
 /**
@@ -33,7 +33,6 @@ import AppDatabase from "./modules/AppDatabase";
 import ClusterManager from "./modules/k8s";
 import { providerAuthenticate } from "./modules/providers";
 import { connect } from "./modules/registry";
-import { logInfo } from "./plugins";
 import main from "./routes/main";
 import { CloudProviderService, ClusterService, ContainerRegistryService } from "./services";
 /**
@@ -211,7 +210,7 @@ function initialize() {
 		 * Enable when running on server
 		 */
 		// app.use(logEnabled(Config.ENV !== "development"));
-		app.use(morgan("tiny"));
+		app.use(morgan(IsDev() ? "dev" : "combined"));
 
 		// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
 		app.use(`/${BASE_PATH}`, main);
@@ -229,7 +228,7 @@ function initialize() {
 			logSuccess(`Server is UP & listening at port ${PORT}...`);
 		}
 
-		server.on("error", (e: any) => logInfo(`ERROR:`, e));
+		server.on("error", (e: any) => log(`ERROR:`, e));
 		server.listen(PORT, onConnect);
 
 		/**

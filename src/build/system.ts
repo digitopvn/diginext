@@ -19,7 +19,6 @@ export async function listImages() {
 
 	const jsonList = await execa.command(`docker images --format "{{json . }}"`);
 	const imgArr = jsonList.stdout.split("\n");
-	// logInfo(imgArr);
 	const json = imgArr.map((line) => JSON.parse(line));
 
 	return JSON.stringify(json, null, 2);

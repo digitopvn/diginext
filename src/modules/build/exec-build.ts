@@ -1,12 +1,10 @@
-import { logError, logWarn } from "diginext-utils/dist/console/log";
+import { logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
-import { existsSync } from "fs";
 import inquirer from "inquirer";
-import path from "path";
 
 import type InputOptions from "@/interfaces/InputOptions";
 
-import { getAppConfig, saveAppConfig } from "../../plugins/utils";
+import { getAppConfig, resolveDockerfilePath, saveAppConfig } from "../../plugins/utils";
 import { askForDomain } from "./ask-for-domain";
 import { startBuild } from "./start-build";
 
@@ -24,12 +22,8 @@ export async function execBuild(options: InputOptions) {
 	const { env = "dev", targetDirectory } = options;
 
 	// check Dockerfile
-	let dockerFile = path.resolve(targetDirectory, `deployment/Dockerfile.${env}`);
-	if (!existsSync(dockerFile)) {
-		const message = `Missing "${targetDirectory}/deployment/Dockerfile.${env}" file, please create one.`;
-		logError(message);
-		return;
-	}
+	let dockerFile = resolveDockerfilePath({ targetDirectory, env });
+	if (!dockerFile) return;
 
 	let domains: string[],
 		selectedSSL: "letsencrypt" | "custom" | "none" = "letsencrypt",

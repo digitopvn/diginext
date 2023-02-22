@@ -62,6 +62,10 @@ export interface DeployEnvironment {
 	tlsSecret?: string;
 	cliVersion?: string;
 	/**
+	 * Content of namespace YAML file
+	 */
+	namespaceYaml?: string;
+	/**
 	 * Content of deployment YAML file
 	 */
 	deploymentYaml?: string;

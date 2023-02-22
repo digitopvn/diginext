@@ -799,7 +799,7 @@ export class ClusterManager {
 
 			await execCmd(`kubectl apply -f ${APP_FILE} -n ${namespace}`);
 
-			log(`Created new deployment: "deployment/${newAppName}" successfully.`);
+			log(`Created new deployment "${newAppName}" successfully.`);
 
 			return newApp;
 		};
@@ -839,7 +839,7 @@ export class ClusterManager {
 				let envCommand = `kubectl set env deployment/${prereleaseAppName} ${envListStr} -n ${namespace}`;
 				try {
 					await execa.command(envCommand, cliOpts);
-					log(`Patched ENV to "deployment/${prereleaseAppName}" successfully.`);
+					log(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
 				} catch (e) {
 					log(`Command failed: ${envCommand}`);
 					log(`Patch deployment's environment variables failed >>`, e.message);

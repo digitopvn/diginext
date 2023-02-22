@@ -24,7 +24,7 @@ import DigitalOcean, { execDigitalOcean } from "@/modules/providers/digitalocean
 import GCloud, { execGoogleCloud } from "@/modules/providers/gcloud";
 import { execRegistry } from "@/modules/registry";
 import { execServer } from "@/modules/server";
-import { freeUp, getOS, logInfo, logVersion } from "@/plugins";
+import { freeUp, getOS, logVersion } from "@/plugins";
 
 import { execInitApp } from "./modules/apps/initApp";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
@@ -41,13 +41,13 @@ export async function processCLI(options?: InputOptions) {
 
 	if (options.isDebugging) {
 		logVersion();
-		logInfo(chalk.cyan("---------------- DEBUG ----------------"));
-		logInfo(`• OS:	`, getOS().toUpperCase());
-		logInfo("• Node:	", (await execa("node", ["-v"])).stdout);
-		logInfo("• NPM:	", (await execa("npm", ["-v"])).stdout);
-		logInfo("• Docker:	", (await execa("docker", ["-v"])).stdout);
-		logInfo("• Mode:	", process.env.CLI_MODE || "client");
-		logInfo(chalk.cyan("---------------------------------------"));
+		log(chalk.cyan("---------------- DEBUG ----------------"));
+		log(`• OS:	`, getOS().toUpperCase());
+		log("• Node:	", (await execa("node", ["-v"])).stdout);
+		log("• NPM:	", (await execa("npm", ["-v"])).stdout);
+		log("• Docker:	", (await execa("docker", ["-v"])).stdout);
+		log("• Mode:	", process.env.CLI_MODE || "client");
+		log(chalk.cyan("---------------------------------------"));
 	}
 
 	// TODO: Add checking for new CLI version

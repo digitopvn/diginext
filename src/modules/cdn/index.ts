@@ -1,4 +1,6 @@
-import { logHelp, logSuccess } from "../../plugins/utils";
+import { logSuccess } from "diginext-utils/dist/console/log";
+
+import { logHelp } from "../../plugins/utils";
 import { disableCDN, enableCDN, loadVersionCacheCDNFromEnv, purgeProject, startUpload } from "./cdn.service";
 
 export async function execCDN(options) {

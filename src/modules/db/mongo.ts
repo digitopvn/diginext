@@ -1,7 +1,6 @@
+import { logError, logSuccess } from "diginext-utils/dist/console/log";
 import generator from "generate-password";
 import { MongoClient } from "mongodb";
-
-import { logError, logSuccess } from "../../plugins";
 
 let currentDB;
 

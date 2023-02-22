@@ -209,6 +209,10 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	return true;
 };
 
+/**
+ * @deprecated
+ * @param all
+ */
 export const patchResources = async (all = true) => {
 	// await copyFile();
 	const updateList = [

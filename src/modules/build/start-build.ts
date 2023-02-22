@@ -14,13 +14,14 @@ import { isServerMode } from "@/app.config";
 import { cliOpts, getCliConfig } from "@/config/config";
 import type { App, Build, Project, Release, User } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { fetchDeployment } from "@/modules/deploy/fetch-deployment";
-import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, wait } from "@/plugins";
+import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
+import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath, wait } from "@/plugins";
 import { getIO } from "@/server";
 import { BuildService, ContainerRegistryService, ProjectService, UserService } from "@/services";
 import AppService from "@/services/AppService";
 
 import { fetchApi } from "../api";
+import { generateDeployment } from "../deploy";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
 import { createReleaseFromBuild, saveLogs, sendMessage, updateBuildStatus } from "./index";
@@ -76,6 +77,7 @@ export const stopBuild = async (appSlug: string, buildSlug: string) => {
  * Start build the app with {InputOptions}
  */
 export async function startBuild(options: InputOptions, addition: { shouldRollout?: boolean } = {}) {
+	// parse variables
 	const { shouldRollout = true } = addition;
 	const startTime = dayjs();
 
@@ -97,7 +99,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	 * on build server, this is gonna be --> /mnt/build/{TARGET_DIRECTORY}/{REPO_BRANCH_NAME}
 	 * /mnt/build/ -> additional disk (300GB) which mounted to this server on Digital Ocean.
 	 */
-	let buildDir = options.targetDirectory;
+	let buildDir = options.targetDirectory || process.cwd();
 	// log(`BUILD_DIR >`, buildDir);
 
 	// ! nếu build trên máy local thì ko cần GIT pull
@@ -146,14 +148,15 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		sendMessage({ SOCKET_ROOM, logger, message: `Finished pulling latest files of "${gitBranch}"...` });
 	}
 
+	// initialize GIT in this app source directory:
 	const git = simpleGit(buildDir, { binary: "git" });
 	const gitStatus = await git.status(["-s"]);
 	options.gitBranch = gitStatus.current;
 	options.buildDir = buildDir;
 
-	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
+	// if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
 
-	const appConfig = getAppConfig(options.targetDirectory);
+	const appConfig = getAppConfig(buildDir);
 
 	// [SYNC] apply "appConfig" -> "options"
 	options.remoteSSH = appConfig.git.repoSSH;
@@ -223,6 +226,30 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	let message = "";
 	let stream;
 
+	/**
+	 * !!! IMPORTANT !!!
+	 * Generate deployment data (YAML) & save the YAML deployment to "app.environment[env]"
+	 * So it can be used to create release from build
+	 */
+	const { endpoint, deploymentContent, prereleaseDeploymentContent } = await generateDeployment(options);
+	appConfig.environment[env].deploymentYaml = deploymentContent;
+	appConfig.environment[env].prereleaseDeploymentYaml = prereleaseDeploymentContent;
+
+	// Update {user}, {project}, {environment} to database before rolling out
+	const updatedAppData: any = {};
+	updatedAppData[`environment.${env}`] = JSON.stringify(appConfig.environment[env]);
+	updatedAppData.lastUpdatedBy = options.username;
+
+	if (isServerMode) {
+		const updatedApp = await appSvc.update({ slug: appConfig.slug }, updatedAppData);
+	} else {
+		const { status, data: updatedApp } = await fetchApi<App>({
+			url: `/api/v1/app?slug=${appConfig.slug}`,
+			method: "PATCH",
+			data: updatedAppData,
+		});
+	}
+
 	// create new build on build server:
 	let newBuild;
 	try {
@@ -271,13 +298,6 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 	const appDirectory = options.buildDir;
 
-	// Prepare deployment YAML files:
-	const DEPLOYMENT_FILE = path.resolve(appDirectory, `deployment/deployment.${env}.yaml`);
-	const DEPLOYMENT_YAML = fs.readFileSync(DEPLOYMENT_FILE, "utf8");
-	const PRERELEASE_DEPLOYMENT_FILE = path.resolve(appDirectory, "deployment/deployment.prerelease.yaml");
-	const PRERELEASE_DEPLOYMENT_YAML = fs.readFileSync(PRERELEASE_DEPLOYMENT_FILE, "utf8");
-	const deploymentData = fetchDeployment(DEPLOYMENT_FILE, options);
-
 	// TODO: authenticate container registry?
 
 	// build the app with Docker:
@@ -285,17 +305,9 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		sendMessage({ SOCKET_ROOM, logger, message: `Start building the Docker image...` });
 
 		// check if using framework version >= 1.3.6
-		let dockerFile = path.resolve(appDirectory, `deployment/Dockerfile.${env}`);
-		if (!existsSync(dockerFile)) {
-			message = `[ERROR] Missing "${appDirectory}/deployment/Dockerfile.${env}" file, please create one.`;
-			sendMessage({ SOCKET_ROOM, logger, message: message });
-			logError(message);
-
-			// save logs to database
-			saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
-
-			return;
-		}
+		// let dockerFile = path.resolve(appDirectory, `Dockerfile`);
+		let dockerFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
+		if (!dockerFile) throw new Error(`Missing "Dockerfile" to build the application, please create one.`);
 
 		/**
 		 * ! Change current working directory to the root of this project repository
@@ -306,7 +318,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		 * ! BUILD CACHING
 		 * Activate the "docker-container" driver before using "buildx"
 		 * use "buildx" with cache to increase build speed
-		 * docker buildx build -f deployment/Dockerfile.dev --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
+		 * docker buildx build -f Dockerfile --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
 		 **/
 		// activate docker build (with "buildx" driver)...
 		execCmd(`docker buildx create --driver docker-container --name ${appSlug.toLowerCase()}`);
@@ -315,15 +327,11 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} --builder=${appSlug.toLowerCase()} .`;
 		// log(`Build command: "${buildCmd}"`);
 
-		// add to process collection so we can kill it if needed:
-		// const abort = new AbortController();
 		stream = execa.command(buildCmd, cliOpts);
-		// const args = ["buildx", "build", "--platform=linux/x86_64", "-f", dockerFile, "--push", "-t", IMAGE_NAME];
-		// if (latestBuild) args.push("--cache-from", `type=registry,ref=${latestBuild.image}`);
-		// stream = execa("docker", args, { ...cliOpts, killSignal: abort.signal });
+
+		// add to process collection so we can kill it if needed:
 		processes[SOCKET_ROOM] = stream;
 
-		// stream = execa("docker", ["build", "--platform=linux/x86_64", "-t", IMAGE_NAME, "-f", dockerFile, "."]);
 		stream.stdio.forEach((_stdio) => {
 			if (_stdio) {
 				_stdio.on("data", (data) => {
@@ -341,16 +349,11 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		message = `✌️ Built a Docker image & pushed to container registry (${appConfig.environment[env].registry}) successfully!`;
 		sendMessage({ SOCKET_ROOM, logger, message });
 
-		// Update deployment data to app:
-		const updateData = {};
-		updateData[`environment.${env}`] = appConfig.environment[env];
-		const updatedApp = await appSvc.update({ id: app._id }, updateData);
-		log(`Updated deploy environment (${env}) to "${appSlug}" app:`, updatedApp);
-
 		// save logs to database
 		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
 	} catch (e) {
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+
 		sendMessage({ SOCKET_ROOM, logger, message: e.toString() });
 		logError(e);
 
@@ -384,7 +387,8 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	}
 
 	// Insert this build record to server:
-	let prereleaseDeploymentData = fetchDeployment(PRERELEASE_DEPLOYMENT_FILE, options);
+	// let prereleaseDeploymentData = fetchDeployment(PRERELEASE_DEPLOYMENT_FILE, options);
+	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
 	let releaseId;
 
 	try {
@@ -426,7 +430,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		msg += chalk.bold(chalk.yellow(`\n -> Review & publish at: ${buildServerUrl}/release/${projectSlug}`));
 		msg += chalk.bold(chalk.yellow(`\n -> Roll out with CLI command:`), `$ dx rollout ${releaseId}`);
 	} else {
-		msg += chalk.bold(chalk.yellow(`\n -> Preview at: ${deploymentData.endpoint}`));
+		msg += chalk.bold(chalk.yellow(`\n -> Preview at: ${endpoint}`));
 	}
 
 	sendMessage({ SOCKET_ROOM, logger, message: msg });
