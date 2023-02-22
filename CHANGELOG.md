@@ -1,3 +1,12 @@
+## [2.0.2](https://github.com/digitopvn/diginext/compare/v2.0.1...v2.0.2) (2023-02-22)
+
+
+### Bug Fixes
+
+* **admin ui:** fix issue of build log always display building message ([5472665](https://github.com/digitopvn/diginext/commit/54726650f57ad5a234be71c6c1e9c809d7790981))
+* **admin ui:** fix websocket connection issue when viewing build logs ([141eef5](https://github.com/digitopvn/diginext/commit/141eef58ad0db5d2da9542df370093334f244ca5))
+* **cli:** print better error messages when deploying app ([dfed07a](https://github.com/digitopvn/diginext/commit/dfed07a74a5d205d9dac8583aa7671de6ff2ef42))
+
 ## [2.0.1](https://github.com/digitopvn/diginext/compare/v2.0.0...v2.0.1) (2023-02-22)
 
 
