@@ -1,12 +1,10 @@
 import { logWarn } from "diginext-utils/dist/console/log";
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import inquirer from "inquirer";
 
-import type { App } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 import { getAppConfig, saveAppConfig } from "@/plugins";
 
-import fetchApi from "../api/fetchApi";
-import { generateDeployment } from "../deploy/generate-deployment";
 import { askForDomain } from "./ask-for-domain";
 import { startBuild } from "./start-build";
 
@@ -60,28 +58,36 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	saveAppConfig(appConfig, { directory: targetDirectory });
 
 	// Generate the deployment before build & deploy
-	const { deploymentContent, prereleaseDeploymentContent, nsName, IMAGE_NAME, BUILD_NUMBER } = await generateDeployment(options);
-	options.namespace = nsName;
-	options.buildImage = IMAGE_NAME;
-	options.buildNumber = BUILD_NUMBER;
+	// const { deploymentContent, prereleaseDeploymentContent, nsName, IMAGE_NAME, BUILD_NUMBER } = await generateDeployment(options);
+	// options.namespace = nsName;
+	// options.buildImage = IMAGE_NAME;
+	// options.buildNumber = BUILD_NUMBER;
+
+	/**
+	 * Generate build number as docker image tag
+	 */
+	const { imageURL, namespace } = appConfig.environment[env];
+	options.namespace = namespace;
+	options.buildNumber = makeDaySlug(); // ! required
+	options.buildImage = `${imageURL}:${options.buildNumber}`; // ! required
 
 	// ! IMPORTANT: Save the YAML deployment to "app.environment[env]" !
 	// So it can be used to create release from build
-	appConfig.environment[env].deploymentYaml = deploymentContent;
-	appConfig.environment[env].prereleaseDeploymentYaml = prereleaseDeploymentContent;
+	// appConfig.environment[env].deploymentYaml = deploymentContent;
+	// appConfig.environment[env].prereleaseDeploymentYaml = prereleaseDeploymentContent;
 
 	// update this app's environment in database:
-	const updatedApp: any = {};
-	updatedApp[`environment.${env}`] = JSON.stringify(appConfig.environment[env]);
-	updatedApp.lastUpdatedBy = options.username;
+	// const updatedApp: any = {};
+	// updatedApp[`environment.${env}`] = JSON.stringify(appConfig.environment[env]);
+	// updatedApp.lastUpdatedBy = options.username;
 	// console.log("updatedApp :>> ", updatedApp);
 
 	// Update user, project when deploying
-	const { status, data: app } = await fetchApi<App>({
-		url: `/api/v1/app?slug=${appConfig.slug}`,
-		method: "PATCH",
-		data: updatedApp,
-	});
+	// const { status, data: app } = await fetchApi<App>({
+	// 	url: `/api/v1/app?slug=${appConfig.slug}`,
+	// 	method: "PATCH",
+	// 	data: updatedApp,
+	// });
 
 	const buildStatus = await startBuild(options, { shouldRollout: true });
 

@@ -4,7 +4,7 @@ export interface KubeService {
 	metadata?: {
 		name?: string;
 		namespace?: string;
-		labels: {
+		labels?: {
 			[key: string]: string;
 		};
 	};
