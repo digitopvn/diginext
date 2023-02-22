@@ -85,11 +85,16 @@ export async function requestDeploy(options: InputOptions) {
 	// Make an API to request server to build:
 	const deployOptions = JSON.stringify(options);
 	try {
-		await fetchApi({
+		const { status, messages = ["Unexpected error."] } = await fetchApi({
 			url: DEPLOY_API_PATH,
 			method: "POST",
 			data: { options: deployOptions },
 		});
+
+		if (!status) {
+			logError(`Can't deploy due to:`, messages[0]);
+			return;
+		}
 	} catch (e) {
 		logError(`Can't connect to the deploy API:`, e);
 		return;
