@@ -18,7 +18,7 @@ if (fs.existsSync(path.resolve(CLI_DIR, ".env.dev"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env") });
 	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env") }).parsed;
 } else {
-	logWarn(`No ENV file detected.`);
+	logWarn(`[SERVER] No ENV file detected.`);
 }
 
 // dev mode?
