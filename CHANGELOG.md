@@ -1,3 +1,11 @@
+## [2.0.3](https://github.com/digitopvn/diginext/compare/v2.0.2...v2.0.3) (2023-02-23)
+
+
+### Bug Fixes
+
+* **hotfix:** fix issue of check version compatibility when deploy app ([99d4843](https://github.com/digitopvn/diginext/commit/99d484305b495d6873733e0e9bcc051a3f7ea023))
+* **serveride generate deployment:** fix issue of api calling when generate deployment yaml on server ([3a5ad9c](https://github.com/digitopvn/diginext/commit/3a5ad9c2d39c7ec8517731d17151c228ba196750))
+
 ## [2.0.2](https://github.com/digitopvn/diginext/compare/v2.0.1...v2.0.2) (2023-02-22)
 
 
