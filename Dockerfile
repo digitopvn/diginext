@@ -52,6 +52,7 @@ RUN pnpm i
 COPY ./dist ./dist
 COPY ./scripts ./scripts
 COPY ./public ./public
+COPY ./templates ./templates
 # COPY ./.env ./.env
 # COPY ./.env.dev ./.env.dev
 
