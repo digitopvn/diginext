@@ -74,7 +74,7 @@
 		"test": "pnpm lint && pnpm build && mocha --require @babel/register test/**/*.test.js",
 		"format": "prettier 'src/**/*.{js,ts,tsx,json,yaml}' --write && pnpm lint",
 		"commit": "git add . && cz && git push origin",
-		"commit-build": "git add . && git commit -m 'build(prerelease): generate changelog to publish' && git push -u origin",
+		"commit-build": "git add . && git commit -m 'build(prerelease): generate changelog to publish' && git push -u origin && exit 0",
 		"pkg-version": "npm pkg set version=$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-)",
 		"npm-publish": "npm publish --access=public",
 		"release": "npm run build && npm run prerelease && npm run husky-hide && npm run npm-publish && npm run husky-show && npm run pull-request",
