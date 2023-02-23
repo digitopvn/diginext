@@ -94,9 +94,11 @@ if (CLI_MODE == "server") {
 		const { options } = req.body;
 
 		// TODO: Save client CLI version to server database for tracking purpose!
+		const cliOptions = JSON.parse(options);
+		log("[DEPLOY] cliOptions", cliOptions);
 
 		// check for version compatibility between CLI & SERVER:
-		const cliVersion = options.version || "0.0.0";
+		const cliVersion = cliOptions.version || "0.0.0";
 		const breakingChangeVersionCli = cliVersion.split(".")[0];
 		const serverVersion = pkg.version;
 		const breakingChangeVersionServer = serverVersion.split(".")[0];
@@ -108,9 +110,6 @@ if (CLI_MODE == "server") {
 					`Your CLI version (${cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please upgrade: "dx update"`,
 				],
 			});
-
-		const cliOptions = JSON.parse(options);
-		log("[API] cliOptions", cliOptions);
 
 		// start build in background:
 		startBuild(cliOptions);

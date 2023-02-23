@@ -14,7 +14,7 @@ import type { DeployEnvironment } from "@/interfaces";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { getAppConfig, objectToContainerEnv, objectToDeploymentYaml, resolveDockerfilePath, trimFirstSlash } from "@/plugins";
-import { AppService } from "@/services";
+import { AppService, ClusterService, ContainerRegistryService } from "@/services";
 
 import fetchApi from "../api/fetchApi";
 import { generateDomains } from "./generate-domain";
@@ -49,20 +49,32 @@ export const generateDeployment = async (options: InputOptions) => {
 	const clusterShortName = appConfig.environment[env].cluster;
 
 	// get container registry
-	const { data: registries } = await fetchApi<ContainerRegistry>({ url: `/api/v1/registry?slug=${registrySlug}` });
-	if (isEmpty(registries)) {
+	let registry: ContainerRegistry;
+	if (isServerMode) {
+		const registrySvc = new ContainerRegistryService();
+		registry = await registrySvc.findOne({ slug: registrySlug });
+	} else {
+		const { data: registries = [] } = await fetchApi<ContainerRegistry>({ url: `/api/v1/registry?slug=${registrySlug}` });
+		registry = registries[0];
+	}
+	if (isEmpty(registry)) {
 		logError(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
 		return;
 	}
-	const registry = (registries as ContainerRegistry[])[0];
 
 	// get destination cluster
-	const { data: clusters } = await fetchApi<Cluster>({ url: `/api/v1/cluster?shortName=${clusterShortName}` });
-	if (isEmpty(clusters)) {
+	let cluster: Cluster;
+	if (isServerMode) {
+		const clusterSvc = new ClusterService();
+		cluster = await clusterSvc.findOne({ shortName: clusterShortName });
+	} else {
+		const { data: clusters = [] } = await fetchApi<Cluster>({ url: `/api/v1/cluster?shortName=${clusterShortName}` });
+		cluster = clusters[0];
+	}
+	if (isEmpty(cluster)) {
 		logError(`Cannot find any clusters with short name as "${clusterShortName}", please contact your admin or create a new one.`);
 		return;
 	}
-	const cluster = (clusters as Cluster[])[0];
 
 	// get registry secret as image pulling secret:
 	const { imagePullingSecret } = registry;
@@ -127,8 +139,8 @@ export const generateDeployment = async (options: InputOptions) => {
 			const appSvc = new AppService();
 			app = await appSvc.findOne({ slug: appConfig.slug });
 		} else {
-			const { data: fetchedApps } = await fetchApi<App>({ url: `/api/v1/registry?slug=${appConfig.slug}` });
-			if (fetchedApps && fetchedApps[0]) app = fetchedApps[0];
+			const { data: fetchedApps = [] } = await fetchApi<App>({ url: `/api/v1/registry?slug=${appConfig.slug}` });
+			app = fetchedApps[0];
 		}
 
 		if (app) {
