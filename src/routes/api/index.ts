@@ -89,8 +89,11 @@ if (CLI_MODE == "server") {
 		res.send(result);
 	});
 
+	// TODO: Convert this API route to controller
 	router.post("/deploy", (req, res) => {
 		const { options } = req.body;
+
+		// TODO: Save client CLI version to server database for tracking purpose!
 
 		// check for version compatibility between CLI & SERVER:
 		const cliVersion = options.version || "0.0.0";

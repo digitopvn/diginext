@@ -757,28 +757,40 @@ export const sequentialExec = async (array, func) => {
 	}, Promise.resolve([]));
 };
 
-interface ResolveDockerfilePathOptions {
+interface ResolveApplicationFilePathOptions {
 	targetDirectory?: string;
 	env?: string;
+	ignoreIfNotExisted?: boolean;
 }
 
 /**
- * Resolve a location path of the "Dockerfile"
+ * Resolve a location path of the file within the application.
  */
-export const resolveDockerfilePath = (options: ResolveDockerfilePathOptions) => {
-	const { targetDirectory = process.cwd(), env = "dev" } = options;
-	let dockerFile = path.resolve(targetDirectory, `Dockerfile`);
-	if (!fs.existsSync(dockerFile)) dockerFile = path.resolve(targetDirectory, `Dockerfile.${env}`);
-	if (!fs.existsSync(dockerFile)) dockerFile = path.resolve(targetDirectory, `deployment/Dockerfile`);
-	if (!fs.existsSync(dockerFile)) dockerFile = path.resolve(targetDirectory, `deployment/Dockerfile.${env}`);
-	if (!fs.existsSync(dockerFile)) {
-		const message = `Missing "${targetDirectory}/Dockerfile" file, please create one.`;
-		logError(message);
-		// throw new Error(message);
-		return;
+export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicationFilePathOptions) => {
+	const { targetDirectory = process.cwd(), env = "dev", ignoreIfNotExisted = false } = options;
+	let filePath = path.resolve(targetDirectory, fileNamePrefix);
+	if (!fs.existsSync(filePath)) filePath = path.resolve(targetDirectory, `${fileNamePrefix}.${env}`);
+	if (!fs.existsSync(filePath)) filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}`);
+	if (!fs.existsSync(filePath)) filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}.${env}`);
+	if (!fs.existsSync(filePath)) {
+		if (!ignoreIfNotExisted) {
+			const message = `Missing "${targetDirectory}/${fileNamePrefix}" file, please create one.`;
+			logError(message);
+			return;
+		}
 	}
-	return dockerFile;
+	return filePath;
 };
+
+/**
+ * Resolve a location path of the "Dockerfile".
+ */
+export const resolveDockerfilePath = (options: ResolveApplicationFilePathOptions) => resolveFilePath("Dockerfile", options);
+
+/**
+ * Resolve a location path of the DOTENV (`.env.*`) file.
+ */
+export const resolveEnvFilePath = (options: ResolveApplicationFilePathOptions) => resolveFilePath(".env", options);
 
 /**
  * Execute an command within a Docker container
