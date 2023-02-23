@@ -321,7 +321,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		 * docker buildx build -f Dockerfile --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
 		 **/
 		// activate docker build (with "buildx" driver)...
-		execCmd(`docker buildx create --driver docker-container --name ${appSlug.toLowerCase()}`);
+		execCmd(`docker buildx create --driver docker-container --name ${appSlug.toLowerCase()}`, "Docker BuildX instance was existed.");
 
 		const cacheCmd = latestBuild ? ` --cache-from type=registry,ref=${latestBuild.image}` : "";
 		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} --builder=${appSlug.toLowerCase()} .`;
