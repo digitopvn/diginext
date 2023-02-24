@@ -2,7 +2,7 @@ import { logError } from "diginext-utils/dist/console/log";
 
 import type { Cluster } from "@/entities";
 
-import { fetchApi } from "../api/fetchApi";
+import { DB } from "../api/DB";
 import { createRecordInDomain } from "../providers/digitalocean";
 
 interface GenerateDomainOptions {
@@ -20,14 +20,11 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	let targetIP;
 
 	if (clusterShortName) {
-		const { status, data: clusters } = await fetchApi<Cluster>({ url: `/api/v1/cluster?shortName=${clusterShortName}` });
-
-		if (status === 0) {
+		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		if (!cluster) {
 			logError(`Cluster "${clusterShortName}" not found.`);
 			return { status: 0, domain, ip: null };
 		}
-		const cluster = clusters[0];
-
 		targetIP = cluster.primaryIP;
 	}
 

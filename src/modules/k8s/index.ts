@@ -12,26 +12,20 @@ import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_CONFIG_DIR, CLI_DIR } from "@/config/const";
 import type { App, Cluster, ContainerRegistry, Release } from "@/entities";
-import type { DeployEnvironment } from "@/interfaces/DeployEnvironment";
-import type { IResourceQuota } from "@/interfaces/IKube";
-import type { KubeConfig } from "@/interfaces/KubeConfig";
-import type { KubeDeployment } from "@/interfaces/KubeDeployment";
-import type { KubeNamespace } from "@/interfaces/KubeNamespace";
-import type { KubeSecret } from "@/interfaces/KubeSecret";
-import type { KubeService } from "@/interfaces/KubeService";
+import type { DeployEnvironment, IResourceQuota, KubeConfig, KubeDeployment, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import { execCmd, objectToDeploymentYaml, waitUntil } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
-import AppService from "@/services/AppService";
-import ClusterService from "@/services/ClusterService";
-import ContainerRegistryService from "@/services/ContainerRegistryService";
-import ReleaseService from "@/services/ReleaseService";
 
-import { fetchApi } from "../api";
+import { DB } from "../api/DB";
 import custom from "../providers/custom";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
 
 export interface ClusterAuthOptions {
+	/**
+	 * Flag to switch to this cluster after finishing authentication
+	 * @default true
+	 */
 	shouldSwitchContextToThisCluster?: boolean;
 }
 
@@ -45,18 +39,10 @@ export class ClusterManager {
 
 		if (!clusterShortName) {
 			throw new Error(`Param "clusterShortName" is required.`);
-			return;
 		}
 
 		// find the cluster in the database:
-		let cluster;
-		if (isServerMode) {
-			const clusterSvc = new ClusterService();
-			cluster = await clusterSvc.findOne({ shortName: clusterShortName });
-		} else {
-			const { data } = await fetchApi<Cluster>({ url: `/api/v1/cluster?shortName=${clusterShortName}` });
-			cluster = data[0];
-		}
+		let cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
 
 		// log({ cluster });
 
@@ -64,14 +50,12 @@ export class ClusterManager {
 			throw new Error(
 				`This cluster (${clusterShortName}) is not existed, please contact your administrator or register a new one with the CLI command.`
 			);
-			return;
 		}
 
 		const { providerShortName } = cluster;
 
 		if (!providerShortName) {
 			throw new Error(`Param "provider" is required.`);
-			return;
 		}
 
 		switch (providerShortName) {
@@ -101,7 +85,6 @@ export class ClusterManager {
 					throw new Error(
 						`This cluster doesn't have any Digital Ocean API access token to authenticate, please contact your administrator.`
 					);
-					return;
 				}
 
 				const doAuth = await digitalocean.authenticate({ key: apiAccessToken });
@@ -132,7 +115,6 @@ export class ClusterManager {
 
 			default:
 				throw new Error(`This provider (${providerShortName}) is not supported yet.`);
-				return;
 		}
 	}
 
@@ -142,7 +124,6 @@ export class ClusterManager {
 		if (filePath) {
 			if (!fs.existsSync(filePath)) {
 				throw new Error(`File "${filePath}" not found.`);
-				return;
 			}
 			currentKubeConfigContent = await execCmd(`kubectl config --kubeconfig ${filePath} view --flatten`);
 		} else {
@@ -159,14 +140,7 @@ export class ClusterManager {
 			throw new Error(`Cluster short name is required.`);
 		}
 
-		let cluster;
-		if (isServerMode) {
-			const clusterSvc = new ClusterService();
-			cluster = await clusterSvc.findOne({ shortName: clusterShortName });
-		} else {
-			const { status, data, messages } = await fetchApi<Cluster>({ url: `/api/v1/cluster?shortName=${clusterShortName}` });
-			cluster = data[0];
-		}
+		let cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
 
 		if (!cluster) {
 			throw new Error(`Cannot retrieve cluster info of "${clusterShortName}".`);
@@ -188,7 +162,6 @@ export class ClusterManager {
 				fs.writeFileSync(filePath, kubeConfig, "utf8");
 				await custom.authenticate({ filePath });
 				return { error: null, shortName };
-				break;
 
 			default:
 				return { error: `This provider (${provider}) is not supported yet.` };
@@ -252,14 +225,7 @@ export class ClusterManager {
 	static async createImagePullSecretsInNamespace(appSlug: string, env: string, namespace: string = "default") {
 		let message = "";
 
-		let app: App;
-		if (isServerMode) {
-			const appSvc = new AppService();
-			app = await appSvc.findOne({ slug: appSlug });
-		} else {
-			const { data: apps } = await fetchApi<App>({ url: `/api/v1/app?slug=${appSlug}` });
-			app = apps[0];
-		}
+		let app = await DB.findOne<App>("app", { slug: appSlug });
 
 		if (!app) throw new Error(`App "${appSlug}" not found.`);
 
@@ -269,15 +235,7 @@ export class ClusterManager {
 		}
 
 		const { registry: regSlug } = deployEnvironment;
-		let registry;
-
-		if (isServerMode) {
-			const registrySvc = new ContainerRegistryService();
-			registry = await registrySvc.findOne({ slug: regSlug });
-		} else {
-			const { data: registries } = await fetchApi<ContainerRegistry>({ url: `/api/v1/registry?slug=${regSlug}` });
-			registry = registries[0];
-		}
+		let registry = await DB.findOne<ContainerRegistry>("registry", { slug: regSlug });
 
 		if (!registry) throw new Error(`Container Registry (${regSlug}) of "${appSlug}" app not found.`);
 
@@ -314,8 +272,9 @@ export class ClusterManager {
 				default:
 					message = `This cloud provider "${registry.provider}" is not supported yet.`;
 					throw new Error(message);
-					break;
 			}
+
+			console.log("imagePullSecret :>> ", imagePullSecret);
 
 			if (imagePullSecret && imagePullSecret.name) {
 				message = `Created "imagePullSecret" named "${imagePullSecret.name}" successfully.`;
@@ -342,7 +301,6 @@ export class ClusterManager {
 			return JSON.parse(stdout).items as KubeNamespace[];
 		} catch (e) {
 			throw new Error(e.message);
-			return;
 		}
 	}
 
@@ -376,7 +334,6 @@ export class ClusterManager {
 			return JSON.parse(stdout).items as KubeSecret[];
 		} catch (e) {
 			throw new Error(e.message);
-			return;
 		}
 	}
 
@@ -396,7 +353,6 @@ export class ClusterManager {
 			return JSON.parse(stdout) as KubeDeployment;
 		} catch (e) {
 			throw new Error(e.message);
-			return;
 		}
 	}
 
@@ -425,7 +381,6 @@ export class ClusterManager {
 			return items as KubeDeployment[];
 		} catch (e) {
 			throw new Error(e.message);
-			return [];
 		}
 	}
 
@@ -436,7 +391,6 @@ export class ClusterManager {
 			return JSON.parse(stdout) as KubeService;
 		} catch (e) {
 			throw new Error(e.message);
-			return;
 		}
 	}
 
@@ -455,7 +409,6 @@ export class ClusterManager {
 			return items as KubeService[];
 		} catch (e) {
 			throw new Error(e.message);
-			return [];
 		}
 	}
 
@@ -506,14 +459,7 @@ export class ClusterManager {
 	static async previewPrerelease(id: string) {
 		log(`ClusterManager > PREVIEW PRE-RELEASE > Release ID >>`, id);
 
-		let releaseData;
-		if (isServerMode) {
-			const releaseSvc = new ReleaseService();
-			releaseData = await releaseSvc.findOne({ id });
-		} else {
-			const res = await fetchApi<Release>({ url: `/api/v1/release?id=${id}` });
-			releaseData = res.data;
-		}
+		let releaseData = await DB.findOne<Release>("release", { id });
 
 		if (isEmpty(releaseData)) return { error: `Release not found.` };
 
@@ -557,7 +503,6 @@ export class ClusterManager {
 				await this.createImagePullSecretsInNamespace(appSlug, env, namespace);
 			} catch (e) {
 				throw new Error(e.message);
-				return;
 			}
 		}
 
@@ -582,15 +527,8 @@ export class ClusterManager {
 		// log(`ClusterManager > rollout > Release ID >>`, id);
 		// log(`ClusterManager > rollout > releaseApiPath >>`, releaseApiPath);
 
-		let releaseData, releaseSvc;
-		if (isServerMode) {
-			releaseSvc = new ReleaseService();
-			releaseData = await releaseSvc.findOne({ id });
-		} else {
-			const releaseApiPath = `/api/v1/release?id=${id}`;
-			const { data } = await fetchApi<Release>({ url: releaseApiPath });
-			releaseData = data as Release;
-		}
+		// let releaseData, releaseSvc;
+		const releaseData = await DB.findOne<Release>("release", { id });
 
 		// log(`ClusterManager > rollout > data >>`, data);
 		// log(`ClusterManager > rollout > releaseData >>`, releaseData);
@@ -653,7 +591,6 @@ export class ClusterManager {
 				await this.createImagePullSecretsInNamespace(appSlug, env, namespace);
 			} catch (e) {
 				throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
-				return;
 			}
 		}
 
@@ -913,27 +850,17 @@ export class ClusterManager {
 		// Filter previous releases:
 		const filter = [{ projectSlug, appSlug, active: true }];
 
-		let latestRelease;
 		// Mark previous releases as "inactive":
-		if (isServerMode) {
-			await releaseSvc.update({ $or: filter }, { active: false });
-			latestRelease = await releaseSvc.update({ _id: new ObjectId(id) }, { active: true });
-		} else {
-			await fetchApi<Release>({
-				url: `/api/v1/release?or=${JSON.stringify(filter)}`,
-				data: { active: false },
-				method: "PATCH",
-			});
+		await DB.update<Release>("release", { $or: filter }, { active: false });
 
-			// Mark this latest release as "active":
-			const { data } = await fetchApi<Release>({ url: `/api/v1/release?id=${id}`, method: "PATCH", data: { active: true } });
-			latestRelease = data;
-		}
 		// Mark this latest release as "active":
+		const latestReleases = await DB.update<Release>("release", { _id: new ObjectId(id) }, { active: true });
+
+		const latestRelease = latestReleases[0];
 		// log({ latestRelease });
+
 		if (!latestRelease) {
 			throw new Error(`Cannot set the latest release (${id}) status as "active".`);
-			return;
 		}
 
 		/**
@@ -995,24 +922,15 @@ export class ClusterManager {
 
 		// validation
 		if (isValidObjectId(idOrRelease)) {
-			let data;
-			if (isServerMode) {
-				const releaseSvc = new ReleaseService();
-				data = await releaseSvc.findOne({ id: idOrRelease });
-			} else {
-				const res = await fetchApi<Release>({ url: `/api/v1/release?id=${idOrRelease}` });
-				data = res.data;
-			}
+			let data = await DB.findOne<Release>("release", { id: idOrRelease });
 
 			if (!data) {
 				throw new Error(`Release "${idOrRelease}" not found.`);
-				return { error: "Release not found." };
 			}
 			releaseData = data as Release;
 		} else {
 			if (!(idOrRelease as Release).appSlug) {
 				throw new Error(`Release "${idOrRelease}" is invalid.`);
-				return { error: "Release data is invalid." };
 			}
 			releaseData = idOrRelease as Release;
 		}
@@ -1055,46 +973,6 @@ export class ClusterManager {
 		logSuccess(msg);
 
 		return { error: null, data: { prereleaseConfigs } };
-	}
-
-	/**
-	 * Roll out deployments - VER 2.0 (new flow, less downtime) - include these steps:
-	 * 1. ReplicaSet: Replace Prerelease ENV with PROD environments
-	 * 2. ReplicaSet: Scale up to PROD replicas
-	 * 3. Patch Prerelease ReplicaSet & Service Labels: phase: "live" -> "old" and phase: "prerelease" -> "live"
-	 * 4. Create PROD Service if it's not existed
-	 * 5. Create PROD Ingress if it's not existed
-	 * 6. Map PROD Ingress to [new] PROD Service
-	 * 7. Clean up OLD PROD deployments
-	 */
-	static async rolloutV2(id) {
-		// let releaseData: Release;
-		// const { data } = await fetchApi<Release>({ url: `/api/v1/release?id=${id}` });
-		// releaseData = data as Release;
-		// // log(`releaseData >>`, releaseData);
-		// const {
-		// 	slug: releaseSlug,
-		// 	diginext, // appConfig
-		// 	project, // ! This is not PROJECT_ID on the cloud provider
-		// 	provider,
-		// 	cluster,
-		// 	providerProjectId,
-		// 	projectSlug,
-		// 	preYaml: prereleaseYaml,
-		// 	prodYaml: productionYaml,
-		// 	productionUrl: productionDomain,
-		// 	namespace,
-		// } = releaseData as Release;
-		// const appConfig: AppConfig = diginext;
-		// // auth & switch to targeted cluster:
-		// const authRes = await ClusterManager.auth(cluster);
-		// 1. ReplicaSet: Replace Prerelease ENV with PROD environments
-		// 2. ReplicaSet: Scale up to PROD replicas
-		// 3. Patch Prerelease ReplicaSet & Service Labels: phase: "live" -> "old" and phase: "prerelease" -> "live"
-		// 4. Create PROD Service if it's not existed
-		// 5. Create PROD Ingress if it's not existed
-		// 6. Map PROD Ingress to [new] PROD Service
-		// 7. Clean up OLD PROD deployments
 	}
 }
 

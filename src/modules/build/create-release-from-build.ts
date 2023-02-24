@@ -1,15 +1,11 @@
 import { isJSON } from "class-validator";
 import { isEmpty } from "lodash";
 
-import { isServerMode } from "@/app.config";
-import type { App, Build, Release, User, Workspace } from "@/entities";
+import type { App, Build, Project, Release, User, Workspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 import type { DeployEnvironment } from "@/interfaces/DeployEnvironment";
-import AppService from "@/services/AppService";
-import ProjectService from "@/services/ProjectService";
-import ReleaseService from "@/services/ReleaseService";
 
-import { fetchApi } from "../api";
+import { DB } from "../api/DB";
 import { fetchDeploymentFromContent } from "../deploy/fetch-deployment";
 
 type OwnershipParams = {
@@ -19,35 +15,18 @@ type OwnershipParams = {
 
 export const createReleaseFromBuild = async (build: Build, ownership?: OwnershipParams) => {
 	// get app data
-	let app;
-	if (isServerMode) {
-		const appSvc = new AppService();
-		app = await appSvc.findOne({ id: build.app }, { populate: ["owner", "workspace"] });
-	} else {
-		const { data } = await fetchApi<App>({ url: `/api/v1/app?id=${build.app}` });
-		app = data;
-	}
+	const app = await DB.findOne<App>("app", { id: build.app }, { populate: ["owner", "workspace"] });
 
 	if (!app) {
 		throw new Error(`App "${build.appSlug}" not found.`);
-		return;
 	}
 
 	// console.log("app :>> ", app);
 
-	// get project data
-	let project;
-	if (isServerMode) {
-		const projectSvc = new ProjectService();
-		project = await projectSvc.findOne({ id: build.project });
-	} else {
-		const { data } = await fetchApi<App>({ url: `/api/v1/project?id=${build.project}` });
-		project = data;
-	}
+	const project = await DB.findOne<Project>("project", { id: build.project });
 
 	if (!project) {
 		throw new Error(`Project "${build.projectSlug}" not found.`);
-		return;
 	}
 	// console.log("project :>> ", project);
 
@@ -136,16 +115,9 @@ export const createReleaseFromBuild = async (build: Build, ownership?: Ownership
 	// log(`createReleaseFromBuild :>>`, { data });
 
 	// create new release in the database
-	let newRelease;
-	if (isServerMode) {
-		const releaseSvc = new ReleaseService();
-		newRelease = await releaseSvc.create(data);
-	} else {
-		const res = await fetchApi<Release>({ url: `/api/v1/release`, method: "POST", data });
-		newRelease = res.data;
-	}
+	const newRelease = DB.create<Release>("release", data);
+
 	// log("Created new Release successfully:", newRelease);
 
-	// return new release
 	return newRelease;
 };

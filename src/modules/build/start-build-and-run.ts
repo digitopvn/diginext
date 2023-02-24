@@ -65,7 +65,10 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	 * Generate build number as docker image tag
 	 */
 	const { imageURL, namespace } = appConfig.environment[env];
-	options.namespace = namespace;
+
+	options.slug = appConfig.slug; // ! required
+	options.projectSlug = appConfig.project; // ! required
+	options.namespace = namespace; // ! required
 	options.buildNumber = makeDaySlug(); // ! required
 	options.buildImage = `${imageURL}:${options.buildNumber}`; // ! required
 

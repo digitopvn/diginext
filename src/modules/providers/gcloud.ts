@@ -7,14 +7,13 @@ import path from "path";
 import yargs from "yargs";
 
 import { isServerMode } from "@/app.config";
-import { cliOpts, getCliConfig, saveCliConfig } from "@/config/config";
+import { cliOpts, saveCliConfig } from "@/config/config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { CloudProvider, ContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { fetchApi } from "@/modules/api/fetchApi";
 import { execCmd } from "@/plugins";
-import { CloudProviderService, ContainerRegistryService } from "@/services";
 
+import { DB } from "../api/DB";
 import ClusterManager from "../k8s";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
 
@@ -47,34 +46,18 @@ export const authenticate = async (options?: InputOptions) => {
 
 	// Save this cloud provider to database
 	const serviceAccount = fs.readFileSync(serviceAccountPath, "utf8");
+	const gcloud = await DB.findOne<CloudProvider>("provider", { shortName: "gcloud" });
 
-	if (isServerMode) {
-		const providerSvc = new CloudProviderService();
-		const gcloud = await providerSvc.findOne({ shortName: "gcloud" });
-
-		// not support multiple cloud providers yet!
-		if (!gcloud) {
-			const newProvider = await providerSvc.create({
-				name: "Google Cloud",
-				shortName: "gcloud",
-				serviceAccount: serviceAccount,
-				owner: options.userId,
-				workspace: options.workspaceId,
-			});
-		}
-	} else {
-		const { status, messages } = await fetchApi<CloudProvider>({
-			url: `/api/v1/provider`,
-			method: "POST",
-			data: {
-				name: "Google Cloud",
-				shortName: "gcloud",
-				serviceAccount: serviceAccount,
-				owner: options.userId,
-				workspace: options.workspaceId,
-			},
+	// not support multiple cloud providers yet!
+	if (!gcloud) {
+		const newProvider = DB.create<CloudProvider>("provider", {
+			name: "Google Cloud",
+			shortName: "gcloud",
+			serviceAccount: serviceAccount,
+			owner: options.userId,
+			workspace: options.workspaceId,
 		});
-		if (status === 0) logError(`Can't save this cloud provider (Google Cloud) to database:`, messages.join(". "));
+		if (!newProvider) logError(`Can't save this cloud provider (Google Cloud) to database.`);
 	}
 
 	return true;
@@ -101,41 +84,16 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 	}
 
 	// save this container registry to database
-	let currentRegistry, existed;
-	if (isServerMode) {
-		const registrySvc = new ContainerRegistryService();
-		existed = await registrySvc.findOne({ provider: "gcloud", host: options.host });
-
-		currentRegistry = existed
-			? existed
-			: await registrySvc.create({
-					name: "Google Container Registry",
-					host: options.host || "asia.gcr.io",
-					provider: "gcloud",
-					owner: options.userId,
-					workspace: options.workspaceId,
-			  });
-	} else {
-		const { currentUser, currentWorkspace } = getCliConfig();
-		const { data: regs } = await fetchApi<ContainerRegistry>({ url: `/api/v1/registry?provider=gcloud&host=${options.host}` });
-		if (isEmpty(regs)) {
-			const { status, data, messages } = await fetchApi<ContainerRegistry>({
-				url: `/api/v1/registry`,
-				method: "POST",
-				data: {
-					name: "Google Container Registry",
-					host: options.host || "asia.gcr.io",
-					provider: "gcloud",
-					owner: currentUser._id,
-					workspace: currentWorkspace._id,
-				},
-			});
-			if (!data) return;
-			currentRegistry = data;
-		} else {
-			currentRegistry = regs[0];
-		}
-	}
+	const existed = await DB.findOne<ContainerRegistry>("registry", { provider: "gcloud", host: options.host });
+	const currentRegistry =
+		existed ||
+		(await DB.create<ContainerRegistry>("registry", {
+			name: "Google Container Registry",
+			host: options.host || "asia.gcr.io",
+			provider: "gcloud",
+			owner: options.userId,
+			workspace: options.workspaceId,
+		}));
 
 	// save registry to local config:
 	// saveCliConfig({ currentRegistry });
@@ -152,15 +110,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	// log(`providerShortName :>>`, providerShortName);
 
 	// get Container Registry data:
-	let registry, registrySvc;
-	if (isServerMode) {
-		registrySvc = new ContainerRegistryService();
-		registry = await registrySvc.findOne({ slug: registrySlug });
-	} else {
-		const { data: registries } = await fetchApi<ContainerRegistry>({ url: `/api/v1/registry?slug=${registrySlug}` });
-		registry = registries[0];
-		// const [registry] = registries as ContainerRegistry[];
-	}
+	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
 
 	if (isEmpty(registry)) {
 		logError(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
@@ -170,15 +120,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const { host } = registry;
 
 	// get Service Account data:
-	let provider;
-	if (isServerMode) {
-		const providerSvc = new CloudProviderService();
-		provider = await providerSvc.findOne({ shortName: providerShortName });
-	} else {
-		const { data: gcloudProviders } = await fetchApi<CloudProvider>({ url: `/api/v1/provider?shortName=${providerShortName}` });
-		provider = gcloudProviders[0];
-		// const [provider] = gcloudProviders as CloudProvider[];
-	}
+	const provider = await DB.findOne<CloudProvider>("provider", { shortName: providerShortName });
 
 	if (isEmpty(provider)) {
 		logError(`No Google Cloud (short name: "${providerShortName}") provider found. Please contact your admin or create a new one.`);
@@ -240,18 +182,10 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 				"imagePullingSecret[value]": secretValue,
 			};
 
-		if (isServerMode) {
-			const updatedRegistries = await registrySvc.update({ provider: providerShortName }, updateData);
-			if (updatedRegistries && updatedRegistries.length > 0) updatedRegistry = updatedRegistries[0];
-		} else {
-			const { status, data } = await fetchApi<ContainerRegistry>({
-				url: `/api/v1/registry?provider=${providerShortName}`,
-				method: "PATCH",
-				data: updateData,
-			});
-			if (!status) return;
-			updatedRegistry = data[0];
+		const updatedRegistries = await DB.update<ContainerRegistry>("registry", { provider: providerShortName }, updateData as ContainerRegistry);
+		updatedRegistry = updatedRegistries[0];
 
+		if (!isServerMode) {
 			// save registry to local config:
 			saveCliConfig({ currentRegistry: updatedRegistry });
 		}

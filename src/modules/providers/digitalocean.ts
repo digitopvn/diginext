@@ -1,22 +1,21 @@
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
 import chalk from "chalk";
-import { logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import execa from "execa";
 import yaml from "js-yaml";
 import { isEmpty } from "lodash";
 import yargs from "yargs";
 
-import { isServerMode } from "@/app.config";
 import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { CloudProvider, ContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
 import { execCmd, wait } from "@/plugins";
-import { CloudProviderService } from "@/services";
+import type { CloudProviderService } from "@/services";
 
 import type { DomainRecord } from "../../interfaces/DomainRecord";
-import { fetchApi } from "../api/fetchApi";
+import { DB } from "../api/DB";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
 
 const DIGITAL_OCEAN_API_BASE_URL = `https://api.digitalocean.com/v2`;
@@ -57,18 +56,9 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
  */
 export const authenticate = async (options?: InputOptions) => {
 	// Not support multiple "Digital Ocean" providers yet!
-	let provider, providerSvc: CloudProviderService;
-
-	if (isServerMode) {
-		providerSvc = new CloudProviderService();
-		provider = await providerSvc.findOne({ shortName: "digitalocean" });
-	} else {
-		const { data: providers } = await fetchApi<CloudProvider>({ url: `/api/v1/provider?shortName=digitalocean` });
-		if ((providers as CloudProvider[]).length == 1) {
-			logWarn(`Digital Ocean provider is existed. Multiple "Digital Ocean" providers are not supported yet.`);
-		}
-		provider = providers[0];
-	}
+	let providerSvc: CloudProviderService;
+	const provider = await DB.findOne<CloudProvider>("provider", { shortName: "digitalocean" });
+	if (provider) logWarn(`Digital Ocean provider is existed. Multiple "Digital Ocean" providers are not supported yet.`);
 
 	let API_ACCESS_TOKEN;
 
@@ -98,11 +88,6 @@ export const authenticate = async (options?: InputOptions) => {
 		}
 	}
 
-	// Check if this cloud provider is existed:
-	// const {
-	// 	data: [provider],
-	// } = await fetchApi<CloudProvider>({ url: `/api/v1/provider?apiAccessToken=${API_ACCESS_TOKEN}` });
-
 	// Save this cloud provider to database
 	if (!provider) {
 		const data = {
@@ -114,17 +99,8 @@ export const authenticate = async (options?: InputOptions) => {
 		};
 
 		// create new cloud provider if not existed
-		if (isServerMode) {
-			const newProvider = await providerSvc.create(data);
-			if (!newProvider) logError(`Can't create new cloud provider "digitalocean"`);
-		} else {
-			const { status, messages } = await fetchApi<CloudProvider>({
-				url: `/api/v1/provider`,
-				method: "POST",
-				data,
-			});
-			if (status === 0) logError(`Can't save this Cloud Provider to database:`, messages.join(". "));
-		}
+		const newProvider = await DB.create<CloudProvider>("provider", data);
+		if (!newProvider) logError(`Can't create new cloud provider "digitalocean".`);
 	}
 
 	return true;
@@ -138,14 +114,12 @@ export const createRecordInDomain = async (input: DomainRecord) => {
 
 	try {
 		// get "access_token" from "Digital Ocean" cloud provider
-		const { status, data: providers, messages } = await fetchApi<CloudProvider>({ url: "/api/v1/provider?shortName=digitalocean" });
-
-		if (status === 0 || isEmpty(providers)) {
-			logError(`Can't get cloud provider (Digital Ocean):`, messages.join(". "));
+		const doProvider = await DB.findOne<CloudProvider>("provider", { shortName: "digitalocean" });
+		if (!doProvider) {
+			logError(`Can't get cloud provider (Digital Ocean).`);
 			return;
 		}
 
-		const doProvider = (providers as CloudProvider[])[0];
 		const { apiAccessToken: access_token } = doProvider;
 
 		// log(`doProvider :>>`, doProvider);
@@ -205,13 +179,11 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const secretName = `${providerShortName}-docker-registry-key`;
 
 	// get Service Account data:
-	const { data: gcloudProviders } = await fetchApi<CloudProvider>({ url: `/api/v1/provider?shortName=${providerShortName}` });
-	if (isEmpty(gcloudProviders)) {
+	const gcloudProvider = await DB.findOne<CloudProvider>("provider", { shortName: providerShortName });
+	if (isEmpty(gcloudProvider)) {
 		logError(`No Google Cloud (short name: "${providerShortName}") provider found. Please contact your admin or create a new one.`);
 		return;
 	}
-	// const [provider] = gcloudProviders as CloudProvider[];
-	// const { serviceAccount } = provider;
 
 	if (shouldCreateSecretInNamespace && namespace == "default") {
 		logWarn(
@@ -231,14 +203,20 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
 
 	// Save to database
-	const { status, data: currentRegistry } = await fetchApi<ContainerRegistry>({
-		url: `/api/v1/registry?provider=digitalocean`,
-		method: "PATCH",
-		data: {
-			"imagePullingSecret[name]": secretName,
-			"imagePullingSecret[value]": registrySecretData.data[".dockerconfigjson"],
-		},
-	});
+	const updatedRegistries = await DB.update<ContainerRegistry>(
+		"registry",
+		{ provider: "digitalocean" },
+		{
+			imagePullingSecret: {
+				name: secretName,
+				value: registrySecretData.data[".dockerconfigjson"],
+			},
+			// ["imagePullingSecret[name]"]: secretName,
+			// ["imagePullingSecret[value]"]: registrySecretData.data[".dockerconfigjson"],
+		}
+	);
+	const updatedRegistry = updatedRegistries[0];
+	log(`DigitalOcean.createImagePullingSecret() :>>`, { updatedRegistry });
 
 	return registrySecretData;
 };
@@ -256,16 +234,12 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 	}
 
 	// Save this container registry to database
-	const { status, data: currentRegistry } = await fetchApi<ContainerRegistry>({
-		url: `/api/v1/registry`,
-		method: "POST",
-		data: {
-			name: "Digital Ocean Container Registry",
-			host: "registry.digitalocean.com",
-			provider: "digitalocean",
-			owner: options.userId,
-			workspace: options.workspaceId,
-		},
+	const currentRegistry = await DB.create<ContainerRegistry>("registry", {
+		name: "Digital Ocean Container Registry",
+		host: "registry.digitalocean.com",
+		provider: "digitalocean",
+		owner: options.userId,
+		workspace: options.workspaceId,
 	});
 
 	await createImagePullingSecret({ ...options, shouldCreateSecretInNamespace: false });

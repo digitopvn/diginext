@@ -1,4 +1,4 @@
-import { logError, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import dotenv from "dotenv";
@@ -6,7 +6,6 @@ import * as fs from "fs";
 import yaml from "js-yaml";
 import _, { isEmpty } from "lodash";
 
-import { isServerMode } from "@/app.config";
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
 import type { App, Cluster, ContainerRegistry } from "@/entities";
@@ -14,9 +13,8 @@ import type { DeployEnvironment } from "@/interfaces";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { getAppConfig, objectToContainerEnv, objectToDeploymentYaml, resolveDockerfilePath, trimFirstSlash } from "@/plugins";
-import { AppService, ClusterService, ContainerRegistryService } from "@/services";
 
-import fetchApi from "../api/fetchApi";
+import { DB } from "../api/DB";
 import { generateDomains } from "./generate-domain";
 
 export const generateDeployment = async (options: InputOptions) => {
@@ -49,28 +47,14 @@ export const generateDeployment = async (options: InputOptions) => {
 	const clusterShortName = appConfig.environment[env].cluster;
 
 	// get container registry
-	let registry: ContainerRegistry;
-	if (isServerMode) {
-		const registrySvc = new ContainerRegistryService();
-		registry = await registrySvc.findOne({ slug: registrySlug });
-	} else {
-		const { data: registries = [] } = await fetchApi<ContainerRegistry>({ url: `/api/v1/registry?slug=${registrySlug}` });
-		registry = registries[0];
-	}
+	let registry: ContainerRegistry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
 	if (isEmpty(registry)) {
 		logError(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
 		return;
 	}
 
 	// get destination cluster
-	let cluster: Cluster;
-	if (isServerMode) {
-		const clusterSvc = new ClusterService();
-		cluster = await clusterSvc.findOne({ shortName: clusterShortName });
-	} else {
-		const { data: clusters = [] } = await fetchApi<Cluster>({ url: `/api/v1/cluster?shortName=${clusterShortName}` });
-		cluster = clusters[0];
-	}
+	let cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
 	if (isEmpty(cluster)) {
 		logError(`Cannot find any clusters with short name as "${clusterShortName}", please contact your admin or create a new one.`);
 		return;
@@ -80,9 +64,10 @@ export const generateDeployment = async (options: InputOptions) => {
 	const { imagePullingSecret } = registry;
 
 	// prerelease:
-	const prereleaseSubdomainName = `${appName}.prerelease`;
-	let prereleaseSvcName = appName;
-	let prereleaseAppName = appName;
+	const prereleaseSubdomainName = `${appConfig.slug.toLowerCase()}.prerelease`;
+	let prereleaseIngName = `prerelease-${ingName}`;
+	let prereleaseSvcName = `prerelease-${svcName}`;
+	let prereleaseAppName = `prerelease-${appName}`;
 	let prereleaseIngressDoc, prereleaseSvcDoc, prereleaseDeployDoc;
 	let prereleaseDomain;
 
@@ -99,6 +84,7 @@ export const generateDeployment = async (options: InputOptions) => {
 		}
 		prereleaseDomain = domain;
 	}
+	if (env === "prod") log({ prereleaseDomain });
 
 	// Find the relevant ENV file:
 	const currentEnvFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
@@ -134,14 +120,7 @@ export const generateDeployment = async (options: InputOptions) => {
 		previousIng: KubeIngress = { metadata: { annotations: {} } };
 
 	if (options.shouldInherit) {
-		let app: App;
-		if (isServerMode) {
-			const appSvc = new AppService();
-			app = await appSvc.findOne({ slug: appConfig.slug });
-		} else {
-			const { data: fetchedApps = [] } = await fetchApi<App>({ url: `/api/v1/registry?slug=${appConfig.slug}` });
-			app = fetchedApps[0];
-		}
+		let app = await DB.findOne<App>("app", { slug: appConfig.slug });
 
 		if (app) {
 			try {
@@ -260,7 +239,7 @@ export const generateDeployment = async (options: InputOptions) => {
 
 					// pre-release
 					prereleaseIngressDoc = _.cloneDeep(doc);
-					prereleaseIngressDoc.metadata.name = "prerelease-" + doc.metadata.name;
+					prereleaseIngressDoc.metadata.name = prereleaseIngName;
 					prereleaseIngressDoc.metadata.namespace = nsName;
 					prereleaseIngressDoc.metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"] = "";
 					prereleaseIngressDoc.metadata.annotations["cert-manager.io/cluster-issuer"] = "letsencrypt-prod";
@@ -308,12 +287,12 @@ export const generateDeployment = async (options: InputOptions) => {
 
 				// clone svc to prerelease:
 				prereleaseSvcDoc = _.cloneDeep(doc);
-				prereleaseSvcDoc.metadata.name = appName;
+				prereleaseSvcDoc.metadata.name = prereleaseSvcName;
 				prereleaseSvcDoc.metadata.namespace = nsName;
 				prereleaseSvcDoc.metadata.labels["main-app"] = mainAppName;
 				prereleaseSvcDoc.metadata.labels.app = appName;
 				prereleaseSvcDoc.metadata.labels.phase = "prerelease";
-				prereleaseSvcDoc.spec.selector.app = appName;
+				prereleaseSvcDoc.spec.selector.app = prereleaseAppName;
 			}
 
 			if (doc && doc.kind == "Deployment") {
@@ -366,16 +345,16 @@ export const generateDeployment = async (options: InputOptions) => {
 				// clone deployment to prerelease:
 				prereleaseDeployDoc = _.cloneDeep(doc);
 				prereleaseDeployDoc.metadata.namespace = nsName;
-				prereleaseDeployDoc.metadata.name = appName;
+				prereleaseDeployDoc.metadata.name = prereleaseAppName;
 				prereleaseDeployDoc.metadata.labels.phase = "prerelease";
 				prereleaseDeployDoc.metadata.labels["main-app"] = mainAppName;
-				prereleaseDeployDoc.metadata.labels.app = appName;
+				prereleaseDeployDoc.metadata.labels.app = prereleaseAppName;
 				prereleaseDeployDoc.metadata.labels.project = projectSlug;
 
 				prereleaseDeployDoc.spec.replicas = 1;
 				prereleaseDeployDoc.spec.template.metadata.labels.phase = "prerelease";
 				prereleaseDeployDoc.spec.template.metadata.labels["main-app"] = mainAppName;
-				prereleaseDeployDoc.spec.template.metadata.labels.app = appName;
+				prereleaseDeployDoc.spec.template.metadata.labels.app = prereleaseAppName;
 				prereleaseDeployDoc.spec.template.metadata.labels.project = projectSlug;
 				prereleaseDeployDoc.spec.template.spec.containers[0].image = IMAGE_NAME;
 				prereleaseDeployDoc.spec.template.spec.containers[0].env = prereleaseEnvs;
