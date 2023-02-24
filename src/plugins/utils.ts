@@ -35,12 +35,6 @@ export function nowStr() {
 	return dayjs().format("YYYY-MM-DD HH:mm:ss");
 }
 
-export async function getLatestCliVersion() {
-	const git = simpleGit(CLI_DIR, { binary: "git" });
-	const tags = (await git.tags(["--sort", "creatordate"])).all.filter((tag) => !tag.includes("beta"));
-	return _.last(tags) as string;
-}
-
 /**
  * Delay/wait a specific miliseconds
  * @param i - waiting time in miliseconds
@@ -302,10 +296,6 @@ export function logVersion() {
 	console.warn(chalk.bgWhite(chalk.bold(chalk.black(` [ Diginext CLI - v${pkg.version} | ${nowStr()} ] `))));
 }
 
-export function currentVersion() {
-	return pkg.version;
-}
-
 type ErrorCallback = (e: string) => void;
 
 export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCallback = "") {
@@ -327,33 +317,33 @@ export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCal
 	}
 }
 
+export function currentVersion() {
+	return pkg.version;
+}
+
+/**
+ * Get latest tag of the git repository
+ */
+export async function getLatestTagOfGitRepo() {
+	const git = simpleGit(CLI_DIR, { binary: "git" });
+	const tags = (await git.tags(["--sort", "creatordate"])).all.filter((tag) => !tag.includes("beta"));
+	return _.last(tags) as string;
+}
+
+/**
+ * Get latest version of the CLI from NPM
+ */
+export async function getLatestCliVersion() {
+	const latestVersion = await execCmd(`npm show ${pkg.name} version`);
+	return latestVersion;
+}
+
+/**
+ * Check if CLI version is latest or not, if not -> return FALSE
+ */
 export async function checkForUpdate() {
-	// const git = SimpleGit(CLI_DIR, { binary: "git" });
-
-	// const curVersion = pkg.version;
-	// const _cv = curVersion.split(".");
-	// const latestVersion: string = (await getLatestCliVersion()).substr(1);
-	// const _lv = latestVersion.split(".");
-
-	// // log(`isValid >>`, currentVersion, ">>", validate(currentVersion));
-	// // log(`latestVersion >>`, latestVersion);
-	// // log(`currentVersion >>`, currentVersion);
-	// // log(`Should update >>`, compareVersions(latestVersion, currentVersion));
-	// const newVersion = compareVersions(latestVersion, curVersion) > 0 ? latestVersion : null;
-
-	// if (newVersion) {
-	// 	logWarn(`===================================================`);
-	// 	logWarn(chalk.bgBlack(chalk.whiteBright(chalk.bold(`[ !!! IMPORTANT: New CLI version available: v$${newVersion} !!! ]`))));
-	// 	logWarn(`-> Update CLI with command: ${chalk.cyan("diginext update")} or ${chalk.cyan("diginext -u")}`);
-	// 	logWarn(`===================================================`);
-	// 	// return;
-	// }
-
-	// return newVersion;
-
-	// TODO: Check for update CLI on NPM
-
-	return "latest";
+	const latestVersion = await getLatestCliVersion();
+	return latestVersion !== currentVersion();
 }
 
 async function logBitbucketError(error: any, delay?: number, location?: string, shouldExit = false) {

@@ -1,9 +1,10 @@
 import chalk from "chalk";
-import { log } from "diginext-utils/dist/console/log";
+import { log, logWarn } from "diginext-utils/dist/console/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
 import type { InputOptions } from "@/interfaces/InputOptions";
+import { checkForUpdate, getLatestCliVersion } from "@/plugins";
 
 const cliHeader =
 	chalk.bold.underline.green(`Diginext CLI USAGE - VERSION ${pkg.version}`.toUpperCase()) +
@@ -134,8 +135,18 @@ const deployOptions = {
 	create: argvOptions.create,
 };
 
-export function parseCliOptions() {
-	// end
+export async function parseCliOptions() {
+	// check for new version
+	const shouldUpdateCLI = await checkForUpdate();
+	if (shouldUpdateCLI) {
+		const latestVersion = await getLatestCliVersion();
+		logWarn(chalk.yellow(`There is new version of the CLI (${latestVersion}), update with:`));
+		logWarn("  dx update");
+		logWarn(chalk.gray("  OR"));
+		logWarn("  npm update @topgroup/diginext --global");
+	}
+
+	// start parsing...
 	const argv: any = yargs(process.argv.slice(2))
 		// header
 		.usage(cliHeader)
