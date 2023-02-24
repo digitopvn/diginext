@@ -1,3 +1,10 @@
+## [2.0.7](https://github.com/digitopvn/diginext/compare/v2.0.6...v2.0.7) (2023-02-24)
+
+
+### Bug Fixes
+
+* **upload dotenv:** fix issue of uploading dotenv when deploy ([232df3c](https://github.com/digitopvn/diginext/commit/232df3cd3ff7bcccde55548ce0b5266fb50ebe7f))
+
 ## [2.0.6](https://github.com/digitopvn/diginext/compare/v2.0.5...v2.0.6) (2023-02-24)
 
 
