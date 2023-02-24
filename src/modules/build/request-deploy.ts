@@ -68,10 +68,10 @@ export async function requestDeploy(options: InputOptions) {
 			: (app.environment[env] as DeployEnvironment);
 
 	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB };
-	log({ targetEnvironment });
+	// log({ targetEnvironment });
 
 	const serverEnvironmentVariables = targetEnvironment?.envVars;
-	log({ serverEnvironmentVariables });
+	// log({ serverEnvironmentVariables });
 
 	let envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
 
@@ -90,12 +90,12 @@ export async function requestDeploy(options: InputOptions) {
 
 		if (shouldUploadEnv) {
 			const containerEnvVars = loadEnvFileAsContainerEnvVars(envFile);
-			log({ containerEnvVars });
+			// log({ containerEnvVars });
 
 			// update env vars to database:
 			const updateAppData = { environment: app.environment } as App;
 			updateAppData.environment[env] = JSON.stringify({ ...targetEnvironment, envVars: containerEnvVars } as DeployEnvironment);
-			log({ updateAppData });
+			// log({ updateAppData });
 
 			const updatedApps = await DB.update<App>("app", { slug }, updateAppData);
 			// log({ updatedApps });
@@ -106,7 +106,7 @@ export async function requestDeploy(options: InputOptions) {
 				}" app has been uploaded to ${env.toUpperCase()} environment.`
 			);
 
-			log({ environments: updatedApps[0].environment });
+			// log({ environments: updatedApps[0].environment });
 		}
 	}
 

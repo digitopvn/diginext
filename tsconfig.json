@@ -29,7 +29,7 @@
 			"libs/*": ["./libs/*"]
 		}
 	},
-	"files": ["src/index.ts", "src/server.ts", "src/interfaces/ResponseData.ts"],
+	"files": ["src/index.ts", "src/server.ts"],
 	"include": ["./src", "./test", "node_modules/execa/index.d.ts"],
 	"exclude": ["dist", "build", "node_modules", "storage", "./storage"],
 	"ts-node": {

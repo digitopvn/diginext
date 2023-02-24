@@ -37,7 +37,6 @@ import { execRollOut } from "./modules/deploy/exec-rollout";
 export const conf = new Configstore(pkg.name);
 
 export async function processCLI(options?: InputOptions) {
-	// let options = parseArgumentsIntoOptions(args);
 	options.version = currentVersion();
 
 	if (options.isDebugging) {
@@ -50,28 +49,6 @@ export async function processCLI(options?: InputOptions) {
 		log("• Mode:	", process.env.CLI_MODE || "client");
 		log(chalk.cyan("---------------------------------------"));
 	}
-
-	// TODO: Add checking for new CLI version
-	// if (options.shouldUpdateCli || options.action == "update") {
-	// 	options = await promptForAuthOptions(options);
-	// 	await authenticateBitbucket(options);
-	// 	await parseOptions(options);
-	// 	await updateCli();
-	// 	return;
-	// }
-
-	// check for new version
-	// const newVersion = await checkForUpdate();
-
-	// print help
-	// if (options.shouldShowHelp) {
-	// 	printHelp();
-	// 	return;
-	// }
-
-	// if (typeof options.action === "undefined") {
-	// 	return;
-	// }
 
 	let env = "dev";
 	if (options.isStaging) env = "staging";
@@ -232,6 +209,7 @@ if (process.env.CLI_MODE == "server") {
 	import("@/server");
 } else {
 	// Execute CLI commands...
-	const inputOptions = parseCliOptions();
-	processCLI(inputOptions).then(() => process.exit(0));
+	parseCliOptions().then((inputOptions) => {
+		processCLI(inputOptions).then(() => process.exit(0));
+	});
 }
