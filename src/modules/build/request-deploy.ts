@@ -98,7 +98,7 @@ export async function requestDeploy(options: InputOptions) {
 			// log({ containerEnvVars });
 
 			// update env vars to database:
-			const updateAppData = { environment: app.environment } as App;
+			const updateAppData = { environment: app.environment || {} } as App;
 			updateAppData.environment[env] = JSON.stringify({ ...targetEnvironment, envVars: containerEnvVars } as DeployEnvironment);
 			// log({ updateAppData });
 
