@@ -1,3 +1,11 @@
+## [2.0.5](https://github.com/digitopvn/diginext/compare/v2.0.4...v2.0.5) (2023-02-24)
+
+
+### Bug Fixes
+
+* **cli build:** fix docker buildx driver did not initialized before build ([49adb22](https://github.com/digitopvn/diginext/commit/49adb2217c4ee9ff9279ae36240624c4f4f52edc))
+* **cli:** check for new version when execute cli command ([35a2942](https://github.com/digitopvn/diginext/commit/35a2942d9346682dd213df36753cd77d0fd8fcef))
+
 ## [2.0.4](https://github.com/digitopvn/diginext/compare/v2.0.3...v2.0.4) (2023-02-24)
 
 
