@@ -1,5 +1,5 @@
 export interface KubeService {
-	apiVersion?: "v1";
+	apiVersion?: string;
 	kind?: "Service";
 	metadata?: {
 		name?: string;

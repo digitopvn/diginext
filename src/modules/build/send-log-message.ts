@@ -1,7 +1,9 @@
 import { log } from "diginext-utils/dist/console/log";
 
-import type { Logger } from "@/plugins";
+import { Logger } from "@/plugins";
 import { getIO } from "@/server";
+
+import { saveLogs } from "./build";
 
 type LogMessageOpts = {
 	logger?: Logger;
@@ -17,4 +19,7 @@ export function sendMessage(options: LogMessageOpts) {
 	let socketServer = getIO();
 	// log({ socketServer });
 	if (socketServer) socketServer.to(SOCKET_ROOM).emit("message", { action: "log", message: message });
+
+	// save logs to database
+	saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
 }

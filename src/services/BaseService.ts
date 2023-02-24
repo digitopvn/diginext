@@ -1,4 +1,4 @@
-import { log, logError, logFull } from "diginext-utils/dist/console/log";
+import { log, logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
@@ -104,7 +104,7 @@ export default class BaseService<E extends ObjectLiteral> {
 		// LOG this for further investigation:
 		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
 		const author = `${user.name} (ID: ${user._id})`;
-		if (user.name !== "Unknown") log(author, `- BaseService.find :>>`, { filter, options, pagination });
+		if (user.name !== "Unknown") log(author, `- find :>>`, { filter, options, pagination });
 		// console.log("BaseService.find > this.req :>> ", this.req);
 
 		if (pagination) {
@@ -173,13 +173,14 @@ export default class BaseService<E extends ObjectLiteral> {
 		data.updatedAt = new Date();
 
 		const updateData = options?.raw ? data : { $set: data };
+		// logFull({ updateData });
 
 		const updateRes = await this.query.updateMany(filter, updateData);
 
-		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
-		const author = `${user.name} (ID: ${user._id})`;
-		if (user.name !== "Unknown") log(author, `- BaseService > UPDATE :>>`);
-		logFull({ filter, updateData, updateRes });
+		// const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+		// const author = `${user.name} (ID: ${user._id})`;
+		// if (user.name !== "Unknown") log(author, `- BaseService > UPDATE :>>`);
+		// logFull({ filter, updateData, updateRes });
 
 		if (updateRes.matchedCount > 0) {
 			const results = await this.find(filter, options);

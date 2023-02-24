@@ -1,5 +1,3 @@
-export * from "./fetchApi";
-// export * from "./slug";
 export * from "./freeup";
 export * from "./gcs";
 export * from "./logger";

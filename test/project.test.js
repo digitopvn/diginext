@@ -49,9 +49,6 @@ describe("Create new project", function () {
 		// 	`BASE_PATH="${projectSlug}/backend"`,
 		// 	`BASE_PATH=${projectSlug}/backend`
 		// ], "BASE_PATH was not setup properly.");
-
-		// const {} = fetchApi
-		// expect()
 	});
 
 	afterEach(async function () {

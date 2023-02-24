@@ -1,5 +1,5 @@
 export interface KubeNamespace {
-	apiVersion?: "v1";
+	apiVersion?: string;
 	kind?: "Namespace";
 	metadata?: {
 		name?: string;

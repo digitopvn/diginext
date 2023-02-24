@@ -1,3 +1,8 @@
+import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
+
+/**
+ * A deployment's environment of the application.
+ */
 export interface DeployEnvironment {
 	/**
 	 * Container registry slug
@@ -55,11 +60,33 @@ export interface DeployEnvironment {
 	 * Container's port
 	 */
 	port?: number;
+	/**
+	 * Application base path in the endpoint
+	 * @default "/"
+	 * @example "http://example.com/base-bath-here"
+	 */
 	basePath?: string;
+	/**
+	 * List of application's domains
+	 */
 	domains?: string[];
+	/**
+	 * Flag to enable CDN for this application
+	 * @default false;
+	 */
 	cdn?: boolean;
+	/**
+	 * SSL Certificate Issuer
+	 */
 	ssl?: "letsencrypt" | "custom" | "none";
+	/**
+	 * Secret name to hold the key of SSL, will be automatically generated.
+	 * Only need to specify when using "custom" SSL (which is the SSL from third-party issuer)
+	 */
 	tlsSecret?: string;
+	/**
+	 * The CLI version
+	 */
 	cliVersion?: string;
 	/**
 	 * Content of namespace YAML file
@@ -73,4 +100,12 @@ export interface DeployEnvironment {
 	 * Content of prerelease deployment YAML file
 	 */
 	prereleaseDeploymentYaml?: string;
+	/**
+	 * Prerelease endpoint URL
+	 */
+	prereleaseUrl?: string;
+	/**
+	 * Collection array of environment variables
+	 */
+	envVars?: KubeEnvironmentVariable[];
 }

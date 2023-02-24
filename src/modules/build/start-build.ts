@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import { isJSON } from "class-validator";
 import dayjs from "dayjs";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import type { ExecaChildProcess } from "execa";
@@ -10,21 +11,19 @@ import PQueue from "p-queue";
 import path from "path";
 import { simpleGit } from "simple-git";
 
-import { isServerMode } from "@/app.config";
 import { cliOpts, getCliConfig } from "@/config/config";
 import type { App, Build, Project, Release, User } from "@/entities";
+import type { DeployEnvironment } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath, wait } from "@/plugins";
 import { getIO } from "@/server";
-import { BuildService, ContainerRegistryService, ProjectService, UserService } from "@/services";
-import AppService from "@/services/AppService";
 
-import { fetchApi } from "../api";
+import { DB } from "../api/DB";
 import { generateDeployment } from "../deploy";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
-import { createReleaseFromBuild, saveLogs, sendMessage, updateBuildStatus } from "./index";
+import { createReleaseFromBuild, sendMessage, updateBuildStatus } from "./index";
 
 type IProcessCommand = {
 	[key: string]: ExecaChildProcess;
@@ -115,9 +114,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		try {
 			await verifySSH({ gitProvider });
 		} catch (e) {
-			// save logs to database
-			saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
-
+			sendMessage({ SOCKET_ROOM, logger, message: `"${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.` });
 			throw new Error(e);
 		}
 
@@ -136,9 +133,6 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 				await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
 			} catch (e) {
 				sendMessage({ SOCKET_ROOM, logger, message: `Failed to pull branch "${gitBranch}" to "${buildDir}": ${e}` });
-
-				// save logs to database
-				saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
 
 				throw new Error(e);
 			}
@@ -179,43 +173,17 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	options.ssl = appConfig.environment[env].ssl != "none";
 	options.namespace = appConfig.environment[env].namespace;
 
-	// log("options :>>", options);
+	log("options :>>", options);
 
-	// back-end service
+	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
+	const app = await DB.findOne<App>("app", { slug: appSlug });
+	const project = await DB.findOne<Project>("project", { slug: projectSlug });
+	const author = await DB.findOne<User>("user", { id: new ObjectId(options.userId) });
 
-	let latestBuild, app, project, author;
-	let appSvc, buildSvc, projectSvc, userSvc;
-
-	if (isServerMode) {
-		appSvc = new AppService();
-		buildSvc = new BuildService();
-		projectSvc = new ProjectService();
-		userSvc = new UserService();
-		// const clusterSvc = new ClusterService();
-		const registrySvc = new ContainerRegistryService();
-
-		latestBuild = await buildSvc.findOne({ appSlug, projectSlug, status: "success" });
-		app = await appSvc.findOne({ slug: appSlug });
-		project = await projectSvc.findOne({ slug: projectSlug });
-		author = await userSvc.findOne({ id: new ObjectId(options.userId) });
-	} else {
-		const { data: builds } = await fetchApi<Build>({ url: `/api/v1/build?appSlug=${appSlug}&projectSlug=${projectSlug}&status=success` });
-		latestBuild = builds[0];
-
-		const { data: apps } = await fetchApi<App>({ url: `/api/v1/app?slug=${appSlug}` });
-		app = apps[0];
-
-		const { data: projects } = await fetchApi<Project>({ url: `/api/v1/project?slug=${projectSlug}` });
-		project = projects[0];
-
-		const { data: user } = await fetchApi<User>({ url: `/api/v1/user?id=${options.userId}` });
-		author = user;
-	}
-
-	log(`latestBuild :>>`, latestBuild);
-	log(`app :>>`, app);
-	log(`project :>>`, project);
-	log("author :>> ", author);
+	// log(`[BUILD] latestBuild :>>`, latestBuild);
+	// log(`[BUILD] app :>>`, app);
+	// log(`[BUILD] project :>>`, project);
+	// log("[BUILD] author :>> ", author);
 
 	options.appSlug = appSlug;
 	options.projectName = project.name;
@@ -226,29 +194,32 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	let message = "";
 	let stream;
 
+	const targetEnvironmentFromDB =
+		app.environment[env] && isJSON(app.environment[env])
+			? (JSON.parse(app.environment[env] as string) as DeployEnvironment)
+			: (app.environment[env] as DeployEnvironment);
+
+	// Merge the one from appConfig with the one from database
+	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB } as DeployEnvironment;
+
 	/**
 	 * !!! IMPORTANT !!!
 	 * Generate deployment data (YAML) & save the YAML deployment to "app.environment[env]"
 	 * So it can be used to create release from build
 	 */
-	const { endpoint, deploymentContent, prereleaseDeploymentContent } = await generateDeployment(options);
-	appConfig.environment[env].deploymentYaml = deploymentContent;
-	appConfig.environment[env].prereleaseDeploymentYaml = prereleaseDeploymentContent;
+	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = await generateDeployment(options);
+
+	targetEnvironment.prereleaseUrl = prereleaseUrl;
+	targetEnvironment.deploymentYaml = deploymentContent;
+	targetEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 
 	// Update {user}, {project}, {environment} to database before rolling out
-	const updatedAppData: any = {};
-	updatedAppData[`environment.${env}`] = JSON.stringify(appConfig.environment[env]);
+	const updatedAppData = { environment: app.environment } as App;
+	updatedAppData.environment[env] = JSON.stringify(targetEnvironment);
 	updatedAppData.lastUpdatedBy = options.username;
 
-	if (isServerMode) {
-		const updatedApp = await appSvc.update({ slug: appConfig.slug }, updatedAppData);
-	} else {
-		const { status, data: updatedApp } = await fetchApi<App>({
-			url: `/api/v1/app?slug=${appConfig.slug}`,
-			method: "PATCH",
-			data: updatedAppData,
-		});
-	}
+	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updatedAppData);
+	log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// create new build on build server:
 	let newBuild;
@@ -269,17 +240,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 			workspace: options.workspace._id,
 		};
 
-		if (isServerMode) {
-			newBuild = await buildSvc.create(buildData);
-		} else {
-			const { data } = await fetchApi<Build>({
-				url: "/api/v1/build",
-				method: "POST",
-				data: buildData,
-			});
-			// log(`startBuild > create build :>>`, data);
-			newBuild = data as Build;
-		}
+		newBuild = await DB.create<Build>("build", buildData);
 
 		message = "[SUCCESS] created new build on server!";
 		sendMessage({ SOCKET_ROOM, logger, message });
@@ -287,9 +248,6 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		logError(e);
 		message = "[FAILED] can't create a new build in database: " + e.toString();
 		sendMessage({ SOCKET_ROOM, logger, message });
-
-		// save logs to database
-		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
 
 		return;
 	}
@@ -346,19 +304,13 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		// update build status as "success"
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "success");
 
-		message = `✌️ Built a Docker image & pushed to container registry (${appConfig.environment[env].registry}) successfully!`;
+		message = `✓ Built a Docker image & pushed to container registry (${appConfig.environment[env].registry}) successfully!`;
 		sendMessage({ SOCKET_ROOM, logger, message });
-
-		// save logs to database
-		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
 	} catch (e) {
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
 
 		sendMessage({ SOCKET_ROOM, logger, message: e.toString() });
 		logError(e);
-
-		// save logs to database
-		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
 
 		return;
 	}
@@ -376,13 +328,11 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 	if (!shouldRollout) {
 		const buildDuration = dayjs().diff(startTime, "millisecond");
-		let buildFinishMsg = chalk.green(`🎉 FINISHED BUILDING AFTER ${humanizeDuration(buildDuration)} 🎉`);
-		buildFinishMsg += `\n  - Image: ${IMAGE_NAME}`;
-		logSuccess(buildFinishMsg);
+		message = chalk.green(`🎉 FINISHED BUILDING AFTER ${humanizeDuration(buildDuration)} 🎉`);
+		message += `\n  - Image: ${IMAGE_NAME}`;
+		logSuccess(message);
 
-		// save logs to database
-		saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
-
+		sendMessage({ SOCKET_ROOM, logger, message });
 		return true;
 	}
 
@@ -390,53 +340,57 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	// let prereleaseDeploymentData = fetchDeployment(PRERELEASE_DEPLOYMENT_FILE, options);
 	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
 	let releaseId;
-
 	try {
 		const newRelease = await createReleaseFromBuild(newBuild, { author: author as User });
 		// log("Created new Release successfully:", newRelease);
 
 		releaseId = (newRelease as Release)._id;
 
-		message = `Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.`;
+		message = `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.`;
 		sendMessage({ SOCKET_ROOM, logger, message });
 	} catch (e) {
 		sendMessage({ SOCKET_ROOM, logger, message: `[ERROR] ${e.message}` });
-		// return;
+		return;
 	}
 
 	// rolling out
+
 	/**
 	 * !!! IMPORTANT NOTE !!!
 	 * ! Sử dụng QUEUE để apply deployment lên từng cluster một,
 	 * ! không để tình trạng concurrent deploy làm deploy lên nhầm lẫn cluster
 	 */
-	// await queueKubeApply(options);
 	if (releaseId) {
 		try {
-			await queue.add(() => ClusterManager.rollout(releaseId));
+			await queue.add(() => (env === "prod" ? ClusterManager.previewPrerelease(releaseId) : ClusterManager.rollout(releaseId)));
 		} catch (e) {
-			log(`Queue job failed -> ClusterManager.rollout() -> ${e.message}:`, { options });
+			logError(`Queue job failed -> ClusterManager.rollout() -> ${e.message}:`, { options });
 		}
 	}
 
 	// Print success:
 	const deployDuration = dayjs().diff(startTime, "millisecond");
 
-	let msg = chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanizeDuration(deployDuration)} 🎉`);
+	message = chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanizeDuration(deployDuration)} 🎉`);
+	sendMessage({ SOCKET_ROOM, logger, message });
 
 	if (env == "prod") {
 		const { buildServerUrl } = getCliConfig();
-		msg += chalk.bold(chalk.yellow(`\n -> Preview at: ${prereleaseDeploymentData.endpoint}`));
-		msg += chalk.bold(chalk.yellow(`\n -> Review & publish at: ${buildServerUrl}/release/${projectSlug}`));
-		msg += chalk.bold(chalk.yellow(`\n -> Roll out with CLI command:`), `$ dx rollout ${releaseId}`);
+
+		message = chalk.bold(chalk.yellow(`✓ Preview at: ${prereleaseDeploymentData.endpoint}`));
+		sendMessage({ SOCKET_ROOM, logger, message });
+
+		message = chalk.bold(
+			chalk.yellow(`✓ Review & publish at: ${buildServerUrl}/project/?lv1=release&project=${projectSlug}&app=${appSlug}&env=prod`)
+		);
+		sendMessage({ SOCKET_ROOM, logger, message });
+
+		message = chalk.bold(chalk.yellow(`✓ Roll out with CLI command:`), `$ dx rollout ${releaseId}`);
+		sendMessage({ SOCKET_ROOM, logger, message });
 	} else {
-		msg += chalk.bold(chalk.yellow(`\n -> Preview at: ${endpoint}`));
+		message = chalk.bold(chalk.yellow(`✓ Preview at: ${endpoint}`));
+		sendMessage({ SOCKET_ROOM, logger, message });
 	}
-
-	sendMessage({ SOCKET_ROOM, logger, message: msg });
-
-	// save logs to database
-	saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
 
 	// disconnect CLI client:
 	if (socketServer) socketServer.to(SOCKET_ROOM).emit("message", { action: "end" });

@@ -3,11 +3,12 @@ import chalk from "chalk";
 import dayjs from "dayjs";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import dns from "dns";
+import dotenv from "dotenv";
 import execa from "execa";
 import * as fs from "fs";
 import * as afs from "fs/promises";
 import yaml from "js-yaml";
-import _, { isArray, isString } from "lodash";
+import _, { isArray, isEmpty, isString } from "lodash";
 import * as m from "marked";
 import TerminalRenderer from "marked-terminal";
 import path from "path";
@@ -16,13 +17,13 @@ import { simpleGit } from "simple-git";
 import pkg from "@/../package.json";
 import { cliOpts } from "@/config/config";
 import type { AppConfig } from "@/interfaces/AppConfig";
+import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { getRepoURL } from "@/modules/git";
 
 import { DIGITOP_CDN_URL } from "../config/const";
 import { checkMonorepo } from "./monorepo";
 import { isWin } from "./os";
-
 // import cliMd from "@/plugins/cli-md";
 
 const { marked } = m;
@@ -659,17 +660,11 @@ export const trimFirstSlash = (input) => {
 /**
  * Convert {Object} to environment variables of Kuberketes container
  * @param {Object} object - Input raw object, **not containing any methods**
- * @returns {[{name,value}]}
  */
-export const objectToContainerEnv = (object) => {
-	let containerEnvs = [];
-	for (const [key, val] of Object.entries(object)) {
-		containerEnvs.push({
-			name: key,
-			value: val.toString(),
-		});
-	}
-	return containerEnvs;
+export const objectToKubeEnvVars = (object: any) => {
+	return Object.entries(object).map(([name, value]) => {
+		return { name, value } as KubeEnvironmentVariable;
+	});
 };
 
 /**
@@ -687,11 +682,27 @@ export const objectToDotenv = (object) => {
 };
 
 /**
+ * Load ENV file (.env.*) and parse to array of K8S container environment variables
+ */
+export const loadEnvFileAsContainerEnvVars = (filePath: string) => {
+	const envObject = dotenv.config({ path: filePath }).parsed;
+	if (isEmpty(envObject)) return [];
+	return objectToKubeEnvVars(envObject);
+};
+
+/**
+ * Grab value of Kube ENV variables by name
+ */
+export const getValueOfKubeEnvVarsByName = (name: string, envVars: KubeEnvironmentVariable[]) => {
+	return envVars.find((envVar) => envVar.name === name)?.value;
+};
+
+/**
  * Convert K8S container's ENV to .env content
  * @param {[{name,value}]} inputEnvs - Input raw object, **not containing any methods**
  * @returns {String}
  */
-export const containerEnvToDotenv = (inputEnvs) => {
+export const kubeEnvToDotenv = (inputEnvs) => {
 	let content = "";
 	inputEnvs.map((envVar) => {
 		content += envVar.name + "=" + `"${envVar.value}"` + "\n";
@@ -757,28 +768,42 @@ export const sequentialExec = async (array, func) => {
 	}, Promise.resolve([]));
 };
 
-interface ResolveDockerfilePathOptions {
+interface ResolveApplicationFilePathOptions {
 	targetDirectory?: string;
 	env?: string;
+	ignoreIfNotExisted?: boolean;
 }
 
 /**
- * Resolve a location path of the "Dockerfile"
+ * Resolve a location path of the file within the application.
  */
-export const resolveDockerfilePath = (options: ResolveDockerfilePathOptions) => {
-	const { targetDirectory = process.cwd(), env = "dev" } = options;
-	let dockerFile = path.resolve(targetDirectory, `Dockerfile`);
-	if (!fs.existsSync(dockerFile)) dockerFile = path.resolve(targetDirectory, `Dockerfile.${env}`);
-	if (!fs.existsSync(dockerFile)) dockerFile = path.resolve(targetDirectory, `deployment/Dockerfile`);
-	if (!fs.existsSync(dockerFile)) dockerFile = path.resolve(targetDirectory, `deployment/Dockerfile.${env}`);
-	if (!fs.existsSync(dockerFile)) {
-		const message = `Missing "${targetDirectory}/Dockerfile" file, please create one.`;
-		logError(message);
-		// throw new Error(message);
-		return;
+export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicationFilePathOptions) => {
+	const { targetDirectory = process.cwd(), env = "dev", ignoreIfNotExisted = false } = options;
+	let filePath = path.resolve(targetDirectory, `${fileNamePrefix}.${env}`);
+	if (!fs.existsSync(filePath)) filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}.${env}`);
+	if (!fs.existsSync(filePath)) filePath = path.resolve(targetDirectory, fileNamePrefix);
+	if (!fs.existsSync(filePath)) filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}`);
+	if (!fs.existsSync(filePath)) {
+		if (!ignoreIfNotExisted) {
+			const message = `Missing "${targetDirectory}/${fileNamePrefix}" file, please create one.`;
+			logError(message);
+			return;
+		} else {
+			return;
+		}
 	}
-	return dockerFile;
+	return filePath;
 };
+
+/**
+ * Resolve a location path of the "Dockerfile".
+ */
+export const resolveDockerfilePath = (options: ResolveApplicationFilePathOptions) => resolveFilePath("Dockerfile", options);
+
+/**
+ * Resolve a location path of the DOTENV (`.env.*`) file.
+ */
+export const resolveEnvFilePath = (options: ResolveApplicationFilePathOptions) => resolveFilePath(".env", options);
 
 /**
  * Execute an command within a Docker container
