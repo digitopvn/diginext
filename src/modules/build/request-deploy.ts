@@ -1,15 +1,22 @@
 import chalk from "chalk";
+import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import inquirer from "inquirer";
+import { isEmpty } from "lodash";
 import simpleGit from "simple-git";
 import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
+import type { App } from "@/entities";
+import type { DeployEnvironment } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
-import { getAppConfig, getCurrentRepoURIs, resolveDockerfilePath } from "@/plugins";
+import { getAppConfig, getCurrentRepoURIs, loadEnvFileAsContainerEnvVars, resolveDockerfilePath, resolveEnvFilePath } from "@/plugins";
+
+import { DB } from "../api/DB";
 
 /**
  * Request the build server to start building & deploying
@@ -52,6 +59,56 @@ export async function requestDeploy(options: InputOptions) {
 
 	const SOCKET_ROOM = `${options.slug}-${options.buildNumber}`;
 	options.SOCKET_ROOM = SOCKET_ROOM;
+
+	// check to sync ENV variables or not...
+	const app = await DB.findOne<App>("app", { slug });
+	const targetEnvironmentFromDB =
+		app.environment[env] && isJSON(app.environment[env])
+			? (JSON.parse(app.environment[env] as string) as DeployEnvironment)
+			: (app.environment[env] as DeployEnvironment);
+
+	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB };
+	log({ targetEnvironment });
+
+	const serverEnvironmentVariables = targetEnvironment?.envVars;
+	log({ serverEnvironmentVariables });
+
+	let envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
+
+	// if ENV file is existed on local & not available on server -> ask to upload local ENV to server:
+	if (envFile && !isEmpty(serverEnvironmentVariables)) {
+		log(`Skip uploading local ENV variables to deployed environment since it's already existed.`);
+		log(`If you want to force upload local ENV variables, deploy again with: "${chalk.cyan("dx deploy --upload-env")}".`);
+	}
+	if (envFile && isEmpty(serverEnvironmentVariables)) {
+		const { shouldUploadEnv } = await inquirer.prompt({
+			type: "confirm",
+			name: "shouldUploadEnv",
+			default: false,
+			message: `Do you want to use your "${envFile}" on ${env.toUpperCase()} environment?`,
+		});
+
+		if (shouldUploadEnv) {
+			const containerEnvVars = loadEnvFileAsContainerEnvVars(envFile);
+			log({ containerEnvVars });
+
+			// update env vars to database:
+			const updateAppData = { environment: app.environment } as App;
+			updateAppData.environment[env] = JSON.stringify({ ...targetEnvironment, envVars: containerEnvVars } as DeployEnvironment);
+			log({ updateAppData });
+
+			const updatedApps = await DB.update<App>("app", { slug }, updateAppData);
+			// log({ updatedApps });
+
+			log(
+				`Your local ENV variables (${containerEnvVars.length}) of "${
+					updatedApps[0].slug
+				}" app has been uploaded to ${env.toUpperCase()} environment.`
+			);
+
+			log({ environments: updatedApps[0].environment });
+		}
+	}
 
 	log(`Requesting BUILD SERVER to deploy this app: "${projectSlug}/${slug}"`);
 

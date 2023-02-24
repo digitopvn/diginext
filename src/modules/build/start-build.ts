@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import { isJSON } from "class-validator";
 import dayjs from "dayjs";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import type { ExecaChildProcess } from "execa";
@@ -12,6 +13,7 @@ import { simpleGit } from "simple-git";
 
 import { cliOpts, getCliConfig } from "@/config/config";
 import type { App, Build, Project, Release, User } from "@/entities";
+import type { DeployEnvironment } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath, wait } from "@/plugins";
@@ -178,10 +180,10 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	const project = await DB.findOne<Project>("project", { slug: projectSlug });
 	const author = await DB.findOne<User>("user", { id: new ObjectId(options.userId) });
 
-	log(`latestBuild :>>`, latestBuild);
-	log(`app :>>`, app);
-	log(`project :>>`, project);
-	log("author :>> ", author);
+	// log(`[BUILD] latestBuild :>>`, latestBuild);
+	// log(`[BUILD] app :>>`, app);
+	// log(`[BUILD] project :>>`, project);
+	// log("[BUILD] author :>> ", author);
 
 	options.appSlug = appSlug;
 	options.projectName = project.name;
@@ -192,21 +194,32 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	let message = "";
 	let stream;
 
+	const targetEnvironmentFromDB =
+		app.environment[env] && isJSON(app.environment[env])
+			? (JSON.parse(app.environment[env] as string) as DeployEnvironment)
+			: (app.environment[env] as DeployEnvironment);
+
+	// Merge the one from appConfig with the one from database
+	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB } as DeployEnvironment;
+
 	/**
 	 * !!! IMPORTANT !!!
 	 * Generate deployment data (YAML) & save the YAML deployment to "app.environment[env]"
 	 * So it can be used to create release from build
 	 */
-	const { endpoint, deploymentContent, prereleaseDeploymentContent } = await generateDeployment(options);
-	appConfig.environment[env].deploymentYaml = deploymentContent;
-	appConfig.environment[env].prereleaseDeploymentYaml = prereleaseDeploymentContent;
+	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = await generateDeployment(options);
+
+	targetEnvironment.prereleaseUrl = prereleaseUrl;
+	targetEnvironment.deploymentYaml = deploymentContent;
+	targetEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 
 	// Update {user}, {project}, {environment} to database before rolling out
-	const updatedAppData: any = {};
-	updatedAppData[`environment.${env}`] = JSON.stringify(appConfig.environment[env]);
+	const updatedAppData = { environment: app.environment } as App;
+	updatedAppData.environment[env] = JSON.stringify(targetEnvironment);
 	updatedAppData.lastUpdatedBy = options.username;
 
-	const updatedApps = await DB.update<App>("app", { slug: appConfig.slug }, updatedAppData);
+	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updatedAppData);
+	log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// create new build on build server:
 	let newBuild;

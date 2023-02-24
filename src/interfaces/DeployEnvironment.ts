@@ -1,8 +1,7 @@
-import type { EnvironmentVariable } from "./EnvironmentVariable";
+import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
 
 /**
  * A deployment's environment of the application.
- * @example dev, prod, canary, alpha, beta,...
  */
 export interface DeployEnvironment {
 	/**
@@ -102,7 +101,11 @@ export interface DeployEnvironment {
 	 */
 	prereleaseDeploymentYaml?: string;
 	/**
+	 * Prerelease endpoint URL
+	 */
+	prereleaseUrl?: string;
+	/**
 	 * Collection array of environment variables
 	 */
-	envVars?: EnvironmentVariable[];
+	envVars?: KubeEnvironmentVariable[];
 }

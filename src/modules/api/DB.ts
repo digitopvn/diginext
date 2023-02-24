@@ -179,11 +179,14 @@ export class DB {
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = queryOptionsToUrlOptions(options);
+			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr.toString()}`;
+			const updateData = dataToBody(data);
+			console.log("[DB] updateData :>> ", updateData);
 
 			const { data: result = [] } = await fetchApi<T>({
-				url: `/api/v1/${collection}?${filterStr.toString()}&${optionStr.toString()}`,
+				url,
 				method: "PATCH",
-				data: dataToBody(data),
+				data: updateData,
 			});
 			items = result;
 		}

@@ -1,5 +1,13 @@
-export interface EnvironmentVariable {
+export interface KubeEnvironmentVariable {
 	name: string;
 	value: string;
-	type: "string" | "secret";
+}
+
+export interface DiginextEnvironmentVariable {
+	name: string;
+	value: string;
+	/**
+	 * @default "string"
+	 */
+	type?: "string" | "secret";
 }

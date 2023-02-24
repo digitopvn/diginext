@@ -13,7 +13,8 @@ import { cliOpts } from "@/config/config";
 import { CLI_CONFIG_DIR, CLI_DIR } from "@/config/const";
 import type { App, Cluster, ContainerRegistry, Release } from "@/entities";
 import type { DeployEnvironment, IResourceQuota, KubeConfig, KubeDeployment, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
-import { execCmd, objectToDeploymentYaml, waitUntil } from "@/plugins";
+import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
+import { execCmd, getValueOfKubeEnvVarsByName, objectToDeploymentYaml, waitUntil } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
@@ -463,7 +464,7 @@ export class ClusterManager {
 
 		if (isEmpty(releaseData)) return { error: `Release not found.` };
 
-		const { slug: releaseSlug, cluster, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData as Release;
+		const { slug: releaseSlug, cluster, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
 
 		log(`Preview the release: "${releaseSlug}" (${id})...`);
 
@@ -475,7 +476,7 @@ export class ClusterManager {
 			return { error: e.message };
 		}
 
-		const tmpDir = path.resolve(`storage/releases/${releaseSlug}`);
+		const tmpDir = path.resolve(CLI_DIR, `storage/releases/${releaseSlug}`);
 		if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
 		/**
@@ -601,7 +602,7 @@ export class ClusterManager {
 		 */
 
 		let replicas = 1,
-			envVars: { [key: string]: any } = {},
+			envVars: KubeEnvironmentVariable[] = [],
 			resourceQuota: IResourceQuota = {},
 			service,
 			svcName,
@@ -652,10 +653,12 @@ export class ClusterManager {
 				log(e);
 			}
 		}
+
 		// Apply "BASE_PATH" when neccessary
-		if (typeof envVars.BASE_PATH !== "undefined") {
+		const BASE_PATH = getValueOfKubeEnvVarsByName("BASE_PATH", envVars);
+		if (BASE_PATH) {
 			const basePathResult = await execCmd(
-				`kubectl -n ${namespace} patch ingress ${ingressName} --type='json' -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"${envVars.BASE_PATH}"}]'`
+				`kubectl -n ${namespace} patch ingress ${ingressName} --type='json' -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"${BASE_PATH}"}]'`
 			);
 			console.log("[INGRESS] basePathResult :>> ", basePathResult);
 		}
@@ -667,6 +670,7 @@ export class ClusterManager {
 		// if (!getIngressResult.error) {
 		// 	ingress = getIngressResult;
 		// } else {
+
 		// ! ALWAYS Create new ingress
 		const ING_FILE = path.resolve(tmpDir, `ingress.${env}.yaml`);
 		let ING_CONTENT = objectToDeploymentYaml(ingress);
@@ -787,7 +791,7 @@ export class ClusterManager {
 		// Wait until the deployment is ready!
 		const isNewDeploymentReady = async () => {
 			const newDeploys = await ClusterManager.getAllDeploys(namespace, "phase=live,app=" + deploymentName);
-			// log(`newDeploys :>>`, newDeploys);
+			log(`${namespace} > ${deploymentName} > newDeploys :>>`, newDeploys);
 
 			let isDeploymentReady = false;
 			newDeploys.forEach((deploy) => {

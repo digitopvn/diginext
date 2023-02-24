@@ -1,4 +1,4 @@
-import { log, logError } from "diginext-utils/dist/console/log";
+import { log, logError, logFull } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
@@ -173,6 +173,7 @@ export default class BaseService<E extends ObjectLiteral> {
 		data.updatedAt = new Date();
 
 		const updateData = options?.raw ? data : { $set: data };
+		logFull({ updateData });
 
 		const updateRes = await this.query.updateMany(filter, updateData);
 

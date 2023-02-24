@@ -4,7 +4,7 @@ import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
 import { getCliConfig } from "@/config/config";
-import type { App, CloudProvider, Cluster, ContainerRegistry } from "@/entities";
+import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 
@@ -188,26 +188,26 @@ export async function execDeploy(options: InputOptions) {
 	// save domains & SSL configs
 	saveAppConfig(appConfig, { directory: targetDirectory });
 
-	// update this app's environment in database:
-	const updatedApp: any = {};
-	updatedApp[`environment.${env}`] = JSON.stringify(appConfig.environment[env]);
-	updatedApp.lastUpdatedBy = options.username;
-	// console.log("updatedApp :>> ", updatedApp);
+	// // update this app's environment in database:
+	// const updatedApp: any = {};
+	// updatedApp[`environment.${env}`] = JSON.stringify(appConfig.environment[env]);
+	// updatedApp.lastUpdatedBy = options.username;
+	// // console.log("updatedApp :>> ", updatedApp);
 
-	const {
-		status,
-		data: app,
-		messages,
-	} = await fetchApi<App>({
-		url: `/api/v1/app?slug=${appConfig.slug}`,
-		method: "PATCH",
-		data: updatedApp,
-	});
+	// const {
+	// 	status,
+	// 	data: app,
+	// 	messages,
+	// } = await fetchApi<App>({
+	// 	url: `/api/v1/app?slug=${appConfig.slug}`,
+	// 	method: "PATCH",
+	// 	data: updatedApp,
+	// });
 
 	// logWarn({ app });
 	// logWarn({ messages });
 
-	if (!status) return logError(`Can't update new app config:`, messages);
+	// if (!status) return logError(`Can't update new app config:`, messages);
 
 	// request build server to build & deploy:
 	await requestDeploy(options);

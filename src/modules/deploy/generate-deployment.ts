@@ -1,7 +1,7 @@
+import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
-import dotenv from "dotenv";
 import * as fs from "fs";
 import yaml from "js-yaml";
 import _, { isEmpty } from "lodash";
@@ -12,7 +12,7 @@ import type { App, Cluster, ContainerRegistry } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
-import { getAppConfig, objectToContainerEnv, objectToDeploymentYaml, resolveDockerfilePath, trimFirstSlash } from "@/plugins";
+import { getAppConfig, loadEnvFileAsContainerEnvVars, objectToDeploymentYaml, resolveEnvFilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { generateDomains } from "./generate-domain";
@@ -21,15 +21,16 @@ export const generateDeployment = async (options: InputOptions) => {
 	const { env, targetDirectory: appDirectory, buildNumber } = options;
 
 	const appConfig = getAppConfig(appDirectory);
+	const { slug } = appConfig;
 
 	// DEFINE DEPLOYMENT PARTS:
 	const BUILD_NUMBER = buildNumber || makeDaySlug();
 
 	const registrySlug = appConfig.environment[env].registry;
 	let nsName = appConfig.environment[env].namespace;
-	let ingName = appConfig.slug.toLowerCase();
-	let svcName = appConfig.slug.toLowerCase();
-	let appName = appConfig.slug.toLowerCase() + "-" + BUILD_NUMBER;
+	let ingName = slug.toLowerCase();
+	let svcName = slug.toLowerCase();
+	let appName = slug.toLowerCase() + "-" + BUILD_NUMBER;
 	let mainAppName = makeSlug(appConfig.name).toLowerCase();
 	let basePath = appConfig.environment[env].basePath ?? "";
 
@@ -64,12 +65,12 @@ export const generateDeployment = async (options: InputOptions) => {
 	const { imagePullingSecret } = registry;
 
 	// prerelease:
-	const prereleaseSubdomainName = `${appConfig.slug.toLowerCase()}.prerelease`;
+	const prereleaseSubdomainName = `${slug.toLowerCase()}.prerelease`;
 	let prereleaseIngName = `prerelease-${ingName}`;
 	let prereleaseSvcName = `prerelease-${svcName}`;
 	let prereleaseAppName = `prerelease-${appName}`;
 	let prereleaseIngressDoc, prereleaseSvcDoc, prereleaseDeployDoc;
-	let prereleaseDomain;
+	let prereleaseDomain: string;
 
 	// Setup a domain for prerelease
 	if (env == "prod") {
@@ -86,27 +87,49 @@ export const generateDeployment = async (options: InputOptions) => {
 	}
 	if (env === "prod") log({ prereleaseDomain });
 
+	// ! Remove this ENV handling part (OLD TACTIC)
 	// Find the relevant ENV file:
-	const currentEnvFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
+	// const currentEnvFile = resolveEnvFilePath({ targetDirectory: appDirectory, env });
 
-	let defaultEnvs: any = {};
-	if (currentEnvFile) {
-		defaultEnvs = dotenv.parse(fs.readFileSync(currentEnvFile));
+	// let defaultEnvs: any = {};
+	// if (currentEnvFile) {
+	// 	defaultEnvs = dotenv.parse(fs.readFileSync(currentEnvFile));
 
-		// Lấy BASE_PATH hoặc NEXT_PUBLIC_BASE_PATH từ user config ENV:
-		basePath = typeof defaultEnvs.BASE_PATH == "undefined" ? basePath : defaultEnvs.BASE_PATH;
-		basePath = trimFirstSlash(basePath);
-		defaultEnvs.NODE_URL = BASE_URL;
-	}
+	// 	// Lấy BASE_PATH hoặc NEXT_PUBLIC_BASE_PATH từ user config ENV:
+	// 	basePath = typeof defaultEnvs.BASE_PATH == "undefined" ? basePath : defaultEnvs.BASE_PATH;
+	// 	basePath = trimFirstSlash(basePath);
+	// 	defaultEnvs.NODE_URL = BASE_URL;
+	// }
 
 	// convert ENV variables object to K8S environment:
-	const containerEnvs = objectToContainerEnv(defaultEnvs);
+	// const containerEnvs = objectToKubeEnvVars(defaultEnvs);
 
-	// prerelease ENV variables:
-	let prereleaseEnvs = JSON.parse(JSON.stringify(containerEnvs));
-	if (domains && domains.length > 0) {
+	// * [NEW TACTIC] Fetch ENV variables from database:
+	const app = await DB.findOne<App>("app", { slug });
+	if (!app) {
+		logError(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
+		return;
+	}
+	const appEnvironment =
+		app.environment[env] && isJSON(app.environment[env])
+			? (JSON.parse(app.environment[env] as string) as DeployEnvironment)
+			: (app.environment[env] as DeployEnvironment);
+	let containerEnvs = appEnvironment.envVars;
+
+	// ENV variables -> fallback support:
+	if (isEmpty(containerEnvs)) {
+		const envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
+		if (envFile) {
+			containerEnvs = loadEnvFileAsContainerEnvVars(envFile);
+			logWarn(`[GENERATE DEPLOYMENT YAML] Fall back loaded ENV variables from files of GIT repository.`);
+		}
+	}
+
+	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
+	let prereleaseEnvs = [...containerEnvs];
+	if (!isEmpty(domains)) {
 		prereleaseEnvs.forEach((envVar) => {
-			let curValue = envVar.value.toString();
+			let curValue = envVar.value;
 			if (curValue.indexOf(domains[0]) > -1) {
 				// replace all production domains with PRERELEASE domains
 				envVar.value = curValue.replace(new RegExp(domains[0], "gi"), prereleaseDomain);
@@ -114,24 +137,18 @@ export const generateDeployment = async (options: InputOptions) => {
 		});
 	}
 
-	// Should inherit the "ingress" config from the previous deployment?
-	let deployData: DeployEnvironment,
-		previousDeployment,
+	// Should inherit the "Ingress" config from the previous deployment?
+	let previousDeployment,
 		previousIng: KubeIngress = { metadata: { annotations: {} } };
 
-	if (options.shouldInherit) {
-		let app = await DB.findOne<App>("app", { slug: appConfig.slug });
-
-		if (app) {
-			try {
-				deployData = JSON.parse(app.environment[env] as string);
-				previousDeployment = yaml.loadAll(deployData.deploymentYaml);
-				previousDeployment.map((doc, index) => {
-					if (doc && doc.kind == "Ingress") previousIng = doc;
-				});
-			} catch (e) {
-				logWarn(e);
-			}
+	if (options.shouldInherit && appEnvironment) {
+		try {
+			previousDeployment = yaml.loadAll(appEnvironment.deploymentYaml);
+			previousDeployment.map((doc, index) => {
+				if (doc && doc.kind == "Ingress") previousIng = doc;
+			});
+		} catch (e) {
+			logWarn(e);
 		}
 	}
 
@@ -381,6 +398,7 @@ export const generateDeployment = async (options: InputOptions) => {
 
 	// End point của ứng dụng:
 	let endpoint = `https://${domains[0]}/${basePath}`;
+	const prereleaseUrl = `https://${prereleaseDomain}/${basePath}`;
 
 	return {
 		// namespace
@@ -396,5 +414,6 @@ export const generateDeployment = async (options: InputOptions) => {
 		BUILD_NUMBER,
 		IMAGE_NAME,
 		endpoint,
+		prereleaseUrl,
 	};
 };
