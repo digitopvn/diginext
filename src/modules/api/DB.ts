@@ -181,7 +181,7 @@ export class DB {
 			const optionStr = queryOptionsToUrlOptions(options);
 			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr.toString()}`;
 			const updateData = dataToBody(data);
-			console.log("[DB] updateData :>> ", updateData);
+			// console.log("[DB] updateData :>> ", updateData);
 
 			const { data: result = [] } = await fetchApi<T>({
 				url,

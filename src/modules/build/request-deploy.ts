@@ -9,7 +9,7 @@ import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { App } from "@/entities";
+import type { App, Project } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
@@ -147,7 +147,7 @@ export async function requestDeploy(options: InputOptions) {
 	// Make an API to request server to build:
 	const deployOptions = JSON.stringify(options);
 	try {
-		const { status, messages = ["Unexpected error."] } = await fetchApi({
+		const { status, messages = ["Unknown error."] } = await fetchApi({
 			url: DEPLOY_API_PATH,
 			method: "POST",
 			data: { options: deployOptions },
@@ -158,8 +158,15 @@ export async function requestDeploy(options: InputOptions) {
 			return;
 		}
 	} catch (e) {
-		logError(`Can't connect to the deploy API:`, e);
+		logError(`Unexpected network error:`, e);
 		return;
+	}
+
+	// update the project so it can be sorted on top
+	try {
+		await DB.update<Project>("project", { slug: projectSlug }, { lastUpdatedBy: options.username });
+	} catch (e) {
+		logWarn(e);
 	}
 
 	log(`-> Check build status here: ${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM} `);
