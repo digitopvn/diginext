@@ -194,10 +194,14 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	let message = "";
 	let stream;
 
-	const targetEnvironmentFromDB =
-		app.environment[env] && isJSON(app.environment[env])
-			? (JSON.parse(app.environment[env] as string) as DeployEnvironment)
-			: (app.environment[env] as DeployEnvironment);
+	let targetEnvironmentFromDB = {};
+	if (app.environment && app.environment[env]) {
+		if (isJSON(app.environment[env])) {
+			targetEnvironmentFromDB = JSON.parse(app.environment[env] as string) as DeployEnvironment;
+		} else {
+			targetEnvironmentFromDB = app.environment[env] as DeployEnvironment;
+		}
+	}
 
 	// Merge the one from appConfig with the one from database
 	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB } as DeployEnvironment;

@@ -1,3 +1,10 @@
+## [2.0.6](https://github.com/digitopvn/diginext/compare/v2.0.5...v2.0.6) (2023-02-24)
+
+
+### Bug Fixes
+
+* **deploy new app:** fix issue of deploy prod when init new app due to undefined environment ([e7fc258](https://github.com/digitopvn/diginext/commit/e7fc2585581fc486033c3ff9a81a82984a9d32f3))
+
 ## [2.0.5](https://github.com/digitopvn/diginext/compare/v2.0.4...v2.0.5) (2023-02-24)
 
 

@@ -62,10 +62,15 @@ export async function requestDeploy(options: InputOptions) {
 
 	// check to sync ENV variables or not...
 	const app = await DB.findOne<App>("app", { slug });
-	const targetEnvironmentFromDB =
-		app.environment[env] && isJSON(app.environment[env])
-			? (JSON.parse(app.environment[env] as string) as DeployEnvironment)
-			: (app.environment[env] as DeployEnvironment);
+
+	let targetEnvironmentFromDB = {};
+	if (app.environment && app.environment[env]) {
+		if (isJSON(app.environment[env])) {
+			targetEnvironmentFromDB = JSON.parse(app.environment[env] as string) as DeployEnvironment;
+		} else {
+			targetEnvironmentFromDB = app.environment[env] as DeployEnvironment;
+		}
+	}
 
 	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB };
 	// log({ targetEnvironment });
