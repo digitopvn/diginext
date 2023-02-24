@@ -1,3 +1,12 @@
+## [2.0.4](https://github.com/digitopvn/diginext/compare/v2.0.3...v2.0.4) (2023-02-24)
+
+
+### Bug Fixes
+
+* **admin ui:** fix redirect url sometime return incorrect value ([987761e](https://github.com/digitopvn/diginext/commit/987761ea531e7801770cf490ca6a06a33b56c075))
+* **base service:** disable debug log in base service ([498c475](https://github.com/digitopvn/diginext/commit/498c475eb6b9351e49cff138a18e3201ef1690d0))
+* **dockerfile:** add templates folder to docker build image ([b89f4fd](https://github.com/digitopvn/diginext/commit/b89f4fde52aaeaeef23c49bdb417e39d164a1f0b))
+
 ## [2.0.3](https://github.com/digitopvn/diginext/compare/v2.0.2...v2.0.3) (2023-02-23)
 
 
