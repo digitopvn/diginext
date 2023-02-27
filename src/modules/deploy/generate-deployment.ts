@@ -1,4 +1,3 @@
-import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
@@ -9,12 +8,12 @@ import _, { isEmpty } from "lodash";
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
 import type { App, Cluster, ContainerRegistry } from "@/entities";
-import type { DeployEnvironment } from "@/interfaces";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { getAppConfig, loadEnvFileAsContainerEnvVars, objectToDeploymentYaml, resolveEnvFilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { getAppEvironment } from "../apps/get-app-environment";
 import { generateDomains } from "./generate-domain";
 
 export const generateDeployment = async (options: InputOptions) => {
@@ -110,11 +109,10 @@ export const generateDeployment = async (options: InputOptions) => {
 		logError(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
 		return;
 	}
-	const appEnvironment =
-		app.environment[env] && isJSON(app.environment[env])
-			? (JSON.parse(app.environment[env] as string) as DeployEnvironment)
-			: (app.environment[env] as DeployEnvironment);
-	let containerEnvs = appEnvironment.envVars;
+
+	const appEnvironment = await getAppEvironment(app, env);
+
+	let containerEnvs = appEnvironment.envVars || [];
 
 	// ENV variables -> fallback support:
 	if (isEmpty(containerEnvs)) {

@@ -36,14 +36,14 @@ export const listAnalyticsProperties = async () => {
 };
 
 export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
-	const diginext = getAppConfig();
+	const appConfig = getAppConfig();
 
 	// if (!name) logError(`"name" is required`);
 	// if (!url) logError(`"url" is required`);
 
-	const accountName = name || diginext.name;
-	let websiteUrl = url || (diginext.environment[env].domains && diginext[env].domains[0]);
-	if (typeof websiteUrl == "undefined" && env == "dev") websiteUrl = `https://dev3.digitop.vn/${diginext.slug}`;
+	const accountName = name || appConfig.name;
+	let websiteUrl = url || (appConfig.environment[env].domains && appConfig[env].domains[0]);
+	if (typeof websiteUrl == "undefined" && env == "dev") websiteUrl = `https://dev3.digitop.vn/${appConfig.slug}`;
 
 	if (!websiteUrl) logError(`[${env.toUpperCase()}] Website URL is required, double check domain name in your "dx.json".`);
 
@@ -132,7 +132,7 @@ export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
 	// diginext.ga = diginext.ga || {};
 	// diginext.ga[env] = diginext.ga[env] ? [...diginext.ga[env], webStream.measurementId] : [webStream.measurementId];
 
-	saveAppConfig(diginext);
+	saveAppConfig(appConfig);
 };
 
 // main(...process.argv.slice(2)).catch((err) => {

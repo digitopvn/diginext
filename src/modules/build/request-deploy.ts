@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import inquirer from "inquirer";
@@ -17,6 +16,7 @@ import { stageAllFiles } from "@/modules/bitbucket";
 import { getAppConfig, getCurrentRepoURIs, loadEnvFileAsContainerEnvVars, resolveDockerfilePath, resolveEnvFilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { getAppEvironment } from "../apps/get-app-environment";
 
 /**
  * Request the build server to start building & deploying
@@ -63,15 +63,9 @@ export async function requestDeploy(options: InputOptions) {
 	// check to sync ENV variables or not...
 	const app = await DB.findOne<App>("app", { slug });
 
-	let targetEnvironmentFromDB = {};
-	if (app.environment && app.environment[env]) {
-		if (isJSON(app.environment[env])) {
-			targetEnvironmentFromDB = JSON.parse(app.environment[env] as string) as DeployEnvironment;
-		} else {
-			targetEnvironmentFromDB = app.environment[env] as DeployEnvironment;
-		}
-	}
+	let targetEnvironmentFromDB = await getAppEvironment(app, env);
 
+	// merge with appConfig
 	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB };
 	// log({ targetEnvironment });
 
@@ -83,8 +77,9 @@ export async function requestDeploy(options: InputOptions) {
 	// if ENV file is existed on local & not available on server -> ask to upload local ENV to server:
 	if (envFile && !isEmpty(serverEnvironmentVariables)) {
 		log(`Skip uploading local ENV variables to deployed environment since it's already existed.`);
-		log(`If you want to force upload local ENV variables, deploy again with: "${chalk.cyan("dx deploy --upload-env")}".`);
+		log(`(If you want to force upload local ENV variables, deploy again with: ${chalk.cyan("dx deploy --upload-env")})`);
 	}
+
 	if (envFile && isEmpty(serverEnvironmentVariables)) {
 		const { shouldUploadEnv } = await inquirer.prompt({
 			type: "confirm",
@@ -98,7 +93,9 @@ export async function requestDeploy(options: InputOptions) {
 			// log({ containerEnvVars });
 
 			// update env vars to database:
-			const updateAppData = { environment: app.environment || {} } as App;
+			const updateAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as App;
+			updateAppData.deployEnvironment[env] = { ...targetEnvironment, envVars: containerEnvVars } as DeployEnvironment;
+			// TODO: Remove this when everyone is using "deployEnvironment" (not JSON of "environment")
 			updateAppData.environment[env] = JSON.stringify({ ...targetEnvironment, envVars: containerEnvVars } as DeployEnvironment);
 			// log({ updateAppData });
 

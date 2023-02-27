@@ -58,14 +58,6 @@ async function kubectlApply(options: InputOptions) {
 		return false;
 	}
 
-	// get the registry
-	// const { data: registries } = await fetchApi<ContainerRegistry>({ url: `/api/v1/registry?slug=${appConfig.environment[env].registry}` });
-	// if (isEmpty(registries)) {
-	// 	logError(`[kubeApply] Can't get container registries.`);
-	// 	return;
-	// }
-	// const registry = registries[0] as ContainerRegistry;
-
 	// try to get namespaces
 	try {
 		await execa.command(`kubectl create ns ${namespace}`);

@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { isJSON } from "class-validator";
 import dayjs from "dayjs";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import type { ExecaChildProcess } from "execa";
@@ -20,6 +19,7 @@ import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, resolveDocker
 import { getIO } from "@/server";
 
 import { DB } from "../api/DB";
+import { getAppEvironment } from "../apps/get-app-environment";
 import { generateDeployment } from "../deploy";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
@@ -194,14 +194,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	let message = "";
 	let stream;
 
-	let targetEnvironmentFromDB = {};
-	if (app.environment && app.environment[env]) {
-		if (isJSON(app.environment[env])) {
-			targetEnvironmentFromDB = JSON.parse(app.environment[env] as string) as DeployEnvironment;
-		} else {
-			targetEnvironmentFromDB = app.environment[env] as DeployEnvironment;
-		}
-	}
+	let targetEnvironmentFromDB = await getAppEvironment(app, env);
 
 	// Merge the one from appConfig with the one from database
 	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB } as DeployEnvironment;
@@ -218,9 +211,11 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	targetEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 
 	// Update {user}, {project}, {environment} to database before rolling out
-	const updatedAppData = { environment: app.environment } as App;
-	updatedAppData.environment[env] = JSON.stringify(targetEnvironment);
+	const updatedAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as App;
 	updatedAppData.lastUpdatedBy = options.username;
+	updatedAppData.deployEnvironment[env] = targetEnvironment;
+	// TODO: Remove this when everyone is using "deployEnvironment" (not JSON of "environment")
+	updatedAppData.environment[env] = JSON.stringify(targetEnvironment);
 
 	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updatedAppData);
 	log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
