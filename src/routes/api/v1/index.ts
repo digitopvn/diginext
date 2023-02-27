@@ -4,6 +4,7 @@ import appRouter from "./app";
 import buildRouter from "./build";
 import clusterRouter from "./cluster";
 import databaseRouter from "./database";
+import deployRouter from "./deploy";
 import frameworkRouter from "./framework";
 import gitRouter from "./git-provider";
 import projectRouter from "./project";
@@ -40,5 +41,6 @@ router.use("/git", gitRouter);
 router.use("/framework", frameworkRouter);
 router.use("/database", databaseRouter);
 router.use("/registry", registryRouter);
+router.use("/deploy", deployRouter);
 
 export default router;

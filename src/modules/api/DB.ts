@@ -87,8 +87,8 @@ function dataToBody(object: any = {}, initialPathPrefix = "") {
 
 	const prefix = initialPathPrefix ? (Array.isArray(object) ? initialPathPrefix : `${initialPathPrefix}.`) : "";
 
-	return Object.keys(object)
-		.flatMap((key) => dataToBody(object[key], Array.isArray(object) ? `${prefix}[${key}]` : `${prefix}${key}`))
+	return Object.entries(object)
+		.flatMap(([key]) => dataToBody(object[key], Array.isArray(object) ? `${prefix}.${key}` : `${prefix}${key}`))
 		.reduce((acc, path) => ({ ...acc, ...path }));
 }
 
@@ -180,6 +180,7 @@ export class DB {
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = queryOptionsToUrlOptions(options);
 			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr.toString()}`;
+
 			const updateData = dataToBody(data);
 			// console.log("[DB] updateData :>> ", updateData);
 

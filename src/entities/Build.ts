@@ -30,6 +30,9 @@ export default class Build extends Base {
 	@Column()
 	branch?: string;
 
+	@Column()
+	cliVersion?: string;
+
 	@Column({ type: "string" })
 	createdBy?: string;
 

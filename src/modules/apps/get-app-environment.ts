@@ -18,7 +18,7 @@ export const getAppEnvironmentFromJSON = async (app: App, env: string) => {
 };
 
 export const getAppEvironment = async (app: App, env: string) => {
-	let appEnvironment = app.deployEnvironment || {};
+	let appEnvironment = app.deployEnvironment[env] || {};
 	if (!appEnvironment || !appEnvironment[env]) {
 		appEnvironment[env] = await getAppEnvironmentFromJSON(app, env);
 

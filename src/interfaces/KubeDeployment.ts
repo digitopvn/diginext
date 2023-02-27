@@ -2,7 +2,7 @@ import type { IResourceQuota } from "./IKube";
 
 export interface KubeDeployment {
 	apiVersion?: string;
-	kind?: "Deployment";
+	kind?: string;
 	metadata?: {
 		name?: string;
 		namespace?: string;

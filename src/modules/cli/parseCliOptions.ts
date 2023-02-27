@@ -4,7 +4,7 @@ import yargs from "yargs";
 
 import pkg from "@/../package.json";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { checkForUpdate, getLatestCliVersion } from "@/plugins";
+import { checkForUpdate, currentVersion, getLatestCliVersion } from "@/plugins";
 
 const cliHeader =
 	chalk.bold.underline.green(`Diginext CLI USAGE - VERSION ${pkg.version}`.toUpperCase()) +
@@ -38,6 +38,7 @@ const argvOptions = {
 	merge: { describe: "Force git merge" },
 	close: { describe: "Should close or not" },
 	create: { describe: "Should create something" },
+	"upload-env": { describe: "Should upload local DOTENV to deployed environment" },
 	inherit: { describe: "Should inherit from previous deployment or not", alias: "ihr" },
 	update: { describe: "Should update CLI before execute a command or not", alias: "U" },
 	app: { describe: "Input app name", alias: "a" },
@@ -133,6 +134,7 @@ const deployOptions = {
 	gcloud: argvOptions.gcloud,
 	custom: argvOptions.custom,
 	create: argvOptions.create,
+	shouldUploadDotenv: argvOptions["upload-env"],
 };
 
 export async function parseCliOptions() {
@@ -320,6 +322,9 @@ export async function parseCliOptions() {
 	// log(`argv >>`, argv);
 
 	const options: InputOptions = {
+		// always attach current version to input options
+		version: currentVersion(),
+
 		// actions
 		action: argv._[0],
 		secondAction: argv._[1],
@@ -371,6 +376,7 @@ export async function parseCliOptions() {
 		shouldMerge: argv.merge ?? false,
 		shouldClose: argv.close ?? false,
 		shouldInherit: argv.inherit ?? true,
+		shouldUploadDotenv: argv["upload-env"],
 
 		// deployment
 		app: argv.app, // monorepo app's name

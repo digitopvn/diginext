@@ -1,9 +1,20 @@
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
 
-/**
- * A deployment's environment of the application.
- */
-export interface DeployEnvironment {
+export interface ClientDeployEnvironmentConfig {
+	/**
+	 * Image URI of this app on the Container Registry.
+	 * - Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`
+	 * - If you build from the source code, don't specify `tag` at the end! (eg. `latest`, `beta`,...)
+	 * @example
+	 * asia.gcr.io/google-project-id/my-project-slug/my-app-slug
+	 */
+	imageURL?: string;
+
+	/**
+	 * Destination namespace name
+	 */
+	namespace?: string;
+
 	/**
 	 * Container registry slug
 	 */
@@ -35,20 +46,6 @@ export interface DeployEnvironment {
 	zone?: string;
 
 	/**
-	 * Image URI of this app on the Container Registry.
-	 * - Combined from: `<registry-image-base-url>/<project-slug>/<app-name-in-slug-case>`
-	 * - No `tag` version at the end! (eg. `latest`, `beta`,...)
-	 * @example
-	 * asia.gcr.io/google-project-id/my-project-slug/my-app-slug
-	 */
-	imageURL?: string;
-
-	/**
-	 * Destination namespace name
-	 */
-	namespace?: string;
-
-	/**
 	 * Container quota resources
 	 * @example
 	 * "none" - {}
@@ -71,18 +68,20 @@ export interface DeployEnvironment {
 
 	/**
 	 * Container's scaling replicas
+	 * @default 1
 	 */
 	replicas?: number;
 
 	/**
 	 * Container's port
+	 * @requires
 	 */
 	port?: number;
 
 	/**
-	 * Application base path in the endpoint
+	 * Application base path in the endpoint URL
 	 * @default "/"
-	 * @example "http://example.com/base-bath-here"
+	 * @example `http://example.com/${base_bath_here}`
 	 */
 	basePath?: string;
 
@@ -99,6 +98,7 @@ export interface DeployEnvironment {
 
 	/**
 	 * SSL Certificate Issuer
+	 * @default "letsencrypt"
 	 */
 	ssl?: "letsencrypt" | "custom" | "none";
 
@@ -107,7 +107,12 @@ export interface DeployEnvironment {
 	 * Only need to specify when using "custom" SSL (which is the SSL from third-party issuer)
 	 */
 	tlsSecret?: string;
+}
 
+/**
+ * A deployment's environment of the application.
+ */
+export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	/**
 	 * The CLI version
 	 */
@@ -137,4 +142,14 @@ export interface DeployEnvironment {
 	 * Collection array of environment variables
 	 */
 	envVars?: KubeEnvironmentVariable[];
+
+	/**
+	 * User name of the first person who deploy on this environment.
+	 */
+	createdBy?: string;
+
+	/**
+	 * User name of the last person who deploy or update this environment.
+	 */
+	lastUpdatedBy?: string;
 }

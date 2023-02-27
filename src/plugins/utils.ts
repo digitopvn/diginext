@@ -500,9 +500,16 @@ export const getCurrentRepoURIs = async (dir = process.cwd()) => {
 		const { stdout: remoteSSH } = await execa.command(`git remote get-url origin`);
 		if (!remoteSSH) return;
 
+		if (remoteSSH.indexOf("https://") > -1) {
+			logError(`Git repository using HTTPS origin is not supported, please use SSH origin.`);
+			log(`For example: "git remote set-url origin git@bitbucket.org:<namespace>/<git-repo-slug>.git"`);
+			return;
+		}
+
 		const slug = remoteSSH.split(":")[1];
 		const provider = remoteSSH.split(":")[0].split("@")[1].split(".")[0];
 		const remoteURL = getRepoURL(provider, slug);
+
 		return { remoteSSH, remoteURL, provider };
 	} catch (e) {
 		return;

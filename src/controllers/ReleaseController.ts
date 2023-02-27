@@ -1,4 +1,3 @@
-import { isJSON } from "class-validator";
 import { toBool } from "diginext-utils/dist/object";
 import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
@@ -30,8 +29,8 @@ export default class ReleaseController extends BaseController<Release> {
 	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<Release, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
-		const { envVars } = body;
-		if (isJSON(envVars)) body.env = JSON.parse(envVars as string);
+		// const { envVars } = body;
+		// if (isJSON(envVars)) body.env = JSON.parse(envVars as string);
 		return super.create(body);
 	}
 
