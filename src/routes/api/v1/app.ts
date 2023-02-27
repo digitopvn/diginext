@@ -17,6 +17,12 @@ router
 		// authorize,
 		controller.apiRespond(controller.read.bind(controller)).bind(controller)
 	)
+	.get(
+		"/config",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.getAppConfig.bind(controller)).bind(controller)
+	)
 	.post(
 		"/",
 		authenticate,
@@ -41,11 +47,17 @@ router
 		// authorize,
 		controller.apiRespond(controller.empty.bind(controller)).bind(controller)
 	)
+	.post(
+		"/environment",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.createDeployEnvironment.bind(controller)).bind(controller)
+	)
 	.delete(
 		"/environment",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.deleteEnvironment.bind(controller)).bind(controller)
+		controller.apiRespond(controller.deleteDeployEnvironment.bind(controller)).bind(controller)
 	);
 
 export default router;

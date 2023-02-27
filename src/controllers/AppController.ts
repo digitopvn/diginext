@@ -1,8 +1,8 @@
 import { log, logError, logFull, logWarn } from "diginext-utils/dist/console/log";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { App } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { App, Project, User, Workspace } from "@/entities";
+import type { AppConfig, ClientDeployEnvironmentConfig, HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { getAppEvironment } from "@/modules/apps/get-app-environment";
@@ -43,8 +43,79 @@ export default class AppController extends BaseController<App> {
 	}
 
 	@Security("jwt")
+	@Get("/config")
+	async getAppConfig(@Queries() queryParams?: { slug: string }) {
+		const app = await this.service.findOne(this.filter, { populate: ["project", "owner", "workspace"] });
+
+		// hide confidential information:
+
+		const clientDeployEnvironment: { [key: string]: ClientDeployEnvironmentConfig } = {};
+		Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
+			const { deploymentYaml, prereleaseDeploymentYaml, prereleaseUrl, envVars, cliVersion, namespaceYaml, ..._clientDeployEnvironment } =
+				app.deployEnvironment[env];
+
+			clientDeployEnvironment[env] = _clientDeployEnvironment[env] as ClientDeployEnvironmentConfig;
+		});
+
+		const appConfig: AppConfig = {
+			name: app.name,
+			slug: app.slug,
+			owner: (app.owner as User).slug,
+			workspace: (app.workspace as Workspace).slug,
+			project: (app.project as Project).slug,
+			framework: app.framework,
+			git: app.git,
+			environment: clientDeployEnvironment,
+		};
+
+		let result = { status: 1, data: appConfig, messages: [] };
+		return result;
+	}
+
+	/**
+	 * Create new deploy environment of the application.
+	 */
+	@Security("jwt")
+	@Post("/environment")
+	async createDeployEnvironment(
+		@Body()
+		body: {
+			/**
+			 * App slug
+			 */
+			slug: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+			/**
+			 * Deploy environment configuration
+			 */
+			config: ClientDeployEnvironmentConfig;
+		},
+		@Queries() queryParams?: IPostQueryParams
+	) {
+		const { slug, env, config } = body;
+		if (!slug) return { status: 0, messsages: [`App slug is required.`] };
+		if (!env) return { status: 0, messsages: [`Deploy environment name is required.`] };
+		if (!config) return { status: 0, messsages: [`Deploy environment configuration is required.`] };
+
+		const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}`]: config });
+		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
+
+		const { data: appConfig } = await this.getAppConfig({ slug });
+
+		let result = { status: 1, data: appConfig, messages: [] };
+		return result;
+	}
+
+	/**
+	 * Delete a deploy environment of the application.
+	 */
+	@Security("jwt")
 	@Delete("/environment")
-	async deleteEnvironment(@Queries() queryParams?: { _id: string; id: string; slug: string; env: string }) {
+	async deleteDeployEnvironment(@Queries() queryParams?: { _id: string; id: string; slug: string; env: string }) {
 		let result: ResponseData & { data: App } = { status: 1, data: {}, messages: [] };
 		// input validation
 		let { _id, id, slug, env } = this.filter;
