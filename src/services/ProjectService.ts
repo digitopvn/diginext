@@ -1,7 +1,8 @@
 import { logError, logWarn } from "diginext-utils/dist/console/log";
 
 import Project from "@/entities/Project";
-import type { DeployEnvironment, IQueryFilter } from "@/interfaces";
+import type { IQueryFilter } from "@/interfaces";
+import { getAppEvironment } from "@/modules/apps/get-app-environment";
 import ClusterManager from "@/modules/k8s";
 
 import AppService from "./AppService";
@@ -26,8 +27,8 @@ export default class ProjectService extends BaseService<Project> {
 			apps.forEach((app) => {
 				const environments = Object.keys(app.environment);
 				if (environments && environments.length > 0) {
-					environments.forEach(async (environment) => {
-						const envConfig = app.environment[environment] as DeployEnvironment;
+					environments.forEach(async (env) => {
+						const envConfig = await getAppEvironment(app, env);
 						const { cluster, namespace } = envConfig;
 
 						// switch to the cluster of this environment

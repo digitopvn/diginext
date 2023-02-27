@@ -37,20 +37,12 @@ export default class BaseController<T extends Base> {
 	apiRespond(executor) {
 		return async (req: Request, res: Response, next: NextFunction) => {
 			this.user = req.user as User;
-
-			// console.log("apiRespond > req.body :>> ", req.body);
 			let result = await executor(req.body);
-			// console.log("apiRespond > data :>> ", data);
-
-			// let result: any = { status: 1, data };
-			// if (!data) result.status = 0;
-
 			return res.status(200).json(result);
 		};
 	}
 
 	async read() {
-		// console.log("this :>> ", this);
 		// console.log("this.filter :>> ", this.filter);
 
 		let data: T | T[];
@@ -74,44 +66,20 @@ export default class BaseController<T extends Base> {
 
 		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
 
-		// return ApiResponse.succeed(res, data);
-		// return res.status(200).json(result);
 		return result;
 	}
 
 	async update(updateData) {
 		const data = await this.service.update(this.filter, updateData, this.options);
 		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
-		// let result: any = { status: 1, data: results };
 
-		// if (results.length == 0) return ApiResponse.failed(res, "Items not found.");
-		// if (results.length == 0) {
-		// 	result.status = 0;
-		// 	result.messages = ["Items not found."];
-		// 	return res.status(200).json(result);
-		// }
-
-		// return ApiResponse.succeed(res, results);
-		// return res.status(200).json(result);
 		return result;
 	}
 
 	async delete() {
 		const data = await this.service.delete(this.filter);
 		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
-		// console.log(`delete result >>`, result);
 
-		// let result: any = { status: 1, data };
-
-		// if (data.ok == 0) {
-		// 	result.status = 0;
-		// 	result.messages = ["Items not found."];
-		// 	return res.status(200).json(result);
-		// 	// return ApiResponse.failed(res, "Items not found.");
-		// }
-
-		// return ApiResponse.succeed(res, data);
-		// return res.status(200).json(result);
 		return result;
 	}
 
@@ -119,10 +87,6 @@ export default class BaseController<T extends Base> {
 		const data = await this.service.softDelete(this.filter);
 
 		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
-		// let result: any = { status: 1, data };
-
-		// return res.status(200).json(result);
-		// return ApiResponse.succeed(res, data);
 		return result;
 	}
 
@@ -133,8 +97,6 @@ export default class BaseController<T extends Base> {
 		if (Config.ENV === "development") {
 			const emptyRes = await this.service.empty(this.filter);
 			result.data.ok = emptyRes.ok;
-			// if (data.ok == 0) return ApiResponse.failed(res, data.error);
-			// return ApiResponse.succeed(res, data);
 		} else {
 			result.data = { ok: 0 };
 			result.messages.push(`This function is restricted to use on development environment only.`);
@@ -159,8 +121,6 @@ export default class BaseController<T extends Base> {
 			if (isValidObjectId(val)) obj[key] = new ObjectId(val);
 			if (isBooleanString(val)) obj[key] = toBool(val);
 		});
-
-		// log("req.body >>", req.body);
 
 		next();
 	}

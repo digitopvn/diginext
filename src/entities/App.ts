@@ -48,6 +48,11 @@ export default class App extends Base {
 	};
 
 	@Column()
+	deployEnvironment?: {
+		[key: string]: DeployEnvironment;
+	};
+
+	@Column()
 	latestBuild?: string;
 
 	@Column({ type: "string" })

@@ -1,4 +1,4 @@
-import type { DeployEnvironment } from "./DeployEnvironment";
+import type { ClientDeployEnvironmentConfig } from "./DeployEnvironment";
 
 export interface AppConfig {
 	name: string;
@@ -22,6 +22,6 @@ export interface AppConfig {
 	};
 
 	environment: {
-		[key: string]: DeployEnvironment;
+		[key: string]: ClientDeployEnvironmentConfig;
 	};
 }

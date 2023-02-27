@@ -30,6 +30,8 @@ import { route404_handler } from "./middlewares/route404";
 // import listEndpoints from "express-list-endpoints";
 // database
 import AppDatabase from "./modules/AppDatabase";
+import { migrateAllReleases } from "./modules/apps/migrate-all-releases";
+import { migrateAllAppEnvironment } from "./modules/apps/migrate-app-environment";
 import ClusterManager from "./modules/k8s";
 import { providerAuthenticate } from "./modules/providers";
 import { connect } from "./modules/registry";
@@ -100,6 +102,10 @@ async function startupScripts() {
 		 */
 		cleanUp();
 	});
+
+	// migration
+	await migrateAllAppEnvironment();
+	await migrateAllReleases();
 }
 
 function initialize() {

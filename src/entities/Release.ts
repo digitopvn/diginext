@@ -1,10 +1,12 @@
 import { IsNotEmpty } from "class-validator";
 
+import { AppConfig } from "@/interfaces";
+import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
 import Base from "./Base";
-import type { App, Project, User, Workspace } from "./index";
+import type { App, Build, Project, User, Workspace } from "./index";
 
 @Entity({ name: "releases" })
 export default class Release extends Base {
@@ -14,6 +16,9 @@ export default class Release extends Base {
 
 	@Column()
 	image?: string;
+
+	@Column()
+	cliVersion?: string;
 
 	/**
 	 * Targeted environment.
@@ -26,7 +31,7 @@ export default class Release extends Base {
 	 * Environment variables
 	 */
 	@Column()
-	envVars?: any[] | string;
+	envVars?: KubeEnvironmentVariable[];
 
 	/**
 	 * ONLY PRE-RELEASE - Environment variables
@@ -34,8 +39,14 @@ export default class Release extends Base {
 	@Column()
 	prereleaseEnvironment?: any[] | string;
 
+	/**
+	 * Old "diginext.json"
+	 */
 	@Column()
 	diginext?: any;
+
+	@Column()
+	appConfig?: AppConfig;
 
 	@Column()
 	namespace?: string;
@@ -95,9 +106,17 @@ export default class Release extends Base {
 	active?: boolean;
 
 	/**
+	 * ID of the build
+	 *
+	 * @remarks This can be populated to {Build} data
+	 */
+	@ObjectIdColumn({ name: "builds" })
+	build?: ObjectID | Build | string;
+
+	/**
 	 * ID of the app
 	 *
-	 * @remarks This can be populated to {Project} data
+	 * @remarks This can be populated to {App} data
 	 */
 	@ObjectIdColumn({ name: "apps" })
 	app?: ObjectID | App | string;

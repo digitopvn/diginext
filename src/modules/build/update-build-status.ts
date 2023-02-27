@@ -1,4 +1,4 @@
-import { log, logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/console/log";
 
 import type { App, Build, Project } from "@/entities";
 import { BuildService } from "@/services";
@@ -21,7 +21,7 @@ export async function updateBuildStatus(appSlug: string, buildSlug: string, buil
 	const updatedProjects = await DB.update<Project>("project", { slug: projectSlug }, { latestBuild: buildSlug });
 	const updatedProject = updatedProjects[0];
 
-	log(`updateBuildStatus >`, { updatedProject });
+	// log(`updateBuildStatus >`, { updatedProject });
 
 	// update latest build to current app
 	await DB.update<App>("app", { slug: appSlug }, { latestBuild: buildSlug });
@@ -31,10 +31,10 @@ export async function updateBuildStatus(appSlug: string, buildSlug: string, buil
 	let updatedBuild = updatedBuilds[0];
 
 	if (updatedBuild) {
-		log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> new status: ${buildStatus.toUpperCase()}`);
+		// log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> new status: ${buildStatus.toUpperCase()}`);
 		return updatedBuild;
 	} else {
 		logError(`updateBuildStatus >> error!`);
-		return { error: "Something is wrong..." };
+		return { error: "Update build status failed." };
 	}
 }

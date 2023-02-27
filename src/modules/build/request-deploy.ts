@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import inquirer from "inquirer";
@@ -9,7 +8,7 @@ import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { App } from "@/entities";
+import type { App, Project } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
@@ -17,6 +16,7 @@ import { stageAllFiles } from "@/modules/bitbucket";
 import { getAppConfig, getCurrentRepoURIs, loadEnvFileAsContainerEnvVars, resolveDockerfilePath, resolveEnvFilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { getAppEvironment } from "../apps/get-app-environment";
 
 /**
  * Request the build server to start building & deploying
@@ -33,7 +33,7 @@ export async function requestDeploy(options: InputOptions) {
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
 	const appDirectory = options.targetDirectory;
-	const DEPLOY_API_PATH = `${buildServerUrl}/api/deploy`;
+	const DEPLOY_API_PATH = `${buildServerUrl}/api/v1/deploy`;
 	const BUILD_SERVER_URL = buildServerUrl;
 
 	if (options.isDebugging) {
@@ -63,15 +63,9 @@ export async function requestDeploy(options: InputOptions) {
 	// check to sync ENV variables or not...
 	const app = await DB.findOne<App>("app", { slug });
 
-	let targetEnvironmentFromDB = {};
-	if (app.environment && app.environment[env]) {
-		if (isJSON(app.environment[env])) {
-			targetEnvironmentFromDB = JSON.parse(app.environment[env] as string) as DeployEnvironment;
-		} else {
-			targetEnvironmentFromDB = app.environment[env] as DeployEnvironment;
-		}
-	}
+	let targetEnvironmentFromDB = await getAppEvironment(app, env);
 
+	// merge with appConfig
 	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB };
 	// log({ targetEnvironment });
 
@@ -80,38 +74,50 @@ export async function requestDeploy(options: InputOptions) {
 
 	let envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
 
-	// if ENV file is existed on local & not available on server -> ask to upload local ENV to server:
-	if (envFile && !isEmpty(serverEnvironmentVariables)) {
-		log(`Skip uploading local ENV variables to deployed environment since it's already existed.`);
-		log(`If you want to force upload local ENV variables, deploy again with: "${chalk.cyan("dx deploy --upload-env")}".`);
+	async function uploadDotenvFile() {
+		const containerEnvVars = loadEnvFileAsContainerEnvVars(envFile);
+		log({ containerEnvVars });
+
+		// update env vars to database:
+		const updateAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as App;
+		updateAppData.deployEnvironment[env] = { ...targetEnvironment, envVars: containerEnvVars } as DeployEnvironment;
+		// TODO: Remove this when everyone is using "deployEnvironment" (not JSON of "environment")
+		updateAppData.environment[env] = JSON.stringify({ ...targetEnvironment, envVars: containerEnvVars } as DeployEnvironment);
+		// log({ updateAppData });
+
+		const updatedApps = await DB.update<App>("app", { slug }, updateAppData);
+		// log({ updatedApps });
+
+		log(
+			`Your local ENV variables (${containerEnvVars.length}) of "${
+				updatedApps[0].slug
+			}" app has been uploaded to ${env.toUpperCase()} environment.`
+		);
 	}
-	if (envFile && isEmpty(serverEnvironmentVariables)) {
-		const { shouldUploadEnv } = await inquirer.prompt({
-			type: "confirm",
-			name: "shouldUploadEnv",
-			default: false,
-			message: `Do you want to use your "${envFile}" on ${env.toUpperCase()} environment?`,
-		});
 
-		if (shouldUploadEnv) {
-			const containerEnvVars = loadEnvFileAsContainerEnvVars(envFile);
-			// log({ containerEnvVars });
+	// if "--upload-env" flag is specified:
+	if (options.shouldUploadDotenv) {
+		if (!envFile) {
+			logWarn(`Can't upload DOTENV since there are no DOTENV files (.env.*) in this directory`);
+		} else {
+			await uploadDotenvFile();
+		}
+	} else {
+		// if ENV file is existed on local & not available on server -> ask to upload local ENV to server:
+		if (envFile && !isEmpty(serverEnvironmentVariables)) {
+			log(`Skip uploading local ENV variables to deployed environment since it's already existed.`);
+			log(`(If you want to force upload local ENV variables, deploy again with: ${chalk.cyan("dx deploy --upload-env")})`);
+		}
 
-			// update env vars to database:
-			const updateAppData = { environment: app.environment || {} } as App;
-			updateAppData.environment[env] = JSON.stringify({ ...targetEnvironment, envVars: containerEnvVars } as DeployEnvironment);
-			// log({ updateAppData });
+		if (envFile && isEmpty(serverEnvironmentVariables)) {
+			const { shouldUploadEnv } = await inquirer.prompt({
+				type: "confirm",
+				name: "shouldUploadEnv",
+				default: false,
+				message: `Do you want to use your "${envFile}" on ${env.toUpperCase()} environment?`,
+			});
 
-			const updatedApps = await DB.update<App>("app", { slug }, updateAppData);
-			// log({ updatedApps });
-
-			log(
-				`Your local ENV variables (${containerEnvVars.length}) of "${
-					updatedApps[0].slug
-				}" app has been uploaded to ${env.toUpperCase()} environment.`
-			);
-
-			// log({ environments: updatedApps[0].environment });
+			if (shouldUploadEnv) await uploadDotenvFile();
 		}
 	}
 
@@ -147,7 +153,7 @@ export async function requestDeploy(options: InputOptions) {
 	// Make an API to request server to build:
 	const deployOptions = JSON.stringify(options);
 	try {
-		const { status, messages = ["Unexpected error."] } = await fetchApi({
+		const { status, messages = ["Unknown error."] } = await fetchApi({
 			url: DEPLOY_API_PATH,
 			method: "POST",
 			data: { options: deployOptions },
@@ -158,8 +164,15 @@ export async function requestDeploy(options: InputOptions) {
 			return;
 		}
 	} catch (e) {
-		logError(`Can't connect to the deploy API:`, e);
+		logError(`Unexpected network error:`, e);
 		return;
+	}
+
+	// update the project so it can be sorted on top
+	try {
+		await DB.update<Project>("project", { slug: projectSlug }, { lastUpdatedBy: options.username });
+	} catch (e) {
+		logWarn(e);
 	}
 
 	log(`-> Check build status here: ${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM} `);

@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { isJSON } from "class-validator";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import execa from "execa";
 import fs from "fs";
@@ -12,12 +11,13 @@ import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_CONFIG_DIR, CLI_DIR } from "@/config/const";
 import type { App, Cluster, ContainerRegistry, Release } from "@/entities";
-import type { DeployEnvironment, IResourceQuota, KubeConfig, KubeDeployment, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
+import type { IResourceQuota, KubeConfig, KubeDeployment, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { execCmd, getValueOfKubeEnvVarsByName, objectToDeploymentYaml, waitUntil } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
+import { getAppEvironment } from "../apps/get-app-environment";
 import custom from "../providers/custom";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
@@ -230,7 +230,7 @@ export class ClusterManager {
 
 		if (!app) throw new Error(`App "${appSlug}" not found.`);
 
-		const deployEnvironment = (isJSON(app.environment[env]) ? JSON.parse(app.environment[env] as string) : {}) as DeployEnvironment;
+		const deployEnvironment = await getAppEvironment(app, env);
 		if (isEmpty(deployEnvironment)) {
 			throw new Error(`Deploy environment (${env}) of "${appSlug}" app not found.`);
 		}

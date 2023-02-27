@@ -8,6 +8,7 @@ export type InputOptions = {
 	 * For testing purpose
 	 */
 	isDebugging?: boolean;
+
 	/**
 	 * Follow the output logs until the command is finished.
 	 */
@@ -49,6 +50,9 @@ export type InputOptions = {
 	 * Target's name
 	 */
 	name?: string;
+	/**
+	 * {App} slug
+	 */
 	slug?: string;
 
 	/**
@@ -301,7 +305,7 @@ export type InputOptions = {
 	shouldInherit?: boolean;
 
 	/**
-	 *
+	 * @deprecated
 	 */
 	shouldUpdatePipeline?: boolean;
 
@@ -312,9 +316,15 @@ export type InputOptions = {
 	shouldInstallPackage?: boolean;
 
 	/**
-	 *
+	 * @default true
 	 */
 	shouldClose?: boolean;
+
+	/**
+	 * [Use when deploying an app] Force upload local DOTENV file to deployed environment.
+	 * @default false
+	 */
+	shouldUploadDotenv?: boolean;
 
 	/**
 	 * Should create something
@@ -324,7 +334,7 @@ export type InputOptions = {
 	shouldCreate?: boolean;
 
 	/**
-	 *
+	 * Should apply something
 	 */
 	shouldApply?: boolean;
 
@@ -465,9 +475,20 @@ export type InputOptions = {
 	 */
 	providerProject?: string;
 
+	/**
+	 * Output type: `JSON`, `YAML`.
+	 * Or specify output directory of the written file.
+	 * @example "json", "yaml"
+	 */
 	output?: any;
 
+	/**
+	 * @deprecated
+	 */
 	stagingDomains?: string[];
+	/**
+	 * @deprecated
+	 */
 	prodDomains?: string[];
 };
 

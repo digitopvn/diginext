@@ -2,9 +2,10 @@ import { log, logError, logFull, logWarn } from "diginext-utils/dist/console/log
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { App } from "@/entities";
-import type { DeployEnvironment, HiddenBodyKeys } from "@/interfaces";
+import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
+import { getAppEvironment } from "@/modules/apps/get-app-environment";
 import ClusterManager from "@/modules/k8s";
 import AppService from "@/services/AppService";
 
@@ -78,7 +79,7 @@ export default class AppController extends BaseController<App> {
 		}
 
 		// take down the deploy environment
-		const envConfig = app.environment[env.toString()] as DeployEnvironment;
+		const envConfig = await getAppEvironment(app, env.toString());
 		const { cluster, namespace } = envConfig;
 		if (!cluster) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Cluster "${cluster}" not found.`);
 		if (!namespace) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Namespace "${namespace}" not found.`);

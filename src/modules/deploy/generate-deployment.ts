@@ -1,4 +1,3 @@
-import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
@@ -8,44 +7,64 @@ import _, { isEmpty } from "lodash";
 
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
-import type { App, Cluster, ContainerRegistry } from "@/entities";
-import type { DeployEnvironment } from "@/interfaces";
-import type InputOptions from "@/interfaces/InputOptions";
+import type { App, Cluster, ContainerRegistry, Workspace } from "@/entities";
+import type { AppConfig } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { getAppConfig, loadEnvFileAsContainerEnvVars, objectToDeploymentYaml, resolveEnvFilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { getAppEvironment } from "../apps/get-app-environment";
 import { generateDomains } from "./generate-domain";
 
-export const generateDeployment = async (options: InputOptions) => {
-	const { env, targetDirectory: appDirectory, buildNumber } = options;
+export type GenerateDeploymentParams = {
+	env: string;
+	username: string;
+	workspace: Workspace;
+	/**
+	 * Requires if generate deployment files from image URL.
+	 */
+	appConfig?: AppConfig;
+	/**
+	 * Requires if generate deployment files from source code.
+	 */
+	targetDirectory?: string;
+	/**
+	 * Requires if generate deployment files from source code.
+	 */
+	buildNumber?: string;
+};
 
-	const appConfig = getAppConfig(appDirectory);
-	const { slug } = appConfig;
+export const generateDeployment = async (params: GenerateDeploymentParams) => {
+	const { env = "dev", username, workspace, targetDirectory, buildNumber, appConfig } = params;
+
+	const currentAppConfig = appConfig || getAppConfig(targetDirectory);
+	const { slug } = currentAppConfig;
 
 	// DEFINE DEPLOYMENT PARTS:
 	const BUILD_NUMBER = buildNumber || makeDaySlug();
 
-	const registrySlug = appConfig.environment[env].registry;
-	let nsName = appConfig.environment[env].namespace;
+	const deployEnvironmentConfig = currentAppConfig.environment[env];
+
+	const registrySlug = deployEnvironmentConfig.registry;
+	let nsName = deployEnvironmentConfig.namespace;
 	let ingName = slug.toLowerCase();
 	let svcName = slug.toLowerCase();
 	let appName = slug.toLowerCase() + "-" + BUILD_NUMBER;
-	let mainAppName = makeSlug(appConfig.name).toLowerCase();
-	let basePath = appConfig.environment[env].basePath ?? "";
+	let mainAppName = makeSlug(currentAppConfig.name).toLowerCase();
+	let basePath = deployEnvironmentConfig.basePath ?? "";
 
 	// Prepare for building docker image
-	const { imageURL } = appConfig.environment[env];
+	const { imageURL } = deployEnvironmentConfig;
 
 	// TODO: Replace BUILD_NUMBER so it can work with Skaffold
 	const IMAGE_NAME = `${imageURL}:${BUILD_NUMBER}`;
 
-	let projectSlug = appConfig.project;
-	let domains = appConfig.environment[env].domains;
-	let replicas = options.replicas ?? appConfig.environment[env].replicas ?? 1;
+	let projectSlug = currentAppConfig.project;
+	let domains = deployEnvironmentConfig.domains;
+	let replicas = deployEnvironmentConfig.replicas ?? 1;
 
 	const BASE_URL = domains && domains.length > 0 ? `https://${domains[0]}` : `http://${svcName}.${nsName}.svc.cluster.local`;
-	const clusterShortName = appConfig.environment[env].cluster;
+	const clusterShortName = deployEnvironmentConfig.cluster;
 
 	// get container registry
 	let registry: ContainerRegistry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
@@ -77,7 +96,7 @@ export const generateDeployment = async (options: InputOptions) => {
 		const { status, domain } = await generateDomains({
 			primaryDomain: DIGINEXT_DOMAIN,
 			subdomainName: prereleaseSubdomainName,
-			clusterShortName: appConfig.environment[env].cluster,
+			clusterShortName: deployEnvironmentConfig.cluster,
 		});
 		if (status === 0) {
 			logError(`Can't create "prerelease" domain: ${domain}`);
@@ -89,7 +108,7 @@ export const generateDeployment = async (options: InputOptions) => {
 
 	// ! Remove this ENV handling part (OLD TACTIC)
 	// Find the relevant ENV file:
-	// const currentEnvFile = resolveEnvFilePath({ targetDirectory: appDirectory, env });
+	// const currentEnvFile = resolveEnvFilePath({ targetDirectory: targetDirectory, env });
 
 	// let defaultEnvs: any = {};
 	// if (currentEnvFile) {
@@ -110,24 +129,25 @@ export const generateDeployment = async (options: InputOptions) => {
 		logError(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
 		return;
 	}
-	const appEnvironment =
-		app.environment[env] && isJSON(app.environment[env])
-			? (JSON.parse(app.environment[env] as string) as DeployEnvironment)
-			: (app.environment[env] as DeployEnvironment);
-	let containerEnvs = appEnvironment.envVars;
+
+	const appEnvironment = await getAppEvironment(app, env);
+
+	let containerEnvs = appEnvironment.envVars || [];
+	console.log("[1] containerEnvs :>> ", containerEnvs);
 
 	// ENV variables -> fallback support:
 	if (isEmpty(containerEnvs)) {
-		const envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
+		const envFile = resolveEnvFilePath({ targetDirectory: targetDirectory, env, ignoreIfNotExisted: true });
 		if (envFile) {
 			containerEnvs = loadEnvFileAsContainerEnvVars(envFile);
 			logWarn(`[GENERATE DEPLOYMENT YAML] Fall back loaded ENV variables from files of GIT repository.`);
 		}
 	}
+	console.log("[2] containerEnvs :>> ", containerEnvs);
 
 	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
 	let prereleaseEnvs = [...containerEnvs];
-	if (!isEmpty(domains)) {
+	if (env === "prod" && !isEmpty(domains)) {
 		prereleaseEnvs.forEach((envVar) => {
 			let curValue = envVar.value;
 			if (curValue.indexOf(domains[0]) > -1) {
@@ -141,7 +161,7 @@ export const generateDeployment = async (options: InputOptions) => {
 	let previousDeployment,
 		previousIng: KubeIngress = { metadata: { annotations: {} } };
 
-	if (options.shouldInherit && appEnvironment) {
+	if (deployEnvironmentConfig.shouldInherit && appEnvironment && appEnvironment.deploymentYaml) {
 		try {
 			previousDeployment = yaml.loadAll(appEnvironment.deploymentYaml);
 			previousDeployment.map((doc, index) => {
@@ -159,8 +179,8 @@ export const generateDeployment = async (options: InputOptions) => {
 	namespaceObject.metadata.name = nsName;
 	namespaceObject.metadata.labels = namespaceObject.metadata.labels || {};
 	namespaceObject.metadata.labels.project = projectSlug.toLowerCase();
-	namespaceObject.metadata.labels.owner = options.username.toLowerCase();
-	namespaceObject.metadata.labels.workspace = options.workspace.slug.toLowerCase();
+	namespaceObject.metadata.labels.owner = username.toLowerCase();
+	namespaceObject.metadata.labels.workspace = workspace.slug.toLowerCase();
 
 	namespaceContent = objectToDeploymentYaml(namespaceObject);
 
@@ -183,14 +203,14 @@ export const generateDeployment = async (options: InputOptions) => {
 					ingCfg.metadata.namespace = nsName;
 
 					// inherit config from previous deployment
-					if (appConfig.environment[env].shouldInherit) {
+					if (deployEnvironmentConfig.shouldInherit) {
 						ingCfg.metadata.annotations = {
 							...previousIng.metadata.annotations,
 							...ingCfg.metadata.annotations,
 						};
 					}
 
-					if (appConfig.environment[env].ssl == "letsencrypt") {
+					if (deployEnvironmentConfig.ssl == "letsencrypt") {
 						ingCfg.metadata.annotations["cert-manager.io/cluster-issuer"] = "letsencrypt-prod";
 					}
 
@@ -202,7 +222,7 @@ export const generateDeployment = async (options: InputOptions) => {
 					doc.metadata.labels.phase = "live";
 
 					// redirect
-					if (appConfig.environment[env].redirect) {
+					if (deployEnvironmentConfig.redirect) {
 						if (!domains.length) {
 							logWarn(`Không thể redirect về domain chính nếu không có domain nào ở "${env}" trong dx.json`);
 						} else if (domains.length == 1) {
@@ -211,9 +231,9 @@ export const generateDeployment = async (options: InputOptions) => {
 							const otherDomains = domains.slice(1);
 							let redirectStr = "";
 							otherDomains.map((domain) => {
-								redirectStr += `if ($host = '${domain}') {
-  rewrite / https://${domains[0]}$request_uri redirect;
-}\n`;
+								redirectStr += `if ($host = '${domain}') {\n`;
+								redirectStr += `  rewrite / https://${domains[0]}$request_uri redirect;\n`;
+								redirectStr += `}\n`;
 							});
 							ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"] = redirectStr;
 						}
@@ -226,7 +246,7 @@ export const generateDeployment = async (options: InputOptions) => {
 						// tls
 						ingCfg.spec.tls.push({
 							hosts: [domain],
-							secretName: appConfig.environment[env].tlsSecret,
+							secretName: deployEnvironmentConfig.tlsSecret,
 						});
 
 						// rules
@@ -238,7 +258,7 @@ export const generateDeployment = async (options: InputOptions) => {
 										path: "/" + basePath,
 										pathType: "Prefix",
 										backend: {
-											service: { name: svcName, port: { number: appConfig.environment[env].port } },
+											service: { name: svcName, port: { number: deployEnvironmentConfig.port } },
 										},
 									},
 								],
@@ -247,7 +267,7 @@ export const generateDeployment = async (options: InputOptions) => {
 					});
 
 					// delete SSL config if have to:
-					if (appConfig.environment[env].ssl == "none") {
+					if (deployEnvironmentConfig.ssl == "none") {
 						try {
 							delete ingCfg.metadata.annotations["cert-manager.io/cluster-issuer"];
 							delete ingCfg.spec.tls;
@@ -275,7 +295,7 @@ export const generateDeployment = async (options: InputOptions) => {
 										path: "/" + basePath,
 										pathType: "Prefix",
 										backend: {
-											service: { name: prereleaseSvcName, port: { number: appConfig.environment[env].port } },
+											service: { name: prereleaseSvcName, port: { number: deployEnvironmentConfig.port } },
 										},
 									},
 								],
@@ -300,7 +320,7 @@ export const generateDeployment = async (options: InputOptions) => {
 
 				// Routing traffic to the same pod base on ClientIP
 				doc.spec.sessionAffinity = "ClientIP";
-				doc.spec.ports = [{ port: appConfig.environment[env].port, targetPort: appConfig.environment[env].port }];
+				doc.spec.ports = [{ port: deployEnvironmentConfig.port, targetPort: deployEnvironmentConfig.port }];
 
 				// clone svc to prerelease:
 				prereleaseSvcDoc = _.cloneDeep(doc);
@@ -318,7 +338,7 @@ export const generateDeployment = async (options: InputOptions) => {
 					doc.spec.template.spec.containers[0].resources = {};
 				} else {
 					// canary, production, staging,...
-					doc.spec.template.spec.containers[0].resources = getContainerResourceBySize(appConfig.environment[env].size || "1x");
+					doc.spec.template.spec.containers[0].resources = getContainerResourceBySize(deployEnvironmentConfig.size || "1x");
 
 					// * Add roll out strategy -> Rolling Update
 					doc.spec.strategy = {
@@ -357,7 +377,7 @@ export const generateDeployment = async (options: InputOptions) => {
 				doc.spec.template.spec.containers[0].env = containerEnvs;
 
 				// ! PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
-				doc.spec.template.spec.containers[0].ports = [{ containerPort: appConfig.environment[env].port || 3000 }];
+				doc.spec.template.spec.containers[0].ports = [{ containerPort: deployEnvironmentConfig.port || 3000 }];
 
 				// clone deployment to prerelease:
 				prereleaseDeployDoc = _.cloneDeep(doc);

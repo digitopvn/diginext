@@ -1,3 +1,15 @@
+# [2.1.0](https://github.com/digitopvn/diginext/compare/v2.0.7...v2.1.0) (2023-02-27)
+
+
+### Bug Fixes
+
+* **deploy:** update project so it can be sorted on top of the list ([9f5c340](https://github.com/digitopvn/diginext/commit/9f5c340f45675afcf302fbe3347b9d727e4b5a15))
+
+
+### Features
+
+* **deploy with image url:** add api to deploy with image url, apps and releases migration ([3db4de4](https://github.com/digitopvn/diginext/commit/3db4de4333e230c515cea300cf0ec988a07657bf))
+
 ## [2.0.7](https://github.com/digitopvn/diginext/compare/v2.0.6...v2.0.7) (2023-02-24)
 
 

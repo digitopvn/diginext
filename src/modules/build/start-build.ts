@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { isJSON } from "class-validator";
 import dayjs from "dayjs";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import type { ExecaChildProcess } from "execa";
@@ -12,7 +11,7 @@ import path from "path";
 import { simpleGit } from "simple-git";
 
 import { cliOpts, getCliConfig } from "@/config/config";
-import type { App, Build, Project, Release, User } from "@/entities";
+import type { App, Build, Project, Release, User, Workspace } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
@@ -20,6 +19,7 @@ import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, resolveDocker
 import { getIO } from "@/server";
 
 import { DB } from "../api/DB";
+import { getAppEvironment } from "../apps/get-app-environment";
 import { generateDeployment } from "../deploy";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
@@ -80,7 +80,19 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	const { shouldRollout = true } = addition;
 	const startTime = dayjs();
 
-	const { env = "dev", buildNumber, buildImage, projectName, gitBranch, username = "Anonymous", projectSlug, slug: appSlug } = options;
+	const { env = "dev", buildNumber, buildImage, projectName, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, workspaceId } = options;
+
+	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
+	const app = await DB.findOne<App>("app", { slug: appSlug });
+	const project = await DB.findOne<Project>("project", { slug: projectSlug });
+	const author = await DB.findOne<User>("user", { id: new ObjectId(options.userId) });
+
+	// get workspace
+	let workspace = options.workspace;
+	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: app.workspace });
+	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: project.workspace });
+	if (!workspace && workspaceId) workspace = await DB.findOne<Workspace>("workspace", { _id: workspaceId });
+	if (!workspace && username != "Anonymous") workspace = await DB.findOne<Workspace>("workspace", { _id: author.activeWorkspace });
 
 	const BUILD_NUMBER = buildNumber;
 	const IMAGE_NAME = buildImage;
@@ -175,11 +187,6 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 	log("options :>>", options);
 
-	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
-	const app = await DB.findOne<App>("app", { slug: appSlug });
-	const project = await DB.findOne<Project>("project", { slug: projectSlug });
-	const author = await DB.findOne<User>("user", { id: new ObjectId(options.userId) });
-
 	// log(`[BUILD] latestBuild :>>`, latestBuild);
 	// log(`[BUILD] app :>>`, app);
 	// log(`[BUILD] project :>>`, project);
@@ -194,14 +201,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	let message = "";
 	let stream;
 
-	let targetEnvironmentFromDB = {};
-	if (app.environment && app.environment[env]) {
-		if (isJSON(app.environment[env])) {
-			targetEnvironmentFromDB = JSON.parse(app.environment[env] as string) as DeployEnvironment;
-		} else {
-			targetEnvironmentFromDB = app.environment[env] as DeployEnvironment;
-		}
-	}
+	let targetEnvironmentFromDB = await getAppEvironment(app, env);
 
 	// Merge the one from appConfig with the one from database
 	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB } as DeployEnvironment;
@@ -211,22 +211,30 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	 * Generate deployment data (YAML) & save the YAML deployment to "app.environment[env]"
 	 * So it can be used to create release from build
 	 */
-	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = await generateDeployment(options);
+	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = await generateDeployment({
+		env,
+		username,
+		workspace,
+		buildNumber,
+		targetDirectory: options.targetDirectory,
+	});
 
 	targetEnvironment.prereleaseUrl = prereleaseUrl;
 	targetEnvironment.deploymentYaml = deploymentContent;
 	targetEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 
 	// Update {user}, {project}, {environment} to database before rolling out
-	const updatedAppData = { environment: app.environment } as App;
-	updatedAppData.environment[env] = JSON.stringify(targetEnvironment);
+	const updatedAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as App;
 	updatedAppData.lastUpdatedBy = options.username;
+	updatedAppData.deployEnvironment[env] = targetEnvironment;
+	// TODO: Remove this when everyone is using "deployEnvironment" (not JSON of "environment")
+	updatedAppData.environment[env] = JSON.stringify(targetEnvironment);
 
 	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updatedAppData);
 	log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// create new build on build server:
-	let newBuild;
+	let newBuild: Build;
 	try {
 		const buildData = {
 			name: `[${options.env.toUpperCase()}] ${IMAGE_NAME}`,
@@ -240,8 +248,8 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 			image: IMAGE_NAME,
 			app: app._id,
 			project: project._id,
-			owner: options.userId,
-			workspace: options.workspace._id,
+			owner: author._id,
+			workspace: workspace._id,
 		};
 
 		newBuild = await DB.create<Build>("build", buildData);
@@ -330,25 +338,13 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	// 	await execCDN(options);
 	// }
 
-	if (!shouldRollout) {
-		const buildDuration = dayjs().diff(startTime, "millisecond");
-		message = chalk.green(`🎉 FINISHED BUILDING AFTER ${humanizeDuration(buildDuration)} 🎉`);
-		message += `\n  - Image: ${IMAGE_NAME}`;
-		logSuccess(message);
-
-		sendMessage({ SOCKET_ROOM, logger, message });
-		return true;
-	}
-
 	// Insert this build record to server:
-	// let prereleaseDeploymentData = fetchDeployment(PRERELEASE_DEPLOYMENT_FILE, options);
 	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
-	let releaseId;
+	let releaseId: string, newRelease: Release;
 	try {
-		const newRelease = await createReleaseFromBuild(newBuild, { author: author as User });
+		newRelease = await createReleaseFromBuild(newBuild, { author });
+		releaseId = newRelease._id.toString();
 		// log("Created new Release successfully:", newRelease);
-
-		releaseId = (newRelease as Release)._id;
 
 		message = `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.`;
 		sendMessage({ SOCKET_ROOM, logger, message });
@@ -357,18 +353,34 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		return;
 	}
 
-	// rolling out
+	if (!shouldRollout) {
+		const buildDuration = dayjs().diff(startTime, "millisecond");
+		message = chalk.green(`🎉 FINISHED BUILDING IMAGE AFTER ${humanizeDuration(buildDuration)} 🎉`);
+		// message += `\n  - Image: ${IMAGE_NAME}`;
+		// logSuccess(message);
+		sendMessage({ SOCKET_ROOM, logger, message });
+
+		return { build: newBuild, release: newRelease };
+	}
 
 	/**
-	 * !!! IMPORTANT NOTE !!!
-	 * ! Sử dụng QUEUE để apply deployment lên từng cluster một,
-	 * ! không để tình trạng concurrent deploy làm deploy lên nhầm lẫn cluster
+	 * !!! ROLL OUT & IMPORTANT NOTE !!!
+	 * Sử dụng QUEUE để apply deployment lên từng cluster một,
+	 * không để tình trạng concurrent deploy làm deploy lên nhầm lẫn cluster
 	 */
 	if (releaseId) {
 		try {
-			await queue.add(() => (env === "prod" ? ClusterManager.previewPrerelease(releaseId) : ClusterManager.rollout(releaseId)));
+			const result = await queue.add(() => (env === "prod" ? ClusterManager.previewPrerelease(releaseId) : ClusterManager.rollout(releaseId)));
+			if (result.error) {
+				message = `[ERROR] Queue job failed > ClusterManager.rollout() :>> ${result.error}.`;
+				sendMessage({ SOCKET_ROOM, logger, message });
+				return;
+			}
+			newRelease = result.data;
 		} catch (e) {
-			logError(`Queue job failed -> ClusterManager.rollout() -> ${e.message}:`, { options });
+			message = `[ERROR] Queue job failed > ClusterManager.rollout() :>> ${e.message}:`;
+			sendMessage({ SOCKET_ROOM, logger, message });
+			return;
 		}
 	}
 
@@ -400,5 +412,5 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	if (socketServer) socketServer.to(SOCKET_ROOM).emit("message", { action: "end" });
 
 	// logSuccess(msg);
-	return true;
+	return { build: newBuild, release: newRelease };
 }
