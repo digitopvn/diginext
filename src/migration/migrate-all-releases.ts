@@ -1,5 +1,6 @@
 import { isJSON } from "class-validator";
 import { log } from "diginext-utils/dist/console/log";
+import { isEmpty } from "lodash";
 
 import type { Release } from "@/entities";
 
@@ -7,6 +8,8 @@ import { DB } from "../modules/api/DB";
 
 export const migrateAllReleases = async () => {
 	const releases = await DB.find<Release>("release", { appConfig: undefined }, { populate: ["app"] });
+	if (isEmpty(releases)) return;
+
 	log(`[MIGRATION] migrateAllReleases > Found ${releases.length} releases need migration.`);
 
 	const results = releases

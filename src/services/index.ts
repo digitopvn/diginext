@@ -1,4 +1,8 @@
-export * from "./AppService";
+import AppService from "./AppService";
+import UserService from "./UserService";
+
+export { AppService, UserService };
+
 export * from "./BaseService";
 export * from "./BuildService";
 export * from "./CloudDatabaseService";
@@ -11,5 +15,4 @@ export * from "./ProjectService";
 export * from "./ReleaseService";
 export * from "./RoleService";
 export * from "./TeamService";
-export * from "./UserService";
 export * from "./WorkspaceService";

@@ -1,5 +1,6 @@
 import { isJSON } from "class-validator";
 import { log } from "diginext-utils/dist/console/log";
+import { isEmpty } from "lodash";
 
 import type { App } from "@/entities";
 
@@ -8,6 +9,8 @@ import { fetchDeploymentFromContent } from "../modules/deploy";
 
 export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) => {
 	const apps = await DB.find<App>("app", { ...filter, deployEnvironment: undefined });
+	if (isEmpty(apps)) return;
+
 	log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need to migrate deploy environments.`);
 
 	const updatedApps = apps.map((app) => {
@@ -34,6 +37,8 @@ export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) =
 
 export const migrateAllAppEnvironment = async () => {
 	const apps = await DB.find<App>("app", { deployEnvironment: undefined });
+	if (isEmpty(apps)) return;
+
 	log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need environment migration.`);
 
 	const updatedApps = apps.map((app) => {

@@ -112,7 +112,7 @@ function initialize() {
 	/**
 	 * ! ONLY START THE BUILD SERVER UP IF RUNNING CLI AS "SERVER" MODE
 	 */
-	if (CLI_MODE == "server") {
+	if (CLI_MODE === "server") {
 		log(`Server is initializing...`);
 
 		app = express();
@@ -247,7 +247,6 @@ function initialize() {
 	}
 }
 
-// export const db = new AppDatabase();
 AppDatabase.connect(initialize);
 
 export const getIO = () => io;

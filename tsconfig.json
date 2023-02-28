@@ -2,8 +2,8 @@
 	"compilerOptions": {
 		"strict": false,
 		"outDir": "dist",
-		"lib": ["es6"],
-		"target": "es6",
+		"lib": ["ES6"],
+		"target": "ES6",
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"noImplicitReturns": false,
@@ -11,6 +11,7 @@
 		"forceConsistentCasingInFileNames": true,
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
+		"allowSyntheticDefaultImports": true,
 		"allowJs": true,
 		"composite": false,
 		"declaration": true,
@@ -29,8 +30,7 @@
 			"libs/*": ["./libs/*"]
 		}
 	},
-	"files": ["src/index.ts", "src/server.ts"],
-	"include": ["./src", "./test", "node_modules/execa/index.d.ts"],
+	"include": ["./src/*", "./src/**/*", "./test", "node_modules/execa/index.d.ts"],
 	"exclude": ["dist", "build", "node_modules", "storage", "./storage"],
 	"ts-node": {
 		"require": ["tsconfig-paths/register"]
