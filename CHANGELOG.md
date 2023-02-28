@@ -1,3 +1,16 @@
+# [2.2.0](https://github.com/digitopvn/diginext/compare/v2.1.0...v2.2.0) (2023-02-28)
+
+
+### Bug Fixes
+
+* **cli git:** ability to check for repository access rights ([aa38e93](https://github.com/digitopvn/diginext/commit/aa38e9360baeea6b99fd8ccff90e5741619179d3))
+* **user,workspace controller:** issue of multiple imports in user and workspace services ([2ad9a1e](https://github.com/digitopvn/diginext/commit/2ad9a1ed6b3268b6b3138e72152ef03173fd8652))
+
+
+### Features
+
+* **add app api to create deploy environment and get client app config:** apps api ([4e676ca](https://github.com/digitopvn/diginext/commit/4e676ca1ab8f7aa54569757ad2c5c2081c9fa2bf))
+
 # [2.1.0](https://github.com/digitopvn/diginext/compare/v2.0.7...v2.1.0) (2023-02-27)
 
 
