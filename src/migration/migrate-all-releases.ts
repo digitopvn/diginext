@@ -3,7 +3,7 @@ import { log } from "diginext-utils/dist/console/log";
 
 import type { Release } from "@/entities";
 
-import { DB } from "../api/DB";
+import { DB } from "../modules/api/DB";
 
 export const migrateAllReleases = async () => {
 	const releases = await DB.find<Release>("release", { appConfig: undefined }, { populate: ["app"] });

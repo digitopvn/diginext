@@ -3,8 +3,8 @@ import { log } from "diginext-utils/dist/console/log";
 
 import type { App } from "@/entities";
 
-import { DB } from "../api/DB";
-import { fetchDeploymentFromContent } from "../deploy";
+import { DB } from "../modules/api/DB";
+import { fetchDeploymentFromContent } from "../modules/deploy";
 
 export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) => {
 	const apps = await DB.find<App>("app", { ...filter, deployEnvironment: undefined });

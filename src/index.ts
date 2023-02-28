@@ -10,7 +10,7 @@ import pkg from "@/../package.json";
 import { execConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
-import createApp from "@/modules/apps/createApp";
+import createApp from "@/modules/apps/new-app";
 import { startBuild } from "@/modules/build/start-build";
 import { execCDN } from "@/modules/cdn";
 import { cliAuthenticate, cliLogin, cliLogout, parseCliOptions } from "@/modules/cli";
@@ -26,7 +26,7 @@ import { execRegistry } from "@/modules/registry";
 import { execServer } from "@/modules/server";
 import { currentVersion, freeUp, getOS, logVersion } from "@/plugins";
 
-import { execInitApp } from "./modules/apps/initApp";
+import { execInitApp } from "./modules/apps/init-app";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
 import { updateCli } from "./modules/cli/update-cli";
 import { execRollOut } from "./modules/deploy/exec-rollout";

@@ -7,11 +7,11 @@ import type InputOptions from "@/interfaces/InputOptions";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { getAppConfig, getCurrentRepoURIs } from "@/plugins";
 
-import fetchApi from "../api/fetchApi";
-import { askAppInitQuestions } from "../apps/askAppInitQuestions";
+import { DB } from "../api/DB";
 import { getRepoSSH, getRepoURL, initializeGitRemote } from "../git";
 import { printInformation } from "../project/printInformation";
 import { generateAppConfig, writeConfig } from "../project/writeConfig";
+import { askAppInitQuestions } from "./askAppInitQuestions";
 
 export async function execInitApp(options: InputOptions) {
 	// create new app form:
@@ -30,14 +30,10 @@ export async function execInitApp(options: InputOptions) {
 		owner: options.userId,
 		project: options.project._id,
 		workspace: options.workspaceId,
-	};
-	const { status, data, messages } = await fetchApi<App>({
-		url: `/api/v1/app`,
-		method: "POST",
-		data: newData,
-	});
-	if (!status) logError(messages);
-	const newApp = data as App;
+	} as App;
+
+	const newApp = await DB.create<App>("app", newData);
+	if (!newApp) logError(`Failed to create new app due to network error.`);
 
 	// to make sure it write down the correct app "slug" in "dx.json"
 	options.slug = newApp.slug;
@@ -46,6 +42,7 @@ export async function execInitApp(options: InputOptions) {
 
 	const { remoteSSH, remoteURL, provider: gitProvider } = await getCurrentRepoURIs(options.targetDirectory);
 	// console.log("{remoteSSH, remoteURL} :>> ", { remoteSSH, remoteURL });
+
 	if (remoteSSH && remoteURL) {
 		options.remoteSSH = remoteSSH;
 		options.remoteURL = remoteURL;
@@ -61,31 +58,21 @@ export async function execInitApp(options: InputOptions) {
 
 	// git setup
 	if (!remoteSSH) await initalizeAndCreateDefaultBranches(options);
-	if (options.git && !remoteSSH) await initializeGitRemote(options);
+	if (options.shouldUseGit && !remoteSSH) await initializeGitRemote(options);
 
 	// update GIT info in the database
-	const updateData = {};
-	updateData["framework[name]"] = options.framework.name;
-	updateData["framework[slug]"] = options.framework.slug;
-	updateData["framework[repoURL]"] = options.framework.repoURL;
-	updateData["framework[repoSSH]"] = options.framework.repoSSH;
+	const { framework } = options;
+	const updateData = { framework } as App;
 
-	if (options.git) {
-		updateData["git[provider]"] = options.gitProvider;
-		updateData["git[repoURL]"] = options.remoteURL;
-		updateData["git[repoSSH]"] = options.remoteSSH;
+	if (options.shouldUseGit) {
+		updateData.git.provider = options.gitProvider;
+		updateData.git.repoURL = options.remoteURL;
+		updateData.git.repoSSH = options.remoteSSH;
 	}
 
-	const {
-		status: updateStatus,
-		data: updatedApp,
-		messages: updateMessages,
-	} = await fetchApi<App>({
-		url: `/api/v1/app?slug=${newApp.slug}`,
-		method: "PATCH",
-		data: newData,
-	});
-	if (!updateStatus) logError(updateMessages);
+	const [updatedApp] = await DB.update<App>("app", { slug: newApp.slug }, updateData);
+
+	if (!updatedApp) logError(`Can't initialize app due to network issue.`);
 
 	// write "dx.json"
 	const appConfig = generateAppConfig(options);

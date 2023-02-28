@@ -1,6 +1,6 @@
 import { logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
-import { isEmpty } from "lodash";
+import { isEmpty, upperFirst } from "lodash";
 
 import { saveCliConfig } from "@/config/config";
 import type { App } from "@/entities";
@@ -8,8 +8,29 @@ import Framework from "@/entities/Framework";
 import type GitProvider from "@/entities/GitProvider";
 import type Project from "@/entities/Project";
 import type InputOptions from "@/interfaces/InputOptions";
-import { fetchApi } from "@/modules/api/fetchApi";
-import createProject from "@/modules/project/createProject";
+import createProject from "@/modules/project/create-project";
+import { getGitRepoDataFromRepoSSH } from "@/plugins";
+
+import { DB } from "../api/DB";
+import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
+
+async function searchProjects(question?: string) {
+	const { keyword } = await inquirer.prompt({
+		type: "input",
+		name: "keyword",
+		message: question ?? "Enter keyword to search projects (leave empty to get recent projects):",
+	});
+
+	// find/search projects
+	let projects = await DB.find<Project>("project", { name: keyword }, { search: true }, { limit: 10 });
+
+	if (isEmpty(projects)) {
+		projects = await searchProjects(`No projects found. Try another keyword:`);
+		return projects;
+	} else {
+		return projects;
+	}
+}
 
 export async function askAppQuestions(options?: InputOptions) {
 	if (!options.project) {
@@ -21,20 +42,8 @@ export async function askAppQuestions(options?: InputOptions) {
 		});
 
 		if (!shouldCreateNewProject) {
-			// search name
-			const { keyword } = await inquirer.prompt({
-				type: "input",
-				name: "keyword",
-				message: "Enter keyword to search projects (leave empty to get recent projects):",
-			});
-
-			// find/search
-			const { status, data, messages } = await fetchApi<Project>({
-				url: keyword ? `/api/v1/project?name=${keyword}&limit=10&search=true` : `/api/v1/project?limit=10`,
-			});
-			if (!status) return logError(messages);
-
-			const projects = data as Project[];
+			// find/search projects
+			const projects = await searchProjects();
 			// log({ projects });
 
 			// display list to select:
@@ -80,14 +89,9 @@ export async function askAppQuestions(options?: InputOptions) {
 
 	let curFramework;
 	if (!options.framework) {
-		const { status, data, messages } = await fetchApi<Framework>({
-			url: `/api/v1/framework`,
-		});
-		if (!status) return logError(messages);
-		const frameworks = data as Framework[];
-		// log({ frameworks });
+		const frameworks = await DB.find<Framework>("framework", {});
 
-		const selectFrameworks = [new Framework({ name: "none", slug: "none" })];
+		const selectFrameworks = [new Framework({ name: "none", slug: "none", isPrivate: false })];
 		if (!isEmpty(frameworks)) selectFrameworks.push(...frameworks);
 		// log({ selectFrameworks });
 
@@ -100,8 +104,28 @@ export async function askAppQuestions(options?: InputOptions) {
 				return { name: fw.name, value: fw };
 			}),
 		});
+
 		options.framework = framework;
 		curFramework = framework;
+	}
+
+	// Check git provider authentication
+	const { gitProvider: frameworkGitProvider, isPrivate, slug, repoSSH } = options.framework;
+	if (slug !== "none") {
+		const { namespace } = getGitRepoDataFromRepoSSH(repoSSH);
+		if (!isPrivate) {
+			const canAccessPublicRepo = await checkGitProviderAccess(frameworkGitProvider);
+			if (!canAccessPublicRepo) {
+				logError(`You need to authenticate ${upperFirst(frameworkGitProvider)} first to be able to pull this framework.`);
+				return;
+			}
+		} else {
+			const canAccessPrivateRepo = await checkGitRepoAccess(repoSSH);
+			if (!canAccessPrivateRepo) {
+				logError(`You may not have access to this private repository or ${namespace} organization, please authenticate first.`);
+				return;
+			}
+		}
 	}
 
 	// Request select specific version
@@ -113,17 +137,16 @@ export async function askAppQuestions(options?: InputOptions) {
 	});
 	options.frameworkVersion = frameworkVersion;
 
-	if (options.git) {
+	if (options.shouldUseGit) {
 		let currentGitProvider;
 		if (!options.gitProvider) {
-			const { status, data, messages } = await fetchApi<GitProvider>({
-				url: `/api/v1/git`,
-			});
-			if (!status) return logError(messages);
+			const gitProviders = await DB.find<GitProvider>("git-provider", {});
+			if (isEmpty(gitProviders)) {
+				logError(`This workspace doesn't have any git providers integrated.`);
+				return;
+			}
 
-			const gitProviders = data as GitProvider[];
-
-			const choices = [
+			const gitProviderChoices = [
 				{ name: "none", value: { slug: "none" } },
 				...gitProviders.map((g) => {
 					return { name: g.name, value: g };
@@ -134,7 +157,7 @@ export async function askAppQuestions(options?: InputOptions) {
 				type: "list",
 				name: "gitProvider",
 				message: "Git provider:",
-				choices: choices,
+				choices: gitProviderChoices,
 			});
 
 			if (gitProvider.slug != "none") {
@@ -144,45 +167,36 @@ export async function askAppQuestions(options?: InputOptions) {
 				// set this git provider to default:
 				saveCliConfig({ currentGitProvider });
 			} else {
-				options.git = false;
+				options.shouldUseGit = false;
 			}
 		} else {
 			// search for this git provider
-			const { status, data, messages } = await fetchApi<GitProvider>({
-				url: `/api/v1/git?slug=${options.gitProvider}`,
-			});
-			if (!status) return logError(messages);
-			currentGitProvider = data[0] as GitProvider;
+			currentGitProvider = await DB.findOne<GitProvider>("git-provider", { slug: options.gitProvider });
+			if (!currentGitProvider) return logError(`Git provider "${options.gitProvider}" not found.`);
 
 			// set this git provider to default:
 			saveCliConfig({ currentGitProvider });
 		}
 	}
 
-	// API to create new app
+	// Call API to create new app
 	const appData = {
 		name: options.name,
 		createdBy: options.username,
 		owner: options.userId,
 		project: options.project._id,
 		workspace: options.workspaceId,
-	} as any;
+	} as App;
 
-	if (options.git) appData["git[provider]"] = options.gitProvider;
+	if (options.shouldUseGit) {
+		appData.git.provider = options.gitProvider;
+	}
 
-	const {
-		status,
-		data,
-		messages = [],
-	} = await fetchApi<App>({
-		url: `/api/v1/app`,
-		method: "POST",
-		data: appData,
-	});
-
-	if (!status) throw new Error(`Can't create new app: ${messages.join(". ")}`);
-
-	const newApp = data as App;
+	const newApp = await DB.create<App>("app", appData);
+	if (!newApp) {
+		logError(`Can't create new app due to network issue.`);
+		return;
+	}
 
 	// to make sure it write down the correct app "slug" in "dx.json"
 	options.slug = newApp.slug;

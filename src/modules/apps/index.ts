@@ -1,4 +1,4 @@
 export * from "./askAppInitQuestions";
 export * from "./askAppQuestions";
-export * from "./createApp";
-export * from "./initApp";
+export * from "./init-app";
+export * from "./new-app";

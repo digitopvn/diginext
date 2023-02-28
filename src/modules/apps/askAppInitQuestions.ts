@@ -7,7 +7,7 @@ import type GitProvider from "@/entities/GitProvider";
 import type Project from "@/entities/Project";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
-import createProject from "@/modules/project/createProject";
+import createProject from "@/modules/project/create-project";
 
 export async function askAppInitQuestions(options?: InputOptions) {
 	if (!options.project) {
@@ -76,7 +76,7 @@ export async function askAppInitQuestions(options?: InputOptions) {
 	options.framework = new Framework({ name: "unknown", slug: "unknown" });
 	options.frameworkVersion = "unknown";
 
-	if (options.git) {
+	if (options.shouldUseGit) {
 		let currentGitProvider;
 		if (!options.gitProvider) {
 			const { status, data, messages } = await fetchApi<GitProvider>({
@@ -107,7 +107,7 @@ export async function askAppInitQuestions(options?: InputOptions) {
 				// set this git provider to default:
 				saveCliConfig({ currentGitProvider });
 			} else {
-				options.git = false;
+				options.shouldUseGit = false;
 			}
 		} else {
 			// search for this git provider
