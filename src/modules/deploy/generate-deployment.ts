@@ -224,9 +224,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					// redirect
 					if (deployEnvironmentConfig.redirect) {
 						if (!domains.length) {
-							logWarn(`Không thể redirect về domain chính nếu không có domain nào ở "${env}" trong dx.json`);
+							logWarn(`Can't redirect to primary domain if there are no domains in "${env}" of "dx.json"`);
 						} else if (domains.length == 1) {
-							logWarn(`Không thể redirect về domain chính nếu chỉ có 1 domain ở "${env}" dx.json`);
+							logWarn(`Can't redirect to primary domain if there is only 1 domain in "${env}" dx.json`);
 						} else {
 							const otherDomains = domains.slice(1);
 							let redirectStr = "";

@@ -12,9 +12,10 @@ metadata:
     nginx.ingress.kubernetes.io/affinity: cookie
     nginx.ingress.kubernetes.io/session-cookie-name: route
     nginx.ingress.kubernetes.io/session-cookie-hash: sha1
-    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    nginx.ingress.kubernetes.io/proxy-body-size: 200m
     # nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
+  ingressClassName: nginx
   tls:
     - hosts:
         - example.com

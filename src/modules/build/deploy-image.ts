@@ -105,7 +105,7 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 		name: `[${env.toUpperCase()}] ${imageURL}`,
 		slug: SOCKET_ROOM,
 		// tag: buildNumber,
-		status: "success" as "start" | "building" | "failed" | "success",
+		status: "success",
 		env,
 		createdBy: username,
 		projectSlug,
@@ -116,7 +116,7 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 		owner: author._id,
 		workspace: workspace._id,
 		cliVersion,
-	};
+	} as Build;
 
 	const newBuild = await DB.create<Build>("build", buildData);
 

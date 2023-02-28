@@ -54,8 +54,7 @@
 	},
 	"scripts": {
 		"build": "rm -rf dist && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && npm run restruct && chmod -R +x dist && npm link",
-		"build_custom": "rm -rf dist && tsc -p tsconfig.build.json",
-		"build:deploy": "pnpm build && npm run deploy",
+		"build:deploy": "pnpm swagger && pnpm build && npm run deploy",
 		"deploy": "skaffold run --tail",
 		"startup": "pm2 startup",
 		"unstartup": "pm2 unstartup",

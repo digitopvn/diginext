@@ -107,6 +107,12 @@ export interface ClientDeployEnvironmentConfig {
 	 * Only need to specify when using "custom" SSL (which is the SSL from third-party issuer)
 	 */
 	tlsSecret?: string;
+
+	/**
+	 * Kubernetes Ingress Class
+	 * @example "nginx" | "kong"
+	 */
+	ingress?: string;
 }
 
 /**
