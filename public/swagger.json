@@ -3171,7 +3171,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.0.7",
+		"version": "2.1.0",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -3179,7 +3179,7 @@
 		"contact": {
 			"name": "TOP GROUP (a.k.a Digitop)",
 			"email": "dev@wearetopgroup.com",
-			"url": "https://github.com/mrgoonie"
+			"url": "https://github.com/digitopvn/diginext"
 		}
 	},
 	"openapi": "3.0.0",
@@ -8548,9 +8548,193 @@
 				]
 			}
 		},
+		"/app/config": {
+			"get": {
+				"operationId": "GetAppConfig",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"messages": {
+											"items": {},
+											"type": "array"
+										},
+										"data": {
+											"$ref": "#/components/schemas/AppConfig"
+										},
+										"status": {
+											"type": "number",
+											"format": "double"
+										}
+									},
+									"required": ["messages", "data", "status"],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["App"],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "slug",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/app/environment": {
+			"post": {
+				"operationId": "CreateDeployEnvironment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"properties": {
+												"messages": {
+													"items": {},
+													"type": "array"
+												},
+												"data": {
+													"$ref": "#/components/schemas/AppConfig"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "data", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messages": {},
+												"messsages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messsages", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messsages": {},
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"description": "Create new deploy environment of the application.",
+				"tags": ["App"],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "owner,workspace"
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"config": {
+										"$ref": "#/components/schemas/ClientDeployEnvironmentConfig",
+										"description": "Deploy environment configuration"
+									},
+									"env": {
+										"type": "string",
+										"description": "Deploy environment name"
+									},
+									"slug": {
+										"type": "string",
+										"description": "App slug"
+									}
+								},
+								"required": ["config", "env", "slug"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			},
 			"delete": {
-				"operationId": "DeleteEnvironment",
+				"operationId": "DeleteDeployEnvironment",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -8576,6 +8760,7 @@
 						}
 					}
 				},
+				"description": "Delete a deploy environment of the application.",
 				"tags": ["App"],
 				"security": [
 					{

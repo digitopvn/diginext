@@ -10,7 +10,7 @@ import type { User } from "@/entities";
 import type Base from "@/entities/Base";
 import type { FindManyOptions, FindOptionsWhere } from "@/libs/typeorm";
 import { isValidObjectId } from "@/plugins/mongodb";
-import type { BaseService } from "@/services";
+import type { BaseService } from "@/services/BaseService";
 
 import type { IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
 import type { ResponseData } from "../interfaces/ResponseData";
@@ -20,7 +20,7 @@ const DEFAULT_PAGE_SIZE = 100;
 export default class BaseController<T extends Base> {
 	user: User;
 
-	service: BaseService<T>;
+	// service: BaseService<T>;
 
 	filter: IQueryOptions & FindManyOptions<any>;
 
@@ -30,8 +30,8 @@ export default class BaseController<T extends Base> {
 
 	where: FindOptionsWhere<any>;
 
-	constructor(service: BaseService<T>) {
-		this.service = service;
+	constructor(protected service?: BaseService<T>) {
+		// if (service) this.service = service;
 	}
 
 	apiRespond(executor) {

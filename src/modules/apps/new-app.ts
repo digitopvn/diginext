@@ -7,7 +7,6 @@ import path from "path";
 import { getCliConfig } from "@/config/config";
 import type App from "@/entities/App";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import fetchApi from "@/modules/api/fetchApi";
 import { pullingFramework } from "@/modules/framework";
 import { getRepoSSH, getRepoURL, initializeGitRemote } from "@/modules/git";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
@@ -15,6 +14,7 @@ import { printInformation } from "@/modules/project/printInformation";
 import { generateAppConfig, writeConfig } from "@/modules/project/writeConfig";
 import { getAppConfig } from "@/plugins";
 
+import { DB } from "../api/DB";
 import { askAppQuestions } from "./askAppQuestions";
 
 /**
@@ -47,22 +47,13 @@ export default async function createApp(options: InputOptions) {
 	// Save this app to database
 	if (!options.project) return logError(`Project is required for creating new app.`);
 
-	// const { currentUser, currentWorkspace } = getCliConfig();
+	const appData = {} as App;
+	appData.framework = options.framework;
 
-	const appData = {} as any;
-	appData["framework[name]"] = options.framework.name;
-	appData["framework[slug]"] = options.framework.slug;
-	appData["framework[repoURL]"] = options.framework.repoURL;
-	appData["framework[repoSSH]"] = options.framework.repoSSH;
+	let [updatedApp] = await DB.update<App>("app", { slug: options.slug }, appData);
 
-	const { status, data, messages } = await fetchApi<App>({
-		url: `/api/v1/app?slug=${options.slug}`,
-		method: "PATCH",
-		data: appData,
-	});
-
-	if (!status) {
-		logError(messages);
+	if (!updatedApp) {
+		logError("Can't create new app due to network issue while updating framework info.");
 		return;
 	}
 
@@ -79,15 +70,19 @@ export default async function createApp(options: InputOptions) {
 
 	await initalizeAndCreateDefaultBranches(options);
 
-	if (options.git) {
+	if (options.shouldUseGit) {
 		await initializeGitRemote(options);
 
 		// update git info to database
-		const { data: updatedApp } = await fetchApi<App>({
-			url: `/api/v1/app?slug=${options.slug}`,
-			method: "PATCH",
-			data: { "git[provider]": options.gitProvider, "git[repoURL]": options.remoteURL, "git[repoSSH]": options.remoteSSH },
-		});
+		[updatedApp] = await DB.update<App>(
+			"app",
+			{ slug: options.slug },
+			{ git: { provider: options.gitProvider, repoSSH: options.remoteSSH, repoURL: options.remoteURL } }
+		);
+		if (!updatedApp) {
+			logError("Can't create new app due to network issue while updating git repo info.");
+			return;
+		}
 	}
 
 	// write "dx.json"

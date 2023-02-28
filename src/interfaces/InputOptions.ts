@@ -149,7 +149,7 @@ export type InputOptions = {
 	 * Enable GIT for the application
 	 * @default true
 	 */
-	git?: boolean;
+	shouldUseGit?: boolean;
 
 	/**
 	 * @default false

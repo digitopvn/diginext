@@ -27,11 +27,11 @@ import { CLI_CONFIG_DIR } from "./config/const";
  * CUSTOM MIDDLEWARES
  */
 import { route404_handler } from "./middlewares/route404";
+import { migrateAllReleases } from "./migration/migrate-all-releases";
+import { migrateAllAppEnvironment } from "./migration/migrate-app-environment";
 // import listEndpoints from "express-list-endpoints";
 // database
 import AppDatabase from "./modules/AppDatabase";
-import { migrateAllReleases } from "./modules/apps/migrate-all-releases";
-import { migrateAllAppEnvironment } from "./modules/apps/migrate-app-environment";
 import ClusterManager from "./modules/k8s";
 import { providerAuthenticate } from "./modules/providers";
 import { connect } from "./modules/registry";
@@ -112,7 +112,7 @@ function initialize() {
 	/**
 	 * ! ONLY START THE BUILD SERVER UP IF RUNNING CLI AS "SERVER" MODE
 	 */
-	if (CLI_MODE == "server") {
+	if (CLI_MODE === "server") {
 		log(`Server is initializing...`);
 
 		app = express();
@@ -247,7 +247,6 @@ function initialize() {
 	}
 }
 
-// export const db = new AppDatabase();
 AppDatabase.connect(initialize);
 
 export const getIO = () => io;

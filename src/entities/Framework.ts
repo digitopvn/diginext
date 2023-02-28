@@ -16,6 +16,18 @@ export default class Framework extends Base {
 	host?: string;
 
 	/**
+	 * Git provider name
+	 */
+	@Column()
+	gitProvider?: "github" | "bitbucket" | "gitlab";
+
+	/**
+	 * Git repository access privacy
+	 */
+	@Column()
+	isPrivate?: boolean;
+
+	/**
 	 * ID of the Git Provider
 	 *
 	 * @remarks This can be populated to {GitProvider} data

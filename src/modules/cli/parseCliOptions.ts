@@ -347,7 +347,7 @@ export async function parseCliOptions() {
 		isTail: argv.tail ?? false,
 		isLocal: argv.local ?? false,
 		overwrite: argv.overwrite ?? false,
-		git: argv.git ?? true,
+		shouldUseGit: argv.git ?? true,
 		gitProvider: argv["git-provider"],
 
 		// project

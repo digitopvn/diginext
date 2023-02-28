@@ -23,7 +23,7 @@ export function generateAppConfig(options: InputOptions) {
 	// log(`options.repoURL >>`, options.repoURL);
 	// log(`options.remoteSSH >>`, options.remoteSSH);
 
-	if (options.git) {
+	if (options.shouldUseGit) {
 		appConfig.git = {
 			provider: options.gitProvider,
 			repoURL: options.repoURL,

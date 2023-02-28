@@ -22,7 +22,8 @@ import { bitbucketAuthentication } from "../bitbucket/promptForAuthOptions";
 
 // git@github.com:digitopvn/fluffy-dollop.git
 
-export const availableGitProviders = ["bitbucket", "github", "gitlab"];
+export const availableGitProviders = ["bitbucket", "github", "gitlab"] as const;
+export type GitProviderType = (typeof availableGitProviders)[number];
 
 export const gitProviderDomain = {
 	bitbucket: "bitbucket.org",
@@ -96,13 +97,13 @@ export async function initializeGitRemote(options: InputOptions) {
 	// log(`options.remoteSSH >>`, options.remoteSSH);
 	// log(`options.repoURL >>`, options.repoURL);
 
-	if (options.git && options.gitProvider == "bitbucket") await createBitbucketRepo(options);
+	if (options.shouldUseGit && options.gitProvider == "bitbucket") await createBitbucketRepo(options);
 	// TODO: Create new repo on "github"
 	// TODO: Create new repo on "gitlab"
 
 	log(`Created new repository on ${options.gitProvider}`);
 
-	if (options.git) {
+	if (options.shouldUseGit) {
 		// add git origin:
 		const git = simpleGit(options.targetDirectory, { binary: "git" });
 		await git.addRemote("origin", options.remoteSSH);
@@ -296,11 +297,46 @@ export const verifySSH = async (options?: InputOptions) => {
 		default:
 			logError(`Provider "${gitProvider}" is not valid.`);
 			return false;
-			break;
 	}
 
 	logSuccess(`${capitalize(gitProvider)} was authenticated successfully.`);
 	return true;
+};
+
+/**
+ * Check if the client machine can access to the git provider publicly.
+ */
+export const checkGitProviderAccess = async (gitProvider: GitProviderType) => {
+	let result: any;
+	switch (gitProvider) {
+		case "bitbucket":
+			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@bitbucket.org`, "Bitbucket authentication failed");
+			break;
+
+		case "github":
+			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "Github authentication failed");
+			break;
+
+		case "gitlab":
+			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "Gitlab authentication failed");
+			break;
+
+		default:
+			logError(`Git provider "${gitProvider}" is not valid.`);
+			result = false;
+			break;
+	}
+
+	return result ? true : false;
+};
+
+/**
+ * Check if the client machine can access to the PRIVATE git repository.
+ */
+export const checkGitRepoAccess = async (repoSSH: string) => {
+	let result = await execCmd(`git ls-remote ${repoSSH}`, `You don't have access to this repo: ${repoSSH}`);
+
+	return result ? true : false;
 };
 
 export async function execGit(options) {

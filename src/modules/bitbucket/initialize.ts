@@ -58,7 +58,7 @@ export async function createBitbucketRepo(options: InputOptions) {
 export async function initializeBitbucket(options: InputOptions) {
 	const { currentGitProvider } = getCliConfig();
 
-	if (options.git) {
+	if (options.shouldUseGit) {
 		// Remove existing bitbucket repository (if overwrite is set)
 		if (options.overwrite) {
 			try {
@@ -94,7 +94,7 @@ export async function initializeBitbucket(options: InputOptions) {
 	// log(`options.git >>`, options.git);
 	// log(`options.remoteURL >>`, options.remoteURL);
 
-	if (options.git) {
+	if (options.shouldUseGit) {
 		// add git origin:
 		// await execa.command(`cd ${options.targetDirectory} && git remote add origin ${options.remoteURL} && git push origin --all`);
 		const git = simpleGit(options.targetDirectory, { binary: "git" });

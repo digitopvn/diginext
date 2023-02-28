@@ -19,6 +19,7 @@ import { cliOpts } from "@/config/config";
 import type { AppConfig } from "@/interfaces/AppConfig";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
+import type { GitProviderType } from "@/modules/git";
 import { getRepoURL } from "@/modules/git";
 
 import { DIGITOP_CDN_URL } from "../config/const";
@@ -514,6 +515,41 @@ export const getCurrentRepoURIs = async (dir = process.cwd()) => {
 	} catch (e) {
 		return;
 	}
+};
+
+export const getGitRepoDataFromRepoSSH = (repoSSH: string) => {
+	// git@bitbucket.org:<namespace>/<git-repo-slug>.git
+	let namespace: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+
+	try {
+		namespace = repoSSH.split(":")[1].split("/")[0];
+	} catch (e) {
+		logError(`Repository SSH (${repoSSH}) is invalid`);
+		return;
+	}
+
+	try {
+		repoSlug = repoSSH.split(":")[1].split("/")[1].split(".")[0];
+	} catch (e) {
+		logError(`Repository SSH (${repoSSH}) is invalid`);
+		return;
+	}
+
+	try {
+		gitDomain = repoSSH.split(":")[0].split("@")[1];
+	} catch (e) {
+		logError(`Repository SSH (${repoSSH}) is invalid`);
+		return;
+	}
+
+	try {
+		gitProvider = gitDomain.split(".")[0] as GitProviderType;
+	} catch (e) {
+		logError(`Repository SSH (${repoSSH}) is invalid`);
+		return;
+	}
+
+	return { namespace, repoSlug, gitDomain, gitProvider };
 };
 
 export const getGitProviderFromRepoSSH = (repoSSH: string) => {

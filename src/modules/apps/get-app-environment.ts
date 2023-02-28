@@ -2,8 +2,7 @@ import { isJSON } from "class-validator";
 
 import type { App } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces";
-
-import { migrateDeployEnvironmentOfSpecificApps } from "./migrate-app-environment";
+import { migrateDeployEnvironmentOfSpecificApps } from "@/migration/migrate-app-environment";
 
 export const getAppEnvironmentFromJSON = async (app: App, env: string) => {
 	let deployEnvironment = {} as DeployEnvironment;
