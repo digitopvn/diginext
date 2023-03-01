@@ -27,6 +27,8 @@ import { CLI_CONFIG_DIR } from "./config/const";
  * CUSTOM MIDDLEWARES
  */
 import { route404_handler } from "./middlewares/route404";
+import { migrateAllFrameworks } from "./migration/migrate-all-frameworks";
+import { migrateAllGitProviders } from "./migration/migrate-all-git-providers";
 import { migrateAllReleases } from "./migration/migrate-all-releases";
 import { migrateAllAppEnvironment } from "./migration/migrate-app-environment";
 // import listEndpoints from "express-list-endpoints";
@@ -106,6 +108,8 @@ async function startupScripts() {
 	// migration
 	await migrateAllAppEnvironment();
 	await migrateAllReleases();
+	await migrateAllFrameworks();
+	await migrateAllGitProviders();
 }
 
 function initialize() {

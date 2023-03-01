@@ -12,9 +12,10 @@ import type { App, Project } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
-import { getAppConfig, getCurrentRepoURIs, resolveDockerfilePath, resolveEnvFilePath } from "@/plugins";
+import { getAppConfig, getCurrentGitRepoData, resolveDockerfilePath, resolveEnvFilePath, updateAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { createOrSelectProject } from "../apps/create-or-select-project";
 import { getAppEvironment } from "../apps/get-app-environment";
 import { checkGitignoreContainsDotenvFiles } from "../deploy/dotenv-exec";
 import { uploadDotenvFileByApp } from "../deploy/dotenv-upload";
@@ -25,7 +26,7 @@ import { uploadDotenvFileByApp } from "../deploy/dotenv-upload";
 export async function requestDeploy(options: InputOptions) {
 	if (process.env.CLI_MODE === "server") {
 		logError(`This command is only available at CLIENT MODE.`);
-		return false;
+		return;
 	}
 
 	const { buildServerUrl } = getCliConfig();
@@ -49,11 +50,30 @@ export async function requestDeploy(options: InputOptions) {
 	let dockerFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
 	if (!dockerFile) return;
 
+	// validate "project" and "app":
+	let project = await DB.findOne<Project>("project", { slug: projectSlug });
+	if (!project) {
+		project = await createOrSelectProject(options);
+		options.namespace = `${project.slug}-${env}`;
+		updateAppConfig({ project: project.slug, environment: { [env]: { namespace: options.namespace } } });
+	}
+
+	let app = await DB.findOne<App>("app", { slug });
+	if (!app) {
+		// app = await createAppByForm(options);
+		// updateAppConfig({ slug: app.slug });
+		logError(`App "${slug}" not found or might be deleted, please re-initialize & deploy again:`);
+		console.log("  $", chalk.cyan("dx init"));
+		console.log("  $", chalk.cyan("dx deploy"));
+		return;
+	}
+
+	// get app config from "dx.json"
+	const appConfig = getAppConfig(appDirectory);
+
 	/**
 	 * Generate build number as docker image tag
 	 */
-	const appConfig = getAppConfig(appDirectory);
-
 	const { imageURL } = appConfig.environment[env];
 	options.buildNumber = makeDaySlug();
 	options.buildImage = `${imageURL}:${options.buildNumber}`;
@@ -62,8 +82,6 @@ export async function requestDeploy(options: InputOptions) {
 	options.SOCKET_ROOM = SOCKET_ROOM;
 
 	// check to sync ENV variables or not...
-	const app = await DB.findOne<App>("app", { slug });
-
 	let targetEnvironmentFromDB = await getAppEvironment(app, env);
 
 	// merge with appConfig
@@ -108,7 +126,7 @@ export async function requestDeploy(options: InputOptions) {
 	options.namespace = appConfig.environment[env].namespace;
 
 	// get remote SSH
-	const { remoteSSH, remoteURL, provider: gitProvider } = await getCurrentRepoURIs(options.targetDirectory);
+	const { remoteSSH, remoteURL, provider: gitProvider } = await getCurrentGitRepoData(options.targetDirectory);
 	options.remoteSSH = remoteSSH;
 	options.remoteURL = remoteURL;
 	options.gitProvider = gitProvider;

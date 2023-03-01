@@ -3,6 +3,7 @@ import { isEmpty } from "lodash";
 
 import { isServerMode } from "@/app.config";
 import type { IQueryOptions, IQueryPagination } from "@/interfaces";
+import { flattenObjectPaths } from "@/plugins";
 import {
 	AppService,
 	BuildService,
@@ -28,7 +29,7 @@ type DBCollection =
 	| "database"
 	| "provider"
 	| "cluster"
-	| "git-provider"
+	| "git"
 	| "registry"
 	| "framework"
 	| "project"
@@ -80,18 +81,6 @@ export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPaginati
 	return optionsStr;
 }
 
-function dataToBody(object: any = {}, initialPathPrefix = "") {
-	if (!object || typeof object !== "object") {
-		return [{ [initialPathPrefix]: object }];
-	}
-
-	const prefix = initialPathPrefix ? (Array.isArray(object) ? initialPathPrefix : `${initialPathPrefix}.`) : "";
-
-	return Object.entries(object)
-		.flatMap(([key]) => dataToBody(object[key], Array.isArray(object) ? `${prefix}.${key}` : `${prefix}${key}`))
-		.reduce((acc, path) => ({ ...acc, ...path }));
-}
-
 export class DB {
 	static service = {
 		app: new AppService(),
@@ -101,7 +90,7 @@ export class DB {
 		cluster: new ClusterService(),
 		registry: new ContainerRegistryService(),
 		framework: new FrameworkService(),
-		"git-provider": new GitProviderService(),
+		git: new GitProviderService(),
 		project: new ProjectService(),
 		release: new ReleaseService(),
 		role: new RoleService(),
@@ -120,9 +109,9 @@ export class DB {
 			}
 			items = (await svc.find(filter, options, pagination)) || [];
 		} else {
-			const optionStr = queryOptionsToUrlOptions(options);
 			const filterStr = queryFilterToUrlFilter(filter);
-			const { data = [] } = await fetchApi<T>({ url: `/api/v1/${collection}?${filterStr.toString()}&${optionStr}` });
+			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
+			const { data = [] } = await fetchApi<T>({ url: `/api/v1/${collection}?${filterStr.toString()}${optionStr}` });
 			items = data;
 		}
 		return items as T[];
@@ -160,7 +149,7 @@ export class DB {
 			const { data: result } = await fetchApi<T>({
 				url: `/api/v1/${collection}?${optionStr.toString()}`,
 				method: "POST",
-				data: dataToBody(data),
+				data: flattenObjectPaths(data),
 			});
 			item = result;
 		}
@@ -181,7 +170,7 @@ export class DB {
 			const optionStr = queryOptionsToUrlOptions(options);
 			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr.toString()}`;
 
-			const updateData = dataToBody(data);
+			const updateData = flattenObjectPaths(data);
 			// console.log("[DB] updateData :>> ", updateData);
 
 			const { data: result = [] } = await fetchApi<T>({

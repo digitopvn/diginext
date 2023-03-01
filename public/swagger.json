@@ -52,6 +52,10 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ResourceQuotaSize": {
+				"type": "string",
+				"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"]
+			},
 			"DeployEnvironment": {
 				"description": "A deployment's environment of the application.",
 				"properties": {
@@ -88,8 +92,7 @@
 						"description": "[Google Cloud] Zone"
 					},
 					"size": {
-						"type": "string",
-						"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"],
+						"$ref": "#/components/schemas/ResourceQuotaSize",
 						"description": "Container quota resources"
 					},
 					"shouldInherit": {
@@ -1586,8 +1589,7 @@
 						"description": "[Google Cloud] Zone"
 					},
 					"size": {
-						"type": "string",
-						"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"],
+						"$ref": "#/components/schemas/ResourceQuotaSize",
 						"description": "Container quota resources"
 					},
 					"shouldInherit": {
@@ -2144,8 +2146,25 @@
 						"type": "array",
 						"deprecated": true
 					},
+					"outputPath": {
+						"description": "Output path (include directory path + file name).",
+						"example": "/path/to/output.file",
+						"default": "\"string\""
+					},
+					"outputName": {
+						"description": "Output file name.",
+						"example": "output.txt",
+						"default": "\"string\""
+					},
+					"outputDir": {
+						"description": "Output directory location.",
+						"example": "/path/to/output/",
+						"default": "\"string\""
+					},
 					"output": {
-						"description": "Output type: `JSON`, `YAML`.\nOr specify output directory of the written file."
+						"type": "string",
+						"description": "Output type: `string`, `json`, `yaml`.",
+						"default": "\"string\""
 					},
 					"providerProject": {
 						"type": "string",
@@ -2190,9 +2209,7 @@
 						"description": "Specify an {App} instance"
 					},
 					"size": {
-						"type": "string",
-						"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"],
-						"default": "\"1x\""
+						"$ref": "#/components/schemas/ResourceQuotaSize"
 					},
 					"buildId": {
 						"type": "string"
@@ -2351,7 +2368,7 @@
 							}
 						],
 						"description": "Specify environment code:\n- One of: `dev, prod, staging,...`",
-						"default": "`dev`"
+						"default": "\"dev\""
 					},
 					"fifthAction": {
 						"type": "string"

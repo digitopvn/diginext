@@ -8,21 +8,21 @@ import { getCliConfig } from "@/config/config";
 import type App from "@/entities/App";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { pullingFramework } from "@/modules/framework";
-import { getRepoSSH, getRepoURL, initializeGitRemote } from "@/modules/git";
+import { generateRepoSSH, generateRepoURL, initializeGitRemote } from "@/modules/git";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { printInformation } from "@/modules/project/printInformation";
 import { generateAppConfig, writeConfig } from "@/modules/project/writeConfig";
 import { getAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
-import { askAppQuestions } from "./askAppQuestions";
+import { createAppByForm } from "./new-app-by-form";
 
 /**
  * Create new app with pre-setup: git, cli, config,...
  */
 export default async function createApp(options: InputOptions) {
-	// create new app form:
-	await askAppQuestions(options);
+	// FORM > Create new project & app:
+	const newApp = await createAppByForm(options);
 
 	// make sure it always create new directory:
 	options.skipCreatingDirectory = false;
@@ -35,7 +35,8 @@ export default async function createApp(options: InputOptions) {
 			if (options.overwrite) {
 				fs.rmSync(options.targetDirectory, { recursive: true, force: true });
 			} else {
-				logError("Project directory was already existed.");
+				logError(`App directory with name "${options.slug}" was already existed.`);
+				return;
 			}
 		}
 
@@ -44,9 +45,12 @@ export default async function createApp(options: InputOptions) {
 
 	if (options.shouldInstallPackage) await pullingFramework(options);
 
-	// Save this app to database
-	if (!options.project) return logError(`Project is required for creating new app.`);
+	if (!options.project) {
+		logError(`Project is required for creating new app.`);
+		return;
+	}
 
+	// Save this app to database
 	const appData = {} as App;
 	appData.framework = options.framework;
 
@@ -63,8 +67,8 @@ export default async function createApp(options: InputOptions) {
 	const { currentGitProvider } = getCliConfig();
 	// log({ currentGitProvider });
 	if (currentGitProvider?.gitWorkspace) {
-		options.remoteSSH = getRepoSSH(options.gitProvider, `${currentGitProvider.gitWorkspace}/${options.repoSlug}`);
-		options.repoURL = getRepoURL(options.gitProvider, `${currentGitProvider.gitWorkspace}/${options.repoSlug}`);
+		options.remoteSSH = generateRepoSSH(options.gitProvider, `${currentGitProvider.gitWorkspace}/${options.repoSlug}`);
+		options.repoURL = generateRepoURL(options.gitProvider, `${currentGitProvider.gitWorkspace}/${options.repoSlug}`);
 		options.remoteURL = options.repoURL;
 	}
 
@@ -93,7 +97,7 @@ export default async function createApp(options: InputOptions) {
 	const finalConfig = getAppConfig(options.targetDirectory);
 	printInformation(finalConfig);
 
-	return true;
+	return newApp;
 }
 
 export { createApp };

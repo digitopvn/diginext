@@ -1,12 +1,14 @@
 import { logError } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 
 import type Project from "@/entities/Project";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import fetchApi from "@/modules/api/fetchApi";
 
-export async function askProjectQuestions(options?: InputOptions) {
+import { DB } from "../api/DB";
+
+export async function askCreateProjectQuestions(options?: InputOptions) {
+	const project = {} as Project;
+
 	if (!options.projectName) {
 		const { projectName } = await inquirer.prompt({
 			type: "input",
@@ -22,35 +24,33 @@ export async function askProjectQuestions(options?: InputOptions) {
 		});
 		options.projectName = projectName;
 	}
-	options.projectSlug = makeSlug(options.projectName);
 
-	return options;
+	project.name = options.projectName;
+
+	// ownership
+	if (options.username) project.createdBy = options.username;
+	if (options.userId) project.owner = options.userId;
+	if (options.workspaceId) project.workspace = options.workspaceId;
+
+	return project;
 }
 
 /**
  * Create new project & children app with pre-setup: git, cli, deployment,...
  */
-export default async function createProject(options: InputOptions) {
+export default async function createProjectByForm(options: InputOptions) {
 	// create project form:
-	await askProjectQuestions(options);
+	const newProjectData = await askCreateProjectQuestions(options);
 
 	// Save this project to database
-	const { status, data, messages } = await fetchApi<Project>({
-		url: `/api/v1/project`,
-		method: "POST",
-		data: {
-			name: options.projectName,
-			createdBy: options.username,
-			owner: options.userId,
-			workspace: options.workspaceId,
-		},
-	});
-
-	if (!status) logError(messages);
-
-	const newProject = data as Project;
+	const newProject = await DB.create<Project>("project", newProjectData);
+	if (!newProject) {
+		logError(`Failed to create new project named "${newProjectData.name}"`);
+		return;
+	}
 
 	options.project = newProject;
+	options.projectName = newProject.name;
 	options.projectSlug = newProject.slug;
 
 	return newProject;

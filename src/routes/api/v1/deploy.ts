@@ -1,7 +1,6 @@
 import { isJSON } from "class-validator";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import { log } from "diginext-utils/dist/console/log";
 import express from "express";
 
 import DeployController from "@/controllers/DeployController";
@@ -27,7 +26,8 @@ router
 		req.body.options = JSON.parse(options);
 
 		// no need to wait :)
-		controller.deployFromSource(req.body).then((result) => log(`Finished deploying from source code:`, { result }));
+		controller.deployFromSource(req.body);
+		//.then((result) => log(`Finished deploying from source code:`, { result }));
 
 		res.status(200).json({ status: 1 });
 	})

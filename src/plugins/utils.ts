@@ -20,7 +20,7 @@ import type { AppConfig } from "@/interfaces/AppConfig";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/modules/git";
-import { getRepoURL } from "@/modules/git";
+import { generateRepoURL } from "@/modules/git";
 
 import { DIGITOP_CDN_URL } from "../config/const";
 import { checkMonorepo } from "./monorepo";
@@ -381,6 +381,22 @@ export const deleteFolderRecursive = async (filePath) => {
 	}
 };
 
+/**
+ * Flatten the object into 1-level-object (with key paths)
+ * @example {a: {b: [{c: 1}, {c: 2}]}, e: 3} -> {"a.b.0.c": 1, "a.b.1.c": 2, "e": 3}
+ */
+export function flattenObjectPaths(object: any = {}, initialPathPrefix = "") {
+	if (!object || typeof object !== "object") {
+		return [{ [initialPathPrefix]: object }];
+	}
+
+	const prefix = initialPathPrefix ? (Array.isArray(object) ? initialPathPrefix : `${initialPathPrefix}.`) : "";
+
+	return Object.entries(object)
+		.flatMap(([key]) => flattenObjectPaths(object[key], Array.isArray(object) ? `${prefix}.${key}` : `${prefix}${key}`))
+		.reduce((acc, _path) => ({ ...acc, ..._path }));
+}
+
 type SaveOpts = {
 	/**
 	 * Absolute path to project directory
@@ -400,10 +416,7 @@ type SaveOpts = {
 export const getAppConfig = (directory?: string) => {
 	const filePath = path.resolve(directory || process.cwd(), "dx.json");
 
-	if (!fs.existsSync(filePath)) {
-		logError(`Không tìm thấy "dx.json"`);
-		return;
-	}
+	if (!fs.existsSync(filePath)) return;
 
 	const cfg = readJson(filePath);
 	return cfg as AppConfig;
@@ -423,6 +436,8 @@ export const saveAppConfig = (_config: AppConfig, options?: SaveOpts) => {
 
 	if (!options.create && !fs.existsSync(filePath)) logError(`Không tìm thấy "dx.json"`);
 
+	if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
 	const content = JSON.stringify(_config, null, 2);
 	fs.writeFileSync(filePath, content, "utf8");
 
@@ -433,14 +448,18 @@ export const saveAppConfig = (_config: AppConfig, options?: SaveOpts) => {
  * Update values of app config ("dx.json")
  * @param updatedData - updated data
  */
-export const updateDiginextConfig = (updatedData: AppConfig, options?: SaveOpts) => {
-	const { directory } = options;
+export const updateAppConfig = (updatedData: AppConfig, options: SaveOpts = {}) => {
+	const { directory = process.cwd() } = options;
 	const currentAppConfig = getAppConfig(directory);
-	const updatedAppConfig = { ...currentAppConfig, ...updatedData };
 
-	saveAppConfig(updatedAppConfig, { directory });
+	const updatedDataMap = flattenObjectPaths(updatedData);
+	Object.entries(updatedDataMap).map(([keyPath, value]) => {
+		_.set(currentAppConfig, keyPath, value);
+	});
 
-	return updatedAppConfig as AppConfig;
+	saveAppConfig(currentAppConfig, { directory });
+
+	return currentAppConfig;
 };
 
 /**
@@ -491,35 +510,9 @@ export const savePackageConfig = (_config, options: SaveOpts) => {
 	}
 };
 
-/**
- * Get current remote SSH & URL
- * @param dir - target directory
- * @returns
- */
-export const getCurrentRepoURIs = async (dir = process.cwd()) => {
-	try {
-		const { stdout: remoteSSH } = await execa.command(`git remote get-url origin`);
-		if (!remoteSSH) return;
-
-		if (remoteSSH.indexOf("https://") > -1) {
-			logError(`Git repository using HTTPS origin is not supported, please use SSH origin.`);
-			log(`For example: "git remote set-url origin git@bitbucket.org:<namespace>/<git-repo-slug>.git"`);
-			return;
-		}
-
-		const slug = remoteSSH.split(":")[1];
-		const provider = remoteSSH.split(":")[0].split("@")[1].split(".")[0];
-		const remoteURL = getRepoURL(provider, slug);
-
-		return { remoteSSH, remoteURL, provider };
-	} catch (e) {
-		return;
-	}
-};
-
-export const getGitRepoDataFromRepoSSH = (repoSSH: string) => {
+export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 	// git@bitbucket.org:<namespace>/<git-repo-slug>.git
-	let namespace: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+	let namespace: string, fullSlug: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
 
 	try {
 		namespace = repoSSH.split(":")[1].split("/")[0];
@@ -549,7 +542,33 @@ export const getGitRepoDataFromRepoSSH = (repoSSH: string) => {
 		return;
 	}
 
-	return { namespace, repoSlug, gitDomain, gitProvider };
+	fullSlug = `${namespace}/${repoSlug}`;
+
+	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
+};
+
+/**
+ * Get current remote SSH & URL
+ */
+export const getCurrentGitRepoData = async (dir = process.cwd()) => {
+	try {
+		const { stdout: remoteSSH } = await execa.command(`git remote get-url origin`);
+		if (!remoteSSH) return;
+
+		if (remoteSSH.indexOf("https://") > -1) {
+			logError(`Git repository using HTTPS origin is not supported, please use SSH origin.`);
+			log(`For example: "git remote set-url origin git@bitbucket.org:<namespace>/<git-repo-slug>.git"`);
+			return;
+		}
+
+		const { repoSlug: slug, gitProvider: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(remoteSSH);
+
+		const remoteURL = generateRepoURL(provider, fullSlug);
+
+		return { remoteSSH, remoteURL, provider, slug, fullSlug, namespace, gitDomain };
+	} catch (e) {
+		return;
+	}
 };
 
 export const getGitProviderFromRepoSSH = (repoSSH: string) => {

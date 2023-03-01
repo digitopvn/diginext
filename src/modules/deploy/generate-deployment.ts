@@ -133,7 +133,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const appEnvironment = await getAppEvironment(app, env);
 
 	let containerEnvs = appEnvironment.envVars || [];
-	console.log("[1] containerEnvs :>> ", containerEnvs);
+	// console.log("[1] containerEnvs :>> ", containerEnvs);
 
 	// ENV variables -> fallback support:
 	if (isEmpty(containerEnvs)) {
@@ -143,7 +143,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			logWarn(`[GENERATE DEPLOYMENT YAML] Fall back loaded ENV variables from files of GIT repository.`);
 		}
 	}
-	console.log("[2] containerEnvs :>> ", containerEnvs);
+	// console.log("[2] containerEnvs :>> ", containerEnvs);
 
 	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
 	let prereleaseEnvs = [...containerEnvs];

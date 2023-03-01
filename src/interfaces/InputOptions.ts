@@ -367,12 +367,12 @@ export type InputOptions = {
 	projectId?: string;
 
 	/**
-	 *
+	 * {Project} slug
 	 */
 	projectSlug?: string;
 
 	/**
-	 *
+	 * {Project} name
 	 */
 	projectName?: string;
 
@@ -382,7 +382,7 @@ export type InputOptions = {
 	remoteURL?: string;
 
 	/**
-	 *
+	 * Kubernetes namespace
 	 */
 	namespace?: string;
 
@@ -463,7 +463,6 @@ export type InputOptions = {
 	/**
 	 * Git provider
 	 * @type {"bitbucket" | "github" | "gitlab"}
-	 * @default "custom"
 	 */
 	gitProvider?: string;
 

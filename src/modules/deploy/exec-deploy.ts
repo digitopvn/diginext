@@ -72,7 +72,10 @@ export async function execDeploy(options: InputOptions) {
 		});
 
 		const clusters = data as Cluster[];
-		if (clusters.length == 0) return logError(`The "${clusterShortName}" doesn't seem to be existed.`);
+		if (clusters.length == 0) {
+			logError(`The "${clusterShortName}" doesn't seem to be existed.`);
+			return;
+		}
 
 		selectedCluster = clusters[0];
 	}
@@ -86,7 +89,10 @@ export async function execDeploy(options: InputOptions) {
 		// if (isEmpty(currentRegistry)) {
 		const { status, data } = await fetchApi<ContainerRegistry>({ url: `/api/v1/registry?limit=10` });
 
-		if (!status) return logError(`Can't get list of container registry.`);
+		if (!status) {
+			logError(`Can't get list of container registry.`);
+			return;
+		}
 		const registries = data as ContainerRegistry[];
 
 		const { selectedRegistry } = await inquirer.prompt({
@@ -188,29 +194,6 @@ export async function execDeploy(options: InputOptions) {
 	// save domains & SSL configs
 	saveAppConfig(appConfig, { directory: targetDirectory });
 
-	// // update this app's environment in database:
-	// const updatedApp: any = {};
-	// updatedApp[`environment.${env}`] = JSON.stringify(appConfig.environment[env]);
-	// updatedApp.lastUpdatedBy = options.username;
-	// // console.log("updatedApp :>> ", updatedApp);
-
-	// const {
-	// 	status,
-	// 	data: app,
-	// 	messages,
-	// } = await fetchApi<App>({
-	// 	url: `/api/v1/app?slug=${appConfig.slug}`,
-	// 	method: "PATCH",
-	// 	data: updatedApp,
-	// });
-
-	// logWarn({ app });
-	// logWarn({ messages });
-
-	// if (!status) return logError(`Can't update new app config:`, messages);
-
 	// request build server to build & deploy:
 	await requestDeploy(options);
-
-	return options;
 }

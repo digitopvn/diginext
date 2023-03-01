@@ -6,67 +6,15 @@ import { saveCliConfig } from "@/config/config";
 import type { App } from "@/entities";
 import Framework from "@/entities/Framework";
 import type GitProvider from "@/entities/GitProvider";
-import type Project from "@/entities/Project";
 import type InputOptions from "@/interfaces/InputOptions";
-import createProject from "@/modules/project/create-project";
-import { getGitRepoDataFromRepoSSH } from "@/plugins";
+import { getAppConfig, parseGitRepoDataFromRepoSSH, updateAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
+import { createOrSelectProject } from "./create-or-select-project";
 
-async function searchProjects(question?: string) {
-	const { keyword } = await inquirer.prompt({
-		type: "input",
-		name: "keyword",
-		message: question ?? "Enter keyword to search projects (leave empty to get recent projects):",
-	});
-
-	// find/search projects
-	let projects = await DB.find<Project>("project", { name: keyword }, { search: true }, { limit: 10 });
-
-	if (isEmpty(projects)) {
-		projects = await searchProjects(`No projects found. Try another keyword:`);
-		return projects;
-	} else {
-		return projects;
-	}
-}
-
-export async function askAppQuestions(options?: InputOptions) {
-	if (!options.project) {
-		const { shouldCreateNewProject } = await inquirer.prompt({
-			type: "confirm",
-			name: "shouldCreateNewProject",
-			message: "Create new project? (NO if you want to select an existing project)",
-			default: true,
-		});
-
-		if (!shouldCreateNewProject) {
-			// find/search projects
-			const projects = await searchProjects();
-			// log({ projects });
-
-			// display list to select:
-			const { selectedProject } = await inquirer.prompt({
-				type: "list",
-				name: "selectedProject",
-				message: "Select your project:",
-				choices: projects.map((p) => {
-					return { name: `${p.name} (${p.slug})`, value: p };
-				}),
-			});
-			options.project = selectedProject;
-			options.projectSlug = selectedProject.slug;
-			options.projectName = selectedProject.name;
-		} else {
-			const newProject = await createProject(options);
-			options.project = newProject;
-			options.projectSlug = newProject.slug;
-			options.projectName = newProject.name;
-		}
-	}
-
-	options.namespace = options.projectSlug;
+export async function createAppByForm(options?: InputOptions) {
+	if (!options.project) options.project = await createOrSelectProject(options);
 
 	if (!options.name) {
 		const { name } = await inquirer.prompt({
@@ -110,9 +58,11 @@ export async function askAppQuestions(options?: InputOptions) {
 	}
 
 	// Check git provider authentication
-	const { gitProvider: frameworkGitProvider, isPrivate, slug, repoSSH } = options.framework;
+	const { isPrivate, slug, repoSSH } = options.framework;
+	const { gitProvider: frameworkGitProvider } = parseGitRepoDataFromRepoSSH(repoSSH);
+
 	if (slug !== "none") {
-		const { namespace } = getGitRepoDataFromRepoSSH(repoSSH);
+		const { namespace } = parseGitRepoDataFromRepoSSH(repoSSH);
 		if (!isPrivate) {
 			const canAccessPublicRepo = await checkGitProviderAccess(frameworkGitProvider);
 			if (!canAccessPublicRepo) {
@@ -138,16 +88,17 @@ export async function askAppQuestions(options?: InputOptions) {
 	options.frameworkVersion = frameworkVersion;
 
 	if (options.shouldUseGit) {
-		let currentGitProvider;
+		let currentGitProvider: GitProvider;
 		if (!options.gitProvider) {
-			const gitProviders = await DB.find<GitProvider>("git-provider", {});
+			const gitProviders = await DB.find<GitProvider>("git", {});
+
 			if (isEmpty(gitProviders)) {
 				logError(`This workspace doesn't have any git providers integrated.`);
 				return;
 			}
 
 			const gitProviderChoices = [
-				{ name: "none", value: { slug: "none" } },
+				{ name: "None", value: { name: "None", slug: "none" } },
 				...gitProviders.map((g) => {
 					return { name: g.name, value: g };
 				}),
@@ -160,9 +111,9 @@ export async function askAppQuestions(options?: InputOptions) {
 				choices: gitProviderChoices,
 			});
 
-			if (gitProvider.slug != "none") {
+			if (gitProvider.slug !== "none") {
 				currentGitProvider = gitProvider;
-				options.gitProvider = gitProvider.slug;
+				options.gitProvider = currentGitProvider.type;
 
 				// set this git provider to default:
 				saveCliConfig({ currentGitProvider });
@@ -171,8 +122,13 @@ export async function askAppQuestions(options?: InputOptions) {
 			}
 		} else {
 			// search for this git provider
-			currentGitProvider = await DB.findOne<GitProvider>("git-provider", { slug: options.gitProvider });
-			if (!currentGitProvider) return logError(`Git provider "${options.gitProvider}" not found.`);
+			currentGitProvider = await DB.findOne<GitProvider>("git", { slug: options.gitProvider });
+			if (!currentGitProvider) {
+				logError(`Git provider "${options.gitProvider}" not found.`);
+				return;
+			}
+
+			options.gitProvider = currentGitProvider.slug;
 
 			// set this git provider to default:
 			saveCliConfig({ currentGitProvider });
@@ -186,11 +142,10 @@ export async function askAppQuestions(options?: InputOptions) {
 		owner: options.userId,
 		project: options.project._id,
 		workspace: options.workspaceId,
+		git: {},
 	} as App;
 
-	if (options.shouldUseGit) {
-		appData.git.provider = options.gitProvider;
-	}
+	if (options.shouldUseGit) appData.git.provider = options.gitProvider;
 
 	const newApp = await DB.create<App>("app", appData);
 	if (!newApp) {
@@ -202,5 +157,9 @@ export async function askAppQuestions(options?: InputOptions) {
 	options.slug = newApp.slug;
 	options.name = newApp.name;
 
-	return options;
+	// update existing "dx.json" if any
+	const appConfig = getAppConfig(options.targetDirectory);
+	if (appConfig) updateAppConfig({ slug: newApp.slug, project: options.project.slug, name: newApp.name });
+
+	return newApp;
 }

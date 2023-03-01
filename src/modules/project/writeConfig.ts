@@ -5,6 +5,9 @@ import type { AppConfig } from "@/interfaces/AppConfig";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { getPackageConfig, saveAppConfig } from "@/plugins";
 
+/**
+ * Generate "dx.json" (app configuration file)
+ */
 export function generateAppConfig(options: InputOptions) {
 	const pkgConfig = getPackageConfig({ directory: options.targetDirectory });
 	const cliConfig = getCliConfig();
@@ -18,11 +21,6 @@ export function generateAppConfig(options: InputOptions) {
 	appConfig.project = options.projectSlug;
 
 	// git
-
-	// log(`options.git >>`, options.git);
-	// log(`options.repoURL >>`, options.repoURL);
-	// log(`options.remoteSSH >>`, options.remoteSSH);
-
 	if (options.shouldUseGit) {
 		appConfig.git = {
 			provider: options.gitProvider,
