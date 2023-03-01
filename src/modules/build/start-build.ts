@@ -89,8 +89,8 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 	// get workspace
 	let workspace = options.workspace;
-	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: app.workspace });
-	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: project.workspace });
+	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: app?.workspace });
+	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: project?.workspace });
 	if (!workspace && workspaceId) workspace = await DB.findOne<Workspace>("workspace", { _id: workspaceId });
 	if (!workspace && username != "Anonymous") workspace = await DB.findOne<Workspace>("workspace", { _id: author.activeWorkspace });
 
@@ -193,7 +193,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	// log("[BUILD] author :>> ", author);
 
 	options.appSlug = appSlug;
-	options.projectName = project.name;
+	options.projectName = projectName || project?.name;
 	options.name = app.name;
 
 	// log(`startBuild > options :>>`, options);
