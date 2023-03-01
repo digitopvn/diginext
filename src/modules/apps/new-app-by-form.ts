@@ -142,13 +142,19 @@ export async function createAppByForm(options?: InputOptions) {
 		owner: options.userId,
 		project: options.project._id,
 		workspace: options.workspaceId,
+		framework: {
+			name: options.framework.name,
+			slug: options.framework.slug,
+			repoSSH: options.framework.repoSSH,
+			repoURL: options.framework.repoURL,
+		},
 		git: {},
 	} as App;
 
 	if (options.shouldUseGit) appData.git.provider = options.gitProvider;
 
 	const newApp = await DB.create<App>("app", appData);
-	if (!newApp) {
+	if (isEmpty(newApp) || (newApp as any).error) {
 		logError(`Can't create new app due to network issue.`);
 		return;
 	}

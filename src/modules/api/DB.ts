@@ -3,7 +3,7 @@ import { isEmpty } from "lodash";
 
 import { isServerMode } from "@/app.config";
 import type { IQueryOptions, IQueryPagination } from "@/interfaces";
-import { flattenObjectPaths } from "@/plugins";
+import { flattenObjectPaths, flattenObjectToPost } from "@/plugins";
 import {
 	AppService,
 	BuildService,
@@ -146,13 +146,16 @@ export class DB {
 			item = await svc.create(data);
 		} else {
 			const optionStr = queryOptionsToUrlOptions(options);
+			const newData = flattenObjectToPost(data);
+			console.log("newData :>> ", newData);
 			const { data: result } = await fetchApi<T>({
 				url: `/api/v1/${collection}?${optionStr.toString()}`,
 				method: "POST",
-				data: flattenObjectPaths(data),
+				data: newData,
 			});
 			item = result;
 		}
+		console.log("create item :>> ", item);
 		return item as T;
 	}
 

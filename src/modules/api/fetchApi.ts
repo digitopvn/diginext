@@ -65,12 +65,6 @@ export async function fetchApi<T = any>(options: AxiosRequestConfig & { access_t
 	try {
 		const { data: responseData } = await axios(options);
 
-		// save new "access_token" if any:
-		// TODO: this is not safe -> should use refresh token!
-		// if (responseData.token?.access_token != cachedAccessToken && responseData.token?.access_token != "") {
-		// 	saveCliConfig({ access_token: responseData.token?.access_token });
-		// }
-
 		// log(`fetchApi > response :>>`, responseData);
 		return responseData as FetchApiResponse<T>;
 	} catch (e) {

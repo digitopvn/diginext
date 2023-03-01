@@ -93,7 +93,7 @@ export async function initializeGitRemote(options: InputOptions) {
 	// log("options.gitProvider :>> ", options.gitProvider);
 	// log("options.repoSlug :>> ", options.repoSlug);
 	// log(`options.remoteURL >>`, options.remoteURL);
-	// log(`options.remoteSSH >>`, options.remoteSSH);
+	log(`options.remoteSSH >>`, options.remoteSSH);
 	// log(`options.repoURL >>`, options.repoURL);
 
 	if (options.shouldUseGit && options.gitProvider == "bitbucket") await createBitbucketRepo(options);

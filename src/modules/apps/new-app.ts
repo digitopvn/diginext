@@ -1,4 +1,4 @@
-import { logError } from "diginext-utils/dist/console/log";
+import { logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import fs from "fs";
 // import Listr from "listr";
@@ -23,6 +23,7 @@ import { createAppByForm } from "./new-app-by-form";
 export default async function createApp(options: InputOptions) {
 	// FORM > Create new project & app:
 	const newApp = await createAppByForm(options);
+	console.log("newApp :>> ", newApp);
 
 	// make sure it always create new directory:
 	options.skipCreatingDirectory = false;
@@ -51,15 +52,15 @@ export default async function createApp(options: InputOptions) {
 	}
 
 	// Save this app to database
-	const appData = {} as App;
-	appData.framework = options.framework;
+	// const appData = {} as App;
+	// if (options.framework) appData.framework = options.framework;
 
-	let [updatedApp] = await DB.update<App>("app", { slug: options.slug }, appData);
+	// let [updatedApp] = await DB.update<App>("app", { slug: options.slug }, appData);
 
-	if (!updatedApp) {
-		logError("Can't create new app due to network issue while updating framework info.");
-		return;
-	}
+	// if (!updatedApp) {
+	// 	logError("Can't create new app due to network issue while updating framework info.");
+	// 	return;
+	// }
 
 	// setup git:
 	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`;
@@ -75,10 +76,14 @@ export default async function createApp(options: InputOptions) {
 	await initalizeAndCreateDefaultBranches(options);
 
 	if (options.shouldUseGit) {
-		await initializeGitRemote(options);
+		try {
+			await initializeGitRemote(options);
+		} catch (e) {
+			logWarn(`Can't initialize git remote: ${options.remoteSSH}`);
+		}
 
 		// update git info to database
-		[updatedApp] = await DB.update<App>(
+		const [updatedApp] = await DB.update<App>(
 			"app",
 			{ slug: options.slug },
 			{ git: { provider: options.gitProvider, repoSSH: options.remoteSSH, repoURL: options.remoteURL } }

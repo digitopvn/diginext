@@ -385,6 +385,30 @@ export const deleteFolderRecursive = async (filePath) => {
  * Flatten the object into 1-level-object (with key paths)
  * @example {a: {b: [{c: 1}, {c: 2}]}, e: 3} -> {"a.b.0.c": 1, "a.b.1.c": 2, "e": 3}
  */
+export function flattenObjectToPost(object: any = {}, initialPathPrefix = "") {
+	if (!object || typeof object !== "object") {
+		return [{ [initialPathPrefix]: object }];
+	}
+
+	const prefix = initialPathPrefix ? (Array.isArray(object) ? initialPathPrefix : `${initialPathPrefix}`) : "";
+
+	const _arr = Object.entries(object).flatMap(([key]) =>
+		flattenObjectToPost(object[key], Array.isArray(object) ? `${prefix}[${key}]` : `${prefix}[${key}]`)
+	);
+	// console.log("_arr :>> ", _arr);
+
+	if (isEmpty(_arr)) return {};
+
+	const res = _arr.reduce((acc, _path) => ({ ...acc, ..._path }));
+	// console.log("res :>> ", res);
+
+	return res;
+}
+
+/**
+ * Flatten the object into 1-level-object (with key paths)
+ * @example {a: {b: [{c: 1}, {c: 2}]}, e: 3} -> {"a.b.0.c": 1, "a.b.1.c": 2, "e": 3}
+ */
 export function flattenObjectPaths(object: any = {}, initialPathPrefix = "") {
 	if (!object || typeof object !== "object") {
 		return [{ [initialPathPrefix]: object }];
@@ -392,9 +416,17 @@ export function flattenObjectPaths(object: any = {}, initialPathPrefix = "") {
 
 	const prefix = initialPathPrefix ? (Array.isArray(object) ? initialPathPrefix : `${initialPathPrefix}.`) : "";
 
-	return Object.entries(object)
-		.flatMap(([key]) => flattenObjectPaths(object[key], Array.isArray(object) ? `${prefix}.${key}` : `${prefix}${key}`))
-		.reduce((acc, _path) => ({ ...acc, ..._path }));
+	const _arr = Object.entries(object).flatMap(([key]) =>
+		flattenObjectPaths(object[key], Array.isArray(object) ? `${prefix}.${key}` : `${prefix}${key}`)
+	);
+	// console.log("_arr :>> ", _arr);
+
+	if (isEmpty(_arr)) return {};
+
+	const res = _arr.reduce((acc, _path) => ({ ...acc, ..._path }));
+	// console.log("res :>> ", res);
+
+	return res;
 }
 
 type SaveOpts = {
