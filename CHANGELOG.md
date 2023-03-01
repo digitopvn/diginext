@@ -1,3 +1,19 @@
+# [2.3.0](https://github.com/digitopvn/diginext/compare/v2.2.0...v2.3.0) (2023-03-01)
+
+
+### Bug Fixes
+
+* **base service:** generated slug now becomes shorter but still unique ([3f89675](https://github.com/digitopvn/diginext/commit/3f896757f6ac41d0b308c69894786bf125f3f2eb))
+* **cli and server:** remove jq package ([6270266](https://github.com/digitopvn/diginext/commit/62702669b2bc7bb10044b44d01cd89ea26d8a8a5))
+* **deploy app:** fix issue of deploy app or project which was deleted ([872fc85](https://github.com/digitopvn/diginext/commit/872fc8558124f4b5b03eb589d203301b8efc43d1))
+* **env vars api:** add crud api of app environment variables ([c3bd49a](https://github.com/digitopvn/diginext/commit/c3bd49adf44b4340648fbd7d1c6fe65562c0d523))
+* **start-build:** issue of project name is undefined ([98fbb69](https://github.com/digitopvn/diginext/commit/98fbb6956994287ae2b71675d81e67436b60770a))
+
+
+### Features
+
+* **cli dotenv:** ability to upload and download dotenv from to deploy environment ([b3934d7](https://github.com/digitopvn/diginext/commit/b3934d7691d27d313ef0509477807c6acbdd03f6))
+
 # [2.2.0](https://github.com/digitopvn/diginext/compare/v2.1.0...v2.2.0) (2023-02-28)
 
 
