@@ -13,6 +13,11 @@ RUN apt-get update --allow-releaseinfo-change -yq \
   && apt-get install nodejs git sed jq kubectl openssh-client -yq \
   && apt-get clean -y
 
+# Helm
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \
+  && chmod 700 get_helm.sh \
+  && ./get_helm.sh
+
 # Docker Buildx
 RUN wget https://github.com/docker/buildx/releases/download/v0.9.1/buildx-v0.9.1.linux-amd64 \
   && chmod a+x buildx-v0.9.1.linux-amd64 \

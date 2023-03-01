@@ -12,6 +12,7 @@ import type GitProvider from "@/entities/GitProvider";
 import type User from "@/entities/User";
 import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
+import type { ResourceQuotaSize } from "@/interfaces/InputOptions";
 
 import { isWin, readJson, saveJson, showDocs } from "../plugins";
 import { CLI_CONFIG_DIR, CLI_CONFIG_FILE, CLI_DIR } from "./const";
@@ -23,7 +24,7 @@ export const cliOpts: execa.Options = isWin()
 			shell: "bash",
 	  };
 
-export const getContainerResourceBySize = (size: "none" | "1x" | "2x" | "3x" | "4x" | "5x" | "6x" | "7x" | "8x" | "9x" | "10x") => {
+export const getContainerResourceBySize = (size: ResourceQuotaSize) => {
 	if (size == "none") return {};
 	const scale = parseInt(size.substring(1, size.length - 1));
 	return {

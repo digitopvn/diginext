@@ -3,7 +3,8 @@ import { log, logWarn } from "diginext-utils/dist/console/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
-import type { InputOptions } from "@/interfaces/InputOptions";
+import type { Project } from "@/entities";
+import type { InputOptions, ResourceQuotaSize } from "@/interfaces/InputOptions";
 import { checkForUpdate, currentVersion, getLatestCliVersion } from "@/plugins";
 
 const cliHeader =
@@ -33,7 +34,7 @@ const argvOptions = {
 	url: { describe: "Input URL address with http" },
 	host: { describe: "Input host address (withou http)" },
 	overwrite: { describe: "[DANGER] Force execute a command (skip any errors)", alias: "force" },
-	output: { describe: "Output type (yaml | json)", alias: "o" },
+	output: { describe: "Output type - default is 'string' (string | yaml | json)", alias: "o" },
 	git: { describe: "Create new remote repository or not" },
 	merge: { describe: "Force git merge" },
 	close: { describe: "Should close or not" },
@@ -108,6 +109,13 @@ const userInputOptions = {
 	output: argvOptions.output,
 };
 
+const dotenvOptions = {
+	targetDir: argvOptions.targetDir,
+	file: argvOptions.file,
+	env: argvOptions.env,
+	slug: argvOptions.slug,
+};
+
 const deployOptions = {
 	debug: argvOptions.debug,
 	tail: argvOptions.tail,
@@ -149,7 +157,7 @@ export async function parseCliOptions() {
 	}
 
 	// start parsing...
-	const argv: any = yargs(process.argv.slice(2))
+	const argv = await yargs(process.argv.slice(2))
 		// header
 		.usage(cliHeader)
 		// .usage("$0 <module> [gcloud|do] <action> - Manage cloud provider accessibility")
@@ -293,8 +301,13 @@ export async function parseCliOptions() {
 		.command("run", "Build your project locally & deploy on the cluster.", deployOptions)
 		// command: deploy
 		.command("deploy", "Request BUILD SERVER to build your project & deploy it", deployOptions)
+		// command: dotenv
+		.command("dotenv", "Download/upload DOTENV files from/to deploy environment", (_yargs) =>
+			_yargs
+				.command("upload", "Upload local DOTENV file to a deploy environment.", dotenvOptions)
+				.command("download", "Download DOTENV file to local from a deploy environment.", dotenvOptions)
+		)
 		// command: release
-		// .command("release", "Roll out your PRE-RELEASE deployment", deployOptions)
 		.command("rollout", "Roll out your PRE-RELEASE deployment", deployOptions)
 		// command: down
 		.command("down", "Take down your deployment project", deployOptions)
@@ -326,70 +339,70 @@ export async function parseCliOptions() {
 		version: currentVersion(),
 
 		// actions
-		action: argv._[0],
-		secondAction: argv._[1],
-		thirdAction: argv._[2],
-		fourAction: argv._[3],
-		fifthAction: argv._[4],
+		action: argv._[0] as string,
+		secondAction: argv._[1] as string,
+		thirdAction: argv._[2] as string,
+		fourAction: argv._[3] as string,
+		fifthAction: argv._[4] as string,
 
 		// inputs
-		input: argv.input,
-		filePath: argv.file,
-		key: argv.key,
-		url: argv.url,
-		host: argv.host,
-		name: argv.name,
-		data: argv.data,
-		value: argv.value,
+		input: argv.input as string,
+		filePath: argv.file as string,
+		key: argv.key as string,
+		url: argv.url as string,
+		host: argv.host as string,
+		name: argv.name as string,
+		data: argv.data as string,
+		value: argv.value as string,
 
 		// definitions
-		isDebugging: argv.debug ?? false,
-		isTail: argv.tail ?? false,
-		isLocal: argv.local ?? false,
-		overwrite: argv.overwrite ?? false,
-		shouldUseGit: argv.git ?? true,
-		gitProvider: argv["git-provider"],
+		isDebugging: (argv.debug as boolean) ?? false,
+		isTail: (argv.tail as boolean) ?? false,
+		isLocal: (argv.local as boolean) ?? false,
+		overwrite: (argv.overwrite as boolean) ?? false,
+		shouldUseGit: (argv.git as boolean) ?? true,
+		gitProvider: argv["git-provider"] as string,
 
 		// project
-		projectName: argv.projectName,
-		projectSlug: argv.projectSlug,
-		targetDirectory: argv.targetDir,
-		framework: argv.framework,
+		projectName: argv.projectName as string,
+		projectSlug: argv.projectSlug as string,
+		targetDirectory: argv.targetDir as string,
+		framework: argv.framework as any,
 
 		// environment
-		env: argv.env ?? "dev",
-		isDev: argv.dev ?? true,
-		isStaging: argv.staging ?? argv.env == "staging" ?? false,
-		isCanary: argv.canary ?? argv.env == "canary" ?? false,
-		isProd: argv.prod ?? argv.env == "prod" ?? false,
+		env: (argv.env as string) ?? "dev",
+		isDev: (argv.dev as boolean) ?? true,
+		isStaging: (argv.staging as boolean) ?? argv.env === "staging" ?? false,
+		isCanary: (argv.canary as boolean) ?? argv.env === "canary" ?? false,
+		isProd: (argv.prod as boolean) ?? argv.env === "prod" ?? false,
 
 		// helper
-		shouldShowInputOptions: argv["show-options"] ?? false,
-		shouldInstallPackage: argv.install ?? true,
-		shouldShowHelp: argv.help ?? false,
-		shouldShowVersion: argv.version ?? true,
-		shouldUpdateCli: argv.update ?? false,
-		shouldCompress: argv.compress ?? false,
-		shouldGenerate: argv.generate ?? false,
-		shouldUseTemplate: argv.template ?? false,
-		shouldUpdatePipeline: argv.pipeline ?? false,
-		shouldMerge: argv.merge ?? false,
-		shouldClose: argv.close ?? false,
-		shouldInherit: argv.inherit ?? true,
-		shouldUploadDotenv: argv["upload-env"],
+		shouldShowInputOptions: (argv["show-options"] as boolean) ?? false,
+		shouldInstallPackage: (argv.install as boolean) ?? true,
+		shouldShowHelp: (argv.help as boolean) ?? false,
+		shouldShowVersion: (argv.version as boolean) ?? true,
+		shouldUpdateCli: (argv.update as boolean) ?? false,
+		shouldCompress: (argv.compress as boolean) ?? false,
+		shouldGenerate: (argv.generate as boolean) ?? false,
+		shouldUseTemplate: (argv.template as boolean) ?? false,
+		shouldUpdatePipeline: (argv.pipeline as boolean) ?? false,
+		shouldMerge: (argv.merge as boolean) ?? false,
+		shouldClose: (argv.close as boolean) ?? false,
+		shouldInherit: (argv.inherit as boolean) ?? true,
+		shouldUploadDotenv: argv["upload-env"] as boolean,
 
 		// deployment
 		app: argv.app, // monorepo app's name
-		port: argv.port,
-		replicas: argv.replicas,
-		size: argv.size ?? "none",
-		provider: argv.provider,
-		cluster: argv.cluster,
-		zone: argv.zone,
-		project: argv.project,
-		namespace: argv.namespace,
-		redirect: argv.redirect,
-		ssl: argv.ssl, // [FLAG] --no-ssl
+		port: argv.port as number,
+		replicas: argv.replicas as number,
+		size: (argv.size as ResourceQuotaSize) ?? "none",
+		provider: argv.provider as string,
+		cluster: argv.cluster as string,
+		zone: argv.zone as string,
+		project: argv.project as Project,
+		namespace: argv.namespace as string,
+		redirect: argv.redirect as boolean,
+		ssl: argv.ssl as boolean, // [FLAG] --no-ssl
 	};
 
 	if (argv.do === true) options.provider = "digitalocean";

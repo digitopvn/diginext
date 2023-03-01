@@ -735,7 +735,7 @@ export const getValueOfKubeEnvVarsByName = (name: string, envVars: KubeEnvironme
  * @param {[{name,value}]} inputEnvs - Input raw object, **not containing any methods**
  * @returns {String}
  */
-export const kubeEnvToDotenv = (inputEnvs) => {
+export const kubeEnvToDotenv = (inputEnvs: KubeEnvironmentVariable[]) => {
 	let content = "";
 	inputEnvs.map((envVar) => {
 		content += envVar.name + "=" + `"${envVar.value}"` + "\n";

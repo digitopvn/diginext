@@ -1,5 +1,7 @@
 import type { App, Framework, Project, Workspace } from "@/entities";
 
+export type ResourceQuotaSize = "none" | "1x" | "2x" | "3x" | "4x" | "5x" | "6x" | "7x" | "8x" | "9x" | "10x";
+
 /**
  * Các giá trị đầu vào của CLI
  */
@@ -204,7 +206,7 @@ export type InputOptions = {
 	/**
 	 * Specify environment code:
 	 * - One of: `dev, prod, staging,...`
-	 * @default `dev`
+	 * @default "dev"
 	 */
 	env?: "dev" | "prod" | "staging" | string;
 
@@ -419,7 +421,7 @@ export type InputOptions = {
 	/**
 	 * @default "1x"
 	 */
-	size?: "none" | "1x" | "2x" | "3x" | "4x" | "5x" | "6x" | "7x" | "8x" | "9x" | "10x";
+	size?: ResourceQuotaSize;
 
 	/**
 	 * Specify an {App} instance
@@ -476,11 +478,32 @@ export type InputOptions = {
 	providerProject?: string;
 
 	/**
-	 * Output type: `JSON`, `YAML`.
-	 * Or specify output directory of the written file.
-	 * @example "json", "yaml"
+	 * Output type: `string`, `json`, `yaml`.
+	 * @default "string"
+	 * @example "string" | "json" | "yaml"
 	 */
-	output?: any;
+	output?: string;
+
+	/**
+	 * Output directory location.
+	 * @default "string"
+	 * @example "/path/to/output/"
+	 */
+	outputDir?: any;
+
+	/**
+	 * Output file name.
+	 * @default "string"
+	 * @example "output.txt"
+	 */
+	outputName?: any;
+
+	/**
+	 * Output path (include directory path + file name).
+	 * @default "string"
+	 * @example "/path/to/output.file"
+	 */
+	outputPath?: any;
 
 	/**
 	 * @deprecated

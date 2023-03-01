@@ -1,4 +1,5 @@
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
+import type { ResourceQuotaSize } from "./InputOptions";
 
 export interface ClientDeployEnvironmentConfig {
 	/**
@@ -52,7 +53,7 @@ export interface ClientDeployEnvironmentConfig {
 	 * "1x" - { requests: { cpu: `50m`, memory: `256Mi` }, limits: { cpu: `50m`, memory: `256Mi` } }
 	 * "2x" - { requests: { cpu: `100m`, memory: `512Mi` }, limits: { cpu: `100m`, memory: `512Mi` } }
 	 */
-	size?: "none" | "1x" | "2x" | "3x" | "4x" | "5x" | "6x" | "7x" | "8x" | "9x" | "10x";
+	size?: ResourceQuotaSize;
 
 	/**
 	 * Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment

@@ -29,6 +29,7 @@ import { currentVersion, freeUp, getOS, logVersion } from "@/plugins";
 import { execInitApp } from "./modules/apps/init-app";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
 import { updateCli } from "./modules/cli/update-cli";
+import { execDotenvCommand } from "./modules/deploy/dotenv-exec";
 import { execRollOut } from "./modules/deploy/exec-rollout";
 
 /**
@@ -172,6 +173,11 @@ export async function processCLI(options?: InputOptions) {
 			await cliAuthenticate(options);
 			options.isLocal = true;
 			await startBuildAndRun(options);
+			return;
+
+		case "dotenv":
+			await cliAuthenticate(options);
+			await execDotenvCommand(options);
 			return;
 
 		case "deploy":
