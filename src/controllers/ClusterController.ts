@@ -35,18 +35,31 @@ export default class ClusterController extends BaseController<Cluster> {
 
 		body.providerShortName = cloudProvider.shortName;
 
+		const auth = await ClusterManager.auth(body.shortName);
+		if (!auth) return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
+
 		return super.create(body);
 	}
 
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: Omit<Cluster, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
-		const cloudProviderSvc = new CloudProviderService();
+		if (body.provider) {
+			const cloudProviderSvc = new CloudProviderService();
 
-		const cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
-		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
+			const cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
+			if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
 
-		body.providerShortName = cloudProvider.shortName;
+			body.providerShortName = cloudProvider.shortName;
+		}
+
+		const cluster = await this.service.findOne(this.filter);
+
+		try {
+			await ClusterManager.auth(cluster.shortName);
+		} catch (e) {
+			return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
+		}
 
 		return super.update(body);
 	}

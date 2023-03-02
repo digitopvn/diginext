@@ -8640,23 +8640,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/ResponseData"
-										},
-										{
-											"properties": {
-												"data": {
-													"items": {
-														"$ref": "#/components/schemas/App"
-													},
-													"type": "array"
-												}
-											},
-											"required": ["data"],
-											"type": "object"
-										}
-									]
+									"$ref": "#/components/schemas/ResponseData"
 								}
 							}
 						}
