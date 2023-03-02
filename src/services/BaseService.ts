@@ -1,7 +1,7 @@
 import { log, logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
-import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { randomStringByLength } from "diginext-utils/dist/string/random";
 import type { Request } from "express";
 
 import type { User } from "@/entities";
@@ -38,12 +38,26 @@ export default class BaseService<E extends ObjectLiteral> {
 	async create(data: E & { slug?: string; metadata?: any; error?: any; owner?: any; workspace?: any }) {
 		try {
 			// generate slug (if needed)
-			if (!data.slug && data.name) {
-				let slug = makeSlug(data.name);
-				const count = await this.count({ slug });
-				if (count > 0) slug = makeSlug(data.name) + "-" + makeDaySlug();
+			const scope = this;
+			const slugRange = "zxcvbnmasdfghjklqwertyuiop1234567890";
+			async function generateUniqueSlug(input, attempt = 1) {
+				let slug = makeSlug(input);
 
-				data.slug = slug;
+				let count = await scope.count({ slug });
+				if (count > 0) slug = slug + "-" + randomStringByLength(attempt, slugRange).toLowerCase();
+
+				// check unique again
+				count = await scope.count({ slug });
+				if (count > 0) return generateUniqueSlug(input, attempt + 1);
+
+				return slug;
+			}
+
+			if (data.slug) {
+				let count = await scope.count({ slug: data.slug });
+				if (count > 0) data.slug = await generateUniqueSlug(data.slug, 1);
+			} else {
+				data.slug = await generateUniqueSlug(data.name || "item", 1);
 			}
 
 			// generate metadata (for searching)

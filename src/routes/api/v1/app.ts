@@ -47,6 +47,12 @@ router
 		// authorize,
 		controller.apiRespond(controller.empty.bind(controller)).bind(controller)
 	)
+	.get(
+		"/environment",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.getDeployEnvironment.bind(controller)).bind(controller)
+	)
 	.post(
 		"/environment",
 		authenticate,
@@ -58,6 +64,24 @@ router
 		authenticate,
 		// authorize,
 		controller.apiRespond(controller.deleteDeployEnvironment.bind(controller)).bind(controller)
+	)
+	.get(
+		"/environment/variables",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.getEnvVarsOnDeployEnvironment.bind(controller)).bind(controller)
+	)
+	.post(
+		"/environment/variables",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.createEnvVarsOnDeployEnvironment.bind(controller)).bind(controller)
+	)
+	.patch(
+		"/environment/variables",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.updateEnvVarsOnDeployEnvironment.bind(controller)).bind(controller)
 	);
 
 export default router;

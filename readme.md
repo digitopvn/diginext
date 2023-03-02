@@ -21,7 +21,6 @@
 #### Required
 
 -   Install `Docker` on your computer: https://docs.docker.com/engine/install/ 
--   Install `jq` on your computer: https://stedolan.github.io/jq/download/
 
 #### Installation
 

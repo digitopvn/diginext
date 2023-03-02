@@ -9,14 +9,16 @@ import { io } from "socket.io-client";
 import { getCliConfig } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
 import type { App, Project } from "@/entities";
-import type { DeployEnvironment } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
-import { getAppConfig, getCurrentRepoURIs, loadEnvFileAsContainerEnvVars, resolveDockerfilePath, resolveEnvFilePath } from "@/plugins";
+import { getAppConfig, getCurrentGitRepoData, resolveDockerfilePath, resolveEnvFilePath, updateAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { createOrSelectProject } from "../apps/create-or-select-project";
 import { getAppEvironment } from "../apps/get-app-environment";
+import { checkGitignoreContainsDotenvFiles } from "../deploy/dotenv-exec";
+import { uploadDotenvFileByApp } from "../deploy/dotenv-upload";
 
 /**
  * Request the build server to start building & deploying
@@ -24,7 +26,7 @@ import { getAppEvironment } from "../apps/get-app-environment";
 export async function requestDeploy(options: InputOptions) {
 	if (process.env.CLI_MODE === "server") {
 		logError(`This command is only available at CLIENT MODE.`);
-		return false;
+		return;
 	}
 
 	const { buildServerUrl } = getCliConfig();
@@ -48,11 +50,30 @@ export async function requestDeploy(options: InputOptions) {
 	let dockerFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
 	if (!dockerFile) return;
 
+	// validate "project" and "app":
+	let project = await DB.findOne<Project>("project", { slug: projectSlug });
+	if (!project) {
+		project = await createOrSelectProject(options);
+		options.namespace = `${project.slug}-${env}`;
+		updateAppConfig({ project: project.slug, environment: { [env]: { namespace: options.namespace } } });
+	}
+
+	let app = await DB.findOne<App>("app", { slug });
+	if (!app) {
+		// app = await createAppByForm(options);
+		// updateAppConfig({ slug: app.slug });
+		logError(`App "${slug}" not found or might be deleted, please re-initialize & deploy again:`);
+		console.log("  $", chalk.cyan("dx init"));
+		console.log("  $", chalk.cyan("dx deploy"));
+		return;
+	}
+
+	// get app config from "dx.json"
+	const appConfig = getAppConfig(appDirectory);
+
 	/**
 	 * Generate build number as docker image tag
 	 */
-	const appConfig = getAppConfig(appDirectory);
-
 	const { imageURL } = appConfig.environment[env];
 	options.buildNumber = makeDaySlug();
 	options.buildImage = `${imageURL}:${options.buildNumber}`;
@@ -61,51 +82,25 @@ export async function requestDeploy(options: InputOptions) {
 	options.SOCKET_ROOM = SOCKET_ROOM;
 
 	// check to sync ENV variables or not...
-	const app = await DB.findOne<App>("app", { slug });
-
 	let targetEnvironmentFromDB = await getAppEvironment(app, env);
 
 	// merge with appConfig
 	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB };
-	// log({ targetEnvironment });
-
-	const serverEnvironmentVariables = targetEnvironment?.envVars;
-	// log({ serverEnvironmentVariables });
+	const serverEnvironmentVariables = targetEnvironment?.envVars || [];
 
 	let envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
-
-	async function uploadDotenvFile() {
-		const containerEnvVars = loadEnvFileAsContainerEnvVars(envFile);
-		log({ containerEnvVars });
-
-		// update env vars to database:
-		const updateAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as App;
-		updateAppData.deployEnvironment[env] = { ...targetEnvironment, envVars: containerEnvVars } as DeployEnvironment;
-		// TODO: Remove this when everyone is using "deployEnvironment" (not JSON of "environment")
-		updateAppData.environment[env] = JSON.stringify({ ...targetEnvironment, envVars: containerEnvVars } as DeployEnvironment);
-		// log({ updateAppData });
-
-		const updatedApps = await DB.update<App>("app", { slug }, updateAppData);
-		// log({ updatedApps });
-
-		log(
-			`Your local ENV variables (${containerEnvVars.length}) of "${
-				updatedApps[0].slug
-			}" app has been uploaded to ${env.toUpperCase()} environment.`
-		);
-	}
 
 	// if "--upload-env" flag is specified:
 	if (options.shouldUploadDotenv) {
 		if (!envFile) {
 			logWarn(`Can't upload DOTENV since there are no DOTENV files (.env.*) in this directory`);
 		} else {
-			await uploadDotenvFile();
+			await uploadDotenvFileByApp(envFile, app, env);
 		}
 	} else {
 		// if ENV file is existed on local & not available on server -> ask to upload local ENV to server:
 		if (envFile && !isEmpty(serverEnvironmentVariables)) {
-			log(`Skip uploading local ENV variables to deployed environment since it's already existed.`);
+			logWarn(`Skip uploading local ENV variables to deployed environment since it's already existed.`);
 			log(`(If you want to force upload local ENV variables, deploy again with: ${chalk.cyan("dx deploy --upload-env")})`);
 		}
 
@@ -117,17 +112,21 @@ export async function requestDeploy(options: InputOptions) {
 				message: `Do you want to use your "${envFile}" on ${env.toUpperCase()} environment?`,
 			});
 
-			if (shouldUploadEnv) await uploadDotenvFile();
+			if (shouldUploadEnv) await uploadDotenvFileByApp(envFile, app, env);
 		}
 	}
 
+	// [SECURITY CHECK] warns if DOTENV files are not listed in ".gitignore" file
+	await checkGitignoreContainsDotenvFiles({ targetDir: appDirectory });
+
+	// Notify the commander:
 	log(`Requesting BUILD SERVER to deploy this app: "${projectSlug}/${slug}"`);
 
 	// additional params:
 	options.namespace = appConfig.environment[env].namespace;
 
 	// get remote SSH
-	const { remoteSSH, remoteURL, provider: gitProvider } = await getCurrentRepoURIs(options.targetDirectory);
+	const { remoteSSH, remoteURL, provider: gitProvider } = await getCurrentGitRepoData(options.targetDirectory);
 	options.remoteSSH = remoteSSH;
 	options.remoteURL = remoteURL;
 	options.gitProvider = gitProvider;

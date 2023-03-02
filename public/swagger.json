@@ -52,6 +52,10 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ResourceQuotaSize": {
+				"type": "string",
+				"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"]
+			},
 			"DeployEnvironment": {
 				"description": "A deployment's environment of the application.",
 				"properties": {
@@ -88,8 +92,7 @@
 						"description": "[Google Cloud] Zone"
 					},
 					"size": {
-						"type": "string",
-						"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"],
+						"$ref": "#/components/schemas/ResourceQuotaSize",
 						"description": "Container quota resources"
 					},
 					"shouldInherit": {
@@ -139,6 +142,10 @@
 					"tlsSecret": {
 						"type": "string",
 						"description": "Secret name to hold the key of SSL, will be automatically generated.\nOnly need to specify when using \"custom\" SSL (which is the SSL from third-party issuer)"
+					},
+					"ingress": {
+						"type": "string",
+						"description": "Kubernetes Ingress Class"
 					},
 					"cliVersion": {
 						"type": "string",
@@ -1080,6 +1087,20 @@
 			},
 			"Pick_Build.Exclude_keyofBuild.keyofHiddenBodyKeys__": {
 				"properties": {
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the workspace"
+					},
 					"app": {
 						"anyOf": [
 							{
@@ -1131,6 +1152,20 @@
 					},
 					"logs": {
 						"type": "string"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
 					},
 					"project": {
 						"anyOf": [
@@ -1425,6 +1460,20 @@
 			},
 			"Pick_Project.Exclude_keyofProject.keyofHiddenBodyKeys__": {
 				"properties": {
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the workspace"
+					},
 					"name": {
 						"type": "string"
 					},
@@ -1437,6 +1486,20 @@
 					},
 					"createdBy": {
 						"type": "string"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
 					},
 					"active": {
 						"type": "boolean",
@@ -1526,8 +1589,7 @@
 						"description": "[Google Cloud] Zone"
 					},
 					"size": {
-						"type": "string",
-						"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"],
+						"$ref": "#/components/schemas/ResourceQuotaSize",
 						"description": "Container quota resources"
 					},
 					"shouldInherit": {
@@ -1577,6 +1639,10 @@
 					"tlsSecret": {
 						"type": "string",
 						"description": "Secret name to hold the key of SSL, will be automatically generated.\nOnly need to specify when using \"custom\" SSL (which is the SSL from third-party issuer)"
+					},
+					"ingress": {
+						"type": "string",
+						"description": "Kubernetes Ingress Class"
 					}
 				},
 				"type": "object",
@@ -1983,6 +2049,15 @@
 					"host": {
 						"type": "string"
 					},
+					"gitProvider": {
+						"type": "string",
+						"enum": ["github", "bitbucket", "gitlab"],
+						"description": "Git provider name"
+					},
+					"isPrivate": {
+						"type": "boolean",
+						"description": "Git repository access privacy"
+					},
 					"git": {
 						"anyOf": [
 							{
@@ -2071,8 +2146,25 @@
 						"type": "array",
 						"deprecated": true
 					},
+					"outputPath": {
+						"description": "Output path (include directory path + file name).",
+						"example": "/path/to/output.file",
+						"default": "\"string\""
+					},
+					"outputName": {
+						"description": "Output file name.",
+						"example": "output.txt",
+						"default": "\"string\""
+					},
+					"outputDir": {
+						"description": "Output directory location.",
+						"example": "/path/to/output/",
+						"default": "\"string\""
+					},
 					"output": {
-						"description": "Output type: `JSON`, `YAML`.\nOr specify output directory of the written file."
+						"type": "string",
+						"description": "Output type: `string`, `json`, `yaml`.",
+						"default": "\"string\""
 					},
 					"providerProject": {
 						"type": "string",
@@ -2117,9 +2209,7 @@
 						"description": "Specify an {App} instance"
 					},
 					"size": {
-						"type": "string",
-						"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"],
-						"default": "\"1x\""
+						"$ref": "#/components/schemas/ResourceQuotaSize"
 					},
 					"buildId": {
 						"type": "string"
@@ -2278,7 +2368,7 @@
 							}
 						],
 						"description": "Specify environment code:\n- One of: `dev, prod, staging,...`",
-						"default": "`dev`"
+						"default": "\"dev\""
 					},
 					"fifthAction": {
 						"type": "string"
@@ -2327,7 +2417,7 @@
 						"type": "boolean",
 						"default": "false"
 					},
-					"git": {
+					"shouldUseGit": {
 						"type": "boolean",
 						"description": "Enable GIT for the application",
 						"default": "true"
@@ -2486,6 +2576,20 @@
 			},
 			"Pick_CloudProvider.Exclude_keyofCloudProvider.keyofHiddenBodyKeys__": {
 				"properties": {
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the workspace"
+					},
 					"name": {
 						"type": "string",
 						"description": "Cloud provider name"
@@ -2493,6 +2597,20 @@
 					"slug": {
 						"type": "string",
 						"description": "Auto-generated by \"name\" column"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
 					},
 					"active": {
 						"type": "boolean",
@@ -2638,6 +2756,20 @@
 			},
 			"Pick_Release.Exclude_keyofRelease.keyofHiddenBodyKeys__": {
 				"properties": {
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the workspace"
+					},
 					"app": {
 						"anyOf": [
 							{
@@ -2680,6 +2812,20 @@
 					},
 					"appSlug": {
 						"type": "string"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
 					},
 					"project": {
 						"anyOf": [
@@ -2785,12 +2931,40 @@
 			},
 			"Pick_Role.Exclude_keyofRole.keyofHiddenBodyKeys__": {
 				"properties": {
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the workspace"
+					},
 					"name": {
 						"type": "string"
 					},
 					"slug": {
 						"type": "string",
 						"description": "Auto-generated by \"name\" column"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
 					},
 					"project": {
 						"anyOf": [
@@ -2827,6 +3001,20 @@
 			},
 			"Pick_Team.Exclude_keyofTeam.keyofHiddenBodyKeys__": {
 				"properties": {
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the workspace"
+					},
 					"name": {
 						"type": "string"
 					},
@@ -2836,6 +3024,20 @@
 					"slug": {
 						"type": "string",
 						"description": "Auto-generated by \"name\" column"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
 					},
 					"project": {
 						"anyOf": [
@@ -3025,6 +3227,20 @@
 						"type": "string",
 						"description": "Workspace slug: auto-generated by \"name\" column"
 					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
+					},
 					"active": {
 						"type": "boolean",
 						"description": "Auto-generated by \"name\" column"
@@ -3052,6 +3268,9 @@
 					},
 					"workspaceId": {
 						"type": "string"
+					},
+					"roleId": {
+						"type": "string"
 					}
 				},
 				"required": ["userId", "workspaceId"],
@@ -3060,6 +3279,20 @@
 			},
 			"Pick_App.Exclude_keyofApp.keyofHiddenBodyKeys__": {
 				"properties": {
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "Workspace ID of the app"
+					},
 					"name": {
 						"type": "string"
 					},
@@ -3075,6 +3308,20 @@
 					},
 					"projectSlug": {
 						"type": "string"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "Owner ID of the app"
 					},
 					"project": {
 						"anyOf": [
@@ -3171,7 +3418,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.1.0",
+		"version": "2.2.0",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -8596,6 +8843,100 @@
 			}
 		},
 		"/app/environment": {
+			"get": {
+				"operationId": "GetDeployEnvironment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"properties": {
+												"messages": {
+													"items": {},
+													"type": "array"
+												},
+												"data": {
+													"$ref": "#/components/schemas/DeployEnvironment"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "data", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messages": {},
+												"messsages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messsages", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messsages": {},
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"description": "Create new deploy environment of the application.",
+				"tags": ["App"],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Deploy environment name",
+						"in": "query",
+						"name": "env",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "App slug",
+						"in": "query",
+						"name": "slug",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
 			"post": {
 				"operationId": "CreateDeployEnvironment",
 				"responses": {
@@ -8801,6 +9142,380 @@
 						}
 					}
 				]
+			}
+		},
+		"/app/environment/variables": {
+			"get": {
+				"operationId": "GetEnvVarsOnDeployEnvironment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"properties": {
+												"messages": {
+													"items": {},
+													"type": "array"
+												},
+												"data": {
+													"items": {
+														"$ref": "#/components/schemas/KubeEnvironmentVariable"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "data", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messages": {},
+												"messsages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messsages", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messsages": {},
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"description": "Get list of variables on the deploy environment of the application.",
+				"tags": ["App"],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "env",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "slug",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateEnvVarsOnDeployEnvironment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"properties": {
+												"messages": {
+													"items": {},
+													"type": "array"
+												},
+												"data": {
+													"$ref": "#/components/schemas/AppConfig"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "data", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messages": {},
+												"messsages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messsages", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messsages": {},
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"description": "Create new variables on the deploy environment of the application.",
+				"tags": ["App"],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "owner,workspace"
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"envVars": {
+										"items": {
+											"$ref": "#/components/schemas/KubeEnvironmentVariable"
+										},
+										"type": "array",
+										"description": "Array of variables to be created on deploy environment"
+									},
+									"env": {
+										"type": "string",
+										"description": "Deploy environment name"
+									},
+									"slug": {
+										"type": "string",
+										"description": "App slug"
+									}
+								},
+								"required": ["envVars", "env", "slug"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"operationId": "UpdateEnvVarsOnDeployEnvironment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"properties": {
+												"messages": {
+													"items": {},
+													"type": "array"
+												},
+												"data": {
+													"$ref": "#/components/schemas/AppConfig"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "data", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messages": {},
+												"messsages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messsages", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messsages": {},
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"description": "Update a variable on the deploy environment of the application.",
+				"tags": ["App"],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "owner,workspace"
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"envVar": {
+										"$ref": "#/components/schemas/KubeEnvironmentVariable",
+										"description": "Array of variables to be created on deploy environment"
+									},
+									"env": {
+										"type": "string",
+										"description": "Deploy environment name"
+									},
+									"slug": {
+										"type": "string",
+										"description": "App slug"
+									}
+								},
+								"required": ["envVar", "env", "slug"],
+								"type": "object"
+							}
+						}
+					}
+				}
 			}
 		}
 	},

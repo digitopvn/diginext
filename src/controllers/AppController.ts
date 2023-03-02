@@ -4,6 +4,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 import type { App, Project, User, Workspace } from "@/entities";
 import type { AppConfig, ClientDeployEnvironmentConfig, HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { getAppEvironment } from "@/modules/apps/get-app-environment";
 import ClusterManager from "@/modules/k8s";
@@ -69,6 +70,37 @@ export default class AppController extends BaseController<App> {
 		};
 
 		let result = { status: 1, data: appConfig, messages: [] };
+		return result;
+	}
+
+	/**
+	 * Create new deploy environment of the application.
+	 */
+	@Security("jwt")
+	@Get("/environment")
+	async getDeployEnvironment(
+		@Queries()
+		queryParams: {
+			/**
+			 * App slug
+			 */
+			slug: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { slug, env } = this.filter;
+		if (!slug) return { status: 0, messsages: [`App slug is required.`] };
+		if (!env) return { status: 0, messsages: [`Deploy environment name is required.`] };
+
+		const app = await this.service.findOne({ slug });
+		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
+		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
+
+		let result = { status: 1, data: app.deployEnvironment[env], messages: [] };
 		return result;
 	}
 
@@ -174,6 +206,122 @@ export default class AppController extends BaseController<App> {
 
 		// respond the results
 		result.data = updatedApp;
+		return result;
+	}
+
+	/**
+	 * Get list of variables on the deploy environment of the application.
+	 */
+	@Security("jwt")
+	@Get("/environment/variables")
+	async getEnvVarsOnDeployEnvironment(@Queries() queryParams?: { slug: string; env: string }) {
+		const { slug, env } = this.filter;
+		if (!slug) return { status: 0, messsages: [`App slug (slug) is required.`] };
+		if (!env) return { status: 0, messsages: [`Deploy environment name (env) is required.`] };
+
+		const app = await this.service.findOne({ slug });
+		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
+
+		const envVars = app.deployEnvironment[env].envVars || [];
+
+		let result = { status: 1, data: envVars, messages: [] };
+		return result;
+	}
+
+	/**
+	 * Create new variables on the deploy environment of the application.
+	 */
+	@Security("jwt")
+	@Post("/environment/variables")
+	async createEnvVarsOnDeployEnvironment(
+		@Body()
+		body: {
+			/**
+			 * App slug
+			 */
+			slug: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+			/**
+			 * Array of variables to be created on deploy environment
+			 */
+			envVars: KubeEnvironmentVariable[];
+		},
+		@Queries() queryParams?: IPostQueryParams
+	) {
+		const { slug, env, envVars } = body;
+		if (!slug) return { status: 0, messsages: [`App slug (slug) is required.`] };
+		if (!env) return { status: 0, messsages: [`Deploy environment name (env) is required.`] };
+		if (!envVars) return { status: 0, messsages: [`Array of variables (envVars) is required.`] };
+
+		const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}.envVars`]: envVars });
+		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
+
+		const { data: appConfig } = await this.getAppConfig({ slug });
+
+		let result = { status: 1, data: appConfig, messages: [] };
+		return result;
+	}
+
+	/**
+	 * Update a variable on the deploy environment of the application.
+	 */
+	@Security("jwt")
+	@Patch("/environment/variables")
+	async updateEnvVarsOnDeployEnvironment(
+		@Body()
+		body: {
+			/**
+			 * App slug
+			 */
+			slug: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+			/**
+			 * Array of variables to be created on deploy environment
+			 */
+			envVar: KubeEnvironmentVariable;
+		},
+		@Queries() queryParams?: IPostQueryParams
+	) {
+		const { slug, env, envVar } = body;
+		if (!slug) return { status: 0, messsages: [`App slug (slug) is required.`] };
+		if (!env) return { status: 0, messsages: [`Deploy environment name (env) is required.`] };
+		if (!envVar) return { status: 0, messsages: [`A variable (envVar { name, value }) is required.`] };
+
+		const app = await this.service.findOne({ slug });
+		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
+		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
+
+		const envVars = app.deployEnvironment[env].envVars || [];
+		const varToBeUpdated = envVars.find((v) => v.name === envVar.name);
+
+		if (varToBeUpdated) {
+			// update old variable
+			const updatedEnvVars = envVars.map((v) => {
+				if (v.name === envVar.name) return envVar;
+				return v;
+			});
+
+			const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}.envVars`]: updatedEnvVars });
+			if (!updatedApp)
+				return { status: 0, messages: [`Failed to update "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
+		} else {
+			// create new variable
+			envVars.push(envVar);
+			const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}.envVars`]: envVars });
+			if (!updatedApp) return { status: 0, messages: [`Failed to add "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
+		}
+
+		const { data: appConfig } = await this.getAppConfig({ slug });
+
+		let result = { status: 1, data: appConfig, messages: [] };
 		return result;
 	}
 }

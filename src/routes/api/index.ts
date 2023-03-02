@@ -1,3 +1,4 @@
+import { isJSON } from "class-validator";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import { log, logWarn } from "diginext-utils/dist/console/log";
@@ -6,7 +7,6 @@ import express from "express";
 
 import pkg from "@/../package.json";
 import { Config } from "@/app.config";
-import { listImages } from "@/build/system";
 import { sendMessage } from "@/modules/build";
 import { testBuild } from "@/modules/build/build";
 import { startBuild } from "@/modules/build/start-build";
@@ -53,12 +53,6 @@ if (CLI_MODE == "server") {
 		res.status(200).json({ status: "Ok" });
 	});
 
-	router.get("/images", (req, res) => {
-		listImages()
-			.then((list) => res.send("<p>" + list + "</p>"))
-			.catch((e) => res.send(`Error: ${e.message}`));
-	});
-
 	router.get("/send-message", (req, res) => {
 		const { room, message } = req.query;
 		// log(io);
@@ -75,18 +69,23 @@ if (CLI_MODE == "server") {
 	});
 
 	router.get("/docker/healthz", async (req, res) => {
-		const resullt = await execCmd(`docker version --format "{{json .}}" | jq`);
-		res.send(resullt);
+		const resultJson = await execCmd(`docker version --format "{{json .}}"`);
+		const result = resultJson && isJSON(resultJson) ? JSON.parse(resultJson) : {};
+		res.status(200).json(result);
 	});
 
 	router.get("/docker/images", async (req, res) => {
-		const result = await execCmd(`docker images --format "{{json .}}" | jq --slurp`);
-		res.send(result);
+		const resultStr = (await execCmd(`docker images --format "{{json .}}"`)) || "";
+		const resultJson = "[" + resultStr.split("\n").join(",") + "]";
+		const result = resultJson && isJSON(resultJson) ? JSON.parse(resultJson) : {};
+		res.status(200).json(result);
 	});
 
 	router.get("/docker/containers", async (req, res) => {
-		const result = await execCmd(`docker ps --format "{{json .}}" | jq --slurp`);
-		res.send(result);
+		const resultStr = (await execCmd(`docker ps --format "{{json .}}"`)) || "";
+		const resultJson = "[" + resultStr.split("\n").join(",") + "]";
+		const result = resultJson && isJSON(resultJson) ? JSON.parse(resultJson) : {};
+		res.status(200).json(result);
 	});
 
 	// TODO: Convert this API route to controller

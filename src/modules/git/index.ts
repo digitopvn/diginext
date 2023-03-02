@@ -41,19 +41,18 @@ export const gitProviderDomain = {
  * @example `digitopvn/diginext13`
  * @returns
  */
-export function getRepoSSH(provider: "bitbucket" | "github" | "gitlab" | string, repoSlug: string) {
+export function generateRepoSSH(provider: "bitbucket" | "github" | "gitlab" | string, repoSlug: string) {
 	return `git@${gitProviderDomain[provider]}:${repoSlug}.git`;
 }
 
 /**
  * Generate SSH URL of the git repository
- * @param provider
- * @example `github`
  * @param repoSlug - Include username/org slug, exclude ".git" at the end
  * @example `digitopvn/diginext13`
  * @returns
+ * @example "https://github.com/digitopvn/diginext13"
  */
-export function getRepoURL(provider: "bitbucket" | "github" | "gitlab" | string, repoSlug: string) {
+export function generateRepoURL(provider: "bitbucket" | "github" | "gitlab" | string, repoSlug: string) {
 	return `https://${gitProviderDomain[provider]}/${repoSlug}`;
 }
 
@@ -94,7 +93,7 @@ export async function initializeGitRemote(options: InputOptions) {
 	// log("options.gitProvider :>> ", options.gitProvider);
 	// log("options.repoSlug :>> ", options.repoSlug);
 	// log(`options.remoteURL >>`, options.remoteURL);
-	// log(`options.remoteSSH >>`, options.remoteSSH);
+	log(`options.remoteSSH >>`, options.remoteSSH);
 	// log(`options.repoURL >>`, options.repoURL);
 
 	if (options.shouldUseGit && options.gitProvider == "bitbucket") await createBitbucketRepo(options);

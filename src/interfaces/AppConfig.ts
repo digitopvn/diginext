@@ -1,10 +1,10 @@
 import type { ClientDeployEnvironmentConfig } from "./DeployEnvironment";
 
 export interface AppConfig {
-	name: string;
-	slug: string;
-	owner: string;
-	workspace: string;
+	name?: string;
+	slug?: string;
+	owner?: string;
+	workspace?: string;
 	cliVersion?: string;
 	project?: string;
 
@@ -21,7 +21,7 @@ export interface AppConfig {
 		repoSSH?: string;
 	};
 
-	environment: {
+	environment?: {
 		[key: string]: ClientDeployEnvironmentConfig;
 	};
 }

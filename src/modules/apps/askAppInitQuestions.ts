@@ -7,7 +7,7 @@ import type GitProvider from "@/entities/GitProvider";
 import type Project from "@/entities/Project";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
-import createProject from "@/modules/project/create-project";
+import createProjectByForm from "@/modules/project/create-project";
 
 export async function askAppInitQuestions(options?: InputOptions) {
 	if (!options.project) {
@@ -48,7 +48,7 @@ export async function askAppInitQuestions(options?: InputOptions) {
 			options.projectSlug = selectedProject.slug;
 			options.projectName = selectedProject.name;
 		} else {
-			const newProject = await createProject(options);
+			const newProject = await createProjectByForm(options);
 			options.project = newProject;
 			options.projectSlug = newProject.slug;
 			options.projectName = newProject.name;

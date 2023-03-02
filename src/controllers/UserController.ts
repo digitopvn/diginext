@@ -1,13 +1,12 @@
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
+import BaseController from "@/controllers/BaseController";
 import type { User } from "@/entities";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
-
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
-import BaseController from "@/controllers/BaseController";
 
 interface JoinWorkspaceBody {
 	userId: string;

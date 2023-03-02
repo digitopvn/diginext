@@ -1,15 +1,13 @@
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
+import BaseController from "@/controllers/BaseController";
 import type { Role, User, Workspace } from "@/entities";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
-
-import WorkspaceService from "@/services/WorkspaceService";
-import { RoleService, UserService } from "@/services";
-
-import BaseController from "@/controllers/BaseController";
 import seedInitialData from "@/seeds";
+import { RoleService, UserService } from "@/services";
+import WorkspaceService from "@/services/WorkspaceService";
 
 interface AddUserBody {
 	userId: string;

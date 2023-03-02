@@ -13,6 +13,10 @@ export interface KubeIngress {
 		annotations?: { [key: string]: string };
 	};
 	spec?: {
+		/**
+		 * @example "nginx" | "kong"
+		 */
+		ingressClassName?: string;
 		tls?: { hosts?: string[]; secretName?: string }[];
 		rules?: {
 			host?: string;

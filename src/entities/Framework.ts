@@ -10,7 +10,7 @@ import type Workspace from "./Workspace";
 @Entity({ name: "frameworks" })
 export default class Framework extends Base {
 	@Column()
-	name: string;
+	name?: string;
 
 	@Column()
 	host?: string;

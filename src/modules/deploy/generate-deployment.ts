@@ -133,7 +133,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const appEnvironment = await getAppEvironment(app, env);
 
 	let containerEnvs = appEnvironment.envVars || [];
-	console.log("[1] containerEnvs :>> ", containerEnvs);
+	// console.log("[1] containerEnvs :>> ", containerEnvs);
 
 	// ENV variables -> fallback support:
 	if (isEmpty(containerEnvs)) {
@@ -143,7 +143,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			logWarn(`[GENERATE DEPLOYMENT YAML] Fall back loaded ENV variables from files of GIT repository.`);
 		}
 	}
-	console.log("[2] containerEnvs :>> ", containerEnvs);
+	// console.log("[2] containerEnvs :>> ", containerEnvs);
 
 	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
 	let prereleaseEnvs = [...containerEnvs];
@@ -224,9 +224,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					// redirect
 					if (deployEnvironmentConfig.redirect) {
 						if (!domains.length) {
-							logWarn(`Không thể redirect về domain chính nếu không có domain nào ở "${env}" trong dx.json`);
+							logWarn(`Can't redirect to primary domain if there are no domains in "${env}" of "dx.json"`);
 						} else if (domains.length == 1) {
-							logWarn(`Không thể redirect về domain chính nếu chỉ có 1 domain ở "${env}" dx.json`);
+							logWarn(`Can't redirect to primary domain if there is only 1 domain in "${env}" dx.json`);
 						} else {
 							const otherDomains = domains.slice(1);
 							let redirectStr = "";

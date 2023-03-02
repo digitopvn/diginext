@@ -23,6 +23,9 @@ export default class GitProvider extends Base {
 		sshPrefix?: string;
 	};
 
+	@Column()
+	type?: "github" | "bitbucket" | "gitlab";
+
 	/**
 	 * User ID of the owner
 	 *

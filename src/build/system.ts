@@ -11,17 +11,16 @@ export async function listImages() {
 	const { stdout } = await execa.command(`docker images`);
 
 	log(`---> SERVER LIST IMAGES`);
-	log(stdout);
+	log(`\n`, stdout);
 
 	logger.append(stdout);
 
 	// convert to json:
 
-	const jsonList = await execa.command(`docker images --format "{{json . }}"`);
-	const imgArr = jsonList.stdout.split("\n");
-	const json = imgArr.map((line) => JSON.parse(line));
+	const jsonList = await execa.command(`docker images --format "{{json .}}"`);
+	const imgArr = jsonList.stdout.split("\n").map((line) => JSON.parse(line));
 
-	return JSON.stringify(json, null, 2);
+	return JSON.stringify(imgArr, null, 2);
 }
 
 export async function cleanUp() {
