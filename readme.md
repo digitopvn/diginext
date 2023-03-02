@@ -167,11 +167,11 @@ If you enjoyed this project — or just feeling generous, consider buying me a b
 <a href="https://paypal.me/mrgoonie/" target="_blank"><img src="https://github.com/andreostrovsky/donate-with-paypal/blob/master/blue.svg" height="40"></a>
 
 <a href="https://opencollective.com/diginext/donate" target="_blank">
-  <img src="https://opencollective.com/diginext/donate/button@2x.png?color=blue" width=300 />
+  <img src="https://opencollective.com/diginext/donate/button@2x.png?color=blue" height=48 />
 </a>
 
 <a href="https://me.momo.vn/mrgoonie" target="_blank">
-  <img src="https://github.com/digitopvn/diginext/blob/main/docs/momo-button.png" width=300 />
+  <img src="https://github.com/digitopvn/diginext/blob/main/docs/momo-button.png" height=48 />
 </a>
 
 - Author: Duy Nguyen <duynguyen@wearetopgroup.com>
