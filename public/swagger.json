@@ -1707,7 +1707,6 @@
 						"type": "object"
 					}
 				},
-				"required": ["name", "slug", "owner", "workspace", "environment"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -1962,6 +1961,10 @@
 						},
 						"type": "object"
 					},
+					"type": {
+						"type": "string",
+						"enum": ["github", "bitbucket", "gitlab"]
+					},
 					"owner": {
 						"anyOf": [
 							{
@@ -2126,7 +2129,6 @@
 						"description": "ID of the workspace"
 					}
 				},
-				"required": ["name"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -2176,8 +2178,7 @@
 					},
 					"gitProvider": {
 						"type": "string",
-						"description": "Git provider",
-						"default": "\"custom\""
+						"description": "Git provider"
 					},
 					"provider": {
 						"type": "string",
@@ -2232,16 +2233,19 @@
 						"default": "false"
 					},
 					"namespace": {
-						"type": "string"
+						"type": "string",
+						"description": "Kubernetes namespace"
 					},
 					"remoteURL": {
 						"type": "string"
 					},
 					"projectName": {
-						"type": "string"
+						"type": "string",
+						"description": "{Project} name"
 					},
 					"projectSlug": {
-						"type": "string"
+						"type": "string",
+						"description": "{Project} slug"
 					},
 					"projectId": {
 						"type": "string",
@@ -3347,6 +3351,20 @@
 					"latestBuild": {
 						"type": "string"
 					},
+					"git": {
+						"properties": {
+							"repoSSH": {
+								"type": "string"
+							},
+							"repoURL": {
+								"type": "string"
+							},
+							"provider": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
 					"framework": {
 						"properties": {
 							"repoSSH": {
@@ -3359,20 +3377,6 @@
 								"type": "string"
 							},
 							"name": {
-								"type": "string"
-							}
-						},
-						"type": "object"
-					},
-					"git": {
-						"properties": {
-							"repoSSH": {
-								"type": "string"
-							},
-							"repoURL": {
-								"type": "string"
-							},
-							"provider": {
 								"type": "string"
 							}
 						},
@@ -3418,7 +3422,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.2.0",
+		"version": "2.3.0",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"

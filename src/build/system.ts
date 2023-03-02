@@ -6,7 +6,7 @@ import { Logger } from "../plugins/logger";
 import { execCmd } from "../plugins/utils";
 
 export async function listImages() {
-	const logger = new Logger(`server-images-${makeDaySlug()}`);
+	const logger = new Logger(`server-images-${makeDaySlug({ divider: "" })}`);
 
 	const { stdout } = await execa.command(`docker images`);
 
@@ -24,7 +24,7 @@ export async function listImages() {
 }
 
 export async function cleanUp() {
-	const logger = new Logger(`server-cleanup-${makeDaySlug()}`);
+	const logger = new Logger(`server-cleanup-${makeDaySlug({ divider: "" })}`);
 
 	// Clean up docker images
 	const result = await execCmd("docker image prune -af --filter until=72h");

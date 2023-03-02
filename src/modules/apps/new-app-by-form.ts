@@ -140,6 +140,7 @@ export async function createAppByForm(options?: InputOptions) {
 		name: options.name,
 		createdBy: options.username,
 		owner: options.userId,
+		projectSlug: options.project.slug,
 		project: options.project._id,
 		workspace: options.workspaceId,
 		framework: {

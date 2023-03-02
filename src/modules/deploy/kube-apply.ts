@@ -11,10 +11,10 @@ import { execCmd, getAppConfig, Logger } from "@/plugins";
 import { ClusterService } from "@/services";
 
 import { fetchApi } from "../api";
+import { sendMessage } from "../build/send-log-message";
+import { queue } from "../build/start-build";
+import { updateBuildStatus } from "../build/update-build-status";
 import { ClusterManager } from "../k8s";
-import { sendMessage } from "./send-log-message";
-import { queue } from "./start-build";
-import { updateBuildStatus } from "./update-build-status";
 
 /**
  * Use "kubectl apply" command to roll out the deployment

@@ -10,7 +10,7 @@ import { fetchApi } from "@/modules/api/fetchApi";
 
 import { getAppConfig, saveAppConfig } from "../../plugins/utils";
 import { askForDomain } from "../build/ask-for-domain";
-import { requestDeploy } from "../build/request-deploy";
+import { requestDeploy } from "./request-deploy";
 
 export async function execDeploy(options: InputOptions) {
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();

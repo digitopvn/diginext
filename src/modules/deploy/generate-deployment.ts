@@ -41,7 +41,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const { slug } = currentAppConfig;
 
 	// DEFINE DEPLOYMENT PARTS:
-	const BUILD_NUMBER = buildNumber || makeDaySlug();
+	const BUILD_NUMBER = buildNumber || makeDaySlug({ divider: "" });
 
 	const deployEnvironmentConfig = currentAppConfig.environment[env];
 

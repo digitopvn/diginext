@@ -15,10 +15,11 @@ import { stageAllFiles } from "@/modules/bitbucket";
 import { getAppConfig, getCurrentGitRepoData, resolveDockerfilePath, resolveEnvFilePath, updateAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { createOrSelectApp } from "../apps/create-or-select-app";
 import { createOrSelectProject } from "../apps/create-or-select-project";
 import { getAppEvironment } from "../apps/get-app-environment";
-import { checkGitignoreContainsDotenvFiles } from "../deploy/dotenv-exec";
-import { uploadDotenvFileByApp } from "../deploy/dotenv-upload";
+import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
+import { uploadDotenvFileByApp } from "./dotenv-upload";
 
 /**
  * Request the build server to start building & deploying
@@ -59,14 +60,7 @@ export async function requestDeploy(options: InputOptions) {
 	}
 
 	let app = await DB.findOne<App>("app", { slug });
-	if (!app) {
-		// app = await createAppByForm(options);
-		// updateAppConfig({ slug: app.slug });
-		logError(`App "${slug}" not found or might be deleted, please re-initialize & deploy again:`);
-		console.log("  $", chalk.cyan("dx init"));
-		console.log("  $", chalk.cyan("dx deploy"));
-		return;
-	}
+	if (!app) app = await createOrSelectApp(project.slug, options);
 
 	// get app config from "dx.json"
 	const appConfig = getAppConfig(appDirectory);
@@ -75,7 +69,7 @@ export async function requestDeploy(options: InputOptions) {
 	 * Generate build number as docker image tag
 	 */
 	const { imageURL } = appConfig.environment[env];
-	options.buildNumber = makeDaySlug();
+	options.buildNumber = makeDaySlug({ divider: "" });
 	options.buildImage = `${imageURL}:${options.buildNumber}`;
 
 	const SOCKET_ROOM = `${options.slug}-${options.buildNumber}`;

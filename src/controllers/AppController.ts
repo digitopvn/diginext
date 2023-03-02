@@ -8,6 +8,7 @@ import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { getAppEvironment } from "@/modules/apps/get-app-environment";
 import ClusterManager from "@/modules/k8s";
+import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
 import BaseController from "./BaseController";
@@ -27,8 +28,22 @@ export default class AppController extends BaseController<App> {
 
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
-		return super.create(body);
+	async create(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		let project: Project;
+		if (!body.projectSlug && body.project) {
+			project = await this.service.findOne({ id: body.project });
+			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
+			body.projectSlug = project.slug;
+		}
+
+		const res = await super.create(body);
+		const { data: newApp } = res;
+
+		if (project) {
+			[project] = await new ProjectService().update({ _id: project._id }, { $addToSet: { apps: project._id } }, { raw: true });
+		}
+
+		return res;
 	}
 
 	@Security("jwt")
@@ -39,7 +54,18 @@ export default class AppController extends BaseController<App> {
 
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	async delete(@Queries() queryParams?: IDeleteQueryParams) {
+		const app = await this.service.findOne(this.filter, { populate: ["project"] });
+		// remove this app ID from project.apps
+		const [project] = await new ProjectService().update(
+			{
+				_id: (app.project as Project)._id,
+			},
+			{
+				$pull: { apps: app._id },
+			},
+			{ raw: true }
+		);
 		return super.delete();
 	}
 

@@ -6,8 +6,8 @@ import type { AppConfig, InputOptions } from "@/interfaces";
 import { IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { startBuild } from "@/modules/build";
-import type { DeployImageParams } from "@/modules/build/deploy-image";
-import { deployImage } from "@/modules/build/deploy-image";
+import type { DeployImageParams } from "@/modules/deploy/deploy-image";
+import { deployImage } from "@/modules/deploy/deploy-image";
 
 @Tags("Deploy")
 @Route("deploy")

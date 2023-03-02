@@ -69,7 +69,7 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	options.slug = appConfig.slug; // ! required
 	options.projectSlug = appConfig.project; // ! required
 	options.namespace = namespace; // ! required
-	options.buildNumber = makeDaySlug(); // ! required
+	options.buildNumber = makeDaySlug({ divider: "" }); // ! required
 	options.buildImage = `${imageURL}:${options.buildNumber}`; // ! required
 
 	const buildStatus = await startBuild(options, { shouldRollout: true });
