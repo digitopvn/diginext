@@ -160,7 +160,17 @@ Suggest improvements and report problems.
 
 ## Credits
 
-<a href="https://www.buymeacoffee.com/gbraad" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+If you enjoyed this project — or just feeling generous, consider buying me a beer. Cheers! 🍻
+
+<a href="https://www.buymeacoffee.com/duynguyen" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+<a href="https://paypal.me/mrgoonie/"><img src="https://github.com/andreostrovsky/donate-with-paypal/blob/master/blue.svg" height="40"></a>
+
+<a href="https://opencollective.com/diginext/donate" target="_blank">
+  <img src="https://opencollective.com/diginext/donate/button@2x.png?color=blue" width=300 />
+</a>
 
 - Author: Duy Nguyen <duynguyen@wearetopgroup.com>
 - CTO at [TOP GROUP](https://wearetopgroup.com)
+
+Thank you!
