@@ -35,17 +35,15 @@ export async function createOrSelectProject(options?: InputOptions) {
 				}),
 			});
 			options.project = selectedProject;
-			options.projectSlug = selectedProject.slug;
-			options.projectName = selectedProject.name;
 		} else {
 			const newProject = await createProjectByForm(options);
 			options.project = newProject;
-			options.projectSlug = newProject.slug;
-			options.projectName = newProject.name;
 		}
 	}
 
-	options.namespace = options.projectSlug;
+	options.projectSlug = options.project.slug;
+	options.projectName = options.project.name;
+	options.namespace = `${options.project.slug}-${options.env || "dev"}`;
 
 	return options.project;
 }

@@ -199,6 +199,7 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	await execCmd(`git clone -b ${frameworkVersion} --single-branch ${repoSSH} ${tmpDir}`, "Failed to connect to the git provider.");
 
 	// delete unneccessary files
+	if (fs.existsSync(".fw/dx.json")) await deleteFolderRecursive(".fw/dx.json");
 	if (fs.existsSync(".fw/.git")) await deleteFolderRecursive(".fw/.git");
 	if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
 	if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");

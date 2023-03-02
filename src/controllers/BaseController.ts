@@ -157,12 +157,12 @@ export default class BaseController<T extends Base> {
 		let _sortOptions: string[];
 		if (sort) _sortOptions = sort.indexOf(",") > -1 ? sort.split(",") : [sort];
 		if (order) _sortOptions = order.indexOf(",") > -1 ? order.split(",") : [order];
-		const sortOptions: { [key: string]: string } = {};
+		const sortOptions: { [key: string]: "DESC" | "ASC" } = {};
 		if (_sortOptions)
 			_sortOptions.forEach((s) => {
 				const isDesc = s.charAt(0) === "-";
 				const key = isDesc ? s.substring(1) : s;
-				const sortValue: string = isDesc ? "DESC" : "ASC";
+				const sortValue: "DESC" | "ASC" = isDesc ? "DESC" : "ASC";
 				sortOptions[key] = sortValue;
 			});
 

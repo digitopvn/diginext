@@ -3,6 +3,7 @@ import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 
 import type InputOptions from "@/interfaces/InputOptions";
+import type { SslIssuer } from "@/interfaces/SystemTypes";
 
 import { getAppConfig, resolveDockerfilePath, saveAppConfig } from "../../plugins/utils";
 import { askForDomain } from "./ask-for-domain";
@@ -26,7 +27,7 @@ export async function execBuild(options: InputOptions) {
 	if (!dockerFile) return;
 
 	let domains: string[],
-		selectedSSL: "letsencrypt" | "custom" | "none" = "letsencrypt",
+		selectedSSL: SslIssuer = "letsencrypt",
 		selectedSecretName;
 
 	// ask for generated domains:

@@ -31,6 +31,8 @@ import { startBuildAndRun } from "./modules/build/start-build-and-run";
 import { updateCli } from "./modules/cli/update-cli";
 import { execDotenvCommand } from "./modules/deploy/dotenv-exec";
 import { execRollOut } from "./modules/deploy/exec-rollout";
+import { requestDeploy } from "./modules/deploy/request-deploy";
+import { requestDeployImage } from "./modules/deploy/request-deploy-image";
 
 /**
  * Initialize CONFIG STORE (in document directory of the local machine)
@@ -182,7 +184,13 @@ export async function processCLI(options?: InputOptions) {
 
 		case "deploy":
 			await cliAuthenticate(options);
-			await deploy.execDeploy(options);
+			if (options.secondAction) {
+				// deploy from image url
+				await requestDeployImage(options.secondAction, options);
+			} else {
+				// deploy from source
+				await requestDeploy(options);
+			}
 			return;
 
 		case "rollout":

@@ -41,7 +41,7 @@ export const gitProviderDomain = {
  * @example `digitopvn/diginext13`
  * @returns
  */
-export function generateRepoSSH(provider: "bitbucket" | "github" | "gitlab" | string, repoSlug: string) {
+export function generateRepoSSH(provider: GitProviderType | string, repoSlug: string) {
 	return `git@${gitProviderDomain[provider]}:${repoSlug}.git`;
 }
 
@@ -52,7 +52,7 @@ export function generateRepoSSH(provider: "bitbucket" | "github" | "gitlab" | st
  * @returns
  * @example "https://github.com/digitopvn/diginext13"
  */
-export function generateRepoURL(provider: "bitbucket" | "github" | "gitlab" | string, repoSlug: string) {
+export function generateRepoURL(provider: GitProviderType | string, repoSlug: string) {
 	return `https://${gitProviderDomain[provider]}/${repoSlug}`;
 }
 

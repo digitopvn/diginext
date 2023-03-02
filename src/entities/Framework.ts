@@ -1,5 +1,6 @@
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
+import { GitProviderType } from "@/modules/git";
 
 import Base from "./Base";
 import type GitProvider from "./GitProvider";
@@ -19,7 +20,7 @@ export default class Framework extends Base {
 	 * Git provider name
 	 */
 	@Column()
-	gitProvider?: "github" | "bitbucket" | "gitlab";
+	gitProvider?: GitProviderType;
 
 	/**
 	 * Git repository access privacy

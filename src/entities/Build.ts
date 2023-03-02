@@ -1,5 +1,6 @@
 import { IsNotEmpty } from "class-validator";
 
+import { BuildStatus } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
@@ -37,7 +38,7 @@ export default class Build extends Base {
 	createdBy?: string;
 
 	@Column({ type: "string" })
-	status?: "start" | "building" | "failed" | "success";
+	status?: BuildStatus;
 
 	@Column({ type: "string" })
 	projectSlug?: string;

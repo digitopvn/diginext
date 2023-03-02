@@ -34,9 +34,14 @@ router
 	/**
 	 * Deploy from image URL
 	 */
-	.post("/from-image", authenticate, async (req, res) => {
-		const result = await controller.deployFromImage(req.body);
-		res.status(200).json(result);
-	});
+	.post(
+		"/from-image",
+		authenticate,
+		controller.apiRespond(controller.deployFromImage.bind(controller))
+		// async (req, res) => {
+		// 	const result = await controller.deployFromImage(req.body);
+		// 	res.status(200).json(result);
+		// }
+	);
 
 export default router;

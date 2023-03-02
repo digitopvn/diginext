@@ -55,7 +55,7 @@ export async function askAppInitQuestions(options?: InputOptions) {
 		}
 	}
 
-	options.namespace = options.projectSlug;
+	options.namespace = `${options.projectSlug}-${options.env || "dev"}`;
 
 	if (!options.name) {
 		const { name } = await inquirer.prompt({

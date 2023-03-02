@@ -13,7 +13,7 @@ type SearchAppOptions = {
 	canSkip?: boolean;
 };
 
-export async function searchProjects(options?: SearchAppOptions) {
+export async function searchProjects(options: SearchAppOptions = {}) {
 	const { question, canSkip = true } = options;
 
 	const { keyword } = await inquirer.prompt({
@@ -23,7 +23,12 @@ export async function searchProjects(options?: SearchAppOptions) {
 	});
 
 	// find/search projects
-	let projects = await DB.find<Project>("project", { name: keyword }, { search: true }, { limit: 10 });
+	let projects = await DB.find<Project>(
+		"project",
+		{ name: keyword },
+		{ search: true, order: { updatedAt: "DESC", createdAt: "DESC" } },
+		{ limit: 10 }
+	);
 
 	if (isEmpty(projects)) {
 		if (canSkip) {
