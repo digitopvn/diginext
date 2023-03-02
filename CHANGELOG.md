@@ -1,3 +1,12 @@
+## [2.3.1](https://github.com/digitopvn/diginext/compare/v2.3.0...v2.3.1) (2023-03-02)
+
+
+### Bug Fixes
+
+* **cli app and deploy:** form issues of deploy or new app or init app command ([f028519](https://github.com/digitopvn/diginext/commit/f0285194de425744a75f645617c948e3ea3ccab8))
+* **cli deploy:** can select or create new app when deploy a deleted app ([87a4d58](https://github.com/digitopvn/diginext/commit/87a4d58bb561408062bc8751761179f51beb627c))
+* **donate buttons:** add donate buttons to buy some beers ([ee30d16](https://github.com/digitopvn/diginext/commit/ee30d162f29098c85c962cd882f437e98d2267e2))
+
 # [2.3.0](https://github.com/digitopvn/diginext/compare/v2.2.0...v2.3.0) (2023-03-01)
 
 
