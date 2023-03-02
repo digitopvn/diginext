@@ -160,5 +160,21 @@ Suggest improvements and report problems.
 
 ## Credits
 
+If you enjoyed this project — or just feeling generous, consider buying me a beer. Cheers! 🍻
+
+<a href="https://www.buymeacoffee.com/duynguyen" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+<a href="https://paypal.me/mrgoonie/" target="_blank"><img src="https://github.com/andreostrovsky/donate-with-paypal/blob/master/blue.svg" height="40"></a>
+
+<a href="https://opencollective.com/diginext/donate" target="_blank">
+  <img src="https://opencollective.com/diginext/donate/button@2x.png?color=blue" width=300 />
+</a>
+
+<a href="https://me.momo.vn/mrgoonie" target="_blank">
+  <img src="https://github.com/digitopvn/diginext/blob/master/docs/momo-button.png" width=300 />
+</a>
+
 - Author: Duy Nguyen <duynguyen@wearetopgroup.com>
 - CTO at [TOP GROUP](https://wearetopgroup.com)
+
+Thank you!

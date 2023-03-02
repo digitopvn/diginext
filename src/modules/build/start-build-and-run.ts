@@ -3,6 +3,7 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import inquirer from "inquirer";
 
 import type InputOptions from "@/interfaces/InputOptions";
+import type { SslIssuer } from "@/interfaces/SystemTypes";
 import { getAppConfig, resolveDockerfilePath, saveAppConfig } from "@/plugins";
 
 import { askForDomain } from "./ask-for-domain";
@@ -15,7 +16,7 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	const { env = "dev", targetDirectory } = options;
 
 	let domains: string[],
-		selectedSSL: "letsencrypt" | "custom" | "none" = "letsencrypt",
+		selectedSSL: SslIssuer = "letsencrypt",
 		selectedSecretName;
 
 	// try to find any "Dockerfile" to build, it it's not existed, throw error!
@@ -69,7 +70,7 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	options.slug = appConfig.slug; // ! required
 	options.projectSlug = appConfig.project; // ! required
 	options.namespace = namespace; // ! required
-	options.buildNumber = makeDaySlug(); // ! required
+	options.buildNumber = makeDaySlug({ divider: "" }); // ! required
 	options.buildImage = `${imageURL}:${options.buildNumber}`; // ! required
 
 	const buildStatus = await startBuild(options, { shouldRollout: true });

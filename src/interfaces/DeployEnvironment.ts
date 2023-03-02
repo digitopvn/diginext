@@ -1,6 +1,12 @@
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
 import type { ResourceQuotaSize } from "./InputOptions";
 
+export const availableSslTypes = ["letsencrypt", "custom", "none"] as const;
+/**
+ * @default "letsencrypt"
+ */
+export type SslType = (typeof availableSslTypes)[number];
+
 export interface ClientDeployEnvironmentConfig {
 	/**
 	 * Image URI of this app on the Container Registry.
@@ -101,7 +107,7 @@ export interface ClientDeployEnvironmentConfig {
 	 * SSL Certificate Issuer
 	 * @default "letsencrypt"
 	 */
-	ssl?: "letsencrypt" | "custom" | "none";
+	ssl?: SslType;
 
 	/**
 	 * Secret name to hold the key of SSL, will be automatically generated.

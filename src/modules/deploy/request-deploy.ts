@@ -8,17 +8,17 @@ import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { App, Project } from "@/entities";
+import type { Project } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
-import { getAppConfig, getCurrentGitRepoData, resolveDockerfilePath, resolveEnvFilePath, updateAppConfig } from "@/plugins";
+import { getAppConfig, getCurrentGitRepoData, resolveDockerfilePath, resolveEnvFilePath, saveAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
-import { createOrSelectProject } from "../apps/create-or-select-project";
-import { getAppEvironment } from "../apps/get-app-environment";
-import { checkGitignoreContainsDotenvFiles } from "../deploy/dotenv-exec";
-import { uploadDotenvFileByApp } from "../deploy/dotenv-upload";
+import { getDeployEvironmentByApp } from "../apps/get-app-environment";
+import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
+import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
+import { uploadDotenvFileByApp } from "./dotenv-upload";
 
 /**
  * Request the build server to start building & deploying
@@ -29,12 +29,12 @@ export async function requestDeploy(options: InputOptions) {
 		return;
 	}
 
-	const { buildServerUrl } = getCliConfig();
-	const { env, projectSlug, slug } = options;
-
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
-	const appDirectory = options.targetDirectory;
+	const { buildServerUrl } = getCliConfig();
+	const { env, projectSlug, slug, targetDirectory } = options;
+
+	const appDirectory = targetDirectory;
 	const DEPLOY_API_PATH = `${buildServerUrl}/api/v1/deploy`;
 	const BUILD_SERVER_URL = buildServerUrl;
 
@@ -46,47 +46,43 @@ export async function requestDeploy(options: InputOptions) {
 		log(`DEPLOY_API_PATH=${DEPLOY_API_PATH}`);
 	}
 
-	// check Dockerfile
+	// check Dockerfile -> no dockerfile, no build -> failed
 	let dockerFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
 	if (!dockerFile) return;
 
-	// validate "project" and "app":
-	let project = await DB.findOne<Project>("project", { slug: projectSlug });
-	if (!project) {
-		project = await createOrSelectProject(options);
-		options.namespace = `${project.slug}-${env}`;
-		updateAppConfig({ project: project.slug, environment: { [env]: { namespace: options.namespace } } });
-	}
-
-	let app = await DB.findOne<App>("app", { slug });
-	if (!app) {
-		// app = await createAppByForm(options);
-		// updateAppConfig({ slug: app.slug });
-		logError(`App "${slug}" not found or might be deleted, please re-initialize & deploy again:`);
-		console.log("  $", chalk.cyan("dx init"));
-		console.log("  $", chalk.cyan("dx deploy"));
-		return;
-	}
-
-	// get app config from "dx.json"
-	const appConfig = getAppConfig(appDirectory);
+	/**
+	 * check if there is deployment configuration
+	 * get app config from "dx.json"
+	 */
+	let appConfig = getAppConfig(targetDirectory);
+	if (appConfig && appConfig.project) options.projectSlug = appConfig.project;
+	if (appConfig && appConfig.slug) options.slug = appConfig.slug;
 
 	/**
-	 * Generate build number as docker image tag
+	 * validate deploy environment data
+	 * if it's invalid, ask for the missing ones
+	 */
+	const { app, appConfig: validatedAppConfig } = await askForDeployEnvironmentInfo(options);
+
+	// save deploy environment data into local app config (dx.json)
+	appConfig = saveAppConfig(validatedAppConfig, { directory: targetDirectory });
+
+	/**
+	 * Generate build number & build image as docker image tag
 	 */
 	const { imageURL } = appConfig.environment[env];
-	options.buildNumber = makeDaySlug();
+	options.buildNumber = makeDaySlug({ divider: "" });
 	options.buildImage = `${imageURL}:${options.buildNumber}`;
 
 	const SOCKET_ROOM = `${options.slug}-${options.buildNumber}`;
 	options.SOCKET_ROOM = SOCKET_ROOM;
 
-	// check to sync ENV variables or not...
-	let targetEnvironmentFromDB = await getAppEvironment(app, env);
+	// check database to see should sync ENV variables or not...
+	let deployEnvironmentFromDB = await getDeployEvironmentByApp(app, env);
 
 	// merge with appConfig
-	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB };
-	const serverEnvironmentVariables = targetEnvironment?.envVars || [];
+	const deployEnvironment = { ...appConfig.environment[env], ...deployEnvironmentFromDB };
+	const serverEnvironmentVariables = deployEnvironment?.envVars || [];
 
 	let envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
 

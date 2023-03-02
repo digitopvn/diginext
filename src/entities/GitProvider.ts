@@ -1,5 +1,6 @@
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
+import { GitProviderType } from "@/modules/git";
 
 import Base from "./Base";
 import type Project from "./Project";
@@ -24,7 +25,7 @@ export default class GitProvider extends Base {
 	};
 
 	@Column()
-	type?: "github" | "bitbucket" | "gitlab";
+	type?: GitProviderType;
 
 	/**
 	 * User ID of the owner

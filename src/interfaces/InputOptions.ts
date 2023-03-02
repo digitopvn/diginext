@@ -329,6 +329,12 @@ export type InputOptions = {
 	shouldUploadDotenv?: boolean;
 
 	/**
+	 * [Use when deploying an app] Should enable CDN for this app
+	 * @default false
+	 */
+	shouldEnableCDN?: boolean;
+
+	/**
 	 * Should create something
 	 * @example
 	 * - Create "imagePullSecrets" in a namespace

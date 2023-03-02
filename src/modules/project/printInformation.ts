@@ -10,8 +10,8 @@ export function printInformation(finalConfig: AppConfig) {
 	console.log(chalk.yellow("    Congratulations! You are all set. Happy coding!"));
 	console.log(chalk.yellow("-----------------------------------------------------------"));
 
-	if (finalConfig.git.repoURL) console.log(chalk.green.bold("Repo URL   : ") + chalk.cyan(finalConfig.git.repoURL));
-	if (finalConfig.git.repoSSH) console.log(chalk.green.bold("Remote SSH : ") + chalk.cyan(finalConfig.git.repoSSH));
+	if (finalConfig.git?.repoURL) console.log(chalk.green.bold("Repo URL   : ") + chalk.cyan(finalConfig.git.repoURL));
+	if (finalConfig.git?.repoSSH) console.log(chalk.green.bold("Remote SSH : ") + chalk.cyan(finalConfig.git.repoSSH));
 
 	console.log(chalk.green.bold("Framework  : ") + chalk.cyan(finalConfig.framework.name));
 	console.log(chalk.green.bold("Version    : ") + chalk.cyan(finalConfig.framework.version));

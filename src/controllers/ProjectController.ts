@@ -1,9 +1,12 @@
+import { log, logWarn } from "diginext-utils/dist/console/log";
+import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { Project } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
+import ClusterManager from "@/modules/k8s";
 import AppService from "@/services/AppService";
 import ProjectService from "@/services/ProjectService";
 
@@ -36,7 +39,35 @@ export default class ProjectController extends BaseController<Project> {
 
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	async delete(@Queries() queryParams?: IDeleteQueryParams) {
+		const project = await this.service.findOne(this.filter);
+		if (!project) return { status: 0, messages: [`Project not found.`] } as ResponseData;
+
+		const appSvc = new AppService();
+		const apps = await appSvc.find({ project: project._id });
+
+		// delete all apps relatively:
+		if (!isEmpty(apps)) {
+			apps.map(async (app) => {
+				// also delete app's namespace on the cluster:
+				Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
+					if (!isEmpty(deployEnvironment)) {
+						const { cluster, namespace } = deployEnvironment;
+						try {
+							await ClusterManager.auth(cluster);
+							await ClusterManager.deleteNamespace(namespace);
+							log(`[PROJECT DELETE] ${app.slug} > Deleted "${namespace}" namespace on "${cluster}" cluster.`);
+						} catch (e) {
+							logWarn(`[PROJECT DELETE] ${app.slug} > Can't delete "${namespace}" namespace on "${cluster}" cluster:`, e);
+						}
+					}
+				});
+
+				// delete app in database:
+				appSvc.softDelete({ _id: app._id });
+			});
+		}
+
 		return super.delete();
 	}
 

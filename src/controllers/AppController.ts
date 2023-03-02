@@ -1,13 +1,16 @@
 import { log, logError, logFull, logWarn } from "diginext-utils/dist/console/log";
+import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { App, Project, User, Workspace } from "@/entities";
-import type { AppConfig, ClientDeployEnvironmentConfig, HiddenBodyKeys } from "@/interfaces";
+import type { App, Project } from "@/entities";
+import type { ClientDeployEnvironmentConfig, HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
-import { getAppEvironment } from "@/modules/apps/get-app-environment";
+import { getAppConfigFromApp } from "@/modules/apps/app-helper";
+import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import ClusterManager from "@/modules/k8s";
+import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
 import BaseController from "./BaseController";
@@ -27,8 +30,22 @@ export default class AppController extends BaseController<App> {
 
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
-		return super.create(body);
+	async create(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		let project: Project;
+		if (!body.projectSlug && body.project) {
+			project = await this.service.findOne({ id: body.project });
+			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
+			body.projectSlug = project.slug;
+		}
+
+		const res = await super.create(body);
+		const { data: newApp } = res;
+
+		if (project) {
+			[project] = await new ProjectService().update({ _id: project._id }, { $addToSet: { apps: project._id } }, { raw: true });
+		}
+
+		return res;
 	}
 
 	@Security("jwt")
@@ -39,7 +56,33 @@ export default class AppController extends BaseController<App> {
 
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	async delete(@Queries() queryParams?: IDeleteQueryParams) {
+		const app = await this.service.findOne(this.filter, { populate: ["project"] });
+
+		// also delete app's namespace on the cluster:
+		Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
+			if (!isEmpty(deployEnvironment)) {
+				const { cluster, namespace } = deployEnvironment;
+				try {
+					await ClusterManager.auth(cluster);
+					await ClusterManager.deleteNamespace(namespace);
+					log(`[APP DELETE] ${app.slug} > Deleted "${namespace}" namespace on "${cluster}" cluster.`);
+				} catch (e) {
+					logWarn(`[APP DELETE] ${app.slug} > Can't delete "${namespace}" namespace on "${cluster}" cluster:`, e);
+				}
+			}
+		});
+
+		// remove this app ID from project.apps
+		const [project] = await new ProjectService().update(
+			{
+				_id: (app.project as Project)._id,
+			},
+			{
+				$pull: { apps: app._id },
+			},
+			{ raw: true }
+		);
 		return super.delete();
 	}
 
@@ -47,27 +90,9 @@ export default class AppController extends BaseController<App> {
 	@Get("/config")
 	async getAppConfig(@Queries() queryParams?: { slug: string }) {
 		const app = await this.service.findOne(this.filter, { populate: ["project", "owner", "workspace"] });
+		if (!app) return { status: 0, messages: [`App not found.`], data: undefined };
 
-		// hide confidential information:
-
-		const clientDeployEnvironment: { [key: string]: ClientDeployEnvironmentConfig } = {};
-		Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
-			const { deploymentYaml, prereleaseDeploymentYaml, prereleaseUrl, envVars, cliVersion, namespaceYaml, ..._clientDeployEnvironment } =
-				app.deployEnvironment[env];
-
-			clientDeployEnvironment[env] = _clientDeployEnvironment[env] as ClientDeployEnvironmentConfig;
-		});
-
-		const appConfig: AppConfig = {
-			name: app.name,
-			slug: app.slug,
-			owner: (app.owner as User).slug,
-			workspace: (app.workspace as Workspace).slug,
-			project: (app.project as Project).slug,
-			framework: app.framework,
-			git: app.git,
-			environment: clientDeployEnvironment,
-		};
+		const appConfig = getAppConfigFromApp(app);
 
 		let result = { status: 1, data: appConfig, messages: [] };
 		return result;
@@ -182,7 +207,7 @@ export default class AppController extends BaseController<App> {
 		}
 
 		// take down the deploy environment
-		const envConfig = await getAppEvironment(app, env.toString());
+		const envConfig = await getDeployEvironmentByApp(app, env.toString());
 		const { cluster, namespace } = envConfig;
 		if (!cluster) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Cluster "${cluster}" not found.`);
 		if (!namespace) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Namespace "${namespace}" not found.`);

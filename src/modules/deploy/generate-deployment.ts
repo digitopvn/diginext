@@ -13,7 +13,7 @@ import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { getAppConfig, loadEnvFileAsContainerEnvVars, objectToDeploymentYaml, resolveEnvFilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
-import { getAppEvironment } from "../apps/get-app-environment";
+import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { generateDomains } from "./generate-domain";
 
 export type GenerateDeploymentParams = {
@@ -41,7 +41,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const { slug } = currentAppConfig;
 
 	// DEFINE DEPLOYMENT PARTS:
-	const BUILD_NUMBER = buildNumber || makeDaySlug();
+	const BUILD_NUMBER = buildNumber || makeDaySlug({ divider: "" });
 
 	const deployEnvironmentConfig = currentAppConfig.environment[env];
 
@@ -130,7 +130,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		return;
 	}
 
-	const appEnvironment = await getAppEvironment(app, env);
+	const appEnvironment = await getDeployEvironmentByApp(app, env);
 
 	let containerEnvs = appEnvironment.envVars || [];
 	// console.log("[1] containerEnvs :>> ", containerEnvs);

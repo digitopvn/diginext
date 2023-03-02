@@ -4,7 +4,7 @@ import type { App, Build, Project, Release, User, Workspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 
 import { DB } from "../api/DB";
-import { getAppEvironment } from "../apps/get-app-environment";
+import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { fetchDeploymentFromContent } from "../deploy/fetch-deployment";
 
 type OwnershipParams = {
@@ -37,7 +37,7 @@ export const createReleaseFromBuild = async (build: Build, ownership?: Ownership
 	// });
 	// console.log("environment :>> ", environment);
 
-	const deployedEnvironment = await getAppEvironment(app, env);
+	const deployedEnvironment = await getDeployEvironmentByApp(app, env);
 	// console.log(`deployedEnvironment > ${env} :>>`, deployedEnvironment);
 
 	const { deploymentYaml, prereleaseDeploymentYaml, namespace, provider, project: providerProject, cluster } = deployedEnvironment;

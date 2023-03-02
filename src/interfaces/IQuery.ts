@@ -65,10 +65,25 @@ export interface IGetQueryParams extends IPostQueryParams, IPaginationQueryParam
 
 export interface IQueryOptions extends IQueryGeneral {
 	_id?: any;
+	/**
+	 * @example { populate: ["owner", "workspace"] }
+	 */
 	populate?: string[];
+	/**
+	 * @example { select: ["_id", "name", "slug"] }
+	 */
 	select?: string[];
-	order?: { [key: string]: string };
+	/**
+	 * @example { order: { createdAt: "DESC" }
+	 */
+	order?: { [key: string]: "ASC" | "DESC" };
+	/**
+	 * @default false
+	 */
 	search?: boolean;
+	/**
+	 * @default false
+	 */
 	download?: boolean;
 	/**
 	 * Disable the default `{$set: body}` of "update" query & update `{body}` directly to the items

@@ -19,7 +19,7 @@ import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, resolveDocker
 import { getIO } from "@/server";
 
 import { DB } from "../api/DB";
-import { getAppEvironment } from "../apps/get-app-environment";
+import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { generateDeployment } from "../deploy";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
@@ -201,7 +201,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 	let message = "";
 	let stream;
 
-	let targetEnvironmentFromDB = await getAppEvironment(app, env);
+	let targetEnvironmentFromDB = await getDeployEvironmentByApp(app, env);
 
 	// Merge the one from appConfig with the one from database
 	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB } as DeployEnvironment;
@@ -240,7 +240,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 			name: `[${options.env.toUpperCase()}] ${IMAGE_NAME}`,
 			slug: SOCKET_ROOM,
 			tag: buildNumber,
-			status: "building" as "start" | "building" | "failed" | "success",
+			status: "building",
 			env,
 			createdBy: username,
 			projectSlug,
@@ -250,7 +250,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 			project: project._id,
 			owner: author._id,
 			workspace: workspace._id,
-		};
+		} as Build;
 
 		newBuild = await DB.create<Build>("build", buildData);
 

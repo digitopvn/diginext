@@ -1,11 +1,12 @@
 import { logError } from "diginext-utils/dist/console/log";
 
 import type { App, Build, Project } from "@/entities";
+import type { BuildStatus } from "@/interfaces/SystemTypes";
 import { BuildService } from "@/services";
 
 import { DB } from "../api/DB";
 
-export async function updateBuildStatus(appSlug: string, buildSlug: string, buildStatus: "start" | "building" | "failed" | "success") {
+export async function updateBuildStatus(appSlug: string, buildSlug: string, buildStatus: BuildStatus) {
 	const buildSvc = new BuildService();
 
 	// find the existing project

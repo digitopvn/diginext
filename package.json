@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "2.3.0",
+	"version": "2.3.1",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -76,9 +76,9 @@
 		"commit-build": "git add . && git commit -m 'build(prerelease): generate changelog to publish' && git push -u origin && exit 0",
 		"pkg-version": "npm pkg set version=$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-)",
 		"npm-publish": "npm publish --access=public",
-		"release": "npm run build && npm run prerelease && npm run husky-hide && npm run npm-publish && npm run husky-show && npm run pull-request",
+		"release": "npm run build && pnpm swagger && npm run prerelease && npm run husky-hide && npm run npm-publish && npm run husky-show && npm run pull-request",
 		"release:all": "npm run release && npm run docker-build && npm run deploy",
-		"prerelease": "npx semantic-release --no-ci && npm run pkg-version && npm run commit-build",
+		"prerelease": "npx semantic-release --no-ci && npm run pkg-version && npm run commit-build && exit 0",
 		"pull-request": "open-cli https://github.com/digitopvn/diginext/compare/main...$(echo $(git rev-parse --abbrev-ref HEAD))",
 		"husky-hide": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall",
 		"husky-show": "npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",

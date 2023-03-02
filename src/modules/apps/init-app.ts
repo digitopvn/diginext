@@ -26,8 +26,9 @@ export async function execInitApp(options: InputOptions) {
 	options.name = newApp.name;
 	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`;
 
+	// get current GIT remote url:
 	const currentGitData = await getCurrentGitRepoData(options.targetDirectory);
-	const { remoteSSH, remoteURL, provider: gitProvider } = currentGitData;
+	const { remoteSSH, remoteURL, provider: gitProvider } = currentGitData || {};
 	// console.log("{remoteSSH, remoteURL} :>> ", { remoteSSH, remoteURL });
 
 	if (remoteSSH && remoteURL) {
@@ -35,10 +36,14 @@ export async function execInitApp(options: InputOptions) {
 		options.remoteURL = remoteURL;
 		options.gitProvider = gitProvider;
 	} else {
+		// get default git provider from CLI config
 		const { currentGitProvider } = getCliConfig();
 		if (currentGitProvider?.gitWorkspace) {
 			options.remoteSSH = generateRepoSSH(options.gitProvider, `${currentGitProvider.gitWorkspace}/${options.repoSlug}`);
 			options.remoteURL = generateRepoURL(options.gitProvider, `${currentGitProvider.gitWorkspace}/${options.repoSlug}`);
+		} else {
+			logError(`No git providers in this workspace, please configurate one.`);
+			return;
 		}
 	}
 	options.repoURL = options.remoteURL;

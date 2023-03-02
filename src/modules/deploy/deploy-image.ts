@@ -5,11 +5,11 @@ import type { AppConfig, DeployEnvironment } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 
 import { DB } from "../api/DB";
-import { getAppEvironment } from "../apps/get-app-environment";
-import { generateDeployment } from "../deploy";
+import { getDeployEvironmentByApp } from "../apps/get-app-environment";
+import { queue } from "../build";
+import { createReleaseFromBuild } from "../build/create-release-from-build";
 import ClusterManager from "../k8s";
-import { queue } from ".";
-import { createReleaseFromBuild } from "./create-release-from-build";
+import { generateDeployment } from ".";
 
 export type DeployImageParams = {
 	/**
@@ -43,7 +43,6 @@ export type DeployImageParams = {
 };
 
 export const deployImage = async (options: DeployImageParams, appConfig: AppConfig, envVars?: KubeEnvironmentVariable[]) => {
-	// this feature is under development...
 	const { env = "dev", projectSlug, slug, username, workspaceId, cliVersion } = options;
 	const { imageURL } = appConfig.environment[env];
 
@@ -69,7 +68,7 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	if (!workspace && author) workspace = await DB.findOne<Workspace>("workspace", { _id: author.activeWorkspace });
 
 	// deploy environment
-	let targetEnvironmentFromDB = await getAppEvironment(app, env);
+	let targetEnvironmentFromDB = await getDeployEvironmentByApp(app, env);
 	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB };
 	// log({ targetEnvironment });
 

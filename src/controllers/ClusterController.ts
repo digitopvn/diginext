@@ -1,11 +1,13 @@
 import { logError } from "diginext-utils/dist/console/log";
+import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { Cluster, Project } from "@/entities";
+import type { Cluster } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
+import { CloudProviderService } from "@/services";
 import ClusterService from "@/services/ClusterService";
 
 import BaseController from "./BaseController";
@@ -25,13 +27,27 @@ export default class ClusterController extends BaseController<Cluster> {
 
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: Omit<Cluster, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		const cloudProviderSvc = new CloudProviderService();
+
+		const cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
+		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
+
+		body.providerShortName = cloudProvider.shortName;
+
 		return super.create(body);
 	}
 
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: Omit<Cluster, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		const cloudProviderSvc = new CloudProviderService();
+
+		const cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
+		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
+
+		body.providerShortName = cloudProvider.shortName;
+
 		return super.update(body);
 	}
 

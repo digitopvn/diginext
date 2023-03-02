@@ -17,7 +17,7 @@ import { execCmd, getValueOfKubeEnvVarsByName, objectToDeploymentYaml, waitUntil
 import { isValidObjectId } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
-import { getAppEvironment } from "../apps/get-app-environment";
+import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import custom from "../providers/custom";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
@@ -230,7 +230,7 @@ export class ClusterManager {
 
 		if (!app) throw new Error(`App "${appSlug}" not found.`);
 
-		const deployEnvironment = await getAppEvironment(app, env);
+		const deployEnvironment = await getDeployEvironmentByApp(app, env);
 		if (isEmpty(deployEnvironment)) {
 			throw new Error(`Deploy environment (${env}) of "${appSlug}" app not found.`);
 		}

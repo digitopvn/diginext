@@ -10,6 +10,7 @@ import type InputOptions from "@/interfaces/InputOptions";
 import { getAppConfig, parseGitRepoDataFromRepoSSH, updateAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
+import type { GitProviderType } from "../git";
 import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
 import { createOrSelectProject } from "./create-or-select-project";
 
@@ -35,11 +36,12 @@ export async function createAppByForm(options?: InputOptions) {
 	// "kind of" unique slug
 	// options.slug = (makeSlug(options.name) + "-" + generatePassword(6, true)).toLowerCase();
 
-	let curFramework;
+	let curFramework: Framework;
+	const noneFramework = new Framework({ name: "none", slug: "none", isPrivate: false });
 	if (!options.framework) {
 		const frameworks = await DB.find<Framework>("framework", {});
 
-		const selectFrameworks = [new Framework({ name: "none", slug: "none", isPrivate: false })];
+		const selectFrameworks = [noneFramework];
 		if (!isEmpty(frameworks)) selectFrameworks.push(...frameworks);
 		// log({ selectFrameworks });
 
@@ -53,39 +55,56 @@ export async function createAppByForm(options?: InputOptions) {
 			}),
 		});
 
-		options.framework = framework;
-		curFramework = framework;
+		curFramework = options.framework = framework;
 	}
 
 	// Check git provider authentication
-	const { isPrivate, slug, repoSSH } = options.framework;
-	const { gitProvider: frameworkGitProvider } = parseGitRepoDataFromRepoSSH(repoSSH);
+	let isFwPrivate = false;
+	let frameworkGitProvider: GitProviderType;
+	let fwSlug = options.framework.slug;
+	let fwRepoSSH = "";
 
-	if (slug !== "none") {
-		const { namespace } = parseGitRepoDataFromRepoSSH(repoSSH);
-		if (!isPrivate) {
+	// TODO: try to get repoSSH by git command?
+	// const curGitData = await getCurrentGitRepoData(options.targetDirectory);
+	// if (!curGitData) {
+	// 	// initialize git?
+	// 	logError(`This directory doesn't have any integrated git repository.`);
+	// 	return;
+	// }
+	// fwRepoSSH = curGitData.remoteSSH;
+
+	if (fwSlug !== "none") {
+		const { isPrivate, repoSSH } = options.framework;
+		isFwPrivate = isPrivate;
+		fwRepoSSH = repoSSH;
+
+		const { gitProvider } = parseGitRepoDataFromRepoSSH(repoSSH);
+		frameworkGitProvider = gitProvider;
+
+		const { namespace } = parseGitRepoDataFromRepoSSH(fwRepoSSH);
+		if (!isFwPrivate) {
 			const canAccessPublicRepo = await checkGitProviderAccess(frameworkGitProvider);
 			if (!canAccessPublicRepo) {
 				logError(`You need to authenticate ${upperFirst(frameworkGitProvider)} first to be able to pull this framework.`);
 				return;
 			}
 		} else {
-			const canAccessPrivateRepo = await checkGitRepoAccess(repoSSH);
+			const canAccessPrivateRepo = await checkGitRepoAccess(fwRepoSSH);
 			if (!canAccessPrivateRepo) {
 				logError(`You may not have access to this private repository or ${namespace} organization, please authenticate first.`);
 				return;
 			}
 		}
-	}
 
-	// Request select specific version
-	const { frameworkVersion } = await inquirer.prompt({
-		type: "input",
-		name: "frameworkVersion",
-		message: `Framework version:`,
-		default: curFramework.mainBranch,
-	});
-	options.frameworkVersion = frameworkVersion;
+		// Request select specific version
+		const { frameworkVersion } = await inquirer.prompt({
+			type: "input",
+			name: "frameworkVersion",
+			message: `Framework version:`,
+			default: curFramework?.mainBranch || "main",
+		});
+		options.frameworkVersion = frameworkVersion;
+	}
 
 	if (options.shouldUseGit) {
 		let currentGitProvider: GitProvider;
@@ -140,6 +159,7 @@ export async function createAppByForm(options?: InputOptions) {
 		name: options.name,
 		createdBy: options.username,
 		owner: options.userId,
+		projectSlug: options.project.slug,
 		project: options.project._id,
 		workspace: options.workspaceId,
 		framework: {

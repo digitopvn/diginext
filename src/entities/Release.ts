@@ -2,6 +2,7 @@ import { IsNotEmpty } from "class-validator";
 
 import { AppConfig } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
+import { BuildStatus } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
@@ -100,7 +101,7 @@ export default class Release extends Base {
 	providerProjectId?: string;
 
 	@Column()
-	buildStatus?: "start" | "building" | "failed" | "success";
+	buildStatus?: BuildStatus;
 
 	@Column({ type: "boolean" })
 	active?: boolean;

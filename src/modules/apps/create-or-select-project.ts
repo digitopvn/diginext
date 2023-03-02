@@ -9,9 +9,9 @@ export async function createOrSelectProject(options?: InputOptions) {
 	if (!options.project) {
 		const { projectSlug } = options;
 
-		const { projectAction } = await inquirer.prompt({
+		const { action } = await inquirer.prompt<{ action: "select" | "create" }>({
 			type: "list",
-			name: "projectAction",
+			name: "action",
 			message: projectSlug
 				? `Project "${projectSlug}" not found or might be deleted, what do want to do?`
 				: `Create new or select an existing project?`,
@@ -21,7 +21,7 @@ export async function createOrSelectProject(options?: InputOptions) {
 			],
 		});
 
-		if (projectAction === "select") {
+		if (action === "select") {
 			// find/search projects
 			const projects = await searchProjects();
 
@@ -35,17 +35,15 @@ export async function createOrSelectProject(options?: InputOptions) {
 				}),
 			});
 			options.project = selectedProject;
-			options.projectSlug = selectedProject.slug;
-			options.projectName = selectedProject.name;
 		} else {
 			const newProject = await createProjectByForm(options);
 			options.project = newProject;
-			options.projectSlug = newProject.slug;
-			options.projectName = newProject.name;
 		}
 	}
 
-	options.namespace = options.projectSlug;
+	options.projectSlug = options.project.slug;
+	options.projectName = options.project.name;
+	options.namespace = `${options.project.slug}-${options.env || "dev"}`;
 
 	return options.project;
 }
