@@ -141,7 +141,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 				await execa.command(`cd ${buildDir} && git checkout -f && git pull --rebase`, cliOpts);
 			} catch (e) {
 				sendMessage({ SOCKET_ROOM, logger, message: `[1] Remove directory: ${buildDir} :>> ${e}` });
-				fs.rmSync(buildDir, { recursive: true, force: true, maxRetries: 2, retryDelay: 500 });
+				fs.rmSync(buildDir, { recursive: true, force: true });
 
 				sendMessage({ SOCKET_ROOM, logger, message: `[1] Clone new into directory: ${buildDir}` });
 				try {
