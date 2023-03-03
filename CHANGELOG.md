@@ -1,3 +1,11 @@
+## [2.3.4](https://github.com/digitopvn/diginext/compare/v2.3.3...v2.3.4) (2023-03-03)
+
+
+### Bug Fixes
+
+* **app migration:** disable migrating app deploy environment ([3127166](https://github.com/digitopvn/diginext/commit/3127166331f3629afef8e7eaea02bf1b090818c4))
+* **deploy:** kubernetes only accept string as env variable value ([6054c46](https://github.com/digitopvn/diginext/commit/6054c465b9c1a64214d9bbed8215dd1e266dfb6b))
+
 ## [2.3.3](https://github.com/digitopvn/diginext/compare/v2.3.2...v2.3.3) (2023-03-03)
 
 

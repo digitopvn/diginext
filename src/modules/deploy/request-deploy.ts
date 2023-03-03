@@ -165,7 +165,7 @@ export async function requestDeploy(options: InputOptions) {
 
 	// update the project so it can be sorted on top
 	try {
-		await DB.update<Project>("project", { slug: projectSlug }, { lastUpdatedBy: options.username });
+		await DB.update<Project>("project", { slug: options.projectSlug }, { lastUpdatedBy: options.username });
 	} catch (e) {
 		logWarn(e);
 	}
