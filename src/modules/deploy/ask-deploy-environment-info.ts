@@ -6,6 +6,7 @@ import { isEmpty } from "lodash";
 import type { App, CloudProvider, Cluster, ContainerRegistry, Project } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
+import { getAppConfig } from "@/plugins";
 import { isNumeric } from "@/plugins/number";
 
 import { DB } from "../api/DB";
@@ -37,8 +38,14 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	/**
 	 * Fetch app deploy environment & generate new deploy environment:
 	 */
+	const localAppConfig = getAppConfig(appDirectory);
+	const localDeployEnvironment = localAppConfig.environment[env];
+	const localDeployDomains = localDeployEnvironment.domains || [];
+
 	const appConfig = getAppConfigFromApp(app);
 	const deployEnvironment = appConfig.environment[env] || {};
+	const serverDeployDomains = deployEnvironment.domains || [];
+
 	// console.log("appConfig :>> ", appConfig);
 	appConfig.project = project.slug;
 	appConfig.slug = app.slug;
@@ -71,7 +78,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 
 	// request domains
 	// console.log("deployEnvironment.domains :>> ", deployEnvironment.domains);
-	if (isEmpty(deployEnvironment.domains)) {
+	if (isEmpty(localDeployDomains)) {
 		try {
 			deployEnvironment.domains = await askForDomain(env, project.slug, app.slug, deployEnvironment);
 		} catch (e) {
@@ -80,6 +87,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		}
 	} else {
 		// TODO: check for domain DNS ?
+		deployEnvironment.domains = localDeployDomains;
 	}
 
 	if (isEmpty(deployEnvironment.domains)) {
