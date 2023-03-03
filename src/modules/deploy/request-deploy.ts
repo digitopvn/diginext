@@ -64,7 +64,7 @@ export async function requestDeploy(options: InputOptions) {
 	 * if it's invalid, ask for the missing ones
 	 */
 	const deploymentInfo = await askForDeployEnvironmentInfo(options);
-	const { app, appConfig: validatedAppConfig } = deploymentInfo;
+	const { project, app, appConfig: validatedAppConfig } = deploymentInfo;
 
 	// save deploy environment data into local app config (dx.json)
 	appConfig = saveAppConfig(validatedAppConfig, { directory: targetDirectory });
@@ -72,10 +72,11 @@ export async function requestDeploy(options: InputOptions) {
 	// save deploy environment data to database:
 	const [updatedApp] = await DB.update<App>(
 		"app",
-		{ slug: app.slug },
+		{ slug },
 		{
-			projectSlug: options.project.slug,
-			project: options.project._id,
+			slug: app.slug, // <-- update old app slug -> new app slug (if any)
+			projectSlug: options.projectSlug, // <-- update old app projectSlug -> new app projectSlug (if any)
+			project: project._id, // <-- update old app's project -> new app's project (if any)
 			deployEnvironment: {
 				[env]: deploymentInfo.deployEnvironment,
 			},
@@ -131,7 +132,7 @@ export async function requestDeploy(options: InputOptions) {
 	await checkGitignoreContainsDotenvFiles({ targetDir: appDirectory });
 
 	// Notify the commander:
-	log(`Requesting BUILD SERVER to deploy this app: "${appConfig.project}/${appConfig.slug}"`);
+	log(`Requesting BUILD SERVER to deploy this app: "${options.projectSlug}/${options.slug}"`);
 
 	// additional params:
 	options.namespace = appConfig.environment[env].namespace;
