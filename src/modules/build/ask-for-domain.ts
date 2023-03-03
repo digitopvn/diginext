@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import inquirer from "inquirer";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
@@ -13,7 +14,9 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 
 	let generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
 	if (generatedDomain.length > 60) {
-		throw new Error(`This app's domain is too long, you probably need to run "dx init" and rename the app to something shorter.`);
+		subdomainName = `web-${makeDaySlug({ divider: "" })}`;
+		generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
+		logWarn(`This app's domain is too long, it will be shorten randomly to: ${generatedDomain}`);
 	}
 	const clusterShortName = deployEnvironment.cluster;
 

@@ -75,9 +75,6 @@ export default class ClusterController extends BaseController<Cluster> {
 	async connect(@Queries() queryParams?: { slug: string }) {
 		const result: ResponseData = { status: 1, messages: [], data: {} };
 
-		// const options = { userId: this.user?._id.toString(), workspaceId: this.user?.activeWorkspace.toString() };
-		// console.log("options :>> ", options);
-
 		const { slug } = this.filter;
 		if (!slug) {
 			result.status = 0;

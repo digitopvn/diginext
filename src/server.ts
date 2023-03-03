@@ -23,6 +23,7 @@ import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 import { Config, IsDev } from "./app.config";
 import { cleanUp } from "./build/system";
 import { CLI_CONFIG_DIR } from "./config/const";
+import { failSafeHandler } from "./middlewares/failSafeHandler";
 /**
  * CUSTOM MIDDLEWARES
  */
@@ -228,8 +229,8 @@ function initialize() {
 		/**
 		 * ROUTE 404 MIDDLEWARE
 		 */
-		// app.use(route404);
 		app.use("*", route404_handler);
+		app.use(failSafeHandler);
 
 		/**
 		 * SERVER HANDLING

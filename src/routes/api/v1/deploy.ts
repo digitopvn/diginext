@@ -25,11 +25,13 @@ router
 		// convert JSON to Object
 		req.body.options = JSON.parse(options);
 
-		// no need to wait :)
 		controller.deployFromSource(req.body);
 		//.then((result) => log(`Finished deploying from source code:`, { result }));
 
-		res.status(200).json({ status: 1 });
+		// res.status(200).json({ status: 1 });
+
+		// no need to wait :)
+		return controller.apiRespond(controller.deployFromSource(req.body)).bind(controller);
 	})
 	/**
 	 * Deploy from image URL

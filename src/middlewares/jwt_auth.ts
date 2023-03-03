@@ -22,6 +22,7 @@ const jwt_auth = (req, res, next) =>
 		} else {
 			req.isAuthenticated = true;
 			req.user = user;
+			res.locals.user = user;
 
 			/**
 			 * We can extract token from cookie / user (check "jwtStrategy.ts")

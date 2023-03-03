@@ -3,7 +3,7 @@ import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import * as fs from "fs";
 import yaml from "js-yaml";
-import _, { isEmpty } from "lodash";
+import _, { isEmpty, isObject, toNumber } from "lodash";
 
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
@@ -130,9 +130,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		return;
 	}
 
-	const appEnvironment = await getDeployEvironmentByApp(app, env);
+	const deployEnvironment = await getDeployEvironmentByApp(app, env);
 
-	let containerEnvs = appEnvironment.envVars || [];
+	let containerEnvs = deployEnvironment.envVars || [];
 	// console.log("[1] containerEnvs :>> ", containerEnvs);
 
 	// ENV variables -> fallback support:
@@ -143,7 +143,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			logWarn(`[GENERATE DEPLOYMENT YAML] Fall back loaded ENV variables from files of GIT repository.`);
 		}
 	}
-	// console.log("[2] containerEnvs :>> ", containerEnvs);
+
+	// FIXME: magic?
+	if (isObject(containerEnvs)) containerEnvs = Object.entries(containerEnvs).map(([key, val]) => val);
+
+	console.log("[2] containerEnvs :>> ", containerEnvs);
 
 	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
 	let prereleaseEnvs = [...containerEnvs];
@@ -161,9 +165,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	let previousDeployment,
 		previousIng: KubeIngress = { metadata: { annotations: {} } };
 
-	if (deployEnvironmentConfig.shouldInherit && appEnvironment && appEnvironment.deploymentYaml) {
+	if (deployEnvironmentConfig.shouldInherit && deployEnvironment && deployEnvironment.deploymentYaml) {
 		try {
-			previousDeployment = yaml.loadAll(appEnvironment.deploymentYaml);
+			previousDeployment = yaml.loadAll(deployEnvironment.deploymentYaml);
 			previousDeployment.map((doc, index) => {
 				if (doc && doc.kind == "Ingress") previousIng = doc;
 			});
@@ -377,7 +381,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				doc.spec.template.spec.containers[0].env = containerEnvs;
 
 				// ! PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
-				doc.spec.template.spec.containers[0].ports = [{ containerPort: deployEnvironmentConfig.port || 3000 }];
+				doc.spec.template.spec.containers[0].ports = [{ containerPort: toNumber(deployEnvironmentConfig.port) }];
 
 				// clone deployment to prerelease:
 				prereleaseDeployDoc = _.cloneDeep(doc);

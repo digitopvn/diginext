@@ -5,6 +5,8 @@ import { isEmpty } from "lodash";
 
 import type { App, CloudProvider, Cluster, ContainerRegistry, Project } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
+import { availableSslTypes } from "@/interfaces";
+import { isNumeric } from "@/plugins/number";
 
 import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
@@ -26,7 +28,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	}
 	// log(`Selected project: "${project.name}"`);
 
-	let app = slug ? await DB.findOne<App>("app", { slug }, { populate: ["project"] }) : undefined;
+	let app = slug ? await DB.findOne<App>("app", { slug }, { populate: ["project", "owner", "workspace"] }) : undefined;
 	if (!app) {
 		app = await createOrSelectApp(project.slug, options);
 		// update deploy environment in app config (if any)
@@ -37,7 +39,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	 */
 	const appConfig = getAppConfigFromApp(app);
 	const deployEnvironment = appConfig.environment[env] || {};
-
+	// console.log("appConfig :>> ", appConfig);
 	appConfig.project = project.slug;
 	appConfig.slug = app.slug;
 
@@ -68,6 +70,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	if (options.zone) deployEnvironment.zone = options.zone;
 
 	// request domains
+	// console.log("deployEnvironment.domains :>> ", deployEnvironment.domains);
 	if (isEmpty(deployEnvironment.domains)) {
 		try {
 			deployEnvironment.domains = await askForDomain(env, project.slug, app.slug, deployEnvironment);
@@ -79,7 +82,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		// TODO: check for domain DNS ?
 	}
 
-	if (deployEnvironment.domains.length < 1) {
+	if (isEmpty(deployEnvironment.domains)) {
 		logWarn(
 			`This app doesn't have any domains configurated & only reachable within namespace scope. 
 To expose this app to the internet later, you can add your own domain to "dx.json" & deploy again.`
@@ -88,6 +91,10 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 
 	// request container registry
 	let registry: ContainerRegistry;
+	if (deployEnvironment.registry) {
+		registry = await DB.findOne("registry", { slug: deployEnvironment.registry });
+		if (registry) deployEnvironment.registry = registry.slug;
+	}
 	if (!deployEnvironment.registry) {
 		const registries = await DB.find<ContainerRegistry>("registry", {}, {}, { limit: 20 });
 
@@ -105,7 +112,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	}
 
 	// request imageURL
-	deployEnvironment.imageURL = imageURL;
+	if (imageURL) deployEnvironment.imageURL = imageURL;
 	if (!deployEnvironment.imageURL) {
 		const imageSlug = `${project.slug}/${app.slug}`;
 		deployEnvironment.imageURL = `${registry.imageBaseURL}/${imageSlug}`;
@@ -117,6 +124,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	// request namespace
 	if (options.namespace) deployEnvironment.namespace = options.namespace;
 	if (!deployEnvironment.namespace) deployEnvironment.namespace = `${project.slug}-${env}`;
+	options.namespace = deployEnvironment.namespace;
 
 	// request port
 	if (options.port) deployEnvironment.port = options.port;
@@ -129,10 +137,12 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 		});
 		deployEnvironment.port = options.port = selectedPort;
 	}
+	options.port = deployEnvironment.port;
 
 	// request inherit previous deployment config
 	if (options.shouldInherit) deployEnvironment.shouldInherit = options.shouldInherit;
 	if (typeof deployEnvironment.shouldInherit === "undefined") deployEnvironment.shouldInherit = true;
+	options.shouldInherit = deployEnvironment.shouldInherit;
 
 	// request cdn
 	if (options.shouldEnableCDN) deployEnvironment.cdn = options.shouldEnableCDN;
@@ -141,18 +151,25 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	// request replicas
 	if (options.replicas) deployEnvironment.replicas = options.replicas;
 	if (typeof deployEnvironment.replicas === "undefined") deployEnvironment.replicas = 1;
+	if (!isNumeric(deployEnvironment.replicas)) deployEnvironment.replicas = 1;
+	options.replicas = deployEnvironment.replicas;
 
 	// request SSL config
 	if (deployEnvironment.domains.length > 0) {
-		const { selectedSSL } = await inquirer.prompt<{ selectedSSL: SslType }>({
-			type: "list",
-			name: "selectedSSL",
-			message: `Which SSL certificate do you want to use for these domains?`,
-			default: "letsencrypt",
-			choices: ["letsencrypt", "custom", "none"],
-		});
 		const primaryDomain = deployEnvironment.domains[0];
-		deployEnvironment.ssl = selectedSSL;
+		if (typeof deployEnvironment.ssl === "undefined" || deployEnvironment.ssl === "none") {
+			const { selectedSSL } = await inquirer.prompt<{ selectedSSL: SslType }>({
+				type: "list",
+				name: "selectedSSL",
+				message: `Which SSL certificate do you want to use for these domains?`,
+				default: "letsencrypt",
+				choices: availableSslTypes,
+			});
+
+			deployEnvironment.ssl = selectedSSL;
+		}
+
+		options.ssl = true;
 		deployEnvironment.tlsSecret = `tls-secret-${deployEnvironment.ssl}-${makeSlug(primaryDomain)}`;
 
 		// if they select "custom" SSL certificate -> ask for secret name:
@@ -166,14 +183,15 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 			if (customSecretName) deployEnvironment.tlsSecret = customSecretName;
 		}
 	} else {
+		options.ssl = false;
 		deployEnvironment.ssl = "none";
 		deployEnvironment.tlsSecret = undefined;
 		deployEnvironment.domains = [];
 		// TODO: remove domains from database
 	}
 
-	appConfig.project = project.slug;
-	appConfig.slug = app.slug;
+	appConfig.project = options.projectSlug = project.slug;
+	appConfig.slug = options.slug = app.slug;
 	appConfig.environment[env] = deployEnvironment;
 
 	return { project, app, appConfig, deployEnvironment };

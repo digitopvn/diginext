@@ -1,8 +1,8 @@
-import { isBooleanString, isJSON } from "class-validator";
+import { isBooleanString, isJSON, isNumberString } from "class-validator";
 import { iterate, toBool, toInt } from "diginext-utils/dist/object";
 // import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Request, Response } from "express";
-import { isEmpty, isString, trim } from "lodash";
+import { isEmpty, isString, toNumber, trim } from "lodash";
 import { ObjectId } from "mongodb";
 
 import { Config } from "@/app.config";
@@ -36,9 +36,14 @@ export default class BaseController<T extends Base> {
 
 	apiRespond(executor) {
 		return async (req: Request, res: Response, next: NextFunction) => {
-			this.user = req.user as User;
-			let result = await executor(req.body);
-			return res.status(200).json(result);
+			try {
+				this.user = req.user as User;
+				let result = await executor(req.body);
+				res.status(200).json(result);
+			} catch (e) {
+				// forward the error to Express.js Error Handling Route
+				next(e);
+			}
 		};
 	}
 
@@ -118,8 +123,15 @@ export default class BaseController<T extends Base> {
 
 		req.body = iterate(req.body, (obj, key, val) => {
 			// log(`key, val =>`, key, val);
-			if (isValidObjectId(val)) obj[key] = new ObjectId(val);
-			if (isBooleanString(val)) obj[key] = toBool(val);
+			if (isValidObjectId(val)) {
+				obj[key] = new ObjectId(val);
+			} else if (isNumberString(val)) {
+				obj[key] = toNumber(val);
+			} else if (isBooleanString(val)) {
+				obj[key] = toBool(val);
+			} else {
+				obj[key] = val;
+			}
 		});
 
 		next();
