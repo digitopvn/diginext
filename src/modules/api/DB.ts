@@ -42,7 +42,8 @@ type DBCollection =
 export function queryFilterToUrlFilter(filter: any = {}) {
 	return Object.entries(filter)
 		.map(([key, val]) => {
-			return val !== null && `${key}=${val}`;
+			if (typeof val === "undefined") return `${key}=undefined`;
+			return val !== null ? `${key}=${val}` : null;
 		})
 		.filter((item) => item !== null)
 		.join("&");
@@ -59,23 +60,23 @@ export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPaginati
 				return val === "ASC" ? key : `-${key}`;
 			})
 			.join(",");
-		optionsStr += orderStr;
+		optionsStr += "sort=" + orderStr;
 	}
 
 	if (!isEmpty(populate)) {
 		const populateStr = options.populate.join(",");
-		optionsStr += "&populate=" + populateStr;
+		optionsStr += (optionsStr && "&") + "populate=" + populateStr;
 	}
 
 	if (!isEmpty(select)) {
 		const selectStr = options.select.join(",");
-		optionsStr += "&" + selectStr;
+		optionsStr += (optionsStr && "&") + "select=" + selectStr;
 	}
 
-	if (!isEmpty(rest)) optionsStr += "&" + new URLSearchParams(rest).toString();
+	if (!isEmpty(rest)) optionsStr += (optionsStr && "&") + new URLSearchParams(rest).toString();
 
 	if (!isEmpty($or)) {
-		optionsStr += "&or=" + JSON.stringify($or);
+		optionsStr += (optionsStr && "&") + "or=" + JSON.stringify($or);
 	}
 
 	return optionsStr;

@@ -3,33 +3,26 @@ import { logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type InputOptions from "@/interfaces/InputOptions";
-import { getAppConfig, saveAppConfig } from "@/plugins";
+import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
 import { generateDomains } from "../deploy/generate-domain";
 
-export const askForDomain = async (options: InputOptions) => {
-	const { env } = options;
-	const appDirectory = options.targetDirectory;
-	const appConfig = getAppConfig(appDirectory);
-
-	let projectSlug = appConfig.project;
-	let appSlug = appConfig.slug.toLowerCase();
-	let subdomainName = `${appSlug}.${env}`;
+export const askForDomain = async (env: string, projectSlug: string, appSlug: string, deployEnvironment: ClientDeployEnvironmentConfig) => {
+	let subdomainName = `${projectSlug}-${appSlug}.${env}`;
 	let domains: string[] = [];
 
 	let generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
 	if (generatedDomain.length > 60) {
 		throw new Error(`This app's domain is too long, you probably need to run "dx init" and rename the app to something shorter.`);
 	}
-	const clusterShortName = appConfig.environment[env].cluster;
+	const clusterShortName = deployEnvironment.cluster;
 
 	// xử lý domains
-	if (typeof appConfig.environment[env].domains != "undefined" && appConfig.environment[env].domains.length > 0) {
+	if (typeof deployEnvironment.domains != "undefined" && deployEnvironment.domains.length > 0) {
 		// lấy domain trong "dx.json"
-		domains = appConfig.environment[env].domains;
+		domains = deployEnvironment.domains;
 	} else {
-		logWarn(`No domains were found in this environment (${env})`);
+		logWarn(`No domains were found in this deploy environment (${env})`);
 
 		const { useGeneratedDomain } = await inquirer.prompt({
 			name: "useGeneratedDomain",
@@ -50,11 +43,11 @@ export const askForDomain = async (options: InputOptions) => {
 			}
 
 			// save app config:
-			if (!appConfig.environment[env].domains) appConfig.environment[env].domains = [];
-			appConfig.environment[env].domains.push(generatedDomain);
-			saveAppConfig(appConfig, { directory: options.targetDirectory });
+			if (!deployEnvironment.domains) deployEnvironment.domains = [];
+			deployEnvironment.domains.push(generatedDomain);
+			// saveAppConfig(appConfig, { directory: options.targetDirectory });
 
-			domains = appConfig.environment[env].domains;
+			domains = deployEnvironment.domains;
 
 			logSuccess(`Great! Domain "${generatedDomain}" has been created and pointed to this IP address: ${ip}`);
 		} else {

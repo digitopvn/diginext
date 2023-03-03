@@ -14,6 +14,8 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	const appConfig = getAppConfig(options.targetDirectory);
 
 	const { env = "dev", targetDirectory } = options;
+	const { project, slug } = appConfig;
+	const deployEnvironment = appConfig.environment[env];
 
 	let domains: string[],
 		selectedSSL: SslIssuer = "letsencrypt",
@@ -24,7 +26,7 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	if (!dockerFile) return;
 
 	// ask for generated domains:
-	domains = await askForDomain(options);
+	domains = await askForDomain(env, project, slug, deployEnvironment);
 	if (domains.length < 1) {
 		logWarn(
 			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "dx.json" to expose this app to the internet anytime.`

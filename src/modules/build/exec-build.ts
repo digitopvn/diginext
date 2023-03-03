@@ -18,9 +18,11 @@ import { startBuild } from "./start-build";
 export async function execBuild(options: InputOptions) {
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
 
-	const appConfig = getAppConfig(options.targetDirectory);
-
 	const { env = "dev", targetDirectory } = options;
+
+	const appConfig = getAppConfig(options.targetDirectory);
+	const { project, slug } = appConfig;
+	const deployEnvironment = appConfig.environment[env];
 
 	// check Dockerfile
 	let dockerFile = resolveDockerfilePath({ targetDirectory, env });
@@ -31,7 +33,7 @@ export async function execBuild(options: InputOptions) {
 		selectedSecretName;
 
 	// ask for generated domains:
-	domains = await askForDomain(options);
+	domains = await askForDomain(env, project, slug, deployEnvironment);
 	if (domains.length < 1) {
 		logWarn(
 			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "dx.json" to expose this app to the internet anytime.`

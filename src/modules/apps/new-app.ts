@@ -50,6 +50,7 @@ export default async function createApp(options: InputOptions) {
 		logError(`Project is required for creating new app.`);
 		return;
 	}
+	options.projectSlug = options.project.slug;
 
 	// Save this app to database
 	// const appData = {} as App;
