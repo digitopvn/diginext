@@ -34,11 +34,26 @@ export default class ClusterController extends BaseController<Cluster> {
 		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
 
 		body.providerShortName = cloudProvider.shortName;
+		body.isVerified = false;
 
-		const auth = await ClusterManager.auth(body.shortName);
-		if (!auth) return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
+		let newCluster = (await this.service.create(body)) as Cluster;
 
-		return super.create(body);
+		if (newCluster) {
+			try {
+				const auth = await ClusterManager.auth(newCluster.shortName);
+				if (!auth) {
+					return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
+				}
+
+				[newCluster] = await this.service.update({ _id: newCluster._id }, { isVerified: true });
+
+				return { status: 1, data: newCluster } as ResponseData;
+			} catch (e) {
+				return { status: 0, messages: [`Failed to connect to the cluster: ${e}`] } as ResponseData;
+			}
+		} else {
+			return { status: 0, messages: [`Can't create new cluster`] } as ResponseData;
+		}
 	}
 
 	@Security("jwt")
@@ -53,10 +68,12 @@ export default class ClusterController extends BaseController<Cluster> {
 			body.providerShortName = cloudProvider.shortName;
 		}
 
-		const cluster = await this.service.findOne(this.filter);
+		let cluster = await this.service.findOne(this.filter);
 
 		try {
 			await ClusterManager.auth(cluster.shortName);
+
+			[cluster] = await this.service.update({ _id: cluster._id }, { isVerified: true });
 		} catch (e) {
 			return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
 		}
