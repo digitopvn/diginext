@@ -1,3 +1,12 @@
+## [2.3.2](https://github.com/digitopvn/diginext/compare/v2.3.1...v2.3.2) (2023-03-03)
+
+
+### Bug Fixes
+
+* **cluster controller:** authenticate cluster before create new or update ([e5253b4](https://github.com/digitopvn/diginext/commit/e5253b4a4e9ea241eeefe9ae59ff8eea94f478bc))
+* **deploy:** issue of ask for deploy environment info ([6cad2f1](https://github.com/digitopvn/diginext/commit/6cad2f1ae6a5d098cbe6218de0200b5913044d84))
+* **digital ocean:** issue auth k8s cluster command typo ([7d59a78](https://github.com/digitopvn/diginext/commit/7d59a78450ac4d0ca0e0da64a843a579a6e98afa))
+
 ## [2.3.1](https://github.com/digitopvn/diginext/compare/v2.3.0...v2.3.1) (2023-03-02)
 
 
