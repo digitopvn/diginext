@@ -50,7 +50,15 @@ export default class AppController extends BaseController<App> {
 
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		let project: Project;
+
+		if (body.project) {
+			project = await this.service.findOne({ id: body.project });
+			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
+			body.projectSlug = project.slug;
+		}
+
 		return super.update(body);
 	}
 

@@ -1,4 +1,4 @@
-import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
@@ -24,13 +24,12 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		project = await createOrSelectProject(options);
 		// update deploy environment in app config (if any)
 	}
-	log(`Selected project: "${project.name}"`);
+	// log(`Selected project: "${project.name}"`);
 
-	let app = slug ? await DB.findOne<App>("app", { slug }) : undefined;
+	let app = slug ? await DB.findOne<App>("app", { slug }, { populate: ["project"] }) : undefined;
 	if (!app) {
 		app = await createOrSelectApp(project.slug, options);
 		// update deploy environment in app config (if any)
-		// updateAppConfig({ slug: app.slug, environment: { [env]: { namespace: options.namespace } } });
 	}
 
 	/**
@@ -38,6 +37,9 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	 */
 	const appConfig = getAppConfigFromApp(app);
 	const deployEnvironment = appConfig.environment[env] || {};
+
+	appConfig.project = project.slug;
+	appConfig.slug = app.slug;
 
 	// request cluster
 	if (options.cluster) deployEnvironment.cluster = options.cluster;
@@ -68,7 +70,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	// request domains
 	if (isEmpty(deployEnvironment.domains)) {
 		try {
-			deployEnvironment.domains = await askForDomain(options);
+			deployEnvironment.domains = await askForDomain(env, project.slug, app.slug, deployEnvironment);
 		} catch (e) {
 			logWarn(e);
 			deployEnvironment.domains = [];
@@ -141,37 +143,38 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	if (typeof deployEnvironment.replicas === "undefined") deployEnvironment.replicas = 1;
 
 	// request SSL config
-	if (!deployEnvironment.ssl || !deployEnvironment.tlsSecret) {
-		if (options.ssl) {
-			if (deployEnvironment.domains.length > 0) {
-				const { selectedSSL } = await inquirer.prompt<{ selectedSSL: SslType }>({
-					type: "list",
-					name: "selectedSSL",
-					message: `Which SSL certificate do you want to use for these domains?`,
-					default: "letsencrypt",
-					choices: ["letsencrypt", "custom", "none"],
-				});
-				deployEnvironment.ssl = selectedSSL;
-				deployEnvironment.tlsSecret = `tls-secret-${deployEnvironment.ssl}-${makeSlug(deployEnvironment.domains[0])}`;
-			} else {
-				deployEnvironment.ssl = "none";
-			}
+	if (deployEnvironment.domains.length > 0) {
+		const { selectedSSL } = await inquirer.prompt<{ selectedSSL: SslType }>({
+			type: "list",
+			name: "selectedSSL",
+			message: `Which SSL certificate do you want to use for these domains?`,
+			default: "letsencrypt",
+			choices: ["letsencrypt", "custom", "none"],
+		});
+		const primaryDomain = deployEnvironment.domains[0];
+		deployEnvironment.ssl = selectedSSL;
+		deployEnvironment.tlsSecret = `tls-secret-${deployEnvironment.ssl}-${makeSlug(primaryDomain)}`;
 
-			// if they select "custom" SSL certificate -> ask for secret name:
-			if (deployEnvironment.ssl === "custom") {
-				const { customSecretName } = await inquirer.prompt({
-					type: "input",
-					name: "customSecretName",
-					message: `Name your predefined custom SSL secret (ENTER to use default):`,
-					default: deployEnvironment.tlsSecret,
-				});
-				if (customSecretName) deployEnvironment.tlsSecret = customSecretName;
-			}
-		} else {
-			deployEnvironment.ssl = "none";
-			deployEnvironment.tlsSecret = undefined;
+		// if they select "custom" SSL certificate -> ask for secret name:
+		if (deployEnvironment.ssl === "custom") {
+			const { customSecretName } = await inquirer.prompt({
+				type: "input",
+				name: "customSecretName",
+				message: `Name your predefined custom SSL secret (ENTER to use default):`,
+				default: deployEnvironment.tlsSecret,
+			});
+			if (customSecretName) deployEnvironment.tlsSecret = customSecretName;
 		}
+	} else {
+		deployEnvironment.ssl = "none";
+		deployEnvironment.tlsSecret = undefined;
+		deployEnvironment.domains = [];
+		// TODO: remove domains from database
 	}
+
+	appConfig.project = project.slug;
+	appConfig.slug = app.slug;
+	appConfig.environment[env] = deployEnvironment;
 
 	return { project, app, appConfig, deployEnvironment };
 };

@@ -8,7 +8,7 @@ import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { Project } from "@/entities";
+import type { App, Project } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
@@ -55,6 +55,7 @@ export async function requestDeploy(options: InputOptions) {
 	 * get app config from "dx.json"
 	 */
 	let appConfig = getAppConfig(targetDirectory);
+	console.log("appConfig :>> ", appConfig);
 	if (appConfig && appConfig.project) options.projectSlug = appConfig.project;
 	if (appConfig && appConfig.slug) options.slug = appConfig.slug;
 
@@ -62,7 +63,12 @@ export async function requestDeploy(options: InputOptions) {
 	 * validate deploy environment data
 	 * if it's invalid, ask for the missing ones
 	 */
-	const { app, appConfig: validatedAppConfig } = await askForDeployEnvironmentInfo(options);
+	const deploymentInfo = await askForDeployEnvironmentInfo(options);
+	const { app, appConfig: validatedAppConfig } = deploymentInfo;
+
+	// save deploy environment data to database:
+	const updatedApp = await DB.update<App>("app", { slug: app.slug }, { deployEnvironment: { [env]: deploymentInfo.deployEnvironment } });
+	console.log("updatedApp :>> ", updatedApp);
 
 	// save deploy environment data into local app config (dx.json)
 	appConfig = saveAppConfig(validatedAppConfig, { directory: targetDirectory });

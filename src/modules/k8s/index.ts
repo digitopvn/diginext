@@ -155,7 +155,7 @@ export class ClusterManager {
 				return { error: null, shortName };
 
 			case "digitalocean":
-				await execCmd(`doctl kubenetes cluster kubeconfig save ${clusterShortName}`);
+				await execCmd(`doctl kubernetes cluster kubeconfig save ${clusterShortName}`);
 				return { error: null, shortName };
 
 			case "custom":

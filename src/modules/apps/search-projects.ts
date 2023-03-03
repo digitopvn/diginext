@@ -16,26 +16,23 @@ type SearchAppOptions = {
 export async function searchProjects(options: SearchAppOptions = {}) {
 	const { question, canSkip = true } = options;
 
-	const { keyword } = await inquirer.prompt({
+	const { keyword } = await inquirer.prompt<{ keyword: string }>({
 		type: "input",
 		name: "keyword",
 		message: question ?? "Enter keyword to search projects (leave empty to get recent projects):",
 	});
 
 	// find/search projects
-	let projects = await DB.find<Project>(
-		"project",
-		{ name: keyword },
-		{ search: true, order: { updatedAt: "DESC", createdAt: "DESC" } },
-		{ limit: 10 }
-	);
+	const filter = keyword ? { name: keyword } : {};
+	let projects = await DB.find<Project>("project", filter, { search: true, order: { updatedAt: "DESC", createdAt: "DESC" } }, { limit: 20 });
+	console.log("projects :>> ", projects);
 
 	if (isEmpty(projects)) {
 		if (canSkip) {
 			const { shouldSkip } = await inquirer.prompt<{ shouldSkip: boolean }>({
 				name: "shouldSkip",
 				type: "confirm",
-				message: `Do you want to create new app instead?`,
+				message: `Do you want to create new project instead?`,
 				default: true,
 			});
 			if (shouldSkip) return [];

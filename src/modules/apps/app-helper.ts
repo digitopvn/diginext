@@ -1,6 +1,10 @@
 import type { App, Project, User, Workspace } from "@/entities";
 import type { AppConfig, ClientDeployEnvironmentConfig } from "@/interfaces";
 
+/**
+ * Parse `AppConfig` data from `App` instance
+ * @param app - Should be populated ["project"]
+ */
 export const getAppConfigFromApp = (app: App) => {
 	// hide confidential information:
 	const clientDeployEnvironment: { [key: string]: ClientDeployEnvironmentConfig } = {};
