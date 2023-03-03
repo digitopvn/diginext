@@ -8,7 +8,7 @@ import type { AppConfig, ClientDeployEnvironmentConfig } from "@/interfaces";
 export const getAppConfigFromApp = (app: App) => {
 	// hide confidential information:
 	const clientDeployEnvironment: { [key: string]: ClientDeployEnvironmentConfig } = {};
-	Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
+	Object.entries(app.deployEnvironment || {}).map(([env, deployEnvironment]) => {
 		const { deploymentYaml, prereleaseDeploymentYaml, prereleaseUrl, envVars, cliVersion, namespaceYaml, ..._clientDeployEnvironmentData } =
 			deployEnvironment;
 

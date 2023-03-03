@@ -35,7 +35,7 @@ export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) =
 };
 
 export const migrateAllAppEnvironment = async () => {
-	const apps = await DB.find<App>("app", {});
+	const apps = await DB.find<App>("app", { deployEnvironment: undefined });
 	if (isEmpty(apps)) return;
 
 	log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need environment migration.`);

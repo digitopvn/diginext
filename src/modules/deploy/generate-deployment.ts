@@ -147,6 +147,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// FIXME: magic?
 	if (isObject(containerEnvs)) containerEnvs = Object.entries(containerEnvs).map(([key, val]) => val);
 
+	// kubernetes YAML only accept string as env variable value
+	containerEnvs = containerEnvs.map(({ name, value }) => {
+		return { name, value: value.toString() };
+	});
+
 	console.log("[2] containerEnvs :>> ", containerEnvs);
 
 	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):

@@ -127,7 +127,8 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 			await verifySSH({ gitProvider });
 		} catch (e) {
 			sendMessage({ SOCKET_ROOM, logger, message: `"${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.` });
-			throw new Error(e);
+			await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+			return;
 		}
 
 		// Git SSH verified -> start pulling now...
@@ -135,18 +136,29 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 		if (existsSync(buildDir)) {
 			try {
+				log(`Trying to check out and git pull: ${buildDir}`);
 				await execa.command(`cd ${buildDir} && git checkout -f && git pull --rebase`, cliOpts);
 			} catch (e) {
-				fs.rmSync(buildDir, { recursive: true, force: true });
-				await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
+				log(`Remove directory: ${buildDir}`);
+				fs.rmSync(buildDir, { recursive: true, force: true, maxRetries: 2, retryDelay: 500 });
+
+				log(`[1] Clone new into directory: ${buildDir}`);
+				try {
+					await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
+				} catch (e2) {
+					sendMessage({ SOCKET_ROOM, logger, message: `Failed to pull branch "${gitBranch}" to "${buildDir}": ${e}` });
+					await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+					return;
+				}
 			}
 		} else {
 			try {
+				log(`[2] Clone new to: ${buildDir}`);
 				await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
 			} catch (e) {
 				sendMessage({ SOCKET_ROOM, logger, message: `Failed to pull branch "${gitBranch}" to "${buildDir}": ${e}` });
-
-				throw new Error(e);
+				await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+				return;
 			}
 		}
 
@@ -277,7 +289,10 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		// check if using framework version >= 1.3.6
 		// let dockerFile = path.resolve(appDirectory, `Dockerfile`);
 		let dockerFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
-		if (!dockerFile) throw new Error(`Missing "Dockerfile" to build the application, please create one.`);
+		if (!dockerFile) {
+			logError(`Missing "Dockerfile" to build the application, please create one.`);
+			return;
+		}
 
 		/**
 		 * ! Change current working directory to the root of this project repository
@@ -291,10 +306,13 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		 * docker buildx build -f Dockerfile --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
 		 **/
 		// activate docker build (with "buildx" driver)...
-		await execCmd(`docker buildx create --driver docker-container --name ${appSlug.toLowerCase()}`, "Docker BuildX instance was existed.");
+		await execCmd(
+			`docker buildx create --driver docker-container --name ${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`,
+			"Docker BuildX instance was existed."
+		);
 
 		const cacheCmd = latestBuild ? ` --cache-from type=registry,ref=${latestBuild.image}` : "";
-		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} --builder=${appSlug.toLowerCase()} .`;
+		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} --builder=${projectSlug.toLowerCase()}_${appSlug.toLowerCase()} .`;
 		// log(`Build command: "${buildCmd}"`);
 
 		stream = execa.command(buildCmd, cliOpts);

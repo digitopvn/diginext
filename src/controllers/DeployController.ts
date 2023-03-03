@@ -34,7 +34,7 @@ export default class DeployController {
 
 	@Security("jwt")
 	@Post("/")
-	async deployFromSource(@Body() body: { options: InputOptions }, @Queries() queryParams?: IPostQueryParams) {
+	deployFromSource(@Body() body: { options: InputOptions }, @Queries() queryParams?: IPostQueryParams) {
 		const { options } = body;
 		log("[DEPLOY] options", options);
 
@@ -56,13 +56,10 @@ export default class DeployController {
 				],
 			};
 
+		startBuild(options);
+
 		// start build in background:
-		try {
-			startBuild(options);
-			return { messages: [`Building...`], status: 1 };
-		} catch (e) {
-			return { messages: [`Failed to build & deploy: ${e.message}`], status: 0 };
-		}
+		return { messages: [`Building...`], status: 1 };
 	}
 
 	@Security("jwt")
