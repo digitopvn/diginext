@@ -36,7 +36,7 @@ export let queue = new PQueue({ concurrency: 1 });
 /**
  * Stop the build process.
  */
-export const stopBuild = async (appSlug: string, buildSlug: string) => {
+export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug: string) => {
 	let error;
 
 	// Validate...
@@ -60,7 +60,8 @@ export const stopBuild = async (appSlug: string, buildSlug: string) => {
 	}
 
 	// Stop the f*cking buildx driver...
-	await execCmd(`docker buildx stop ${appSlug.toLowerCase()}`);
+	await execCmd(`docker buildx stop ${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`);
+	await execCmd(`docker buildx stop buildx_buildkit_${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`);
 	await wait(100);
 
 	// Update the status in the database
