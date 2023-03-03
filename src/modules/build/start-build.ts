@@ -136,29 +136,29 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 		if (existsSync(buildDir)) {
 			try {
-				log(`Trying to check out and git pull: ${buildDir}`);
+				sendMessage({ SOCKET_ROOM, logger, message: `[0] Trying to check out existing directory and do git pull at: ${buildDir}` });
 				await execa.command(`cd ${buildDir} && git checkout -f && git pull --rebase`, cliOpts);
 			} catch (e) {
-				log(`Remove directory: ${buildDir}`);
+				sendMessage({ SOCKET_ROOM, logger, message: `[1] Remove directory: ${buildDir} :>> ${e}` });
 				fs.rmSync(buildDir, { recursive: true, force: true, maxRetries: 2, retryDelay: 500 });
 
-				log(`[1] Clone new into directory: ${buildDir}`);
+				sendMessage({ SOCKET_ROOM, logger, message: `[1] Clone new into directory: ${buildDir}` });
 				try {
 					await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
 				} catch (e2) {
-					sendMessage({ SOCKET_ROOM, logger, message: `Failed to pull branch "${gitBranch}" to "${buildDir}": ${e}` });
-					await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
-					return;
+					sendMessage({ SOCKET_ROOM, logger, message: `[1] Failed to clone new branch "${gitBranch}" to "${buildDir}": ${e}` });
+					// await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+					// return;
 				}
 			}
 		} else {
 			try {
-				log(`[2] Clone new to: ${buildDir}`);
+				sendMessage({ SOCKET_ROOM, logger, message: `[2] Clone new to: ${buildDir}` });
 				await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
 			} catch (e) {
-				sendMessage({ SOCKET_ROOM, logger, message: `Failed to pull branch "${gitBranch}" to "${buildDir}": ${e}` });
-				await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
-				return;
+				sendMessage({ SOCKET_ROOM, logger, message: `[2] Failed to Clone new branch "${gitBranch}" to "${buildDir}": ${e}` });
+				// await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+				// return;
 			}
 		}
 
@@ -340,7 +340,6 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
 
 		sendMessage({ SOCKET_ROOM, logger, message: e.toString() });
-		logError(e);
 
 		return;
 	}

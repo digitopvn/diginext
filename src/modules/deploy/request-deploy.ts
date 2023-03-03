@@ -70,7 +70,17 @@ export async function requestDeploy(options: InputOptions) {
 	appConfig = saveAppConfig(validatedAppConfig, { directory: targetDirectory });
 
 	// save deploy environment data to database:
-	const [updatedApp] = await DB.update<App>("app", { slug: app.slug }, { deployEnvironment: { [env]: deploymentInfo.deployEnvironment } });
+	const [updatedApp] = await DB.update<App>(
+		"app",
+		{ slug: app.slug },
+		{
+			projectSlug: options.project.slug,
+			project: options.project._id,
+			deployEnvironment: {
+				[env]: deploymentInfo.deployEnvironment,
+			},
+		}
+	);
 
 	/**
 	 * Generate build number & build image as docker image tag
