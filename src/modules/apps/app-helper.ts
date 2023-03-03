@@ -3,18 +3,18 @@ import type { AppConfig, ClientDeployEnvironmentConfig } from "@/interfaces";
 
 /**
  * Parse `AppConfig` data from `App` instance
- * @param app - Should be populated ["project"]
+ * @param app - Should be populated ["project", "owner", "workspace"]
  */
 export const getAppConfigFromApp = (app: App) => {
 	// hide confidential information:
 	const clientDeployEnvironment: { [key: string]: ClientDeployEnvironmentConfig } = {};
 	Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
-		const { deploymentYaml, prereleaseDeploymentYaml, prereleaseUrl, envVars, cliVersion, namespaceYaml, ..._clientDeployEnvironment } =
+		const { deploymentYaml, prereleaseDeploymentYaml, prereleaseUrl, envVars, cliVersion, namespaceYaml, ..._clientDeployEnvironmentData } =
 			deployEnvironment;
 
-		clientDeployEnvironment[env] = (_clientDeployEnvironment[env] || {}) as ClientDeployEnvironmentConfig;
+		clientDeployEnvironment[env] = (_clientDeployEnvironmentData || {}) as ClientDeployEnvironmentConfig;
 	});
-
+	// console.log("clientDeployEnvironment :>> ", clientDeployEnvironment);
 	const appConfig: AppConfig = {
 		name: app.name,
 		slug: app.slug,

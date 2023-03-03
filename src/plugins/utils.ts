@@ -383,7 +383,7 @@ export const deleteFolderRecursive = async (filePath) => {
 
 /**
  * Flatten the object into 1-level-object (with key paths)
- * @example {a: {b: [{c: 1}, {c: 2}]}, e: 3} -> {"a.b.0.c": 1, "a.b.1.c": 2, "e": 3}
+ * @example {a: {b: [{c: 1}, {c: 2}]}, e: 3} -> {"a.b[0].c": 1, "a.b[1].c": 2, "e": 3}
  */
 export function flattenObjectToPost(object: any = {}, initialPathPrefix = "") {
 	if (!object || typeof object !== "object") {

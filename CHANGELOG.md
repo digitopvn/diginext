@@ -1,3 +1,10 @@
+## [2.3.3](https://github.com/digitopvn/diginext/compare/v2.3.2...v2.3.3) (2023-03-03)
+
+
+### Bug Fixes
+
+* **deploy:** ssl issue for longer than 64 chars domain ([eefd4d3](https://github.com/digitopvn/diginext/commit/eefd4d39df2ea8cbfafda114205aa07a51e0b220))
+
 ## [2.3.2](https://github.com/digitopvn/diginext/compare/v2.3.1...v2.3.2) (2023-03-03)
 
 

@@ -176,6 +176,7 @@ export class DB {
 
 			const updateData = flattenObjectPaths(data);
 			// console.log("[DB] updateData :>> ", updateData);
+			// logFull(updateData);
 
 			const { data: result = [] } = await fetchApi<T>({
 				url,

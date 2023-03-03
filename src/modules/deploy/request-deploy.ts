@@ -55,7 +55,7 @@ export async function requestDeploy(options: InputOptions) {
 	 * get app config from "dx.json"
 	 */
 	let appConfig = getAppConfig(targetDirectory);
-	console.log("appConfig :>> ", appConfig);
+	// console.log("appConfig :>> ", appConfig);
 	if (appConfig && appConfig.project) options.projectSlug = appConfig.project;
 	if (appConfig && appConfig.slug) options.slug = appConfig.slug;
 
@@ -66,12 +66,11 @@ export async function requestDeploy(options: InputOptions) {
 	const deploymentInfo = await askForDeployEnvironmentInfo(options);
 	const { app, appConfig: validatedAppConfig } = deploymentInfo;
 
-	// save deploy environment data to database:
-	const updatedApp = await DB.update<App>("app", { slug: app.slug }, { deployEnvironment: { [env]: deploymentInfo.deployEnvironment } });
-	console.log("updatedApp :>> ", updatedApp);
-
 	// save deploy environment data into local app config (dx.json)
 	appConfig = saveAppConfig(validatedAppConfig, { directory: targetDirectory });
+
+	// save deploy environment data to database:
+	const [updatedApp] = await DB.update<App>("app", { slug: app.slug }, { deployEnvironment: { [env]: deploymentInfo.deployEnvironment } });
 
 	/**
 	 * Generate build number & build image as docker image tag
@@ -122,7 +121,7 @@ export async function requestDeploy(options: InputOptions) {
 	await checkGitignoreContainsDotenvFiles({ targetDir: appDirectory });
 
 	// Notify the commander:
-	log(`Requesting BUILD SERVER to deploy this app: "${projectSlug}/${slug}"`);
+	log(`Requesting BUILD SERVER to deploy this app: "${appConfig.project}/${appConfig.slug}"`);
 
 	// additional params:
 	options.namespace = appConfig.environment[env].namespace;
@@ -154,16 +153,11 @@ export async function requestDeploy(options: InputOptions) {
 	// Make an API to request server to build:
 	const deployOptions = JSON.stringify(options);
 	try {
-		const { status, messages = ["Unknown error."] } = await fetchApi({
+		fetchApi({
 			url: DEPLOY_API_PATH,
 			method: "POST",
 			data: { options: deployOptions },
 		});
-
-		if (!status) {
-			logError(`Can't deploy due to:`, messages[0]);
-			return;
-		}
 	} catch (e) {
 		logError(`Unexpected network error:`, e);
 		return;

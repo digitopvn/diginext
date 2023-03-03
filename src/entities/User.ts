@@ -96,7 +96,6 @@ export default class User extends Base {
 	constructor(data?: User) {
 		super();
 		Object.assign(this, data);
-		// this.username = this.slug;
 	}
 }
 

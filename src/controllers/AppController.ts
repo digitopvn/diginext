@@ -59,6 +59,8 @@ export default class AppController extends BaseController<App> {
 			body.projectSlug = project.slug;
 		}
 
+		console.log("body :>> ", body);
+
 		return super.update(body);
 	}
 
@@ -166,6 +168,7 @@ export default class AppController extends BaseController<App> {
 		if (!env) return { status: 0, messsages: [`Deploy environment name is required.`] };
 		if (!config) return { status: 0, messsages: [`Deploy environment configuration is required.`] };
 
+		// TODO: change to "deployEnvironment"
 		const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}`]: config });
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
 
@@ -232,6 +235,7 @@ export default class AppController extends BaseController<App> {
 			errorMsg = e.message;
 		}
 
+		// TODO: change to "deployEnvironment"
 		// update the app (delete the environment)
 		const updatedApp = await this.service.update(appFilter, { $unset: { [`environment.${env}`]: "" } }, { raw: true });
 		log(`[BaseController] deleteEnvironment`, { appFilter }, ` :>>`, { updatedApp });
@@ -290,6 +294,7 @@ export default class AppController extends BaseController<App> {
 		if (!env) return { status: 0, messsages: [`Deploy environment name (env) is required.`] };
 		if (!envVars) return { status: 0, messsages: [`Array of variables (envVars) is required.`] };
 
+		// TODO: change to "deployEnvironment"
 		const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}.envVars`]: envVars });
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
 
@@ -342,12 +347,14 @@ export default class AppController extends BaseController<App> {
 				return v;
 			});
 
+			// TODO: change to "deployEnvironment"
 			const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}.envVars`]: updatedEnvVars });
 			if (!updatedApp)
 				return { status: 0, messages: [`Failed to update "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
 		} else {
 			// create new variable
 			envVars.push(envVar);
+			// TODO: change to "deployEnvironment"
 			const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}.envVars`]: envVars });
 			if (!updatedApp) return { status: 0, messages: [`Failed to add "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
 		}

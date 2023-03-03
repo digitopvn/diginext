@@ -21,9 +21,14 @@ export default class DeployController {
 
 	apiRespond(executor) {
 		return async (req: Request, res: Response, next: NextFunction) => {
-			this.user = req.user as User;
-			let result = await executor(req.body);
-			return res.status(200).json(result);
+			try {
+				this.user = req.user as User;
+				let result = await executor(req.body);
+				res.status(200).json(result);
+			} catch (e) {
+				// forward the error to Express.js Error Handling Route
+				next(e);
+			}
 		};
 	}
 
@@ -52,9 +57,12 @@ export default class DeployController {
 			};
 
 		// start build in background:
-		const result = await startBuild(options);
-		if (!result) return { status: 0, messages: [`Failed to build & deploy.`] };
-		return { messages: [], status: 1, data: result };
+		try {
+			startBuild(options);
+			return { messages: [`Building...`], status: 1 };
+		} catch (e) {
+			return { messages: [`Failed to build & deploy: ${e.message}`], status: 0 };
+		}
 	}
 
 	@Security("jwt")
