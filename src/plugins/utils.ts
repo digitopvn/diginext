@@ -591,7 +591,7 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
  */
 export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 	try {
-		const remoteSSH = await execCmd(`cd ${dir} && git remote get-url origin`);
+		const remoteSSH = await execCmd(`cd "${dir}" && git remote get-url origin`);
 		// console.log("dir :>> ", dir);
 		// console.log("remoteSSH :>> ", remoteSSH);
 		if (!remoteSSH) return;
