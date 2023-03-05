@@ -27,7 +27,7 @@ export async function requestDeploy(options: InputOptions) {
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
 	const { buildServerUrl } = getCliConfig();
-	const { env, projectSlug, slug, targetDirectory } = options;
+	const { env, targetDirectory } = options;
 
 	const appDirectory = targetDirectory;
 	const DEPLOY_API_PATH = `${buildServerUrl}/api/v1/deploy`;
@@ -63,7 +63,7 @@ export async function requestDeploy(options: InputOptions) {
 	const { imageURL } = deployEnvironment;
 	options.buildNumber = makeDaySlug({ divider: "" });
 	options.buildImage = `${imageURL}:${options.buildNumber}`;
-	options.SOCKET_ROOM = `${options.slug}-${options.buildNumber}`;
+	options.SOCKET_ROOM = `${appConfig.slug}-${options.buildNumber}`;
 	const { SOCKET_ROOM } = options;
 
 	/**
@@ -83,7 +83,10 @@ export async function requestDeploy(options: InputOptions) {
 	/**
 	 * [5] Notify the commander & call API to request server build:
 	 */
-	log(`Requesting BUILD SERVER to deploy this app: "${options.projectSlug}/${options.slug}"`);
+	log(`Requesting BUILD SERVER to deploy this app: "${appConfig.project}/${appConfig.slug}"`);
+	options.projectSlug = appConfig.project;
+	options.appSlug = appConfig.slug;
+	options.slug = appConfig.slug;
 
 	// Make an API to request server to build:
 	const deployOptions = JSON.stringify(options);

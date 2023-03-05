@@ -129,7 +129,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		logError(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
 		return;
 	}
-
+	console.log("generate deployment > app :>> ", app);
 	const deployEnvironment = await getDeployEvironmentByApp(app, env);
 
 	let containerEnvs = deployEnvironment.envVars || [];

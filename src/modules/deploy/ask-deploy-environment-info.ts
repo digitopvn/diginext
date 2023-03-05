@@ -44,7 +44,7 @@ export const askForCertIssuer = async (options: { question?: string; defaultValu
 };
 
 export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequestOptions) => {
-	const { isDebugging, imageURL, env, projectSlug, slug, targetDirectory: appDirectory = process.cwd() } = options;
+	const { env, targetDirectory: appDirectory = process.cwd() } = options;
 
 	/**
 	 * --------------------------------------------------
@@ -54,15 +54,17 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	 * by REQUEST DEPLOY IMAGE URL, which don't have "dx.json" app configuration)
 	 */
 
-	let project = projectSlug ? await DB.findOne<Project>("project", { slug: projectSlug }) : undefined;
-	if (!project) project = await createOrSelectProject(options);
-
-	let app = slug ? await DB.findOne<App>("app", { slug }, { populate: ["project", "owner", "workspace"] }) : undefined;
-	if (!app) app = await createOrSelectApp(project.slug, options);
-
 	let localAppConfig = getAppConfig(appDirectory);
 	const localDeployEnvironment = localAppConfig.environment[env] || {};
 	const localDeployDomains = localDeployEnvironment.domains || [];
+
+	let project = localAppConfig.project ? await DB.findOne<Project>("project", { slug: localAppConfig.project }) : undefined;
+	if (!project) project = await createOrSelectProject(options);
+
+	let app = localAppConfig.slug
+		? await DB.findOne<App>("app", { slug: localAppConfig.slug }, { populate: ["project", "owner", "workspace"] })
+		: undefined;
+	if (!app) app = await createOrSelectApp(project.slug, options);
 
 	// TODO: validate owner, workspace, git & framework
 
@@ -281,7 +283,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	 */
 	const [updatedApp] = await DB.update<App>(
 		"app",
-		{ slug },
+		{ slug: appConfig.slug },
 		{
 			slug: appConfig.slug, // <-- update old app slug -> new app slug (if any)
 			projectSlug: appConfig.project, // <-- update old app projectSlug -> new app projectSlug (if any)

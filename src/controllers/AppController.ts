@@ -1,4 +1,4 @@
-import { log, logError, logFull, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
@@ -57,15 +57,16 @@ export default class AppController extends BaseController<App> {
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
-		let project: Project;
+		let project: Project,
+			projectSvc = new ProjectService();
 
 		if (body.project) {
-			project = await this.service.findOne({ id: body.project });
+			project = await projectSvc.findOne({ _id: new ObjectId(body.project as string) });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
 		}
 
-		console.log("body :>> ", body);
+		// console.log("body :>> ", body);
 
 		return super.update(body);
 	}
@@ -234,7 +235,7 @@ export default class AppController extends BaseController<App> {
 		}
 
 		// find the app
-		const appFilter = typeof id != "undefined" ? { id } : { slug };
+		const appFilter = typeof id != "undefined" ? { _id: new ObjectId(id) } : { slug };
 		const app = await this.service.findOne(appFilter);
 
 		// check if the environment is existed
@@ -244,7 +245,7 @@ export default class AppController extends BaseController<App> {
 			return result;
 		}
 
-		const deployEnvironment = app.deployEnvironment[env.toString()];
+		const deployEnvironment = (app.deployEnvironment || {})[env.toString()];
 		if (!deployEnvironment) {
 			result.status = 0;
 			result.messages.push(`App environment "${env}" not found.`);
@@ -270,19 +271,12 @@ export default class AppController extends BaseController<App> {
 		}
 
 		// update the app (delete the deploy environment)
-		const updatedApp = await this.service.update(
-			appFilter,
-			{
-				$unset: {
-					[`environment.${env}`]: "",
-					[`deployEnvironment.${env}`]: "",
-				},
-			},
-			{ raw: true }
-		);
+		const updatedApp = await this.service.update(appFilter, {
+			[`environment.${env}`]: "",
+			[`deployEnvironment.${env}`]: {},
+		});
 
-		log(`[BaseController] deleteEnvironment`, { appFilter }, ` :>>`, { updatedApp });
-		logFull({ appFilter });
+		log(`[BaseController] deleted Environment`, { appFilter }, ` :>>`, { updatedApp });
 
 		// respond the results
 		result.data = updatedApp;
