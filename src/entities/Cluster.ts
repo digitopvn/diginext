@@ -21,6 +21,12 @@ export default class Cluster extends Base {
 	slug?: string;
 
 	/**
+	 * Is cluster verified
+	 */
+	@Column()
+	isVerified?: boolean;
+
+	/**
 	 * Cluster short name (to access via `kubectl context`)
 	 */
 	@Column()

@@ -260,7 +260,7 @@ export const verifySSH = async (options?: InputOptions) => {
 			await execCmd(`chmod -R 400 ${privateIdRsaFile}`, `Can't assign permission [400] to "id_rsa" private key.`);
 		}
 	} else {
-		logError(`PUBLIC_KEY and PRIVATE_KEY are not existed.`);
+		logError(`[GIT] PUBLIC_KEY and PRIVATE_KEY are not existed.`);
 		return false;
 	}
 
@@ -273,33 +273,47 @@ export const verifySSH = async (options?: InputOptions) => {
 	await execCmd(`touch ~/.ssh/config`);
 
 	if (isMac()) {
-		await execCmd(
-			`echo "Host ${gitProviderDomain[gitProvider]}\n	UseKeychain yes\n	AddKeysToAgent yes\n	IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`
-		);
+		await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}" >> ~/.ssh/config`);
+		await execCmd(`echo "  UseKeychain yes" >> ~/.ssh/config`);
+		await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
+		await execCmd(`echo "  IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
 	} else {
-		await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}\n	AddKeysToAgent yes\n	IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
+		await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}" >> ~/.ssh/config`);
+		await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
+		await execCmd(`echo "  IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
+		// await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}\n	AddKeysToAgent yes\n	IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
 	}
 	// await execCmd(`ssh -T git@${gitProviderDomain[gitProvider]}`);
 
+	let authResult;
 	switch (gitProvider) {
 		case "bitbucket":
-			await execCmd(`ssh -o StrictHostKeyChecking=no -T git@bitbucket.org`, "Bitbucket authentication failed");
+			authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@bitbucket.org`, "[GIT] Bitbucket authentication failed");
+			authResult = typeof authResult !== "undefined";
 			break;
 
 		case "github":
-			await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "Github authentication failed");
+			authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "[GIT] Github authentication failed");
+			authResult = typeof authResult !== "undefined";
 			break;
 
 		case "gitlab":
-			await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "Gitlab authentication failed");
+			authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "[GIT] Gitlab authentication failed");
+			authResult = typeof authResult !== "undefined";
+			break;
 
 		default:
-			logError(`Provider "${gitProvider}" is not valid.`);
-			return false;
+			authResult = false;
+			break;
 	}
 
-	logSuccess(`${capitalize(gitProvider)} was authenticated successfully.`);
-	return true;
+	if (authResult) {
+		logSuccess(`[GIT] ${capitalize(gitProvider)} was authenticated successfully.`);
+	} else {
+		logError(`[GIT] Provider "${gitProvider}" is not valid.`);
+	}
+
+	return authResult;
 };
 
 /**

@@ -1,24 +1,19 @@
 import chalk from "chalk";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
-import inquirer from "inquirer";
-import { isEmpty } from "lodash";
-import simpleGit from "simple-git";
 import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { App, Project } from "@/entities";
+import type { Project } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
-import { getAppConfig, getCurrentGitRepoData, resolveDockerfilePath, resolveEnvFilePath, saveAppConfig } from "@/plugins";
+import { resolveDockerfilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
-import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
-import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
-import { uploadDotenvFileByApp } from "./dotenv-upload";
+import { parseOptionsToAppConfig } from "./parse-options-to-app-config";
 
 /**
  * Request the build server to start building & deploying
@@ -32,7 +27,7 @@ export async function requestDeploy(options: InputOptions) {
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
 	const { buildServerUrl } = getCliConfig();
-	const { env, projectSlug, slug, targetDirectory } = options;
+	const { env, targetDirectory } = options;
 
 	const appDirectory = targetDirectory;
 	const DEPLOY_API_PATH = `${buildServerUrl}/api/v1/deploy`;
@@ -51,93 +46,29 @@ export async function requestDeploy(options: InputOptions) {
 	if (!dockerFile) return;
 
 	/**
-	 * check if there is deployment configuration
-	 * get app config from "dx.json"
+	 * [1] Parse cli options, validate the input params
+	 *     and save it to "dx.json"
 	 */
-	let appConfig = getAppConfig(targetDirectory);
-	// console.log("appConfig :>> ", appConfig);
-	if (appConfig && appConfig.project) options.projectSlug = appConfig.project;
-	if (appConfig && appConfig.slug) options.slug = appConfig.slug;
+	let appConfig = await parseOptionsToAppConfig(options);
 
 	/**
-	 * validate deploy environment data
-	 * if it's invalid, ask for the missing ones
+	 * [2] Compare LOCAL & SERVER App Config,
+	 *     then upload local app config to server.
 	 */
-	const deploymentInfo = await askForDeployEnvironmentInfo(options);
-	const { app, appConfig: validatedAppConfig } = deploymentInfo;
-
-	// save deploy environment data into local app config (dx.json)
-	appConfig = saveAppConfig(validatedAppConfig, { directory: targetDirectory });
-
-	// save deploy environment data to database:
-	const [updatedApp] = await DB.update<App>("app", { slug: app.slug }, { deployEnvironment: { [env]: deploymentInfo.deployEnvironment } });
+	const { deployEnvironment } = await askForDeployEnvironmentInfo(options);
 
 	/**
-	 * Generate build number & build image as docker image tag
+	 * [3] Generate build number & build image as docker image tag
 	 */
-	const { imageURL } = appConfig.environment[env];
+	const { imageURL } = deployEnvironment;
 	options.buildNumber = makeDaySlug({ divider: "" });
 	options.buildImage = `${imageURL}:${options.buildNumber}`;
+	options.SOCKET_ROOM = `${appConfig.slug}-${options.buildNumber}`;
+	const { SOCKET_ROOM } = options;
 
-	const SOCKET_ROOM = `${options.slug}-${options.buildNumber}`;
-	options.SOCKET_ROOM = SOCKET_ROOM;
-
-	// check database to see should sync ENV variables or not...
-	let deployEnvironmentFromDB = await getDeployEvironmentByApp(app, env);
-
-	// merge with appConfig
-	const deployEnvironment = { ...appConfig.environment[env], ...deployEnvironmentFromDB };
-	const serverEnvironmentVariables = deployEnvironment?.envVars || [];
-
-	let envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
-
-	// if "--upload-env" flag is specified:
-	if (options.shouldUploadDotenv) {
-		if (!envFile) {
-			logWarn(`Can't upload DOTENV since there are no DOTENV files (.env.*) in this directory`);
-		} else {
-			await uploadDotenvFileByApp(envFile, app, env);
-		}
-	} else {
-		// if ENV file is existed on local & not available on server -> ask to upload local ENV to server:
-		if (envFile && !isEmpty(serverEnvironmentVariables)) {
-			logWarn(`Skip uploading local ENV variables to deployed environment since it's already existed.`);
-			log(`(If you want to force upload local ENV variables, deploy again with: ${chalk.cyan("dx deploy --upload-env")})`);
-		}
-
-		if (envFile && isEmpty(serverEnvironmentVariables)) {
-			const { shouldUploadEnv } = await inquirer.prompt({
-				type: "confirm",
-				name: "shouldUploadEnv",
-				default: false,
-				message: `Do you want to use your "${envFile}" on ${env.toUpperCase()} environment?`,
-			});
-
-			if (shouldUploadEnv) await uploadDotenvFileByApp(envFile, app, env);
-		}
-	}
-
-	// [SECURITY CHECK] warns if DOTENV files are not listed in ".gitignore" file
-	await checkGitignoreContainsDotenvFiles({ targetDir: appDirectory });
-
-	// Notify the commander:
-	log(`Requesting BUILD SERVER to deploy this app: "${appConfig.project}/${appConfig.slug}"`);
-
-	// additional params:
-	options.namespace = appConfig.environment[env].namespace;
-
-	// get remote SSH
-	const { remoteSSH, remoteURL, provider: gitProvider } = await getCurrentGitRepoData(options.targetDirectory);
-	options.remoteSSH = remoteSSH;
-	options.remoteURL = remoteURL;
-	options.gitProvider = gitProvider;
-
-	// get git branch:
-	const git = simpleGit(appDirectory, { binary: "git" });
-	const gitStatus = await git.status(["-s"]);
-	options.gitBranch = gitStatus.current;
-
-	// Commit the deployment files to GIT repository:
+	/**
+	 * [4] Stage, commit & push configuration files (dx.json) to GIT repository:
+	 */
 	try {
 		await stageAllFiles({
 			directory: options.targetDirectory,
@@ -149,7 +80,14 @@ export async function requestDeploy(options: InputOptions) {
 		return;
 	}
 
-	// return;
+	/**
+	 * [5] Notify the commander & call API to request server build:
+	 */
+	log(`Requesting BUILD SERVER to deploy this app: "${appConfig.project}/${appConfig.slug}"`);
+	options.projectSlug = appConfig.project;
+	options.appSlug = appConfig.slug;
+	options.slug = appConfig.slug;
+
 	// Make an API to request server to build:
 	const deployOptions = JSON.stringify(options);
 	try {

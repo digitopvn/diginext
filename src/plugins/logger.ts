@@ -12,9 +12,12 @@ export class Logger {
 
 	filePath: string;
 
+	content: string;
+
 	constructor(name: string) {
 		this.name = name;
 		this.fileName = name + ".txt";
+		this.content = "";
 
 		this.dir = process.env.LOG_DIR ?? path.resolve(CLI_DIR, "public/logs");
 		if (!fs.existsSync(this.dir)) fs.mkdirSync(this.dir, { recursive: true });
@@ -37,6 +40,7 @@ export class Logger {
 	}
 
 	append(str) {
+		this.content += "\n" + str;
 		const content = this.read();
 		fs.writeFileSync(this.filePath, content + "\n" + str, { flag: "w", encoding: "utf8" });
 	}

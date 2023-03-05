@@ -41,6 +41,8 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 		app = await createAppByForm(options);
 	}
 
+	if (!app) return;
+
 	options.app = app;
 	options.slug = app.slug;
 

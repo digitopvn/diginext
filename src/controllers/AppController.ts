@@ -1,5 +1,6 @@
-import { log, logError, logFull, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
+import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { App, Project } from "@/entities";
@@ -31,35 +32,41 @@ export default class AppController extends BaseController<App> {
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
-		let project: Project;
-		if (!body.projectSlug && body.project) {
-			project = await this.service.findOne({ id: body.project });
+		let project: Project,
+			projectSvc: ProjectService = new ProjectService();
+
+		if (body.project) {
+			project = await projectSvc.findOne({ _id: new ObjectId(body.project as string) });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
 		}
 
-		const res = await super.create(body);
-		const { data: newApp } = res;
+		const newApp = await this.service.create(body);
+		// console.log("app create > newApp :>> ", newApp);
 
 		if (project) {
-			[project] = await new ProjectService().update({ _id: project._id }, { $addToSet: { apps: project._id } }, { raw: true });
+			const newAppId = (newApp as App)._id;
+			const projectApps = [...(project.apps || []), newAppId];
+			// console.log("projectApps :>> ", projectApps);
+			[project] = await projectSvc.update({ _id: project._id }, { apps: projectApps });
 		}
 
-		return res;
+		return { status: 1, data: newApp, messages: [""] } as ResponseData;
 	}
 
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
-		let project: Project;
+		let project: Project,
+			projectSvc = new ProjectService();
 
 		if (body.project) {
-			project = await this.service.findOne({ id: body.project });
+			project = await projectSvc.findOne({ _id: new ObjectId(body.project as string) });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
 		}
 
-		console.log("body :>> ", body);
+		// console.log("body :>> ", body);
 
 		return super.update(body);
 	}
@@ -128,14 +135,15 @@ export default class AppController extends BaseController<App> {
 		}
 	) {
 		const { slug, env } = this.filter;
-		if (!slug) return { status: 0, messsages: [`App slug is required.`] };
-		if (!env) return { status: 0, messsages: [`Deploy environment name is required.`] };
+		if (!slug) return { status: 0, messages: [`App slug is required.`] };
+		if (!env) return { status: 0, messages: [`Deploy environment name is required.`] };
 
 		const app = await this.service.findOne({ slug });
 		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 
-		let result = { status: 1, data: app.deployEnvironment[env], messages: [] };
+		const deployEnvironment = app.deployEnvironment[env];
+		let result = { status: 1, data: deployEnvironment, messages: [""] };
 		return result;
 	}
 
@@ -159,17 +167,22 @@ export default class AppController extends BaseController<App> {
 			/**
 			 * Deploy environment configuration
 			 */
-			config: ClientDeployEnvironmentConfig;
+			clientDeployEnvironment: ClientDeployEnvironmentConfig;
 		},
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		const { slug, env, config } = body;
+		const { slug, env, clientDeployEnvironment } = body;
 		if (!slug) return { status: 0, messsages: [`App slug is required.`] };
 		if (!env) return { status: 0, messsages: [`Deploy environment name is required.`] };
-		if (!config) return { status: 0, messsages: [`Deploy environment configuration is required.`] };
+		if (!clientDeployEnvironment) return { status: 0, messsages: [`Deploy environment configuration is required.`] };
 
-		// TODO: change to "deployEnvironment"
-		const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}`]: config });
+		const [updatedApp] = await this.service.update(
+			{ slug },
+			{
+				[`environment.${env}`]: clientDeployEnvironment,
+				[`deployEnvironment.${env}`]: clientDeployEnvironment,
+			}
+		);
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
 
 		const { data: appConfig } = await this.getAppConfig({ slug });
@@ -183,10 +196,32 @@ export default class AppController extends BaseController<App> {
 	 */
 	@Security("jwt")
 	@Delete("/environment")
-	async deleteDeployEnvironment(@Queries() queryParams?: { _id: string; id: string; slug: string; env: string }) {
-		let result: ResponseData & { data: App } = { status: 1, data: {}, messages: [] };
+	async deleteDeployEnvironment(
+		@Body()
+		body?: {
+			/**
+			 * App's ID (no need `slug` if using `id` or `_id`)
+			 */
+			_id?: string;
+			/**
+			 * [alias] App's ID (no need `slug` if using `id` or `_id`)
+			 */
+			id?: string;
+			/**
+			 * App's slug (no need `id` or `_id` if using `slug`)
+			 */
+			slug?: string;
+			/**
+			 * Short name of deploy environment
+			 * @example "dev", "prod",...
+			 */
+			env?: string;
+		}
+	) {
+		let result = { status: 1, data: {}, messages: [] } as ResponseData & { data: App };
+
 		// input validation
-		let { _id, id, slug, env } = this.filter;
+		let { _id, id, slug, env } = body;
 		if (!id && _id) id = _id;
 		if (!id && !slug) {
 			result.status = 0;
@@ -200,7 +235,7 @@ export default class AppController extends BaseController<App> {
 		}
 
 		// find the app
-		const appFilter = typeof id != "undefined" ? { id } : { slug };
+		const appFilter = typeof id != "undefined" ? { _id: new ObjectId(id) } : { slug };
 		const app = await this.service.findOne(appFilter);
 
 		// check if the environment is existed
@@ -210,8 +245,8 @@ export default class AppController extends BaseController<App> {
 			return result;
 		}
 
-		const { environment } = app;
-		if (!environment[env.toString()]) {
+		const deployEnvironment = (app.deployEnvironment || {})[env.toString()];
+		if (!deployEnvironment) {
 			result.status = 0;
 			result.messages.push(`App environment "${env}" not found.`);
 			return result;
@@ -235,11 +270,13 @@ export default class AppController extends BaseController<App> {
 			errorMsg = e.message;
 		}
 
-		// TODO: change to "deployEnvironment"
-		// update the app (delete the environment)
-		const updatedApp = await this.service.update(appFilter, { $unset: { [`environment.${env}`]: "" } }, { raw: true });
-		log(`[BaseController] deleteEnvironment`, { appFilter }, ` :>>`, { updatedApp });
-		logFull({ appFilter });
+		// update the app (delete the deploy environment)
+		const updatedApp = await this.service.update(appFilter, {
+			[`environment.${env}`]: "",
+			[`deployEnvironment.${env}`]: {},
+		});
+
+		log(`[BaseController] deleted Environment`, { appFilter }, ` :>>`, { updatedApp });
 
 		// respond the results
 		result.data = updatedApp;
@@ -294,8 +331,13 @@ export default class AppController extends BaseController<App> {
 		if (!env) return { status: 0, messsages: [`Deploy environment name (env) is required.`] };
 		if (!envVars) return { status: 0, messsages: [`Array of variables (envVars) is required.`] };
 
-		// TODO: change to "deployEnvironment"
-		const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}.envVars`]: envVars });
+		const [updatedApp] = await this.service.update(
+			{ slug },
+			{
+				[`environment.${env}.envVars`]: envVars,
+				[`deployEnvironment.${env}.envVars`]: envVars,
+			}
+		);
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
 
 		const { data: appConfig } = await this.getAppConfig({ slug });
@@ -348,14 +390,26 @@ export default class AppController extends BaseController<App> {
 			});
 
 			// TODO: change to "deployEnvironment"
-			const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}.envVars`]: updatedEnvVars });
+			const [updatedApp] = await this.service.update(
+				{ slug },
+				{
+					[`environment.${env}.envVars`]: updatedEnvVars,
+					[`deployEnvironment.${env}.envVars`]: updatedEnvVars,
+				}
+			);
 			if (!updatedApp)
 				return { status: 0, messages: [`Failed to update "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
 		} else {
 			// create new variable
 			envVars.push(envVar);
-			// TODO: change to "deployEnvironment"
-			const [updatedApp] = await this.service.update({ slug }, { [`environment.${env}.envVars`]: envVars });
+
+			const [updatedApp] = await this.service.update(
+				{ slug },
+				{
+					[`environment.${env}.envVars`]: envVars,
+					[`deployEnvironment.${env}.envVars`]: envVars,
+				}
+			);
 			if (!updatedApp) return { status: 0, messages: [`Failed to add "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
 		}
 

@@ -1,3 +1,7 @@
+import type { ObjectId } from "mongodb";
+
+import type { User } from "@/entities";
+
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
 import type { ResourceQuotaSize } from "./InputOptions";
 
@@ -165,4 +169,14 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	 * User name of the last person who deploy or update this environment.
 	 */
 	lastUpdatedBy?: string;
+
+	/**
+	 * ID of the creator
+	 */
+	creator?: ObjectId | User;
+
+	/**
+	 * Update time
+	 */
+	updatedAt?: Date;
 }

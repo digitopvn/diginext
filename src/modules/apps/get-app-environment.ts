@@ -17,7 +17,7 @@ export const getDeployEnvironmentFromJSON = async (app: App, env: string) => {
 			deployEnvironment = app.environment[env] as DeployEnvironment;
 		}
 	}
-	return deployEnvironment;
+	return deployEnvironment || {};
 };
 
 export const getDeployEvironmentByApp = async (app: App, env: string) => {
@@ -27,5 +27,5 @@ export const getDeployEvironmentByApp = async (app: App, env: string) => {
 		deployEnvironment[env] = await getDeployEnvironmentFromJSON(app, env);
 		// migrateDeployEnvironmentOfSpecificApps({ _id: app._id });
 	}
-	return deployEnvironment[env];
+	return deployEnvironment[env] || {};
 };

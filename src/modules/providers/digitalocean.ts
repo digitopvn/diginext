@@ -12,7 +12,6 @@ import type { CloudProvider, ContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
 import { execCmd, wait } from "@/plugins";
-import type { CloudProviderService } from "@/services";
 
 import type { DomainRecord } from "../../interfaces/DomainRecord";
 import { DB } from "../api/DB";
@@ -55,10 +54,7 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
  * @param {InputOptions} options
  */
 export const authenticate = async (options?: InputOptions) => {
-	// Not support multiple "Digital Ocean" providers yet!
-	let providerSvc: CloudProviderService;
 	const provider = await DB.findOne<CloudProvider>("provider", { shortName: "digitalocean" });
-	if (provider) logWarn(`Digital Ocean provider is existed. Multiple "Digital Ocean" providers are not supported yet.`);
 
 	let API_ACCESS_TOKEN;
 

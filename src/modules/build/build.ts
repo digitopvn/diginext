@@ -18,7 +18,6 @@ export async function testBuild() {
  */
 export async function saveLogs(buildSlug: string, logs: string) {
 	if (!buildSlug) throw new Error(`Build's slug is required, it's empty now.`);
-
-	const builds = await DB.update<Build>("build", { slug: buildSlug }, { logs });
-	return builds[0];
+	const [build] = await DB.update<Build>("build", { slug: buildSlug }, { logs });
+	return build;
 }

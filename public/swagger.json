@@ -56,142 +56,9 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ResourceQuotaSize": {
+			"ObjectId": {
 				"type": "string",
-				"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"]
-			},
-			"SslType": {
-				"type": "string",
-				"enum": ["none", "letsencrypt", "custom"],
-				"default": "\"letsencrypt\""
-			},
-			"DeployEnvironment": {
-				"description": "A deployment's environment of the application.",
-				"properties": {
-					"imageURL": {
-						"type": "string",
-						"description": "Image URI of this app on the Container Registry.\n- Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`\n- If you build from the source code, don't specify `tag` at the end! (eg. `latest`, `beta`,...)"
-					},
-					"namespace": {
-						"type": "string",
-						"description": "Destination namespace name"
-					},
-					"registry": {
-						"type": "string",
-						"description": "Container registry slug"
-					},
-					"provider": {
-						"type": "string",
-						"description": "Cloud provider's short name"
-					},
-					"cluster": {
-						"type": "string",
-						"description": "Cluster's short name"
-					},
-					"project": {
-						"type": "string",
-						"description": "[Google Cloud] PROJECT_ID"
-					},
-					"region": {
-						"type": "string",
-						"description": "[Google Cloud] Region"
-					},
-					"zone": {
-						"type": "string",
-						"description": "[Google Cloud] Zone"
-					},
-					"size": {
-						"$ref": "#/components/schemas/ResourceQuotaSize",
-						"description": "Container quota resources"
-					},
-					"shouldInherit": {
-						"type": "boolean",
-						"description": "Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment",
-						"default": "true"
-					},
-					"redirect": {
-						"type": "boolean",
-						"description": "Set to `false` if you don't want to redirect all the secondary domains to the primary domain.",
-						"default": "true"
-					},
-					"replicas": {
-						"type": "number",
-						"format": "double",
-						"description": "Container's scaling replicas",
-						"default": "1"
-					},
-					"port": {
-						"type": "number",
-						"format": "double",
-						"description": "Container's port"
-					},
-					"basePath": {
-						"type": "string",
-						"description": "Application base path in the endpoint URL",
-						"default": "\"/\""
-					},
-					"domains": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "List of application's domains"
-					},
-					"cdn": {
-						"type": "boolean",
-						"description": "Flag to enable CDN for this application",
-						"default": "false;"
-					},
-					"ssl": {
-						"$ref": "#/components/schemas/SslType",
-						"description": "SSL Certificate Issuer"
-					},
-					"tlsSecret": {
-						"type": "string",
-						"description": "Secret name to hold the key of SSL, will be automatically generated.\nOnly need to specify when using \"custom\" SSL (which is the SSL from third-party issuer)"
-					},
-					"ingress": {
-						"type": "string",
-						"description": "Kubernetes Ingress Class"
-					},
-					"cliVersion": {
-						"type": "string",
-						"description": "The CLI version"
-					},
-					"namespaceYaml": {
-						"type": "string",
-						"description": "Content of namespace YAML file"
-					},
-					"deploymentYaml": {
-						"type": "string",
-						"description": "Content of deployment YAML file"
-					},
-					"prereleaseDeploymentYaml": {
-						"type": "string",
-						"description": "Content of prerelease deployment YAML file"
-					},
-					"prereleaseUrl": {
-						"type": "string",
-						"description": "Prerelease endpoint URL"
-					},
-					"envVars": {
-						"items": {
-							"$ref": "#/components/schemas/KubeEnvironmentVariable"
-						},
-						"type": "array",
-						"description": "Collection array of environment variables"
-					},
-					"createdBy": {
-						"type": "string",
-						"description": "User name of the first person who deploy on this environment."
-					},
-					"lastUpdatedBy": {
-						"type": "string",
-						"description": "User name of the last person who deploy or update this environment."
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
+				"description": "A class representation of the BSON ObjectId type."
 			},
 			"ProviderInfo": {
 				"properties": {
@@ -908,6 +775,159 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ResourceQuotaSize": {
+				"type": "string",
+				"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"]
+			},
+			"SslType": {
+				"type": "string",
+				"enum": ["none", "letsencrypt", "custom"],
+				"default": "\"letsencrypt\""
+			},
+			"DeployEnvironment": {
+				"description": "A deployment's environment of the application.",
+				"properties": {
+					"imageURL": {
+						"type": "string",
+						"description": "Image URI of this app on the Container Registry.\n- Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`\n- If you build from the source code, don't specify `tag` at the end! (eg. `latest`, `beta`,...)"
+					},
+					"namespace": {
+						"type": "string",
+						"description": "Destination namespace name"
+					},
+					"registry": {
+						"type": "string",
+						"description": "Container registry slug"
+					},
+					"provider": {
+						"type": "string",
+						"description": "Cloud provider's short name"
+					},
+					"cluster": {
+						"type": "string",
+						"description": "Cluster's short name"
+					},
+					"project": {
+						"type": "string",
+						"description": "[Google Cloud] PROJECT_ID"
+					},
+					"region": {
+						"type": "string",
+						"description": "[Google Cloud] Region"
+					},
+					"zone": {
+						"type": "string",
+						"description": "[Google Cloud] Zone"
+					},
+					"size": {
+						"$ref": "#/components/schemas/ResourceQuotaSize",
+						"description": "Container quota resources"
+					},
+					"shouldInherit": {
+						"type": "boolean",
+						"description": "Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment",
+						"default": "true"
+					},
+					"redirect": {
+						"type": "boolean",
+						"description": "Set to `false` if you don't want to redirect all the secondary domains to the primary domain.",
+						"default": "true"
+					},
+					"replicas": {
+						"type": "number",
+						"format": "double",
+						"description": "Container's scaling replicas",
+						"default": "1"
+					},
+					"port": {
+						"type": "number",
+						"format": "double",
+						"description": "Container's port"
+					},
+					"basePath": {
+						"type": "string",
+						"description": "Application base path in the endpoint URL",
+						"default": "\"/\""
+					},
+					"domains": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "List of application's domains"
+					},
+					"cdn": {
+						"type": "boolean",
+						"description": "Flag to enable CDN for this application",
+						"default": "false;"
+					},
+					"ssl": {
+						"$ref": "#/components/schemas/SslType",
+						"description": "SSL Certificate Issuer"
+					},
+					"tlsSecret": {
+						"type": "string",
+						"description": "Secret name to hold the key of SSL, will be automatically generated.\nOnly need to specify when using \"custom\" SSL (which is the SSL from third-party issuer)"
+					},
+					"ingress": {
+						"type": "string",
+						"description": "Kubernetes Ingress Class"
+					},
+					"cliVersion": {
+						"type": "string",
+						"description": "The CLI version"
+					},
+					"namespaceYaml": {
+						"type": "string",
+						"description": "Content of namespace YAML file"
+					},
+					"deploymentYaml": {
+						"type": "string",
+						"description": "Content of deployment YAML file"
+					},
+					"prereleaseDeploymentYaml": {
+						"type": "string",
+						"description": "Content of prerelease deployment YAML file"
+					},
+					"prereleaseUrl": {
+						"type": "string",
+						"description": "Prerelease endpoint URL"
+					},
+					"envVars": {
+						"items": {
+							"$ref": "#/components/schemas/KubeEnvironmentVariable"
+						},
+						"type": "array",
+						"description": "Collection array of environment variables"
+					},
+					"createdBy": {
+						"type": "string",
+						"description": "User name of the first person who deploy on this environment."
+					},
+					"lastUpdatedBy": {
+						"type": "string",
+						"description": "User name of the last person who deploy or update this environment."
+					},
+					"creator": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							}
+						],
+						"description": "ID of the creator"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Update time"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Build": {
 				"properties": {
 					"_id": {
@@ -1273,6 +1293,10 @@
 						"type": "string",
 						"description": "Cluster name"
 					},
+					"isVerified": {
+						"type": "boolean",
+						"description": "Is cluster verified"
+					},
 					"shortName": {
 						"type": "string",
 						"description": "Cluster short name (to access via `kubectl context`)"
@@ -1504,6 +1528,10 @@
 					"active": {
 						"type": "boolean",
 						"description": "Auto-generated by \"name\" column"
+					},
+					"isVerified": {
+						"type": "boolean",
+						"description": "Is cluster verified"
 					},
 					"shortName": {
 						"type": "string",
@@ -3505,7 +3533,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.3.3",
+		"version": "2.3.4",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -4430,20 +4458,27 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"messages": {
-											"items": {
-												"type": "string"
-											},
-											"type": "array"
+									"anyOf": [
+										{
+											"$ref": "#/components/schemas/ResponseData"
 										},
-										"status": {
-											"type": "number",
-											"format": "double"
+										{
+											"properties": {
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
 										}
-									},
-									"required": ["messages", "status"],
-									"type": "object"
+									]
 								}
 							}
 						}
@@ -8795,7 +8830,9 @@
 										{
 											"properties": {
 												"messages": {
-													"items": {},
+													"items": {
+														"type": "string"
+													},
 													"type": "array"
 												},
 												"data": {
@@ -8811,24 +8848,6 @@
 										},
 										{
 											"properties": {
-												"messages": {},
-												"messsages": {
-													"items": {
-														"type": "string"
-													},
-													"type": "array"
-												},
-												"status": {
-													"type": "number",
-													"format": "double"
-												}
-											},
-											"required": ["messsages", "status"],
-											"type": "object"
-										},
-										{
-											"properties": {
-												"messsages": {},
 												"messages": {
 													"items": {
 														"type": "string"
@@ -8994,7 +9013,7 @@
 						"application/json": {
 							"schema": {
 								"properties": {
-									"config": {
+									"clientDeployEnvironment": {
 										"$ref": "#/components/schemas/ClientDeployEnvironmentConfig",
 										"description": "Deploy environment configuration"
 									},
@@ -9007,7 +9026,7 @@
 										"description": "App slug"
 									}
 								},
-								"required": ["config", "env", "slug"],
+								"required": ["clientDeployEnvironment", "env", "slug"],
 								"type": "object"
 							}
 						}
@@ -9048,40 +9067,35 @@
 						"jwt": []
 					}
 				],
-				"parameters": [
-					{
-						"in": "query",
-						"name": "env",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "slug",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "_id",
-						"required": true,
-						"schema": {
-							"type": "string"
+				"parameters": [],
+				"requestBody": {
+					"required": false,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"env": {
+										"type": "string",
+										"description": "Short name of deploy environment"
+									},
+									"slug": {
+										"type": "string",
+										"description": "App's slug (no need `id` or `_id` if using `slug`)"
+									},
+									"id": {
+										"type": "string",
+										"description": "[alias] App's ID (no need `slug` if using `id` or `_id`)"
+									},
+									"_id": {
+										"type": "string",
+										"description": "App's ID (no need `slug` if using `id` or `_id`)"
+									}
+								},
+								"type": "object"
+							}
 						}
 					}
-				]
+				}
 			}
 		},
 		"/app/environment/variables": {

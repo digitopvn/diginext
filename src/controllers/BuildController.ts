@@ -99,7 +99,7 @@ export default class BuildController extends BaseController<Build> {
 			return result;
 		}
 
-		const stoppedBuild = await stopBuild(build.appSlug, slug.toString());
+		const stoppedBuild = await stopBuild(build.projectSlug, build.appSlug, slug.toString());
 		if ((stoppedBuild as { error: string }).error) {
 			result.status = 0;
 			result.messages.push((stoppedBuild as { error: string }).error);
