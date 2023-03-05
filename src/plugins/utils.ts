@@ -591,9 +591,9 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
  */
 export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 	try {
-		const remoteSSH = await execCmd(`cd "${dir}" && git remote get-url origin`);
-		// console.log("dir :>> ", dir);
-		// console.log("remoteSSH :>> ", remoteSSH);
+		process.chdir(dir);
+
+		const remoteSSH = await execCmd(`git remote get-url origin`);
 		if (!remoteSSH) return;
 
 		if (remoteSSH.indexOf("https://") > -1) {
@@ -602,14 +602,16 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 			return;
 		}
 
+		const branch = await getCurrentGitBranch(dir);
+		if (!branch) return;
+
 		const { repoSlug: slug, gitProvider: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(remoteSSH);
 
 		const remoteURL = generateRepoURL(provider, fullSlug);
 
-		const branch = await getCurrentGitBranch(dir);
-
 		return { remoteSSH, remoteURL, provider, slug, fullSlug, namespace, gitDomain, branch };
 	} catch (e) {
+		logWarn(`getCurrentGitRepoData() :>>`, e);
 		return;
 	}
 };

@@ -1,3 +1,17 @@
+## [2.4.4](https://github.com/digitopvn/diginext/compare/v2.4.3...v2.4.4) (2023-03-05)
+
+
+### Bug Fixes
+
+* **server generate deploy:** issue of empty env vars when deploy prod ([05754cd](https://github.com/digitopvn/diginext/commit/05754cdde1c1810e2dbe328c8cad8a46e6233c54))
+
+## [2.4.3](https://github.com/digitopvn/diginext/compare/v2.4.2...v2.4.3) (2023-03-05)
+
+
+### Bug Fixes
+
+* **cli git:** try to fix git directory path in windows ([be62e89](https://github.com/digitopvn/diginext/commit/be62e897907c69610307a5b5e6e1aa299c4de258))
+
 ## [2.4.2](https://github.com/digitopvn/diginext/compare/v2.4.1...v2.4.2) (2023-03-05)
 
 

@@ -131,20 +131,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	console.log("generate deployment > app :>> ", app);
 	// const deployEnvironment = await getDeployEvironmentByApp(app, env);
 
-	const deployEnvironment = app.deployEnvironment || {};
+	const deployEnvironment = (app.deployEnvironment || {})[env] || {};
 	console.log("generate deployment > deployEnvironment :>> ", deployEnvironment);
 
 	let containerEnvs = deployEnvironment.envVars || [];
 	// console.log("[1] containerEnvs :>> ", containerEnvs);
-
-	// ENV variables -> fallback support:
-	// if (isEmpty(containerEnvs)) {
-	// 	const envFile = resolveEnvFilePath({ targetDirectory: targetDirectory, env, ignoreIfNotExisted: true });
-	// 	if (envFile) {
-	// 		containerEnvs = loadEnvFileAsContainerEnvVars(envFile);
-	// 		logWarn(`[GENERATE DEPLOYMENT YAML] Fall back loaded ENV variables from files of GIT repository.`);
-	// 	}
-	// }
 
 	// FIXME: magic?
 	if (isObject(containerEnvs)) containerEnvs = Object.entries(containerEnvs).map(([key, val]) => val);

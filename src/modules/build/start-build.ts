@@ -118,9 +118,10 @@ export async function startBuild(
 	 * /mnt/build/ -> additional disk (300GB) which mounted to this server on Digital Ocean.
 	 */
 	let buildDir = options.targetDirectory || process.cwd();
-	// log(`BUILD_DIR >`, buildDir);
 
-	// ! nếu build trên máy local thì ko cần GIT pull
+	log("options :>>", options);
+
+	// ! If this function is executed on local machine, then we don't need to do "git pull"
 	if (process.env.PROJECT_DIR) {
 		const dirName = `${options.projectSlug}-${options.slug}`;
 		buildDir = path.resolve(process.env.PROJECT_DIR, dirName, gitBranch);
@@ -144,7 +145,7 @@ export async function startBuild(
 		if (existsSync(buildDir)) {
 			try {
 				sendMessage({ SOCKET_ROOM, logger, message: `[0] Trying to check out existing directory and do git pull at: ${buildDir}` });
-				await execa.command(`cd "${buildDir}" && git checkout -f && git pull --rebase`, cliOpts);
+				await execCmd(`cd '${buildDir}' && git checkout -f && git pull --rebase`);
 			} catch (e) {
 				sendMessage({ SOCKET_ROOM, logger, message: `[1] Remove directory: ${buildDir} :>> ${e}` });
 				fs.rmSync(buildDir, { recursive: true, force: true });
@@ -174,7 +175,6 @@ export async function startBuild(
 	}
 
 	options.buildDir = buildDir;
-	log("options :>>", options);
 
 	let message = "";
 	let stream;

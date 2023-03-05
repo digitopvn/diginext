@@ -17,12 +17,7 @@ import type { ResourceQuotaSize } from "@/interfaces/InputOptions";
 import { isWin, readJson, saveJson, showDocs } from "../plugins";
 import { CLI_CONFIG_DIR, CLI_CONFIG_FILE, CLI_DIR } from "./const";
 
-export const cliOpts: execa.Options = isWin()
-	? {}
-	: {
-			// stdio: "inherit",
-			shell: "bash",
-	  };
+export const cliOpts: execa.Options = isWin() ? {} : { shell: "bash" };
 
 export const getContainerResourceBySize = (size: ResourceQuotaSize) => {
 	if (size == "none") return {};
