@@ -12,8 +12,7 @@ import { startBuild } from "./start-build";
 /**
  * This command allow you to build & deploy your application directly from your machine, without requesting to the build server.
  * Notes that it could lead to platform conflicts if your machine & your cluster are running different OS.
- * @param options
- * @returns
+ * @deprecated
  */
 export async function execBuild(options: InputOptions) {
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();

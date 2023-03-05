@@ -21,5 +21,5 @@ export function sendMessage(options: LogMessageOpts) {
 	if (socketServer) socketServer.to(SOCKET_ROOM).emit("message", { action: "log", message: message });
 
 	// save logs to database
-	saveLogs(SOCKET_ROOM, Logger.getLogs(SOCKET_ROOM));
+	saveLogs(SOCKET_ROOM, logger.content ?? Logger.getLogs(SOCKET_ROOM));
 }

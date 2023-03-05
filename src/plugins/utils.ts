@@ -21,6 +21,7 @@ import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/modules/git";
 import { generateRepoURL } from "@/modules/git";
+import { getCurrentGitBranch } from "@/modules/git/git-utils";
 
 import { DIGITOP_CDN_URL } from "../config/const";
 import { checkMonorepo } from "./monorepo";
@@ -306,14 +307,21 @@ export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCal
 		return stdout;
 	} catch (e) {
 		if (typeof errorMsgOrCallback == "string") {
-			if (errorMsgOrCallback != "") {
-				logError(`${errorMsgOrCallback}:\n`, e);
+			const errorMsg = errorMsgOrCallback;
+			if (errorMsg != "") {
+				logError(`${errorMsg} (${e.message})`);
 			} else {
-				logWarn(`[FAILED_BUT_IGNORE]`, e);
+				logWarn(`[FAILED_BUT_IGNORE] ${e.message}`);
 			}
 			return;
 		} else {
-			return errorMsgOrCallback(e);
+			// if it's a callback function
+			try {
+				errorMsgOrCallback(e);
+			} catch (f) {
+				logWarn(`[FAILED_BUT_IGNORE] ${f.message}`);
+				return;
+			}
 		}
 	}
 }
@@ -456,21 +464,20 @@ export const getAppConfig = (directory?: string) => {
 
 /**
  * Save object of project configuration to "dx.json"
- * @param  {Object} _config - Object data of the config
+ * @param  {Object} appConfig - Object data of the config
  * @param  {SaveOpts} [options] - Save options
- * @param  {String} [options.directory] - Absolute path to project directory
- * @param  {Boolean} [options.create] - TRUE will create new file if not existed.
+ * @param  {String} [options.directory] - Absolute path to project directory @default process.cwd()
+ * @param  {Boolean} [options.create] - TRUE will create new file if not existed. @default false
  */
-export const saveAppConfig = (_config: AppConfig, options?: SaveOpts) => {
-	// TODO: change "dx.json" to "dx.json" to avoid conflicts
-	const { directory } = options;
+export const saveAppConfig = (appConfig: AppConfig, options: SaveOpts = { directory: process.cwd(), create: false }) => {
+	const { directory, create } = options;
 	const filePath = path.resolve(directory || process.cwd(), "dx.json");
 
-	if (!options.create && !fs.existsSync(filePath)) logError(`Không tìm thấy "dx.json"`);
+	if (!create && !fs.existsSync(filePath)) logError(`Không tìm thấy "dx.json"`);
 
 	if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-	const content = JSON.stringify(_config, null, 2);
+	const content = JSON.stringify(appConfig, null, 2);
 	fs.writeFileSync(filePath, content, "utf8");
 
 	return getAppConfig(directory);
@@ -584,7 +591,9 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
  */
 export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 	try {
-		const { stdout: remoteSSH } = await execa.command(`git remote get-url origin`);
+		const remoteSSH = await execCmd(`cd ${dir} && git remote get-url origin`);
+		// console.log("dir :>> ", dir);
+		// console.log("remoteSSH :>> ", remoteSSH);
 		if (!remoteSSH) return;
 
 		if (remoteSSH.indexOf("https://") > -1) {
@@ -597,7 +606,9 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 
 		const remoteURL = generateRepoURL(provider, fullSlug);
 
-		return { remoteSSH, remoteURL, provider, slug, fullSlug, namespace, gitDomain };
+		const branch = await getCurrentGitBranch(dir);
+
+		return { remoteSSH, remoteURL, provider, slug, fullSlug, namespace, gitDomain, branch };
 	} catch (e) {
 		return;
 	}

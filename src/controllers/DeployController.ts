@@ -5,7 +5,7 @@ import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import pkg from "@/../package.json";
 import type { User } from "@/entities";
-import type { InputOptions } from "@/interfaces";
+import type { InputOptions, ResponseData } from "@/interfaces";
 import { IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
@@ -35,12 +35,16 @@ export default class DeployController {
 	@Security("jwt")
 	@Post("/")
 	deployFromSource(@Body() body: { options: InputOptions }, @Queries() queryParams?: IPostQueryParams) {
-		const { options } = body;
+		let { options: inputOptions } = body;
+
+		// validation & conversion...
+		if (!inputOptions) return { status: 0, messages: [`Deploy "options" is required.`] } as ResponseData;
+		if (!isJSON(inputOptions)) return { status: 0, messages: [`Deploy "options" is invalid (should be in JSON format).`] } as ResponseData;
+
+		const options = JSON.parse(inputOptions as string) as InputOptions;
 		log("[DEPLOY] options", options);
 
 		// TODO: Save client CLI version to server database for tracking purpose!
-
-		log(`deployFromSource > options.buildNumber :>>`, options.buildNumber);
 
 		// check for version compatibility between CLI & SERVER:
 		const cliVersion = options.version || "0.0.0";
@@ -48,14 +52,16 @@ export default class DeployController {
 		const serverVersion = pkg.version;
 		const breakingChangeVersionServer = serverVersion.split(".")[0];
 
-		if (breakingChangeVersionCli != breakingChangeVersionServer)
+		if (breakingChangeVersionCli != breakingChangeVersionServer) {
 			return {
 				status: 0,
 				messages: [
 					`Your CLI version (${cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please upgrade: "dx update"`,
 				],
 			};
+		}
 
+		log(`deployFromSource > options.buildNumber :>>`, options.buildNumber);
 		startBuild(options);
 
 		// start build in background:

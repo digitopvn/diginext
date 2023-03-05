@@ -25,7 +25,6 @@ export async function searchProjects(options: SearchAppOptions = {}) {
 	// find/search projects
 	const filter = keyword ? { name: keyword } : {};
 	let projects = await DB.find<Project>("project", filter, { search: true, order: { updatedAt: "DESC", createdAt: "DESC" } }, { limit: 20 });
-	console.log("projects :>> ", projects);
 
 	if (isEmpty(projects)) {
 		if (canSkip) {

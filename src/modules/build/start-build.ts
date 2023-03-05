@@ -8,14 +8,12 @@ import humanizeDuration from "humanize-duration";
 import { ObjectId } from "mongodb";
 import PQueue from "p-queue";
 import path from "path";
-import { simpleGit } from "simple-git";
 
 import { cliOpts, getCliConfig } from "@/config/config";
 import type { App, Build, Project, Release, User, Workspace } from "@/entities";
-import type { DeployEnvironment } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
-import { execCmd, getAppConfig, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath, wait } from "@/plugins";
+import { execCmd, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath, wait } from "@/plugins";
 import { getIO } from "@/server";
 
 import { DB } from "../api/DB";
@@ -76,12 +74,20 @@ export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug:
 /**
  * Start build the app with {InputOptions}
  */
-export async function startBuild(options: InputOptions, addition: { shouldRollout?: boolean } = {}) {
+export async function startBuild(
+	options: InputOptions,
+	addition: {
+		/**
+		 * @default true
+		 */
+		shouldRollout?: boolean;
+	} = { shouldRollout: true }
+) {
 	// parse variables
 	const { shouldRollout = true } = addition;
 	const startTime = dayjs();
 
-	const { env = "dev", buildNumber, buildImage, projectName, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, workspaceId } = options;
+	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, workspaceId } = options;
 
 	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
 	const app = await DB.findOne<App>("app", { slug: appSlug });
@@ -167,57 +173,20 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		sendMessage({ SOCKET_ROOM, logger, message: `Finished pulling latest files of "${gitBranch}"...` });
 	}
 
-	// initialize GIT in this app source directory:
-	const git = simpleGit(buildDir, { binary: "git" });
-	const gitStatus = await git.status(["-s"]);
-	options.gitBranch = gitStatus.current;
 	options.buildDir = buildDir;
-
-	// if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
-
-	const appConfig = getAppConfig(buildDir);
-
-	// [SYNC] apply "appConfig" -> "options"
-	options.remoteSSH = appConfig.git.repoSSH;
-	options.remoteURL = appConfig.git.repoURL;
-	options.projectSlug = projectSlug;
-	options.slug = appSlug;
-
-	// log(`startBuild > appConfig.environment[${env}] :>>`, appConfig.environment[env]);
-
-	// [SYNC] apply "appConfig" -> "options"
-	options.gitProvider = appConfig.git.provider;
-	options.shouldInherit = appConfig.environment[env].shouldInherit;
-	options.redirect = appConfig.environment[env].redirect;
-	options.provider = appConfig.environment[env].provider;
-	options.cluster = appConfig.environment[env].cluster;
-	options.zone = appConfig.environment[env].zone;
-	options.replicas = appConfig.environment[env].replicas;
-	options.size = appConfig.environment[env].size;
-	options.port = appConfig.environment[env].port;
-	options.ssl = appConfig.environment[env].ssl != "none";
-	options.namespace = appConfig.environment[env].namespace;
-
 	log("options :>>", options);
-
-	// log(`[BUILD] latestBuild :>>`, latestBuild);
-	// log(`[BUILD] app :>>`, app);
-	// log(`[BUILD] project :>>`, project);
-	// log("[BUILD] author :>> ", author);
-
-	options.appSlug = appSlug;
-	options.projectName = projectName || project?.name;
-	options.name = app.name;
-
-	// log(`startBuild > options :>>`, options);
 
 	let message = "";
 	let stream;
 
-	let targetEnvironmentFromDB = await getDeployEvironmentByApp(app, env);
-
-	// Merge the one from appConfig with the one from database
-	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB } as DeployEnvironment;
+	/**
+	 * Check if Dockerfile existed
+	 */
+	let dockerFile = resolveDockerfilePath({ targetDirectory: buildDir, env });
+	if (!dockerFile) {
+		sendMessage({ SOCKET_ROOM, logger, message: `Missing "Dockerfile" to build the application, please create one first.` });
+		return;
+	}
 
 	/**
 	 * !!! IMPORTANT !!!
@@ -232,18 +201,20 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		targetDirectory: options.targetDirectory,
 	});
 
-	targetEnvironment.prereleaseUrl = prereleaseUrl;
-	targetEnvironment.deploymentYaml = deploymentContent;
-	targetEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+	let serverDeployEnvironment = await getDeployEvironmentByApp(app, env);
+	serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
+	serverDeployEnvironment.deploymentYaml = deploymentContent;
+	serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+	serverDeployEnvironment.updatedAt = new Date();
+	serverDeployEnvironment.lastUpdatedBy = username;
 
 	// Update {user}, {project}, {environment} to database before rolling out
 	const updatedAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as App;
-	updatedAppData.lastUpdatedBy = options.username;
-	updatedAppData.deployEnvironment[env] = targetEnvironment;
-	// TODO: Remove this when everyone is using "deployEnvironment" (not JSON of "environment")
-	updatedAppData.environment[env] = JSON.stringify(targetEnvironment);
+	updatedAppData.lastUpdatedBy = username;
+	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
+	updatedAppData.environment[env] = JSON.stringify(serverDeployEnvironment);
 
-	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updatedAppData);
+	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, updatedAppData);
 	log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// create new build on build server:
@@ -259,6 +230,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 			projectSlug,
 			appSlug,
 			image: IMAGE_NAME,
+			cliVersion: options.version,
 			app: app._id,
 			project: project._id,
 			owner: author._id,
@@ -277,23 +249,9 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		return;
 	}
 
-	// return;
-
-	const appDirectory = options.buildDir;
-
-	// TODO: authenticate container registry?
-
 	// build the app with Docker:
 	try {
 		sendMessage({ SOCKET_ROOM, logger, message: `Start building the Docker image...` });
-
-		// check if using framework version >= 1.3.6
-		// let dockerFile = path.resolve(appDirectory, `Dockerfile`);
-		let dockerFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
-		if (!dockerFile) {
-			logError(`Missing "Dockerfile" to build the application, please create one.`);
-			return;
-		}
 
 		/**
 		 * ! Change current working directory to the root of this project repository
@@ -335,7 +293,7 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 		// update build status as "success"
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "success");
 
-		message = `✓ Built a Docker image & pushed to container registry (${appConfig.environment[env].registry}) successfully!`;
+		message = `✓ Built a Docker image & pushed to container registry (${serverDeployEnvironment.registry}) successfully!`;
 		sendMessage({ SOCKET_ROOM, logger, message });
 	} catch (e) {
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
@@ -373,9 +331,8 @@ export async function startBuild(options: InputOptions, addition: { shouldRollou
 
 	if (!shouldRollout) {
 		const buildDuration = dayjs().diff(startTime, "millisecond");
+
 		message = chalk.green(`🎉 FINISHED BUILDING IMAGE AFTER ${humanizeDuration(buildDuration)} 🎉`);
-		// message += `\n  - Image: ${IMAGE_NAME}`;
-		// logSuccess(message);
 		sendMessage({ SOCKET_ROOM, logger, message });
 
 		return { build: newBuild, release: newRelease };

@@ -112,7 +112,8 @@ export class DB {
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const { data = [] } = await fetchApi<T>({ url: `/api/v1/${collection}?${filterStr.toString()}${optionStr}` });
+			const { data = [], status, messages } = await fetchApi<T>({ url: `/api/v1/${collection}?${filterStr.toString()}${optionStr}` });
+			if (!status) logError(`Can't find any items:`, messages);
 			items = data;
 		}
 		return items as T[];
@@ -130,7 +131,8 @@ export class DB {
 		} else {
 			const optionStr = queryOptionsToUrlOptions(options);
 			const filterStr = queryFilterToUrlFilter(filter);
-			const { data } = await fetchApi<T>({ url: `/api/v1/${collection}?${filterStr.toString()}&${optionStr}` });
+			const { data, status, messages } = await fetchApi<T>({ url: `/api/v1/${collection}?${filterStr.toString()}&${optionStr}` });
+			if (!status) logError(`Item not found:`, messages);
 			item = data[0];
 		}
 		return item as T;
@@ -147,16 +149,24 @@ export class DB {
 			item = await svc.create(data);
 		} else {
 			const optionStr = queryOptionsToUrlOptions(options);
-			const newData = flattenObjectToPost(data);
-			console.log("newData :>> ", newData);
-			const { data: result } = await fetchApi<T>({
+			let newData = flattenObjectToPost(data);
+			Object.entries(newData).map(([key, val]) => {
+				newData[key.replace("[", "").replace("]", "")] = val;
+				delete newData[key];
+			});
+			// console.log("newData :>> ", newData);
+			const {
+				data: result,
+				status,
+				messages,
+			} = await fetchApi<T>({
 				url: `/api/v1/${collection}?${optionStr.toString()}`,
 				method: "POST",
 				data: newData,
 			});
+			if (!status && messages && messages.length > 0) logError(`Can't create item:`, messages);
 			item = result;
 		}
-		console.log("create item :>> ", item);
 		return item as T;
 	}
 
@@ -178,11 +188,16 @@ export class DB {
 			// console.log("[DB] updateData :>> ", updateData);
 			// logFull(updateData);
 
-			const { data: result = [] } = await fetchApi<T>({
+			const {
+				status,
+				data: result = [],
+				messages,
+			} = await fetchApi<T>({
 				url,
 				method: "PATCH",
 				data: updateData,
 			});
+			if (!status) logError(`Can't update item:`, messages);
 			items = result;
 		}
 		return items as T[];
@@ -199,10 +214,15 @@ export class DB {
 			item = await svc.delete(filter);
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);
-			const { data: result } = await fetchApi<T>({
+			const {
+				data: result,
+				status,
+				messages,
+			} = await fetchApi<T>({
 				url: `/api/v1/${collection}?${filterStr.toString()}`,
 				method: "DELETE",
 			});
+			if (!status) logError(`Can't delete item:`, messages);
 			item = result;
 		}
 		return item;

@@ -31,6 +31,7 @@ import { startBuildAndRun } from "./modules/build/start-build-and-run";
 import { updateCli } from "./modules/cli/update-cli";
 import { execDotenvCommand } from "./modules/deploy/dotenv-exec";
 import { execRollOut } from "./modules/deploy/exec-rollout";
+import { parseOptionsToAppConfig } from "./modules/deploy/parse-options-to-app-config";
 import { requestDeploy } from "./modules/deploy/request-deploy";
 import { requestDeployImage } from "./modules/deploy/request-deploy-image";
 
@@ -168,12 +169,14 @@ export async function processCLI(options?: InputOptions) {
 		case "build":
 			await cliAuthenticate(options);
 			options.isLocal = true;
+			await parseOptionsToAppConfig(options);
 			await startBuild(options, { shouldRollout: false });
 			return;
 
 		case "run":
 			await cliAuthenticate(options);
 			options.isLocal = true;
+			await parseOptionsToAppConfig(options);
 			await startBuildAndRun(options);
 			return;
 
