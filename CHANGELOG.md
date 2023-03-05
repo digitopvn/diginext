@@ -1,3 +1,23 @@
+# [2.4.0](https://github.com/digitopvn/diginext/compare/v2.3.4...v2.4.0) (2023-03-05)
+
+
+### Bug Fixes
+
+* **generate deployment:** remove fallback support when reading deployment env vars ([1a7876f](https://github.com/digitopvn/diginext/commit/1a7876fd7978e52e7eaa8d2ee634365ad681f865))
+* **git access:** verify git provider access at start up ([469ec1f](https://github.com/digitopvn/diginext/commit/469ec1f33f77329bd4016e484d43b6ba9a69a5f6))
+* **git pull:** git pull cache issue ([16c4558](https://github.com/digitopvn/diginext/commit/16c4558b807fa1a1154b893540c031d8cfd1f7f2))
+* **request deploy:** compare local domains with server domains ([e2aad4a](https://github.com/digitopvn/diginext/commit/e2aad4a176f1db0ff5c21c2af1a2d4fc78801558))
+* **request deploy:** correct the app and project slug when calling request deploy api ([2b23577](https://github.com/digitopvn/diginext/commit/2b235774e3c5ab876f5e3113a89f490f1d79c422))
+* **request deploy:** issue when deploy old app ([9213a05](https://github.com/digitopvn/diginext/commit/9213a05e9480be363485385c1a0f2affbe3112a1))
+* **server cluster:** authenticate cluster before create or update ([a2ad4d5](https://github.com/digitopvn/diginext/commit/a2ad4d512f21e6a1e816da1b0110518d5921ba79))
+* **start build:** issue of git pull rebase ([79b8620](https://github.com/digitopvn/diginext/commit/79b86201e1281155ca1cb7e1a295edf385793ea9))
+* **stop build:** issue when stop build ([d9e58c8](https://github.com/digitopvn/diginext/commit/d9e58c802fd12f3e7126317ea318ddf37617d6ff))
+
+
+### Features
+
+* **deploy environment compare:** compare deploy config ([69636a4](https://github.com/digitopvn/diginext/commit/69636a40da8ea8873b785c4f3981094ab86a24fe))
+
 ## [2.3.4](https://github.com/digitopvn/diginext/compare/v2.3.3...v2.3.4) (2023-03-03)
 
 
