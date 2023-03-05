@@ -1,3 +1,10 @@
+## [2.4.2](https://github.com/digitopvn/diginext/compare/v2.4.1...v2.4.2) (2023-03-05)
+
+
+### Bug Fixes
+
+* **cli git:** issue failed to get git info on windows ([3b40acc](https://github.com/digitopvn/diginext/commit/3b40acc72c4bfb55529afa4d78aad2b0c595c583))
+
 ## [2.4.1](https://github.com/digitopvn/diginext/compare/v2.4.0...v2.4.1) (2023-03-05)
 
 

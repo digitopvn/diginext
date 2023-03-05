@@ -99,6 +99,8 @@ export async function createAppByForm(options?: InputOptions) {
 	}
 
 	const currentGitData = await getCurrentGitRepoData(options.targetDirectory);
+	if (options.isDebugging) log(`[CREATE APP BY FORM] current git data :>>`, currentGitData);
+
 	if (currentGitData) {
 		options.shouldUseGit = true;
 		options.gitProvider = currentGitData.provider;

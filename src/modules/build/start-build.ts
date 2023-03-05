@@ -144,7 +144,7 @@ export async function startBuild(
 		if (existsSync(buildDir)) {
 			try {
 				sendMessage({ SOCKET_ROOM, logger, message: `[0] Trying to check out existing directory and do git pull at: ${buildDir}` });
-				await execa.command(`cd ${buildDir} && git checkout -f && git pull --rebase`, cliOpts);
+				await execa.command(`cd "${buildDir}" && git checkout -f && git pull --rebase`, cliOpts);
 			} catch (e) {
 				sendMessage({ SOCKET_ROOM, logger, message: `[1] Remove directory: ${buildDir} :>> ${e}` });
 				fs.rmSync(buildDir, { recursive: true, force: true });
