@@ -60,13 +60,15 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 
 	let project = localAppConfig.project ? await DB.findOne<Project>("project", { slug: localAppConfig.project }) : undefined;
 	if (!project) project = await createOrSelectProject(options);
+	localAppConfig.project = project.slug;
 
 	let app = localAppConfig.slug
 		? await DB.findOne<App>("app", { slug: localAppConfig.slug }, { populate: ["project", "owner", "workspace"] })
 		: undefined;
 	if (!app) app = await createOrSelectApp(project.slug, options);
+	localAppConfig.slug = app.slug;
 
-	// TODO: validate owner, workspace, git & framework
+	// TODO: validate owner, workspace, git & framework ?
 
 	/**
 	 * -----------------------------------------------------------------------
@@ -128,6 +130,8 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		localDeployEnvironment.cluster = cluster.shortName;
 		localDeployEnvironment.provider = (cluster.provider as CloudProvider).shortName;
 	}
+	localAppConfig.environment[env].cluster = localDeployEnvironment.cluster;
+	localAppConfig.environment[env].provider = localDeployEnvironment.provider;
 	options.cluster = localDeployEnvironment.cluster;
 	options.provider = localDeployEnvironment.provider;
 
@@ -185,6 +189,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 
 	// request namespace
 	if (!localDeployEnvironment.namespace) localDeployEnvironment.namespace = `${project.slug}-${env}`;
+	localAppConfig.environment[env].namespace = localDeployEnvironment.namespace;
 	options.namespace = localDeployEnvironment.namespace;
 
 	// request port
@@ -276,6 +281,8 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	await checkGitignoreContainsDotenvFiles({ targetDir: appDirectory });
 
 	const appConfig = saveAppConfig(localAppConfig, { directory: appDirectory });
+	// console.log("ask deploy info > appConfig > save :>> ", appConfig);
+
 	const deployEnvironment = appConfig.environment[env];
 	/**
 	 * PUSH LOCAL APP CONFIG TO SERVER:

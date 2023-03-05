@@ -90,7 +90,7 @@ export async function startBuild(
 	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, workspaceId } = options;
 
 	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
-	const app = await DB.findOne<App>("app", { slug: appSlug });
+	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	const project = await DB.findOne<Project>("project", { slug: projectSlug });
 	const author = await DB.findOne<User>("user", { id: new ObjectId(options.userId) });
 
@@ -193,13 +193,16 @@ export async function startBuild(
 	 * Generate deployment data (YAML) & save the YAML deployment to "app.environment[env]"
 	 * So it can be used to create release from build
 	 */
-	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = await generateDeployment({
+	const deployment = await generateDeployment({
 		env,
 		username,
 		workspace,
 		buildNumber,
+		// appConfig: getAppConfigFromApp(app),
 		targetDirectory: options.targetDirectory,
 	});
+	// console.log("deployment :>> ", deployment);
+	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
 
 	let serverDeployEnvironment = await getDeployEvironmentByApp(app, env);
 	serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
@@ -215,6 +218,7 @@ export async function startBuild(
 	updatedAppData.environment[env] = JSON.stringify(serverDeployEnvironment);
 
 	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, updatedAppData);
+
 	log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// create new build on build server:

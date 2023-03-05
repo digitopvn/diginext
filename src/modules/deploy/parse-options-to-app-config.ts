@@ -115,5 +115,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		}
 	}
 
-	return saveAppConfig(appConfig);
+	appConfig = saveAppConfig(appConfig);
+
+	return appConfig;
 };

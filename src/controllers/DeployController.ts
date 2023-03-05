@@ -42,7 +42,7 @@ export default class DeployController {
 		if (!isJSON(inputOptions)) return { status: 0, messages: [`Deploy "options" is invalid (should be in JSON format).`] } as ResponseData;
 
 		const options = JSON.parse(inputOptions as string) as InputOptions;
-		log("[DEPLOY] options", options);
+		// log("[DEPLOY] options", options);
 
 		// TODO: Save client CLI version to server database for tracking purpose!
 
