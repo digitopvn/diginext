@@ -1,4 +1,4 @@
-import { logError } from "diginext-utils/dist/console/log";
+import { log, logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 import { isEmpty, upperFirst } from "lodash";
 
@@ -178,10 +178,12 @@ export async function createAppByForm(options?: InputOptions) {
 		if (options.remoteSSH) appData.git.repoSSH = options.remoteSSH;
 		if (options.remoteURL) appData.git.repoURL = options.remoteURL;
 	}
-
+	if (options.isDebugging) log(`Create new app with data:`, appData);
 	const newApp = await DB.create<App>("app", appData);
+	if (options.isDebugging) log({ newApp });
+
 	if (isEmpty(newApp) || (newApp as any).error) {
-		logError(`Can't create new app due to network issue.`);
+		logError(`[CREATE APP BY FORM] Can't create new app due to network issue.`);
 		return;
 	}
 

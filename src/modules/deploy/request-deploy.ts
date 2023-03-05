@@ -55,7 +55,8 @@ export async function requestDeploy(options: InputOptions) {
 	 * [2] Compare LOCAL & SERVER App Config,
 	 *     then upload local app config to server.
 	 */
-	const { deployEnvironment } = await askForDeployEnvironmentInfo(options);
+	const { deployEnvironment, appConfig: validatedAppConfig } = await askForDeployEnvironmentInfo(options);
+	appConfig = validatedAppConfig;
 
 	/**
 	 * [3] Generate build number & build image as docker image tag

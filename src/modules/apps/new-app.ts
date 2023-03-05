@@ -52,17 +52,6 @@ export default async function createApp(options: InputOptions) {
 	}
 	options.projectSlug = options.project.slug;
 
-	// Save this app to database
-	// const appData = {} as App;
-	// if (options.framework) appData.framework = options.framework;
-
-	// let [updatedApp] = await DB.update<App>("app", { slug: options.slug }, appData);
-
-	// if (!updatedApp) {
-	// 	logError("Can't create new app due to network issue while updating framework info.");
-	// 	return;
-	// }
-
 	// setup git:
 	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`;
 

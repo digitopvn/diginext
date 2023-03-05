@@ -59,10 +59,14 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		logError(`This directory doesn't have any initialized git.`);
 		return;
 	}
+
 	const { remoteSSH, remoteURL, provider: gitProvider, branch } = gitRepoData;
+
+	if (!appConfig.git) appConfig.git = {};
 	appConfig.git.provider = gitProvider;
 	appConfig.git.repoSSH = remoteSSH;
 	appConfig.git.repoURL = remoteURL;
+
 	options.remoteSSH = remoteSSH;
 	options.remoteURL = remoteURL;
 	options.gitProvider = gitProvider;

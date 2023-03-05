@@ -1,3 +1,10 @@
+## [2.4.1](https://github.com/digitopvn/diginext/compare/v2.4.0...v2.4.1) (2023-03-05)
+
+
+### Bug Fixes
+
+* **request deploy:** git provider is undefined when request deploy ([394203a](https://github.com/digitopvn/diginext/commit/394203a0bf38cd1c3498b3ff054bd72431180a85))
+
 # [2.4.0](https://github.com/digitopvn/diginext/compare/v2.3.4...v2.4.0) (2023-03-05)
 
 
