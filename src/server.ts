@@ -9,6 +9,7 @@ import session from "express-session";
 import * as fs from "fs";
 import type { Server } from "http";
 import { createServer } from "http";
+import { isEmpty } from "lodash";
 import morgan from "morgan";
 import cronjob from "node-cron";
 import passport from "passport";
@@ -35,11 +36,12 @@ import { migrateAllAppEnvironment } from "./migration/migrate-app-environment";
 // import listEndpoints from "express-list-endpoints";
 // database
 import AppDatabase from "./modules/AppDatabase";
+import { verifySSH } from "./modules/git";
 import ClusterManager from "./modules/k8s";
 import { providerAuthenticate } from "./modules/providers";
 import { connect } from "./modules/registry";
 import main from "./routes/main";
-import { CloudProviderService, ClusterService, ContainerRegistryService } from "./services";
+import { CloudProviderService, ClusterService, ContainerRegistryService, GitProviderService } from "./services";
 /**
  * ENVIRONMENT CONFIG
  */
@@ -66,6 +68,15 @@ async function startupScripts() {
 
 	// config dir
 	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);
+
+	// connect git providers
+	const gitSvc = new GitProviderService();
+	const gitProviders = await gitSvc.find({});
+	if (!isEmpty(gitProviders)) {
+		gitProviders.forEach(async (gitProvider) => {
+			await verifySSH({ gitProvider: gitProvider.type });
+		});
+	}
 
 	// connect cloud providers
 	const providerSvc = new CloudProviderService();

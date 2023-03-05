@@ -151,7 +151,7 @@ export async function startBuild(
 
 				sendMessage({ SOCKET_ROOM, logger, message: `[1] Clone new into directory: ${buildDir}` });
 				try {
-					await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
+					await execCmd(`git clone ${options.remoteSSH} --branch ${gitBranch} --single-branch ${buildDir}`);
 				} catch (e2) {
 					sendMessage({ SOCKET_ROOM, logger, message: `[1] Failed to clone new branch "${gitBranch}" to "${buildDir}": ${e}` });
 					// await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
@@ -161,7 +161,7 @@ export async function startBuild(
 		} else {
 			try {
 				sendMessage({ SOCKET_ROOM, logger, message: `[2] Clone new to: ${buildDir}` });
-				await execa("git", ["clone", options.remoteSSH, "--branch", gitBranch, "--single-branch", buildDir], cliOpts);
+				await execCmd(`git clone ${options.remoteSSH} --branch ${gitBranch} --single-branch ${buildDir}`);
 			} catch (e) {
 				sendMessage({ SOCKET_ROOM, logger, message: `[2] Failed to Clone new branch "${gitBranch}" to "${buildDir}": ${e}` });
 				// await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
