@@ -9,7 +9,7 @@ import type { Project } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
-import { resolveDockerfilePath } from "@/plugins";
+import { isWin, resolveDockerfilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
@@ -34,11 +34,12 @@ export async function requestDeploy(options: InputOptions) {
 	const BUILD_SERVER_URL = buildServerUrl;
 
 	if (options.isDebugging) {
-		log("CLI_MODE =", process.env.CLI_MODE || "client");
-		log("CLI_DIR", CLI_DIR);
-		log(`CURRENT_WORKING_DIR = ${process.cwd()}`);
-		log(`BUILD_SERVER_URL=${BUILD_SERVER_URL}`);
-		log(`DEPLOY_API_PATH=${DEPLOY_API_PATH}`);
+		log("CLI_MODE:", process.env.CLI_MODE || "client");
+		log("CLI_DIR:", CLI_DIR);
+		log(`CURRENT_WORKING_DIR: ${process.cwd()}`);
+		log(`BUILD_SERVER_URL: ${BUILD_SERVER_URL}`);
+		log(`DEPLOY_API_PATH: ${DEPLOY_API_PATH}`);
+		log(`IS_WINDOWS:`, isWin());
 	}
 
 	// check Dockerfile -> no dockerfile, no build -> failed
@@ -50,6 +51,7 @@ export async function requestDeploy(options: InputOptions) {
 	 *     and save it to "dx.json"
 	 */
 	let appConfig = await parseOptionsToAppConfig(options);
+	if (!appConfig) return;
 
 	/**
 	 * [2] Compare LOCAL & SERVER App Config,
