@@ -14,7 +14,7 @@ import { fetchApi } from "../api";
 import { sendMessage } from "../build/send-log-message";
 import { queue } from "../build/start-build";
 import { updateBuildStatus } from "../build/update-build-status";
-import { ClusterManager } from "../k8s";
+import ClusterManager from "../k8s";
 
 /**
  * Use "kubectl apply" command to roll out the deployment
@@ -52,7 +52,7 @@ async function kubectlApply(options: InputOptions) {
 	// Auth & select correct cloud provider / cluster
 	const clusterShortName = targetCluster.shortName;
 	try {
-		await ClusterManager.auth(clusterShortName);
+		await ClusterManager.authCluster(clusterShortName);
 	} catch (e) {
 		logError(e);
 		return false;

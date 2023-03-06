@@ -2,7 +2,7 @@ import "reflect-metadata";
 
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logSuccess } from "diginext-utils/dist/console/log";
 import express from "express";
 import { queryParser } from "express-query-parser";
 import session from "express-session";
@@ -73,43 +73,43 @@ async function startupScripts() {
 	const gitSvc = new GitProviderService();
 	const gitProviders = await gitSvc.find({});
 	if (!isEmpty(gitProviders)) {
-		gitProviders.forEach(async (gitProvider) => {
-			await verifySSH({ gitProvider: gitProvider.type });
-		});
+		for (const gitProvider of gitProviders) {
+			verifySSH({ gitProvider: gitProvider.type });
+		}
 	}
 
 	// connect cloud providers
 	const providerSvc = new CloudProviderService();
 	const providers = await providerSvc.find({});
 	if (providers.length > 0) {
-		providers.forEach(async (provider) => {
-			await providerAuthenticate(provider);
-		});
+		for (const provider of providers) {
+			providerAuthenticate(provider);
+		}
 	}
 
 	// connect container registries
 	const registrySvc = new ContainerRegistryService();
 	const registries = await registrySvc.find({});
 	if (registries.length > 0) {
-		registries.forEach(async (registry) => {
-			await connect(registry);
-		});
+		for (const registry of registries) {
+			connect(registry);
+		}
 	}
 
 	// connect clusters
 	const clusterSvc = new ClusterService();
 	const clusters = await clusterSvc.find({});
 	if (clusters.length > 0) {
-		clusters.forEach(async (cluster) => {
-			// only switch current context to cluster if provider is "custom"?
-			await ClusterManager.auth(cluster.shortName, { shouldSwitchContextToThisCluster: cluster.providerShortName === "custom" }).catch((e) =>
-				logError(e)
-			);
-		});
+		let i = 1;
+		for (const cluster of clusters) {
+			log(`[${i}] Authenticating "${cluster.shortName}" cluster...`);
+			await ClusterManager.authCluster(cluster.shortName, { shouldSwitchContextToThisCluster: false });
+			i++;
+		}
 	}
 
 	// cronjobs
-	logSuccess(`[SYSTEM] Cronjob of "System Clean Up" has been scheduled every 3 days at 00:00 AM`);
+	logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every 3 days at 00:00 AM`);
 	cronjob.schedule("0 0 */3 * *", () => {
 		/**
 		 * Schedule a clean up task every 3 days at 00:00 AM

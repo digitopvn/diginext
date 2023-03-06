@@ -476,6 +476,11 @@ export type InputOptions = {
 	provider?: string;
 
 	/**
+	 * Container Registry's slug
+	 */
+	registry?: string;
+
+	/**
 	 * Git provider
 	 * @type {"bitbucket" | "github" | "gitlab"}
 	 */

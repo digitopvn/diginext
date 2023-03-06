@@ -1,20 +1,22 @@
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
 import chalk from "chalk";
-import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import execa from "execa";
+import inquirer from "inquirer";
 import yaml from "js-yaml";
 import { isEmpty } from "lodash";
 import yargs from "yargs";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { CloudProvider, ContainerRegistry } from "@/entities";
+import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
 import { execCmd, wait } from "@/plugins";
 
 import type { DomainRecord } from "../../interfaces/DomainRecord";
 import { DB } from "../api/DB";
+import { getKubeContextByClusterShortName } from "../k8s/kube-config";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
 
 const DIGITAL_OCEAN_API_BASE_URL = `https://api.digitalocean.com/v2`;
@@ -170,16 +172,28 @@ export const createRecordInDomain = async (input: DomainRecord) => {
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
 	// Implement create "imagePullingSecret" of Digital Ocean
-	const { registrySlug, providerShortName, namespace = "default", shouldCreateSecretInNamespace = false } = options;
-	// const { name, namespace = "default", providerShortName, shouldCreateSecretInNamespace = false } = options;
-	const secretName = `${providerShortName}-docker-registry-key`;
+	const { registrySlug, clusterShortName, namespace = "default", shouldCreateSecretInNamespace = false } = options;
 
-	// get Service Account data:
-	const gcloudProvider = await DB.findOne<CloudProvider>("provider", { shortName: providerShortName });
-	if (isEmpty(gcloudProvider)) {
-		logError(`No Google Cloud (short name: "${providerShortName}") provider found. Please contact your admin or create a new one.`);
+	if (!registrySlug) {
+		logError(`Container Registry's slug is required.`);
 		return;
 	}
+
+	if (!clusterShortName) {
+		logError(`Cluster's short name is required.`);
+		return;
+	}
+
+	// get Service Account data:
+	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+	if (!cluster) {
+		logError(`Cluster "${clusterShortName}" not found.`);
+		return;
+	}
+	const { providerShortName } = cluster;
+	const { name: context } = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
+
+	const secretName = `${providerShortName}-docker-registry-key`;
 
 	if (shouldCreateSecretInNamespace && namespace == "default") {
 		logWarn(
@@ -195,26 +209,22 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const applyCommand = shouldCreateSecretInNamespace ? `| kubectl apply -f -` : "";
 
 	// command: "doctl registry kubernetes-manifest"
-	const registryYaml = await execCmd(`doctl registry kubernetes-manifest --namespace ${namespace} --name ${secretName} ${applyCommand}`);
+	const registryYaml = await execCmd(
+		`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} ${applyCommand}`
+	);
 	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
 
 	// Save to database
-	const updatedRegistries = await DB.update<ContainerRegistry>(
-		"registry",
-		{ provider: "digitalocean" },
-		{
-			imagePullingSecret: {
-				name: secretName,
-				value: registrySecretData.data[".dockerconfigjson"],
-			},
-			// ["imagePullingSecret[name]"]: secretName,
-			// ["imagePullingSecret[value]"]: registrySecretData.data[".dockerconfigjson"],
-		}
-	);
-	const updatedRegistry = updatedRegistries[0];
-	log(`DigitalOcean.createImagePullingSecret() :>>`, { updatedRegistry });
+	const imagePullingSecret = {
+		name: secretName,
+		value: registrySecretData.data[".dockerconfigjson"],
+	};
 
-	return registrySecretData;
+	const [updatedRegistry] = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, { imagePullingSecret });
+	if (!updatedRegistry) logError(`[API] Can't update container registry of Digital Ocean.`);
+	// log(`DigitalOcean.createImagePullingSecret() :>>`, { updatedRegistry });
+
+	return imagePullingSecret;
 };
 
 /**
@@ -222,6 +232,10 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
  * @param {InputOptions} options
  */
 export const connectDockerRegistry = async (options?: InputOptions) => {
+	if (!options.cluster) {
+		logError(`Cluster's short name is required. ("--cluster" flag)`);
+		return;
+	}
 	try {
 		await execa.command(`doctl registry login`);
 	} catch (e) {
@@ -230,7 +244,7 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 	}
 
 	// Save this container registry to database
-	const currentRegistry = await DB.create<ContainerRegistry>("registry", {
+	let currentRegistry = await DB.create<ContainerRegistry>("registry", {
 		name: "Digital Ocean Container Registry",
 		host: "registry.digitalocean.com",
 		provider: "digitalocean",
@@ -238,7 +252,11 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 		workspace: options.workspaceId,
 	});
 
-	await createImagePullingSecret({ ...options, shouldCreateSecretInNamespace: false });
+	await createImagePullingSecret({
+		clusterShortName: options.cluster,
+		registrySlug: currentRegistry.slug,
+		shouldCreateSecretInNamespace: false,
+	});
 
 	// save registry to local config:
 	// saveCliConfig({ currentRegistry });
@@ -267,6 +285,34 @@ export const execDigitalOcean = async (options?: InputOptions) => {
 				logError(e);
 			}
 			break;
+
+		case "create-image-pull-secret":
+			const registries = await DB.find<ContainerRegistry>("registry", {});
+			if (isEmpty(registries)) {
+				logError(`This workspace doesn't have any registered Container Registries.`);
+				return;
+			}
+
+			const { selectedRegistry } = await inquirer.prompt<{ selectedRegistry: ContainerRegistry }>({
+				message: `Select the container registry:`,
+				type: "list",
+				choices: registries.map((reg, i) => {
+					return { name: `[${i + 1}] ${reg.name} (${reg.provider})`, value: reg };
+				}),
+			});
+
+			try {
+				await createImagePullingSecret({
+					clusterShortName: options.cluster,
+					registrySlug: selectedRegistry.slug,
+					namespace: options.namespace,
+					shouldCreateSecretInNamespace: options.shouldCreate,
+				});
+			} catch (e) {
+				logError(e);
+			}
+			break;
+
 		default:
 			yargs.showHelp();
 			break;

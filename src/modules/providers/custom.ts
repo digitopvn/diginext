@@ -8,6 +8,7 @@ import yargs from "yargs";
 
 import { CLI_DIR, HOME_DIR } from "@/config/const";
 import type { CloudProvider, Cluster } from "@/entities";
+import type { KubeConfig } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
 import { DB } from "../api/DB";
@@ -26,7 +27,7 @@ export const authenticate = async (options?: InputOptions) => {
 
 	// load new kubeconfig yaml:
 	let newKubeConfigContent = fs.readFileSync(kubeConfigPath, "utf8");
-	let newKubeConfig = yaml.load(newKubeConfigContent);
+	let newKubeConfig = yaml.load(newKubeConfigContent) as KubeConfig;
 	const currentContext = newKubeConfig["current-context"];
 
 	// generate current kubeconfig file:
@@ -107,7 +108,7 @@ export const authenticate = async (options?: InputOptions) => {
 		if (!newProvider) logWarn(`Can't create new "custom" cloud provider.`);
 	}
 
-	logSuccess(`Authenticated a custom provider: ${currentContext}`);
+	logSuccess(`[CLOUD PROVIDER] ✓ Authenticated a custom provider: ${currentContext}`);
 	log(`Switched kubectl context to "${currentContext}"`);
 
 	return currentContext;
@@ -127,8 +128,8 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
 	logWarn(`This feature is under development.`);
-	const { providerShortName } = options;
-	const secretName = `${providerShortName}-docker-registry-key`;
+	const { clusterShortName } = options;
+	const secretName = `${clusterShortName}-docker-registry-key`;
 	return { name: secretName, value: null };
 };
 

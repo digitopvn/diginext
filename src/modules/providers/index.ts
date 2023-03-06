@@ -10,6 +10,7 @@ import gcloud from "./gcloud";
 
 export const providerAuthenticate = async (provider: CloudProvider, options?: { userId?: any; workspaceId?: any }) => {
 	const { shortName } = provider;
+
 	switch (shortName) {
 		case "gcloud":
 			const { serviceAccount } = provider;
@@ -18,19 +19,17 @@ export const providerAuthenticate = async (provider: CloudProvider, options?: { 
 			fs.writeFileSync(filePath, serviceAccount, "utf8");
 
 			const gcloudAuth = await gcloud.authenticate({ filePath, ...options });
-			if (gcloudAuth) logSuccess(`[CLOUD PROVIDER] Authenticated to Google Cloud provider.`);
+			if (gcloudAuth) logSuccess(`[CLOUD PROVIDER] ✓ Authenticated to Google Cloud provider.`);
 			return gcloudAuth;
-			break;
 
 		case "digitalocean":
 			const { apiAccessToken } = provider;
 			const doAuth = await digitalocean.authenticate({ key: apiAccessToken, ...options });
-			if (doAuth) logSuccess(`[CLOUD PROVIDER] Authenticated to Digital Ocean cloud provider.`);
+			if (doAuth) logSuccess(`[CLOUD PROVIDER] ✓ Authenticated to Digital Ocean cloud provider.`);
 			return doAuth;
-			break;
 
 		case "custom":
-			logSuccess(`[CLOUD PROVIDER] "custom" cloud provider doesn't have authentication method -> Skip.`);
+			logSuccess(`[CLOUD PROVIDER] ✓ Skipped ("custom" cloud provider doesn't have authentication method).`);
 			return;
 
 		default:

@@ -33,14 +33,14 @@ export default class ProjectService extends BaseService<Project> {
 
 						// switch to the cluster of this environment
 						try {
-							await ClusterManager.auth(cluster);
+							await ClusterManager.authCluster(cluster);
 						} catch (e) {
 							logError(e);
 							// return { error: e.message };
 						}
 
 						// delete the whole namespace of this environment
-						await ClusterManager.deleteNamespace(namespace);
+						await ClusterManager.deleteNamespaceByCluster(namespace, cluster);
 					});
 				}
 			});
