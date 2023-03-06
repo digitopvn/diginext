@@ -201,6 +201,9 @@ export async function startBuild(
 		// appConfig: getAppConfigFromApp(app),
 		targetDirectory: options.targetDirectory,
 	});
+
+	if (!deployment) return;
+
 	// console.log("deployment :>> ", deployment);
 	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
 
@@ -349,15 +352,16 @@ export async function startBuild(
 	 */
 	if (releaseId) {
 		try {
-			const result = await queue.add(() => (env === "prod" ? ClusterManager.previewPrerelease(releaseId) : ClusterManager.rollout(releaseId)));
+			const result = env === "prod" ? await ClusterManager.previewPrerelease(releaseId) : await ClusterManager.rollout(releaseId);
+
 			if (result.error) {
-				message = `[ERROR] Queue job failed > ClusterManager.rollout() :>> ${result.error}.`;
+				message = `[ERROR] ClusterManager.rollout() :>> ${result.error}.`;
 				sendMessage({ SOCKET_ROOM, logger, message });
 				return;
 			}
 			newRelease = result.data;
 		} catch (e) {
-			message = `[ERROR] Queue job failed > ClusterManager.rollout() :>> ${e.message}:`;
+			message = `[ERROR] ClusterManager.rollout() :>> ${e.message}:`;
 			sendMessage({ SOCKET_ROOM, logger, message });
 			return;
 		}

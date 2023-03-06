@@ -16,7 +16,7 @@ import { execCmd } from "@/plugins";
 
 import { DB } from "../api/DB";
 import ClusterManager from "../k8s";
-import { getKubeContextByClusterShortName } from "../k8s/kube-config";
+import { getKubeContextByCluster } from "../k8s/kube-config";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
 
 /**
@@ -124,30 +124,33 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 		return;
 	}
 
-	const { host } = registry;
+	// Get SERVICE ACCOUNT from CONTAINER REGISTRY -> to authenticate & generate "imagePullSecrets"
+	const { host, serviceAccount, provider: providerShortName } = registry;
 
-	// BEFORE: get SERVICE ACCOUNT from CLOUD PROVIDER
-	// get Service Account data:
-	// const provider = await DB.findOne<CloudProvider>("provider", { shortName: providerShortName });
-	// if (isEmpty(provider)) {
-	// 	logError(`No Google Cloud (short name: "${providerShortName}") provider found. Please contact your admin or create a new one.`);
-	// 	return;
-	// }
-	// const { serviceAccount } = provider;
+	console.log(":>>>>>>>>>>>>>> 1 ");
 
-	// AFTER: get SERVICE ACCOUNT from CLUSTER
+	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
 	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
 	if (isEmpty(cluster)) {
 		logError(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterShortName}" cluster.`);
 		return;
 	}
-	const { serviceAccount, providerShortName } = cluster;
-	const { name: context } = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
+
+	const { name: context } = await getKubeContextByCluster(cluster);
+
+	console.log(":>>>>>>>>>>>>>> 2 ");
+
+	console.log("context :>> ", context);
+	console.log("serviceAccount :>> ", serviceAccount);
 
 	// write down the service account file:
 	const serviceAccountPath = path.resolve(CLI_CONFIG_DIR, `${providerShortName}-service-account.json`);
+	console.log("serviceAccountPath :>> ", serviceAccountPath);
+
 	if (fs.existsSync(serviceAccountPath)) fs.unlinkSync(serviceAccountPath);
 	fs.writeFileSync(serviceAccountPath, serviceAccount, "utf8");
+
+	console.log(":>>>>>>>>>>>>>> 3 ");
 
 	if (shouldCreateSecretInNamespace && namespace == "default") {
 		logWarn(
@@ -159,13 +162,16 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 		);
 	}
 
-	let secretValue;
+	let secretValue: string;
 	const secretName = `${providerShortName}-docker-registry-key`;
+	console.log("secretName :>> ", secretName);
+
+	console.log(":>>>>>>>>>>>>>> 4 ");
 
 	// check if namespace is existed
 	if (shouldCreateSecretInNamespace) {
 		const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
-		if (isNsExisted) {
+		if (!isNsExisted) {
 			logError(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
 			return;
 		}
@@ -175,15 +181,22 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const isSecretExisted = await ClusterManager.isSecretExisted(secretName, namespace, { context });
 	if (isSecretExisted) await ClusterManager.deleteSecret(secretName, namespace, { context });
 
+	console.log(":>>>>>>>>>>>>>> 5 ");
+
+	// Create new "imagePullingSecret":
+	const { stdout: newImagePullingSecret } = await execa.command(
+		`kubectl ${
+			context ? `--context=${context} ` : ""
+		}-n ${namespace} create secret docker-registry ${secretName} --docker-server=${host} --docker-username=_json_key --docker-password="$(cat ${serviceAccountPath})" -o json`,
+		cliOpts
+	);
+
+	console.log(":>>>>>>>>>>>>>> 6 ");
+
+	console.log("GCLOUD > createImagePullingSecret > newImagePullingSecret :>> ", newImagePullingSecret);
+
 	// create new image pulling secret (in namespace & in database)
 	try {
-		// Create new "imagePullingSecret":
-		const { stdout: newImagePullingSecret } = await execa.command(
-			`kubectl ${
-				context ? `--context=${context} ` : ""
-			}-n ${namespace} create secret docker-registry ${secretName} --docker-server=${host} --docker-username=_json_key --docker-password="$(cat ${serviceAccountPath})" -o json`,
-			cliOpts
-		);
 		secretValue = JSON.parse(newImagePullingSecret).data[".dockerconfigjson"];
 		// log({ secretValue });
 

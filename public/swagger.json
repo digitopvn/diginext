@@ -1299,7 +1299,11 @@
 					},
 					"shortName": {
 						"type": "string",
-						"description": "Cluster short name (to access via `kubectl context`)"
+						"description": "A cluster name on the cloud provider\n- This is **NOT** a cluster name in `kubeconfig`"
+					},
+					"contextName": {
+						"type": "string",
+						"description": "Cluster context name (to access via `kubectl context`)"
 					},
 					"provider": {
 						"anyOf": [
@@ -1535,7 +1539,11 @@
 					},
 					"shortName": {
 						"type": "string",
-						"description": "Cluster short name (to access via `kubectl context`)"
+						"description": "A cluster name on the cloud provider\n- This is **NOT** a cluster name in `kubeconfig`"
+					},
+					"contextName": {
+						"type": "string",
+						"description": "Cluster context name (to access via `kubectl context`)"
 					},
 					"provider": {
 						"anyOf": [
@@ -1874,6 +1882,10 @@
 					"gitProvider": {
 						"type": "string",
 						"description": "Git provider"
+					},
+					"registry": {
+						"type": "string",
+						"description": "Container Registry's slug"
 					},
 					"provider": {
 						"type": "string",

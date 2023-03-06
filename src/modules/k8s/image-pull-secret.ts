@@ -8,6 +8,7 @@ import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import custom from "../providers/custom";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
+import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
 
 /**
  * Create imagePullSecrets in a namespace
@@ -33,34 +34,27 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 
 	if (!registry) throw new Error(`Container Registry (${regSlug}) of "${appSlug}" app not found.`);
 
+	const options: ContainerRegistrySecretOptions = {
+		namespace: namespace,
+		clusterShortName: clusterShortName,
+		registrySlug: registry.slug,
+		shouldCreateSecretInNamespace: true,
+	};
+	console.log("createImagePullSecretsInNamespace > options :>> ", options);
+
 	try {
-		let imagePullSecret;
+		let imagePullSecret: { name?: string; value?: string };
 		switch (registry.provider) {
 			case "gcloud":
-				imagePullSecret = await gcloud.createImagePullingSecret({
-					namespace: namespace,
-					clusterShortName: clusterShortName,
-					registrySlug: registry.slug,
-					shouldCreateSecretInNamespace: true,
-				});
+				imagePullSecret = await gcloud.createImagePullingSecret(options);
 				break;
 
 			case "digitalocean":
-				imagePullSecret = await digitalocean.createImagePullingSecret({
-					namespace: namespace,
-					clusterShortName: clusterShortName,
-					registrySlug: registry.slug,
-					shouldCreateSecretInNamespace: true,
-				});
+				imagePullSecret = await digitalocean.createImagePullingSecret(options);
 				break;
 
 			case "custom":
-				imagePullSecret = await custom.createImagePullingSecret({
-					namespace: namespace,
-					clusterShortName: clusterShortName,
-					registrySlug: registry.slug,
-					shouldCreateSecretInNamespace: true,
-				});
+				imagePullSecret = await custom.createImagePullingSecret(options);
 				break;
 
 			default:

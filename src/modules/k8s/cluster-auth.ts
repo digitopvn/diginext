@@ -96,6 +96,7 @@ const authCluster = async (clusterShortName: string, options: ClusterAuthOptions
 			filePath = path.resolve(CLI_CONFIG_DIR, `${clusterShortName}-service-account.json`);
 			writeFileSync(filePath, serviceAccount, "utf8");
 
+			// start authenticating...
 			const gcloudAuth = await gcloud.authenticate({ filePath });
 			if (!gcloudAuth) {
 				throw new Error(`[UNKNOWN] Cannot authenticate the Google Cloud provider.`);
@@ -106,7 +107,7 @@ const authCluster = async (clusterShortName: string, options: ClusterAuthOptions
 			if (!zone) throw new Error(`ZONE is required for Google Cloud Cluster authentication.`);
 			if (!projectID) throw new Error(`PROJECT_ID is required for Google Cloud Cluster authentication.`);
 
-			// start authenticating...
+			// save cluster access info to "kubeconfig"
 			await execCmd(`gcloud container clusters get-credentials ${clusterShortName} --zone=${zone} --project=${projectID}`);
 
 			context = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
@@ -120,7 +121,7 @@ const authCluster = async (clusterShortName: string, options: ClusterAuthOptions
 
 			if (shouldSwitchContextToThisCluster) switchContext(context.name);
 
-			logSuccess(`[CLUSTER MANAGER] Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
+			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
 
 			return cluster;
 
@@ -136,6 +137,10 @@ const authCluster = async (clusterShortName: string, options: ClusterAuthOptions
 				throw new Error(`[UNKNOWN] Cannot authenticate the Digital Ocean provider.`);
 			}
 
+			// save cluster access info to "kubeconfig"
+			await execCmd(`doctl kubernetes cluster kubeconfig save ${clusterShortName}`);
+
+			// get the context in "kubeconfig"
 			context = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
 
 			if (context) {
@@ -147,7 +152,7 @@ const authCluster = async (clusterShortName: string, options: ClusterAuthOptions
 
 			if (shouldSwitchContextToThisCluster) switchContext(context.name);
 
-			logSuccess(`[CLUSTER MANAGER] Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
+			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
 
 			return cluster;
 
@@ -164,7 +169,7 @@ const authCluster = async (clusterShortName: string, options: ClusterAuthOptions
 
 			writeFileSync(filePath, kubeConfig, "utf8");
 
-			// start authenticating...
+			// start authenticating & save cluster access info to "kubeconfig"...
 			const contextName = await custom.authenticate({ filePath });
 
 			if (contextName) {
@@ -176,12 +181,12 @@ const authCluster = async (clusterShortName: string, options: ClusterAuthOptions
 
 			if (shouldSwitchContextToThisCluster) switchContext(contextName);
 
-			logSuccess(`[CLUSTER MANAGER] Connected to "${clusterShortName}" cluster (Context: "${contextName}").`);
+			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${contextName}").`);
 
 			return cluster;
 
 		default:
-			throw new Error(`This provider (${providerShortName}) is not supported yet.`);
+			throw new Error(`❌ This provider (${providerShortName}) is not supported yet.`);
 	}
 };
 

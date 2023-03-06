@@ -16,7 +16,8 @@ import { execCmd, wait } from "@/plugins";
 
 import type { DomainRecord } from "../../interfaces/DomainRecord";
 import { DB } from "../api/DB";
-import { getKubeContextByClusterShortName } from "../k8s/kube-config";
+import ClusterManager from "../k8s";
+import { getKubeContextByCluster } from "../k8s/kube-config";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
 
 const DIGITAL_OCEAN_API_BASE_URL = `https://api.digitalocean.com/v2`;
@@ -184,14 +185,25 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 		return;
 	}
 
-	// get Service Account data:
+	// get Container Registry data:
+	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
+
+	if (isEmpty(registry)) {
+		logError(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
+		return;
+	}
+
+	// Get SERVICE ACCOUNT from CONTAINER REGISTRY -> to authenticate & generate "imagePullSecrets"
+	const { host, serviceAccount, provider: providerShortName } = registry;
+
+	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
 	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
 	if (!cluster) {
 		logError(`Cluster "${clusterShortName}" not found.`);
 		return;
 	}
-	const { providerShortName } = cluster;
-	const { name: context } = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
+
+	const { name: context } = await getKubeContextByCluster(cluster);
 
 	const secretName = `${providerShortName}-docker-registry-key`;
 
@@ -203,6 +215,15 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			"\n  dx registry allow --create --provider=digitalocean --namespace=my-website-namespace",
 			"\n  dx registry allow --create --do create -n my-website-namespace"
 		);
+	}
+
+	// check if namespace is existed
+	if (shouldCreateSecretInNamespace) {
+		const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+		if (!isNsExisted) {
+			logError(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+			return;
+		}
 	}
 
 	// create secret in the namespace (if needed)
