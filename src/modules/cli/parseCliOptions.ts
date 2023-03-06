@@ -75,6 +75,7 @@ const argvOptions = {
 	generate: { describe: "Should generate config file or not", alias: "G" },
 	pipeline: { describe: "Should generate Bitbucket pipeline YAML or not" },
 	template: { describe: "Should replace current deployment with the templates or not", alias: "tpl" },
+	fresh: { describe: "Should do a fresh deploy [WARN - this will wipe out the current namespace]", alias: "fr" },
 };
 
 const globalOptions = {
@@ -143,6 +144,7 @@ const deployOptions = {
 	custom: argvOptions.custom,
 	create: argvOptions.create,
 	shouldUploadDotenv: argvOptions["upload-env"],
+	fresh: argvOptions.fresh,
 };
 
 export async function parseCliOptions() {
