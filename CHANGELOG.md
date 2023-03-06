@@ -1,3 +1,10 @@
+## [2.4.5](https://github.com/digitopvn/diginext/compare/v2.4.4...v2.4.5) (2023-03-06)
+
+
+### Bug Fixes
+
+* **cli and admin:** minor issues of admin and cli deploy domain correction ([46b74e3](https://github.com/digitopvn/diginext/commit/46b74e31fe6ea9dcc42f5ab6794abaaf486b9bfb))
+
 ## [2.4.4](https://github.com/digitopvn/diginext/compare/v2.4.3...v2.4.4) (2023-03-05)
 
 
