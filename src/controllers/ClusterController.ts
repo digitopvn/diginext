@@ -40,7 +40,7 @@ export default class ClusterController extends BaseController<Cluster> {
 
 		if (newCluster) {
 			try {
-				const auth = await ClusterManager.auth(newCluster.shortName);
+				const auth = await ClusterManager.authCluster(newCluster.shortName);
 				if (!auth) {
 					return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
 				}
@@ -71,7 +71,7 @@ export default class ClusterController extends BaseController<Cluster> {
 		let cluster = await this.service.findOne(this.filter);
 
 		try {
-			await ClusterManager.auth(cluster.shortName);
+			await ClusterManager.authCluster(cluster.shortName);
 
 			[cluster] = await this.service.update({ _id: cluster._id }, { isVerified: true });
 		} catch (e) {
@@ -109,7 +109,7 @@ export default class ClusterController extends BaseController<Cluster> {
 
 		const { shortName } = cluster;
 		try {
-			const authResult = await ClusterManager.auth(shortName);
+			const authResult = await ClusterManager.authCluster(shortName);
 			if (authResult) {
 				result.status = 1;
 				result.messages.push("Ok");

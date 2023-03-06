@@ -1,3 +1,20 @@
+## [2.4.6](https://github.com/digitopvn/diginext/compare/v2.4.5...v2.4.6) (2023-03-06)
+
+
+### Bug Fixes
+
+* **admin ui:** base api url still fall to localhost ([31a3730](https://github.com/digitopvn/diginext/commit/31a3730fdef0b9ab037ebb8de1ceda32db479de6))
+* **admin ui:** issue of api base path redirect to localhost ([e4ca5b9](https://github.com/digitopvn/diginext/commit/e4ca5b9e0d8aa22c43b501e8d73caad670394271))
+* **cli options:** add flag --fresh for deploy from scratch ([12aface](https://github.com/digitopvn/diginext/commit/12afaced02824f43db0e2be59ac52f07d35ed90b))
+* **image pull secrets:** issue of create image pull secrets in namespace of cluster ([f7eb4ae](https://github.com/digitopvn/diginext/commit/f7eb4ae3830d341f19eed2cb6aad78915b02f635))
+
+## [2.4.5](https://github.com/digitopvn/diginext/compare/v2.4.4...v2.4.5) (2023-03-06)
+
+
+### Bug Fixes
+
+* **cli and admin:** minor issues of admin and cli deploy domain correction ([46b74e3](https://github.com/digitopvn/diginext/commit/46b74e31fe6ea9dcc42f5ab6794abaaf486b9bfb))
+
 ## [2.4.4](https://github.com/digitopvn/diginext/compare/v2.4.3...v2.4.4) (2023-03-05)
 
 

@@ -7,7 +7,7 @@ import execa from "execa";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
-import { execConfig } from "@/config/config";
+import { execConfig, getCliConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
 import createApp from "@/modules/apps/new-app";
@@ -24,8 +24,9 @@ import DigitalOcean, { execDigitalOcean } from "@/modules/providers/digitalocean
 import GCloud, { execGoogleCloud } from "@/modules/providers/gcloud";
 import { execRegistry } from "@/modules/registry";
 import { execServer } from "@/modules/server";
-import { currentVersion, freeUp, getOS, logVersion } from "@/plugins";
+import { currentVersion, freeUp, getOS } from "@/plugins";
 
+import { CLI_CONFIG_FILE, CLI_DIR } from "./config/const";
 import { execInitApp } from "./modules/apps/init-app";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
 import { updateCli } from "./modules/cli/update-cli";
@@ -43,14 +44,20 @@ export const conf = new Configstore(pkg.name);
 export async function processCLI(options?: InputOptions) {
 	options.version = currentVersion();
 
+	const { buildServerUrl } = getCliConfig();
+
 	if (options.isDebugging) {
-		logVersion();
 		log(chalk.cyan("---------------- DEBUG ----------------"));
-		log(`• OS:	`, getOS().toUpperCase());
-		log("• Node:	", (await execa("node", ["-v"])).stdout);
-		log("• NPM:	", (await execa("npm", ["-v"])).stdout);
-		log("• Docker:	", (await execa("docker", ["-v"])).stdout);
-		log("• Mode:	", process.env.CLI_MODE || "client");
+		log(`• OS:			`, getOS().toUpperCase());
+		log("• Node:		", (await execa("node", ["-v"])).stdout);
+		log("• NPM:			", (await execa("npm", ["-v"])).stdout);
+		log("• Docker:		", (await execa("docker", ["-v"])).stdout);
+		log("• Mode:		", process.env.CLI_MODE || "client");
+		log("• CLI Version:	", options.version);
+		log("• CLI Dir:		", CLI_DIR);
+		log("• CLI Config:	", CLI_CONFIG_FILE);
+		log("• Working dir:	", process.cwd());
+		log("• Server URL:	", buildServerUrl);
 		log(chalk.cyan("---------------------------------------"));
 	}
 

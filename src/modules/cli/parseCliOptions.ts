@@ -61,7 +61,7 @@ const argvOptions = {
 	do: { describe: "Select Digital Ocean as a provider", alias: "digitalocean" },
 	gcloud: { describe: "Select Google Cloud as a provider", alias: "gcp" },
 	cluster: { describe: "Specify selected cluster" },
-	registry: { describe: "Specify selected container registry" },
+	registry: { describe: "Specify container registry's slug", alias: "reg" },
 	project: { describe: "Specify selected project id (for Google Cloud)", alias: "pro" },
 	zone: { describe: "Specify selected zone (for Google Cloud)" },
 	region: { describe: "Specify selected region (for Google Cloud)" },
@@ -75,6 +75,7 @@ const argvOptions = {
 	generate: { describe: "Should generate config file or not", alias: "G" },
 	pipeline: { describe: "Should generate Bitbucket pipeline YAML or not" },
 	template: { describe: "Should replace current deployment with the templates or not", alias: "tpl" },
+	fresh: { describe: "Should do a fresh deploy [WARN - this will wipe out the current namespace]", alias: "fr" },
 };
 
 const globalOptions = {
@@ -143,6 +144,7 @@ const deployOptions = {
 	custom: argvOptions.custom,
 	create: argvOptions.create,
 	shouldUploadDotenv: argvOptions["upload-env"],
+	fresh: argvOptions.fresh,
 };
 
 export async function parseCliOptions() {
@@ -397,6 +399,7 @@ export async function parseCliOptions() {
 		replicas: argv.replicas as number,
 		size: (argv.size as ResourceQuotaSize) ?? "none",
 		provider: argv.provider as string,
+		registry: argv.registry as string,
 		cluster: argv.cluster as string,
 		zone: argv.zone as string,
 		project: argv.project as Project,

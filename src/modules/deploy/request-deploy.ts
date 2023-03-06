@@ -4,12 +4,11 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
-import { CLI_DIR } from "@/config/const";
 import type { Project } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
-import { isWin, resolveDockerfilePath } from "@/plugins";
+import { resolveDockerfilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
@@ -31,16 +30,6 @@ export async function requestDeploy(options: InputOptions) {
 
 	const appDirectory = targetDirectory;
 	const DEPLOY_API_PATH = `${buildServerUrl}/api/v1/deploy`;
-	const BUILD_SERVER_URL = buildServerUrl;
-
-	if (options.isDebugging) {
-		log("CLI_MODE:", process.env.CLI_MODE || "client");
-		log("CLI_DIR:", CLI_DIR);
-		log(`CURRENT_WORKING_DIR: ${process.cwd()}`);
-		log(`BUILD_SERVER_URL: ${BUILD_SERVER_URL}`);
-		log(`DEPLOY_API_PATH: ${DEPLOY_API_PATH}`);
-		log(`IS_WINDOWS:`, isWin());
-	}
 
 	// check Dockerfile -> no dockerfile, no build -> failed
 	let dockerFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });

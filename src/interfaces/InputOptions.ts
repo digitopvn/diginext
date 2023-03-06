@@ -148,12 +148,6 @@ export type InputOptions = {
 	frameworkVersion?: string;
 
 	/**
-	 * Enable GIT for the application
-	 * @default true
-	 */
-	shouldUseGit?: boolean;
-
-	/**
 	 * @default false
 	 */
 	overwrite?: boolean;
@@ -271,10 +265,17 @@ export type InputOptions = {
 	shouldShowVersion?: boolean;
 
 	/**
+	 * Should update CLI version before running the command
 	 * @type {Boolean}
 	 * @default false
 	 */
 	shouldUpdateCli?: boolean;
+
+	/**
+	 * Enable GIT when create new or initialize app
+	 * @default true
+	 */
+	shouldUseGit?: boolean;
 
 	/**
 	 * @type {Boolean}
@@ -345,6 +346,14 @@ export type InputOptions = {
 	 * Should apply something
 	 */
 	shouldApply?: boolean;
+
+	/**
+	 * ! Should deploy app from a fresh namespace
+	 * ## WARNING
+	 * - **With this flag enabled, the server will wipe out all current deployments within the target namespace, then deploy your app completely from scratch!**
+	 * - Use at your own risk, make sure you understand what you're doing, double check the namespace before deploying to avoid accidently take down other apps.
+	 */
+	shouldUseFreshDeploy?: boolean;
 
 	/**
 	 * Content of the deployment yaml (Namespace, Ingress, Service, Deploy,...)
@@ -465,6 +474,11 @@ export type InputOptions = {
 	 * @default "custom"
 	 */
 	provider?: string;
+
+	/**
+	 * Container Registry's slug
+	 */
+	registry?: string;
 
 	/**
 	 * Git provider

@@ -27,10 +27,17 @@ export default class Cluster extends Base {
 	isVerified?: boolean;
 
 	/**
-	 * Cluster short name (to access via `kubectl context`)
+	 * A cluster name on the cloud provider
+	 * - This is **NOT** a cluster name in `kubeconfig`
 	 */
 	@Column()
 	shortName?: string;
+
+	/**
+	 * Cluster context name (to access via `kubectl context`)
+	 */
+	@Column()
+	contextName?: string;
 
 	/**
 	 * Cloud provider of this cluster
@@ -40,6 +47,7 @@ export default class Cluster extends Base {
 
 	/**
 	 * Short name of the cloud provider
+	 * @example "gcloud", "digitalocean", "custom"
 	 */
 	@Column()
 	providerShortName?: string;

@@ -54,8 +54,8 @@ export default class ProjectController extends BaseController<Project> {
 					if (!isEmpty(deployEnvironment)) {
 						const { cluster, namespace } = deployEnvironment;
 						try {
-							await ClusterManager.auth(cluster);
-							await ClusterManager.deleteNamespace(namespace);
+							await ClusterManager.authCluster(cluster);
+							await ClusterManager.deleteNamespaceByCluster(namespace, cluster);
 							log(`[PROJECT DELETE] ${app.slug} > Deleted "${namespace}" namespace on "${cluster}" cluster.`);
 						} catch (e) {
 							logWarn(`[PROJECT DELETE] ${app.slug} > Can't delete "${namespace}" namespace on "${cluster}" cluster:`, e);

@@ -81,8 +81,8 @@ export default class AppController extends BaseController<App> {
 			if (!isEmpty(deployEnvironment)) {
 				const { cluster, namespace } = deployEnvironment;
 				try {
-					await ClusterManager.auth(cluster);
-					await ClusterManager.deleteNamespace(namespace);
+					await ClusterManager.authCluster(cluster);
+					await ClusterManager.deleteNamespaceByCluster(namespace, cluster);
 					log(`[APP DELETE] ${app.slug} > Deleted "${namespace}" namespace on "${cluster}" cluster.`);
 				} catch (e) {
 					logWarn(`[APP DELETE] ${app.slug} > Can't delete "${namespace}" namespace on "${cluster}" cluster:`, e);
@@ -261,10 +261,10 @@ export default class AppController extends BaseController<App> {
 		let errorMsg;
 		try {
 			// switch to the cluster of this environment
-			await ClusterManager.auth(cluster);
+			await ClusterManager.authCluster(cluster);
 
 			// delete the whole namespace of this environment
-			await ClusterManager.deleteNamespace(namespace);
+			await ClusterManager.deleteNamespaceByCluster(namespace, cluster);
 		} catch (e) {
 			logError(`[BaseController] deleteEnvironment (${cluster} - ${namespace}) :>>`, e);
 			errorMsg = e.message;
@@ -341,6 +341,8 @@ export default class AppController extends BaseController<App> {
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
 
 		const { data: appConfig } = await this.getAppConfig({ slug });
+
+		// TODO: Apply ENV variables to current deployment
 
 		let result = { status: 1, data: appConfig, messages: [] };
 		return result;

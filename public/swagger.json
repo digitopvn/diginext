@@ -1299,7 +1299,11 @@
 					},
 					"shortName": {
 						"type": "string",
-						"description": "Cluster short name (to access via `kubectl context`)"
+						"description": "A cluster name on the cloud provider\n- This is **NOT** a cluster name in `kubeconfig`"
+					},
+					"contextName": {
+						"type": "string",
+						"description": "Cluster context name (to access via `kubectl context`)"
 					},
 					"provider": {
 						"anyOf": [
@@ -1535,7 +1539,11 @@
 					},
 					"shortName": {
 						"type": "string",
-						"description": "Cluster short name (to access via `kubectl context`)"
+						"description": "A cluster name on the cloud provider\n- This is **NOT** a cluster name in `kubeconfig`"
+					},
+					"contextName": {
+						"type": "string",
+						"description": "Cluster context name (to access via `kubectl context`)"
 					},
 					"provider": {
 						"anyOf": [
@@ -1875,6 +1883,10 @@
 						"type": "string",
 						"description": "Git provider"
 					},
+					"registry": {
+						"type": "string",
+						"description": "Container Registry's slug"
+					},
 					"provider": {
 						"type": "string",
 						"description": "Cloud provider",
@@ -1962,6 +1974,10 @@
 						"type": "string",
 						"description": "Content of the deployment yaml (Namespace, Ingress, Service, Deploy,...)"
 					},
+					"shouldUseFreshDeploy": {
+						"type": "boolean",
+						"description": "! Should deploy app from a fresh namespace\n## WARNING\n- **With this flag enabled, the server will wipe out all current deployments within the target namespace, then deploy your app completely from scratch!**\n- Use at your own risk, make sure you understand what you're doing, double check the namespace before deploying to avoid accidently take down other apps."
+					},
 					"shouldApply": {
 						"type": "boolean",
 						"description": "Should apply something"
@@ -2013,8 +2029,14 @@
 						"type": "boolean",
 						"default": "false"
 					},
+					"shouldUseGit": {
+						"type": "boolean",
+						"description": "Enable GIT when create new or initialize app",
+						"default": "true"
+					},
 					"shouldUpdateCli": {
 						"type": "boolean",
+						"description": "Should update CLI version before running the command",
 						"default": "false"
 					},
 					"shouldShowVersion": {
@@ -2120,11 +2142,6 @@
 					"overwrite": {
 						"type": "boolean",
 						"default": "false"
-					},
-					"shouldUseGit": {
-						"type": "boolean",
-						"description": "Enable GIT for the application",
-						"default": "true"
 					},
 					"frameworkVersion": {
 						"type": "string",
@@ -3533,7 +3550,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.4.3",
+		"version": "2.4.5",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"

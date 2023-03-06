@@ -147,6 +147,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	} else {
 		// TODO: check for domain DNS ?
 	}
+	localAppConfig.environment[env].domains = localDeployEnvironment.domains;
 
 	if (isEmpty(localDeployEnvironment.domains)) {
 		logWarn(
@@ -176,6 +177,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 		registry = selectedRegistry;
 		localDeployEnvironment.registry = selectedRegistry.slug;
 	}
+	localAppConfig.environment[env].registry = localDeployEnvironment.registry;
 
 	// request imageURL
 	if (!localDeployEnvironment.imageURL) {
@@ -183,6 +185,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 		localDeployEnvironment.imageURL = `${registry.imageBaseURL}/${imageSlug}`;
 	}
 	options.imageURL = localDeployEnvironment.imageURL;
+	localAppConfig.environment[env].imageURL = localDeployEnvironment.imageURL;
 
 	// request ingress class
 	// deployEnvironment.ingress;
@@ -203,19 +206,23 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 		localDeployEnvironment.port = options.port = selectedPort;
 	}
 	options.port = localDeployEnvironment.port;
+	localAppConfig.environment[env].port = localDeployEnvironment.port;
 
 	// request inherit previous deployment config
 	if (typeof localDeployEnvironment.shouldInherit === "undefined") localDeployEnvironment.shouldInherit = true;
 	options.shouldInherit = localDeployEnvironment.shouldInherit;
+	localAppConfig.environment[env].shouldInherit = localDeployEnvironment.shouldInherit;
 
 	// request cdn
 	if (typeof localDeployEnvironment.cdn === "undefined") localDeployEnvironment.cdn = false;
 	options.shouldEnableCDN = localDeployEnvironment.cdn;
+	localAppConfig.environment[env].cdn = localDeployEnvironment.cdn;
 
 	// request replicas
 	if (typeof localDeployEnvironment.replicas === "undefined") localDeployEnvironment.replicas = 1;
 	if (!isNumeric(localDeployEnvironment.replicas)) localDeployEnvironment.replicas = 1;
 	options.replicas = localDeployEnvironment.replicas;
+	localAppConfig.environment[env].replicas = localDeployEnvironment.replicas;
 
 	// request SSL config
 	if (localDeployEnvironment.domains.length > 0) {
@@ -244,6 +251,8 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 		localDeployEnvironment.domains = [];
 		// TODO: remove domains from database
 	}
+	localAppConfig.environment[env].ssl = localDeployEnvironment.ssl;
+	localAppConfig.environment[env].tlsSecret = localDeployEnvironment.tlsSecret;
 
 	// environment variables
 	// check database to see should sync ENV variables or not...
@@ -281,7 +290,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	await checkGitignoreContainsDotenvFiles({ targetDir: appDirectory });
 
 	const appConfig = saveAppConfig(localAppConfig, { directory: appDirectory });
-	// console.log("ask deploy info > appConfig > save :>> ", appConfig);
+	if (options.isDebugging) log(`[ASK DEPLOY INFO] appConfig :>>`, appConfig);
 
 	const deployEnvironment = appConfig.environment[env];
 	/**
@@ -300,6 +309,8 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 			},
 		}
 	);
+
+	if (options.isDebugging) log(`[ASK DEPLOY INFO] updatedApp :>>`, updatedApp);
 
 	return { project, app, appConfig, deployEnvironment };
 };
