@@ -11,7 +11,7 @@ import { DB } from "../api/DB";
 import custom from "../providers/custom";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
-import { getKubeContextByClusterShortName } from "./kube-config";
+import { getKubeContextByCluster, getKubeContextByClusterShortName } from "./kube-config";
 
 export interface ClusterAuthOptions {
 	/**
@@ -84,6 +84,13 @@ const authCluster = async (clusterShortName: string, options: ClusterAuthOptions
 	const { shouldSwitchContextToThisCluster } = options;
 
 	let context: KubeConfigContext;
+
+	// Check if Kubernetes context of the cluster is existed -> skip cluster authentication
+	context = await getKubeContextByCluster(cluster);
+	if (context) {
+		logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
+		return cluster;
+	}
 
 	switch (providerShortName) {
 		case "gcloud":

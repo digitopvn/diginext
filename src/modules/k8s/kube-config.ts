@@ -42,6 +42,14 @@ export async function currentCluster() {
 }
 
 /**
+ * Get all available Kubernetes contexts of the build server
+ */
+export const getAllContexts = async (filePath?: string) => {
+	const currentKubeConfig = await getKubeConfig(filePath);
+	return currentKubeConfig.contexts;
+};
+
+/**
  * Get KUBE_CONTEXT by cluster's short name & cloud provider's short name
  * @param shortName - A cluster name on the cloud provider (**NOT** a cluster in `kubeconfig`)
  * @param provider - A cloud provider short name. One of "digitalocean", "gcloud" or "custom"
