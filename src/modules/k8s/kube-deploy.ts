@@ -166,10 +166,6 @@ export async function rollout(id: string) {
 		endpoint: endpointUrl,
 		namespace,
 		env,
-		// diginext, // <--- appConfig
-		// provider, // <--- cloud provider
-		// providerProjectId, // <--- this is PROJECT_ID of Google Cloud project
-		// projectSlug,
 	} = releaseData as Release;
 
 	log(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);

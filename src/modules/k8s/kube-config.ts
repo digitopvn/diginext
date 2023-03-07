@@ -50,7 +50,7 @@ export async function currentCluster() {
  */
 export async function getKubeContextByClusterShortName(shortName: string, provider: string, filePath?: string) {
 	const kubeConfig = await getKubeConfig(filePath);
-	if (!kubeConfig) throw new Error(`Can't get context of "${shortName}" cluster (${provider}) due to empty KUBE_CONFIG.`);
+	if (!kubeConfig) throw new Error(`Can't get Kubernetes context of "${shortName}" cluster (${provider}) due to empty KUBE_CONFIG.`);
 
 	const listContexts = kubeConfig.contexts || [];
 
@@ -64,9 +64,14 @@ export async function getKubeContextByClusterShortName(shortName: string, provid
 		providerContexts = listContexts.filter((ctx) => ctx.name.substring(0, 4) === "gke_");
 		context = providerContexts.find((ctx) => ctx.name.split("_").slice(3).join("").indexOf(shortName) > -1);
 	} else {
-		providerContexts = listContexts.filter((ctx) => ctx.name.substring(0, 4) !== "gke_" && ctx.name.substring(0, 3) === "do-");
+		providerContexts = listContexts.filter((ctx) => ctx.name.substring(0, 4) !== "gke_" && ctx.name.substring(0, 3) !== "do-");
 		context = providerContexts.find((ctx) => ctx.name.indexOf(shortName) > -1);
 	}
+
+	if (!context)
+		throw new Error(
+			`Kubernetes context not found of "${shortName}" cluster (${provider}), current contexts: ${listContexts.map((ctx) => ctx.name)}.`
+		);
 
 	return context;
 }
@@ -80,5 +85,7 @@ export async function getKubeContextByClusterShortName(shortName: string, provid
 export async function getKubeContextByCluster(cluster: Cluster, filePath?: string) {
 	const { shortName, providerShortName: provider } = cluster;
 
-	return getKubeContextByClusterShortName(shortName, provider, filePath);
+	const context = await getKubeContextByClusterShortName(shortName, provider, filePath);
+
+	return context;
 }

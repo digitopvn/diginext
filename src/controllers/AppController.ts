@@ -1,5 +1,5 @@
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
-import { isEmpty } from "lodash";
+import { isArray, isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
@@ -8,6 +8,7 @@ import type { ClientDeployEnvironmentConfig, HiddenBodyKeys } from "@/interfaces
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
+import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import ClusterManager from "@/modules/k8s";
@@ -25,8 +26,37 @@ export default class AppController extends BaseController<App> {
 
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
-		return super.read();
+	async read(@Queries() queryParams?: IGetQueryParams) {
+		let apps = await DB.find<App>("app", this.filter, this.options, this.pagination);
+
+		// convert "envVars" Object to Array (if needed)
+		// console.log("[1] apps :>> ", apps);
+		apps = apps.map((app) => {
+			if (app.deployEnvironment)
+				Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
+					if (deployEnvironment) {
+						const envVars = deployEnvironment.envVars;
+						if (envVars && !isArray(envVars)) {
+							/**
+							 * {Object} envVars
+							 * @example
+							 * {
+							 * 		"0": { name: "NAME", value: "VALUE" },
+							 * 		"1": { name: "NAME", value: "VALUE" },
+							 * 		...
+							 * }
+							 */
+							const convertedEnvVars = [];
+							Object.values(envVars).map((envVar) => convertedEnvVars.push(envVar));
+							app.deployEnvironment[env].envVars = convertedEnvVars;
+						}
+					}
+				});
+			return app;
+		});
+		// console.log("[2] apps :>> ", apps);
+
+		return { status: 1, data: apps } as ResponseData;
 	}
 
 	@Security("jwt")
