@@ -1,3 +1,4 @@
+import { logError } from "diginext-utils/dist/console/log";
 import { existsSync } from "fs";
 import yaml from "js-yaml";
 
@@ -77,9 +78,7 @@ export async function getKubeContextByClusterShortName(shortName: string, provid
 	}
 
 	if (!context)
-		throw new Error(
-			`Kubernetes context not found of "${shortName}" cluster (${provider}), current contexts: ${listContexts.map((ctx) => ctx.name)}.`
-		);
+		logError(`Kubernetes context not found of "${shortName}" cluster (${provider}), current contexts: ${listContexts.map((ctx) => ctx.name)}.`);
 
 	return context;
 }

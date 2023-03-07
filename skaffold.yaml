@@ -10,3 +10,5 @@ build:
 manifests:
   rawYaml:
     - deployment.yaml
+deploy:
+  kubeContext: topgroup-k3s
