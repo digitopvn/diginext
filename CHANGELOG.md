@@ -1,3 +1,11 @@
+## [2.4.8](https://github.com/digitopvn/diginext/compare/v2.4.7...v2.4.8) (2023-03-07)
+
+
+### Bug Fixes
+
+* **ask deploy environment:** issue of update app deploy environmentt to db ([856884c](https://github.com/digitopvn/diginext/commit/856884c9398efadecc9cbe0123f55cb05d103b42))
+* **readme:** update momo button png ([52fd933](https://github.com/digitopvn/diginext/commit/52fd933f6a8046e2ef7b0e74a8f9d4b8960bd17e))
+
 ## [2.4.7](https://github.com/digitopvn/diginext/compare/v2.4.6...v2.4.7) (2023-03-07)
 
 

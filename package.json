@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "2.4.7",
+	"version": "2.4.8",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -55,6 +55,7 @@
 	"scripts": {
 		"build": "rm -rf dist && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && npm run restruct && chmod -R +x dist && npm link && pnpm swagger",
 		"build:deploy": "pnpm build && npm run deploy",
+		"build:deploy-release": "pnpm build && skaffold run && pnpm release:nobuild",
 		"deploy": "skaffold run --tail",
 		"startup": "pm2 startup",
 		"unstartup": "pm2 unstartup",
@@ -77,6 +78,7 @@
 		"pkg-version": "npm pkg set version=$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-)",
 		"npm-publish": "npm publish --access=public",
 		"release": "npm run build && npm run prerelease && npm run husky-hide && npm run npm-publish && npm run husky-show && npm run pull-request",
+		"release:nobuild": "npm run prerelease && npm run husky-hide && npm run npm-publish && npm run husky-show && npm run pull-request",
 		"release:all": "npm run release && npm run docker-build && npm run deploy",
 		"prerelease": "npx semantic-release --no-ci && npm run pkg-version && npm run commit-build && exit 0",
 		"pull-request": "open-cli https://github.com/digitopvn/diginext/compare/main...$(echo $(git rev-parse --abbrev-ref HEAD))",
