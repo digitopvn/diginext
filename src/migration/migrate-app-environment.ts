@@ -34,77 +34,46 @@ export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) =
 	return results;
 };
 
+export const migrateAppEnvironmentVariables = async (app: App) => {
+	if (isEmpty(app)) return;
+	if (isEmpty(app.deployEnvironment)) return app;
+
+	const updateData = {} as any;
+	Object.entries(app.deployEnvironment).map(([env, deployData]) => {
+		if (deployData && deployData.envVars && isObject(deployData.envVars)) {
+			/**
+			 * - {Object} envVars
+			 * @example
+			 * {
+			 * 	"0": { name: "NAME", value: "VALUE" },
+			 * 	"1": { name: "NAME", value: "VALUE" },
+			 * 	...
+			 * }
+			 *
+			 * - {Array} envVars
+			 * @example
+			 * [
+			 * 	{ name: "NAME", value: "VALUE" },
+			 * 	{ name: "NAME", value: "VALUE" },
+			 * 	...
+			 * ]
+			 */
+			const newEnvVars = Object.values(deployData.envVars);
+			updateData[`deployEnvironment.${env}.envVars`] = newEnvVars;
+		}
+	});
+	const [updatedApp] = await DB.update<App>("app", { _id: app._id }, updateData);
+	return updatedApp;
+};
+
 export const migrateAllAppEnvironment = async () => {
 	const apps = await DB.find<App>("app", { deployEnvironment: undefined });
 	if (isEmpty(apps)) return;
 
 	log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need environment migration.`);
 
-	apps.map((app) => {
-		if (app.deployEnvironment)
-			Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
-				if (deployEnvironment) {
-					const envVars = deployEnvironment.envVars;
-					if (envVars && isObject(envVars)) {
-						/**
-						 * - {Object} envVars
-						 * @example
-						 * {
-						 * 	"0": { name: "NAME", value: "VALUE" },
-						 * 	"1": { name: "NAME", value: "VALUE" },
-						 * 	...
-						 * }
-						 *
-						 * - {Array} envVars
-						 * @example
-						 * [
-						 * 	{ name: "NAME", value: "VALUE" },
-						 * 	{ name: "NAME", value: "VALUE" },
-						 * 	...
-						 * ]
-						 */
-						const convertedEnvVars = [];
-						Object.values(envVars).map((envVar) => convertedEnvVars.push(envVar));
-						app.deployEnvironment[env].envVars = convertedEnvVars;
-					}
-				}
-			});
-		return app;
-	});
 	// convert "envVars" {Object} to {Array} (if needed)
-	const results = await Promise.all(
-		apps.map(async (app) => {
-			if (app.deployEnvironment) {
-				Object.entries(app.deployEnvironment).map(([env, deployData]) => {
-					if (deployData.envVars && isObject(deployData.envVars)) {
-						/**
-						 * - {Object} envVars
-						 * @example
-						 * {
-						 * 	"0": { name: "NAME", value: "VALUE" },
-						 * 	"1": { name: "NAME", value: "VALUE" },
-						 * 	...
-						 * }
-						 *
-						 * - {Array} envVars
-						 * @example
-						 * [
-						 * 	{ name: "NAME", value: "VALUE" },
-						 * 	{ name: "NAME", value: "VALUE" },
-						 * 	...
-						 * ]
-						 */
-						const newEnvVars = Object.values(deployData.envVars);
-						app.deployEnvironment[env].envVars = newEnvVars;
-					}
-				});
-				const [updatedApp] = await DB.update<App>("app", { _id: app._id }, { deployEnvironment: app.deployEnvironment });
-				return updatedApp;
-			} else {
-				return app;
-			}
-		})
-	);
+	const results = await Promise.all(apps.map((app) => migrateAppEnvironmentVariables(app)));
 
 	log(`[MIGRATION] migrateAppEnvironment > FINISH MIGRATION >> Affected ${results.length} items.`);
 

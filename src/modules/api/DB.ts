@@ -192,11 +192,12 @@ export class DB {
 			items = (await svc.update(filter, data, options)) || [];
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);
-			const optionStr = queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr.toString()}`;
+			const optionStr = (filterStr.toString() && "&") + queryOptionsToUrlOptions(options);
+			const url = `/api/v1/${collection}?${filterStr.toString()}${optionStr.toString()}`;
+			// console.log("[DB] UPDATE > url :>> ", url);
 
 			const updateData = flattenObjectPaths(data);
-			// console.log("[DB] updateData :>> ", updateData);
+			// console.log("[DB] UPDATE > updateData :>> ", updateData);
 			// logFull(updateData);
 
 			const {
@@ -208,7 +209,8 @@ export class DB {
 				method: "PATCH",
 				data: updateData,
 			});
-			if (!status) logError(`Can't update item:`, messages);
+			// console.log("[DB] UPDATE > result :>> ", result);
+			if (!status) logError(`[DB] Can't update item (STATUS = ${status}):`, messages);
 			items = result;
 		}
 		return items as T[];
