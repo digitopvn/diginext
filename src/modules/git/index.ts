@@ -293,8 +293,15 @@ export const verifySSH = async (options?: InputOptions) => {
 			break;
 
 		case "github":
-			authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "[GIT] Github authentication failed");
-			authResult = typeof authResult !== "undefined";
+			try {
+				await execa.command(`ssh -o StrictHostKeyChecking=no -T git@github.com`);
+				authResult = true;
+			} catch (e) {
+				authResult = e.toString().indexOf("successfully authenticated") > -1;
+			}
+
+			// authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "[GIT] Github authentication failed");
+			// authResult = typeof authResult !== "undefined";
 			break;
 
 		case "gitlab":

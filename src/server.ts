@@ -102,7 +102,7 @@ async function startupScripts() {
 	if (clusters.length > 0) {
 		let i = 1;
 		for (const cluster of clusters) {
-			log(`[${i}] Authenticating "${cluster.shortName}" cluster...`);
+			// log(`[${i}] Authenticating "${cluster.shortName}" cluster...`);
 			await ClusterManager.authCluster(cluster.shortName, { shouldSwitchContextToThisCluster: false });
 			i++;
 		}
@@ -241,7 +241,7 @@ function initialize() {
 		 * ROUTE 404 MIDDLEWARE
 		 */
 		app.use("*", route404_handler);
-		app.use(failSafeHandler);
+		if (Config.ENV !== "development") app.use(failSafeHandler);
 
 		/**
 		 * SERVER HANDLING

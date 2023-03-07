@@ -5,6 +5,7 @@ import { randomStringByLength } from "diginext-utils/dist/string/random";
 import type { Request } from "express";
 
 import type { User } from "@/entities";
+import type Base from "@/entities/Base";
 import type { EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeorm";
 import type { MongoFindManyOptions } from "@/libs/typeorm/find-options/mongodb/MongoFindManyOptions";
 import { manager, query } from "@/modules/AppDatabase";
@@ -19,7 +20,7 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interface
  */
 const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 
-export default class BaseService<E extends ObjectLiteral> {
+export default class BaseService<E extends Base & { owner?: any; workspace?: any } & ObjectLiteral> {
 	protected query: MongoRepository<ObjectLiteral>;
 
 	req?: Request;
@@ -35,7 +36,7 @@ export default class BaseService<E extends ObjectLiteral> {
 		return this.query.count({ ...filter, ...options });
 	}
 
-	async create(data: E & { slug?: string; metadata?: any; error?: any; owner?: any; workspace?: any }) {
+	async create(data: E) {
 		try {
 			// generate slug (if needed)
 			const scope = this;
@@ -81,10 +82,10 @@ export default class BaseService<E extends ObjectLiteral> {
 
 			const item = await this.query.create(data);
 
-			return (await manager.save(item)) as E & { slug?: string; metadata?: any };
+			return (await manager.save(item)) as E;
 		} catch (e) {
 			logError(e);
-			return { error: e };
+			return;
 		}
 	}
 

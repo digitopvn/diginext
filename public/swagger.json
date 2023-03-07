@@ -3550,7 +3550,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.4.6",
+		"version": "2.4.7",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -3734,31 +3734,7 @@
 										{
 											"properties": {
 												"data": {
-													"anyOf": [
-														{
-															"allOf": [
-																{
-																	"$ref": "#/components/schemas/Build"
-																},
-																{
-																	"properties": {
-																		"metadata": {},
-																		"slug": {
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
-																}
-															]
-														},
-														{
-															"properties": {
-																"error": {}
-															},
-															"required": ["error"],
-															"type": "object"
-														}
-													]
+													"$ref": "#/components/schemas/Build"
 												}
 											},
 											"required": ["data"],
@@ -4877,31 +4853,7 @@
 										{
 											"properties": {
 												"data": {
-													"anyOf": [
-														{
-															"allOf": [
-																{
-																	"$ref": "#/components/schemas/Project"
-																},
-																{
-																	"properties": {
-																		"metadata": {},
-																		"slug": {
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
-																}
-															]
-														},
-														{
-															"properties": {
-																"error": {}
-															},
-															"required": ["error"],
-															"type": "object"
-														}
-													]
+													"$ref": "#/components/schemas/Project"
 												}
 											},
 											"required": ["data"],
@@ -5416,31 +5368,7 @@
 										{
 											"properties": {
 												"data": {
-													"anyOf": [
-														{
-															"allOf": [
-																{
-																	"$ref": "#/components/schemas/CloudProvider"
-																},
-																{
-																	"properties": {
-																		"metadata": {},
-																		"slug": {
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
-																}
-															]
-														},
-														{
-															"properties": {
-																"error": {}
-															},
-															"required": ["error"],
-															"type": "object"
-														}
-													]
+													"$ref": "#/components/schemas/CloudProvider"
 												}
 											},
 											"required": ["data"],
@@ -5828,31 +5756,7 @@
 										{
 											"properties": {
 												"data": {
-													"anyOf": [
-														{
-															"allOf": [
-																{
-																	"$ref": "#/components/schemas/ContainerRegistry"
-																},
-																{
-																	"properties": {
-																		"metadata": {},
-																		"slug": {
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
-																}
-															]
-														},
-														{
-															"properties": {
-																"error": {}
-															},
-															"required": ["error"],
-															"type": "object"
-														}
-													]
+													"$ref": "#/components/schemas/ContainerRegistry"
 												}
 											},
 											"required": ["data"],
@@ -6287,31 +6191,7 @@
 										{
 											"properties": {
 												"data": {
-													"anyOf": [
-														{
-															"allOf": [
-																{
-																	"$ref": "#/components/schemas/Release"
-																},
-																{
-																	"properties": {
-																		"metadata": {},
-																		"slug": {
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
-																}
-															]
-														},
-														{
-															"properties": {
-																"error": {}
-															},
-															"required": ["error"],
-															"type": "object"
-														}
-													]
+													"$ref": "#/components/schemas/Release"
 												}
 											},
 											"required": ["data"],
@@ -6858,31 +6738,7 @@
 										{
 											"properties": {
 												"data": {
-													"anyOf": [
-														{
-															"allOf": [
-																{
-																	"$ref": "#/components/schemas/Role"
-																},
-																{
-																	"properties": {
-																		"metadata": {},
-																		"slug": {
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
-																}
-															]
-														},
-														{
-															"properties": {
-																"error": {}
-															},
-															"required": ["error"],
-															"type": "object"
-														}
-													]
+													"$ref": "#/components/schemas/Role"
 												}
 											},
 											"required": ["data"],
@@ -7270,31 +7126,7 @@
 										{
 											"properties": {
 												"data": {
-													"anyOf": [
-														{
-															"allOf": [
-																{
-																	"$ref": "#/components/schemas/Team"
-																},
-																{
-																	"properties": {
-																		"metadata": {},
-																		"slug": {
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
-																}
-															]
-														},
-														{
-															"properties": {
-																"error": {}
-															},
-															"required": ["error"],
-															"type": "object"
-														}
-													]
+													"$ref": "#/components/schemas/Team"
 												}
 											},
 											"required": ["data"],
@@ -7682,31 +7514,7 @@
 										{
 											"properties": {
 												"data": {
-													"anyOf": [
-														{
-															"allOf": [
-																{
-																	"$ref": "#/components/schemas/User"
-																},
-																{
-																	"properties": {
-																		"metadata": {},
-																		"slug": {
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
-																}
-															]
-														},
-														{
-															"properties": {
-																"error": {}
-															},
-															"required": ["error"],
-															"type": "object"
-														}
-													]
+													"$ref": "#/components/schemas/User"
 												}
 											},
 											"required": ["data"],
@@ -8137,31 +7945,7 @@
 										{
 											"properties": {
 												"data": {
-													"anyOf": [
-														{
-															"allOf": [
-																{
-																	"$ref": "#/components/schemas/Workspace"
-																},
-																{
-																	"properties": {
-																		"metadata": {},
-																		"slug": {
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
-																}
-															]
-														},
-														{
-															"properties": {
-																"error": {}
-															},
-															"required": ["error"],
-															"type": "object"
-														}
-													]
+													"$ref": "#/components/schemas/Workspace"
 												}
 											},
 											"required": ["data"],

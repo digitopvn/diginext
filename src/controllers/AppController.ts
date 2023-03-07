@@ -4,10 +4,11 @@ import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { App, Project } from "@/entities";
-import type { ClientDeployEnvironmentConfig, DeployEnvironment, HiddenBodyKeys } from "@/interfaces";
+import type { ClientDeployEnvironmentConfig, HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
+import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environment";
 import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
@@ -16,45 +17,6 @@ import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
 import BaseController from "./BaseController";
-
-/**
- * ### Convert "deployEnvironment" in request body params to {DeployEnvironment} instance
- * ---
- * FIXME: This code is so fucking weird, but it works.
- * So I've just left here & gonna find a better way later.
- * ---
- * @param body - Request body object
- * @example
- * {
- * 	...
- * 	"deployEnvironment.dev.cluster": "CLUSTER_NAME",
- * 	"deployEnvironment.dev.envVars.0.name": "VAR_NAME",
- * 	"deployEnvironment.dev.envVars.0.value": "VAR_VALUE",
- * 	"deployEnvironment.dev.envVars.1.name": "VAR_NAME",
- * 	"deployEnvironment.dev.envVars.1.value": "VAR_VALUE",
- * 	"deployEnvironment.prod.cluster": "CLUSTER_NAME",
- * 	"deployEnvironment.prod.namespace": "NAMESPACE_NAME",
- * 	...
- * }
- */
-export const convertBodyDeployEnvironmentObject = (body: any) => {
-	let appDeployEnvironment: { [env: string]: DeployEnvironment } = {};
-	Object.entries(body).map(([key, val]) => {
-		if (key.indexOf(`deployEnvironment`) > -1) {
-			if (isEmpty(val)) return;
-			// "deployEnvironment.dev.envVars.0.name".split(".")
-			const [, env, deployEnvironmentKey, index, envVarKey] = key.split(".");
-			if (!env) return (appDeployEnvironment = val as any);
-			if (!deployEnvironmentKey) return (appDeployEnvironment[env] = val as any);
-			if (deployEnvironmentKey !== "envVars") return (appDeployEnvironment[env][deployEnvironmentKey] = val as any);
-			if (typeof index === "undefined") return (appDeployEnvironment[env][deployEnvironmentKey] = val as any);
-			if (!envVarKey) return (appDeployEnvironment[env][deployEnvironmentKey][index] = val as any);
-			appDeployEnvironment[env][deployEnvironmentKey][index][envVarKey] = val;
-		}
-	});
-	body.deployEnvironment = appDeployEnvironment;
-	return appDeployEnvironment;
-};
 
 @Tags("App")
 @Route("app")
@@ -111,11 +73,20 @@ export default class AppController extends BaseController<App> {
 		}
 
 		// body.deployEnvironment = convertBodyDeployEnvironmentObject(body);
+		// console.log("AppController > body.deployEnvironment :>> ", JSON.stringify(body.deployEnvironment, null, 2));
 
-		console.log("AppController > body.deployEnvironment :>> ", JSON.stringify(body.deployEnvironment, null, 2));
-
-		const newApp = await this.service.create(body);
+		let newApp: App;
 		// console.log("app create > newApp :>> ", newApp);
+
+		try {
+			newApp = await this.service.create(body);
+			if (!newApp) return { status: 0, messages: [`Failed to update app at "${JSON.stringify(this.filter)}"`] } as ResponseData;
+		} catch (e) {
+			return { status: 0, messages: [e.message] } as ResponseData;
+		}
+
+		// migrate app environment variables if needed (convert {Object} to {Array})
+		newApp = await migrateAppEnvironmentVariables(newApp);
 
 		if (project) {
 			const newAppId = (newApp as App)._id;
@@ -139,10 +110,22 @@ export default class AppController extends BaseController<App> {
 			body.projectSlug = project.slug;
 		}
 
-		body.deployEnvironment = convertBodyDeployEnvironmentObject(body);
+		// body.deployEnvironment = convertBodyDeployEnvironmentObject(body);
 		// console.log("body :>> ", body);
 
-		return super.update(body);
+		let app: App;
+		try {
+			[app] = await this.service.update(this.filter, body, this.options);
+			if (!app) return { status: 0, messages: [`Failed to update app at "${JSON.stringify(this.filter)}"`] } as ResponseData;
+		} catch (e) {
+			return { status: 0, messages: [e.message] } as ResponseData;
+		}
+
+		// migrate app environment variables if needed (convert {Object} to {Array})
+		app = await migrateAppEnvironmentVariables(app);
+
+		return { status: 1, data: [app] } as ResponseData;
+		// return super.update(body);
 	}
 
 	@Security("jwt")

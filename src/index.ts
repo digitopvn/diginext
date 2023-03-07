@@ -48,13 +48,13 @@ export async function processCLI(options?: InputOptions) {
 
 	if (options.isDebugging) {
 		log(chalk.cyan("---------------- DEBUG ----------------"));
-		log(`• OS:			`, getOS().toUpperCase());
+		log(`• OS:		`, getOS().toUpperCase());
 		log("• Node:		", (await execa("node", ["-v"])).stdout);
 		log("• NPM:			", (await execa("npm", ["-v"])).stdout);
 		log("• Docker:		", (await execa("docker", ["-v"])).stdout);
 		log("• Mode:		", process.env.CLI_MODE || "client");
 		log("• CLI Version:	", options.version);
-		log("• CLI Dir:		", CLI_DIR);
+		log("• CLI Dir:	", CLI_DIR);
 		log("• CLI Config:	", CLI_CONFIG_FILE);
 		log("• Working dir:	", process.cwd());
 		log("• Server URL:	", buildServerUrl);

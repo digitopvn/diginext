@@ -394,9 +394,7 @@ export const deleteFolderRecursive = async (filePath) => {
  * @example {a: {b: [{c: 1}, {c: 2}]}, e: 3} -> {"a.b[0].c": 1, "a.b[1].c": 2, "e": 3}
  */
 export function flattenObjectToPost(object: any = {}, initialPathPrefix = "") {
-	if (!object || typeof object !== "object") {
-		return [{ [initialPathPrefix]: object }];
-	}
+	if (!object || typeof object !== "object") return [{ [initialPathPrefix]: object }];
 
 	const prefix = initialPathPrefix ? (Array.isArray(object) ? initialPathPrefix : `${initialPathPrefix}`) : "";
 
@@ -418,9 +416,7 @@ export function flattenObjectToPost(object: any = {}, initialPathPrefix = "") {
  * @example {a: {b: [{c: 1}, {c: 2}]}, e: 3} -> {"a.b.0.c": 1, "a.b.1.c": 2, "e": 3}
  */
 export function flattenObjectPaths(object: any = {}, initialPathPrefix = "") {
-	if (!object || typeof object !== "object") {
-		return [{ [initialPathPrefix]: object }];
-	}
+	if (!object || typeof object !== "object") return [{ [initialPathPrefix]: object }];
 
 	const prefix = initialPathPrefix ? (Array.isArray(object) ? initialPathPrefix : `${initialPathPrefix}.`) : "";
 
