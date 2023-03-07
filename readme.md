@@ -162,9 +162,9 @@ Suggest improvements and report problems.
 
 If you enjoyed this project — or just feeling generous, consider buying me a beer. Cheers! 🍻
 
-<a href="https://www.buymeacoffee.com/duynguyen" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+<a href="https://www.buymeacoffee.com/duynguyen" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" height=48 ></a>
 
-<a href="https://paypal.me/mrgoonie/" target="_blank"><img src="https://github.com/andreostrovsky/donate-with-paypal/blob/master/blue.svg" height="40"></a>
+<a href="https://paypal.me/mrgoonie/" target="_blank"><img src="https://github.com/andreostrovsky/donate-with-paypal/blob/master/blue.svg" height=48></a>
 
 <a href="https://opencollective.com/diginext/donate" target="_blank">
   <img src="https://opencollective.com/diginext/donate/button@2x.png?color=blue" height=48 />
