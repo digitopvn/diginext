@@ -1,3 +1,13 @@
+## [2.4.7](https://github.com/digitopvn/diginext/compare/v2.4.6...v2.4.7) (2023-03-07)
+
+
+### Bug Fixes
+
+* **cluster auth:** skip cluster auth if it is existed in kubeconfig ([e65c6aa](https://github.com/digitopvn/diginext/commit/e65c6aa5dd55ebfa4aea6637b2c052b635076b05))
+* **kube config:** log error if kube context not found ([6e6bbbb](https://github.com/digitopvn/diginext/commit/6e6bbbb30adc5cc5caa3bf887ac3d157f644a54c))
+* **kube deploy:** issue of kubernetes context not found when deploy custom cluster ([4bd7318](https://github.com/digitopvn/diginext/commit/4bd7318c7564796a1c68cbfd13876be9dd65457a))
+* **start build:** issue of resolving dockerfile in source code ([22e674a](https://github.com/digitopvn/diginext/commit/22e674a139d12acd522468510a0590694783e742))
+
 ## [2.4.6](https://github.com/digitopvn/diginext/compare/v2.4.5...v2.4.6) (2023-03-06)
 
 

@@ -297,18 +297,17 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	 * PUSH LOCAL APP CONFIG TO SERVER:
 	 * (save app & its deploy environment data to database)
 	 */
-	const [updatedApp] = await DB.update<App>(
-		"app",
-		{ slug: appConfig.slug },
-		{
-			slug: appConfig.slug, // <-- update old app slug -> new app slug (if any)
-			projectSlug: appConfig.project, // <-- update old app projectSlug -> new app projectSlug (if any)
-			project: project._id, // <-- update old app's project -> new app's project (if any)
-			deployEnvironment: {
-				[env]: deployEnvironment, // <-- update new app's deploy environment
-			},
-		}
-	);
+	const updateAppData = {
+		slug: appConfig.slug, // <-- update old app slug -> new app slug (if any)
+		projectSlug: appConfig.project, // <-- update old app projectSlug -> new app projectSlug (if any)
+		project: project._id, // <-- update old app's project -> new app's project (if any)
+		deployEnvironment: {
+			[env]: deployEnvironment, // <-- update new app's deploy environment
+		},
+	};
+	if (options.isDebugging) log(`[ASK DEPLOY INFO] updateAppData :>>`, updateAppData);
+
+	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updateAppData);
 
 	if (options.isDebugging) log(`[ASK DEPLOY INFO] updatedApp :>>`, updatedApp);
 
