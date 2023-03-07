@@ -885,8 +885,6 @@ export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicat
 			const message = `Missing "${targetDirectory}/${fileNamePrefix}" file, please create one.`;
 			logError(message);
 			return;
-		} else {
-			return;
 		}
 	}
 	return filePath;

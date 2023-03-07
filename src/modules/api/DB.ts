@@ -3,7 +3,7 @@ import { isEmpty } from "lodash";
 
 import { isServerMode } from "@/app.config";
 import type { IQueryOptions, IQueryPagination } from "@/interfaces";
-import { flattenObjectPaths, flattenObjectToPost } from "@/plugins";
+import { flattenObjectPaths } from "@/plugins";
 import {
 	AppService,
 	BuildService,
@@ -149,11 +149,22 @@ export class DB {
 			item = await svc.create(data);
 		} else {
 			const optionStr = queryOptionsToUrlOptions(options);
-			let newData = flattenObjectToPost(data);
-			Object.entries(newData).map(([key, val]) => {
-				newData[key.replace("[", "").replace("]", "")] = val;
-				delete newData[key];
-			});
+
+			/**
+			 * This is working, but use the same flatten method with UPDATE for convenience
+			 */
+			// let newData = flattenObjectToPost(data);
+			// // convert "[var][key]" -> "var[key]"
+			// Object.entries(newData).map(([key, val]) => {
+			// 	newData[key.replace("[", "").replace("]", "")] = val;
+			// 	delete newData[key];
+			// });
+
+			/**
+			 * use the same flatten method with UPDATE for convenience
+			 */
+			let newData = flattenObjectPaths(data);
+
 			// console.log("newData :>> ", newData);
 			const {
 				data: result,

@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { App, Project } from "@/entities";
-import type { ClientDeployEnvironmentConfig, HiddenBodyKeys } from "@/interfaces";
+import type { ClientDeployEnvironmentConfig, DeployEnvironment, HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
@@ -16,6 +16,45 @@ import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
 import BaseController from "./BaseController";
+
+/**
+ * ### Convert "deployEnvironment" in request body params to {DeployEnvironment} instance
+ * ---
+ * FIXME: This code is so fucking weird, but it works.
+ * So I've just left here & gonna find a better way later.
+ * ---
+ * @param body - Request body object
+ * @example
+ * {
+ * 	...
+ * 	"deployEnvironment.dev.cluster": "CLUSTER_NAME",
+ * 	"deployEnvironment.dev.envVars.0.name": "VAR_NAME",
+ * 	"deployEnvironment.dev.envVars.0.value": "VAR_VALUE",
+ * 	"deployEnvironment.dev.envVars.1.name": "VAR_NAME",
+ * 	"deployEnvironment.dev.envVars.1.value": "VAR_VALUE",
+ * 	"deployEnvironment.prod.cluster": "CLUSTER_NAME",
+ * 	"deployEnvironment.prod.namespace": "NAMESPACE_NAME",
+ * 	...
+ * }
+ */
+export const convertBodyDeployEnvironmentObject = (body: any) => {
+	let appDeployEnvironment: { [env: string]: DeployEnvironment } = {};
+	Object.entries(body).map(([key, val]) => {
+		if (key.indexOf(`deployEnvironment`) > -1) {
+			if (isEmpty(val)) return;
+			// "deployEnvironment.dev.envVars.0.name".split(".")
+			const [, env, deployEnvironmentKey, index, envVarKey] = key.split(".");
+			if (!env) return (appDeployEnvironment = val as any);
+			if (!deployEnvironmentKey) return (appDeployEnvironment[env] = val as any);
+			if (deployEnvironmentKey !== "envVars") return (appDeployEnvironment[env][deployEnvironmentKey] = val as any);
+			if (typeof index === "undefined") return (appDeployEnvironment[env][deployEnvironmentKey] = val as any);
+			if (!envVarKey) return (appDeployEnvironment[env][deployEnvironmentKey][index] = val as any);
+			appDeployEnvironment[env][deployEnvironmentKey][index][envVarKey] = val;
+		}
+	});
+	body.deployEnvironment = appDeployEnvironment;
+	return appDeployEnvironment;
+};
 
 @Tags("App")
 @Route("app")
@@ -29,8 +68,8 @@ export default class AppController extends BaseController<App> {
 	async read(@Queries() queryParams?: IGetQueryParams) {
 		let apps = await DB.find<App>("app", this.filter, this.options, this.pagination);
 
+		// TODO: remove this code after all "deployEnvironment.envVars" of apps are {Array}
 		// convert "envVars" Object to Array (if needed)
-		// console.log("[1] apps :>> ", apps);
 		apps = apps.map((app) => {
 			if (app.deployEnvironment)
 				Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
@@ -61,15 +100,19 @@ export default class AppController extends BaseController<App> {
 
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: any, @Queries() queryParams?: IPostQueryParams) {
 		let project: Project,
 			projectSvc: ProjectService = new ProjectService();
 
 		if (body.project) {
-			project = await projectSvc.findOne({ _id: new ObjectId(body.project as string) });
+			project = await projectSvc.findOne({ _id: new ObjectId(body.project) });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
 		}
+
+		// body.deployEnvironment = convertBodyDeployEnvironmentObject(body);
+
+		console.log("AppController > body.deployEnvironment :>> ", JSON.stringify(body.deployEnvironment, null, 2));
 
 		const newApp = await this.service.create(body);
 		// console.log("app create > newApp :>> ", newApp);
@@ -96,6 +139,7 @@ export default class AppController extends BaseController<App> {
 			body.projectSlug = project.slug;
 		}
 
+		body.deployEnvironment = convertBodyDeployEnvironmentObject(body);
 		// console.log("body :>> ", body);
 
 		return super.update(body);
