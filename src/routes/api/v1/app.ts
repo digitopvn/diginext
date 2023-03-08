@@ -81,7 +81,13 @@ router
 		"/environment/variables",
 		authenticate,
 		// authorize,
-		controller.apiRespond(controller.updateEnvVarsOnDeployEnvironment.bind(controller)).bind(controller)
+		controller.apiRespond(controller.updateSingleEnvVarOnDeployEnvironment.bind(controller)).bind(controller)
+	)
+	.delete(
+		"/environment/variables",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.deleteEnvVarsOnDeployEnvironment.bind(controller)).bind(controller)
 	);
 
 export default router;

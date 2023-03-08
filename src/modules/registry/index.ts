@@ -26,14 +26,14 @@ export const connect = async (registry: ContainerRegistry, options?: { userId?: 
 
 			const authResult = await gcloud.authenticate({ filePath: tmpFilePath, ...options });
 			const connectResult = await gcloud.connectDockerRegistry({ filePath: tmpFilePath, host, ...options });
-			if (connectResult) logSuccess(`[CONTAINER REGISTRY] Connected to Container Registry: "gcloud"`);
+			if (connectResult) logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry: "gcloud"`);
 			// console.log("authResult :>> ", authResult);
 			return authResult;
 
 		case "digitalocean":
 			const { apiAccessToken } = registry;
 			const doResult = await digitalocean.authenticate({ key: apiAccessToken, ...options });
-			if (doResult) logSuccess(`[CONTAINER REGISTRY] Connected to Container Registry: "digitalocean"`);
+			if (doResult) logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry: "digitalocean"`);
 			return doResult;
 
 		default:

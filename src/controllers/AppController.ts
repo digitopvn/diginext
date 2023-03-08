@@ -1,3 +1,4 @@
+import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { isArray, isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
@@ -229,14 +230,13 @@ export default class AppController extends BaseController<App> {
 		@Queries() queryParams?: IPostQueryParams
 	) {
 		const { slug, env, clientDeployEnvironment } = body;
-		if (!slug) return { status: 0, messsages: [`App slug is required.`] };
-		if (!env) return { status: 0, messsages: [`Deploy environment name is required.`] };
-		if (!clientDeployEnvironment) return { status: 0, messsages: [`Deploy environment configuration is required.`] };
+		if (!slug) return { status: 0, messages: [`App slug is required.`] };
+		if (!env) return { status: 0, messages: [`Deploy environment name is required.`] };
+		if (!clientDeployEnvironment) return { status: 0, messages: [`Deploy environment configuration is required.`] };
 
 		const [updatedApp] = await this.service.update(
 			{ slug },
 			{
-				[`environment.${env}`]: clientDeployEnvironment,
 				[`deployEnvironment.${env}`]: clientDeployEnvironment,
 			}
 		);
@@ -329,7 +329,6 @@ export default class AppController extends BaseController<App> {
 
 		// update the app (delete the deploy environment)
 		const updatedApp = await this.service.update(appFilter, {
-			[`environment.${env}`]: "",
 			[`deployEnvironment.${env}`]: {},
 		});
 
@@ -347,8 +346,8 @@ export default class AppController extends BaseController<App> {
 	@Get("/environment/variables")
 	async getEnvVarsOnDeployEnvironment(@Queries() queryParams?: { slug: string; env: string }) {
 		const { slug, env } = this.filter;
-		if (!slug) return { status: 0, messsages: [`App slug (slug) is required.`] };
-		if (!env) return { status: 0, messsages: [`Deploy environment name (env) is required.`] };
+		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
+		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
 
 		const app = await this.service.findOne({ slug });
 		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
@@ -383,25 +382,25 @@ export default class AppController extends BaseController<App> {
 		},
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		const { slug, env, envVars } = body;
-		if (!slug) return { status: 0, messsages: [`App slug (slug) is required.`] };
-		if (!env) return { status: 0, messsages: [`Deploy environment name (env) is required.`] };
-		if (!envVars) return { status: 0, messsages: [`Array of variables (envVars) is required.`] };
+		// console.log("body :>> ", body);
+		// return { status: 0 };
+		let { slug, env, envVars } = body;
+		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
+		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
+		if (!envVars) return { status: 0, messages: [`Array of variables in JSON format (envVars) is required.`] };
+		if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
 
+		const updateEnvVars = JSON.parse(envVars as unknown as string) as KubeEnvironmentVariable[];
+		console.log("updateEnvVars :>> ", updateEnvVars);
 		const [updatedApp] = await this.service.update(
 			{ slug },
 			{
-				[`environment.${env}.envVars`]: envVars,
-				[`deployEnvironment.${env}.envVars`]: envVars,
+				[`deployEnvironment.${env}.envVars`]: updateEnvVars,
 			}
 		);
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
 
-		const { data: appConfig } = await this.getAppConfig({ slug });
-
-		// TODO: Apply ENV variables to current deployment
-
-		let result = { status: 1, data: appConfig, messages: [] };
+		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [] };
 		return result;
 	}
 
@@ -410,7 +409,7 @@ export default class AppController extends BaseController<App> {
 	 */
 	@Security("jwt")
 	@Patch("/environment/variables")
-	async updateEnvVarsOnDeployEnvironment(
+	async updateSingleEnvVarOnDeployEnvironment(
 		@Body()
 		body: {
 			/**
@@ -423,36 +422,36 @@ export default class AppController extends BaseController<App> {
 			 */
 			env: string;
 			/**
-			 * Array of variables to be created on deploy environment
+			 * A variables to be created on deploy environment
 			 */
 			envVar: KubeEnvironmentVariable;
 		},
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		const { slug, env, envVar } = body;
-		if (!slug) return { status: 0, messsages: [`App slug (slug) is required.`] };
-		if (!env) return { status: 0, messsages: [`Deploy environment name (env) is required.`] };
-		if (!envVar) return { status: 0, messsages: [`A variable (envVar { name, value }) is required.`] };
+		let { slug, env, envVar } = body;
+		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
+		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
+		if (!envVar) return { status: 0, messages: [`A variable (envVar { name, value }) is required.`] };
+		if (!isJSON(envVar)) return { status: 0, messages: [`A variable (envVar { name, value }) should be a valid JSON format.`] };
 
 		const app = await this.service.findOne({ slug });
 		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 
+		envVar = JSON.parse(envVar as unknown as string) as KubeEnvironmentVariable;
+
 		const envVars = app.deployEnvironment[env].envVars || [];
 		const varToBeUpdated = envVars.find((v) => v.name === envVar.name);
 
+		let updatedApp: App;
+
 		if (varToBeUpdated) {
 			// update old variable
-			const updatedEnvVars = envVars.map((v) => {
-				if (v.name === envVar.name) return envVar;
-				return v;
-			});
+			const updatedEnvVars = envVars.map((v) => (v.name === envVar.name ? envVar : v));
 
-			// TODO: change to "deployEnvironment"
-			const [updatedApp] = await this.service.update(
+			[updatedApp] = await this.service.update(
 				{ slug },
 				{
-					[`environment.${env}.envVars`]: updatedEnvVars,
 					[`deployEnvironment.${env}.envVars`]: updatedEnvVars,
 				}
 			);
@@ -462,19 +461,53 @@ export default class AppController extends BaseController<App> {
 			// create new variable
 			envVars.push(envVar);
 
-			const [updatedApp] = await this.service.update(
+			[updatedApp] = await this.service.update(
 				{ slug },
 				{
-					[`environment.${env}.envVars`]: envVars,
 					[`deployEnvironment.${env}.envVars`]: envVars,
 				}
 			);
 			if (!updatedApp) return { status: 0, messages: [`Failed to add "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
 		}
 
-		const { data: appConfig } = await this.getAppConfig({ slug });
+		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [] };
+		return result;
+	}
 
-		let result = { status: 1, data: appConfig, messages: [] };
+	/**
+	 * Update a variable on the deploy environment of the application.
+	 */
+	@Security("jwt")
+	@Delete("/environment/variables")
+	async deleteEnvVarsOnDeployEnvironment(
+		@Body()
+		body: {
+			/**
+			 * App slug
+			 */
+			slug: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		},
+		@Queries() queryParams?: IPostQueryParams
+	) {
+		let { slug, env } = body;
+		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
+		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
+
+		const app = await this.service.findOne({ slug });
+		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
+		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
+		if (isEmpty(app.deployEnvironment[env]))
+			return { status: 0, messages: [`This deploy environment (${env}) of "${slug}" app doesn't have any environment variables.`] };
+
+		let [updatedApp] = await this.service.update({ _id: app._id }, { [`deployEnvironment.${env}.envVars`]: [] });
+		if (!updatedApp) return { status: 0, messages: [`Failed to delete environment variables in "${env}" deploy environment of "${slug}" app.`] };
+
+		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [] };
 		return result;
 	}
 }

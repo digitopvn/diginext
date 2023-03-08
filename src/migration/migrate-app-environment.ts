@@ -10,7 +10,7 @@ export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) =
 	const apps = await DB.find<App>("app", { ...filter, deployEnvironment: undefined });
 	if (isEmpty(apps)) return;
 
-	log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need to migrate deploy environments.`);
+	// log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need to migrate deploy environments.`);
 
 	const updatedApps = apps.map((app) => {
 		const updatedApp = app;
@@ -29,14 +29,14 @@ export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) =
 		updatedApps.map((app) => DB.update<App>("app", { _id: app._id }, { deployEnvironment: app.deployEnvironment }))
 	);
 
-	log(`[MIGRATION] migrateAppEnvironment > FINISH MIGRATION >> Affected ${results.length} apps.`);
+	log(`[MIGRATION] ✓ migrateAppEnvironment > FINISH >> Affected ${results.length} apps.`);
 
 	return results;
 };
 
 export const migrateAppEnvironmentVariables = async (app: App) => {
 	if (isEmpty(app)) return;
-	if (isEmpty(app.deployEnvironment)) return app;
+	if (isEmpty(app.deployEnvironment)) return;
 
 	const updateData = {} as any;
 	Object.entries(app.deployEnvironment).map(([env, deployData]) => {
@@ -62,7 +62,12 @@ export const migrateAppEnvironmentVariables = async (app: App) => {
 			updateData[`deployEnvironment.${env}.envVars`] = newEnvVars;
 		}
 	});
+
+	if (isEmpty(updateData)) return;
+
 	const [updatedApp] = await DB.update<App>("app", { _id: app._id }, updateData);
+	if (!updatedApp) return;
+
 	return updatedApp;
 };
 
@@ -70,12 +75,12 @@ export const migrateAllAppEnvironment = async () => {
 	const apps = await DB.find<App>("app", { deployEnvironment: undefined });
 	if (isEmpty(apps)) return;
 
-	log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need environment migration.`);
+	// log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need environment migration.`);
 
 	// convert "envVars" {Object} to {Array} (if needed)
-	const results = await Promise.all(apps.map((app) => migrateAppEnvironmentVariables(app)));
+	const results = (await Promise.all(apps.map((app) => migrateAppEnvironmentVariables(app)))).filter((app) => typeof app !== "undefined");
 
-	log(`[MIGRATION] migrateAppEnvironment > FINISH MIGRATION >> Affected ${results.length} items.`);
+	if (results.length > 0) log(`[MIGRATION] ✓ migrateAppEnvironment > FINISH >> Affected ${results.length} items.`);
 
 	return results;
 };

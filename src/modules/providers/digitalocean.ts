@@ -282,7 +282,7 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 	// save registry to local config:
 	// saveCliConfig({ currentRegistry });
 
-	logSuccess(`Connected to DigitalOcean Container Registry!`);
+	logSuccess(`✓ Connected to DigitalOcean Container Registry!`);
 
 	return currentRegistry;
 };
