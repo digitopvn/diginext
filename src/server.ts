@@ -3,6 +3,7 @@ import "reflect-metadata";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import { log, logSuccess } from "diginext-utils/dist/console/log";
+import type { Request, Response } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";
 import session from "express-session";
@@ -21,7 +22,7 @@ import swaggerUi from "swagger-ui-express";
 import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
-import { Config, IsDev } from "./app.config";
+import { Config, IsDev, IsProd } from "./app.config";
 import { cleanUp } from "./build/system";
 import { CLI_CONFIG_DIR } from "./config/const";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
@@ -231,17 +232,24 @@ function initialize() {
 		 * LOGGING SYSTEM MIDDLEWARE - ENABLED
 		 * Enable when running on server
 		 */
-		// app.use(logEnabled(Config.ENV !== "development"));
-		app.use(morgan(IsDev() ? "dev" : "combined"));
+		morgan.token("user", (req: Request) => (req.user ? `[${(req.user as any)?.slug?.toUpperCase()}]` : "[unauthenticated]"));
+		const morganMessage = IsDev()
+			? "[REQUEST :date[clf]] :method - :user - :url :status :response-time ms - :res[content-length]"
+			: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;
+		const morganOptions = {
+			skip: (req, res) => req.method.toUpperCase() === "OPTIONS",
+		} as morgan.Options<Request, Response>;
+		app.use(morgan(morganMessage, morganOptions));
 
 		// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
 		app.use(`/${BASE_PATH}`, main);
 
 		/**
-		 * ROUTE 404 MIDDLEWARE
+		 * ROUTE 404 & FAIL SAFE HANDLING MIDDLEWARE
 		 */
 		app.use("*", route404_handler);
-		if (Config.ENV !== "development") app.use(failSafeHandler);
+
+		if (IsProd()) app.use(failSafeHandler);
 
 		/**
 		 * SERVER HANDLING

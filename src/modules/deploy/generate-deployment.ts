@@ -1,4 +1,4 @@
-import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { log, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import * as fs from "fs";
@@ -8,7 +8,7 @@ import _, { isEmpty, isObject, toNumber } from "lodash";
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
 import type { App, Cluster, ContainerRegistry, Workspace } from "@/entities";
-import type { AppConfig } from "@/interfaces";
+import type { AppConfig, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { getAppConfig, objectToDeploymentYaml } from "@/plugins";
 
@@ -31,6 +31,23 @@ export type GenerateDeploymentParams = {
 	 * Requires if generate deployment files from source code.
 	 */
 	buildNumber?: string;
+};
+
+export type GenerateDeploymentResult = {
+	// namespace
+	namespaceContent: string;
+	namespaceObject: KubeNamespace;
+	// deployment (ingress, service, pods,...)
+	deploymentContent: string;
+	deploymentCfg: KubeDeployment;
+	// prerelease (ingress, service, pods,...)
+	prereleaseYamlObject: any[];
+	prereleaseDeploymentContent: string;
+	// accessibility
+	BUILD_NUMBER: string;
+	IMAGE_NAME: string;
+	endpoint: string;
+	prereleaseUrl: string;
 };
 
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
@@ -68,15 +85,13 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// get container registry
 	let registry: ContainerRegistry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
 	if (isEmpty(registry)) {
-		logError(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
-		return;
+		throw new Error(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
 	}
 
 	// get destination cluster
 	let cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
 	if (isEmpty(cluster)) {
-		logError(`Cannot find any clusters with short name as "${clusterShortName}", please contact your admin or create a new one.`);
-		return;
+		throw new Error(`Cannot find any clusters with short name as "${clusterShortName}", please contact your admin or create a new one.`);
 	}
 
 	// get registry secret as image pulling secret:
@@ -98,8 +113,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			clusterShortName: deployEnvironmentConfig.cluster,
 		});
 		if (status === 0) {
-			logError(`Can't create "prerelease" domain: ${domain}`);
-			return;
+			throw new Error(`Can't create "prerelease" domain: ${domain}`);
 		}
 		prereleaseDomain = domain;
 	}
@@ -125,8 +139,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// * [NEW TACTIC] Fetch ENV variables from database:
 	const app = await DB.findOne<App>("app", { slug });
 	if (!app) {
-		logError(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
-		return;
+		throw new Error(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
 	}
 	console.log("generate deployment > app :>> ", app);
 	// const deployEnvironment = await getDeployEvironmentByApp(app, env);
@@ -407,7 +420,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			}
 		});
 	} else {
-		logError("YAML deployment template is incorrect");
+		throw new Error("YAML deployment template is incorrect");
 	}
 
 	deploymentContent = objectToDeploymentYaml(deploymentCfg);
@@ -437,5 +450,5 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		IMAGE_NAME,
 		endpoint,
 		prereleaseUrl,
-	};
+	} as GenerateDeploymentResult;
 };

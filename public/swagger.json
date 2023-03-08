@@ -1976,7 +1976,7 @@
 					},
 					"shouldUseFreshDeploy": {
 						"type": "boolean",
-						"description": "! Should deploy app from a fresh namespace\n## WARNING\n- **With this flag enabled, the server will wipe out all current deployments within the target namespace, then deploy your app completely from scratch!**\n- Use at your own risk, make sure you understand what you're doing, double check the namespace before deploying to avoid accidently take down other apps."
+						"description": "! Should deploy app from a fresh namespace\n## [WARNING]\n- **With this flag enabled, the server will wipe out all current deployments within the target namespace, then deploy your app completely from scratch!**\n- Use at your own risk, make sure you understand what you're doing, double check the namespace before deploying to avoid accidently take down other apps."
 					},
 					"shouldApply": {
 						"type": "boolean",
@@ -3550,7 +3550,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.4.8",
+		"version": "2.4.9",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"

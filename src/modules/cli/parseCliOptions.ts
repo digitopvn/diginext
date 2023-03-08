@@ -172,6 +172,7 @@ export async function parseCliOptions() {
 		.alias("v", "version")
 		.global(["D", "s", "local", "h"])
 		// command: CLI management
+		.command("info", "Show CLI & SERVER information")
 		// command: login
 		.command("login", "Authenticate Diginext CLI with BUILD server")
 		.command("logout", "Sign out Diginext CLI from BUILD server")
@@ -394,6 +395,7 @@ export async function parseCliOptions() {
 		shouldClose: (argv.close as boolean) ?? false,
 		shouldInherit: (argv.inherit as boolean) ?? true,
 		shouldUploadDotenv: argv["upload-env"] as boolean,
+		shouldUseFreshDeploy: argv.fresh as boolean,
 
 		// deployment
 		app: argv.app, // monorepo app's name

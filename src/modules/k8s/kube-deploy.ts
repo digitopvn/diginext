@@ -3,7 +3,7 @@ import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/
 import execa from "execa";
 import { existsSync, mkdirSync } from "fs";
 import yaml from "js-yaml";
-import { isArray, isEmpty, isString, trimEnd } from "lodash";
+import { isArray, isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
 import path from "path";
 
@@ -18,7 +18,6 @@ import { isValidObjectId } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
 import ClusterManager from ".";
-import { createNamespace, deleteDeploy, deleteDeploymentsByFilter, deleteIngress, deleteServiceByFilter, kubectlApplyContent } from "./kubectl";
 
 /**
  * Clean up PRERELEASE resources by ID or release data
@@ -65,15 +64,15 @@ export async function cleanUp(idOrRelease: string | Release) {
 
 		// Delete INGRESS to optimize cluster
 		if (doc && doc.kind == "Ingress") {
-			cleanUpCommands.push(deleteIngress(doc.metadata.name, doc.metadata.namespace, { context }));
+			cleanUpCommands.push(ClusterManager.deleteIngress(doc.metadata.name, doc.metadata.namespace, { context }));
 		}
 	});
 
 	// Delete Prerelease SERVICE to optimize cluster
-	cleanUpCommands.push(deleteServiceByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${mainAppName}` }));
+	cleanUpCommands.push(ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${mainAppName}` }));
 
 	// Clean up Prerelease Deployments
-	cleanUpCommands.push(deleteDeploymentsByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${mainAppName}` }));
+	cleanUpCommands.push(ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${mainAppName}` }));
 
 	// Clean up immediately & just ignore if any errors
 	cleanUpCommands.forEach(async (cmd) => {
@@ -124,7 +123,7 @@ export async function previewPrerelease(id: string) {
 	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 	if (!isNsExisted) {
 		log(`[KUBE_DEPLOY] Namespace "${namespace}" not found, creating one...`);
-		const createNsRes = await createNamespace(namespace, { context });
+		const createNsRes = await ClusterManager.createNamespace(namespace, { context });
 		if (!createNsRes) {
 			logError(
 				`[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`
@@ -155,7 +154,7 @@ export async function previewPrerelease(id: string) {
 	/**
 	 * Apply PRE-RELEASE deployment YAML
 	 */
-	const prereleaseDeploymentRes = await kubectlApplyContent(preYaml, namespace, { context });
+	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, namespace, { context });
 	if (!prereleaseDeploymentRes)
 		throw new Error(
 			`Can't preview the pre-release "${id}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}).`
@@ -216,7 +215,7 @@ export async function rollout(id: string) {
 	if (!isNsExisted) {
 		log(`Namespace "${namespace}" not found, creating one...`);
 
-		const createNsRes = await createNamespace(namespace, { context });
+		const createNsRes = await ClusterManager.createNamespace(namespace, { context });
 		if (!createNsRes) {
 			logError(
 				`[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`
@@ -292,7 +291,7 @@ export async function rollout(id: string) {
 	} else {
 		// Create new PROD service
 		const SVC_CONTENT = objectToDeploymentYaml(service);
-		const applySvcRes = await kubectlApplyContent(SVC_CONTENT, namespace, { context });
+		const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, namespace, { context });
 		if (!applySvcRes)
 			throw new Error(
 				`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`
@@ -314,7 +313,7 @@ export async function rollout(id: string) {
 
 	// ! ALWAYS Create new ingress
 	const ING_CONTENT = objectToDeploymentYaml(ingress);
-	const ingCreateResult = await kubectlApplyContent(ING_CONTENT, namespace, { context });
+	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, namespace, { context });
 	if (!ingCreateResult) throw new Error(`Failed to apply INGRESS config to "${ingressName}" in "${namespace}" namespace of "${context}" context.`);
 
 	// log(`5`);
@@ -367,7 +366,7 @@ export async function rollout(id: string) {
 		newApp.spec.selector.matchLabels.app = newAppName;
 
 		let APP_CONTENT = objectToDeploymentYaml(newApp);
-		const appCreateResult = await kubectlApplyContent(APP_CONTENT, namespace, { context });
+		const appCreateResult = await ClusterManager.kubectlApplyContent(APP_CONTENT, namespace, { context });
 		if (!appCreateResult)
 			throw new Error(`Failed to apply APP DEPLOYMENT config to "${newAppName}" in "${namespace}" namespace of "${context}" context.`);
 
@@ -403,26 +402,9 @@ export async function rollout(id: string) {
 	 * 3. [ONLY PROD DEPLOY] Update ENV variables to PRODUCTION values
 	 */
 	if (env === "prod") {
-		let envListStr = "";
-		envVars.map(({ name, value }) => {
-			// only replace the domain from PRERELEASE DOMAIN to PRODUCTION DOMAIN:
-			if (isString(value) && value.indexOf(endpointUrl) > -1) {
-				envListStr += `${name}=${value} `;
-			}
-		});
-		log(`envListStr:`, envListStr);
-
-		if (envListStr != "") {
-			envListStr = trimEnd(" ");
-			let envCommand = `kubectl set env deployment/${prereleaseAppName} ${envListStr} -n ${namespace}`;
-			try {
-				await execa.command(envCommand, cliOpts);
-				log(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
-			} catch (e) {
-				log(`Command failed: ${envCommand}`);
-				log(`Patch deployment's environment variables failed >>`, e.message);
-			}
-		}
+		const prodEnvVars = envVars.filter((envVar) => envVar.value.toString().indexOf(endpointUrl) > -1);
+		const setPreEnvVarRes = await ClusterManager.setEnvVar(prodEnvVars, prereleaseAppName, namespace, { context });
+		if (setPreEnvVarRes) log(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
 	}
 
 	// Wait until the deployment is ready!
@@ -472,7 +454,7 @@ export async function rollout(id: string) {
 	 * 5. Scale replicas to PRODUCTION config
 	 */
 	try {
-		await execa("kubectl", ["scale", `--replicas=${replicas}`, `deploy`, deploymentName, `-n`, namespace], cliOpts);
+		await execa("kubectl", [`--context=${context}`, "scale", `--replicas=${replicas}`, `deploy`, deploymentName, `-n`, namespace], cliOpts);
 		log(`Scaled "${deploymentName}" replicas to ${replicas} successfully`);
 	} catch (e) {
 		log(`Scaled "${deploymentName}" replicas to ${replicas} unsuccessful >>`, e.message);
@@ -523,7 +505,7 @@ export async function rollout(id: string) {
 			.filter((d) => d.metadata.name != deploymentName)
 			.map((deploy) => {
 				const deployName = deploy.metadata.name;
-				return deleteDeploy(deployName, namespace, { context });
+				return ClusterManager.deleteDeploy(deployName, namespace, { context });
 			});
 
 		if (isServerMode) {

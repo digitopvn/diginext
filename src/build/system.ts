@@ -26,20 +26,40 @@ export async function listImages() {
 export async function cleanUp() {
 	const logger = new Logger(`server-cleanup-${makeDaySlug({ divider: "" })}`);
 
-	// Clean up docker images
-	const result = await execCmd("docker image prune -af --filter until=72h");
-	log(`>>> DOCKER IMAGES HAVE BEEN CLEANED UP:`);
+	let result;
+
+	// Clean up docker system
+	result = await execCmd("docker system prune -af --filter until=72h");
+	log(`>>> DOCKER SYSTEM HAVE BEEN CLEANED UP:`);
 	log(result);
 	logger.append(result);
 
 	logger.append(`-------------------------`);
 	logger.append(`-------------------------`);
 
-	// Clean up docker build cache
-	const cleanCache = await execCmd(`docker builder prune -af --filter until=72h`);
-	log(`>>> DOCKER BUILD CACHE HAS BEEN CLEANED UP:`);
-	log(cleanCache);
-	logger.append(cleanCache);
+	// Clean up docker volumes
+	result = await execCmd("docker volume prune -af --filter until=72h");
+	log(`>>> DOCKER VOLUME HAVE BEEN CLEANED UP:`);
+	log(result);
+	logger.append(result);
+
+	logger.append(`-------------------------`);
+	logger.append(`-------------------------`);
+
+	// // Clean up docker images
+	// result = await execCmd("docker image prune -af --filter until=72h");
+	// log(`>>> DOCKER IMAGES HAVE BEEN CLEANED UP:`);
+	// log(result);
+	// logger.append(result);
+
+	// logger.append(`-------------------------`);
+	// logger.append(`-------------------------`);
+
+	// // Clean up docker build cache
+	// result = await execCmd(`docker builder prune -af --filter until=72h`);
+	// log(`>>> DOCKER BUILD CACHE HAS BEEN CLEANED UP:`);
+	// log(result);
+	// logger.append(result);
 
 	// log success message:
 	logSuccess(`Cleaned up build server successfully.`);
