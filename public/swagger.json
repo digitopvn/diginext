@@ -3550,7 +3550,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.4.7",
+		"version": "2.4.8",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -8700,24 +8700,6 @@
 										},
 										{
 											"properties": {
-												"messages": {},
-												"messsages": {
-													"items": {
-														"type": "string"
-													},
-													"type": "array"
-												},
-												"status": {
-													"type": "number",
-													"format": "double"
-												}
-											},
-											"required": ["messsages", "status"],
-											"type": "object"
-										},
-										{
-											"properties": {
-												"messsages": {},
 												"messages": {
 													"items": {
 														"type": "string"
@@ -8906,24 +8888,6 @@
 										},
 										{
 											"properties": {
-												"messages": {},
-												"messsages": {
-													"items": {
-														"type": "string"
-													},
-													"type": "array"
-												},
-												"status": {
-													"type": "number",
-													"format": "double"
-												}
-											},
-											"required": ["messsages", "status"],
-											"type": "object"
-										},
-										{
-											"properties": {
-												"messsages": {},
 												"messages": {
 													"items": {
 														"type": "string"
@@ -8986,7 +8950,10 @@
 													"type": "array"
 												},
 												"data": {
-													"$ref": "#/components/schemas/AppConfig"
+													"items": {
+														"$ref": "#/components/schemas/KubeEnvironmentVariable"
+													},
+													"type": "array"
 												},
 												"status": {
 													"type": "number",
@@ -8998,24 +8965,6 @@
 										},
 										{
 											"properties": {
-												"messages": {},
-												"messsages": {
-													"items": {
-														"type": "string"
-													},
-													"type": "array"
-												},
-												"status": {
-													"type": "number",
-													"format": "double"
-												}
-											},
-											"required": ["messsages", "status"],
-											"type": "object"
-										},
-										{
-											"properties": {
-												"messsages": {},
 												"messages": {
 													"items": {
 														"type": "string"
@@ -9111,7 +9060,7 @@
 				}
 			},
 			"patch": {
-				"operationId": "UpdateEnvVarsOnDeployEnvironment",
+				"operationId": "UpdateSingleEnvVarOnDeployEnvironment",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -9126,7 +9075,10 @@
 													"type": "array"
 												},
 												"data": {
-													"$ref": "#/components/schemas/AppConfig"
+													"items": {
+														"$ref": "#/components/schemas/KubeEnvironmentVariable"
+													},
+													"type": "array"
 												},
 												"status": {
 													"type": "number",
@@ -9138,24 +9090,6 @@
 										},
 										{
 											"properties": {
-												"messages": {},
-												"messsages": {
-													"items": {
-														"type": "string"
-													},
-													"type": "array"
-												},
-												"status": {
-													"type": "number",
-													"format": "double"
-												}
-											},
-											"required": ["messsages", "status"],
-											"type": "object"
-										},
-										{
-											"properties": {
-												"messsages": {},
 												"messages": {
 													"items": {
 														"type": "string"
@@ -9229,7 +9163,7 @@
 								"properties": {
 									"envVar": {
 										"$ref": "#/components/schemas/KubeEnvironmentVariable",
-										"description": "Array of variables to be created on deploy environment"
+										"description": "A variables to be created on deploy environment"
 									},
 									"env": {
 										"type": "string",
@@ -9241,6 +9175,124 @@
 									}
 								},
 								"required": ["envVar", "env", "slug"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteEnvVarsOnDeployEnvironment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"properties": {
+												"messages": {
+													"items": {},
+													"type": "array"
+												},
+												"data": {
+													"items": {
+														"$ref": "#/components/schemas/KubeEnvironmentVariable"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "data", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"description": "Update a variable on the deploy environment of the application.",
+				"tags": ["App"],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "owner,workspace"
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"env": {
+										"type": "string",
+										"description": "Deploy environment name"
+									},
+									"slug": {
+										"type": "string",
+										"description": "App slug"
+									}
+								},
+								"required": ["env", "slug"],
 								"type": "object"
 							}
 						}

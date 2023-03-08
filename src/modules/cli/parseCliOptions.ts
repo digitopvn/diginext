@@ -152,10 +152,12 @@ export async function parseCliOptions() {
 	const shouldUpdateCLI = await checkForUpdate();
 	if (shouldUpdateCLI) {
 		const latestVersion = await getLatestCliVersion();
+		logWarn(`-----------------------------------------------------------`);
 		logWarn(chalk.yellow(`There is new version of the CLI (${latestVersion}), update with:`));
 		logWarn("  dx update");
 		logWarn(chalk.gray("  OR"));
 		logWarn("  npm update @topgroup/diginext --global");
+		logWarn(`-----------------------------------------------------------`);
 	}
 
 	// start parsing...

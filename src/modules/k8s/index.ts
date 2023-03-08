@@ -3,10 +3,17 @@ import { createImagePullSecretsInNamespace } from "./image-pull-secret";
 import { currentCluster, currentContext, getKubeConfig, getKubeContextByCluster, getKubeContextByClusterShortName } from "./kube-config";
 import { previewPrerelease, rollout } from "./kube-deploy";
 import {
+	createNamespace,
 	deleteDeploy,
+	deleteDeploymentsByFilter,
+	deleteIngress,
+	deleteIngressByFilter,
 	deleteNamespace,
 	deleteNamespaceByCluster,
 	deleteSecret,
+	deleteSecretsByFilter,
+	deleteService,
+	deleteServiceByFilter,
 	getAllDeploys,
 	getAllNamespaces,
 	getAllPods,
@@ -18,6 +25,8 @@ import {
 	getService,
 	isNamespaceExisted,
 	isSecretExisted,
+	kubectlApply,
+	kubectlApplyContent,
 } from "./kubectl";
 
 const ClusterManager = {
@@ -25,10 +34,17 @@ const ClusterManager = {
 	createImagePullSecretsInNamespace,
 	currentContext,
 	currentCluster,
+	createNamespace,
 	deleteNamespace,
 	deleteNamespaceByCluster,
 	deleteSecret,
 	deleteDeploy,
+	deleteService,
+	deleteDeploymentsByFilter,
+	deleteIngressByFilter,
+	deleteIngress,
+	deleteSecretsByFilter,
+	deleteServiceByFilter,
 	getKubeConfig,
 	getKubeContextByClusterShortName,
 	getKubeContextByCluster,
@@ -45,6 +61,8 @@ const ClusterManager = {
 	isSecretExisted,
 	previewPrerelease,
 	rollout,
+	kubectlApply,
+	kubectlApplyContent,
 };
 
 export default ClusterManager;

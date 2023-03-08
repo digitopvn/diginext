@@ -315,9 +315,9 @@ export const verifySSH = async (options?: InputOptions) => {
 	}
 
 	if (authResult) {
-		logSuccess(`[GIT] ${capitalize(gitProvider)} was authenticated successfully.`);
+		logSuccess(`[GIT] ✓ ${capitalize(gitProvider)} was authenticated successfully.`);
 	} else {
-		logError(`[GIT] Provider "${gitProvider}" is not valid.`);
+		logError(`[GIT] ❌ Provider "${gitProvider}" is not valid.`);
 	}
 
 	return authResult;

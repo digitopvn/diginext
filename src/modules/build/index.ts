@@ -1,4 +1,3 @@
-export * from "../deploy/kube-apply";
 export * from "./ask-for-domain";
 export * from "./build";
 export * from "./create-release-from-build";
