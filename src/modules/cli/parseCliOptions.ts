@@ -65,6 +65,7 @@ const argvOptions = {
 	project: { describe: "Specify selected project id (for Google Cloud)", alias: "pro" },
 	zone: { describe: "Specify selected zone (for Google Cloud)" },
 	region: { describe: "Specify selected region (for Google Cloud)" },
+	domain: { describe: "Specify primary application's domain" },
 	namespace: { describe: "Specify selected namespace inside the cluster", alias: "n" },
 	port: { describe: "Specify app listening port / mapping port", alias: "p" },
 	replicas: { describe: "Specify app scale replicas", alias: "rep" },
@@ -130,6 +131,7 @@ const deployOptions = {
 	framework: argvOptions.framework,
 	provider: argvOptions.provider,
 	cluster: argvOptions.cluster,
+	domain: argvOptions.domain,
 	namespace: argvOptions.namespace,
 	template: argvOptions.template,
 	registry: argvOptions.registry,
@@ -398,7 +400,8 @@ export async function parseCliOptions() {
 		shouldUseFreshDeploy: argv.fresh as boolean,
 
 		// deployment
-		app: argv.app, // monorepo app's name
+		app: argv.app,
+		domain: argv.domain as string,
 		port: argv.port as number,
 		replicas: argv.replicas as number,
 		size: (argv.size as ResourceQuotaSize) ?? "none",

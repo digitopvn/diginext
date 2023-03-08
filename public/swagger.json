@@ -1939,6 +1939,11 @@
 						"type": "boolean",
 						"default": "false"
 					},
+					"domain": {
+						"type": "string",
+						"description": "Application's domain",
+						"example": "myapp.example.com"
+					},
 					"namespace": {
 						"type": "string",
 						"description": "Kubernetes namespace"
@@ -3550,7 +3555,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.4.9",
+		"version": "2.5.0",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"

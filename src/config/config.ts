@@ -1,6 +1,7 @@
 import { log } from "diginext-utils/dist/console/log";
 import type execa from "execa";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { toNumber } from "lodash";
 import path from "path";
 
 import type CloudDatabase from "@/entities/CloudDatabase";
@@ -21,7 +22,7 @@ export const cliOpts: execa.Options = isWin() ? {} : { shell: "bash" };
 
 export const getContainerResourceBySize = (size: ResourceQuotaSize) => {
 	if (size == "none") return {};
-	const scale = parseInt(size.substring(1, size.length - 1));
+	const scale = toNumber(size.substring(size.length - 1));
 	return {
 		requests: {
 			cpu: `${50 * scale}m`,

@@ -402,6 +402,12 @@ export type InputOptions = {
 	namespace?: string;
 
 	/**
+	 * Application's domain
+	 * @example "myapp.example.com"
+	 */
+	domain?: string;
+
+	/**
 	 * @type {Boolean}
 	 * @default false
 	 */

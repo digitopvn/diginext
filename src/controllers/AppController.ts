@@ -320,6 +320,7 @@ export default class AppController extends BaseController<App> {
 			// switch to the cluster of this environment
 			await ClusterManager.authCluster(cluster);
 
+			// TODO: Should NOT delete namespace because it will affect other apps in a project!
 			// delete the whole namespace of this environment
 			await ClusterManager.deleteNamespaceByCluster(namespace, cluster);
 		} catch (e) {
@@ -400,6 +401,8 @@ export default class AppController extends BaseController<App> {
 		);
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
 
+		// TODO: Set environment variables to deployment in the cluster
+
 		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [] };
 		return result;
 	}
@@ -470,6 +473,8 @@ export default class AppController extends BaseController<App> {
 			if (!updatedApp) return { status: 0, messages: [`Failed to add "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
 		}
 
+		// TODO: Set environment variables to deployment in the cluster
+
 		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [] };
 		return result;
 	}
@@ -506,6 +511,8 @@ export default class AppController extends BaseController<App> {
 
 		let [updatedApp] = await this.service.update({ _id: app._id }, { [`deployEnvironment.${env}.envVars`]: [] });
 		if (!updatedApp) return { status: 0, messages: [`Failed to delete environment variables in "${env}" deploy environment of "${slug}" app.`] };
+
+		// TODO: Set environment variables to deployment in the cluster
 
 		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [] };
 		return result;
