@@ -35,6 +35,7 @@ import { execRollOut } from "./modules/deploy/exec-rollout";
 import { parseOptionsToAppConfig } from "./modules/deploy/parse-options-to-app-config";
 import { requestDeploy } from "./modules/deploy/request-deploy";
 import { requestDeployImage } from "./modules/deploy/request-deploy-image";
+import { showServerInfo } from "./modules/server/server-info";
 
 /**
  * Initialize CONFIG STORE (in document directory of the local machine)
@@ -67,6 +68,10 @@ export async function processCLI(options?: InputOptions) {
 	if (options.env) env = options.env;
 
 	switch (options.action) {
+		case "info":
+			await showServerInfo(options);
+			break;
+
 		case "login":
 			await cliLogin(options);
 			break;

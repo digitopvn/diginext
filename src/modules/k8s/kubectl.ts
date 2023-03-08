@@ -561,3 +561,31 @@ export async function deleteEnvVar(envVarNames: string[], deploy: string, namesp
 		return;
 	}
 }
+
+export async function deleteEnvVarByFilter(envVarNames: string[], namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, filterLabel } = options;
+
+	if (isEmpty(envVarNames)) {
+		logError(`[KUBE_CTL] deleteEnvVar > No env variable names to be delete.`);
+		return;
+	}
+
+	let envVarStrArr = envVarNames.map((name) => `${name}-`);
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "set", "env", `deployment`);
+
+		args.push(...envVarStrArr);
+
+		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		logError(`[KUBE_CTL] deleteEnvVar >`, e);
+		return;
+	}
+}

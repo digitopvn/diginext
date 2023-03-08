@@ -349,7 +349,7 @@ export type InputOptions = {
 
 	/**
 	 * ! Should deploy app from a fresh namespace
-	 * ## WARNING
+	 * ## [WARNING]
 	 * - **With this flag enabled, the server will wipe out all current deployments within the target namespace, then deploy your app completely from scratch!**
 	 * - Use at your own risk, make sure you understand what you're doing, double check the namespace before deploying to avoid accidently take down other apps.
 	 */

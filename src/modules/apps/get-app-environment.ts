@@ -1,5 +1,4 @@
 import { isJSON } from "class-validator";
-import { isEmpty } from "lodash";
 
 import type { App } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces";
@@ -21,11 +20,11 @@ export const getDeployEnvironmentFromJSON = async (app: App, env: string) => {
 };
 
 export const getDeployEvironmentByApp = async (app: App, env: string) => {
-	let deployEnvironment = app.deployEnvironment || {};
-	if (isEmpty(deployEnvironment) || isEmpty(deployEnvironment[env])) {
-		// try to fetch from old CLI version if any...
-		deployEnvironment[env] = await getDeployEnvironmentFromJSON(app, env);
-		// migrateDeployEnvironmentOfSpecificApps({ _id: app._id });
-	}
-	return deployEnvironment[env] || {};
+	// let deployEnvironment = app.deployEnvironment || {};
+	// if (isEmpty(deployEnvironment) || isEmpty(deployEnvironment[env])) {
+	// 	// try to fetch from old CLI version if any...
+	// 	deployEnvironment[env] = await getDeployEnvironmentFromJSON(app, env);
+	// 	// migrateDeployEnvironmentOfSpecificApps({ _id: app._id });
+	// }
+	return (app.deployEnvironment || {})[env] || {};
 };
