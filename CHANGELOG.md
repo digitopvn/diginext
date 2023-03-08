@@ -1,3 +1,13 @@
+## [2.4.9](https://github.com/digitopvn/diginext/compare/v2.4.8...v2.4.9) (2023-03-08)
+
+
+### Bug Fixes
+
+* **api env vars:** add create and update env vars on deploy environment of app ([77d9337](https://github.com/digitopvn/diginext/commit/77d933716aec03d5f5d7819870da517746401a16))
+* **check for update:** better warning logs ([b3a6ccd](https://github.com/digitopvn/diginext/commit/b3a6ccd2a729e65c4eaec37d348a2b92900b5f8f))
+* **cluster manager:** add some utilities and k8s command into cluster manager ([eb96726](https://github.com/digitopvn/diginext/commit/eb967268c702fdff1f6dfa13a5be2c995b014c7f))
+* **kube deploy:** issue of incorrect context when roll out and preview ([13916c2](https://github.com/digitopvn/diginext/commit/13916c2b22069a14c67b900a4ee9016ec3164bfc))
+
 ## [2.4.8](https://github.com/digitopvn/diginext/compare/v2.4.7...v2.4.8) (2023-03-07)
 
 
