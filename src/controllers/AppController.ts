@@ -391,7 +391,7 @@ export default class AppController extends BaseController<App> {
 		if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
 
 		const updateEnvVars = JSON.parse(envVars as unknown as string) as KubeEnvironmentVariable[];
-		console.log("updateEnvVars :>> ", updateEnvVars);
+		// console.log("updateEnvVars :>> ", updateEnvVars);
 		const [updatedApp] = await this.service.update(
 			{ slug },
 			{

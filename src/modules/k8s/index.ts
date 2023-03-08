@@ -27,6 +27,8 @@ import {
 	isSecretExisted,
 	kubectlApply,
 	kubectlApplyContent,
+	setEnvVar,
+	setEnvVarByFilter,
 } from "./kubectl";
 
 const ClusterManager = {
@@ -59,6 +61,8 @@ const ClusterManager = {
 	getDeploy,
 	isNamespaceExisted,
 	isSecretExisted,
+	setEnvVar,
+	setEnvVarByFilter,
 	previewPrerelease,
 	rollout,
 	kubectlApply,
