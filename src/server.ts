@@ -3,6 +3,7 @@ import "reflect-metadata";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import { log, logSuccess } from "diginext-utils/dist/console/log";
+import type { Request } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";
 import session from "express-session";
@@ -231,8 +232,16 @@ function initialize() {
 		 * LOGGING SYSTEM MIDDLEWARE - ENABLED
 		 * Enable when running on server
 		 */
-		// app.use(logEnabled(Config.ENV !== "development"));
-		app.use(morgan(IsDev() ? "dev" : "combined"));
+		morgan.token("user", (req: Request) =>
+			req.user ? `${(req.user as any)?.name?.toUpperCase()} [${(req.user as any)?.slug}]` : "UNKNOWN_USER"
+		);
+		app.use(
+			morgan(
+				IsDev()
+					? ":method - :user - :url :status :response-time ms - :res[content-length]"
+					: `:remote-addr - :remote-user - :user - [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"`
+			)
+		);
 
 		// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
 		app.use(`/${BASE_PATH}`, main);

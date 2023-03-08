@@ -472,7 +472,7 @@ export async function rollout(id: string) {
 	 * 5. Scale replicas to PRODUCTION config
 	 */
 	try {
-		await execa("kubectl", ["scale", `--replicas=${replicas}`, `deploy`, deploymentName, `-n`, namespace], cliOpts);
+		await execa("kubectl", [`--context=${context}`, "scale", `--replicas=${replicas}`, `deploy`, deploymentName, `-n`, namespace], cliOpts);
 		log(`Scaled "${deploymentName}" replicas to ${replicas} successfully`);
 	} catch (e) {
 		log(`Scaled "${deploymentName}" replicas to ${replicas} unsuccessful >>`, e.message);

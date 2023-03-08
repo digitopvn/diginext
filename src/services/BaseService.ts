@@ -119,7 +119,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		// LOG this for further investigation:
 		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
 		const author = `${user.name} (ID: ${user._id})`;
-		if (user.name !== "Unknown") log(author, `- find :>>`, { filter, options, pagination });
+		// if (user.name !== "Unknown") log(author, `- find :>>`, { filter, options, pagination });
 		// console.log("BaseService.find > this.req :>> ", this.req);
 
 		if (pagination) {
