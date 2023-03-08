@@ -1,3 +1,16 @@
+# [2.5.0](https://github.com/digitopvn/diginext/compare/v2.4.9...v2.5.0) (2023-03-08)
+
+
+### Bug Fixes
+
+* **server kubectl scale:** issue of missing context when run kubectl scale ([f752565](https://github.com/digitopvn/diginext/commit/f752565fe46c54fd7ca16bbc002b5b464f05011e))
+* **server kubectl:** set and unset env variables with kubectl ([6b8fb9c](https://github.com/digitopvn/diginext/commit/6b8fb9c1f49cdbdd5d2125bb2103b98386ee0a92))
+
+
+### Features
+
+* **cli deploy:** add flag --fresh to deploy app from scratch ([1431aa4](https://github.com/digitopvn/diginext/commit/1431aa49cda3c92ea89fe4238f8110121741721f))
+
 ## [2.4.9](https://github.com/digitopvn/diginext/compare/v2.4.8...v2.4.9) (2023-03-08)
 
 
