@@ -1,3 +1,11 @@
+## [2.5.1](https://github.com/digitopvn/diginext/compare/v2.5.0...v2.5.1) (2023-03-09)
+
+
+### Bug Fixes
+
+* **cli kb:** add dx kb set deploy and improve dx registry allow ([18a2a84](https://github.com/digitopvn/diginext/commit/18a2a84a99d2cdbdda36f83e68bf59c3d5aed815))
+* **server generate depploy:** issue of generate resource quota from container size ([96d6249](https://github.com/digitopvn/diginext/commit/96d6249b761496beac3e25cd677841fd99ececf0))
+
 # [2.5.0](https://github.com/digitopvn/diginext/compare/v2.4.9...v2.5.0) (2023-03-08)
 
 
