@@ -331,6 +331,16 @@ export async function parseCliOptions() {
 				.command("add-user", "Add new user to a database")
 				.demandCommand(1)
 		)
+		// command: cluster
+		.command("cluster", "Manage your clusters", (_yargs) =>
+			_yargs
+				.command("connect", "Connect your machine to the cluster")
+				.command("get", "Get cluster info")
+				.command("set", "Set value to cluster's property")
+				.command("del", "Delete a cluster")
+				.command("delete", "Delete a cluster")
+				.demandCommand(1)
+		)
 		// command: kubectl
 		.command("kb", "Just kubectl commands with better developer experience", (_yargs) =>
 			_yargs

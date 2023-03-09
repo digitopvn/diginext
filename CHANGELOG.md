@@ -1,3 +1,11 @@
+## [2.5.2](https://github.com/digitopvn/diginext/compare/v2.5.1...v2.5.2) (2023-03-09)
+
+
+### Bug Fixes
+
+* **cli cluster:** add command to connect cluster to local machine ([e20e9e0](https://github.com/digitopvn/diginext/commit/e20e9e020fb68517396eb8438dafa127d5e0e746))
+* **cli kubectl:** issue of escaping value of env var when set env var to deployment ([a17fdb4](https://github.com/digitopvn/diginext/commit/a17fdb48e69b3e025daed1ece2c49c82396e6b88))
+
 ## [2.5.1](https://github.com/digitopvn/diginext/compare/v2.5.0...v2.5.1) (2023-03-09)
 
 

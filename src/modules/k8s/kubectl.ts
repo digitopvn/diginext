@@ -549,7 +549,7 @@ export async function setEnvVar(envVars: KubeEnvironmentVariable[], deploy: stri
 		return;
 	}
 
-	let envVarStrArr = envVars.map(({ name, value }) => `${name}="${value}"`);
+	let envVarStrArr = envVars.map(({ name, value }) => `${name}=${value}`);
 
 	try {
 		const args = [];
@@ -575,7 +575,7 @@ export async function setEnvVarByFilter(envVars: KubeEnvironmentVariable[], name
 		return;
 	}
 
-	let envVarStrArr = envVars.map(({ name, value }) => `${name}="${value}"`);
+	let envVarStrArr = envVars.map(({ name, value }) => `${name}=${value}`);
 
 	try {
 		const args = [];
