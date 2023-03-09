@@ -5,7 +5,7 @@ import path from "path";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { Cluster } from "@/entities";
 import type { KubeConfigContext } from "@/interfaces";
-import { execCmd } from "@/plugins";
+import { createTmpFile, execCmd } from "@/plugins";
 
 import { DB } from "../api/DB";
 import custom from "../providers/custom";
@@ -61,8 +61,8 @@ export const switchContextToCluster = async (clusterShortName: string, providerS
  *
  * @param clusterShortName - A cluster name on the cloud provider (**NOT** a cluster in `kubeconfig`)
  */
-const authCluster = async (clusterShortName: string, options: ClusterAuthOptions = { shouldSwitchContextToThisCluster: true }) => {
-	let filePath;
+export const authCluster = async (clusterShortName: string, options: ClusterAuthOptions = { shouldSwitchContextToThisCluster: true }) => {
+	let filePath: string;
 
 	if (!clusterShortName) {
 		throw new Error(`Param "clusterShortName" is required.`);
@@ -100,10 +100,8 @@ const authCluster = async (clusterShortName: string, options: ClusterAuthOptions
 				throw new Error(`This cluster doesn't have any Google Service Account to authenticate, please contact your administrator.`);
 			}
 
-			filePath = path.resolve(CLI_CONFIG_DIR, `${clusterShortName}-service-account.json`);
-			writeFileSync(filePath, serviceAccount, "utf8");
-
 			// start authenticating...
+			filePath = createTmpFile(`${clusterShortName}-service-account.json`, serviceAccount);
 			const gcloudAuth = await gcloud.authenticate({ filePath });
 			if (!gcloudAuth) {
 				throw new Error(`[UNKNOWN] Cannot authenticate the Google Cloud provider.`);

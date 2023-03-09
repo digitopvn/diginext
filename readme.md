@@ -87,7 +87,7 @@ Read the [docs here](docs/docs.md).
 
 #### Manual installation
 
--   Install `kubectl`: [https://docs.docker.com/engine/install/](https://kubernetes.io/docs/tasks/tools/)
+-   Install `kubectl`: [https://kubernetes.io/docs/tasks/tools/](https://kubernetes.io/docs/tasks/tools/)
 -   Install `MongoDB`: https://www.mongodb.com/docs/manual/installation/
 -   Install `gcloud`: https://cloud.google.com/sdk/docs/install#installation_instructions
 -   Install `doctl`: https://docs.digitalocean.com/reference/doctl/

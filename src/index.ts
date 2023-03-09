@@ -30,6 +30,7 @@ import { CLI_CONFIG_FILE, CLI_DIR } from "./config/const";
 import { execInitApp } from "./modules/apps/init-app";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
 import { updateCli } from "./modules/cli/update-cli";
+import { execCluster } from "./modules/cluster/cli-cluster";
 import { execDotenvCommand } from "./modules/deploy/dotenv-exec";
 import { execRollOut } from "./modules/deploy/exec-rollout";
 import { parseOptionsToAppConfig } from "./modules/deploy/parse-options-to-app-config";
@@ -167,6 +168,11 @@ export async function processCLI(options?: InputOptions) {
 		case "git":
 			await cliAuthenticate(options);
 			await execGit(options);
+			return;
+
+		case "cluster":
+			await cliAuthenticate(options);
+			await execCluster(options);
 			return;
 
 		case "db":
