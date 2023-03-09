@@ -4,7 +4,7 @@ import { isArray, isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { App, Project } from "@/entities";
+import type { App, Cluster, Project } from "@/entities";
 import type { ClientDeployEnvironmentConfig, HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
@@ -391,19 +391,26 @@ export default class AppController extends BaseController<App> {
 		if (!envVars) return { status: 0, messages: [`Array of variables in JSON format (envVars) is required.`] };
 		if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
 
-		const updateEnvVars = JSON.parse(envVars as unknown as string) as KubeEnvironmentVariable[];
+		const newEnvVars = JSON.parse(envVars as unknown as string) as KubeEnvironmentVariable[];
 		// console.log("updateEnvVars :>> ", updateEnvVars);
 		const [updatedApp] = await this.service.update(
 			{ slug },
 			{
-				[`deployEnvironment.${env}.envVars`]: updateEnvVars,
+				[`deployEnvironment.${env}.envVars`]: newEnvVars,
 			}
 		);
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
 
-		// TODO: Set environment variables to deployment in the cluster
+		// Set environment variables to deployment in the cluster
+		const deployEnvironment = updatedApp.deployEnvironment[env];
+		const { namespace, cluster: clusterShortName } = deployEnvironment;
+		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
+			context: cluster.contextName,
+			filterLabel: `main-app=${slug}`,
+		});
 
-		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [] };
+		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [setEnvVarsRes] };
 		return result;
 	}
 
@@ -473,9 +480,16 @@ export default class AppController extends BaseController<App> {
 			if (!updatedApp) return { status: 0, messages: [`Failed to add "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
 		}
 
-		// TODO: Set environment variables to deployment in the cluster
+		// Set environment variables to deployment in the cluster
+		const deployEnvironment = updatedApp.deployEnvironment[env];
+		const { namespace, cluster: clusterShortName } = deployEnvironment;
+		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(envVars, namespace, {
+			context: cluster.contextName,
+			filterLabel: `main-app=${slug}`,
+		});
 
-		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [] };
+		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [setEnvVarsRes] };
 		return result;
 	}
 
@@ -509,12 +523,26 @@ export default class AppController extends BaseController<App> {
 		if (isEmpty(app.deployEnvironment[env]))
 			return { status: 0, messages: [`This deploy environment (${env}) of "${slug}" app doesn't have any environment variables.`] };
 
+		const envVars = app.deployEnvironment[env].envVars;
+
+		// delete in database
 		let [updatedApp] = await this.service.update({ _id: app._id }, { [`deployEnvironment.${env}.envVars`]: [] });
 		if (!updatedApp) return { status: 0, messages: [`Failed to delete environment variables in "${env}" deploy environment of "${slug}" app.`] };
 
-		// TODO: Set environment variables to deployment in the cluster
+		// Set environment variables to deployment in the cluster
+		const deployEnvironment = updatedApp.deployEnvironment[env];
+		const { namespace, cluster: clusterShortName } = deployEnvironment;
+		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		const deleteEnvVarsRes = await ClusterManager.deleteEnvVarByFilter(
+			envVars.map((_var) => _var.name),
+			namespace,
+			{
+				context: cluster.contextName,
+				filterLabel: `main-app=${slug}`,
+			}
+		);
 
-		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [] };
+		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [deleteEnvVarsRes] };
 		return result;
 	}
 }
