@@ -1,3 +1,11 @@
+## [2.5.3](https://github.com/digitopvn/diginext/compare/v2.5.2...v2.5.3) (2023-03-09)
+
+
+### Bug Fixes
+
+* **admin ui:** add app environment variables modification feature ([4c02493](https://github.com/digitopvn/diginext/commit/4c02493b625686fb2b1c80c39a05f15aab53f0d6))
+* **cli commands:** add get set delete commands to cluster and kubectl ([2142386](https://github.com/digitopvn/diginext/commit/2142386682567a3392e9d4848e36171121116757))
+
 ## [2.5.2](https://github.com/digitopvn/diginext/compare/v2.5.1...v2.5.2) (2023-03-09)
 
 

@@ -337,6 +337,34 @@ export async function setDeployImageByFilter(imageURL: string, namespace = "defa
 }
 
 /**
+ * Set "imagePullSecrets" name to deployments in a namespace by filter
+ */
+export async function setDeployImagePullSecretByFilter(imagePullSecretName: string, namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, filterLabel } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		// kubectl patch deployment valid-deployment  --type json   -p='[{"op": "replace", "path": "/spec/containers/0/image", "value":"new image"}]'
+		args.push("-n", namespace, "patch", "deployment");
+
+		if (filterLabel) args.push(`-l`, filterLabel);
+
+		args.push(
+			"--type",
+			"json",
+			`-p='[{"op": "replace", "path": "/spec/containers/0/imagePullSecrets/0/name", "value":"${imagePullSecretName}"}]'`
+		);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		logError(`[KUBE_CTL] setDeployImagePullSecretByFilter >`, e);
+		return;
+	}
+}
+
+/**
  * Delete a deployment in a namespace
  */
 export async function deleteDeploy(name, namespace = "default", options: KubeCommandOptions = {}) {

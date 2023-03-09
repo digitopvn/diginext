@@ -337,20 +337,62 @@ export async function parseCliOptions() {
 				.command("connect", "Connect your machine to the cluster")
 				.command("get", "Get cluster info")
 				.command("set", "Set value to cluster's property")
-				.command("del", "Delete a cluster")
-				.command("delete", "Delete a cluster")
+				.command({
+					command: "delete",
+					aliases: ["del", "rm"],
+					describe: "Delete a cluster",
+					handler: (_argv) => {},
+				})
 				.demandCommand(1)
 		)
 		// command: kubectl
 		.command("kb", "Just kubectl commands with better developer experience", (_yargs) =>
 			_yargs
-				.command("get", "Get information of a specific K8S resource", kubectlOptions)
+				.command("get", "Get information of a specific K8S resource", (__yargs) =>
+					__yargs
+						.command("namespace", "Namespace")
+						.command("ingress", "Ingress")
+						.command("service", "Service")
+						.command("deploy", "Deployment")
+						.command("secret", "Secret")
+				)
 				.command("set", "Set information of a specific K8S resource", (__yargs) =>
 					__yargs
-						.command("deploy", "Deployment resource of Kubernetes", kubectlOptions)
-						.command("deployment", "Deployment resource of Kubernetes", kubectlOptions)
+						// .command("namespace", "Namespace")
+						.command("service", "Service")
+						.command({
+							command: "deployment",
+							aliases: ["dep", "deploy"],
+							describe: "Deployment",
+							builder: (___yargs) =>
+								___yargs
+									.command("namespace", "Namespace")
+									.command("ingress", "Ingress")
+									.command("service", "Service")
+									.command("deploy", "Deployment")
+									.command("secret", "Secret"),
+							handler: (_argv) => {
+								console.log("key :>> ", _argv.key);
+								// _argv.thirdAction = _argv.key;
+							},
+						})
+						.option("secret", { desc: `Name of "imagePullSecret" (create one with: "dx registry allow")`, alias: "key" })
+						.option("image", { desc: "", alias: "img" })
 				)
 				.command("del", "Delete information of a specific K8S resource", kubectlOptions)
+				.command({
+					command: "delete",
+					aliases: ["del", "rm"],
+					describe: "Delete specific K8S resources",
+					builder: (___yargs) =>
+						___yargs
+							.command("namespace", "Namespace")
+							.command("ingress", "Ingress")
+							.command("service", "Service")
+							.command("deploy", "Deployment")
+							.command("secret", "Secret"),
+					handler: (_argv) => {},
+				})
 		)
 		// command: pipeline
 		// .command("pipeline", "Run your pipeline workflow")
