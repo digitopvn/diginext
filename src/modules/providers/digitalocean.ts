@@ -1,7 +1,7 @@
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
 import chalk from "chalk";
-import { logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import execa from "execa";
 import inquirer from "inquirer";
 import yaml from "js-yaml";
@@ -253,38 +253,49 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
  * @param {InputOptions} options
  */
 export const connectDockerRegistry = async (options?: InputOptions) => {
-	if (!options.cluster) {
-		logError(`Cluster's short name is required. ("--cluster" flag)`);
-		return;
-	}
+	const { host, key: API_ACCESS_TOKEN, userId, workspaceId } = options;
+
 	try {
-		await execa.command(`doctl registry login`);
+		let connectRes;
+		if (API_ACCESS_TOKEN) {
+			connectRes = await execCmd(`doctl registry login --access-token ${API_ACCESS_TOKEN}`);
+		} else {
+			connectRes = await execCmd(`doctl registry login`);
+		}
+		if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { authRes: connectRes });
 	} catch (e) {
 		logError(e);
-		return false;
+		return;
 	}
 
+	const existingRegistry = await DB.findOne<ContainerRegistry>("registry", { provider: "digitalocean", host });
+	if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { existingRegistry });
+
+	if (existingRegistry) return existingRegistry;
+
 	// Save this container registry to database
-	let currentRegistry = await DB.create<ContainerRegistry>("registry", {
+	const registryHost = host || "registry.digitalocean.com";
+	const imageBaseURL = `${registryHost}/${options.workspace?.slug || "diginext"}`;
+	let newRegistry = await DB.create<ContainerRegistry>("registry", {
 		name: "Digital Ocean Container Registry",
-		host: "registry.digitalocean.com",
 		provider: "digitalocean",
-		owner: options.userId,
-		workspace: options.workspaceId,
+		host: registryHost,
+		imageBaseURL,
+		apiAccessToken: API_ACCESS_TOKEN,
+		owner: userId,
+		workspace: workspaceId,
 	});
 
-	await createImagePullingSecret({
-		clusterShortName: options.cluster,
-		registrySlug: currentRegistry.slug,
-		shouldCreateSecretInNamespace: false,
-	});
+	// await createImagePullingSecret({
+	// 	clusterShortName: options.cluster,
+	// 	registrySlug: currentRegistry.slug,
+	// 	shouldCreateSecretInNamespace: false,
+	// });
 
 	// save registry to local config:
 	// saveCliConfig({ currentRegistry });
 
-	logSuccess(`✓ Connected to DigitalOcean Container Registry!`);
-
-	return currentRegistry;
+	return newRegistry;
 };
 
 export const execDigitalOcean = async (options?: InputOptions) => {

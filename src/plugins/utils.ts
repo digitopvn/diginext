@@ -2,6 +2,7 @@ import chalk from "chalk";
 // import { compareVersions } from "compare-versions";
 import dayjs from "dayjs";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import dns from "dns";
 import dotenv from "dotenv";
 import execa from "execa";
@@ -23,7 +24,7 @@ import type { GitProviderType } from "@/modules/git";
 import { generateRepoURL } from "@/modules/git";
 import { getCurrentGitBranch } from "@/modules/git/git-utils";
 
-import { DIGITOP_CDN_URL } from "../config/const";
+import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
 import { checkMonorepo } from "./monorepo";
 import { isWin } from "./os";
 // import cliMd from "@/plugins/cli-md";
@@ -125,6 +126,28 @@ export const showDocs = async (filePath: string) => {
 	log(marked(content));
 	// log(cliMd(content));
 	return content;
+};
+
+/**
+ * Create temporary file with provided content
+ * @param fileName - File name (include the extension)
+ * @param content - Content of the file
+ * @returns Path to the file
+ */
+export const createTmpFile = (
+	fileName: string,
+	content: string,
+	options: { recursive?: boolean; encoding?: BufferEncoding } = { recursive: true, encoding: "utf8" }
+) => {
+	const { encoding, recursive } = options;
+
+	const tmpDir = path.resolve(HOME_DIR, `tmp/${makeDaySlug({ divider: "" })}`);
+	if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive });
+
+	const tmpFilePath = path.resolve(tmpDir, fileName);
+	fs.writeFileSync(tmpFilePath, content, encoding);
+
+	return tmpFilePath;
 };
 
 /**

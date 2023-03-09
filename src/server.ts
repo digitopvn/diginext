@@ -40,7 +40,7 @@ import AppDatabase from "./modules/AppDatabase";
 import { verifySSH } from "./modules/git";
 import ClusterManager from "./modules/k8s";
 import { providerAuthenticate } from "./modules/providers";
-import { connect } from "./modules/registry";
+import { connectRegistry } from "./modules/registry/connect-registry";
 import main from "./routes/main";
 import { CloudProviderService, ClusterService, ContainerRegistryService, GitProviderService } from "./services";
 /**
@@ -93,7 +93,7 @@ async function startupScripts() {
 	const registries = await registrySvc.find({});
 	if (registries.length > 0) {
 		for (const registry of registries) {
-			connect(registry);
+			connectRegistry(registry);
 		}
 	}
 
@@ -232,7 +232,7 @@ function initialize() {
 		 * LOGGING SYSTEM MIDDLEWARE - ENABLED
 		 * Enable when running on server
 		 */
-		morgan.token("user", (req: Request) => (req.user ? `[${(req.user as any)?.slug?.toUpperCase()}]` : "[unauthenticated]"));
+		morgan.token("user", (req: Request) => (req.user ? `[${(req.user as any)?.slug}]` : "[unauthenticated]"));
 		const morganMessage = IsDev()
 			? "[REQUEST :date[clf]] :method - :user - :url :status :response-time ms - :res[content-length]"
 			: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;
