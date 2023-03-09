@@ -31,6 +31,7 @@ import {
 	kubectlApplyContent,
 	setDeployImage,
 	setDeployImageByFilter,
+	setDeployImagePullSecretByFilter,
 	setEnvVar,
 	setEnvVarByFilter,
 } from "./kubectl";
@@ -71,6 +72,7 @@ const ClusterManager = {
 	setEnvVarByFilter,
 	setDeployImage,
 	setDeployImageByFilter,
+	setDeployImagePullSecretByFilter,
 	previewPrerelease,
 	rollout,
 	kubectlApply,

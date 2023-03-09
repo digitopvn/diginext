@@ -13,7 +13,7 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
 import type { GoogleServiceAccount } from "@/interfaces/GoogleServiceAccount";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { execCmd } from "@/plugins";
+import { execCmd, isWin } from "@/plugins";
 
 import { DB } from "../api/DB";
 import ClusterManager from "../k8s";
@@ -200,10 +200,11 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	if (isSecretExisted) await ClusterManager.deleteSecret(secretName, namespace, { context });
 
 	// Create new "imagePullingSecret":
+	const svcAccContentCmd = isWin() ? `$(type ${serviceAccountPath})` : `$(cat ${serviceAccountPath})`;
 	const { stdout: newImagePullingSecret } = await execa.command(
 		`kubectl ${
 			context ? `--context=${context} ` : ""
-		}-n ${namespace} create secret docker-registry ${secretName} --docker-server=${host} --docker-username=_json_key --docker-password="$(cat ${serviceAccountPath})" -o json`,
+		}-n ${namespace} create secret docker-registry ${secretName} --docker-server=${host} --docker-username=_json_key --docker-password="${svcAccContentCmd}" -o json`,
 		cliOpts
 	);
 
