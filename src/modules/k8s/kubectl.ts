@@ -200,17 +200,71 @@ export async function deleteSecretsByFilter(namespace = "default", options: Kube
 	}
 }
 
+export async function getIngress(name, namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, filterLabel } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-n", namespace, "get", "ing", name);
+
+		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout);
+	} catch (e) {
+		logError(`[KUBE_CTL] getIngress >`, e);
+		return;
+	}
+}
+
+export async function deleteIngress(name, namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, filterLabel } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-n", namespace, "delete", "ing", name);
+
+		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		logError(`[KUBE_CTL] deleteIngress >`, e);
+		return;
+	}
+}
+
+export async function deleteIngressByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, filterLabel } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-n", namespace, "delete", "ing");
+
+		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		logError(`[KUBE_CTL] deleteIngressByFilter >`, e);
+		return;
+	}
+}
+
 /**
  * Get a deployment in a namespace
  */
-export async function getDeploy(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
+export async function getDeploy(name: string, namespace = "default", options: KubeCommandOptions = {}) {
+	const { context } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 		args.push("-n", namespace, "get", "deploy", name);
-
-		if (filterLabel) args.push(`-l`, filterLabel);
 
 		args.push("-o", "json");
 
@@ -218,6 +272,66 @@ export async function getDeploy(name, namespace = "default", options: KubeComman
 		return JSON.parse(stdout) as KubeDeployment;
 	} catch (e) {
 		logError(`[KUBE_CTL] getDeploy >`, e);
+		return;
+	}
+}
+
+/**
+ * Get deployments in a namespace by filter labels
+ */
+export async function getDeployByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, filterLabel } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-n", namespace, "get", "deploy");
+
+		if (filterLabel) args.push(`-l`, filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout) as KubeDeployment[];
+	} catch (e) {
+		logError(`[KUBE_CTL] getDeploy >`, e);
+		return;
+	}
+}
+
+/**
+ * Set image to deployments in a namespace by filter
+ */
+export async function setDeployImage(name: string, imageURL: string, namespace = "default", options: KubeCommandOptions = {}) {
+	const { context } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-n", namespace, "set", "image", `deployment/${name}`, `*=${imageURL}`);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		logError(`[KUBE_CTL] setDeployImage >`, e);
+		return;
+	}
+}
+
+/**
+ * Set image to deployments in a namespace by filter
+ */
+export async function setDeployImageByFilter(imageURL: string, namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, filterLabel } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-n", namespace, "set", "image", "deploy", `*=${imageURL}`);
+
+		if (filterLabel) args.push(`-l`, filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		logError(`[KUBE_CTL] setDeployImageByFilter >`, e);
 		return;
 	}
 }
@@ -338,26 +452,6 @@ export async function getAllServices(namespace = "default", labelFilter = "", op
 	}
 }
 
-export async function getPod(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
-	try {
-		const args = [];
-		if (context) args.push(`--context=${context}`);
-
-		args.push("-n", namespace, "get", "pod", name);
-
-		if (filterLabel) args.push("-l", filterLabel);
-
-		args.push("-o", "json");
-
-		const { stdout } = await execa("kubectl", args);
-		return JSON.parse(stdout);
-	} catch (e) {
-		logError(`[KUBE_CTL] getPod >`, e);
-		return;
-	}
-}
-
 /**
  * Delete service by name
  * @param namespace @default "default"
@@ -402,6 +496,26 @@ export async function deleteServiceByFilter(namespace = "default", options: Kube
 	}
 }
 
+export async function getPod(name, namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, filterLabel } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "get", "pod", name);
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout);
+	} catch (e) {
+		logError(`[KUBE_CTL] getPod >`, e);
+		return;
+	}
+}
+
 /**
  * Get pods in a namespace
  * @param namespace @default "default"
@@ -424,62 +538,6 @@ export async function getAllPods(namespace = "default", options: KubeCommandOpti
 	} catch (e) {
 		logError(`[KUBE_CTL] getAllPods >`, e);
 		return [];
-	}
-}
-
-export async function getIngress(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
-
-	try {
-		const args = [];
-		if (context) args.push(`--context=${context}`);
-		args.push("-n", namespace, "get", "ing", name);
-
-		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
-
-		args.push("-o", "json");
-
-		const { stdout } = await execa("kubectl", args);
-		return JSON.parse(stdout);
-	} catch (e) {
-		logError(`[KUBE_CTL] getIngress >`, e);
-		return;
-	}
-}
-
-export async function deleteIngress(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
-
-	try {
-		const args = [];
-		if (context) args.push(`--context=${context}`);
-		args.push("-n", namespace, "delete", "ing", name);
-
-		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
-
-		const { stdout } = await execa("kubectl", args);
-		return stdout;
-	} catch (e) {
-		logError(`[KUBE_CTL] deleteIngress >`, e);
-		return;
-	}
-}
-
-export async function deleteIngressByFilter(namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
-
-	try {
-		const args = [];
-		if (context) args.push(`--context=${context}`);
-		args.push("-n", namespace, "delete", "ing");
-
-		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
-
-		const { stdout } = await execa("kubectl", args);
-		return stdout;
-	} catch (e) {
-		logError(`[KUBE_CTL] deleteIngressByFilter >`, e);
-		return;
 	}
 }
 

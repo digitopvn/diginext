@@ -1922,6 +1922,9 @@
 					"buildId": {
 						"type": "string"
 					},
+					"imageURL": {
+						"type": "string"
+					},
 					"buildImage": {
 						"type": "string"
 					},
@@ -1938,6 +1941,11 @@
 					"printSuccess": {
 						"type": "boolean",
 						"default": "false"
+					},
+					"domain": {
+						"type": "string",
+						"description": "Application's domain",
+						"example": "myapp.example.com"
 					},
 					"namespace": {
 						"type": "string",
@@ -3550,7 +3558,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.4.9",
+		"version": "2.5.0",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"

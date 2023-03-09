@@ -2,13 +2,14 @@ import chalk from "chalk";
 // import { compareVersions } from "compare-versions";
 import dayjs from "dayjs";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import dns from "dns";
 import dotenv from "dotenv";
 import execa from "execa";
 import * as fs from "fs";
 import * as afs from "fs/promises";
 import yaml from "js-yaml";
-import _, { isArray, isEmpty, isString } from "lodash";
+import _, { isArray, isEmpty, isString, toNumber } from "lodash";
 import * as m from "marked";
 import TerminalRenderer from "marked-terminal";
 import path from "path";
@@ -23,8 +24,9 @@ import type { GitProviderType } from "@/modules/git";
 import { generateRepoURL } from "@/modules/git";
 import { getCurrentGitBranch } from "@/modules/git/git-utils";
 
-import { DIGITOP_CDN_URL } from "../config/const";
+import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
 import { checkMonorepo } from "./monorepo";
+import { isNumeric } from "./number";
 import { isWin } from "./os";
 // import cliMd from "@/plugins/cli-md";
 
@@ -125,6 +127,52 @@ export const showDocs = async (filePath: string) => {
 	log(marked(content));
 	// log(cliMd(content));
 	return content;
+};
+
+/**
+ * Create temporary file with provided content
+ * @param fileName - File name (include the extension)
+ * @param content - Content of the file
+ * @returns Path to the file
+ */
+export const createTmpFile = (
+	fileName: string,
+	content: string,
+	options: { recursive?: boolean; encoding?: BufferEncoding } = { recursive: true, encoding: "utf8" }
+) => {
+	const { encoding, recursive } = options;
+
+	const tmpDir = path.resolve(HOME_DIR, `tmp/${makeDaySlug({ divider: "" })}`);
+	if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive });
+
+	const tmpFilePath = path.resolve(tmpDir, fileName);
+	fs.writeFileSync(tmpFilePath, content, encoding);
+
+	return tmpFilePath;
+};
+
+/**
+ * Convert string-array-like to array
+ * @example "1" -> ["1"] | "123,555,abc,def" -> ["123","555","abc","def"]
+ */
+export const stringToArray = (
+	str: string,
+	options: {
+		/**
+		 * Convert items to number if it's valid
+		 * @default false
+		 * @example "1,a,2" -> [1, "a", 2]
+		 */
+		typeTransform?: boolean;
+		/**
+		 * @default ","
+		 */
+		divider?: string;
+	} = { typeTransform: false, divider: "," }
+) => {
+	const { typeTransform = false, divider = "," } = options;
+	const arr = str.indexOf(divider) === -1 ? [str] : str.split(divider);
+	return typeTransform ? arr.map((item) => (isNumeric(item) ? toNumber(item) : item)) : arr;
 };
 
 /**

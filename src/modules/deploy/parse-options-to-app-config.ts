@@ -19,6 +19,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		projectSlug,
 		namespace,
 		cluster,
+		domain,
 		port,
 		shouldEnableCDN: cdn,
 		shouldInherit,
@@ -82,6 +83,9 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 	if (typeof providerProject !== "undefined") deployEnvironment.project = providerProject;
 	if (typeof region !== "undefined") deployEnvironment.region = region;
 	if (typeof zone !== "undefined") deployEnvironment.zone = zone;
+
+	// Domains
+	if (typeof domain !== "undefined") deployEnvironment.domains = [domain];
 
 	// Kubernetes Info
 	if (typeof namespace !== "undefined") deployEnvironment.namespace = namespace;

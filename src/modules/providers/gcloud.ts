@@ -1,7 +1,7 @@
 import chalk from "chalk";
-import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import execa from "execa";
-import fs from "fs";
+import fs, { readFileSync } from "fs";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 import path from "path";
@@ -11,6 +11,7 @@ import { isServerMode } from "@/app.config";
 import { cliOpts, saveCliConfig } from "@/config/config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
+import type { GoogleServiceAccount } from "@/interfaces/GoogleServiceAccount";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execCmd } from "@/plugins";
 
@@ -69,39 +70,64 @@ export const authenticate = async (options?: InputOptions) => {
  * Connect Docker to Google Cloud Registry
  */
 export const connectDockerRegistry = async (options?: InputOptions) => {
-	if (!options.host) {
-		logWarn(`You should specify your Google Registry host with`, chalk.cyan("diginext gcloud registry connect --host"), `<GCP_HOST_URL>`);
-		logWarn(`Learn more: https://cloud.google.com/container-registry/docs/advanced-authentication`);
+	const { host, filePath, userId, workspaceId } = options;
+
+	// Validation
+	if (!host) {
+		logWarn(
+			`[GCLOUD] You should specify your Google Registry host with`,
+			chalk.cyan("diginext gcloud registry connect --host"),
+			`<GCP_HOST_URL>`
+		);
+		logWarn(`[GCLOUD] Learn more: https://cloud.google.com/container-registry/docs/advanced-authentication`);
 	}
 
-	try {
-		if (options.host) {
-			await execa.command(`gcloud auth configure-docker ${options.host} --quiet`);
-		} else {
-			await execa.command(`gcloud auth configure-docker --quiet`);
+	// if Service Account (JSON) file is specified as "filePath" (--file / -f)
+	let serviceAccountContent = "";
+	let serviceAccountObject: GoogleServiceAccount;
+	if (filePath) {
+		const authRes = await authenticate({ ...options, filePath });
+		if (!authRes) {
+			logError(`[GCLOUD] Failed to authenticate Google Cloud with service account (json)`);
+			return;
 		}
-	} catch (e) {
-		logError(e);
-		return false;
+		serviceAccountContent = readFileSync(filePath, "utf8");
+		serviceAccountObject = JSON.parse(serviceAccountContent);
 	}
+
+	//
+	try {
+		let connectRes;
+		if (host) {
+			connectRes = await execCmd(`gcloud auth configure-docker ${options.host} --quiet`);
+		} else {
+			connectRes = await execCmd(`gcloud auth configure-docker --quiet`);
+		}
+		if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { authRes: connectRes });
+	} catch (e) {
+		logError(`[GCLOUD]`, e);
+		return;
+	}
+
+	const existingRegistry = await DB.findOne<ContainerRegistry>("registry", { provider: "gcloud", host: options.host });
+	if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { existingRegistry });
+
+	if (existingRegistry) return existingRegistry;
 
 	// save this container registry to database
-	const existed = await DB.findOne<ContainerRegistry>("registry", { provider: "gcloud", host: options.host });
-	const currentRegistry =
-		existed ||
-		(await DB.create<ContainerRegistry>("registry", {
-			name: "Google Container Registry",
-			host: options.host || "asia.gcr.io",
-			provider: "gcloud",
-			owner: options.userId,
-			workspace: options.workspaceId,
-		}));
+	const registryHost = host || "asia.gcr.io";
+	const imageBaseURL = `${registryHost}/${serviceAccountObject.project_id}`;
+	const newRegistry = await DB.create<ContainerRegistry>("registry", {
+		name: "Google Container Registry",
+		host: registryHost,
+		provider: "gcloud",
+		owner: userId,
+		workspace: workspaceId,
+		imageBaseURL,
+		serviceAccount: serviceAccountContent,
+	});
 
-	// save registry to local config:
-	// saveCliConfig({ currentRegistry });
-	// logSuccess(`[] Connected to Google Container Registry at "${options.host || "asia.gcr.io"}"`);
-
-	return currentRegistry;
+	return newRegistry;
 };
 
 /**
@@ -125,9 +151,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	}
 
 	// Get SERVICE ACCOUNT from CONTAINER REGISTRY -> to authenticate & generate "imagePullSecrets"
-	const { host, serviceAccount, provider: providerShortName } = registry;
-
-	console.log(":>>>>>>>>>>>>>> 1 ");
+	const { host, serviceAccount } = registry;
 
 	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
 	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
@@ -138,19 +162,15 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 	const { name: context } = await getKubeContextByCluster(cluster);
 
-	console.log(":>>>>>>>>>>>>>> 2 ");
-
-	console.log("context :>> ", context);
-	console.log("serviceAccount :>> ", serviceAccount);
+	// console.log("context :>> ", context);
+	// console.log("serviceAccount :>> ", serviceAccount);
 
 	// write down the service account file:
-	const serviceAccountPath = path.resolve(CLI_CONFIG_DIR, `${providerShortName}-service-account.json`);
-	console.log("serviceAccountPath :>> ", serviceAccountPath);
+	const serviceAccountPath = path.resolve(CLI_CONFIG_DIR, `${registrySlug}-service-account.json`);
+	// console.log("serviceAccountPath :>> ", serviceAccountPath);
 
 	if (fs.existsSync(serviceAccountPath)) fs.unlinkSync(serviceAccountPath);
 	fs.writeFileSync(serviceAccountPath, serviceAccount, "utf8");
-
-	console.log(":>>>>>>>>>>>>>> 3 ");
 
 	if (shouldCreateSecretInNamespace && namespace == "default") {
 		logWarn(
@@ -163,10 +183,8 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	}
 
 	let secretValue: string;
-	const secretName = `${providerShortName}-docker-registry-key`;
-	console.log("secretName :>> ", secretName);
-
-	console.log(":>>>>>>>>>>>>>> 4 ");
+	const secretName = `${registrySlug}-docker-registry-key`;
+	// console.log("secretName :>> ", secretName);
 
 	// check if namespace is existed
 	if (shouldCreateSecretInNamespace) {
@@ -181,8 +199,6 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const isSecretExisted = await ClusterManager.isSecretExisted(secretName, namespace, { context });
 	if (isSecretExisted) await ClusterManager.deleteSecret(secretName, namespace, { context });
 
-	console.log(":>>>>>>>>>>>>>> 5 ");
-
 	// Create new "imagePullingSecret":
 	const { stdout: newImagePullingSecret } = await execa.command(
 		`kubectl ${
@@ -191,9 +207,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 		cliOpts
 	);
 
-	console.log(":>>>>>>>>>>>>>> 6 ");
-
-	console.log("GCLOUD > createImagePullingSecret > newImagePullingSecret :>> ", newImagePullingSecret);
+	// console.log("GCLOUD > createImagePullingSecret > newImagePullingSecret :>> ", newImagePullingSecret);
 
 	// create new image pulling secret (in namespace & in database)
 	try {
@@ -206,7 +220,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			"imagePullingSecret[value]": secretValue,
 		};
 
-		const updatedRegistries = await DB.update<ContainerRegistry>("registry", { provider: providerShortName }, updateData as ContainerRegistry);
+		const updatedRegistries = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, updateData as ContainerRegistry);
 		const updatedRegistry = updatedRegistries[0];
 
 		if (!isServerMode) {
@@ -216,6 +230,9 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 		// console.log(JSON.stringify(updatedRegistry.imagePullingSecret, null, 2));
 		// log(`gcloud.createImagePullingSecret() :>>`, { updatedRegistry });
+		logSuccess(
+			`[GCLOUD] ✓ Successfully assign "imagePullSecret" data (${secretName}) to "${namespace}" namespace of "${clusterShortName}" cluster.`
+		);
 
 		return updatedRegistry.imagePullingSecret;
 	} catch (e) {
