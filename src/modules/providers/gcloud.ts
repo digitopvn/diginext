@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import execa from "execa";
 import fs, { readFileSync } from "fs";
 import inquirer from "inquirer";
@@ -151,9 +151,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	}
 
 	// Get SERVICE ACCOUNT from CONTAINER REGISTRY -> to authenticate & generate "imagePullSecrets"
-	const { host, serviceAccount, provider: providerShortName } = registry;
-
-	console.log(":>>>>>>>>>>>>>> 1 ");
+	const { host, serviceAccount } = registry;
 
 	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
 	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
@@ -164,19 +162,15 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 	const { name: context } = await getKubeContextByCluster(cluster);
 
-	console.log(":>>>>>>>>>>>>>> 2 ");
-
-	console.log("context :>> ", context);
-	console.log("serviceAccount :>> ", serviceAccount);
+	// console.log("context :>> ", context);
+	// console.log("serviceAccount :>> ", serviceAccount);
 
 	// write down the service account file:
-	const serviceAccountPath = path.resolve(CLI_CONFIG_DIR, `${providerShortName}-service-account.json`);
-	console.log("serviceAccountPath :>> ", serviceAccountPath);
+	const serviceAccountPath = path.resolve(CLI_CONFIG_DIR, `${registrySlug}-service-account.json`);
+	// console.log("serviceAccountPath :>> ", serviceAccountPath);
 
 	if (fs.existsSync(serviceAccountPath)) fs.unlinkSync(serviceAccountPath);
 	fs.writeFileSync(serviceAccountPath, serviceAccount, "utf8");
-
-	console.log(":>>>>>>>>>>>>>> 3 ");
 
 	if (shouldCreateSecretInNamespace && namespace == "default") {
 		logWarn(
@@ -189,10 +183,8 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	}
 
 	let secretValue: string;
-	const secretName = `${providerShortName}-docker-registry-key`;
-	console.log("secretName :>> ", secretName);
-
-	console.log(":>>>>>>>>>>>>>> 4 ");
+	const secretName = `${registrySlug}-docker-registry-key`;
+	// console.log("secretName :>> ", secretName);
 
 	// check if namespace is existed
 	if (shouldCreateSecretInNamespace) {
@@ -207,8 +199,6 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const isSecretExisted = await ClusterManager.isSecretExisted(secretName, namespace, { context });
 	if (isSecretExisted) await ClusterManager.deleteSecret(secretName, namespace, { context });
 
-	console.log(":>>>>>>>>>>>>>> 5 ");
-
 	// Create new "imagePullingSecret":
 	const { stdout: newImagePullingSecret } = await execa.command(
 		`kubectl ${
@@ -217,9 +207,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 		cliOpts
 	);
 
-	console.log(":>>>>>>>>>>>>>> 6 ");
-
-	console.log("GCLOUD > createImagePullingSecret > newImagePullingSecret :>> ", newImagePullingSecret);
+	// console.log("GCLOUD > createImagePullingSecret > newImagePullingSecret :>> ", newImagePullingSecret);
 
 	// create new image pulling secret (in namespace & in database)
 	try {
@@ -232,7 +220,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			"imagePullingSecret[value]": secretValue,
 		};
 
-		const updatedRegistries = await DB.update<ContainerRegistry>("registry", { provider: providerShortName }, updateData as ContainerRegistry);
+		const updatedRegistries = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, updateData as ContainerRegistry);
 		const updatedRegistry = updatedRegistries[0];
 
 		if (!isServerMode) {
@@ -242,6 +230,9 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 		// console.log(JSON.stringify(updatedRegistry.imagePullingSecret, null, 2));
 		// log(`gcloud.createImagePullingSecret() :>>`, { updatedRegistry });
+		logSuccess(
+			`[GCLOUD] ✓ Successfully assign "imagePullSecret" data (${secretName}) to "${namespace}" namespace of "${clusterShortName}" cluster.`
+		);
 
 		return updatedRegistry.imagePullingSecret;
 	} catch (e) {

@@ -1922,6 +1922,9 @@
 					"buildId": {
 						"type": "string"
 					},
+					"imageURL": {
+						"type": "string"
+					},
 					"buildImage": {
 						"type": "string"
 					},

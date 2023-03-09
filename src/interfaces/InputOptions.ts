@@ -437,6 +437,11 @@ export type InputOptions = {
 	/**
 	 *
 	 */
+	imageURL?: string;
+
+	/**
+	 *
+	 */
 	buildId?: string;
 
 	/**

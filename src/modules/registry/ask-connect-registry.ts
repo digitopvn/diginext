@@ -19,7 +19,7 @@ export const askToConnectRegistry = async (options?: InputOptions) => {
 	const { registry } = await inquirer.prompt<{ registry: ContainerRegistry }>({
 		name: "registry",
 		type: "list",
-		message: `Which container registry do you want to connect?`,
+		message: `Select container registry you want to connect:`,
 		default: registries[0],
 		choices: registries.map((reg) => {
 			return { name: `${reg.name} (${reg.host} / ${reg.provider})`, value: reg };

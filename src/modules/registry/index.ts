@@ -1,14 +1,15 @@
 import { logError, logWarn } from "diginext-utils/dist/console/log";
-import inquirer from "inquirer";
-import { isEmpty } from "lodash";
 
-import type { Cluster, ContainerRegistry } from "@/entities";
+import type { Cluster } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 
 import { DB } from "../api/DB";
+import { askForCluster } from "../cluster/ask-for-cluster";
+import { askForNamespace } from "../k8s/ask-for-namespace";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
 import { askToConnectRegistry } from "./ask-connect-registry";
+import { askForRegistry } from "./ask-for-registry";
 
 export const execRegistry = async (options: InputOptions) => {
 	const { secondAction, provider, registry, namespace, shouldCreate: shouldCreateSecretInNamespace } = options;
@@ -35,20 +36,12 @@ export const execRegistry = async (options: InputOptions) => {
 			let cluster: Cluster;
 			if (options.cluster) {
 				cluster = await DB.findOne<Cluster>("cluster", { shortName: options.cluster });
-			} else {
-				const clusters = await DB.find<Cluster>("cluster", {});
-				if (isEmpty(clusters)) {
-					logError(`There are no registered clusters in this workspace.`);
+				if (!cluster) {
+					logError(`No cluster named "${options.cluster}" found.`);
 					return;
 				}
-				const { selectedCluster } = await inquirer.prompt<{ selectedCluster: Cluster }>({
-					type: "list",
-					default: clusters[0],
-					choices: clusters.map((c, i) => {
-						return { name: `[${i + 1}] ${c.name} (${c.providerShortName})`, value: c };
-					}),
-				});
-				cluster = selectedCluster;
+			} else {
+				cluster = await askForCluster();
 			}
 			const { providerShortName } = cluster;
 
@@ -56,26 +49,17 @@ export const execRegistry = async (options: InputOptions) => {
 			if (registry) {
 				registrySlug = registry;
 			} else {
-				const registries = await DB.find<ContainerRegistry>("registry", {});
-				if (isEmpty(registries)) {
-					logError(`There are no registered container registries in this workspace.`);
-					return;
-				}
-				const { selectedRegistry } = await inquirer.prompt<{ selectedRegistry: ContainerRegistry }>({
-					type: "list",
-					default: registries[0],
-					choices: registries.map((c, i) => {
-						return { name: `[${i + 1}] ${c.name} (${c.provider})`, value: c };
-					}),
-				});
+				const selectedRegistry = await askForRegistry();
 				registrySlug = selectedRegistry.slug;
 			}
+
+			const targetNamespace = namespace || (await askForNamespace(cluster));
 
 			if (providerShortName == "gcloud")
 				return gcloud.createImagePullingSecret({
 					clusterShortName: cluster.shortName,
 					registrySlug,
-					namespace,
+					namespace: targetNamespace,
 					shouldCreateSecretInNamespace,
 				});
 
@@ -83,7 +67,7 @@ export const execRegistry = async (options: InputOptions) => {
 				return digitalocean.createImagePullingSecret({
 					clusterShortName: cluster.shortName,
 					registrySlug,
-					namespace,
+					namespace: targetNamespace,
 					shouldCreateSecretInNamespace,
 				});
 

@@ -27,6 +27,7 @@ const argvOptions = {
 	"show-options": { describe: "Show current input options [for debugging].", alias: "s" },
 	local: { describe: "[TEST] For testing CLI & BUILD SERVER on local machine" },
 	input: { describe: "Input string", alias: "i" },
+	type: { describe: "Input type as string" },
 	data: { describe: "Input data", alias: "d" },
 	value: { describe: "Input value" },
 	file: { describe: "Input file path", alias: "f" },
@@ -68,9 +69,13 @@ const argvOptions = {
 	domain: { describe: "Specify primary application's domain" },
 	namespace: { describe: "Specify selected namespace inside the cluster", alias: "n" },
 	port: { describe: "Specify app listening port / mapping port", alias: "p" },
+	image: { describe: "Specify app's image URL on container registry", alias: "img" },
 	replicas: { describe: "Specify app scale replicas", alias: "rep" },
 	size: { describe: "Assign resource quotas to workload / deploy", alias: "s" },
 	ssl: { describe: "Should generate SSL for the deploy or not" },
+	ingress: { describe: "Ingress of Kubernetes", alias: "ing" },
+	service: { describe: "Service of Kubernetes", alias: "svc" },
+	deployment: { describe: "Deployment of Kubernetes", alias: "deploy" },
 	compress: { describe: "Should compress static files or not", alias: "zip" },
 	redirect: { describe: "Should redirect all alternative domains to the primary or not" },
 	generate: { describe: "Should generate config file or not", alias: "G" },
@@ -147,6 +152,34 @@ const deployOptions = {
 	create: argvOptions.create,
 	shouldUploadDotenv: argvOptions["upload-env"],
 	fresh: argvOptions.fresh,
+};
+
+const kubectlDeploymentOptions = {
+	image: argvOptions.image,
+	port: argvOptions.port,
+	size: argvOptions.size,
+};
+
+const kubectlOptions = {
+	debug: argvOptions.debug,
+	tail: argvOptions.tail,
+	targetDir: argvOptions.targetDir,
+	overwrite: argvOptions.overwrite,
+	cluster: argvOptions.cluster,
+	name: argvOptions.name,
+	// resources
+	namespace: argvOptions.namespace,
+	ingress: argvOptions.ingress,
+	service: argvOptions.service,
+	deployment: argvOptions.deployment,
+	// resource > namespace
+	// resource > ingress
+	// annotations: argvOptions.annotations,
+	// resource > service
+	type: argvOptions.type,
+	// resource > deployment
+	...kubectlDeploymentOptions,
+	// env: argvOptions["env-vars"],
 };
 
 export async function parseCliOptions() {
@@ -298,6 +331,17 @@ export async function parseCliOptions() {
 				.command("add-user", "Add new user to a database")
 				.demandCommand(1)
 		)
+		// command: kubectl
+		.command("kb", "Just kubectl commands with better developer experience", (_yargs) =>
+			_yargs
+				.command("get", "Get information of a specific K8S resource", kubectlOptions)
+				.command("set", "Set information of a specific K8S resource", (__yargs) =>
+					__yargs
+						.command("deploy", "Deployment resource of Kubernetes", kubectlOptions)
+						.command("deployment", "Deployment resource of Kubernetes", kubectlOptions)
+				)
+				.command("del", "Delete information of a specific K8S resource", kubectlOptions)
+		)
 		// command: pipeline
 		// .command("pipeline", "Run your pipeline workflow")
 		// command: dev
@@ -337,7 +381,7 @@ export async function parseCliOptions() {
 		.help("help")
 		.wrap(yargs.terminalWidth())
 		// copyright
-		.epilog("Copyright by DIGITOP © 2022").argv;
+		.epilog("Copyright by TOP GROUP VIETNAM © 2023").argv;
 
 	// log(`argv >>`, argv);
 
@@ -413,6 +457,7 @@ export async function parseCliOptions() {
 		namespace: argv.namespace as string,
 		redirect: argv.redirect as boolean,
 		ssl: argv.ssl as boolean, // [FLAG] --no-ssl
+		imageURL: argv.image as string,
 	};
 
 	if (argv.do === true) options.provider = "digitalocean";
