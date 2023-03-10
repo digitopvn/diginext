@@ -24,6 +24,9 @@ RUN wget https://github.com/docker/buildx/releases/download/v0.9.1/buildx-v0.9.1
   && mkdir -p ~/.docker/cli-plugins \
   && mv buildx-v0.9.1.linux-amd64 ~/.docker/cli-plugins/docker-buildx
 
+# Podman
+RUN apt-get -y install podman
+
 # Install Digital Ocean CLI
 RUN cd ~ \
   && wget https://github.com/digitalocean/doctl/releases/download/v1.78.0/doctl-1.78.0-linux-amd64.tar.gz \

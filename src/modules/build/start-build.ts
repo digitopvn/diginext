@@ -1,8 +1,6 @@
 import chalk from "chalk";
 import dayjs from "dayjs";
-import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
-import type { ExecaChildProcess } from "execa";
-import execa from "execa";
+import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 import fs, { existsSync } from "fs";
 import humanizeDuration from "humanize-duration";
 import { isEmpty } from "lodash";
@@ -10,26 +8,21 @@ import { ObjectId } from "mongodb";
 import PQueue from "p-queue";
 import path from "path";
 
-import { cliOpts, getCliConfig } from "@/config/config";
+import { getCliConfig } from "@/config/config";
 import type { App, Build, Project, Release, User, Workspace } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
-import { execCmd, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath, wait } from "@/plugins";
+import { execCmd, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
 import { getIO } from "@/server";
 
 import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
+import builder from "../builder";
 import type { GenerateDeploymentResult } from "../deploy";
 import { generateDeployment } from "../deploy";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
 import { createReleaseFromBuild, sendMessage, updateBuildStatus } from "./index";
-
-type IProcessCommand = {
-	[key: string]: ExecaChildProcess;
-};
-
-const processes: IProcessCommand = {};
 
 export let queue = new PQueue({ concurrency: 1 });
 
@@ -40,33 +33,18 @@ export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug:
 	let error;
 
 	// Validate...
-	if (!processes[buildSlug]) {
-		error = `[IGNORE] Build "${buildSlug}" not found (it might be stopped already).`;
-		logWarn(error);
-		// return { error };
-	}
-
 	if (!appSlug) {
 		error = `App "${appSlug}" not found.`;
 		logError(error);
 		return { error };
 	}
 
-	// Kill the f*cking build process...
-	try {
-		processes[buildSlug].kill("SIGTERM", { forceKillAfterTimeout: 2000 });
-	} catch (e) {
-		logWarn(`[IGNORE] Cannot stop the build process of "${buildSlug}": ${e}`);
-	}
-
 	// Stop the f*cking buildx driver...
-	await execCmd(`docker buildx stop ${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`);
-	await execCmd(`docker buildx stop buildx_buildkit_${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`);
-	await wait(100);
+	const builderName = `${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`;
+	await builder.Docker.stopBuild(builderName);
 
 	// Update the status in the database
 	const stoppedBuild = await updateBuildStatus(appSlug, buildSlug, "failed");
-	delete processes[buildSlug];
 
 	logSuccess(`Build process of "${buildSlug}" has been stopped.`);
 
@@ -290,6 +268,7 @@ export async function startBuild(
 			projectSlug,
 			appSlug,
 			image: IMAGE_NAME,
+			logs: logger.content,
 			cliVersion: options.version,
 			app: app._id,
 			project: project._id,
@@ -313,42 +292,14 @@ export async function startBuild(
 	try {
 		sendMessage({ SOCKET_ROOM, logger, message: `Start building the Docker image...` });
 
-		/**
-		 * ! Change current working directory to the root of this project repository
-		 **/
-		process.chdir(buildDir);
-
-		/**
-		 * ! BUILD CACHING
-		 * Activate the "docker-container" driver before using "buildx"
-		 * use "buildx" with cache to increase build speed
-		 * docker buildx build -f Dockerfile --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
-		 **/
-		// activate docker build (with "buildx" driver)...
-		await execCmd(
-			`docker buildx create --driver docker-container --name ${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`,
-			"Docker BuildX instance was existed."
-		);
-
-		const cacheCmd = latestBuild ? ` --cache-from type=registry,ref=${latestBuild.image}` : "";
-		const buildCmd = `docker buildx build --platform=linux/x86_64 -f ${dockerFile} --push -t ${IMAGE_NAME}${cacheCmd} --builder=${projectSlug.toLowerCase()}_${appSlug.toLowerCase()} .`;
-		// log(`Build command: "${buildCmd}"`);
-
-		stream = execa.command(buildCmd, cliOpts);
-
-		// add to process collection so we can kill it if needed:
-		processes[SOCKET_ROOM] = stream;
-
-		stream.stdio.forEach((_stdio) => {
-			if (_stdio) {
-				_stdio.on("data", (data) => {
-					message = data.toString();
-					// send messages to CLI client:
-					sendMessage({ SOCKET_ROOM, logger, message });
-				});
-			}
+		await builder.Docker.build(IMAGE_NAME, {
+			platforms: ["linux/amd64"],
+			builder: `${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`,
+			cacheFroms: latestBuild ? [{ type: "registry", value: latestBuild.image }] : [],
+			dockerFile: dockerFile,
+			shouldPush: true,
+			onBuilding: (msg) => sendMessage({ SOCKET_ROOM, logger, message }),
 		});
-		await stream;
 
 		// update build status as "success"
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "success");
@@ -357,9 +308,7 @@ export async function startBuild(
 		sendMessage({ SOCKET_ROOM, logger, message });
 	} catch (e) {
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
-
-		sendMessage({ SOCKET_ROOM, logger, message: e.toString() });
-
+		sendMessage({ SOCKET_ROOM, logger, message: e.message });
 		return;
 	}
 
