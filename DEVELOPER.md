@@ -1,19 +1,22 @@
-# Building and Testing TypeORM
+# Building and Testing Diginext (DX)
 
-This document describes how to set up your development environment and run TypeORM test cases.
+This document describes how to set up your development environment and run Diginext (DX) test cases.
 
-* [Prerequisite Software](#prerequisite-software)
-* [Getting the Sources](#getting-the-sources)
-* [Installing NPM Modules](#installing-npm-modules)
-* [Building](#building)
-* [Running Tests Locally](#running-tests-locally)
+- [Building and Testing Diginext (DX)](#building-and-testing-diginext-dx)
+  - [Prerequisite Software](#prerequisite-software)
+  - [Getting the Sources](#getting-the-sources)
+  - [Installing NPM Modules](#installing-npm-modules)
+  - [Building](#building)
+  - [Running Tests Locally](#running-tests-locally)
+    - [Faster developer cycle for editing code and running tests](#faster-developer-cycle-for-editing-code-and-running-tests)
+  - [Using Docker](#using-docker)
 
-See the [contribution guidelines](https://github.com/typeorm/typeorm/blob/master/CONTRIBUTING.md)
-if you'd like to contribute to TypeORM.
+See the [contribution guidelines](https://github.com/digitopvn/diginext/blob/main/CONTRIBUTING.md)
+if you'd like to contribute to Diginext (DX).
 
 ## Prerequisite Software
 
-Before you can build and test TypeORM, you must install and configure the
+Before you can build and test Diginext (DX), you must install and configure the
 following products on your development machine:
 
 * [Git](http://git-scm.com) and/or the **GitHub app** (for [Mac](http://mac.github.com) or
@@ -22,73 +25,49 @@ following products on your development machine:
 * [Node.js](http://nodejs.org), (better to install latest version) which is used to run a development web server,
   run tests, and generate distributable files.
   Depending on your system, you can install Node either from source or as a pre-packaged bundle.
-* [Mysql](https://www.mysql.com/) is required to run tests on this platform (or docker)
-* [MariaDB](https://mariadb.com/) is required to run tests on this platform (or docker)
-* [Postgres](https://www.postgresql.org/) is required to run tests on this platform (or docker)
-* [Oracle](https://www.oracle.com/database/index.html) is required to run tests on this platform
-* [Microsoft SQL Server](https://www.microsoft.com/en-us/cloud-platform/sql-server) is required to run tests on this platform
-* For MySQL, MariaDB and Postgres you can use [docker](https://www.docker.com/) instead (docker configuration is
- [here](https://github.com/typeorm/typeorm/blob/master/docker-compose.yml))
+* [MongoDB](https://www.mongodb.com/docs/manual/installation/) is required to run tests on this platform (or docker)
+* [Google Cloud CLI](https://cloud.google.com/sdk/docs/install#installation_instructions)
+* [DigitalOcean CLI](https://docs.digitalocean.com/reference/doctl/)
+* [kubectl](https://kubernetes.io/docs/tasks/tools/)
 
 ## Getting the Sources
 
 Fork and clone the repository:
 
 1. Login to your GitHub account or create one by following the instructions given [here](https://github.com/signup/free).
-2. [Fork](http://help.github.com/forking) the [main TypeORM repository](https://github.com/typeorm/typeorm).
-3. Clone your fork of the TypeORM repository and define an `upstream` remote pointing back to
-   the TypeORM repository that you forked in the first place.
+2. [Fork](http://help.github.com/forking) the [main Diginext (DX) repository](https://github.com/digitopvn/diginext).
+3. Clone your fork of the Diginext (DX) repository and define an `upstream` remote pointing back to
+   the Diginext (DX) repository that you forked in the first place.
 
 ```shell
 # Clone your GitHub repository:
-git clone git@github.com:<github username>/typeorm.git
+git clone git@github.com:<github username>/diginext.git
 
-# Go to the TypeORM directory:
-cd typeorm
+# Go to the Diginext (DX) directory:
+cd diginext
 
-# Add the main TypeORM repository as an upstream remote to your repository:
-git remote add upstream https://github.com/typeorm/typeorm.git
+# Add the main Diginext (DX) repository as an upstream remote to your repository:
+git remote add upstream https://github.com/digitopvn/diginext.git
 ```
 ## Installing NPM Modules
 
-Install all TypeORM dependencies by running this command:
+Install all Diginext (DX) dependencies by running this command:
 
 ```shell
 npm install
 ```
 
 During installation, you may have some problems with some dependencies.
-For example to properly install oracle driver you need to follow all instructions from
- [node-oracle documentation](https://github.com/oracle/node-oracledb).
-
-## ORM config
-
-To create an initial `ormconfig.json` file, run the following command:
-
-```shell
-cp ormconfig.json.dist ormconfig.json
-```
 
 ## Building
 
-To build a distribution package of TypeORM run:
+To build a distribution package of Diginext (DX) run:
 
 ```shell
-npm run package
+npm run build
 ```
 
-This command will generate you a distribution package in the `build/package` directory.
-You can link (or simply copy/paste) this directory into your project and test TypeORM there
-(but make sure to keep all node_modules required by TypeORM).
-
-To build the distribution package of TypeORM packed into a `.tgz`, run:
-
-```shell
-npm run pack
-```
-
-This command will generate you a distribution package tar in the `build` directory (`build/typeorm-x.x.x.tgz`).
-You can copy this tar into your project and run `npm install ./typeorm-x.x.x.tgz` to bundle your build of TypeORM in your project.
+This command will generate you a distribution package in the `dist` directory & auto link globally.
 
 ## Running Tests Locally
 
@@ -128,13 +107,7 @@ describe("github issues > #<issue number> <issue title>", () => {
 });
 ```
 
-If you place entities in `./entity/<entity-name>.ts` relative to your `issue-<num>.ts` file,
-they will automatically be loaded.
-
-To run the tests, setup your environment configuration by copying `ormconfig.json.dist` into `ormconfig.json` and
-replacing parameters with your own.
-
-Then run tests:
+To run the tests:
 
 ```shell
 npm test
@@ -175,40 +148,4 @@ in the root of the project. Once all images are fetched and run you can run test
 - The docker image of mssql-server needs at least 3.25GB of RAM.
 - Make sure to assign enough memory to the Docker VM if you're running on Docker for Mac or Windows
 
-### Oracle XE
 
-In order to run tests on Oracle XE locally, we need to start 2 docker containers:
-
-- a container with Oracle XE database
-- a container with typeorm and its tests
-
-#### 1. Booting Oracle XE database
-
-Execute in shell the next command:
-
-```shell
-docker-compose up -d oracle
-```
-
-It will start an oracle instance only.
-The instance will be run in background,
-therefore, we need to stop it later on.
-
-#### 2. Booting typeorm for Oracle
-
-Execute in shell the next command:
-
-```shell
-docker-compose -f docker-compose.oracle.yml up
-```
-
-it will start a nodejs instance which builds typeorm and executes unit tests.
-The instance exits after the run.
-
-#### 3. Shutting down Oracle XE database
-
-Execute in shell the next command:
-
-```shell
-docker-compose down
-```
