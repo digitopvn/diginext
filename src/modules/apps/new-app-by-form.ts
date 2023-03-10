@@ -7,10 +7,10 @@ import type { App } from "@/entities";
 import Framework from "@/entities/Framework";
 import type GitProvider from "@/entities/GitProvider";
 import type InputOptions from "@/interfaces/InputOptions";
+import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { getAppConfig, getCurrentGitRepoData, parseGitRepoDataFromRepoSSH, updateAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
-import type { GitProviderType } from "../git";
 import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
 import { createOrSelectProject } from "./create-or-select-project";
 

@@ -6,9 +6,10 @@ import { isEmpty, isString, toNumber, trim } from "lodash";
 import { ObjectId } from "mongodb";
 
 import { Config } from "@/app.config";
-import type { User } from "@/entities";
+import type { User, Workspace } from "@/entities";
 import type Base from "@/entities/Base";
 import type { FindManyOptions, FindOptionsWhere } from "@/libs/typeorm";
+import { DB } from "@/modules/api/DB";
 import { isValidObjectId } from "@/plugins/mongodb";
 import type { BaseService } from "@/services/BaseService";
 
@@ -19,6 +20,8 @@ const DEFAULT_PAGE_SIZE = 100;
 
 export default class BaseController<T extends Base> {
 	user: User;
+
+	workspace: Workspace;
 
 	// service: BaseService<T>;
 
@@ -38,6 +41,15 @@ export default class BaseController<T extends Base> {
 		return async (req: Request, res: Response, next: NextFunction) => {
 			try {
 				this.user = req.user as User;
+
+				if (!isEmpty(this.user?.activeWorkspace)) {
+					const wsId = (this.user?.activeWorkspace as Workspace)._id || (this.user?.activeWorkspace as any);
+					this.workspace =
+						typeof (this.user?.activeWorkspace as any)._id === "undefined"
+							? (this.user?.activeWorkspace as Workspace)
+							: await DB.findOne<Workspace>("workspace", { _id: wsId });
+				}
+
 				let result = await executor(req.body);
 				res.status(200).json(result);
 			} catch (e) {

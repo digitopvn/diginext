@@ -5,7 +5,6 @@ import type { App, ContainerRegistry } from "@/entities";
 
 import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
-import custom from "../providers/custom";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
@@ -53,9 +52,9 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 				imagePullSecret = await digitalocean.createImagePullingSecret(options);
 				break;
 
-			case "custom":
-				imagePullSecret = await custom.createImagePullingSecret(options);
-				break;
+			// case "custom":
+			// 	imagePullSecret = await custom.createImagePullingSecret(options);
+			// 	break;
 
 			default:
 				message = `This cloud provider "${registry.provider}" is not supported yet.`;
