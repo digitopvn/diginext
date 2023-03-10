@@ -1,6 +1,6 @@
+import { GitProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
-import { GitProviderType } from "@/modules/git";
 
 import Base from "./Base";
 import type Project from "./Project";

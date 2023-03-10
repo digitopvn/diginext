@@ -11,6 +11,8 @@ import yargs from "yargs";
 import { cliOpts } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
+import type { GitProviderType } from "@/interfaces/SystemTypes";
+import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { execCmd, isMac, wait } from "@/plugins";
 
 import { conf } from "../..";
@@ -21,15 +23,6 @@ import { applyBranchPermissions } from "../bitbucket/permissions";
 import { bitbucketAuthentication } from "../bitbucket/promptForAuthOptions";
 
 // git@github.com:digitopvn/fluffy-dollop.git
-
-export const availableGitProviders = ["bitbucket", "github", "gitlab"] as const;
-export type GitProviderType = (typeof availableGitProviders)[number];
-
-export const gitProviderDomain = {
-	bitbucket: "bitbucket.org",
-	github: "github.com",
-	gitlab: "gitlab.com",
-};
 
 // TODO: Implement CRUD of git provider
 

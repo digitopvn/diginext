@@ -1,3 +1,4 @@
+import { RegistryProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
@@ -12,6 +13,9 @@ export default class ContainerRegistry extends Base {
 
 	@Column()
 	slug?: string;
+
+	@Column()
+	isVerified?: boolean;
 
 	/**
 	 * The host (domain) of your container registry which you are using.
@@ -36,7 +40,7 @@ export default class ContainerRegistry extends Base {
 	 * Provider's "shortName"
 	 */
 	@Column()
-	provider?: string;
+	provider?: RegistryProviderType;
 
 	/**
 	 * Content of the Service Account credentials ti access services on this cloud provider

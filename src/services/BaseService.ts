@@ -69,16 +69,14 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 			}
 
 			// assign item authority:
-			if (this.req?.user) {
-				data.owner = (this.req?.user as User)._id;
-				data.workspace = ((this.req?.user as User).activeWorkspace as any)._id
-					? ((this.req?.user as User).activeWorkspace as any)._id
-					: ((this.req?.user as User).activeWorkspace as any);
-			}
+			const user = this.req?.user as User;
+			const userId = user?._id;
+			const workspaceId = (user.activeWorkspace as any)._id ? (user.activeWorkspace as any)._id : (user.activeWorkspace as any);
+			data.owner = userId;
+			data.workspace = workspaceId;
 
-			const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
-			const author = `${user.name} (ID: ${user._id})`;
-			if (user.name !== "Unknown") log(author, `- BaseService.create :>>`, { data });
+			// const author = `${user.name} (ID: ${user._id})`;
+			// if (user.name !== "Unknown") log(author, `- BaseService.create :>>`, { data });
 
 			const item = await this.query.create(data);
 

@@ -158,9 +158,10 @@ Suggest improvements and report problems.
 
 ---
 
-## Credits
+## Credits / Donations
 
-If you enjoyed this project — or just feeling generous, consider buying me a beer. Cheers! 🍻
+This is a **ONE-MAN** project & I've been spending a lot of time for it, although it's my hobby project, I still need beers to keep the momentum.
+If you enjoyed this project — or just feeling generous, consider buying me some beers. Cheers! 🍻
 
 <a href="https://www.buymeacoffee.com/duynguyen" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" height=48 ></a>
 

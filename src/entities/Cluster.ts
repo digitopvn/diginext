@@ -1,3 +1,4 @@
+import { CloudProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
@@ -50,7 +51,7 @@ export default class Cluster extends Base {
 	 * @example "gcloud", "digitalocean", "custom"
 	 */
 	@Column()
-	providerShortName?: string;
+	providerShortName?: CloudProviderType;
 
 	/**
 	 * Cloud zone of this cluster

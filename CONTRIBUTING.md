@@ -8,21 +8,21 @@ We have adopted a [Code of Conduct](CODE_OF_CONDUCT.md) that we expect project p
 
 All work on Diginext happens directly on [GitHub](https://github.com/digitopvn/diginext). Both core team members and external contributors send pull requests which go through the same review process.
 
+Wanna give me a hand? Get started here: [DEVELOPER.md](DEVELOPER.md)
+
 ## Branch Organization
 
 According to our [release schedule](changelog#release-schedule), we maintain two branches, `main` and `feature`. If you send a bugfix pull request, please do it against the `main` branch, if it's a feature pull request, please do it against the `feature` branch.
 
 ## Bugs
 
-We are using [GitHub Issues](https://github.com/digitopvn/diginext/issues) for bug tracking. The best way to get your bug fixed is by using our [issue helper](http://new-issue.ant.design) and provide reproduction steps with this [template](https://u.ant.design/codesandbox-repro).
+We are using [GitHub Issues](https://github.com/digitopvn/diginext/issues) for bug tracking. The best way to get your bug fixed is by providing reproduction steps with this [template](https://github.com/digitopvn/diginext/issues/new?assignees=&labels=&template=bug_report.md&title=%5BBUG%5D).
 
 Before you report a bug, please make sure you've searched existing issues, and read our [FAQ](FAQ.md).
 
 ## Proposing a Change
 
-If you intend to change the public API or introduce new feature, we also recommend you use our [issue helper](http://new-issue.ant.design) to create a feature request issue.
-
-If you want to help on new API, please reference [API Naming Rules](https://github.com/digitopvn/diginext/wiki/API-Naming-rules) to name it.
+If you intend to change the public API or introduce new feature, we also recommend you use our [issue helper](https://github.com/digitopvn/diginext/issues/new?assignees=&labels=&template=propose_change.md&title=) to create a proposal issue.
 
 ## Your First Pull Request
 
@@ -53,7 +53,7 @@ The core team is monitoring for pull requests. We will review your pull request 
 
 Sending a Pull Request to [react-component](https://github.com/react-component/):
 
-If it's a bugfix pull request, after it's merged, the core team will release a patch release for that component as soon as possible, then you only need to reinstall antd in your project to get the latest patch release. If it's a feature pull request, after it's merged, the core team will release a minor release, then you need raise another pull request to [Diginext](https://github.com/digitopvn/diginext/) to update dependencies, document and TypeScript interfaces (if needed).
+If it's a bugfix pull request, after it's merged, the core team will release a patch release for that component as soon as possible, then you only need to reinstall Diginext (DX) in your project to get the latest patch release. If it's a feature pull request, after it's merged, the core team will release a minor release, then you need raise another pull request to [Diginext](https://github.com/digitopvn/diginext/) to update dependencies, document and TypeScript interfaces (if needed).
 
 ## Development Workflow
 

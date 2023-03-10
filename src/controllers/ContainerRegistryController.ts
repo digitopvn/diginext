@@ -1,15 +1,22 @@
+import { isNotIn } from "class-validator";
 import * as fs from "fs";
+import { isEmpty } from "lodash";
 import path from "path";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { ContainerRegistry, Project } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { ContainerRegistry } from "@/entities";
+import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import { registryProviderList } from "@/interfaces/SystemTypes";
+import { DB } from "@/modules/api/DB";
 import digitalocean from "@/modules/providers/digitalocean";
 import gcloud from "@/modules/providers/gcloud";
+import { connectRegistry } from "@/modules/registry/connect-registry";
 import ContainerRegistryService from "@/services/ContainerRegistryService";
 
 import BaseController from "./BaseController";
+
+type MaskedContainerRegistry = Omit<ContainerRegistry, keyof HiddenBodyKeys>;
 
 @Tags("Container Registry")
 @Route("registry")
@@ -26,14 +33,74 @@ export default class ContainerRegistryController extends BaseController<Containe
 
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
-		return super.create(body);
+	async create(@Body() body: MaskedContainerRegistry, @Queries() queryParams?: IPostQueryParams) {
+		const { name, serviceAccount, provider: providerShortName, host, imageBaseURL, apiAccessToken } = body;
+
+		const errors: string[] = [];
+		if (isEmpty(name)) errors.push(`Name is required.`);
+		if (isEmpty(host)) errors.push(`Host is required (eg. us.gcr.io, hub.docker.com,...)`);
+		if (isEmpty(imageBaseURL)) errors.push(`Base image URL is required (eg. asia.gcr.io/my-workspace)`);
+		if (isEmpty(providerShortName)) errors.push(`Container registry provider is required (eg. gcloud, digitalocean, dockerhub,...)`);
+		if (isNotIn(providerShortName, registryProviderList))
+			errors.push(`Container registry provider should be one of [${registryProviderList.join(", ")}]`);
+
+		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+
+		if (providerShortName === "gcloud" && isEmpty(serviceAccount))
+			return { status: 0, messages: [`Service Account (JSON) is required to authenticate Google Container Registry.`] } as ResponseData;
+
+		if (providerShortName === "digitalocean" && isEmpty(apiAccessToken))
+			return { status: 0, messages: [`API access token is required to authenticate DigitalOcean Container Registry.`] } as ResponseData;
+
+		const newRegistryData = {
+			name,
+			provider: providerShortName,
+			host,
+			serviceAccount,
+			imageBaseURL,
+			apiAccessToken,
+			isVerified: false,
+		} as MaskedContainerRegistry;
+
+		const newRegistry = await this.service.create(newRegistryData);
+
+		// verify...
+		let verifiedRegistry: ContainerRegistry;
+		const authRes = await connectRegistry(newRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
+		if (authRes) [verifiedRegistry] = await DB.update<ContainerRegistry>("registry", { _id: newRegistry._id }, { isVerified: true });
+
+		return { status: 1, data: isEmpty(verifiedRegistry) ? newRegistry : verifiedRegistry, messages: authRes ? [authRes] : [] } as ResponseData;
 	}
 
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
-		return super.update(body);
+	async update(@Body() body: Omit<ContainerRegistry, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		const [updatedRegistry] = await DB.update<ContainerRegistry>("registry", this.filter, body);
+
+		const { name, serviceAccount, provider: providerShortName, host, imageBaseURL, apiAccessToken } = updatedRegistry;
+
+		const errors: string[] = [];
+		if (isEmpty(name)) errors.push(`Name is required.`);
+		if (isEmpty(host)) errors.push(`Host is required (eg. us.gcr.io, hub.docker.com,...)`);
+		if (isEmpty(imageBaseURL)) errors.push(`Base image URL is required (eg. asia.gcr.io/my-workspace)`);
+		if (isEmpty(providerShortName)) errors.push(`Container registry provider is required (eg. gcloud, digitalocean, dockerhub,...)`);
+		if (isNotIn(providerShortName, registryProviderList))
+			errors.push(`Container registry provider should be one of [${registryProviderList.join(", ")}]`);
+
+		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+
+		if (providerShortName === "gcloud" && isEmpty(serviceAccount))
+			return { status: 0, messages: [`Service Account (JSON) is required to authenticate Google Container Registry.`] } as ResponseData;
+
+		if (providerShortName === "digitalocean" && isEmpty(apiAccessToken))
+			return { status: 0, messages: [`API access token is required to authenticate DigitalOcean Container Registry.`] } as ResponseData;
+
+		// verify...
+		let verifiedRegistry: ContainerRegistry;
+		const authRes = await connectRegistry(updatedRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
+		[verifiedRegistry] = await DB.update<ContainerRegistry>("registry", { _id: updatedRegistry._id }, { isVerified: authRes ? true : false });
+
+		return { status: 1, data: updatedRegistry, messages: authRes ? [authRes] : [] } as ResponseData;
 	}
 
 	@Security("jwt")
@@ -86,7 +153,6 @@ export default class ContainerRegistryController extends BaseController<Containe
 					result.messages = [`Google Cloud Container Registry authentication failed.`];
 				}
 				return result;
-				break;
 
 			case "digitalocean":
 				const { apiAccessToken } = registry;
@@ -99,13 +165,11 @@ export default class ContainerRegistryController extends BaseController<Containe
 					result.messages = [`Digital Ocean Container Registry authentication failed.`];
 				}
 				return result;
-				break;
 
 			default:
 				result.status = 0;
 				result.messages = [`This container registry is not supported (${provider}), only "gcloud" and "digitalocean" are supported.`];
 				return result;
-				break;
 		}
 	}
 }

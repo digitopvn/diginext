@@ -1,3 +1,4 @@
+import { CloudProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
@@ -18,7 +19,7 @@ export default class CloudProvider extends Base {
 	 * Cloud provider short name, without spacing & special characters
 	 */
 	@Column()
-	shortName?: string;
+	shortName?: CloudProviderType;
 
 	// @Column({ default: [] })
 	// ips?: string[];
