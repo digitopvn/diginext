@@ -53,7 +53,7 @@ const { BASE_PATH, PORT, CLI_MODE } = Config;
  */
 let app;
 let server: Server;
-let io: SocketServer;
+let socketIO: SocketServer;
 
 if (process.env.CLI_MODE == "server") log(`Connecting to database. Please wait...`);
 
@@ -101,11 +101,8 @@ async function startupScripts() {
 	const clusterSvc = new ClusterService();
 	const clusters = await clusterSvc.find({});
 	if (clusters.length > 0) {
-		let i = 1;
 		for (const cluster of clusters) {
-			// log(`[${i}] Authenticating "${cluster.shortName}" cluster...`);
 			await ClusterManager.authCluster(cluster.shortName, { shouldSwitchContextToThisCluster: false });
-			i++;
 		}
 	}
 
@@ -138,8 +135,8 @@ function initialize() {
 		/**
 		 * Websocket / SOCKET.IO
 		 */
-		io = new SocketServer(server, { transports: ["websocket"] });
-		io.on("connection", (socket) => {
+		socketIO = new SocketServer(server, { transports: ["websocket"] });
+		socketIO.on("connection", (socket) => {
 			console.log("a user connected");
 
 			socket.on("join", (data) => {
@@ -273,6 +270,6 @@ function initialize() {
 
 AppDatabase.connect(initialize);
 
-export const getIO = () => io;
+export const getIO = () => socketIO;
 
-export { app, io, server };
+export { app, server, socketIO };

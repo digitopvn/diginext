@@ -1,15 +1,31 @@
 # DEBIAN - Base on offical Google Cloud SDK Slim image -> Google Cloud CLI
 FROM gcr.io/google.com/cloudsdktool/cloud-sdk:slim
 
+RUN apt-get clean
+
 # Kubernetes Gcloud Authentication plugin
 RUN apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 
 # Node.js, Git, kubectl & Open SSH
 RUN apt-get update --allow-releaseinfo-change -yq \
   && apt-get install curl gnupg wget ca-certificates -yq \
-  && curl -sL https://deb.nodesource.com/setup_18.x | bash \
+  && curl -sL https://deb.nodesource.com/setup_16.x | bash \
   && apt-get install nodejs git sed jq kubectl openssh-client -yq \
   && apt-get clean -y
+
+# Helm
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \
+  && chmod 700 get_helm.sh \
+  && ./get_helm.sh
+
+# Docker Buildx
+RUN wget https://github.com/docker/buildx/releases/download/v0.9.1/buildx-v0.9.1.linux-amd64 \
+  && chmod a+x buildx-v0.9.1.linux-amd64 \
+  && mkdir -p ~/.docker/cli-plugins \
+  && mv buildx-v0.9.1.linux-amd64 ~/.docker/cli-plugins/docker-buildx
+
+# Podman
+RUN apt-get -y install podman
 
 # Install Digital Ocean CLI
 RUN cd ~ \
@@ -17,19 +33,36 @@ RUN cd ~ \
   && tar xf ~/doctl-1.78.0-linux-amd64.tar.gz \
   && mv ~/doctl /usr/local/bin
 
-# Install yarn package manager & pm2
-RUN npm install -g yarn
+# Install PNPM (instead of YARN as the previous version)
+# RUN npm install -g yarn
+RUN npm install -g pnpm
 
 # Set working directory
 WORKDIR /usr/diginext-cli
 
 # Copy package.json and package-lock.json before other files
 # Utilise Docker cache to save re-installing dependencies if unchanged
-COPY ./package*.json ./
+# COPY ./package*.json ./
+# COPY ./pnpm-lock.yaml ./
+
+# Copy source config file so we can mount file in docker-compose volumes
+# COPY ./.babelrc.js ./
+# COPY ./.eslintignore ./
+# COPY ./.eslintrc ./
+# COPY ./.prettierignore ./
+# COPY ./.prettierrc.json ./
+# COPY ./commitlint.config.js ./
+# COPY ./lint-staged.config.js ./
+# COPY ./tsconfig.json ./
+# COPY ./tsoa.json ./
+
+# Use yarn 3+
+# RUN yarn set version berry
 
 # Install dependencies
-RUN touch yarn.lock
-RUN yarn install
+# RUN touch yarn.lock
+# RUN yarn install
+# RUN pnpm i
 
 # RUN yarn add esm
 
@@ -38,6 +71,8 @@ RUN yarn install
 
 # COPY ./dist ./dist
 # COPY ./scripts ./scripts
+# COPY ./public ./public
+# COPY ./templates ./templates
 # COPY ./.env ./.env
 # COPY ./.env.dev ./.env.dev
 
@@ -51,17 +86,32 @@ RUN usermod -aG docker $(whoami)
 
 # RUN chmod -R +x /usr/diginext-cli/dist
 # RUN chmod -R +x /usr/diginext-cli/scripts
-RUN npm link
 
-EXPOSE 8080
+# RUN chmod +w pnpm-lock.yaml \
+#   .babelrc.js \
+#   .eslintignore \
+#   .eslintrc \
+#   .prettierignore \
+#   .prettierrc.json \
+#   commitlint.config.js \
+#   lint-staged.config.js \
+#   tsconfig.json \
+#   tsoa.json
 
-ENV CLI_MODE=server
+# RUN npm link
+
+EXPOSE 6969
+
+# ENV CLI_MODE=server
 
 # Run npm start script when container starts
 # CMD [ "npm", "start" ]
 # CMD [ "yarn", "start" ]
+# CMD [ "node", "/usr/diginext-cli/dist/server.js" ]
 
-CMD [ "node", "/usr/diginext-cli/dist/server.js" ]
+# CMD [ "pnpm", "dev" ]
+
+ENTRYPOINT [ "/usr/diginext-cli/scripts/startup-dev.sh" ]
 
 # CMD gcloud version && kubectl version && docker version
 # CMD yarn start

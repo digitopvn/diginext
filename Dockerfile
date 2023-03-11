@@ -85,7 +85,7 @@ EXPOSE 6969
 # CMD [ "yarn", "start" ]
 # CMD [ "node", "/usr/diginext-cli/dist/server.js" ]
 
-ENTRYPOINT [ "/usr/diginext-cli/scripts/entry.sh" ]
+ENTRYPOINT [ "/usr/diginext-cli/scripts/startup.sh" ]
 
 # CMD gcloud version && kubectl version && docker version
 # CMD yarn start

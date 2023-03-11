@@ -1,8 +1,5 @@
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
-import { writeFileSync } from "fs";
-import path from "path";
 
-import { CLI_CONFIG_DIR } from "@/config/const";
 import type { Cluster } from "@/entities";
 import type { KubeConfigContext } from "@/interfaces";
 import { createTmpFile, execCmd } from "@/plugins";
@@ -168,11 +165,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 				throw new Error(`This cluster doesn't have any "kube-config" data to authenticate, please contact your administrator.`);
 			}
 
-			filePath = process.env.STORAGE
-				? path.resolve(process.env.STORAGE, `${clusterShortName}-kube-config.yaml`)
-				: path.resolve(CLI_CONFIG_DIR, `${clusterShortName}-kube-config.yaml`);
-
-			writeFileSync(filePath, kubeConfig, "utf8");
+			filePath = createTmpFile(`${clusterShortName}-kube-config.yaml`, kubeConfig);
 
 			// start authenticating & save cluster access info to "kubeconfig"...
 			const contextName = await custom.authenticate({ filePath });

@@ -1,7 +1,5 @@
 import { isNotIn } from "class-validator";
-import * as fs from "fs";
 import { isEmpty } from "lodash";
-import path from "path";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { ContainerRegistry } from "@/entities";
@@ -12,6 +10,7 @@ import { DB } from "@/modules/api/DB";
 import digitalocean from "@/modules/providers/digitalocean";
 import gcloud from "@/modules/providers/gcloud";
 import { connectRegistry } from "@/modules/registry/connect-registry";
+import { createTmpFile } from "@/plugins";
 import ContainerRegistryService from "@/services/ContainerRegistryService";
 
 import BaseController from "./BaseController";
@@ -137,11 +136,7 @@ export default class ContainerRegistryController extends BaseController<Containe
 			case "gcloud":
 				const { serviceAccount } = registry;
 
-				const tmpDir = path.resolve(process.env.STORAGE, `registry`);
-				if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-
-				const tmpFilePath = path.resolve(tmpDir, `gcloud-service-account.json`);
-				fs.writeFileSync(tmpFilePath, serviceAccount, "utf8");
+				const tmpFilePath = createTmpFile(`gcloud-service-account.json`, serviceAccount);
 
 				const authResult = await gcloud.authenticate({ filePath: tmpFilePath, host, ...options });
 				// console.log("authResult :>> ", authResult);

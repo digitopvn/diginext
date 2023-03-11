@@ -9,6 +9,7 @@ import PQueue from "p-queue";
 import path from "path";
 
 import { getCliConfig } from "@/config/config";
+import { CLI_CONFIG_DIR } from "@/config/const";
 import type { App, Build, Project, Release, User, Workspace } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
@@ -22,7 +23,7 @@ import type { GenerateDeploymentResult } from "../deploy";
 import { generateDeployment } from "../deploy";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
-import { createReleaseFromBuild, sendMessage, updateBuildStatus } from "./index";
+import { createReleaseFromBuild, sendLog, updateBuildStatus } from "./index";
 
 export let queue = new PQueue({ concurrency: 1 });
 
@@ -94,7 +95,7 @@ export async function startBuild(
 
 	// Validating...
 	if (isEmpty(app)) {
-		sendMessage({ SOCKET_ROOM, logger, message: `[BUILD SERVER] App "${appSlug}" not found.` });
+		sendLog({ SOCKET_ROOM, logger, type: "error", message: `[START BUILD] App "${appSlug}" not found.` });
 		return;
 	}
 
@@ -108,59 +109,57 @@ export async function startBuild(
 	log("options :>>", options);
 
 	// ! If this function is executed on local machine, then we don't need to do "git pull"
-	if (process.env.PROJECT_DIR) {
-		const dirName = `${options.projectSlug}-${options.slug}`;
-		buildDir = path.resolve(process.env.PROJECT_DIR, dirName, gitBranch);
-		options.targetDirectory = buildDir;
 
-		// detect "gitProvider":
-		const gitProvider = getGitProviderFromRepoSSH(options.remoteSSH);
+	const SOURCE_CODE = `${options.projectSlug}/${options.slug}/${gitBranch}`;
+	buildDir = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE);
+	options.targetDirectory = buildDir;
+	options.buildDir = buildDir;
 
-		// verify SSH before pulling files...
+	// detect "gitProvider":
+	const gitProvider = getGitProviderFromRepoSSH(options.remoteSSH);
+
+	// verify SSH before pulling files...
+	try {
+		await verifySSH({ gitProvider });
+	} catch (e) {
+		sendLog({ SOCKET_ROOM, logger, type: "error", message: `"${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.` });
+		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+		return;
+	}
+
+	// Git SSH verified -> start pulling now...
+	sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Pulling latest files from "${options.remoteSSH}" at "${gitBranch}" branch...` });
+
+	if (existsSync(buildDir)) {
 		try {
-			await verifySSH({ gitProvider });
+			sendLog({ SOCKET_ROOM, logger, message: `[0] Trying to check out existing directory and do git pull at: ${buildDir}` });
+			await execCmd(`cd '${buildDir}' && git checkout -f && git pull --rebase`);
 		} catch (e) {
-			sendMessage({ SOCKET_ROOM, logger, message: `"${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.` });
-			await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
-			return;
-		}
+			sendLog({ SOCKET_ROOM, logger, message: `[1] Remove directory: ${buildDir} :>> ${e}` });
+			fs.rmSync(buildDir, { recursive: true, force: true });
 
-		// Git SSH verified -> start pulling now...
-		sendMessage({ SOCKET_ROOM, logger, message: `[BUILD SERVER] Pulling latest files from "${options.remoteSSH}" at "${gitBranch}" branch...` });
-
-		if (existsSync(buildDir)) {
+			sendLog({ SOCKET_ROOM, logger, message: `[1] Clone new into directory: ${buildDir}` });
 			try {
-				sendMessage({ SOCKET_ROOM, logger, message: `[0] Trying to check out existing directory and do git pull at: ${buildDir}` });
-				await execCmd(`cd '${buildDir}' && git checkout -f && git pull --rebase`);
-			} catch (e) {
-				sendMessage({ SOCKET_ROOM, logger, message: `[1] Remove directory: ${buildDir} :>> ${e}` });
-				fs.rmSync(buildDir, { recursive: true, force: true });
-
-				sendMessage({ SOCKET_ROOM, logger, message: `[1] Clone new into directory: ${buildDir}` });
-				try {
-					await execCmd(`git clone ${options.remoteSSH} --branch ${gitBranch} --single-branch ${buildDir}`);
-				} catch (e2) {
-					sendMessage({ SOCKET_ROOM, logger, message: `[1] Failed to clone new branch "${gitBranch}" to "${buildDir}": ${e}` });
-					// await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
-					// return;
-				}
-			}
-		} else {
-			try {
-				sendMessage({ SOCKET_ROOM, logger, message: `[2] Clone new to: ${buildDir}` });
 				await execCmd(`git clone ${options.remoteSSH} --branch ${gitBranch} --single-branch ${buildDir}`);
-			} catch (e) {
-				sendMessage({ SOCKET_ROOM, logger, message: `[2] Failed to Clone new branch "${gitBranch}" to "${buildDir}": ${e}` });
+			} catch (e2) {
+				sendLog({ SOCKET_ROOM, logger, type: "error", message: `[1] Failed to clone new branch "${gitBranch}" to "${buildDir}": ${e}` });
 				// await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
 				// return;
 			}
 		}
-
-		// emit socket message to "digirelease" app:
-		sendMessage({ SOCKET_ROOM, logger, message: `[BUILD SERVER] Finished pulling latest files of "${gitBranch}"...` });
+	} else {
+		try {
+			sendLog({ SOCKET_ROOM, logger, message: `[2] Clone new to: ${buildDir}` });
+			await execCmd(`git clone ${options.remoteSSH} --branch ${gitBranch} --single-branch ${buildDir}`);
+		} catch (e) {
+			sendLog({ SOCKET_ROOM, logger, type: "error", message: `[2] Failed to Clone new branch "${gitBranch}" to "${buildDir}": ${e}` });
+			// await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+			// return;
+		}
 	}
 
-	options.buildDir = buildDir;
+	// emit socket message to "digirelease" app:
+	sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Finished pulling latest files of "${gitBranch}"...` });
 
 	let message = "";
 	let stream;
@@ -170,10 +169,11 @@ export async function startBuild(
 	 */
 	let dockerFile = resolveDockerfilePath({ targetDirectory: buildDir, env });
 	if (!dockerFile) {
-		sendMessage({
+		sendLog({
 			SOCKET_ROOM,
 			logger,
-			message: `[BUILD SERVER] Missing "Dockerfile" to build the application, please create your "Dockerfile" in the root directory of the source code.`,
+			type: "error",
+			message: `[START BUILD] Missing "Dockerfile" to build the application, please create your "Dockerfile" in the root directory of the source code.`,
 		});
 		return;
 	}
@@ -186,28 +186,31 @@ export async function startBuild(
 
 	// validating...
 	if (isEmpty(serverDeployEnvironment)) {
-		sendMessage({
+		sendLog({
 			SOCKET_ROOM,
 			logger,
-			message: `[BUILD SERVER] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app is empty (probably deleted?).`,
+			type: "error",
+			message: `[START BUILD] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app is empty (probably deleted?).`,
 		});
 		isPassedDeployEnvironmentValidation = false;
 	}
 
 	if (isEmpty(serverDeployEnvironment.cluster)) {
-		sendMessage({
+		sendLog({
 			SOCKET_ROOM,
 			logger,
-			message: `[BUILD SERVER] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`,
+			type: "error",
+			message: `[START BUILD] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`,
 		});
 		isPassedDeployEnvironmentValidation = false;
 	}
 
 	if (isEmpty(serverDeployEnvironment.namespace)) {
-		sendMessage({
+		sendLog({
 			SOCKET_ROOM,
 			logger,
-			message: `[BUILD SERVER] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`,
+			type: "error",
+			message: `[START BUILD] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`,
 		});
 		isPassedDeployEnvironmentValidation = false;
 	}
@@ -220,7 +223,7 @@ export async function startBuild(
 	 * So it can be used to create release from build
 	 */
 	let deployment: GenerateDeploymentResult;
-	sendMessage({ SOCKET_ROOM, logger, message: `[BUILD SERVER] Generating the deployment files on server...` });
+	sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Generating the deployment files on server...` });
 	try {
 		deployment = await generateDeployment({
 			env,
@@ -230,7 +233,7 @@ export async function startBuild(
 			targetDirectory: options.targetDirectory,
 		});
 	} catch (e) {
-		sendMessage({ SOCKET_ROOM, logger, message: e.message });
+		sendLog({ SOCKET_ROOM, logger, type: "error", message: e.message });
 		return;
 	}
 
@@ -251,7 +254,7 @@ export async function startBuild(
 
 	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, updatedAppData);
 
-	sendMessage({ SOCKET_ROOM, logger, message: `[BUILD SERVER] Generated the deployment files successfully!` });
+	sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// create new build on build server:
@@ -278,19 +281,15 @@ export async function startBuild(
 
 		newBuild = await DB.create<Build>("build", buildData);
 
-		message = "[SUCCESS] Created new build on server!";
-		sendMessage({ SOCKET_ROOM, logger, message });
+		sendLog({ SOCKET_ROOM, logger, message: "Created new build on server!" });
 	} catch (e) {
-		logError(e);
-		message = "[FAILED] Can't create a new build in database: " + e.toString();
-		sendMessage({ SOCKET_ROOM, logger, message });
-
+		sendLog({ SOCKET_ROOM, logger, type: "error", message: "Can't create a new build in database: " + e.toString() });
 		return;
 	}
 
 	// build the app with Docker:
 	try {
-		sendMessage({ SOCKET_ROOM, logger, message: `Start building the Docker image...` });
+		sendLog({ SOCKET_ROOM, logger, message: `Start building the Docker image...` });
 
 		await builder.Docker.build(IMAGE_NAME, {
 			platforms: ["linux/amd64"],
@@ -298,17 +297,20 @@ export async function startBuild(
 			cacheFroms: latestBuild ? [{ type: "registry", value: latestBuild.image }] : [],
 			dockerFile: dockerFile,
 			shouldPush: true,
-			onBuilding: (msg) => sendMessage({ SOCKET_ROOM, logger, message }),
+			onBuilding: (msg) => sendLog({ SOCKET_ROOM, logger, message }),
 		});
 
 		// update build status as "success"
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "success");
 
-		message = `✓ Built a Docker image & pushed to container registry (${serverDeployEnvironment.registry}) successfully!`;
-		sendMessage({ SOCKET_ROOM, logger, message });
+		sendLog({
+			SOCKET_ROOM,
+			logger,
+			message: `✓ Built a Docker image & pushed to container registry (${serverDeployEnvironment.registry}) successfully!`,
+		});
 	} catch (e) {
 		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
-		sendMessage({ SOCKET_ROOM, logger, message: e.message });
+		sendLog({ SOCKET_ROOM, logger, message: e.message, type: "error" });
 		return;
 	}
 
@@ -332,9 +334,9 @@ export async function startBuild(
 		// log("Created new Release successfully:", newRelease);
 
 		message = `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.`;
-		sendMessage({ SOCKET_ROOM, logger, message });
+		sendLog({ SOCKET_ROOM, logger, message });
 	} catch (e) {
-		sendMessage({ SOCKET_ROOM, logger, message: `[ERROR] ${e.message}` });
+		sendLog({ SOCKET_ROOM, logger, message: `${e.message}`, type: "error" });
 		return;
 	}
 
@@ -342,7 +344,7 @@ export async function startBuild(
 		const buildDuration = dayjs().diff(startTime, "millisecond");
 
 		message = chalk.green(`🎉 FINISHED BUILDING IMAGE AFTER ${humanizeDuration(buildDuration)} 🎉`);
-		sendMessage({ SOCKET_ROOM, logger, message });
+		sendLog({ SOCKET_ROOM, logger, message, type: "success" });
 
 		return { build: newBuild, release: newRelease };
 	}
@@ -353,23 +355,25 @@ export async function startBuild(
 	 */
 	console.log("[START BUILD] options.shouldUseFreshDeploy :>> ", options.shouldUseFreshDeploy);
 	if (options.shouldUseFreshDeploy) {
-		sendMessage({
+		sendLog({
 			SOCKET_ROOM,
 			logger,
+			type: "warn",
 			message: `[SYSTEM WARNING] Flag "--fresh" of CLI was specified by "${username}" while executed request deploy command, the build server's going to delete the "${options.namespace}" namespace (APP: ${appSlug} / PROJECT: ${projectSlug}) shortly...`,
 		});
 
 		const wipedNamespaceRes = await ClusterManager.deleteNamespaceByCluster(options.namespace, serverDeployEnvironment.cluster);
 		if (isEmpty(wipedNamespaceRes)) {
-			sendMessage({
+			sendLog({
 				SOCKET_ROOM,
 				logger,
+				type: "error",
 				message: `Unable to delete "${options.namespace}" namespace of "${serverDeployEnvironment.cluster}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
 			});
 			return;
 		}
 
-		sendMessage({
+		sendLog({
 			SOCKET_ROOM,
 			logger,
 			message: `Successfully deleted "${options.namespace}" namespace of "${serverDeployEnvironment.cluster}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
@@ -377,7 +381,7 @@ export async function startBuild(
 	}
 
 	if (releaseId) {
-		sendMessage({
+		sendLog({
 			SOCKET_ROOM,
 			logger,
 			message:
@@ -390,12 +394,12 @@ export async function startBuild(
 			const result = env === "prod" ? await ClusterManager.previewPrerelease(releaseId) : await ClusterManager.rollout(releaseId);
 
 			if (result.error) {
-				sendMessage({ SOCKET_ROOM, logger, message: `[ERROR] ClusterManager.rollout() :>> ${result.error}.` });
+				sendLog({ SOCKET_ROOM, logger, type: "error", message: `Failed to roll out the release :>> ${result.error}.` });
 				return;
 			}
 			newRelease = result.data;
 		} catch (e) {
-			sendMessage({ SOCKET_ROOM, logger, message: `[ERROR] ClusterManager.rollout() :>> ${e.message}:` });
+			sendLog({ SOCKET_ROOM, logger, type: "error", message: `Failed to roll out the release :>> ${e.message}:` });
 			return;
 		}
 	}
@@ -404,24 +408,24 @@ export async function startBuild(
 	const deployDuration = dayjs().diff(startTime, "millisecond");
 
 	message = chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanizeDuration(deployDuration)} 🎉`);
-	sendMessage({ SOCKET_ROOM, logger, message });
+	sendLog({ SOCKET_ROOM, logger, message, type: "success" });
 
 	if (env == "prod") {
 		const { buildServerUrl } = getCliConfig();
 
 		message = chalk.bold(chalk.yellow(`✓ Preview at: ${prereleaseDeploymentData.endpoint}`));
-		sendMessage({ SOCKET_ROOM, logger, message });
+		sendLog({ SOCKET_ROOM, logger, message, type: "success" });
 
 		message = chalk.bold(
 			chalk.yellow(`✓ Review & publish at: ${buildServerUrl}/project/?lv1=release&project=${projectSlug}&app=${appSlug}&env=prod`)
 		);
-		sendMessage({ SOCKET_ROOM, logger, message });
+		sendLog({ SOCKET_ROOM, logger, message, type: "success" });
 
 		message = chalk.bold(chalk.yellow(`✓ Roll out with CLI command:`), `$ dx rollout ${releaseId}`);
-		sendMessage({ SOCKET_ROOM, logger, message });
+		sendLog({ SOCKET_ROOM, logger, message, type: "success" });
 	} else {
 		message = chalk.bold(chalk.yellow(`✓ Preview at: ${endpoint}`));
-		sendMessage({ SOCKET_ROOM, logger, message });
+		sendLog({ SOCKET_ROOM, logger, message, type: "success" });
 	}
 
 	// disconnect CLI client:

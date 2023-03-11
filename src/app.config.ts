@@ -89,6 +89,10 @@ export class Config {
 		return process.env.CLI_MODE || "client";
 	}
 
+	static get BUILDER() {
+		return process.env.BUILDER || "podman";
+	}
+
 	static get DISABLE_INPECT_MEMORY() {
 		return toBool(process.env.DISABLE_INPECT_MEMORY, false);
 	}
