@@ -58,7 +58,7 @@ export default class BuildController extends BaseController<Build> {
 
 		// Attempt [1]: get logs from the database
 		const build = await this.service.findOne({ slug });
-		console.log("build :>> ", build);
+		// console.log("build :>> ", build);
 		if (build) {
 			const logContent = build.logs;
 			if (logContent) {

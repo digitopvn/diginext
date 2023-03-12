@@ -147,7 +147,7 @@ export const generateSSH = async (options?: InputOptions) => {
 	// const { gitProvider } = options;
 	// Check if any "id_rsa" existed
 
-	const SSH_DIR = path.resolve(HOME_DIR, "ssh");
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
 	const idRsaDir = SSH_DIR;
 
 	// const idRsaDir = path.resolve(CLI_DIR, "storage/home/ssh");
@@ -240,7 +240,7 @@ export const generateSSH = async (options?: InputOptions) => {
 export const verifySSH = async (options?: InputOptions) => {
 	const { gitProvider } = options;
 
-	const SSH_DIR = path.resolve(HOME_DIR, "ssh");
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
 	const idRsaDir = SSH_DIR;
 
 	let publicIdRsaFile: string, privateIdRsaFile: string;

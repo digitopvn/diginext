@@ -10,11 +10,11 @@ import path from "path";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { App, Build, Project, Release, User, Workspace } from "@/entities";
+import type { App, Build, Project, Release, User } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { execCmd, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
-import { getIO } from "@/server";
+import { socketIO } from "@/server";
 
 import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
@@ -23,7 +23,7 @@ import type { GenerateDeploymentResult } from "../deploy";
 import { generateDeployment } from "../deploy";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
-import { createReleaseFromBuild, sendLog, updateBuildStatus } from "./index";
+import { createReleaseFromBuild, sendLog, updateBuildStatus, updateBuildStatusByAppSlug } from "./index";
 
 export let queue = new PQueue({ concurrency: 1 });
 
@@ -45,7 +45,7 @@ export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug:
 	await builder.Docker.stopBuild(builderName);
 
 	// Update the status in the database
-	const stoppedBuild = await updateBuildStatus(appSlug, buildSlug, "failed");
+	const stoppedBuild = await updateBuildStatusByAppSlug(appSlug, buildSlug, "failed");
 
 	logSuccess(`Build process of "${buildSlug}" has been stopped.`);
 
@@ -68,36 +68,28 @@ export async function startBuild(
 	const { shouldRollout = true } = addition;
 	const startTime = dayjs();
 
-	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, workspaceId } = options;
+	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, workspace } = options;
 
 	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
 	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	const project = await DB.findOne<Project>("project", { slug: projectSlug });
 	const author = await DB.findOne<User>("user", { id: new ObjectId(options.userId) });
 
-	// get workspace
-	let workspace = options.workspace;
-	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: app?.workspace });
-	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: project?.workspace });
-	if (!workspace && workspaceId) workspace = await DB.findOne<Workspace>("workspace", { _id: workspaceId });
-	if (!workspace && username != "Anonymous") workspace = await DB.findOne<Workspace>("workspace", { _id: author.activeWorkspace });
-
-	const BUILD_NUMBER = buildNumber;
-	const IMAGE_NAME = buildImage;
-	const SOCKET_ROOM = `${appSlug}-${BUILD_NUMBER}`;
-
+	// socket & logs
+	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 	const logger = new Logger(SOCKET_ROOM);
 	options.SOCKET_ROOM = SOCKET_ROOM;
 
 	// Emit socket message to request the BUILD SERVER to start building...
-	let socketServer = getIO();
-	if (socketServer) socketServer.to(SOCKET_ROOM).emit("message", { action: "start" });
+	socketIO?.to(SOCKET_ROOM).emit("message", { action: "start" });
 
 	// Validating...
 	if (isEmpty(app)) {
 		sendLog({ SOCKET_ROOM, logger, type: "error", message: `[START BUILD] App "${appSlug}" not found.` });
 		return;
 	}
+
+	log("options :>>", options);
 
 	/**
 	 * Specify BUILD DIRECTORY to pull source code:
@@ -106,11 +98,7 @@ export async function startBuild(
 	 */
 	let buildDir = options.targetDirectory || process.cwd();
 
-	log("options :>>", options);
-
-	// ! If this function is executed on local machine, then we don't need to do "git pull"
-
-	const SOURCE_CODE = `${options.projectSlug}/${options.slug}/${gitBranch}`;
+	const SOURCE_CODE = `cache/${options.projectSlug}/${options.slug}/${gitBranch}`;
 	buildDir = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE);
 	options.targetDirectory = buildDir;
 	options.buildDir = buildDir;
@@ -118,51 +106,85 @@ export async function startBuild(
 	// detect "gitProvider":
 	const gitProvider = getGitProviderFromRepoSSH(options.remoteSSH);
 
+	// create new build on build server:
+	const buildData = {
+		name: `[${options.env.toUpperCase()}] ${buildImage}`,
+		slug: SOCKET_ROOM,
+		tag: buildNumber,
+		status: "building",
+		env,
+		createdBy: username,
+		projectSlug,
+		appSlug,
+		image: buildImage,
+		logs: logger.content,
+		cliVersion: options.version,
+		app: app._id,
+		project: project._id,
+		owner: author._id,
+		workspace: workspace._id,
+	} as Build;
+
+	const newBuild = await DB.create<Build>("build", buildData);
+	if (!newBuild) {
+		console.log("buildData :>> ", buildData);
+		sendLog({ SOCKET_ROOM, logger, message: "Failed to create new build on server." });
+		return;
+	}
+	sendLog({ SOCKET_ROOM, logger, message: "Created new build on server!" });
+
 	// verify SSH before pulling files...
 	try {
 		await verifySSH({ gitProvider });
 	} catch (e) {
 		sendLog({ SOCKET_ROOM, logger, type: "error", message: `"${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.` });
-		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+		await updateBuildStatus(newBuild, "failed");
 		return;
 	}
 
 	// Git SSH verified -> start pulling now...
-	sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Pulling latest files from "${options.remoteSSH}" at "${gitBranch}" branch...` });
+	sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Pulling latest source code from "${options.remoteSSH}" at "${gitBranch}" branch...` });
 
 	if (existsSync(buildDir)) {
 		try {
-			sendLog({ SOCKET_ROOM, logger, message: `[0] Trying to check out existing directory and do git pull at: ${buildDir}` });
+			sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Trying to check out existing directory and do git pull at: ${buildDir}` });
 			await execCmd(`cd '${buildDir}' && git checkout -f && git pull --rebase`);
 		} catch (e) {
-			sendLog({ SOCKET_ROOM, logger, message: `[1] Remove directory: ${buildDir} :>> ${e}` });
+			sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Removing a directory: ${buildDir} :>> ${e}` });
 			fs.rmSync(buildDir, { recursive: true, force: true });
 
-			sendLog({ SOCKET_ROOM, logger, message: `[1] Clone new into directory: ${buildDir}` });
+			sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Clone new source code into directory: ${buildDir}` });
 			try {
 				await execCmd(`git clone ${options.remoteSSH} --branch ${gitBranch} --single-branch ${buildDir}`);
 			} catch (e2) {
-				sendLog({ SOCKET_ROOM, logger, type: "error", message: `[1] Failed to clone new branch "${gitBranch}" to "${buildDir}": ${e}` });
-				// await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+				sendLog({
+					SOCKET_ROOM,
+					logger,
+					type: "error",
+					message: `[START BUILD] Failed to clone new branch "${gitBranch}" to "${buildDir}": ${e}`,
+				});
+				// await updateBuildStatus(newBuild, "failed");
 				// return;
 			}
 		}
 	} else {
 		try {
-			sendLog({ SOCKET_ROOM, logger, message: `[2] Clone new to: ${buildDir}` });
+			sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Clone new source code into: ${buildDir}` });
 			await execCmd(`git clone ${options.remoteSSH} --branch ${gitBranch} --single-branch ${buildDir}`);
 		} catch (e) {
-			sendLog({ SOCKET_ROOM, logger, type: "error", message: `[2] Failed to Clone new branch "${gitBranch}" to "${buildDir}": ${e}` });
-			// await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+			sendLog({
+				SOCKET_ROOM,
+				logger,
+				type: "error",
+				message: `[START BUILD] Failed to Clone new branch "${gitBranch}" to "${buildDir}": ${e}`,
+			});
+			// await updateBuildStatus(newBuild, "failed");
 			// return;
 		}
 	}
 
 	// emit socket message to "digirelease" app:
 	sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Finished pulling latest files of "${gitBranch}"...` });
-
-	let message = "";
-	let stream;
 
 	/**
 	 * Check if Dockerfile existed
@@ -257,51 +279,23 @@ export async function startBuild(
 	sendLog({ SOCKET_ROOM, logger, message: `[START BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
-	// create new build on build server:
-	let newBuild: Build;
-
-	try {
-		const buildData = {
-			name: `[${options.env.toUpperCase()}] ${IMAGE_NAME}`,
-			slug: SOCKET_ROOM,
-			tag: buildNumber,
-			status: "building",
-			env,
-			createdBy: username,
-			projectSlug,
-			appSlug,
-			image: IMAGE_NAME,
-			logs: logger.content,
-			cliVersion: options.version,
-			app: app._id,
-			project: project._id,
-			owner: author._id,
-			workspace: workspace._id,
-		} as Build;
-
-		newBuild = await DB.create<Build>("build", buildData);
-
-		sendLog({ SOCKET_ROOM, logger, message: "Created new build on server!" });
-	} catch (e) {
-		sendLog({ SOCKET_ROOM, logger, type: "error", message: "Can't create a new build in database: " + e.toString() });
-		return;
-	}
-
 	// build the app with Docker:
 	try {
 		sendLog({ SOCKET_ROOM, logger, message: `Start building the Docker image...` });
 
-		await builder.Docker.build(IMAGE_NAME, {
+		const buildEngine = process.env.BUILDER === "docker" ? builder.Docker : builder.Podman;
+		await buildEngine.build(buildImage, {
 			platforms: ["linux/amd64"],
 			builder: `${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`,
 			cacheFroms: latestBuild ? [{ type: "registry", value: latestBuild.image }] : [],
 			dockerFile: dockerFile,
+			buildDirectory: buildDir,
 			shouldPush: true,
-			onBuilding: (msg) => sendLog({ SOCKET_ROOM, logger, message }),
+			onBuilding: (message) => sendLog({ SOCKET_ROOM, logger, message }),
 		});
 
 		// update build status as "success"
-		await updateBuildStatus(appSlug, SOCKET_ROOM, "success");
+		await updateBuildStatus(newBuild, "success");
 
 		sendLog({
 			SOCKET_ROOM,
@@ -309,7 +303,7 @@ export async function startBuild(
 			message: `✓ Built a Docker image & pushed to container registry (${serverDeployEnvironment.registry}) successfully!`,
 		});
 	} catch (e) {
-		await updateBuildStatus(appSlug, SOCKET_ROOM, "failed");
+		await updateBuildStatus(newBuild, "failed");
 		sendLog({ SOCKET_ROOM, logger, message: e.message, type: "error" });
 		return;
 	}
@@ -333,8 +327,7 @@ export async function startBuild(
 		releaseId = newRelease._id.toString();
 		// log("Created new Release successfully:", newRelease);
 
-		message = `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.`;
-		sendLog({ SOCKET_ROOM, logger, message });
+		sendLog({ SOCKET_ROOM, logger, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });
 	} catch (e) {
 		sendLog({ SOCKET_ROOM, logger, message: `${e.message}`, type: "error" });
 		return;
@@ -343,8 +336,12 @@ export async function startBuild(
 	if (!shouldRollout) {
 		const buildDuration = dayjs().diff(startTime, "millisecond");
 
-		message = chalk.green(`🎉 FINISHED BUILDING IMAGE AFTER ${humanizeDuration(buildDuration)} 🎉`);
-		sendLog({ SOCKET_ROOM, logger, message, type: "success" });
+		sendLog({
+			SOCKET_ROOM,
+			logger,
+			message: chalk.green(`🎉 FINISHED BUILDING IMAGE AFTER ${humanizeDuration(buildDuration)} 🎉`),
+			type: "success",
+		});
 
 		return { build: newBuild, release: newRelease };
 	}
@@ -407,29 +404,33 @@ export async function startBuild(
 	// Print success:
 	const deployDuration = dayjs().diff(startTime, "millisecond");
 
-	message = chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanizeDuration(deployDuration)} 🎉`);
-	sendLog({ SOCKET_ROOM, logger, message, type: "success" });
+	sendLog({ SOCKET_ROOM, logger, message: chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanizeDuration(deployDuration)} 🎉`), type: "success" });
 
 	if (env == "prod") {
 		const { buildServerUrl } = getCliConfig();
+		const rollOutUrl = `${buildServerUrl}/project/?lv1=release&project=${projectSlug}&app=${appSlug}&env=prod`;
 
-		message = chalk.bold(chalk.yellow(`✓ Preview at: ${prereleaseDeploymentData.endpoint}`));
-		sendLog({ SOCKET_ROOM, logger, message, type: "success" });
+		sendLog({ SOCKET_ROOM, logger, message: chalk.bold(chalk.yellow(`✓ Preview at: ${prereleaseDeploymentData.endpoint}`)), type: "success" });
 
-		message = chalk.bold(
-			chalk.yellow(`✓ Review & publish at: ${buildServerUrl}/project/?lv1=release&project=${projectSlug}&app=${appSlug}&env=prod`)
-		);
-		sendLog({ SOCKET_ROOM, logger, message, type: "success" });
+		sendLog({
+			SOCKET_ROOM,
+			logger,
+			message: chalk.bold(chalk.yellow(`✓ Review & publish at: ${rollOutUrl}`)),
+			type: "success",
+		});
 
-		message = chalk.bold(chalk.yellow(`✓ Roll out with CLI command:`), `$ dx rollout ${releaseId}`);
-		sendLog({ SOCKET_ROOM, logger, message, type: "success" });
+		sendLog({
+			SOCKET_ROOM,
+			logger,
+			message: chalk.bold(chalk.yellow(`✓ Roll out with CLI command:`), `$ dx rollout ${releaseId}`),
+			type: "success",
+		});
 	} else {
-		message = chalk.bold(chalk.yellow(`✓ Preview at: ${endpoint}`));
-		sendLog({ SOCKET_ROOM, logger, message, type: "success" });
+		sendLog({ SOCKET_ROOM, logger, message: chalk.bold(chalk.yellow(`✓ Preview at: ${endpoint}`)), type: "success" });
 	}
 
 	// disconnect CLI client:
-	if (socketServer) socketServer.to(SOCKET_ROOM).emit("message", { action: "end" });
+	socketIO?.to(SOCKET_ROOM).emit("message", { action: "end" });
 
 	// logSuccess(msg);
 	return { build: newBuild, release: newRelease };

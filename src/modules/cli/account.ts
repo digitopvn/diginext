@@ -9,6 +9,8 @@ import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 
+import { DB } from "../api/DB";
+
 export const cliLogin = async (options: InputOptions) => {
 	const { secondAction, url } = options;
 
@@ -56,9 +58,10 @@ export const cliLogin = async (options: InputOptions) => {
 	// "access_token" is VALID -> save it to local machine!
 	saveCliConfig({ access_token });
 
+	// console.log(`[AUTH]`, { currentUser });
 	const { workspaces = [], activeWorkspace } = currentUser;
 	let currentWorkspace;
-	// console.log({ workspaces });
+	// console.log(`[AUTH]`, { activeWorkspace });
 
 	// If no workspace existed, create new here!
 	if (workspaces.length < 1) {
@@ -78,30 +81,23 @@ export const cliLogin = async (options: InputOptions) => {
 		]);
 
 		// create new workspace:
-		const { data: newWorkspace, messages: wsMsgs } = await fetchApi<Workspace>({
-			url: `/api/v1/workspace`,
-			method: "POST",
-			data: { name: workspaceName, owner: currentUser._id },
-		});
-
-		if (isEmpty(newWorkspace)) {
-			logError(`Can't create a workspace.`, wsMsgs.join(". "));
-			return;
-		}
+		const newWorkspace = await DB.create<Workspace>("workspace", { name: workspaceName, owner: currentUser._id });
+		if (isEmpty(newWorkspace)) return;
 
 		currentWorkspace = newWorkspace as Workspace;
 
 		// update workspaceId to this user and set it as an active workspace:
-		const { data: updatedUser, messages: updateUserMsgs } = await fetchApi<User>({
-			url: `/api/v1/user?populate=workspaces,activeWorkspace`,
-			method: "PATCH",
-			data: { "workspaces[]": currentWorkspace._id, activeWorkspace: currentWorkspace._id },
-		});
+		const [updatedUser] = await DB.update<User>(
+			"user",
+			{ _id: currentUser._id },
+			{
+				$set: { activeWorkspace: currentWorkspace._id },
+				$addToSet: { workspaces: currentWorkspace._id },
+			},
+			{ populate: ["workspaces", "activeWorkspace"], raw: true }
+		);
 
-		if (isEmpty(updatedUser)) {
-			logError(updateUserMsgs.join(". "));
-			return;
-		}
+		if (isEmpty(updatedUser)) return;
 
 		// TODO: seed default data: frameworks, git ?
 		currentUser = updatedUser[0];
@@ -138,7 +134,6 @@ export async function cliAuthenticate(options: InputOptions) {
 	const { currentWorkspace, access_token: currentAccessToken, buildServerUrl } = getCliConfig();
 	accessToken = currentAccessToken;
 	workspace = currentWorkspace;
-	// if (isEmpty(access_token) || isEmpty(currentWorkspace) || isEmpty(currentUser)) return logError(`Please login first: "dx login <workspace_url>"`);
 
 	const continueToLoginStep = async (url) => {
 		options.url = url;

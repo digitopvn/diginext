@@ -227,20 +227,25 @@ export async function rollout(id: string) {
 	// log(`1`, { isNsExisted });
 
 	/**
-	 * Check if there is "imagePullSecrets" within prod namespace, if not -> create one
+	 * Check if there is "imagePullSecrets" within the namespace, if not -> create one
 	 */
-	const allSecrets = await ClusterManager.getAllSecrets(namespace, { context });
-	let isImagePullSecretExisted = false;
-	if (allSecrets && allSecrets.length > 0) {
-		const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
-		if (imagePullSecret) isImagePullSecretExisted = true;
-	}
-	if (!isImagePullSecretExisted) {
-		try {
-			await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
-		} catch (e) {
-			throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
-		}
+	// const allSecrets = await ClusterManager.getAllSecrets(namespace, { context });
+	// let isImagePullSecretExisted = false;
+	// if (allSecrets && allSecrets.length > 0) {
+	// 	const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
+	// 	if (imagePullSecret) isImagePullSecretExisted = true;
+	// }
+	// if (!isImagePullSecretExisted) {
+	// 	try {
+	// 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+	// 	} catch (e) {
+	// 		throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
+	// 	}
+	// }
+	try {
+		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+	} catch (e) {
+		throw new Error(`[KUBE DEPLOY] Can't create "imagePullSecrets" in the "${namespace}" namespace: ${e.message}`);
 	}
 
 	// log(`2`, { isImagePullSecretExisted });
@@ -410,7 +415,7 @@ export async function rollout(id: string) {
 	// Wait until the deployment is ready!
 	const isNewDeploymentReady = async () => {
 		const newDeploys = await ClusterManager.getAllDeploys(namespace, { context, filterLabel: `phase=live,app=${deploymentName}` });
-		log(`${namespace} > ${deploymentName} > newDeploys :>>`, newDeploys);
+		// log(`${namespace} > ${deploymentName} > newDeploys :>>`, newDeploys);
 
 		let isDeploymentReady = false;
 		newDeploys.forEach((deploy) => {
@@ -423,7 +428,9 @@ export async function rollout(id: string) {
 	};
 	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 5 * 60);
 	if (!isReallyReady) {
-		return { error: `New app deployment stucked or crashed.` };
+		return {
+			error: `New app deployment stucked or crashed, probably because of the unauthorized container registry or the app was crashed on start up.`,
+		};
 	}
 
 	/**
