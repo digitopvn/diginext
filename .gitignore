@@ -85,6 +85,9 @@ keys
 # deployment config
 deployment.yaml
 deployment-*.yaml
+deployment.*.yaml
+!deployment.example.yaml
+
 !templates/deployment.yaml
 docker-compose*.yaml
 !docker-compose.example.yaml
@@ -94,6 +97,7 @@ docker-compose*.yaml
 02-cert-issuer.yaml
 03-certificate.yaml
 04-ingress.yaml
+# 05-podman*
 gcloud-secret.yaml
 dx.json
 

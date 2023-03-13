@@ -11,6 +11,7 @@ RUN apt-get update --allow-releaseinfo-change -yq \
   && apt-get install curl gnupg wget ca-certificates -yq \
   && curl -sL https://deb.nodesource.com/setup_16.x | bash \
   && apt-get install nodejs git sed jq kubectl openssh-client -yq \
+  && apt-get autoremove -y \
   && apt-get clean -y
 
 # Helm
@@ -25,7 +26,8 @@ RUN wget https://github.com/docker/buildx/releases/download/v0.9.1/buildx-v0.9.1
   && mv buildx-v0.9.1.linux-amd64 ~/.docker/cli-plugins/docker-buildx
 
 # Podman
-RUN apt-get -y install podman
+RUN apt-get -y install podman iptables \
+  && apt-get clean -y
 
 # Install Digital Ocean CLI
 RUN cd ~ \
@@ -63,6 +65,9 @@ COPY ./public ./public
 COPY ./templates ./templates
 # COPY ./.env ./.env
 # COPY ./.env.dev ./.env.dev
+
+# Configuration files for PODMAN to resolve "docker.io" registry shortname alias
+COPY ./podman/containers/registries.conf /etc/containers/registries.conf
 
 # RUN yarn build
 

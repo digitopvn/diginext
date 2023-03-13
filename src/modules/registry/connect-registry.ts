@@ -25,9 +25,6 @@ export const connectRegistry = async (registry: ContainerRegistry, options?: { u
 			const authResult = await gcloud.authenticate({ ...options, filePath: serviceAccountFile });
 			if (!authResult) return;
 
-			// delete temporary service account
-			unlink(serviceAccountFile, (err) => logError(err));
-
 			connectedRegistry = await gcloud.connectDockerRegistry({ ...options, registry: slug, host });
 
 			if (connectedRegistry) {
@@ -35,6 +32,9 @@ export const connectRegistry = async (registry: ContainerRegistry, options?: { u
 			} else {
 				logError(`[CONTAINER REGISTRY] ❌ Failed to connect to this container registry (${registry.name}).`);
 			}
+
+			// delete temporary service account
+			unlink(serviceAccountFile, (err) => logError(err));
 
 			return connectedRegistry;
 
