@@ -1,5 +1,4 @@
-import { logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
-import { unlink } from "fs";
+import { logSuccess, logWarn } from "diginext-utils/dist/console/log";
 
 import type { CloudProvider } from "@/entities";
 import { createTmpFile } from "@/plugins";
@@ -20,7 +19,7 @@ export const providerAuthenticate = async (provider: CloudProvider, options?: { 
 			if (gcloudAuth) logSuccess(`[CLOUD PROVIDER] ✓ Authenticated to Google Cloud provider.`);
 
 			// delete temporary file
-			unlink(filePath, (err) => logError(err));
+			// unlink(filePath, (err) => logError(err));
 
 			return gcloudAuth;
 

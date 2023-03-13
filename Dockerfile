@@ -68,18 +68,29 @@ COPY ./templates ./templates
 
 # Configuration files for PODMAN to resolve "docker.io" registry shortname alias
 COPY ./podman/containers/registries.conf /etc/containers/registries.conf
+COPY ./podman/containers/containers.conf /home/cloudsdk/.config/containers/containers.conf
 
 # RUN yarn build
 
 # RUN rm -rf src
 
 RUN groupadd docker
-
 RUN usermod -aG docker $(whoami)
+RUN usermod -aG docker cloudsdk
+
+RUN chmod u+x /usr/bin/podman && chown 1000:1000 /usr/bin/podman
+RUN touch /etc/sub{u,g}id
+RUN usermod --add-subuids 10000-75535 cloudsdk
+RUN usermod --add-subgids 10000-75535 cloudsdk
+RUN rm -rf /home/cloudsdk/.local/share/containers
 
 # RUN chmod -R +x /usr/diginext-cli/dist
 RUN chmod -R +x /usr/diginext-cli/scripts
 RUN npm link
+
+ENV _BUILDAH_STARTED_IN_USERNS=""
+ENV BUILDAH_ISOLATION=chroot
+ENV STORAGE_DRIVER=vfs
 
 EXPOSE 6969
 
