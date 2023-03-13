@@ -57,6 +57,10 @@ fw/
 storage
 ./storage
 storage/**/*
+!storage/containers
+!./storage/containers
+!./storage/containers/**/*
+
 # public/uploads
 ./redis_data/*
 redis_data/
