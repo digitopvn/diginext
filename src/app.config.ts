@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import Table from "cli-table";
-import { logWarn } from "diginext-utils/dist/console/log";
 import xobject from "diginext-utils/dist/object";
 import dotenv from "dotenv";
 import fs from "fs";
@@ -11,7 +10,7 @@ import { CLI_DIR } from "./config/const";
 
 let appEnv: any = {};
 let isNoEnvFile = false;
-logWarn("config");
+
 if (fs.existsSync(path.resolve(CLI_DIR, ".env.dev"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") });
 	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") }).parsed;

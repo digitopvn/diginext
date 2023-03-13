@@ -111,7 +111,7 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 		.join(" ");
 
 	// docker build command:
-	const buildCmd = `podman build ${optionFlags}`;
+	const buildCmd = `podman --events-backend=file build ${optionFlags}`;
 
 	let stream = execa.command(buildCmd, cliOpts);
 	processes[builder] = stream;
@@ -126,7 +126,7 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 	await stream;
 
 	if (shouldPush) {
-		stream = execa.command(`podman push ${imageURL}`, cliOpts);
+		stream = execa.command(`podman --events-backend=file push ${imageURL}`, cliOpts);
 		processes[builder] = stream;
 
 		stream.stdio.forEach((_stdio) => {

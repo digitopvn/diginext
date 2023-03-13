@@ -18,12 +18,9 @@ import swaggerUi from "swagger-ui-express";
 import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
-console.log("1");
 import { Config, IsDev, IsProd } from "./app.config";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
 import { route404_handler } from "./middlewares/route404";
-console.log("2");
-
 import AppDatabase from "./modules/AppDatabase";
 import { startupScripts } from "./modules/server/startup-scripts";
 import routes from "./routes/routes";
@@ -186,12 +183,9 @@ function initialize() {
 	}
 }
 
-console.log("CLI_MODE :>> ", CLI_MODE);
 if (CLI_MODE === "server") {
 	log(`Connecting to database. Please wait...`);
 	AppDatabase.connect(initialize);
-} else {
-	log(`Hello world!`);
 }
 
 export const getIO = () => socketIO;

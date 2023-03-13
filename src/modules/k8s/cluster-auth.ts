@@ -1,4 +1,5 @@
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
+import { unlink } from "fs";
 
 import type { Cluster } from "@/entities";
 import type { KubeConfigContext } from "@/interfaces";
@@ -98,11 +99,13 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			}
 
 			// start authenticating...
-			filePath = createTmpFile(`${clusterShortName}-service-account.json`, serviceAccount);
+			filePath = createTmpFile(`gsa.json`, serviceAccount);
 			const gcloudAuth = await gcloud.authenticate({ filePath });
 			if (!gcloudAuth) {
 				throw new Error(`[UNKNOWN] Cannot authenticate the Google Cloud provider.`);
 			}
+			// delete temporary service account
+			unlink(filePath, (err) => logError(err));
 
 			// save this cluster to KUBE_CONFIG
 			const { zone, projectID } = cluster;
@@ -176,6 +179,9 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 				logError(`Context of "${clusterShortName}" cluster not found.`);
 				return;
 			}
+
+			// delete temporary file
+			unlink(filePath, (err) => logError(err));
 
 			if (shouldSwitchContextToThisCluster) switchContext(contextName);
 

@@ -1,4 +1,5 @@
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
+import { unlink } from "fs";
 
 import type { ContainerRegistry } from "@/entities";
 import { createTmpFile } from "@/plugins";
@@ -23,6 +24,9 @@ export const connectRegistry = async (registry: ContainerRegistry, options?: { u
 
 			const authResult = await gcloud.authenticate({ ...options, filePath: serviceAccountFile });
 			if (!authResult) return;
+
+			// delete temporary service account
+			unlink(serviceAccountFile, (err) => logError(err));
 
 			connectedRegistry = await gcloud.connectDockerRegistry({ ...options, registry: slug, host });
 

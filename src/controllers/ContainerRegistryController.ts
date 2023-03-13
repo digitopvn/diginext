@@ -1,4 +1,6 @@
 import { isNotIn } from "class-validator";
+import { logError } from "diginext-utils/dist/console/log";
+import { unlink } from "fs";
 import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
@@ -136,7 +138,7 @@ export default class ContainerRegistryController extends BaseController<Containe
 			case "gcloud":
 				const { serviceAccount } = registry;
 
-				const tmpFilePath = createTmpFile(`gcloud-service-account.json`, serviceAccount);
+				const tmpFilePath = createTmpFile(`gsa.json`, serviceAccount);
 
 				const authResult = await gcloud.authenticate({ filePath: tmpFilePath, host, ...options });
 				// console.log("authResult :>> ", authResult);
@@ -147,6 +149,10 @@ export default class ContainerRegistryController extends BaseController<Containe
 					result.status = 0;
 					result.messages = [`Google Cloud Container Registry authentication failed.`];
 				}
+
+				// delete temporary service account
+				unlink(tmpFilePath, (err) => logError(err));
+
 				return result;
 
 			case "digitalocean":
