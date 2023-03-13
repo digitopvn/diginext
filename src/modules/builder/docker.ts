@@ -3,6 +3,7 @@ import execa from "execa";
 import { isEmpty } from "lodash";
 
 import { cliOpts } from "@/config/config";
+import type { DockerImageType } from "@/interfaces/DockerResourceTypes";
 import type { BuildPlatform } from "@/interfaces/SystemTypes";
 import { execCmd, wait } from "@/plugins";
 
@@ -129,4 +130,10 @@ export const stopBuild = async (builder: string) => {
 		return false;
 	}
 	return true;
+};
+
+export const getAllImages = async () => {
+	const jsonList = await execa.command(`docker images --format "{{json .}}"`);
+	const imgArr = jsonList.stdout.split("\n").map((line) => JSON.parse(line));
+	return imgArr as DockerImageType[];
 };

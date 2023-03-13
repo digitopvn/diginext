@@ -4,7 +4,7 @@
 
 # /usr/diginext-cli/shells/auth.sh
 
-echo "HELLOOOOOOOO"
+echo "EXECUTING START-UP SCRIPT IN DEVELOPMENT"
 
 chmod +rw pnpm-lock.yaml \
     .babelrc.js \
@@ -18,4 +18,5 @@ chmod +rw pnpm-lock.yaml \
     tsoa.json
 
 pnpm i
-pnpm dev
+# pnpm dev:nodemon
+pnpm start:ts

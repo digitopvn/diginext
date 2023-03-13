@@ -10,7 +10,8 @@ import path from "path";
 import { CLI_DIR } from "./config/const";
 
 let appEnv: any = {};
-
+let isNoEnvFile = false;
+logWarn("config");
 if (fs.existsSync(path.resolve(CLI_DIR, ".env.dev"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") });
 	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") }).parsed;
@@ -18,7 +19,8 @@ if (fs.existsSync(path.resolve(CLI_DIR, ".env.dev"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env") });
 	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env") }).parsed;
 } else {
-	logWarn(`[SERVER] No ENV file detected.`);
+	// logWarn(`[SERVER] No ENV file detected.`);
+	isNoEnvFile = true;
 }
 
 // dev mode?
@@ -29,6 +31,8 @@ export const isDevMode =
 	process.env.DEV_MODE === "1";
 
 export const isServerMode = process.env.CLI_MODE === "server";
+appEnv.CLI_MODE = process.env.CLI_MODE;
+
 // console.log("env :>> ", env);
 // console.log("process.env.CLI_MODE :>> ", process.env.CLI_MODE);
 
@@ -36,9 +40,14 @@ const table = new Table();
 if (process.env.CLI_MODE === "server") {
 	console.log(chalk.yellow(`------ process.env ------`));
 	Object.entries(process.env).forEach(([key, val]) => {
-		if (Object.keys(appEnv).includes(key)) {
+		if (isNoEnvFile) {
 			const value = _.truncate(val.toString(), { length: 60, separator: " " });
 			table.push([key, value]);
+		} else {
+			if (Object.keys(appEnv).includes(key)) {
+				const value = _.truncate(val.toString(), { length: 60, separator: " " });
+				table.push([key, value]);
+			}
 		}
 	});
 	console.log(table.toString());
@@ -121,7 +130,6 @@ export const IsDev = function () {
 export const IsStag = function () {
 	return Config.ENV === EnvName.STAGING;
 };
-
 export const IsProd = function () {
 	return Config.ENV === EnvName.PRODUCTION;
 };

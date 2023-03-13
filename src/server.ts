@@ -7,42 +7,27 @@ import type { Request, Response } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";
 import session from "express-session";
-import * as fs from "fs";
 import type { Server } from "http";
 import { createServer } from "http";
-import { isEmpty } from "lodash";
 import morgan from "morgan";
-import cronjob from "node-cron";
 import passport from "passport";
 import path from "path";
 import { Server as SocketServer } from "socket.io";
 import swaggerUi from "swagger-ui-express";
 
-// routes
 import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
+console.log("1");
 import { Config, IsDev, IsProd } from "./app.config";
-import { cleanUp } from "./build/system";
-import { CLI_CONFIG_DIR } from "./config/const";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
-/**
- * CUSTOM MIDDLEWARES
- */
 import { route404_handler } from "./middlewares/route404";
-import { migrateAllFrameworks } from "./migration/migrate-all-frameworks";
-import { migrateAllGitProviders } from "./migration/migrate-all-git-providers";
-import { migrateAllReleases } from "./migration/migrate-all-releases";
-import { migrateAllAppEnvironment } from "./migration/migrate-app-environment";
-// import listEndpoints from "express-list-endpoints";
-// database
+console.log("2");
+
 import AppDatabase from "./modules/AppDatabase";
-import { verifySSH } from "./modules/git";
-import ClusterManager from "./modules/k8s";
-import { providerAuthenticate } from "./modules/providers";
-import { connectRegistry } from "./modules/registry/connect-registry";
-import main from "./routes/main";
-import { CloudProviderService, ClusterService, ContainerRegistryService, GitProviderService } from "./services";
+import { startupScripts } from "./modules/server/startup-scripts";
+import routes from "./routes/routes";
+
 /**
  * ENVIRONMENT CONFIG
  */
@@ -55,79 +40,12 @@ let app;
 let server: Server;
 let socketIO: SocketServer;
 
-if (process.env.CLI_MODE == "server") log(`Connecting to database. Please wait...`);
-
-/**
- * BUILD SERVER INITIAL START-UP SCRIPTS:
- * - Create config directory in {HOME_DIR}
- * - Connect GIT providers (if any)
- * - Connect container registries (if any)
- * - Connect K8S clusters (if any)
- */
-async function startupScripts() {
-	log(`-------------- RUNNING INITIAL SCRIPTS -----------------`);
-
-	// config dir
-	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);
-
-	// connect git providers
-	const gitSvc = new GitProviderService();
-	const gitProviders = await gitSvc.find({});
-	if (!isEmpty(gitProviders)) {
-		for (const gitProvider of gitProviders) {
-			verifySSH({ gitProvider: gitProvider.type });
-		}
-	}
-
-	// connect cloud providers
-	const providerSvc = new CloudProviderService();
-	const providers = await providerSvc.find({});
-	if (providers.length > 0) {
-		for (const provider of providers) {
-			providerAuthenticate(provider);
-		}
-	}
-
-	// connect container registries
-	const registrySvc = new ContainerRegistryService();
-	const registries = await registrySvc.find({});
-	if (registries.length > 0) {
-		for (const registry of registries) {
-			connectRegistry(registry);
-		}
-	}
-
-	// connect clusters
-	const clusterSvc = new ClusterService();
-	const clusters = await clusterSvc.find({});
-	if (clusters.length > 0) {
-		for (const cluster of clusters) {
-			await ClusterManager.authCluster(cluster.shortName, { shouldSwitchContextToThisCluster: false });
-		}
-	}
-
-	// cronjobs
-	logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every 3 days at 00:00 AM`);
-	cronjob.schedule("0 0 */3 * *", () => {
-		/**
-		 * Schedule a clean up task every 3 days at 00:00 AM
-		 */
-		cleanUp();
-	});
-
-	// migration
-	await migrateAllAppEnvironment();
-	await migrateAllReleases();
-	await migrateAllFrameworks();
-	await migrateAllGitProviders();
-}
-
 function initialize() {
 	/**
 	 * ! ONLY START THE BUILD SERVER UP IF RUNNING CLI AS "SERVER" MODE
 	 */
 	if (CLI_MODE === "server") {
-		log(`Server is initializing...`);
+		// log(`Server is initializing...`);
 
 		app = express();
 		server = createServer(app);
@@ -239,7 +157,7 @@ function initialize() {
 		app.use(morgan(morganMessage, morganOptions));
 
 		// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
-		app.use(`/${BASE_PATH}`, main);
+		app.use(`/${BASE_PATH}`, routes);
 
 		/**
 		 * ROUTE 404 & FAIL SAFE HANDLING MIDDLEWARE
@@ -268,7 +186,13 @@ function initialize() {
 	}
 }
 
-AppDatabase.connect(initialize);
+console.log("CLI_MODE :>> ", CLI_MODE);
+if (CLI_MODE === "server") {
+	log(`Connecting to database. Please wait...`);
+	AppDatabase.connect(initialize);
+} else {
+	log(`Hello world!`);
+}
 
 export const getIO = () => socketIO;
 

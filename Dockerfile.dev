@@ -42,8 +42,8 @@ WORKDIR /usr/diginext-cli
 
 # Copy package.json and package-lock.json before other files
 # Utilise Docker cache to save re-installing dependencies if unchanged
-# COPY ./package*.json ./
-# COPY ./pnpm-lock.yaml ./
+COPY ./package*.json ./
+COPY ./pnpm-lock.yaml ./
 
 # Copy source config file so we can mount file in docker-compose volumes
 # COPY ./.babelrc.js ./
@@ -67,7 +67,7 @@ WORKDIR /usr/diginext-cli
 # RUN yarn add esm
 
 # # Copy all files
-# COPY ./ ./
+COPY ./ ./
 
 # COPY ./dist ./dist
 # COPY ./scripts ./scripts
