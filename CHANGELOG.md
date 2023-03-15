@@ -1,3 +1,12 @@
+## [2.5.4](https://github.com/digitopvn/diginext/compare/v2.5.3...v2.5.4) (2023-03-15)
+
+
+### Bug Fixes
+
+* **cli and server:** fix cli init app and server roll out image pull secret ([dc84e3b](https://github.com/digitopvn/diginext/commit/dc84e3b2a93e1515711c948ed1e15c7d4319ffc6))
+* **server: cluster, registry:** add more validations to cluster and registry controllers ([193c567](https://github.com/digitopvn/diginext/commit/193c56728d9a457c1cc953648f602a9313e075a4))
+* **utilities:** check recommended resources installed such as cert manager and nginx ingress ([5e735cc](https://github.com/digitopvn/diginext/commit/5e735cc7493b2e2f45f66f301a8acecf3c0f5eeb))
+
 ## [2.5.3](https://github.com/digitopvn/diginext/compare/v2.5.2...v2.5.3) (2023-03-09)
 
 
