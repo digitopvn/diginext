@@ -141,11 +141,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (!app) {
 		throw new Error(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
 	}
-	console.log("generate deployment > app :>> ", app);
+	// console.log("generate deployment > app :>> ", app);
 	// const deployEnvironment = await getDeployEvironmentByApp(app, env);
 
 	const deployEnvironment = (app.deployEnvironment || {})[env] || {};
-	console.log("generate deployment > deployEnvironment :>> ", deployEnvironment);
+	// console.log("generate deployment > deployEnvironment :>> ", deployEnvironment);
 
 	let containerEnvs = deployEnvironment.envVars || [];
 	// console.log("[1] containerEnvs :>> ", containerEnvs);
@@ -158,19 +158,21 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		return { name, value: value.toString() };
 	});
 
-	console.log("[2] containerEnvs :>> ", containerEnvs);
+	// console.log("[2] containerEnvs :>> ", containerEnvs);
 
 	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
 	let prereleaseEnvs = [...containerEnvs];
 	if (env === "prod" && !isEmpty(domains)) {
-		prereleaseEnvs.forEach((envVar) => {
+		prereleaseEnvs = prereleaseEnvs.map((envVar) => {
 			let curValue = envVar.value;
 			if (curValue.indexOf(domains[0]) > -1) {
 				// replace all production domains with PRERELEASE domains
 				envVar.value = curValue.replace(new RegExp(domains[0], "gi"), prereleaseDomain);
 			}
+			return envVar;
 		});
 	}
+	console.log("[3] prereleaseEnvs :>> ", prereleaseEnvs);
 
 	// Should inherit the "Ingress" config from the previous deployment?
 	let previousDeployment,

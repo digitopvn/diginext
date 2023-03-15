@@ -8,6 +8,7 @@ import yaml from "js-yaml";
 import { isEmpty } from "lodash";
 import yargs from "yargs";
 
+import { Config } from "@/app.config";
 import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
@@ -257,11 +258,18 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 
 	try {
 		let connectRes;
+		// connect DOCKER to CONTAINER REGISTRY
 		if (API_ACCESS_TOKEN) {
 			connectRes = await execCmd(`doctl registry login --access-token ${API_ACCESS_TOKEN}`);
 		} else {
 			connectRes = await execCmd(`doctl registry login`);
 		}
+
+		if (Config.BUILDER === "podman") {
+			// connect PODMAN to CONTAINER REGISTRY
+			connectRes = await execCmd(`podman login`);
+		}
+
 		if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { authRes: connectRes });
 	} catch (e) {
 		logError(e);

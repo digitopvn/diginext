@@ -1,4 +1,5 @@
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
+import { existsSync, unlink } from "fs";
 
 import type { ContainerRegistry } from "@/entities";
 import { createTmpFile } from "@/plugins";
@@ -31,6 +32,9 @@ export const connectRegistry = async (registry: ContainerRegistry, options?: { u
 			} else {
 				logError(`[CONTAINER REGISTRY] ❌ Failed to connect to this container registry (${registry.name}).`);
 			}
+
+			// delete temporary service account
+			if (existsSync(serviceAccountFile)) unlink(serviceAccountFile, (err) => err && logError(`[REGISTRY] Delete temporary file:`, err));
 
 			return connectedRegistry;
 

@@ -82,22 +82,37 @@ export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPaginati
 	return optionsStr;
 }
 
+const app = new AppService();
+const build = new BuildService();
+const database = new CloudDatabaseService();
+const provider = new CloudProviderService();
+const cluster = new ClusterService();
+const registry = new ContainerRegistryService();
+const framework = new FrameworkService();
+const git = new GitProviderService();
+const project = new ProjectService();
+const release = new ReleaseService();
+const role = new RoleService();
+const team = new TeamService();
+const user = new UserService();
+const workspace = new WorkspaceService();
+
 export class DB {
 	static service = {
-		app: new AppService(),
-		build: new BuildService(),
-		database: new CloudDatabaseService(),
-		provider: new CloudProviderService(),
-		cluster: new ClusterService(),
-		registry: new ContainerRegistryService(),
-		framework: new FrameworkService(),
-		git: new GitProviderService(),
-		project: new ProjectService(),
-		release: new ReleaseService(),
-		role: new RoleService(),
-		team: new TeamService(),
-		user: new UserService(),
-		workspace: new WorkspaceService(),
+		app,
+		build,
+		database,
+		provider,
+		cluster,
+		registry,
+		framework,
+		git,
+		project,
+		release,
+		role,
+		team,
+		user,
+		workspace,
 	};
 
 	static async find<T = any>(collection: DBCollection, filter: any = {}, options?: IQueryOptions, pagination?: IQueryPagination) {
@@ -105,15 +120,22 @@ export class DB {
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] Service "${collection}" not found.`);
+				logError(`[DB] FIND :>> Service "${collection}" not found.`);
 				return;
 			}
-			items = (await svc.find(filter, options, pagination)) || [];
+			try {
+				items = (await svc.find(filter, options, pagination)) || [];
+			} catch (e) {
+				logError(`[DB] FIND > Service "${collection}" :>>`, e);
+			}
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const { data = [], status, messages } = await fetchApi<T>({ url: `/api/v1/${collection}?${filterStr.toString()}${optionStr}` });
-			if (!status) logError(`Can't find any items:`, messages);
+			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr}`;
+
+			const { data = [], status, messages } = await fetchApi<T>({ url });
+			if (!status) logError(`[DB] FIND MANY - ${url} :>>`, messages);
+
 			items = data;
 		}
 		return items as T[];
@@ -124,15 +146,20 @@ export class DB {
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] Service "${collection}" not found.`);
+				logError(`[DB] FIND ONE > Service "${collection}" not found.`);
 				return;
 			}
-			item = await svc.findOne(filter, options);
+			try {
+				item = await svc.findOne(filter, options);
+			} catch (e) {
+				logError(`[DB] FIND ONE > Service "${collection}" :>>`, e);
+			}
 		} else {
 			const optionStr = queryOptionsToUrlOptions(options);
 			const filterStr = queryFilterToUrlFilter(filter);
-			const { data, status, messages } = await fetchApi<T>({ url: `/api/v1/${collection}?${filterStr.toString()}&${optionStr}` });
-			if (!status) logError(`Item not found:`, messages);
+			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr}`;
+			const { data, status, messages } = await fetchApi<T>({ url });
+			if (!status) logError(`[DB] FIND ONE - ${url} :>>`, messages);
 			item = data[0];
 		}
 		return item as T;
@@ -143,53 +170,51 @@ export class DB {
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] Service "${collection}" not found.`);
+				logError(`[DB] CREATE :>> Service "${collection}" not found.`);
 				return;
 			}
-			item = await svc.create(data);
+			try {
+				item = await svc.create(data);
+			} catch (e) {
+				logError(`[DB] CREATE > Service "${collection}" :>>`, e);
+			}
 		} else {
-			const optionStr = queryOptionsToUrlOptions(options);
-
 			/**
-			 * This is working, but use the same flatten method with UPDATE for convenience
-			 */
-			// let newData = flattenObjectToPost(data);
-			// // convert "[var][key]" -> "var[key]"
-			// Object.entries(newData).map(([key, val]) => {
-			// 	newData[key.replace("[", "").replace("]", "")] = val;
-			// 	delete newData[key];
-			// });
-
-			/**
-			 * use the same flatten method with UPDATE for convenience
+			 * <u>Notes</u>: use the same flatten method with UPDATE for convenience!
 			 */
 			let newData = flattenObjectPaths(data);
-
+			const optionStr = queryOptionsToUrlOptions(options);
+			const url = `/api/v1/${collection}?${optionStr.toString()}`;
 			// console.log("newData :>> ", newData);
 			const {
 				data: result,
 				status,
 				messages,
 			} = await fetchApi<T>({
-				url: `/api/v1/${collection}?${optionStr.toString()}`,
+				url,
 				method: "POST",
 				data: newData,
 			});
-			if (!status && messages && messages.length > 0) logError(`Can't create item:`, messages);
+			if (!status && messages && messages.length > 0) logError(`[DB] CREATE - ${url} :>>`, messages);
 			item = result;
 		}
 		return item as T;
 	}
 
-	static async update<T = any>(collection: DBCollection, filter: any, data: T, options?: IQueryOptions) {
+	static async update<T = any>(collection: DBCollection, filter: any, data: any, options?: IQueryOptions) {
 		let items;
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] Service "${collection}" not found.`);
+				logError(`[DB] UPDATE > Service "${collection}" :>> Service not found.`);
 				return;
 			}
-			items = (await svc.update(filter, data, options)) || [];
+			try {
+				items = (await svc.update(filter, data, options)) || [];
+			} catch (e) {
+				logError(`[DB] UPDATE > Service "${collection}" :>>`, e);
+				items = [];
+			}
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr.toString() && "&") + queryOptionsToUrlOptions(options);
@@ -210,7 +235,7 @@ export class DB {
 				data: updateData,
 			});
 			// console.log("[DB] UPDATE > result :>> ", result);
-			if (!status) logError(`[DB] Can't update item (STATUS = ${status}):`, messages);
+			if (!status || isEmpty(result)) logError(`[DB] UPDATE - ${url} :>>`, messages);
 			items = result;
 		}
 		return items as T[];
@@ -221,21 +246,26 @@ export class DB {
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] Service "${collection}" not found.`);
+				logError(`[DB] DELETE > Service "${collection}" :>> Service not found.`);
 				return;
 			}
-			item = await svc.delete(filter);
+			try {
+				item = await svc.softDelete(filter);
+			} catch (e) {
+				logError(`[DB] DELETE > Service "${collection}" :>>`, e);
+			}
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);
+			const url = `/api/v1/${collection}?${filterStr.toString()}`;
 			const {
 				data: result,
 				status,
 				messages,
 			} = await fetchApi<T>({
-				url: `/api/v1/${collection}?${filterStr.toString()}`,
+				url,
 				method: "DELETE",
 			});
-			if (!status) logError(`Can't delete item:`, messages);
+			if (!status) logError(`[DB] DELETE - ${url} :>>`, messages);
 			item = result;
 		}
 		return item;

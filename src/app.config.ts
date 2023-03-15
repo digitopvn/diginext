@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import Table from "cli-table";
-import { logWarn } from "diginext-utils/dist/console/log";
 import xobject from "diginext-utils/dist/object";
 import dotenv from "dotenv";
 import fs from "fs";
@@ -10,6 +9,7 @@ import path from "path";
 import { CLI_DIR } from "./config/const";
 
 let appEnv: any = {};
+let isNoEnvFile = false;
 
 if (fs.existsSync(path.resolve(CLI_DIR, ".env.dev"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") });
@@ -18,7 +18,8 @@ if (fs.existsSync(path.resolve(CLI_DIR, ".env.dev"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env") });
 	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env") }).parsed;
 } else {
-	logWarn(`[SERVER] No ENV file detected.`);
+	// logWarn(`[SERVER] No ENV file detected.`);
+	isNoEnvFile = true;
 }
 
 // dev mode?
@@ -29,6 +30,8 @@ export const isDevMode =
 	process.env.DEV_MODE === "1";
 
 export const isServerMode = process.env.CLI_MODE === "server";
+appEnv.CLI_MODE = process.env.CLI_MODE;
+
 // console.log("env :>> ", env);
 // console.log("process.env.CLI_MODE :>> ", process.env.CLI_MODE);
 
@@ -36,9 +39,14 @@ const table = new Table();
 if (process.env.CLI_MODE === "server") {
 	console.log(chalk.yellow(`------ process.env ------`));
 	Object.entries(process.env).forEach(([key, val]) => {
-		if (Object.keys(appEnv).includes(key)) {
+		if (isNoEnvFile) {
 			const value = _.truncate(val.toString(), { length: 60, separator: " " });
 			table.push([key, value]);
+		} else {
+			if (Object.keys(appEnv).includes(key)) {
+				const value = _.truncate(val.toString(), { length: 60, separator: " " });
+				table.push([key, value]);
+			}
 		}
 	});
 	console.log(table.toString());
@@ -89,6 +97,10 @@ export class Config {
 		return process.env.CLI_MODE || "client";
 	}
 
+	static get BUILDER() {
+		return process.env.BUILDER || "podman";
+	}
+
 	static get DISABLE_INPECT_MEMORY() {
 		return toBool(process.env.DISABLE_INPECT_MEMORY, false);
 	}
@@ -117,7 +129,6 @@ export const IsDev = function () {
 export const IsStag = function () {
 	return Config.ENV === EnvName.STAGING;
 };
-
 export const IsProd = function () {
 	return Config.ENV === EnvName.PRODUCTION;
 };

@@ -4,16 +4,14 @@ import execa from "execa";
 import fs, { readFileSync } from "fs";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
-import path from "path";
 import yargs from "yargs";
 
-import { isServerMode } from "@/app.config";
+import { Config, isServerMode } from "@/app.config";
 import { cliOpts, saveCliConfig } from "@/config/config";
-import { CLI_CONFIG_DIR } from "@/config/const";
 import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
 import type { GoogleServiceAccount } from "@/interfaces/GoogleServiceAccount";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { execCmd, isWin } from "@/plugins";
+import { createTmpFile, execCmd, isWin } from "@/plugins";
 
 import { DB } from "../api/DB";
 import ClusterManager from "../k8s";
@@ -98,10 +96,16 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 	//
 	try {
 		let connectRes;
-		if (host) {
-			connectRes = await execCmd(`gcloud auth configure-docker ${options.host} --quiet`);
+		if (Config.BUILDER === "docker") {
+			// connect DOCKER to CONTAINER REGISTRY
+			if (host) {
+				connectRes = await execCmd(`gcloud auth configure-docker ${host} --quiet`);
+			} else {
+				connectRes = await execCmd(`gcloud auth configure-docker --quiet`);
+			}
 		} else {
-			connectRes = await execCmd(`gcloud auth configure-docker --quiet`);
+			// connect PODMAN to CONTAINER REGISTRY
+			connectRes = await execCmd(`gcloud auth print-access-token | podman login -u oauth2accesstoken --password-stdin ${host || ""}`);
 		}
 		if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { authRes: connectRes });
 	} catch (e) {
@@ -166,11 +170,11 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	// console.log("serviceAccount :>> ", serviceAccount);
 
 	// write down the service account file:
-	const serviceAccountPath = path.resolve(CLI_CONFIG_DIR, `${registrySlug}-service-account.json`);
+	const serviceAccountPath = createTmpFile(`gcloud-service-account.json`, serviceAccount);
+	// const serviceAccountPath = path.resolve(CLI_CONFIG_DIR, `${registrySlug}-service-account.json`);
 	// console.log("serviceAccountPath :>> ", serviceAccountPath);
-
-	if (fs.existsSync(serviceAccountPath)) fs.unlinkSync(serviceAccountPath);
-	fs.writeFileSync(serviceAccountPath, serviceAccount, "utf8");
+	// if (fs.existsSync(serviceAccountPath)) fs.unlinkSync(serviceAccountPath);
+	// fs.writeFileSync(serviceAccountPath, serviceAccount, "utf8");
 
 	if (shouldCreateSecretInNamespace && namespace == "default") {
 		logWarn(
@@ -207,6 +211,9 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 		}-n ${namespace} create secret docker-registry ${secretName} --docker-server=${host} --docker-username=_json_key --docker-password="${svcAccContentCmd}" -o json`,
 		cliOpts
 	);
+
+	// delete temporary file
+	// unlink(serviceAccountPath, (err) => err && logError(`[REGISTRY CONTROLLER] Remove tmp file:`, err));
 
 	// console.log("GCLOUD > createImagePullingSecret > newImagePullingSecret :>> ", newImagePullingSecret);
 
