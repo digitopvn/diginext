@@ -93,12 +93,12 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 	/**
 	 * --cache-from: repository must contain neither a tag nor digest
 	 */
-	const cacheFlags =
-		!isEmpty(cacheFroms) &&
-		cacheFroms.map((cache) => {
-			let cacheURL = cache.value.indexOf(":") > -1 ? cache.value.split(":")[0] : cache.value;
-			return `--cache-from ${cacheURL}`;
-		});
+	const cacheFlags = !isEmpty(cacheFroms)
+		? cacheFroms.map((cache) => {
+				let cacheURL = cache.value.indexOf(":") > -1 ? cache.value.split(":")[0] : cache.value;
+				return `--cache-from ${cacheURL}`;
+		  })
+		: [];
 
 	const dockerFileFlag = `-f ${dockerFile}`;
 	// const pushFlag = shouldPush ? "--push" : undefined;
