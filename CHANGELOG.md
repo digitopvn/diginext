@@ -1,3 +1,10 @@
+## [2.5.6](https://github.com/digitopvn/diginext/compare/v2.5.5...v2.5.6) (2023-03-15)
+
+
+### Bug Fixes
+
+* **cli:** disable debug logs ([4b1d549](https://github.com/digitopvn/diginext/commit/4b1d549104ab326007e76ddcae08465e5606a65f))
+
 ## [2.5.5](https://github.com/digitopvn/diginext/compare/v2.5.4...v2.5.5) (2023-03-15)
 
 
