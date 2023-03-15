@@ -10,7 +10,7 @@ import path from "path";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { App, Build, Project, Release, User } from "@/entities";
+import type { App, Build, Cluster, Project, Release, User } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { execCmd, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
@@ -68,7 +68,7 @@ export async function startBuild(
 	const { shouldRollout = true } = addition;
 	const startTime = dayjs();
 
-	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, workspace } = options;
+	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, workspace, namespace } = options;
 
 	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
 	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
@@ -238,6 +238,31 @@ export async function startBuild(
 	}
 
 	if (!isPassedDeployEnvironmentValidation) return;
+
+	/**
+	 * Create namespace & imagePullScrets here!
+	 * Because it will generate the name of secret to put into deployment yaml
+	 */
+	const cluster = await DB.findOne<Cluster>("cluster", { shortName: serverDeployEnvironment.cluster });
+	const { contextName: context } = cluster;
+
+	const isNsExisted = await ClusterManager.isNamespaceExisted(serverDeployEnvironment.namespace, { context });
+	if (!isNsExisted) {
+		const createNsResult = await ClusterManager.createNamespace(serverDeployEnvironment.namespace, { context });
+		if (!createNsResult) return;
+	}
+
+	try {
+		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, serverDeployEnvironment.cluster, serverDeployEnvironment.namespace);
+	} catch (e) {
+		sendLog({
+			SOCKET_ROOM,
+			logger,
+			type: "error",
+			message: `[PREVIEW] Can't create "imagePullSecrets" in the "${namespace}" namespace.`,
+		});
+		return;
+	}
 
 	/**
 	 * !!! IMPORTANT !!!

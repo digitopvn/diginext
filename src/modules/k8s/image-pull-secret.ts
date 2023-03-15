@@ -64,6 +64,11 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 		// console.log("imagePullSecret :>> ", imagePullSecret);
 
 		if (imagePullSecret && imagePullSecret.name) {
+			// update image pull secret name into container registry
+			const [updatedRegistry] = await DB.update<ContainerRegistry>("registry", { slug: regSlug }, { imagePullSecret });
+			if (!updatedRegistry) logError(`[IMAGE PULL SECRET] Can't update "imagePullSecrets" to "${regSlug}" registry`);
+
+			// print success
 			message = `Created "imagePullSecret" named "${imagePullSecret.name}" successfully.`;
 			log(message);
 		} else {
