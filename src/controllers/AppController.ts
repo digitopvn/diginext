@@ -87,7 +87,9 @@ export default class AppController extends BaseController<App> {
 		}
 
 		// migrate app environment variables if needed (convert {Object} to {Array})
-		newApp = await migrateAppEnvironmentVariables(newApp);
+		const migratedApp = await migrateAppEnvironmentVariables(newApp);
+		if (migratedApp) newApp = migratedApp;
+		console.log("newApp :>> ", newApp);
 
 		if (project) {
 			const newAppId = (newApp as App)._id;
