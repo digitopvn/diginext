@@ -1,3 +1,10 @@
+## [2.5.5](https://github.com/digitopvn/diginext/compare/v2.5.4...v2.5.5) (2023-03-15)
+
+
+### Bug Fixes
+
+* **server:** undefined app response when process updating ([0ce2ad5](https://github.com/digitopvn/diginext/commit/0ce2ad522c8631c69ec813b14aa27dd7d6e08413)), closes [#52](https://github.com/digitopvn/diginext/issues/52)
+
 ## [2.5.4](https://github.com/digitopvn/diginext/compare/v2.5.3...v2.5.4) (2023-03-15)
 
 
