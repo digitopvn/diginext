@@ -1,3 +1,12 @@
+## [2.6.1](https://github.com/digitopvn/diginext/compare/v2.6.0...v2.6.1) (2023-03-15)
+
+
+### Bug Fixes
+
+* **server:** create namespace and imagepullsecrets before building ([e0459b2](https://github.com/digitopvn/diginext/commit/e0459b2577a34df24d01c22aae2fdea38d3b2d6a))
+* **server:** generate and verify ssh private keys ([b8d5a00](https://github.com/digitopvn/diginext/commit/b8d5a002842effc056d22ce2be64d057b051baf1))
+* **server:** wrong platform args when build with docker buildx ([6d67cc0](https://github.com/digitopvn/diginext/commit/6d67cc003ca7b4015d749ef8ebd39c983c76fd07))
+
 # [2.6.0](https://github.com/digitopvn/diginext/compare/v2.5.6...v2.6.0) (2023-03-15)
 
 
