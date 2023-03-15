@@ -1,3 +1,23 @@
+# [2.6.0](https://github.com/digitopvn/diginext/compare/v2.5.6...v2.6.0) (2023-03-15)
+
+
+### Bug Fixes
+
+* **builder:** refactor builder ([fb83bc3](https://github.com/digitopvn/diginext/commit/fb83bc34e82b962d6d7c3465b25b2ba8e133c9c5))
+* **cli:** issue of resolving dockerfile ([b28a577](https://github.com/digitopvn/diginext/commit/b28a577c9608294f4f45cc9ba8364a3828d50603))
+* **dev environment:** setup docker compose for dev environment ([402e48d](https://github.com/digitopvn/diginext/commit/402e48d50b04daa61aa8fa9e56032a658c72ebb9))
+* **docker compose:** setup docker compose for podman builder ([8213aa6](https://github.com/digitopvn/diginext/commit/8213aa66a0e3262730a0352b0bb3f2981c6ca872))
+* **gcloud auth:** rm auth file after success authenticate ([9698c93](https://github.com/digitopvn/diginext/commit/9698c934f26995bef68be78565a70c20e60b5cb9))
+* **podman:** failed: try to make podman work in rootless mode ([d5ea889](https://github.com/digitopvn/diginext/commit/d5ea889e6b499dbd5c0f0e2b28c935b97ad73306))
+* **registry auth:** podman login when authenticate container registries ([0525824](https://github.com/digitopvn/diginext/commit/0525824f9be1847e06cebbd4041b6411140d0d69))
+* **rm git cache:** rm git cache ([3b899fb](https://github.com/digitopvn/diginext/commit/3b899fb1a3e2a3f6e1a8d68c93baa1c395c5c075))
+* **server:** incorrect env vars of prerelease and prod ([895fe9b](https://github.com/digitopvn/diginext/commit/895fe9b6b6e8da68bc0fe54dfc43bf264ad45ff9))
+
+
+### Features
+
+* **podman:** add podman as primary builder ([b49eb63](https://github.com/digitopvn/diginext/commit/b49eb63cc6b27e13f2f7563ea592ce87a9813903))
+
 ## [2.5.6](https://github.com/digitopvn/diginext/compare/v2.5.5...v2.5.6) (2023-03-15)
 
 

@@ -1,4 +1,6 @@
 import chalk from "chalk";
+import dayjs from "dayjs";
+import localizedFormat from "dayjs/plugin/localizedFormat";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import stripAnsi from "strip-ansi";
 
@@ -6,6 +8,8 @@ import { Logger } from "@/plugins";
 import { socketIO } from "@/server";
 
 import { saveLogs } from "./build";
+
+dayjs.extend(localizedFormat);
 
 type LogMessageOpts = {
 	type?: "log" | "warn" | "error" | "success";
@@ -17,7 +21,8 @@ type LogMessageOpts = {
 export function sendLog(options: LogMessageOpts) {
 	const { logger, SOCKET_ROOM, message, type = "log" } = options;
 
-	const messageWithoutANSI = stripAnsi(chalk.reset(message));
+	const now = dayjs().format("llll");
+	const messageWithoutANSI = now + " - " + stripAnsi(chalk.reset(message));
 
 	switch (type) {
 		case "error":
