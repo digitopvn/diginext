@@ -65,7 +65,7 @@ export async function fetchApi<T = any>(options: AxiosRequestConfig & { access_t
 	try {
 		const { data: responseData } = await axios(options);
 
-		// log(`fetchApi > response :>>`, responseData);
+		// console.log(`fetchApi > response :>>`, responseData);
 		return responseData as FetchApiResponse<T>;
 	} catch (e) {
 		logError(`${options.method} - ${options.url} - ERROR:`, e);

@@ -1,3 +1,17 @@
+## [2.5.6](https://github.com/digitopvn/diginext/compare/v2.5.5...v2.5.6) (2023-03-15)
+
+
+### Bug Fixes
+
+* **cli:** disable debug logs ([4b1d549](https://github.com/digitopvn/diginext/commit/4b1d549104ab326007e76ddcae08465e5606a65f))
+
+## [2.5.5](https://github.com/digitopvn/diginext/compare/v2.5.4...v2.5.5) (2023-03-15)
+
+
+### Bug Fixes
+
+* **server:** undefined app response when process updating ([0ce2ad5](https://github.com/digitopvn/diginext/commit/0ce2ad522c8631c69ec813b14aa27dd7d6e08413)), closes [#52](https://github.com/digitopvn/diginext/issues/52)
+
 ## [2.5.4](https://github.com/digitopvn/diginext/compare/v2.5.3...v2.5.4) (2023-03-15)
 
 
