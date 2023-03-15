@@ -84,7 +84,7 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 	const platformFlag = !isEmpty(platforms) && `--platform=${platforms.join(",")}`;
 
 	await execCmd(
-		`docker buildx create ${platformFlag} --driver ${driver} ${buildContextNameFlag}`,
+		`docker buildx create --driver ${driver} ${buildContextNameFlag}`,
 		"Docker build context instance was existed, no worries, just ignoring this message."
 	);
 
