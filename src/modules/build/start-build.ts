@@ -134,9 +134,8 @@ export async function startBuild(
 	sendLog({ SOCKET_ROOM, logger, message: "Created new build on server!" });
 
 	// verify SSH before pulling files...
-	try {
-		await verifySSH({ gitProvider });
-	} catch (e) {
+	const gitAuth = await verifySSH({ gitProvider });
+	if (!gitAuth) {
 		sendLog({ SOCKET_ROOM, logger, type: "error", message: `"${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.` });
 		await updateBuildStatus(newBuild, "failed");
 		return;
