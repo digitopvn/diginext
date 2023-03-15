@@ -11,19 +11,20 @@ import { DB } from "../api/DB";
 import { generateRepoSSH, generateRepoURL, initializeGitRemote } from "../git";
 import { printInformation } from "../project/printInformation";
 import { generateAppConfig, writeConfig } from "../project/writeConfig";
-import { createAppByForm } from "./new-app-by-form";
+import { createOrSelectApp } from "./create-or-select-app";
+import { createOrSelectProject } from "./create-or-select-project";
 
 export async function execInitApp(options: InputOptions) {
-	// Create new app in the database
-	const newApp = await createAppByForm(options);
+	const initProject = await createOrSelectProject(options);
+	const initApp = await createOrSelectApp(initProject.slug, options);
 
 	// ! The ONLY different with "createApp": Select the current working directory instead of create new one
 	options.skipCreatingDirectory = true;
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
 
 	// to make sure it write down the correct app "slug" in "dx.json"
-	options.slug = newApp.slug;
-	options.name = newApp.name;
+	options.slug = initApp.slug;
+	options.name = initApp.name;
 	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`;
 
 	// get current GIT remote url:
@@ -54,7 +55,8 @@ export async function execInitApp(options: InputOptions) {
 
 	// update GIT info in the database
 	const { framework } = options;
-	const updateData = { framework } as App;
+	const updateData = {} as App;
+	if (framework) updateData.framework = framework;
 
 	if (options.shouldUseGit) {
 		updateData.git = {};
@@ -64,7 +66,7 @@ export async function execInitApp(options: InputOptions) {
 	}
 	if (options.isDebugging) console.log("[INIT APP] updateData :>> ", updateData);
 
-	const [updatedApp] = await DB.update<App>("app", { slug: newApp.slug }, updateData);
+	const [updatedApp] = await DB.update<App>("app", { slug: initApp.slug }, updateData);
 	if (options.isDebugging) console.log("[INIT APP] updatedApp :>> ", updatedApp);
 
 	if (!updatedApp) logError(`[INIT APP] Can't initialize app due to network issue.`);

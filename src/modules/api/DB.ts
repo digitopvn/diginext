@@ -209,7 +209,7 @@ export class DB {
 				method: "PATCH",
 				data: updateData,
 			});
-			// console.log("[DB] UPDATE > result :>> ", result);
+			console.log("[DB] UPDATE > result :>> ", result);
 			if (!status) logError(`[DB] Can't update item (STATUS = ${status}):`, messages);
 			items = result;
 		}

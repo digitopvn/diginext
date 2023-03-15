@@ -31,10 +31,10 @@ export function generateAppConfig(options: InputOptions) {
 
 	// framework
 	appConfig.framework = {
-		name: options.framework.name,
-		slug: options.framework.slug,
-		repoSSH: options.framework.repoSSH,
-		version: pkgConfig.version ?? options.frameworkVersion ?? "",
+		name: options.framework?.name || "Unknown",
+		slug: options.framework?.slug || "unknown",
+		repoSSH: options.framework?.repoSSH || "unknown",
+		version: pkgConfig.version ?? options.frameworkVersion ?? "unknown",
 	};
 
 	// environment
