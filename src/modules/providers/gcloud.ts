@@ -213,7 +213,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	);
 
 	// delete temporary file
-	// unlink(serviceAccountPath, (err) => logError(err));
+	// unlink(serviceAccountPath, (err) => err && logError(`[REGISTRY CONTROLLER] Remove tmp file:`, err));
 
 	// console.log("GCLOUD > createImagePullingSecret > newImagePullingSecret :>> ", newImagePullingSecret);
 

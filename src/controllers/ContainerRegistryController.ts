@@ -151,7 +151,7 @@ export default class ContainerRegistryController extends BaseController<Containe
 				}
 
 				// delete temporary service account
-				unlink(tmpFilePath, (err) => logError(err));
+				unlink(tmpFilePath, (err) => err && logError(`[REGISTRY CONTROLLER] Remove tmp file:`, err));
 
 				return result;
 

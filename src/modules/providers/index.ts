@@ -19,7 +19,7 @@ export const providerAuthenticate = async (provider: CloudProvider, options?: { 
 			if (gcloudAuth) logSuccess(`[CLOUD PROVIDER] ✓ Authenticated to Google Cloud provider.`);
 
 			// delete temporary file
-			// unlink(filePath, (err) => logError(err));
+			// unlink(filePath, (err) => err && logError(`[REGISTRY CONTROLLER] Remove tmp file:`, err));
 
 			return gcloudAuth;
 

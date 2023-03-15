@@ -105,7 +105,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 				throw new Error(`[UNKNOWN] Cannot authenticate the Google Cloud provider.`);
 			}
 			// delete temporary service account
-			unlink(filePath, (err) => logError(err));
+			unlink(filePath, (err) => err && logError(`[CLUSTER AUTH] Remove tmp file:`, err));
 
 			// save this cluster to KUBE_CONFIG
 			const { zone, projectID } = cluster;
@@ -181,7 +181,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			}
 
 			// delete temporary file
-			unlink(filePath, (err) => logError(err));
+			unlink(filePath, (err) => err && logError(`[CLUSTER AUTH] Remove tmp file:`, err));
 
 			if (shouldSwitchContextToThisCluster) switchContext(contextName);
 

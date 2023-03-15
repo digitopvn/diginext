@@ -89,7 +89,7 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 	);
 
 	// latestBuild ? ` --cache-from type=registry,ref=${latestBuild.image}` : "";
-	const cacheFlags = !isEmpty(cacheFroms) && cacheFroms.map((cache) => `--cache-from type=${cache.type || "registry"},ref=${cache.value}`);
+	const cacheFlags = !isEmpty(cacheFroms) ? cacheFroms.map((cache) => `--cache-from type=${cache.type || "registry"},ref=${cache.value}`) : [];
 	const dockerFileFlag = `-f ${dockerFile}`;
 	const pushFlag = shouldPush ? "--push" : undefined;
 	const tagFlag = `-t ${imageURL}`;
