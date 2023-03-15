@@ -163,14 +163,16 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
 	let prereleaseEnvs = [...containerEnvs];
 	if (env === "prod" && !isEmpty(domains)) {
-		prereleaseEnvs.forEach((envVar) => {
+		prereleaseEnvs = prereleaseEnvs.map((envVar) => {
 			let curValue = envVar.value;
 			if (curValue.indexOf(domains[0]) > -1) {
 				// replace all production domains with PRERELEASE domains
 				envVar.value = curValue.replace(new RegExp(domains[0], "gi"), prereleaseDomain);
 			}
+			return envVar;
 		});
 	}
+	console.log("[3] prereleaseEnvs :>> ", prereleaseEnvs);
 
 	// Should inherit the "Ingress" config from the previous deployment?
 	let previousDeployment,

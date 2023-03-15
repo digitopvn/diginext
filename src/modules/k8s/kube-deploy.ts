@@ -64,7 +64,7 @@ export async function cleanUp(idOrRelease: string | Release) {
 
 		// Delete INGRESS to optimize cluster
 		if (doc && doc.kind == "Ingress") {
-			cleanUpCommands.push(ClusterManager.deleteIngress(doc.metadata.name, doc.metadata.namespace, { context }));
+			cleanUpCommands.push(ClusterManager.deleteIngress(doc.metadata.name, doc.metadata.namespace, { context, skipOnError: true }));
 		}
 	});
 
@@ -258,6 +258,7 @@ export async function rollout(id: string) {
 	/**
 	 * 1. Create SERVICE & INGRESS
 	 */
+	console.log("deploymentYaml :>> ", deploymentYaml);
 
 	let replicas = 1,
 		envVars: KubeEnvironmentVariable[] = [],
@@ -338,8 +339,8 @@ export async function rollout(id: string) {
 		if (!prereleaseAppName) return { error: `"prereleaseAppName" is invalid.` };
 		log(`prereleaseAppName =`, prereleaseAppName);
 
-		deploymentName = prereleaseAppName;
-		deployment = prereleaseApp;
+		// deploymentName = prereleaseAppName;
+		// deployment = prereleaseApp;
 	}
 
 	/**
@@ -355,8 +356,8 @@ export async function rollout(id: string) {
 
 	const createNewDeployment = async (appDoc) => {
 		const newApp = appDoc;
-		// newApp.metadata.name = prereleaseAppName;
-		const newAppName = newApp.metadata.name;
+		const newAppName = deploymentName;
+		newApp.metadata.name = deploymentName;
 
 		// labels
 		newApp.metadata.labels.phase = "live"; // mark this app as "live" phase
@@ -403,7 +404,7 @@ export async function rollout(id: string) {
 			];
 			await execa(`kubectl`, args, cliOpts);
 		} catch (e) {
-			// log(`Patch "deployment" failed >>`, e.message);
+			log(`[ROLL OUT] Patch "deployment" failed >>`, e.message);
 			await createNewDeployment(deployment);
 		}
 	}
@@ -413,8 +414,12 @@ export async function rollout(id: string) {
 	 */
 	if (env === "prod") {
 		const prodEnvVars = envVars.filter((envVar) => envVar.value.toString().indexOf(endpointUrl) > -1);
-		const setPreEnvVarRes = await ClusterManager.setEnvVar(prodEnvVars, prereleaseAppName, namespace, { context });
-		if (setPreEnvVarRes) log(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
+		console.log("prodEnvVars :>> ", prodEnvVars);
+
+		if (!isEmpty(prodEnvVars)) {
+			const setPreEnvVarRes = await ClusterManager.setEnvVar(prodEnvVars, prereleaseAppName, namespace, { context });
+			if (setPreEnvVarRes) log(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
+		}
 	}
 
 	// Wait until the deployment is ready!
