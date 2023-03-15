@@ -9,7 +9,7 @@ import { simpleGit } from "simple-git";
 import yargs from "yargs";
 
 import { cliOpts } from "@/config/config";
-import { CLI_DIR } from "@/config/const";
+import { HOME_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { gitProviderDomain } from "@/interfaces/SystemTypes";
@@ -147,7 +147,8 @@ export const generateSSH = async (options?: InputOptions) => {
 	// const { gitProvider } = options;
 	// Check if any "id_rsa" existed
 
-	const idRsaDir = process.env.STORAGE ? path.resolve(process.env.STORAGE, "home/ssh") : path.resolve(CLI_DIR, "storage/home/ssh");
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
 
 	// const idRsaDir = path.resolve(CLI_DIR, "storage/home/ssh");
 	log(`idRsaDir:`, idRsaDir, `>> Existed: ${existsSync(idRsaDir)}`);
@@ -239,7 +240,8 @@ export const generateSSH = async (options?: InputOptions) => {
 export const verifySSH = async (options?: InputOptions) => {
 	const { gitProvider } = options;
 
-	const idRsaDir = process.env.STORAGE ? path.resolve(process.env.STORAGE, "home/ssh") : path.resolve(CLI_DIR, "storage/home/ssh");
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
 
 	let publicIdRsaFile: string, privateIdRsaFile: string;
 	if (existsSync(idRsaDir)) {

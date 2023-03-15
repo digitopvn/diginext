@@ -57,6 +57,10 @@ fw/
 storage
 ./storage
 storage/**/*
+!storage/containers
+!./storage/containers
+!./storage/containers/**/*
+
 # public/uploads
 ./redis_data/*
 redis_data/
@@ -81,7 +85,9 @@ keys
 # deployment config
 deployment.yaml
 deployment-*.yaml
-deployment.podman*.yaml
+deployment.*.yaml
+!deployment.example.yaml
+
 !templates/deployment.yaml
 docker-compose*.yaml
 !docker-compose.example.yaml
@@ -91,6 +97,7 @@ docker-compose*.yaml
 02-cert-issuer.yaml
 03-certificate.yaml
 04-ingress.yaml
+# 05-podman*
 gcloud-secret.yaml
 dx.json
 

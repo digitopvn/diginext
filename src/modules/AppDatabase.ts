@@ -53,7 +53,7 @@ export const manager = appDataSource.manager;
 export async function connect(onConnected?: any) {
 	try {
 		const dataSource = await appDataSource.initialize();
-		if (process.env.CLI_MODE == "server") logSuccess("Database is connected!");
+		if (process.env.CLI_MODE == "server") logSuccess("[DATABASE] MongoDB is connected!");
 		if (typeof onConnected != "undefined") onConnected(dataSource);
 	} catch (e) {
 		logError(e);

@@ -141,11 +141,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (!app) {
 		throw new Error(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
 	}
-	console.log("generate deployment > app :>> ", app);
+	// console.log("generate deployment > app :>> ", app);
 	// const deployEnvironment = await getDeployEvironmentByApp(app, env);
 
 	const deployEnvironment = (app.deployEnvironment || {})[env] || {};
-	console.log("generate deployment > deployEnvironment :>> ", deployEnvironment);
+	// console.log("generate deployment > deployEnvironment :>> ", deployEnvironment);
 
 	let containerEnvs = deployEnvironment.envVars || [];
 	// console.log("[1] containerEnvs :>> ", containerEnvs);
@@ -158,7 +158,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		return { name, value: value.toString() };
 	});
 
-	console.log("[2] containerEnvs :>> ", containerEnvs);
+	// console.log("[2] containerEnvs :>> ", containerEnvs);
 
 	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
 	let prereleaseEnvs = [...containerEnvs];

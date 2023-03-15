@@ -7,7 +7,7 @@ import express from "express";
 
 import pkg from "@/../package.json";
 import { Config } from "@/app.config";
-import { sendMessage } from "@/modules/build";
+import { sendLog } from "@/modules/build";
 import { testBuild } from "@/modules/build/build";
 import { startBuild } from "@/modules/build/start-build";
 import { execCmd } from "@/plugins";
@@ -58,7 +58,7 @@ if (CLI_MODE == "server") {
 		// log(io);
 		// io.to("2021-08-18-18-33-20").emit("message", { action: "start", message: "Hello" });
 
-		sendMessage({ SOCKET_ROOM: room.toString(), message: message.toString() });
+		sendLog({ SOCKET_ROOM: room.toString(), message: message.toString() });
 
 		res.send("done");
 	});

@@ -39,7 +39,7 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 		registrySlug: registry.slug,
 		shouldCreateSecretInNamespace: true,
 	};
-	console.log("createImagePullSecretsInNamespace > options :>> ", options);
+	// console.log("createImagePullSecretsInNamespace > options :>> ", options);
 
 	try {
 		let imagePullSecret: { name?: string; value?: string };
@@ -61,7 +61,7 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 				throw new Error(message);
 		}
 
-		console.log("imagePullSecret :>> ", imagePullSecret);
+		// console.log("imagePullSecret :>> ", imagePullSecret);
 
 		if (imagePullSecret && imagePullSecret.name) {
 			message = `Created "imagePullSecret" named "${imagePullSecret.name}" successfully.`;

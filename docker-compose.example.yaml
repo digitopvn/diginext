@@ -46,7 +46,6 @@ services:
             - JWT_SECRET=
             - JWT_EXPIRE_TIME=48h
             - PROJECT_DIR=/usr/app/deploy
-            - STORAGE=/var/app/storage
             # Add your credentials
             - GOOGLE_CLIENT_ID=
             - GOOGLE_CLIENT_SECRET=

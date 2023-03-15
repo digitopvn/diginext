@@ -1,8 +1,6 @@
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
-import { writeFileSync } from "fs";
-import path from "path";
+import { unlink } from "fs";
 
-import { CLI_CONFIG_DIR } from "@/config/const";
 import type { Cluster } from "@/entities";
 import type { KubeConfigContext } from "@/interfaces";
 import { createTmpFile, execCmd } from "@/plugins";
@@ -101,11 +99,13 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			}
 
 			// start authenticating...
-			filePath = createTmpFile(`${clusterShortName}-service-account.json`, serviceAccount);
+			filePath = createTmpFile(`gsa.json`, serviceAccount);
 			const gcloudAuth = await gcloud.authenticate({ filePath });
 			if (!gcloudAuth) {
 				throw new Error(`[UNKNOWN] Cannot authenticate the Google Cloud provider.`);
 			}
+			// delete temporary service account
+			unlink(filePath, (err) => logError(err));
 
 			// save this cluster to KUBE_CONFIG
 			const { zone, projectID } = cluster;
@@ -168,11 +168,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 				throw new Error(`This cluster doesn't have any "kube-config" data to authenticate, please contact your administrator.`);
 			}
 
-			filePath = process.env.STORAGE
-				? path.resolve(process.env.STORAGE, `${clusterShortName}-kube-config.yaml`)
-				: path.resolve(CLI_CONFIG_DIR, `${clusterShortName}-kube-config.yaml`);
-
-			writeFileSync(filePath, kubeConfig, "utf8");
+			filePath = createTmpFile(`${clusterShortName}-kube-config.yaml`, kubeConfig);
 
 			// start authenticating & save cluster access info to "kubeconfig"...
 			const contextName = await custom.authenticate({ filePath });
@@ -183,6 +179,9 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 				logError(`Context of "${clusterShortName}" cluster not found.`);
 				return;
 			}
+
+			// delete temporary file
+			unlink(filePath, (err) => logError(err));
 
 			if (shouldSwitchContextToThisCluster) switchContext(contextName);
 
