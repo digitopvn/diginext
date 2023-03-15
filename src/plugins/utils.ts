@@ -921,9 +921,17 @@ interface ResolveApplicationFilePathOptions {
 export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicationFilePathOptions) => {
 	const { targetDirectory = process.cwd(), env = "dev", ignoreIfNotExisted = false } = options;
 	let filePath = path.resolve(targetDirectory, `${fileNamePrefix}.${env}`);
-	if (!fs.existsSync(filePath)) filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}.${env}`);
-	if (!fs.existsSync(filePath)) filePath = path.resolve(targetDirectory, fileNamePrefix);
-	if (!fs.existsSync(filePath)) filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}`);
+	if (fs.existsSync(filePath)) return filePath;
+
+	filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}.${env}`);
+	if (fs.existsSync(filePath)) return filePath;
+
+	filePath = path.resolve(targetDirectory, fileNamePrefix);
+	if (fs.existsSync(filePath)) return filePath;
+
+	filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}`);
+	if (fs.existsSync(filePath)) return filePath;
+
 	if (!fs.existsSync(filePath)) {
 		if (!ignoreIfNotExisted) {
 			const message = `Missing "${targetDirectory}/${fileNamePrefix}" file, please create one.`;

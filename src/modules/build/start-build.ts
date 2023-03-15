@@ -11,7 +11,7 @@ import PQueue from "p-queue";
 import path from "path";
 
 import { cliOpts, getCliConfig } from "@/config/config";
-import type { App, Build, Project, Release, User, Workspace } from "@/entities";
+import type { App, Build, Project, Release, User } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { execCmd, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath, wait } from "@/plugins";
@@ -94,14 +94,14 @@ export async function startBuild(
 	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
 	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	const project = await DB.findOne<Project>("project", { slug: projectSlug });
-	const author = await DB.findOne<User>("user", { id: new ObjectId(options.userId) });
+	const author = await DB.findOne<User>("user", { _id: new ObjectId(options.userId) });
 
 	// get workspace
 	let workspace = options.workspace;
-	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: app?.workspace });
-	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: project?.workspace });
-	if (!workspace && workspaceId) workspace = await DB.findOne<Workspace>("workspace", { _id: workspaceId });
-	if (!workspace && username != "Anonymous") workspace = await DB.findOne<Workspace>("workspace", { _id: author.activeWorkspace });
+	// if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: app?.workspace });
+	// if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: project?.workspace });
+	// if (!workspace && workspaceId) workspace = await DB.findOne<Workspace>("workspace", { _id: workspaceId });
+	// if (!workspace && username != "Anonymous") workspace = await DB.findOne<Workspace>("workspace", { _id: author.activeWorkspace });
 
 	const BUILD_NUMBER = buildNumber;
 	const IMAGE_NAME = buildImage;
@@ -126,7 +126,7 @@ export async function startBuild(
 	 * /mnt/build/ -> additional disk (300GB) which mounted to this server on Digital Ocean.
 	 */
 	let buildDir = options.targetDirectory || process.cwd();
-
+	log("buildDir :>>", buildDir);
 	log("options :>>", options);
 
 	// ! If this function is executed on local machine, then we don't need to do "git pull"
@@ -191,6 +191,7 @@ export async function startBuild(
 	 * Check if Dockerfile existed
 	 */
 	let dockerFile = resolveDockerfilePath({ targetDirectory: buildDir, env });
+	if (options.isDebugging) console.log("dockerFile :>> ", dockerFile);
 	if (!dockerFile) {
 		sendMessage({
 			SOCKET_ROOM,
