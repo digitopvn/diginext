@@ -62,10 +62,12 @@ export async function execInitApp(options: InputOptions) {
 		updateData.git.repoURL = options.remoteURL;
 		updateData.git.repoSSH = options.remoteSSH;
 	}
+	if (options.isDebugging) console.log("[INIT APP] updateData :>> ", updateData);
 
 	const [updatedApp] = await DB.update<App>("app", { slug: newApp.slug }, updateData);
+	if (options.isDebugging) console.log("[INIT APP] updatedApp :>> ", updatedApp);
 
-	if (!updatedApp) logError(`Can't initialize app due to network issue.`);
+	if (!updatedApp) logError(`[INIT APP] Can't initialize app due to network issue.`);
 
 	// write "dx.json"
 	const appConfig = generateAppConfig(options);

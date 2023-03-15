@@ -14,11 +14,14 @@ import { execCmd } from "@/plugins";
 import { DB } from "../api/DB";
 import ClusterManager from ".";
 
-interface KubeCommandOptions {
+interface KubeGenericOptions {
 	/**
 	 * A context name in KUBECONFIG
 	 */
 	context?: string;
+}
+
+interface KubeCommandOptions extends KubeGenericOptions {
 	/**
 	 * Filter resources by label
 	 * @example "phase!=prerelease,app=abc-xyz"
@@ -26,10 +29,17 @@ interface KubeCommandOptions {
 	filterLabel?: string;
 }
 
-export async function kubectlApply(filePath: string, namespace: string = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
+/**
+ * Similar to `kubectl apply -f deployment.yaml`
+ * @param filePath - Path to Kubernetes YAML file or URL of Kubernetes YAML file
+ * @param namespace - Target namespace of the cluster
+ * @param options - kubectl command options
+ * @returns
+ */
+export async function kubectlApply(filePath: string, namespace: string = "default", options: KubeGenericOptions = {}) {
+	const { context } = options;
 	const stdout = await execCmd(
-		`kubectl ${context ? `--context=${context} ` : ""}apply -f ${filePath} -n ${namespace} ${filterLabel ? `-l ${filterLabel} ` : ""}`,
+		`kubectl ${context ? `--context=${context} ` : ""}apply -f ${filePath} -n ${namespace}`,
 		`[KUBE_CTL] kubectlApply > Failed to apply "${filePath}" in "${namespace}" namespace of "${context}" cluster context.`
 	);
 	if (stdout) logSuccess(stdout);
@@ -81,7 +91,7 @@ export async function getAllNamespaces(options: KubeCommandOptions = {}) {
 /**
  * Create new namespace of a cluster
  */
-export async function createNamespace(namespace: string, options: KubeCommandOptions = {}) {
+export async function createNamespace(namespace: string, options: KubeGenericOptions = {}) {
 	const { context } = options;
 	try {
 		await execCmd(`kubectl ${context ? `--context=${context} ` : ""}create namespace ${namespace}`);
@@ -163,14 +173,12 @@ export async function isSecretExisted(name: string, namespace: string = "default
 /**
  * Delete a secret in a namespace
  */
-export async function deleteSecret(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
+export async function deleteSecret(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 		args.push("-n", namespace, "delete", "secret", name);
-
-		if (filterLabel) args.push(`-l`, filterLabel);
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
@@ -200,15 +208,13 @@ export async function deleteSecretsByFilter(namespace = "default", options: Kube
 	}
 }
 
-export async function getIngress(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
+export async function getIngress(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context } = options;
 
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 		args.push("-n", namespace, "get", "ing", name);
-
-		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
 
 		args.push("-o", "json");
 
@@ -220,15 +226,13 @@ export async function getIngress(name, namespace = "default", options: KubeComma
 	}
 }
 
-export async function deleteIngress(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
+export async function deleteIngress(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context } = options;
 
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 		args.push("-n", namespace, "delete", "ing", name);
-
-		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
@@ -259,7 +263,7 @@ export async function deleteIngressByFilter(namespace = "default", options: Kube
 /**
  * Get a deployment in a namespace
  */
-export async function getDeploy(name: string, namespace = "default", options: KubeCommandOptions = {}) {
+export async function getDeploy(name: string, namespace = "default", options: KubeGenericOptions = {}) {
 	const { context } = options;
 	try {
 		const args = [];
@@ -301,7 +305,7 @@ export async function getDeployByFilter(namespace = "default", options: KubeComm
 /**
  * Set image to deployments in a namespace by filter
  */
-export async function setDeployImage(name: string, imageURL: string, namespace = "default", options: KubeCommandOptions = {}) {
+export async function setDeployImage(name: string, imageURL: string, namespace = "default", options: KubeGenericOptions = {}) {
 	const { context } = options;
 	try {
 		const args = [];
@@ -367,14 +371,12 @@ export async function setDeployImagePullSecretByFilter(imagePullSecretName: stri
 /**
  * Delete a deployment in a namespace
  */
-export async function deleteDeploy(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
+export async function deleteDeploy(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 		args.push("-n", namespace, "delete", "deploy", name);
-
-		if (filterLabel) args.push("-l", filterLabel);
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
@@ -433,15 +435,13 @@ export async function getAllDeploys(namespace = "default", options: KubeCommandO
  * Get service by name
  * @param namespace @default "default"
  */
-export async function getService(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
+export async function getService(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 
 		args.push("-n", namespace, "get", "svc", name);
-
-		if (filterLabel) args.push("-l", filterLabel);
 
 		args.push("-o", "json");
 
@@ -484,15 +484,13 @@ export async function getAllServices(namespace = "default", labelFilter = "", op
  * Delete service by name
  * @param namespace @default "default"
  */
-export async function deleteService(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
+export async function deleteService(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 
 		args.push("-n", namespace, "delete", "svc", name);
-
-		if (filterLabel) args.push("-l", filterLabel);
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
@@ -524,15 +522,13 @@ export async function deleteServiceByFilter(namespace = "default", options: Kube
 	}
 }
 
-export async function getPod(name, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel } = options;
+export async function getPod(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 
 		args.push("-n", namespace, "get", "pod", name);
-
-		if (filterLabel) args.push("-l", filterLabel);
 
 		args.push("-o", "json");
 
@@ -569,7 +565,9 @@ export async function getAllPods(namespace = "default", options: KubeCommandOpti
 	}
 }
 
-export async function setEnvVar(envVars: KubeEnvironmentVariable[], deploy: string, namespace = "default", options: KubeCommandOptions = {}) {
+export const getPodsByFilter = getAllPods;
+
+export async function setEnvVar(envVars: KubeEnvironmentVariable[], deploy: string, namespace = "default", options: KubeGenericOptions = {}) {
 	const { context } = options;
 
 	if (isEmpty(envVars)) {
@@ -622,7 +620,7 @@ export async function setEnvVarByFilter(envVars: KubeEnvironmentVariable[], name
 	}
 }
 
-export async function deleteEnvVar(envVarNames: string[], deploy: string, namespace = "default", options: KubeCommandOptions = {}) {
+export async function deleteEnvVar(envVarNames: string[], deploy: string, namespace = "default", options: KubeGenericOptions = {}) {
 	const { context } = options;
 
 	if (isEmpty(envVarNames)) {

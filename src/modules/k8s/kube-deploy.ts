@@ -135,20 +135,25 @@ export async function previewPrerelease(id: string) {
 	/**
 	 * Check if there is "imagePullSecrets" within prod namespace, if not -> create one
 	 */
-	const allSecrets = await ClusterManager.getAllSecrets(namespace, { context });
-	let isImagePullSecretExisted = false;
-	if (allSecrets && allSecrets.length > 0) {
-		const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
-		if (imagePullSecret) isImagePullSecretExisted = true;
-	}
+	// const allSecrets = await ClusterManager.getAllSecrets(namespace, { context });
+	// let isImagePullSecretExisted = false;
+	// if (allSecrets && allSecrets.length > 0) {
+	// 	const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
+	// 	if (imagePullSecret) isImagePullSecretExisted = true;
+	// }
 
-	log(`isImagePullSecretExisted :>>`, isImagePullSecretExisted);
-	if (!isImagePullSecretExisted) {
-		try {
-			await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
-		} catch (e) {
-			throw new Error(e.message);
-		}
+	// log(`isImagePullSecretExisted :>>`, isImagePullSecretExisted);
+	// if (!isImagePullSecretExisted) {
+	// 	try {
+	// 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+	// 	} catch (e) {
+	// 		throw new Error(e.message);
+	// 	}
+	// }
+	try {
+		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+	} catch (e) {
+		throw new Error(`[PREVIEW] Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
 	}
 
 	/**
@@ -229,18 +234,23 @@ export async function rollout(id: string) {
 	/**
 	 * Check if there is "imagePullSecrets" within prod namespace, if not -> create one
 	 */
-	const allSecrets = await ClusterManager.getAllSecrets(namespace, { context });
-	let isImagePullSecretExisted = false;
-	if (allSecrets && allSecrets.length > 0) {
-		const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
-		if (imagePullSecret) isImagePullSecretExisted = true;
-	}
-	if (!isImagePullSecretExisted) {
-		try {
-			await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
-		} catch (e) {
-			throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
-		}
+	// const allSecrets = await ClusterManager.getAllSecrets(namespace, { context });
+	// let isImagePullSecretExisted = false;
+	// if (allSecrets && allSecrets.length > 0) {
+	// 	const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
+	// 	if (imagePullSecret) isImagePullSecretExisted = true;
+	// }
+	// if (!isImagePullSecretExisted) {
+	// 	try {
+	// 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+	// 	} catch (e) {
+	// 		throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
+	// 	}
+	// }
+	try {
+		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+	} catch (e) {
+		throw new Error(`[ROLL OUT] Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
 	}
 
 	// log(`2`, { isImagePullSecretExisted });
