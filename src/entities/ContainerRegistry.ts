@@ -58,7 +58,7 @@ export default class ContainerRegistry extends Base {
 	apiAccessToken?: string;
 
 	@Column()
-	imagePullingSecret?: {
+	imagePullSecret?: {
 		name?: string;
 		value?: string;
 	};

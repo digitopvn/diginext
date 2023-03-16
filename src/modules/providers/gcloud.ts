@@ -203,7 +203,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const isSecretExisted = await ClusterManager.isSecretExisted(secretName, namespace, { context });
 	if (isSecretExisted) await ClusterManager.deleteSecret(secretName, namespace, { context });
 
-	// Create new "imagePullingSecret":
+	// Create new "imagePullSecret":
 	const svcAccContentCmd = isWin() ? `$(type ${serviceAccountPath})` : `$(cat ${serviceAccountPath})`;
 	const { stdout: newImagePullingSecret } = await execa.command(
 		`kubectl ${
@@ -224,8 +224,10 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 		// save this secret to database:
 		let updateData = {
-			"imagePullingSecret[name]": secretName,
-			"imagePullingSecret[value]": secretValue,
+			imagePullSecret: {
+				name: secretName,
+				value: secretValue,
+			},
 		};
 
 		const updatedRegistries = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, updateData as ContainerRegistry);
@@ -236,13 +238,13 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			saveCliConfig({ currentRegistry: updatedRegistry });
 		}
 
-		// console.log(JSON.stringify(updatedRegistry.imagePullingSecret, null, 2));
+		// console.log(JSON.stringify(updatedRegistry.imagePullSecret, null, 2));
 		// log(`gcloud.createImagePullingSecret() :>>`, { updatedRegistry });
 		logSuccess(
 			`[GCLOUD] ✓ Successfully assign "imagePullSecret" data (${secretName}) to "${namespace}" namespace of "${clusterShortName}" cluster.`
 		);
 
-		return updatedRegistry.imagePullingSecret;
+		return updatedRegistry.imagePullSecret;
 	} catch (e) {
 		logError(`Cannot create image pull secret:`, e);
 		return;

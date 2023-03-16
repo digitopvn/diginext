@@ -173,7 +173,7 @@ export const createRecordInDomain = async (input: DomainRecord) => {
  * Create DigitalOcean Container Registry image's pull secret
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
-	// Implement create "imagePullingSecret" of Digital Ocean
+	// Implement create "imagePullSecret" of Digital Ocean
 	const { registrySlug, clusterShortName, namespace = "default", shouldCreateSecretInNamespace = false } = options;
 
 	if (!registrySlug) {
@@ -237,16 +237,16 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
 
 	// Save to database
-	const imagePullingSecret = {
+	const imagePullSecret = {
 		name: secretName,
 		value: registrySecretData.data[".dockerconfigjson"],
 	};
 
-	const [updatedRegistry] = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, { imagePullingSecret });
+	const [updatedRegistry] = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, { imagePullSecret });
 	if (!updatedRegistry) logError(`[API] Can't update container registry of Digital Ocean.`);
 	// log(`DigitalOcean.createImagePullingSecret() :>>`, { updatedRegistry });
 
-	return imagePullingSecret;
+	return imagePullSecret;
 };
 
 /**
