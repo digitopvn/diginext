@@ -95,7 +95,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	}
 
 	// get registry secret as image pulling secret:
-	const { imagePullingSecret } = registry;
+	const { imagePullSecret } = registry;
 
 	// prerelease:
 	const prereleaseSubdomainName = `${slug.toLowerCase()}.prerelease`;
@@ -388,7 +388,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				doc.spec.template.spec.containers[0].name = appName;
 
 				// Inject "imagePullSecrets" to pull image from the container registry
-				doc.spec.template.spec.imagePullSecrets = [{ name: imagePullingSecret.name }];
+				doc.spec.template.spec.imagePullSecrets = [{ name: imagePullSecret.name }];
 
 				doc.spec.template.spec.containers[0].image = IMAGE_NAME;
 				doc.spec.template.spec.containers[0].env = containerEnvs;
