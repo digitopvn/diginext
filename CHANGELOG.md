@@ -1,3 +1,10 @@
+## [2.6.2](https://github.com/digitopvn/diginext/compare/v2.6.1...v2.6.2) (2023-03-16)
+
+
+### Bug Fixes
+
+* **server:** correct image pull secret name ([80a2ae7](https://github.com/digitopvn/diginext/commit/80a2ae77544e9265c8e32984bb608314e6faf3b4))
+
 ## [2.6.1](https://github.com/digitopvn/diginext/compare/v2.6.0...v2.6.1) (2023-03-15)
 
 

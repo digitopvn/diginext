@@ -2863,7 +2863,7 @@
 						"type": "string",
 						"description": "Content of the API access token to use services on this cloud provider\n- Apply for: Digital Ocean"
 					},
-					"imagePullingSecret": {
+					"imagePullSecret": {
 						"properties": {
 							"value": {
 								"type": "string"
@@ -2970,7 +2970,7 @@
 						"type": "string",
 						"description": "Base URL of the image, usually is the registry host URI combines with something else.\n- This will be used to combine with your project/app image path."
 					},
-					"imagePullingSecret": {
+					"imagePullSecret": {
 						"properties": {
 							"value": {
 								"type": "string"
@@ -3655,7 +3655,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.6.0",
+		"version": "2.6.1",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
