@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
-import { isEmpty } from "lodash";
+import { isEmpty, isNaN } from "lodash";
 
 import { getCliConfig } from "@/config/config";
 import type { App, CloudProvider, Cluster, ContainerRegistry, Project } from "@/entities";
