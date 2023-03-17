@@ -202,6 +202,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 			name: "selectedPort",
 			message: "Which port do you use for this app?",
 			default: 3000,
+			validate: (input) => (isNaN(input) ? "Port should be a valid number." : true),
 		});
 		localDeployEnvironment.port = options.port = selectedPort;
 	}
