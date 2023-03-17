@@ -196,7 +196,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	options.namespace = localDeployEnvironment.namespace;
 
 	// request port
-	if (!localDeployEnvironment.port) {
+	if (typeof localDeployEnvironment.port === "undefined" || isNaN(localDeployEnvironment.port)) {
 		const { selectedPort } = await inquirer.prompt<{ selectedPort: number }>({
 			type: "number",
 			name: "selectedPort",
