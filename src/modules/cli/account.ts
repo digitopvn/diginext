@@ -169,7 +169,7 @@ export async function cliAuthenticate(options: InputOptions) {
 	// log(`user :>>`, user);
 
 	if (!status || isEmpty(user)) {
-		logError(`Authentication failed.`, messages);
+		// logError(`Authentication failed.`, messages);
 		if (buildServerUrl) user = await continueToLoginStep(buildServerUrl);
 	}
 
