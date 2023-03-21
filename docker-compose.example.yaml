@@ -1,11 +1,5 @@
 version: "3"
 services:
-    redis:
-        image: "redis"
-        container_name: diginext-redis
-        restart: always
-        volumes:
-            - ./redis_data:/data
     mongo:
         ports:
             - '27017:27017'
@@ -28,8 +22,7 @@ services:
             - "6969:6969"
         restart: unless-stopped
         depends_on:
-        - redis
-        - mongo
+            - mongo
         privileged: true
         volumes:
             # HOST:CONTAINER
@@ -42,10 +35,10 @@ services:
             - BASE_URL=http://localhost:6969
             - SOCKET_BASE_URL=ws://localhost:6969
             - MONGODB_CONNECTION_STRING=mongodb://root:diginextcli@mongo:27017/digirelease?authSource=admin
+            - PROJECT_DIR=/usr/app/deploy
             - CLI_MODE=server
             - JWT_SECRET=
             - JWT_EXPIRE_TIME=48h
-            - PROJECT_DIR=/usr/app/deploy
             # Add your credentials
             - GOOGLE_CLIENT_ID=
             - GOOGLE_CLIENT_SECRET=
