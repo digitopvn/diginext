@@ -82,22 +82,27 @@ keys
 # .env.test.local
 # .env.production.local
 
-# deployment config
-deployment.yaml
-deployment-*.yaml
-deployment.*.yaml
-
+# docker
 !templates/deployment.yaml
 docker-compose*.yaml
 !docker-compose.example.yaml
 !templates/docker-compose*.yaml
+Dockerfile.podman
+
+# kubernetes
+deployment.yaml
+deployment-*.yaml
+deployment.*.yaml
+
 00-namespace.yaml
 01-cert-secret.yaml
 02-cert-issuer.yaml
 03-certificate.yaml
 04-ingress.yaml
-# 05-podman*
+05-podman-fuse-device-plugin.yaml
 gcloud-secret.yaml
+
+# diginext
 dx.json
 
 # exclude examples

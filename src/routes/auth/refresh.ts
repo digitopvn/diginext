@@ -27,7 +27,7 @@ router.get("/", jwt_auth, (req: Request, res: Response, next: NextFunction) => {
 	const userId = user._id;
 
 	log("Refreshing access token for the user :>> ", user);
-	const access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "24h" });
+	const access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "48h" });
 
 	const expiredDate = dayjs().add(8, "hour");
 	const expiredTimestamp = expiredDate.diff(dayjs());

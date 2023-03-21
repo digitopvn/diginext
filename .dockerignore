@@ -1,5 +1,31 @@
 node_modules/
-# deploy/
-# .env.dev
 yarn.lock
+
+.env
+.env.*
+
 # pnpm-lock.yaml
+Dockerfile
+Dockerfile.*
+.git
+deployment.*.yaml
+docker-compose.*.yaml
+
+00-namespace.yaml
+01-cert-secret.yaml
+02-cert-issuer.yaml
+03-certificate.yaml
+04-ingress.yaml
+05-podman-fuse-device-plugin.yaml
+gcloud-secret.yaml
+
+# diginext
+dx.json
+
+# dev api
+thunder-tests/
+thunder-tests/**
+
+# mounted volume "storage"
+storage/
+# podman/

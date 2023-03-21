@@ -1,10 +1,17 @@
 version: "3"
+networks:
+    bridge:
+        driver: bridge
+volumes:
+    mongodb:
+        external: true
+        name: mongodb
 services:
     mongo:
         ports:
             - '27017:27017'
         container_name: diginext-mongo
-        restart: always
+        restart: unless-stopped
         logging:
             options:
                 max-size: 1g
@@ -13,7 +20,7 @@ services:
             - MONGO_INITDB_ROOT_PASSWORD=diginextcli
         image: mongo
         volumes:
-            - ./storage/mongo:/data/db
+            - mongodb:/data/db
     diginext:
         image: "digitop/diginext"
         container_name: diginext
@@ -35,7 +42,6 @@ services:
             - BASE_URL=http://localhost:6969
             - SOCKET_BASE_URL=ws://localhost:6969
             - MONGODB_CONNECTION_STRING=mongodb://root:diginextcli@mongo:27017/digirelease?authSource=admin
-            - PROJECT_DIR=/usr/app/deploy
             - CLI_MODE=server
             - JWT_SECRET=
             - JWT_EXPIRE_TIME=48h

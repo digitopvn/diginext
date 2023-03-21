@@ -38,7 +38,7 @@ router
 			// log("redirectUrl", redirectUrl);
 
 			const userId = (req.user as User)._id.toString();
-			const access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "8h" });
+			const access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "48h" });
 			// log("access_token", access_token);
 
 			// We can extract token from cookie (check "jwtStrategy.ts")

@@ -39,22 +39,9 @@ spec:
           ports:
             - containerPort: 6969
           securityContext:
+            priviledged: true
             runAsUser: 1000
             runAsGroup: 1000
-            seLinuxOptions:
-              type: spc_t
-            capabilities:
-              add:
-                - "SYS_ADMIN"
-                - "MKNOD"
-                - "SYS_CHROOT"
-                - "SETFCAP"
-                - "SYS_RESOURCE"
-                - "SETUID"
-                - "SETGID"
-          resources:
-            limits:
-              github.com/fuse: 1
           env:
             - name: TZ
               value: Asia/Ho_Chi_Minh
@@ -66,42 +53,33 @@ spec:
               value: server
             - name: DEV_MODE
               value: "false"
-            - name: SOCKET_BASE_URL
-              value: wss://api.diginext.site
             - name: BASE_URL
               value: https://api.diginext.site
             - name: MONGODB_CONNECTION_STRING
-              value: mongodb://root:iGk8fETzZt@mongodb.mongodb:27017/diginext?authSource=admin
+              value: # insert here
             - name: JWT_SECRET
-              value: b15af072d38ae5484ca71796a31c139d14ed72ab13041d2dda972032b27badab
+              value: # insert here
             - name: JWT_EXPIRE_TIME
               value: 48h
             - name: GOOGLE_CLIENT_ID
-              value: 164894140632-jov6gli0u5gf8a0bb2ukvmsodbohvece.apps.googleusercontent.com
+              value: # insert here
             - name: GOOGLE_CLIENT_SECRET
-              value: bk9nXaIIocKxtWmjiz-u9lLC
+              value: # insert here
             - name: BUILDER
               value: podman
             - name: LOG_DIR
-              value: /usr/diginext/public/logs
+              value: /usr/app/public/logs
           volumeMounts:
-            # - name: docker-sock
-            #   mountPath: /var/run/docker.sock
             - name: storage
               mountPath: /var/app/storage
             - name: logs
               mountPath: /usr/diginext/public/logs
-            # - name: kube-config
-            #   mountPath: /root/.kube
             - name: home
               mountPath: /root
             # PODMAN
             # - name: podman-local
             #   mountPath: /home/podman/.local/share/containers
       volumes:
-        # - name: docker-sock
-        #   hostPath:
-        #     path: "/var/run/docker.sock"
         # - name: podman-local
         #   hostPath:
         #     path: /home/dev/.local/share/containers
@@ -114,9 +92,6 @@ spec:
         - name: home
           hostPath:
             path: /home/dev/diginext/storage/home
-        # - name: kube-config
-        #   hostPath:
-        #     path: /home/dev/diginext/storage/kube-config
 ---
 # persistent volume
 

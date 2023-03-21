@@ -9,13 +9,13 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.dev
-        working_dir: /usr/diginext-cli/
+        working_dir: /usr/app/
         ports:
             - "6969:6969"
         networks:
             - bridge
         # ----------- [START] FOR PODMAN TO RUN INSIDE DOCKER WITHOUT PRIVILEDGE MODE ----------
-        devices: 
+        devices:
             - "/dev/fuse"
         security_opt:
             - "seccomp=unconfined"
@@ -26,8 +26,9 @@ services:
         # ----------- [END] FOR PODMAN TO RUN INSIDE DOCKER WITHOUT PRIVILEDGE MODE ----------
         volumes:
             # HOST:CONTAINER
-            - ./dist:/usr/diginext-cli/dist
-            - ./public:/usr/diginext-cli/public
+            - ./dist:/usr/app/dist
+            - ./templates:/usr/app/templates
+            - ./public:/usr/app/public
             - ./storage:/var/app/storage
         environment:
             - NODE_ENV=development
@@ -40,6 +41,4 @@ services:
             - JWT_EXPIRE_TIME=48h
             - GOOGLE_CLIENT_ID=
             - GOOGLE_CLIENT_SECRET=
-            - PROJECT_DIR=/usr/app/deploy
-            - STORAGE=/var/app/storage
-            - LOG_DIR=/usr/diginext-cli/public/logs
+            - LOG_DIR=/usr/app/public/logs

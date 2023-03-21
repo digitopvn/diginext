@@ -1,4 +1,7 @@
 version: "3"
+networks:
+    bridge:
+        driver: bridge
 services:
     mongo:
         ports:
@@ -16,29 +19,28 @@ services:
             - ./storage/mongo:/data/db
     diginext:
         container_name: diginext
-        depends_on:
-            - mongo
         build:
             context: .
             dockerfile: Dockerfile.dev
         working_dir: /usr/app/
         ports:
             - "6969:6969"
+        networks:
+            - bridge
         volumes:
-            # HOST:CONTAINER
+            # docker.sock -> comment this out if you're using PODMAN
             - "/var/run/docker.sock:/var/run/docker.sock"
-            - ./dist:/usr/diginext-cli/dist
-            - ./public:/usr/diginext-cli/public
+            # HOST:CONTAINER
+            - ./dist:/usr/app/dist
+            - ./public:/usr/app/public
             - ./storage:/var/app/storage
         environment:
             - NODE_ENV=development
             - PORT=6969
             - BASE_URL=http://localhost:6969
-            - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/digirelease?authSource=admin
+            - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/diginext?authSource=admin
             - CLI_MODE=server
             - JWT_SECRET=
             - JWT_EXPIRE_TIME=48h
             - GOOGLE_CLIENT_ID=
             - GOOGLE_CLIENT_SECRET=
-            - PROJECT_DIR=/usr/app/deploy
-            - STORAGE=/var/app/storage

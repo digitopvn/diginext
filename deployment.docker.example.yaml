@@ -40,6 +40,7 @@ spec:
           ports:
             - containerPort: 6969
           securityContext:
+            # this is required for Docker but very dangerous !
             privileged: true
             runAsUser: 0
           env:
@@ -70,6 +71,7 @@ spec:
             - name: BUILDER
               value: docker
           volumeMounts:
+            # this is required for Docker but very dangerous !
             - name: docker-sock
               mountPath: /var/run/docker.sock
             - name: storage
@@ -79,6 +81,7 @@ spec:
             - name: home
               mountPath: /root
       volumes:
+        # this is required for Docker but very dangerous !
         - name: docker-sock
           hostPath:
             path: "/var/run/docker.sock"

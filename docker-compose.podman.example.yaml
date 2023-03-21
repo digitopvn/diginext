@@ -28,7 +28,7 @@ services:
     diginext:
         image: digitop/diginext:beta
         container_name: diginext
-        working_dir: /usr/diginext-cli/
+        working_dir: /usr/app/
         ports:
             - "6969:6969"
         restart: unless-stopped
@@ -36,7 +36,7 @@ services:
             - bridge
         depends_on:
             - mongo
-        # ----------- [START] FOR PODMAN TO RUN INSIDE DOCKER ----------
+        # ----------- [START] FOR PODMAN TO RUN INSIDE DOCKER WITHOUT PRIVILEDGE MODE ----------
         devices:
             - "/dev/fuse"
         security_opt:
@@ -45,7 +45,7 @@ services:
         cap_add:
             - sys_admin
             - mknod
-        # ----------- [END] FOR PODMAN TO RUN INSIDE DOCKER ----------
+        # ----------- [END] FOR PODMAN TO RUN INSIDE DOCKER WITHOUT PRIVILEDGE MODE ----------
         volumes:
             # HOST:CONTAINER
             - ./storage:/var/app/storage
@@ -56,10 +56,9 @@ services:
             - BASE_URL=http://localhost:6969
             - CLI_MODE=server
             - BUILDER=podman # <---- select PODMAN as a main builder here
-            - SESSION_NAME=diginext-cli
             - JWT_SECRET=
             - JWT_EXPIRE_TIME=48h
             - GOOGLE_CLIENT_ID=
             - GOOGLE_CLIENT_SECRET=
             - MONGODB_CONNECTION_STRING=mongodb://root:diginextcli@mongo:27017/diginext-cli?authSource=admin
-            - LOG_DIR=/usr/diginext-cli/public/logs
+            - LOG_DIR=/usr/app/public/logs
