@@ -86,7 +86,6 @@ keys
 deployment.yaml
 deployment-*.yaml
 deployment.*.yaml
-!deployment.example.yaml
 
 !templates/deployment.yaml
 docker-compose*.yaml
@@ -100,6 +99,9 @@ docker-compose*.yaml
 # 05-podman*
 gcloud-secret.yaml
 dx.json
+
+# exclude examples
+!*.example.yaml
 
 # dev api
 thunder-tests/
