@@ -66,7 +66,7 @@
 		"dev:swagger": "concurrently \"pnpm dev:spec\" \"pnpm dev:server\"",
 		"dev:spec": "ts-node-dev --respawn --transpile-only -- node_modules/tsoa/dist/cli.js spec",
 		"dev:server": "CLI_MODE=server ts-node-dev --poll -r tsconfig-paths/register src/server.ts --debug --respawn --exit-child --watch src",
-		"dev:nodemon": "CLI_MODE=server nodemon --legacy-watch \"src/**/*.ts\" --ext \"ts,json\" --exec \"CLI_MODE=server ts-node -r tsconfig-paths/register src/server.ts\"",
+		"dev:nodemon": "CLI_MODE=server nodemon --legacy-watch \"src/**/*.ts\" --ext \"ts,json\" --exec \"pnpm swagger && CLI_MODE=server ts-node -r tsconfig-paths/register src/server.ts\"",
 		"start:ts": "CLI_MODE=server ts-node -r tsconfig-paths/register src/server.ts",
 		"start:js": "CLI_MODE=server node dist/server.js",
 		"check-types": "tsc --noEmit --pretty -p tsconfig.json",

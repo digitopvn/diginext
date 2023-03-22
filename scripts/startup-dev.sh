@@ -18,6 +18,5 @@ echo "EXECUTING START-UP SCRIPT IN DEVELOPMENT"
 #     tsoa.json
 
 # pnpm i
-pnpm dev:nodemon
-# pnpm start:ts
-# pnpm dev:server
+# pnpm dev:nodemon
+pnpm dev:server
