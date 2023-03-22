@@ -1,73 +1,147 @@
-# Building and Testing Diginext (DX)
+# Development Workflow
 
-This document describes how to set up your development environment and run Diginext (DX) test cases.
+This document describes how to set up your development environment.
 
-- [Building and Testing Diginext (DX)](#building-and-testing-diginext-dx)
-  - [Prerequisite Software](#prerequisite-software)
-  - [Getting the Sources](#getting-the-sources)
-  - [Installing NPM Modules](#installing-npm-modules)
-  - [Building](#building)
-  - [Running Tests Locally](#running-tests-locally)
-    - [Faster developer cycle for editing code and running tests](#faster-developer-cycle-for-editing-code-and-running-tests)
-  - [Using Docker](#using-docker)
+## With Docker Compose
 
-See the [contribution guidelines](https://github.com/digitopvn/diginext/blob/main/CONTRIBUTING.md)
-if you'd like to contribute to Diginext (DX).
+The fastest way to start developing Diginext is using Docker Compose, since mostly everything (like developer tools) is pre-installed and pre-configurated inside the container images.
 
-## Prerequisite Software
+You can use this example `docker-compose.dev.example.yaml`
 
-Before you can build and test Diginext (DX), you must install and configure the
-following products on your development machine:
-
-* [Git](http://git-scm.com) and/or the **GitHub app** (for [Mac](http://mac.github.com) or
-  [Windows](http://windows.github.com)); [GitHub's Guide to Installing
-  Git](https://help.github.com/articles/set-up-git) is a good source of information.
-* [Node.js](http://nodejs.org), (better to install latest version) which is used to run a development web server,
-  run tests, and generate distributable files.
-  Depending on your system, you can install Node either from source or as a pre-packaged bundle.
-* [MongoDB](https://www.mongodb.com/docs/manual/installation/) is required to run tests on this platform (or docker)
-* [Google Cloud CLI](https://cloud.google.com/sdk/docs/install#installation_instructions)
-* [DigitalOcean CLI](https://docs.digitalocean.com/reference/doctl/)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/)
-
-## Getting the Sources
-
-Fork and clone the repository:
-
-1. Login to your GitHub account or create one by following the instructions given [here](https://github.com/signup/free).
-2. [Fork](http://help.github.com/forking) the [main Diginext (DX) repository](https://github.com/digitopvn/diginext).
-3. Clone your fork of the Diginext (DX) repository and define an `upstream` remote pointing back to
-   the Diginext (DX) repository that you forked in the first place.
-
-```shell
-# Clone your GitHub repository:
-git clone git@github.com:<github username>/diginext.git
-
-# Go to the Diginext (DX) directory:
-cd diginext
-
-# Add the main Diginext (DX) repository as an upstream remote to your repository:
-git remote add upstream https://github.com/digitopvn/diginext.git
+```yaml
+version: "3"
+networks:
+    bridge:
+        driver: bridge
+volumes:
+		mongo:
+    home:
+    node:
+services:
+    mongo:
+        ports:
+            - '27017:27017'
+        container_name: mongo
+        restart: always
+        logging:
+            driver: none
+        networks:
+            - bridge
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=root
+            - MONGO_INITDB_ROOT_PASSWORD=diginext
+        image: mongo
+        volumes:
+            - mongo:/data/db
+    diginext:
+        container_name: diginext
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        working_dir: /usr/app/
+        ports:
+            - "6969:6969"
+        networks:
+            - bridge
+        entrypoint: /usr/app/scripts/startup-dev.sh
+        volumes:
+            # docker.sock -> comment this out if you're using PODMAN
+            - "/var/run/docker.sock:/var/run/docker.sock"
+            # Persist NODE_MODULES & HOME DIR with named Docker volume
+            - node:/usr/app/node_modules/
+            - home:/home/app/
+            # Persist data with host path -> HOST:CONTAINER
+            - ./src:/usr/app/src
+            - ./public:/usr/app/public
+            - ./storage:/var/app/storage
+            - ./scripts:/usr/app/scripts
+        environment:
+            - NODE_ENV=development
+            - PORT=6969
+            - BASE_URL=http://localhost:6969
+            - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/diginext?authSource=admin
+            - CLI_MODE=server
+            - JWT_SECRET=
+            - JWT_EXPIRE_TIME=48h
+            - GOOGLE_CLIENT_ID=
+            - GOOGLE_CLIENT_SECRET=
 ```
-## Installing NPM Modules
 
-Install all Diginext (DX) dependencies by running this command:
+Start your development environment with: `docker compose -f docker-compose.dev.yaml up --attach diginext`
 
-```shell
-npm install
+Check out your server endpoint at: [http://localhost:6969](http://localhost:6969) 
+
+## Manual
+
+Developing inside a Docker Container environment sometime consumes a lot of your computer’s resources, or you just want to start from scratch. There you go:
+
+> *I use `pnpm` instead of `npm` because I find it a bit faster. Therefore, I recommend that you also use `pnpm`, especially since I have set up some scripts in `package.json` that utilize `pnpm`.*
+> 
+
+### Diginext Server & CLI
+
+After cloning `[digitopvn/diginext](https://github.com/digitopvn/diginext)`, run `npm install` to fetch its dependencies. Then, you can run several commands:
+
+1. `npm run dev` runs Diginext Server locally, the Dashboard UI should be: [http://localhost:6969](http://localhost:6969) 
+2. `npm run lint` checks the code style.
+3. `npm run build` to build the TypeScript to JavaScript at `dist/` and link the current directory to global `node_modules`, so you can test your CLI commands locally.
+
+#### Development Tools
+
+- Git
+- Node.js (16+)
+- Docker
+    - Docker BuildX
+- Podman
+- OpenSSH
+- kubectl
+    - google-cloud-sdk-gke-gcloud-auth-plugin
+- helm
+- gcloud
+- doctl
+
+### Workspace Dashboard
+
+The repository of workspace dashboard is located at `[digitopvn/diginext-admin](https://github.com/digitopvn/diginext-admin)`, clone it to your computer and place at the same level of the Diginext Server source code. 
+
+For example:
+
+```bash
+- **diginext/**
+    - src/
+    - dist/
+    - …
+- **diginext-admin/**
+    - src/
+    - pages/
+    - …
 ```
 
-During installation, you may have some problems with some dependencies.
+Run `npm install` and `npm run dev` to start development, your dev link should be [http://localhost:3000](http://localhost:3000) 
 
-## Building
+1. `npm run dev` runs Workspace Dashboard website locally.
+2. `npm run lint` checks the code style.
+3. `npm run export-to-cli` to export Workspace Dashboard to static HTML files and copy to `../diginext/public` directory
 
-To build a distribution package of Diginext (DX) run:
+## Initial Setup
 
-```shell
-npm run build
-```
+When you spin up a new development environment, there will be a couple things you should be aware of:
 
-This command will generate you a distribution package in the `dist` directory & auto link globally.
+### Authenticate with your Git Providers
+
+Assuming you are familiar with Git workflow and understand SSH keys, if not, [read here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/about-ssh). To pull and push to the Git repository, the keys on your machine have to match those in the Git provider's settings. The same applies to Diginext Server. In order to pull your git repositories for building container images, Diginext Server requires access to your repositories via SSH keys.
+
+#### 1. Using Diginext Server generated key
+
+(TBU)
+
+#### 2. Using your machine’s key
+
+(TBU)
+
+#### 3. Using custom private key & public key
+
+(TBU)
 
 ## Running Tests Locally
 
@@ -138,14 +212,4 @@ The `npm test` script works by deleting built TypeScript code, rebuilding the co
 Instead, for a quicker feedback cycle, you can run `npm run compile -- --watch` to make a fresh build and instruct TypeScript to watch for changes and only compile what code you've changed.
 
 Once TypeScript finishes compiling your changes, you can run `npm run test-fast` (instead of `test`), to trigger a test without causing a full recompile, which allows you to edit and check your changes much faster.
-
-## Using Docker
-
-To run your tests you need dbms installed on your machine. Alternatively, you can use docker
-with all dbms images inside it. To use dbms for your tests from docker simply run `docker-compose up`
-in the root of the project. Once all images are fetched and run you can run tests.
-
-- The docker image of mssql-server needs at least 3.25GB of RAM.
-- Make sure to assign enough memory to the Docker VM if you're running on Docker for Mac or Windows
-
 

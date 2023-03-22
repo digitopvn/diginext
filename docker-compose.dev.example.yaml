@@ -9,11 +9,12 @@ services:
     mongo:
         ports:
             - '27017:27017'
-        container_name: diginext-mongo
+        container_name: mongo
         restart: always
         logging:
-            options:
-                max-size: 1g
+            driver: none
+        networks:
+            - bridge
         environment:
             - MONGO_INITDB_ROOT_USERNAME=root
             - MONGO_INITDB_ROOT_PASSWORD=diginext
@@ -44,6 +45,7 @@ services:
             - ./src:/usr/app/src
             - ./public:/usr/app/public
             - ./storage:/var/app/storage
+            - ./scripts:/usr/app/scripts
         environment:
             - NODE_ENV=development
             - PORT=6969
