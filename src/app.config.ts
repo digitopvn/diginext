@@ -41,7 +41,7 @@ if (process.env.CLI_MODE === "server") {
 	Object.entries(process.env).forEach(([key, val]) => {
 		if (isNoEnvFile) {
 			const value = _.truncate(val.toString(), { length: 60, separator: " " });
-			table.push([key, value]);
+			if (key.indexOf("npm_") < -1) table.push([key, value]);
 		} else {
 			if (Object.keys(appEnv).includes(key)) {
 				const value = _.truncate(val.toString(), { length: 60, separator: " " });

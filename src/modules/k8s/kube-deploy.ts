@@ -325,7 +325,10 @@ export async function rollout(id: string) {
 	// ! ALWAYS Create new ingress
 	const ING_CONTENT = objectToDeploymentYaml(ingress);
 	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, namespace, { context });
-	if (!ingCreateResult) throw new Error(`Failed to apply INGRESS config to "${ingressName}" in "${namespace}" namespace of "${context}" context.`);
+	if (!ingCreateResult)
+		throw new Error(
+			`Failed to apply invalid INGRESS config (${env.toUpperCase()}) to "${ingressName}" in "${namespace}" namespace of "${context}" context.`
+		);
 
 	// log(`5`);
 

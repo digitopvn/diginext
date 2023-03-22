@@ -1,3 +1,15 @@
+## [2.6.3](https://github.com/digitopvn/diginext/compare/v2.6.2...v2.6.3) (2023-03-22)
+
+
+### Bug Fixes
+
+* **cli:** deploy: throw error message when validate port ([e23d638](https://github.com/digitopvn/diginext/commit/e23d638c192a660aadd11fe294b75f3e2907b8e9))
+* **cli:** issue of port is not a number ([9b6faaf](https://github.com/digitopvn/diginext/commit/9b6faaf304745051fbed5995df1ff21ca34b5c06))
+* **cli:** use lodash to detect port is not a number ([8398560](https://github.com/digitopvn/diginext/commit/83985601b6d6555f9c453c91ab03eab106e467ad))
+* **examples:** docker compose development examples with persistent data and hot reload ([10d8b58](https://github.com/digitopvn/diginext/commit/10d8b5882e6ea04d4e8a314d6a56e9e65e8b3cb6))
+* **server:** git ssh api and git module with create, generate, verify, get public key ([7c8fb4f](https://github.com/digitopvn/diginext/commit/7c8fb4f061518273b04bb403372dffcfbaa41104))
+* **server:** improve ingress config apply error message ([422db23](https://github.com/digitopvn/diginext/commit/422db2323beba1c37bc4a134198dd42e35b4f11c))
+
 ## [2.6.2](https://github.com/digitopvn/diginext/compare/v2.6.1...v2.6.2) (2023-03-16)
 
 

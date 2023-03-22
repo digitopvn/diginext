@@ -1,0 +1,58 @@
+version: "3"
+networks:
+    bridge:
+        driver: bridge
+volumes:
+    home:
+    node:
+services:
+    mongo:
+        ports:
+            - '27017:27017'
+        container_name: mongo
+        restart: always
+        logging:
+            driver: none
+        networks:
+            - bridge
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=root
+            - MONGO_INITDB_ROOT_PASSWORD=diginext
+        image: mongo
+        volumes:
+            - ./storage/mongo:/data/db
+    diginext:
+        container_name: diginext
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        working_dir: /usr/app/
+        ports:
+            - "6969:6969"
+        networks:
+            - bridge
+        entrypoint: /usr/app/scripts/startup-dev.sh
+        volumes:
+            # docker.sock -> comment this out if you're using PODMAN
+            - "/var/run/docker.sock:/var/run/docker.sock"
+            # Persist NODE_MODULES & HOME DIR with anomyous volumes
+            # - /usr/app/node_modules/
+            # - /home/app/
+            # Persist NODE_MODULES & HOME DIR with named Docker volume
+            - node:/usr/app/node_modules/
+            - home:/home/app/
+            # Persist data with host path -> HOST:CONTAINER
+            - ./src:/usr/app/src
+            - ./public:/usr/app/public
+            - ./storage:/var/app/storage
+            - ./scripts:/usr/app/scripts
+        environment:
+            - NODE_ENV=development
+            - PORT=6969
+            - BASE_URL=http://localhost:6969
+            - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/diginext?authSource=admin
+            - CLI_MODE=server
+            - JWT_SECRET=
+            - JWT_EXPIRE_TIME=48h
+            - GOOGLE_CLIENT_ID=
+            - GOOGLE_CLIENT_SECRET=

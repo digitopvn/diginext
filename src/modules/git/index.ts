@@ -1,8 +1,10 @@
 import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import execa from "execa";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import globby from "globby";
+import { isEmpty } from "lodash";
 import capitalize from "lodash/capitalize";
 import path from "path";
 import { simpleGit } from "simple-git";
@@ -143,6 +145,55 @@ export const createNewPullRequest = async (options?: InputOptions) => {
 	return createPullRequest(options);
 };
 
+export const writeCustomSSHKeys = async (params: { privateKey: string; publicKey: string }) => {
+	const { privateKey, publicKey } = params;
+	if (!privateKey) throw new Error(`[GIT] Write SSH keys > "privateKey" content is required.`);
+	if (!publicKey) throw new Error(`[GIT] Write SSH keys > "publicKey" content is required.`);
+
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	const slug = makeDaySlug({ divider: "" });
+	const privateIdRsaFile = path.resolve(idRsaDir, `id_rsa${slug}`);
+	const publicIdRsaFile = path.resolve(idRsaDir, `id_rsa${slug}.pub`);
+
+	// delete existing files
+	if (existsSync(privateIdRsaFile)) unlinkSync(privateIdRsaFile);
+	if (existsSync(publicIdRsaFile)) unlinkSync(publicIdRsaFile);
+
+	// write content to files
+	writeFileSync(privateIdRsaFile, privateKey, "utf8");
+	writeFileSync(publicIdRsaFile, publicKey, "utf8");
+
+	// Make sure the private key is assigned correct permissions (400)
+	try {
+		await execa.command(`chmod -R 400 ${privateIdRsaFile}`);
+	} catch (e) {
+		throw new Error(`[GIT] Can't assign permission [400] to "id_rsa" private key.`);
+	}
+
+	// await execCmd(`touch ~/.ssh/known_hosts`);
+	// await execCmd(`ssh-keyscan ${gitProviderDomain[gitProvider]} >> ~/.ssh/known_hosts`);
+	// await execCmd(`touch ~/.ssh/config`);
+
+	// if (isMac()) {
+	// 	await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}" >> ~/.ssh/config`);
+	// 	await execCmd(`echo "  UseKeychain yes" >> ~/.ssh/config`);
+	// 	await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
+	// 	await execCmd(`echo "  IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
+	// } else {
+	// 	await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}" >> ~/.ssh/config`);
+	// 	await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
+	// 	await execCmd(`echo "  IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
+	// }
+
+	log(`Added new SSH keys on this machine:`);
+	log(`- Public key:`, publicIdRsaFile);
+	log(`- Private key:`, privateIdRsaFile);
+
+	return { privateIdRsaFile, publicIdRsaFile };
+};
+
 export const generateSSH = async (options?: InputOptions) => {
 	// const { gitProvider } = options;
 	// Check if any "id_rsa" existed
@@ -151,7 +202,7 @@ export const generateSSH = async (options?: InputOptions) => {
 	const idRsaDir = SSH_DIR;
 
 	// const idRsaDir = path.resolve(CLI_DIR, "storage/home/ssh");
-	log(`idRsaDir:`, idRsaDir, `>> Existed: ${existsSync(idRsaDir)}`);
+	// log(`idRsaDir:`, idRsaDir, `>> Existed: ${existsSync(idRsaDir)}`);
 
 	let publicIdRsaFile: string, privateIdRsaFile: string;
 	if (existsSync(idRsaDir)) {
@@ -234,12 +285,11 @@ export const generateSSH = async (options?: InputOptions) => {
 	const publicKeyContent = readFileSync(publicIdRsaFile, "utf8");
 	logSuccess(`Copy this public key content & paste to GIT provider:`);
 	log(publicKeyContent);
+
 	return publicKeyContent;
 };
 
-export const verifySSH = async (options?: InputOptions) => {
-	const { gitProvider } = options;
-
+export const sshKeysExisted = async () => {
 	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
 	const idRsaDir = SSH_DIR;
 
@@ -252,6 +302,71 @@ export const verifySSH = async (options?: InputOptions) => {
 			privateIdRsaFile = files.find((f) => f.indexOf(".pub") == -1);
 
 			// Make sure the private key is assigned correct permissions (400)
+			try {
+				await execa.command(`chmod -R 400 ${privateIdRsaFile}`);
+			} catch (e) {
+				logError(`[GIT] Can't assign permission [400] to "id_rsa" private key.`);
+				return false;
+			}
+		} else {
+			return false;
+		}
+	} else {
+		logError(`[GIT] PUBLIC_KEY and PRIVATE_KEY are not existed.`);
+		return false;
+	}
+
+	return true;
+};
+
+export const getSshKeys = async () => {
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	const privateIdRsaFile = path.resolve(idRsaDir, "id_rsa");
+	const publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
+
+	if (!existsSync(privateIdRsaFile)) throw new Error(`PRIVATE_KEY is not existed.`);
+	if (!existsSync(publicIdRsaFile)) throw new Error(`PUBLIC_KEY is not existed.`);
+
+	const privateKey = readFileSync(privateIdRsaFile, "utf8");
+	const publicKey = readFileSync(publicIdRsaFile, "utf8");
+
+	return { privateKey, publicKey };
+};
+
+export const getPublicKey = async () => {
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	const publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
+
+	if (!existsSync(publicIdRsaFile)) throw new Error(`PUBLIC_KEY is not existed.`);
+
+	const publicKey = readFileSync(publicIdRsaFile, "utf8");
+
+	return { publicKey };
+};
+
+export const verifySSH = async (options?: InputOptions) => {
+	const { gitProvider } = options;
+
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	let publicIdRsaFile: string, privateIdRsaFile: string;
+	let privateIdRsaFiles: string[];
+
+	if (existsSync(idRsaDir)) {
+		const files = await globby(idRsaDir + "/id_*");
+		// log(`existed "id_rsa" files >>`, files);
+		privateIdRsaFiles = files.filter((f) => f.indexOf(".pub") === -1);
+
+		if (files.length > 0) {
+			publicIdRsaFile = files.find((f) => f.indexOf(".pub") > -1);
+			privateIdRsaFile = files.find((f) => f.indexOf(".pub") == -1);
+
+			// Make sure the private key is assigned correct permissions (400)
 			await execCmd(`chmod -R 400 ${privateIdRsaFile}`, `Can't assign permission [400] to "id_rsa" private key.`);
 		}
 	} else {
@@ -259,26 +374,31 @@ export const verifySSH = async (options?: InputOptions) => {
 		return false;
 	}
 
+	// log(`[GIT] privateIdRsaFiles:`, privateIdRsaFiles);
+
 	privateIdRsaFile = path.resolve(idRsaDir, "id_rsa");
 	publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
 
+	const gitDomain = gitProviderDomain[gitProvider];
+
 	await execCmd(`mkdir -p ~/.ssh`);
 	await execCmd(`touch ~/.ssh/known_hosts`);
-	await execCmd(`ssh-keyscan ${gitProviderDomain[gitProvider]} >> ~/.ssh/known_hosts`);
+	await execCmd(`ssh-keyscan ${gitDomain} >> ~/.ssh/known_hosts`);
 	await execCmd(`touch ~/.ssh/config`);
 
-	if (isMac()) {
-		await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}" >> ~/.ssh/config`);
-		await execCmd(`echo "  UseKeychain yes" >> ~/.ssh/config`);
-		await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
-		await execCmd(`echo "  IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
-	} else {
-		await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}" >> ~/.ssh/config`);
-		await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
-		await execCmd(`echo "  IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
-		// await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}\n	AddKeysToAgent yes\n	IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
+	if (!isEmpty(privateIdRsaFiles)) {
+		const sshConfigContent = (await execCmd(`cat ~/.ssh/config`)) || "";
+		for (const idRsaFile of privateIdRsaFiles) {
+			// log(`[GIT] sshConfigContent.indexOf("${idRsaFile}"):`, sshConfigContent.indexOf(idRsaFile));
+			// log(`[GIT] sshConfigContent.indexOf("${gitDomain}"):`, sshConfigContent.indexOf(gitDomain));
+			if (sshConfigContent.indexOf(idRsaFile) === -1 || sshConfigContent.indexOf(gitDomain) === -1) {
+				await execCmd(`echo "Host ${gitDomain}" >> ~/.ssh/config`);
+				if (isMac()) await execCmd(`echo "  UseKeychain yes" >> ~/.ssh/config`);
+				await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
+				await execCmd(`echo "  IdentityFile ${idRsaFile}" >> ~/.ssh/config`);
+			}
+		}
 	}
-	// await execCmd(`ssh -T git@${gitProviderDomain[gitProvider]}`);
 
 	let authResult;
 	switch (gitProvider) {

@@ -1,0 +1,90 @@
+# SERVICE CONFIGURATION
+apiVersion: v1
+kind: Service
+metadata:
+  name: diginext-svc
+  namespace: diginext
+  labels:
+    app: diginext
+spec:
+  ports:
+    - port: 6969
+  selector:
+    app: diginext
+---
+# POD DEPLOYMENT CONFIGURATION
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diginext
+  namespace: diginext
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: diginext
+  template:
+    metadata:
+      labels:
+        app: diginext
+    spec:
+      containers:
+        - name: diginext
+          image: digitop/diginext:latest
+          ports:
+            - containerPort: 6969
+          securityContext:
+            priviledged: true
+            runAsUser: 1000
+            runAsGroup: 1000
+          env:
+            - name: TZ
+              value: Asia/Ho_Chi_Minh
+            - name: PORT
+              value: "6969"
+            - name: NODE_ENV
+              value: production
+            - name: CLI_MODE
+              value: server
+            - name: DEV_MODE
+              value: "false"
+            - name: BASE_URL
+              value: https://api.diginext.site
+            - name: MONGODB_CONNECTION_STRING
+              value: # insert here
+            - name: JWT_SECRET
+              value: # insert here
+            - name: JWT_EXPIRE_TIME
+              value: 48h
+            - name: GOOGLE_CLIENT_ID
+              value: # insert here
+            - name: GOOGLE_CLIENT_SECRET
+              value: # insert here
+            - name: BUILDER
+              value: podman
+          volumeMounts:
+            - name: storage
+              mountPath: /var/app/storage
+            - name: home
+              mountPath: /var/app
+            # PODMAN
+            # - name: podman-local
+            #   mountPath: /home/podman/.local/share/containers
+      volumes:
+        # - name: podman-local
+        #   hostPath:
+        #     path: /home/dev/.local/share/containers
+        - name: storage
+          hostPath:
+            path: /home/dev/diginext/storage
+        - name: home
+          hostPath:
+            path: /home/dev/diginext/storage/home
+---
+# persistent volume
+

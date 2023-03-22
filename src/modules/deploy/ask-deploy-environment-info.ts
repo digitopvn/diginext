@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
-import { isEmpty } from "lodash";
+import { isEmpty, isNaN } from "lodash";
 
 import { getCliConfig } from "@/config/config";
 import type { App, CloudProvider, Cluster, ContainerRegistry, Project } from "@/entities";
@@ -196,12 +196,13 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	options.namespace = localDeployEnvironment.namespace;
 
 	// request port
-	if (!localDeployEnvironment.port) {
+	if (typeof localDeployEnvironment.port === "undefined" || isNaN(localDeployEnvironment.port)) {
 		const { selectedPort } = await inquirer.prompt<{ selectedPort: number }>({
 			type: "number",
 			name: "selectedPort",
 			message: "Which port do you use for this app?",
 			default: 3000,
+			validate: (input) => (isNaN(input) ? "Port should be a valid number." : true),
 		});
 		localDeployEnvironment.port = options.port = selectedPort;
 	}

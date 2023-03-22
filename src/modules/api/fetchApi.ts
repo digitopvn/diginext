@@ -4,6 +4,8 @@ import { logError } from "diginext-utils/dist/console/log";
 const Agent = require("agentkeepalive");
 const HttpsAgent = require("agentkeepalive").HttpsAgent;
 
+import { url } from "inspector";
+
 import { getCliConfig } from "@/config/config";
 
 const keepAliveAgent = new Agent({
@@ -29,7 +31,7 @@ export interface FetchApiResponse<T extends Object> {
 }
 
 export async function fetchApi<T = any>(options: AxiosRequestConfig & { access_token?: string; data?: T }) {
-	const { access_token, method } = options;
+	const { access_token, method = "GET" } = options;
 
 	const { buildServerUrl = process.env.BASE_URL, currentUser, access_token: cachedAccessToken } = getCliConfig();
 
@@ -68,7 +70,11 @@ export async function fetchApi<T = any>(options: AxiosRequestConfig & { access_t
 		// console.log(`fetchApi > response :>>`, responseData);
 		return responseData as FetchApiResponse<T>;
 	} catch (e) {
-		logError(`${options.method} - ${options.url} - ERROR:`, e);
+		if (e.toString().indexOf(`ECONNREFUSED`) > -1) {
+			logError(`NETWORK ERROR: Cannot connect to the build server at "${url}".`);
+		} else {
+			logError(`${options.method} - ${options.url} - API ERROR:`, e);
+		}
 		return { status: 0, messages: [`Something went wrong: ${e.toString()}`], data: null } as FetchApiResponse<T>;
 	}
 }

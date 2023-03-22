@@ -1,0 +1,66 @@
+version: "3"
+networks:
+    bridge:
+        driver: bridge
+volumes:
+    mongo:
+        external: true
+        name: mongo
+services:
+    # mongo database
+    mongo:
+        image: mongo
+        container_name: mongo
+        restart: always
+        ports:
+            - '27017'
+        networks:
+            - bridge
+        logging:
+            options:
+                max-size: 1g
+        volumes:
+            - mongo:/data/db
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=root
+            - MONGO_INITDB_ROOT_PASSWORD=diginext
+    # build server
+    diginext:
+        image: digitop/diginext:beta
+        container_name: diginext
+        working_dir: /usr/app/
+        ports:
+            - "6969:6969"
+        restart: unless-stopped
+        networks:
+            - bridge
+        depends_on:
+            - mongo
+        # ----------- [START] FOR PODMAN TO RUN INSIDE DOCKER WITHOUT PRIVILEDGE MODE ----------
+        devices:
+            - "/dev/fuse"
+        security_opt:
+            - "seccomp=unconfined"
+            - "label=disable"
+        cap_add:
+            - sys_admin
+            - mknod
+        # ----------- [END] FOR PODMAN TO RUN INSIDE DOCKER WITHOUT PRIVILEDGE MODE ----------
+        volumes:
+            # PERSIST NODE_MODULES & HOME DIR
+            - /usr/app/node_modules/
+            - /home/app/
+            # HOST:CONTAINER
+            - ./storage:/var/app/storage
+        environment:
+            - TZ=Asia/Ho_Chi_Minh
+            - NODE_ENV=production
+            - PORT=6969
+            - BASE_URL=http://localhost:6969
+            - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/diginext-cli?authSource=admin
+            - CLI_MODE=server
+            - JWT_SECRET= # <--- insert here
+            - JWT_EXPIRE_TIME=48h
+            - GOOGLE_CLIENT_ID= # <--- insert here
+            - GOOGLE_CLIENT_SECRET= # <--- insert here
+            - BUILDER=podman # <---- select PODMAN as a main builder here

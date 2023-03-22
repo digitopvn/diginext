@@ -17,18 +17,6 @@ router
 		// authorize,
 		controller.apiRespond(controller.read.bind(controller))
 	)
-	.get(
-		"/ssh",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.generateSSH.bind(controller))
-	)
-	.get(
-		"/ssh-verify",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.verifySSH.bind(controller))
-	)
 	.post(
 		"/",
 		authenticate,
@@ -46,6 +34,30 @@ router
 		authenticate,
 		// authorize,
 		controller.apiRespond(controller.delete.bind(controller))
+	)
+	.get(
+		"/ssh/public-key",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.getPublicKey.bind(controller))
+	)
+	.post(
+		"/ssh/create",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.createKeysSSH.bind(controller))
+	)
+	.post(
+		"/ssh/generate",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.generateSSH.bind(controller))
+	)
+	.post(
+		"/ssh/verify",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.verifySSH.bind(controller))
 	)
 	.delete(
 		"/empty",

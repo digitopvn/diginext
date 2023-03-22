@@ -73,7 +73,7 @@ export const jwtStrategy = new Strategy(
 		const expHourLeft = expiredTimestamp / 60 / 60 / 1000;
 		if (expHourLeft < 2) {
 			const userId = payload.id;
-			access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "24h" });
+			access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "48h" });
 
 			expiredDate = dayjs(new Date(payload.exp * 1000));
 			expiredTimestamp = dayjs(new Date(payload.exp * 1000)).diff(dayjs());

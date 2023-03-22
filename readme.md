@@ -174,14 +174,14 @@ If you enjoyed this project — or just feeling generous, consider buying me som
 
 <a href="https://www.buymeacoffee.com/duynguyen" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" height=48 ></a>
 
-<a href="https://paypal.me/mrgoonie/" target="_blank"><img src="https://github.com/andreostrovsky/donate-with-paypal/blob/master/blue.svg" height=48></a>
+<a href="https://paypal.me/mrgoonie/" target="_blank"><img src="https://github.com/andreostrovsky/donate-with-paypal/blob/master/PNG/blue.png" height=48></a>
 
 <a href="https://opencollective.com/diginext/donate" target="_blank">
   <img src="https://opencollective.com/diginext/donate/button@2x.png?color=blue" height=48 />
 </a>
 
 <a href="https://me.momo.vn/mrgoonie" target="_blank">
-  <img src="https://github.com/digitopvn/diginext/blob/main/docs/momo-button.png" height=48 />
+  <img src="https://github.com/digitopvn/diginext/blob/main/docs/momo-button.png?raw=true" height=48 />
 </a>
 
 - Author: Duy Nguyen <duynguyen@wearetopgroup.com>

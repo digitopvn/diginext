@@ -1,51 +1,57 @@
 version: "3"
+networks:
+    bridge:
+        driver: bridge
+volumes:
+    mongo:
+        external: true
+        name: mongo
 services:
-    redis:
-        image: "redis"
-        container_name: diginext-redis
-        restart: always
-        volumes:
-            - ./redis_data:/data
     mongo:
         ports:
-            - '27017:27017'
-        container_name: diginext-mongo
+            - '27017'
+        container_name: mongo
         restart: always
         logging:
             options:
                 max-size: 1g
+        networks:
+            - bridge
         environment:
             - MONGO_INITDB_ROOT_USERNAME=root
-            - MONGO_INITDB_ROOT_PASSWORD=diginextcli
+            - MONGO_INITDB_ROOT_PASSWORD=diginext
         image: mongo
         volumes:
-            - ./storage/mongo:/data/db
+            - mongo:/data/db
     diginext:
-        image: "digitop/diginext-cli"
+        image: "digitop/diginext:latest"
         container_name: diginext
         working_dir: /usr/app/
         ports:
             - "6969:6969"
         restart: unless-stopped
         depends_on:
-        - redis
-        - mongo
+            - mongo
+        networks:
+            - bridge
         privileged: true
+        entrypoint: /usr/app/scripts/startup.sh
         volumes:
-            # HOST:CONTAINER
+            # DOCKER SOCK
             - "/var/run/docker.sock:/var/run/docker.sock"
-            - /mnt/build:/usr/app/deploy
-            - ./public:/usr/diginext-cli/public
+            # CACHE NODE_MODULES & HOME DIR
+            - /usr/app/node_modules/
+            - /home/app/
+            # HOST:CONTAINER
+            - ./storage:/var/app/storage
         environment:
-            - NODE_ENV=development
+            - NODE_ENV=production
             - PORT=6969
             - BASE_URL=http://localhost:6969
-            - SOCKET_BASE_URL=ws://localhost:6969
-            - MONGODB_CONNECTION_STRING=mongodb://root:diginextcli@mongo:27017/digirelease?authSource=admin
+            - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/diginext?authSource=admin
             - CLI_MODE=server
+            - BUILDER=docker
             - JWT_SECRET=
             - JWT_EXPIRE_TIME=48h
-            - PROJECT_DIR=/usr/app/deploy
-            # Add your credentials
             - GOOGLE_CLIENT_ID=
             - GOOGLE_CLIENT_SECRET=

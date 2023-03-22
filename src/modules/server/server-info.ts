@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import Table from "cli-table";
 import execa from "execa";
 
@@ -23,7 +22,5 @@ export const showServerInfo = async (options: InputOptions) => {
 	table.push(["CLI Config", CLI_CONFIG_FILE]);
 	table.push(["Server URL", buildServerUrl]);
 
-	console.log(chalk.cyan("--------- CLI & SERVER INFO ----------"));
 	console.log(table.toString());
-	console.log(chalk.cyan("---------------------------------------"));
 };

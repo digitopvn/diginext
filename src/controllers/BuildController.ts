@@ -1,13 +1,11 @@
-import * as fs from "fs";
-import path from "path";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { CLI_DIR } from "@/config/const";
 import type { Build } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { stopBuild } from "@/modules/build";
+import { Logger } from "@/plugins";
 import BuildService from "@/services/BuildService";
 
 import BaseController from "./BaseController";
@@ -68,11 +66,12 @@ export default class BuildController extends BaseController<Build> {
 		}
 
 		// Attempt [2]: get logs from files
-		const LOG_FILE_PATH = process.env.LOG_DIR
-			? path.resolve(process.env.LOG_DIR, `${slug}.txt`)
-			: path.resolve(CLI_DIR, `public/logs/${slug}.txt`);
-		console.log("LOG_FILE_PATH :>> ", LOG_FILE_PATH);
-		const logs = fs.existsSync(LOG_FILE_PATH) ? fs.readFileSync(LOG_FILE_PATH, "utf8") : "No data.";
+		// const LOG_DIR = process.env.LOG_DIR ?? path.resolve(CLI_DIR, `public/logs`);
+		// const LOG_FILE_PATH = path.resolve(LOG_DIR, `${slug}.txt`);
+		// console.log("LOG_FILE_PATH :>> ", LOG_FILE_PATH);
+		// const logs = fs.existsSync(LOG_FILE_PATH) ? fs.readFileSync(LOG_FILE_PATH, "utf8") : "No data.";
+
+		const logs = Logger.getLogs(slug) || "No data.";
 
 		result.data = logs;
 		return result;
