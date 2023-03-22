@@ -234,7 +234,67 @@ export const generateSSH = async (options?: InputOptions) => {
 	const publicKeyContent = readFileSync(publicIdRsaFile, "utf8");
 	logSuccess(`Copy this public key content & paste to GIT provider:`);
 	log(publicKeyContent);
+
 	return publicKeyContent;
+};
+
+export const sshKeysExisted = async () => {
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	let publicIdRsaFile: string, privateIdRsaFile: string;
+	if (existsSync(idRsaDir)) {
+		const files = await globby(idRsaDir + "/id_*");
+		// log(`existed "id_rsa" files >>`, files);
+		if (files.length > 0) {
+			publicIdRsaFile = files.find((f) => f.indexOf(".pub") > -1);
+			privateIdRsaFile = files.find((f) => f.indexOf(".pub") == -1);
+
+			// Make sure the private key is assigned correct permissions (400)
+			try {
+				await execa.command(`chmod -R 400 ${privateIdRsaFile}`);
+			} catch (e) {
+				logError(`[GIT] Can't assign permission [400] to "id_rsa" private key.`);
+				return false;
+			}
+		} else {
+			return false;
+		}
+	} else {
+		logError(`[GIT] PUBLIC_KEY and PRIVATE_KEY are not existed.`);
+		return false;
+	}
+
+	return true;
+};
+
+export const getSshKeys = async () => {
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	const privateIdRsaFile = path.resolve(idRsaDir, "id_rsa");
+	const publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
+
+	if (!existsSync(privateIdRsaFile)) throw new Error(`PRIVATE_KEY is not existed.`);
+	if (!existsSync(publicIdRsaFile)) throw new Error(`PUBLIC_KEY is not existed.`);
+
+	const privateKey = readFileSync(privateIdRsaFile);
+	const publicKey = readFileSync(publicIdRsaFile);
+
+	return { privateKey, publicKey };
+};
+
+export const getPublicKey = async () => {
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	const publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
+
+	if (!existsSync(publicIdRsaFile)) throw new Error(`PUBLIC_KEY is not existed.`);
+
+	const publicKey = readFileSync(publicIdRsaFile);
+
+	return { publicKey };
 };
 
 export const verifySSH = async (options?: InputOptions) => {

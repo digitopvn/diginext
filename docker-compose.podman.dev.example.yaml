@@ -24,7 +24,11 @@ services:
             - sys_admin
             - mknod
         # ----------- [END] FOR PODMAN TO RUN INSIDE DOCKER WITHOUT PRIVILEDGE MODE ----------
+        entrypoint: /usr/app/scripts/startup-dev.sh
         volumes:
+            # PERSIST NODE_MODULES & HOME DIR
+            - /usr/app/node_modules/
+            - /home/app/
             # HOST:CONTAINER
             - ./dist:/usr/app/dist
             - ./templates:/usr/app/templates
@@ -41,4 +45,3 @@ services:
             - JWT_EXPIRE_TIME=48h
             - GOOGLE_CLIENT_ID=
             - GOOGLE_CLIENT_SECRET=
-            - LOG_DIR=/usr/app/public/logs

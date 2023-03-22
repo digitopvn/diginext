@@ -10,71 +10,86 @@ USER root
 # RUN apt install <packages>
 # RUN apt <privileged command>
 
-RUN apt-get clean
+# Install all APT-GET packages from scratch...
+# RUN apt-get clean
+# RUN apt-get update -yq
 
-# Node.js, Git, kubectl & Open SSH
-RUN apt-get update --allow-releaseinfo-change -yq \
-    && apt-get install curl wget -yq \
-    && curl -sL https://deb.nodesource.com/setup_16.x | bash \
-    && apt-get install nodejs git sed jq openssh-client -yq \
-    && apt-get autoremove -y \
-    && apt-get clean -y
+# Git, kubectl & Open SSH
+RUN apt-get update -yq \
+  && apt-get install curl wget -yq \
+  && apt-get install git sed jq openssh-client -yq
+
+# Node.js & NPM
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash \
+  && apt-get update -yq \
+  && apt-get install nodejs -yq
 
 # Install GCLOUD CLI / SDK
 RUN apt-get install apt-transport-https ca-certificates gnupg -yq \
-    && echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg && apt-get update -y && apt-get install google-cloud-sdk -y
+  && echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
+  && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg \
+  && apt-get update -yq \
+  && apt-get install google-cloud-sdk -y
 
 # Install KUBECTL
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
-    && chmod +x kubectl \
-    && mv ./kubectl /usr/bin/kubectl
+  && chmod +x kubectl \
+  && mv ./kubectl /usr/bin/kubectl
 
 # Kubernetes Gcloud Authentication plugin
 RUN apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 
 # Helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \
-    && chmod 700 get_helm.sh \
-    && ./get_helm.sh
+  && chmod 700 get_helm.sh \
+  && ./get_helm.sh
 
 # Docker
-RUN apt-get install lsb-release \
-    && mkdir -m 0755 -p /etc/apt/keyrings \
-    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update \
-    && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -yq
+RUN apt-get install lsb-release -yq \
+  && mkdir -m 0755 -p /etc/apt/keyrings \
+  && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+  && apt-get update -yq \
+  && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -yq
 
 # Docker Buildx
 COPY ./binaries/buildx-v0.9.1.linux-amd64 .
 
 RUN chmod a+x buildx-v0.9.1.linux-amd64 \
-    && mkdir -p ~/.docker/cli-plugins \
-    && mv buildx-v0.9.1.linux-amd64 ~/.docker/cli-plugins/docker-buildx
+  && mkdir -p ~/.docker/cli-plugins \
+  && mv buildx-v0.9.1.linux-amd64 ~/.docker/cli-plugins/docker-buildx
 
 # RUN wget https://github.com/docker/buildx/releases/download/v0.9.1/buildx-v0.9.1.linux-amd64 \
 #     && chmod a+x buildx-v0.9.1.linux-amd64 \
 #     && mkdir -p ~/.docker/cli-plugins \
 #     && mv buildx-v0.9.1.linux-amd64 ~/.docker/cli-plugins/docker-buildx
 
-RUN apt install fuse-overlayfs -yq
-
 # Podman
-RUN apt-get -y install podman iptables \
-    && apt-get clean -y
+RUN apt install fuse-overlayfs -yq
+RUN apt-get -y install podman iptables
 
 # Install Digital Ocean CLI
 RUN cd ~ \
-    && wget https://github.com/digitalocean/doctl/releases/download/v1.78.0/doctl-1.78.0-linux-amd64.tar.gz \
-    && tar xf ~/doctl-1.78.0-linux-amd64.tar.gz \
-    && mv ~/doctl /usr/local/bin
+  && wget https://github.com/digitalocean/doctl/releases/download/v1.78.0/doctl-1.78.0-linux-amd64.tar.gz \
+  && tar xf ~/doctl-1.78.0-linux-amd64.tar.gz \
+  && mv ~/doctl /usr/local/bin
 
 # Install PNPM (instead of YARN as the previous version)
 # RUN npm install -g yarn
 RUN npm install -g pnpm
 
+# MongoDB Client Shell
+RUN wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add - \
+  && echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list \
+  && apt-get update -yq \
+  && apt-get install -y mongodb-mongosh
+
 # FOR DEVELOPMENT ONLY
-RUN apt-get install vim -yq
+# RUN apt-get install vim iputils-ping -yq
+
+# CLEAN UP
+RUN apt-get autoremove -y \
+  && apt-get clean -y
 
 # Set working directory
 WORKDIR /usr/app
@@ -87,10 +102,14 @@ COPY ./package*.json ./
 RUN pnpm i
 
 # Copy neccessary files
+# COPY ./src ./src
 COPY ./dist ./dist
 COPY ./scripts ./scripts
 COPY ./public ./public
 COPY ./templates ./templates
+
+# Copy all files
+# COPY . .
 
 # Set user and group
 ARG user=app
@@ -117,6 +136,10 @@ RUN mkdir -p /home/${user}/.local
 RUN chown -R ${uid}:${gid} /home/${user}
 RUN chmod -R ug+rwx /home/${user}
 
+# Make "app" user has rights to "/usr/app" directory
+RUN chown -R ${uid}:${gid} /usr/app
+RUN chmod -R ug+rwx /usr/app
+
 # podman storage directory
 RUN mkdir -p /run/user/1000 && chmod 700 /run/user/1000
 RUN chown -R ${uid}:${gid} /run/user/1000
@@ -139,7 +162,7 @@ RUN touch /etc/sub{u,g}id
 RUN chmod 755 /etc/subuid
 RUN chmod 755 /etc/subgid
 
-# [SECURITY] Switch to "app" user !!!
+# [SECURITY] Switch to "app" user before starting container !!!
 ENV USER=${user}
 USER ${uid}:${gid}
 

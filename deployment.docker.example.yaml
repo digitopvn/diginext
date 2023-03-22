@@ -57,17 +57,15 @@ spec:
             - name: BASE_URL
               value: https://api.diginext.site
             - name: MONGODB_CONNECTION_STRING
-              value: 
+              value: # insert here
             - name: JWT_SECRET
-              value: 
+              value: # insert here
             - name: JWT_EXPIRE_TIME
               value: 48h
             - name: GOOGLE_CLIENT_ID
-              value: 
+              value: # insert here
             - name: GOOGLE_CLIENT_SECRET
-              value: 
-            - name: LOG_DIR
-              value: /usr/diginext/public/logs
+              value: # insert here
             - name: BUILDER
               value: docker
           volumeMounts:
@@ -76,10 +74,8 @@ spec:
               mountPath: /var/run/docker.sock
             - name: storage
               mountPath: /var/app/storage
-            - name: logs
-              mountPath: /usr/diginext/public/logs
-            - name: home
-              mountPath: /root
+            # - name: home
+            #   mountPath: /root
       volumes:
         # this is required for Docker but very dangerous !
         - name: docker-sock
@@ -88,9 +84,6 @@ spec:
         - name: storage
           hostPath:
             path: /home/dev/diginext/storage
-        - name: logs
-          hostPath:
-            path: /home/dev/diginext/public/logs
         - name: home
           hostPath:
             path: /home/dev/diginext/storage/home

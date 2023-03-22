@@ -60,6 +60,7 @@ storage/**/*
 !storage/containers
 !./storage/containers
 !./storage/containers/**/*
+!storage/note.txt
 
 # public/uploads
 ./redis_data/*

@@ -9,18 +9,19 @@ import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
 import { migrateAllReleases } from "@/migration/migrate-all-releases";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
-import { verifySSH } from "@/modules/git";
+import { generateSSH, sshKeysExisted, verifySSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
-import { providerAuthenticate } from "@/modules/providers";
 import { connectRegistry } from "@/modules/registry/connect-registry";
-import { CloudProviderService, ClusterService, ContainerRegistryService, GitProviderService } from "@/services";
+import { ClusterService, ContainerRegistryService, GitProviderService } from "@/services";
 
 /**
  * BUILD SERVER INITIAL START-UP SCRIPTS:
  * - Create config directory in {HOME_DIR}
  * - Connect GIT providers (if any)
- * - Connect container registries (if any)
+ * - Connect Container Registries (if any)
  * - Connect K8S clusters (if any)
+ * - Start cron jobs
+ * - Seed some initial data
  */
 export async function startupScripts() {
 	log(`-------------- Server is initializing -----------------`);
@@ -28,23 +29,24 @@ export async function startupScripts() {
 	// config dir
 	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);
 
+	const isSSHKeysExisted = await sshKeysExisted();
+	if (!isSSHKeysExisted) await generateSSH();
+
 	// connect git providers
 	const gitSvc = new GitProviderService();
 	const gitProviders = await gitSvc.find({});
 	if (!isEmpty(gitProviders)) {
-		for (const gitProvider of gitProviders) {
-			verifySSH({ gitProvider: gitProvider.type });
-		}
+		for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
 	}
 
 	// connect cloud providers
-	const providerSvc = new CloudProviderService();
-	const providers = await providerSvc.find({});
-	if (providers.length > 0) {
-		for (const provider of providers) {
-			providerAuthenticate(provider);
-		}
-	}
+	// const providerSvc = new CloudProviderService();
+	// const providers = await providerSvc.find({});
+	// if (providers.length > 0) {
+	// 	for (const provider of providers) {
+	// 		providerAuthenticate(provider);
+	// 	}
+	// }
 
 	// connect container registries
 	const registrySvc = new ContainerRegistryService();
@@ -66,10 +68,10 @@ export async function startupScripts() {
 
 	// cronjobs
 	logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every 3 days at 00:00 AM`);
+	/**
+	 * Schedule a clean up task every 3 days at 00:00 AM
+	 */
 	cronjob.schedule("0 0 */3 * *", () => {
-		/**
-		 * Schedule a clean up task every 3 days at 00:00 AM
-		 */
 		cleanUp();
 	});
 

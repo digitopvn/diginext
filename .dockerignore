@@ -26,6 +26,8 @@ dx.json
 thunder-tests/
 thunder-tests/**
 
-# mounted volume "storage"
+# ignore directories which already mounted volume "storage"
 storage/
-# podman/
+# public/
+docs/
+# dist/

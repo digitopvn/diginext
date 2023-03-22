@@ -12,20 +12,23 @@ USER root
 
 # Install all APT-GET packages from scratch...
 # RUN apt-get clean
+# RUN apt-get update -yq
 
-# Node.js, Git, kubectl & Open SSH
+# Git, kubectl & Open SSH
 RUN apt-get update -yq \
   && apt-get install curl wget -yq \
-  && curl -sL https://deb.nodesource.com/setup_16.x | bash \
-  && apt-get install nodejs git sed jq openssh-client -yq \
-  && apt-get autoremove -y \
-  && apt-get clean -y
+  && apt-get install git sed jq openssh-client -yq
+
+# Node.js & NPM
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash \
+  && apt-get update -yq \
+  && apt-get install nodejs -yq
 
 # Install GCLOUD CLI / SDK
 RUN apt-get install apt-transport-https ca-certificates gnupg -yq \
   && echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
   && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg \
-  && apt-get update -y \
+  && apt-get update -yq \
   && apt-get install google-cloud-sdk -y
 
 # Install KUBECTL
@@ -42,11 +45,11 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/s
   && ./get_helm.sh
 
 # Docker
-RUN apt-get install lsb-release \
+RUN apt-get install lsb-release -yq \
   && mkdir -m 0755 -p /etc/apt/keyrings \
   && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
   && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-  && apt-get update \
+  && apt-get update -yq \
   && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -yq
 
 # Docker Buildx
@@ -61,11 +64,9 @@ RUN chmod a+x buildx-v0.9.1.linux-amd64 \
 #     && mkdir -p ~/.docker/cli-plugins \
 #     && mv buildx-v0.9.1.linux-amd64 ~/.docker/cli-plugins/docker-buildx
 
-RUN apt install fuse-overlayfs -yq
-
 # Podman
-RUN apt-get -y install podman iptables \
-  && apt-get clean -y
+RUN apt install fuse-overlayfs -yq
+RUN apt-get -y install podman iptables
 
 # Install Digital Ocean CLI
 RUN cd ~ \
@@ -77,8 +78,18 @@ RUN cd ~ \
 # RUN npm install -g yarn
 RUN npm install -g pnpm
 
+# MongoDB Client Shell
+RUN wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add - \
+  && echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list \
+  && apt-get update -yq \
+  && apt-get install -y mongodb-mongosh
+
 # FOR DEVELOPMENT ONLY
-RUN apt-get install vim -yq
+RUN apt-get install vim iputils-ping -yq
+
+# CLEAN UP
+RUN apt-get autoremove -y \
+  && apt-get clean -y
 
 # Set working directory
 WORKDIR /usr/app

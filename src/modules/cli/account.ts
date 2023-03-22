@@ -140,7 +140,7 @@ export async function cliAuthenticate(options: InputOptions) {
 		const user = await cliLogin(options);
 
 		if (!user) {
-			logError(`Can't login to the build server...`);
+			logError(`Failed to login: User not found.`);
 			return;
 		}
 
