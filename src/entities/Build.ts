@@ -6,6 +6,7 @@ import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
 import type { App } from "./App";
 import Base from "./Base";
+import type ContainerRegistry from "./ContainerRegistry";
 import type Project from "./Project";
 import type User from "./User";
 import type Workspace from "./Workspace";
@@ -19,15 +20,41 @@ export default class Build extends Base {
 	@Column({ type: "string" })
 	image?: string;
 
+	/**
+	 * Image tag is also "buildNumber"
+	 */
 	@Column({ type: "string" })
 	tag?: string;
 
-	@Column({ type: "string" })
-	slug?: string;
+	/**
+	 * Build start time
+	 */
+	@Column({ type: "datetime" })
+	startTime?: Date;
 
+	/**
+	 * Build end time
+	 */
+	@Column({ type: "datetime" })
+	endTime?: Date;
+
+	/**
+	 * Build duration in miliseconds
+	 */
+	@Column({ type: "number" })
+	duration?: number;
+
+	/**
+	 * Build for which deploy environment
+	 * - **[OPTIONAL] SHOULD NOT rely on this!**
+	 * - A build should be able to used for any deploy environments.
+	 */
 	@Column({ type: "string" })
 	env?: string;
 
+	/**
+	 * Build from which git branch
+	 */
 	@Column()
 	branch?: string;
 
@@ -48,6 +75,14 @@ export default class Build extends Base {
 
 	@Column({ type: "string" })
 	logs?: string;
+
+	/**
+	 * ID of the container registry
+	 *
+	 * @remarks This can be populated to {ContainerRegistry} data
+	 */
+	@Column({ type: "string" })
+	registry?: ObjectID | ContainerRegistry | string;
 
 	/**
 	 * ID of the app

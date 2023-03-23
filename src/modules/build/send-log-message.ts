@@ -13,13 +13,14 @@ dayjs.extend(localizedFormat);
 
 type LogMessageOpts = {
 	type?: "log" | "warn" | "error" | "success";
-	logger?: Logger;
 	SOCKET_ROOM: string;
 	message: string;
 };
 
 export function sendLog(options: LogMessageOpts) {
-	const { logger, SOCKET_ROOM, message, type = "log" } = options;
+	const { SOCKET_ROOM, message, type = "log" } = options;
+
+	const logger = new Logger(SOCKET_ROOM);
 
 	const now = dayjs().format("llll");
 	const messageWithoutANSI = now + " - " + stripAnsi(chalk.reset(message));

@@ -7,7 +7,7 @@ import type { SslIssuer } from "@/interfaces/SystemTypes";
 
 import { getAppConfig, resolveDockerfilePath, saveAppConfig } from "../../plugins/utils";
 import { askForDomain } from "./ask-for-domain";
-import { startBuild } from "./start-build";
+import { startBuildV1 } from "./start-build";
 
 /**
  * This command allow you to build & deploy your application directly from your machine, without requesting to the build server.
@@ -71,6 +71,6 @@ export async function execBuild(options: InputOptions) {
 	saveAppConfig(appConfig, { directory: targetDirectory });
 
 	// request build server to build & deploy:
-	const buildStatus = await startBuild(options);
+	const buildStatus = await startBuildV1(options);
 	return buildStatus;
 }

@@ -28,14 +28,7 @@ export const createReleaseFromBuild = async (build: Build, ownership?: Ownership
 	const { owner, workspace, slug: appSlug } = app;
 	const { slug: workspaceSlug } = workspace as Workspace;
 
-	const BUILD_NUMBER = tag ?? image.split(":")[1];
-	// console.log("BUILD_NUMBER :>> ", BUILD_NUMBER);
-
-	// traverse and parse "environment":
-	// Object.entries(environment).forEach(([key, val]) => {
-	// 	environment[key] = isJSON(val) ? JSON.parse(val as string) : {};
-	// });
-	// console.log("environment :>> ", environment);
+	const buildNumber = tag ?? image.split(":")[1];
 
 	const deployedEnvironment = await getDeployEvironmentByApp(app, env);
 	// console.log(`deployedEnvironment > ${env} :>>`, deployedEnvironment);
@@ -68,7 +61,7 @@ export const createReleaseFromBuild = async (build: Build, ownership?: Ownership
 	const data = {
 		env,
 		cliVersion,
-		name: `${projectSlug}/${appSlug}:${BUILD_NUMBER}`,
+		name: `${projectSlug}/${appSlug}:${buildNumber}`,
 		image: IMAGE_NAME,
 		// old diginext.json
 		diginext: JSON.stringify(appConfig),

@@ -919,11 +919,14 @@ interface ResolveApplicationFilePathOptions {
  * Resolve a location path of the file within the application.
  */
 export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicationFilePathOptions) => {
-	const { targetDirectory = process.cwd(), env = "dev", ignoreIfNotExisted = false } = options;
-	let filePath = path.resolve(targetDirectory, `${fileNamePrefix}.${env}`);
+	const { targetDirectory = process.cwd(), env, ignoreIfNotExisted = false } = options;
+
+	let filePath = env ? path.resolve(targetDirectory, `${fileNamePrefix}.${env}`) : path.resolve(targetDirectory, fileNamePrefix);
 	if (fs.existsSync(filePath)) return filePath;
 
-	filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}.${env}`);
+	filePath = env
+		? path.resolve(targetDirectory, `deployment/${fileNamePrefix}.${env}`)
+		: path.resolve(targetDirectory, `deployment/${fileNamePrefix}`);
 	if (fs.existsSync(filePath)) return filePath;
 
 	filePath = path.resolve(targetDirectory, fileNamePrefix);

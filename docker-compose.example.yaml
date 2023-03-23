@@ -4,8 +4,9 @@ networks:
         driver: bridge
 volumes:
     mongo:
-        external: true
         name: mongo
+    home:
+    node:
 services:
     mongo:
         ports:
@@ -35,13 +36,14 @@ services:
         networks:
             - bridge
         privileged: true
+        user: root
         entrypoint: /usr/app/scripts/startup.sh
         volumes:
             # DOCKER SOCK
             - "/var/run/docker.sock:/var/run/docker.sock"
             # CACHE NODE_MODULES & HOME DIR
-            - /usr/app/node_modules/
-            - /home/app/
+            - node:/usr/app/node_modules/
+            - home:/home/app/
             # HOST:CONTAINER
             - ./storage:/var/app/storage
         environment:

@@ -4,15 +4,15 @@ import type { NextFunction, Request, Response } from "express";
 import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import pkg from "@/../package.json";
+import { Config } from "@/app.config";
 import type { User } from "@/entities";
 import type { InputOptions, ResponseData } from "@/interfaces";
 import { IPostQueryParams } from "@/interfaces";
-import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
-import { getAppConfigFromApp } from "@/modules/apps/app-helper";
-import { startBuild } from "@/modules/build";
-import type { DeployImageParams } from "@/modules/deploy/deploy-image";
-import { deployImage } from "@/modules/deploy/deploy-image";
-import { AppService } from "@/services";
+import type { StartBuildParams } from "@/modules/build";
+import { buildAndDeploy } from "@/modules/build/build-and-deploy";
+import { startBuildV1 } from "@/modules/build/start-build";
+import type { DeployBuildOptions } from "@/modules/deploy/deploy-build";
+import { deployWithBuildSlug } from "@/modules/deploy/deploy-build";
 
 @Tags("Deploy")
 @Route("deploy")
@@ -32,6 +32,11 @@ export default class DeployController {
 		};
 	}
 
+	/**
+	 * ### [DEPRECATED SOON]
+	 * #### Use `buildAndDeploy()` instead.
+	 * Build container image first, then deploy that build to target deploy environment.
+	 */
 	@Security("jwt")
 	@Post("/")
 	deployFromSource(@Body() body: { options: InputOptions }, @Queries() queryParams?: IPostQueryParams) {
@@ -62,69 +67,140 @@ export default class DeployController {
 		}
 
 		log(`deployFromSource > options.buildNumber :>>`, options.buildNumber);
-		startBuild(options);
+		startBuildV1(options);
 
 		// start build in background:
 		return { messages: [`Building...`], status: 1 };
 	}
 
+	/**
+	 * Build container image first, then deploy that build to target deploy environment.
+	 */
 	@Security("jwt")
-	@Post("/from-image")
-	async deployFromImage(
+	@Post("/build-first")
+	buildAndDeploy(@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildOptions }, @Queries() queryParams?: IPostQueryParams) {
+		let { buildParams: buildParamsJSON, deployParams: deployParamsJSON } = body;
+
+		// validation & conversion...
+		if (!buildParamsJSON) return { status: 0, messages: [`Build "params" is required.`] } as ResponseData;
+		if (!isJSON(buildParamsJSON)) return { status: 0, messages: [`Invalid JSON format of build "params".`] } as ResponseData;
+		const buildParams = JSON.parse(buildParamsJSON as unknown as string) as StartBuildParams;
+
+		if (!deployParamsJSON) return { status: 0, messages: [`Deploy "params" is required.`] } as ResponseData;
+		if (!isJSON(deployParamsJSON)) return { status: 0, messages: [`Invalid JSON format of deploy "params".`] } as ResponseData;
+		const deployParams = JSON.parse(deployParamsJSON as unknown as string) as DeployBuildOptions;
+
+		// log("[DEPLOY] options", options);
+
+		// TODO: Save client CLI version to server database for tracking purpose!
+		// check for version compatibility between CLI & SERVER:
+		const cliVersion = buildParams.cliVersion || "0.0.0";
+		const breakingChangeVersionCli = cliVersion.split(".")[0];
+		const serverVersion = pkg.version;
+		const breakingChangeVersionServer = serverVersion.split(".")[0];
+
+		if (breakingChangeVersionCli != breakingChangeVersionServer) {
+			return {
+				status: 0,
+				messages: [
+					`Your CLI version (${cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please update your CLI with: "dx update"`,
+				],
+			};
+		}
+
+		log(`buildAndDeploy > buildParams.buildNumber :>>`, buildParams.buildNumber);
+		buildAndDeploy(buildParams, deployParams);
+
+		const { appSlug, buildNumber } = buildParams;
+		const buildServerUrl = Config.BASE_URL;
+		const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
+		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}`;
+
+		// start build in background:
+		return { messages: [`Building...`], status: 1, data: { logURL } };
+	}
+
+	@Security("jwt")
+	@Post("/from-build")
+	async deployFromBuild(
 		@Body()
 		body: {
 			/**
-			 * Project's slug
+			 * Build's slug
 			 */
-			projectSlug: string;
-			/**
-			 * App's slug
-			 */
-			slug: string;
-			/**
-			 * @example "dev" | "prod"
-			 */
-			env?: string;
-			/**
-			 * CLI's version
-			 */
-			cliVersion?: string;
-			/**
-			 * Kubernetes Environment Variables in JSON Array
-			 * @example [ { "name": "TZ", "value": "Asia/Ho_Chi_Minh" } ]
-			 */
-			envVars?: string;
-		},
+			buildSlug: string;
+		} & DeployBuildOptions,
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		const { env, projectSlug, slug, envVars: envVarsStr, cliVersion } = body;
-		if (!projectSlug) return { status: 0, messages: [`Project "slug" is required`] };
-		if (!slug) return { status: 0, messages: [`App "slug" is required`] };
+		const { buildSlug } = body;
+		if (!buildSlug) return { status: 0, messages: [`Build "slug" is required`] };
 
-		const appSvc = new AppService();
-		const app = await appSvc.findOne({ slug }, { populate: ["workspace"] });
+		// DEPLOY A BUILD:
+		const result = await deployWithBuildSlug(buildSlug, body);
+		const { release } = result;
 
-		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
-
-		const appConfig = getAppConfigFromApp(app);
-
-		const envVars: KubeEnvironmentVariable[] = isJSON(envVarsStr) ? JSON.parse(envVarsStr) : [];
-
-		const params = {
-			projectSlug,
-			slug,
-			env,
-			envVars,
-			workspace: this.user?.activeWorkspace,
-			username: this.user?.slug,
-			workspaceId: app.workspace,
-			cliVersion,
-		} as DeployImageParams;
-
-		const result = await deployImage(params, appConfig, envVars);
-
-		if (!result) return { status: 0, messages: [`Failed to deploy from image URL.`] };
+		if (!release) return { status: 0, messages: [`Failed to deploy from a build (${buildSlug}).`] };
 
 		return { messages: [], status: 1, data: result };
 	}
+
+	// @Security("jwt")
+	// @Post("/from-image")
+	// async deployFromImage(
+	// 	@Body()
+	// 	body: {
+	// 		/**
+	// 		 * Project's slug
+	// 		 */
+	// 		projectSlug: string;
+	// 		/**
+	// 		 * App's slug
+	// 		 */
+	// 		slug: string;
+	// 		/**
+	// 		 * @example "dev" | "prod"
+	// 		 */
+	// 		env?: string;
+	// 		/**
+	// 		 * CLI's version
+	// 		 */
+	// 		cliVersion?: string;
+	// 		/**
+	// 		 * Kubernetes Environment Variables in JSON Array
+	// 		 * @example [ { "name": "TZ", "value": "Asia/Ho_Chi_Minh" } ]
+	// 		 */
+	// 		envVars?: string;
+	// 	},
+	// 	@Queries() queryParams?: IPostQueryParams
+	// ) {
+	// 	const { env, projectSlug, slug, envVars: envVarsStr, cliVersion } = body;
+	// 	if (!projectSlug) return { status: 0, messages: [`Project "slug" is required`] };
+	// 	if (!slug) return { status: 0, messages: [`App "slug" is required`] };
+
+	// 	const appSvc = new AppService();
+	// 	const app = await appSvc.findOne({ slug }, { populate: ["workspace"] });
+
+	// 	if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
+
+	// 	const appConfig = getAppConfigFromApp(app);
+
+	// 	const envVars: KubeEnvironmentVariable[] = isJSON(envVarsStr) ? JSON.parse(envVarsStr) : [];
+
+	// 	const params = {
+	// 		projectSlug,
+	// 		slug,
+	// 		env,
+	// 		envVars,
+	// 		workspace: this.user?.activeWorkspace,
+	// 		username: this.user?.slug,
+	// 		workspaceId: app.workspace,
+	// 		cliVersion,
+	// 	} as DeployImageParams;
+
+	// 	const result = await deployImage(params, appConfig, envVars);
+
+	// 	if (!result) return { status: 0, messages: [`Failed to deploy from image URL.`] };
+
+	// 	return { messages: [], status: 1, data: result };
+	// }
 }

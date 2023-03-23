@@ -1,14 +1,17 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
+import { Config } from "@/app.config";
 import type { Build } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
-import { stopBuild } from "@/modules/build";
+import { startBuild, StartBuildParams, stopBuild } from "@/modules/build";
 import { Logger } from "@/plugins";
 import BuildService from "@/services/BuildService";
 
 import BaseController from "./BaseController";
+
+type BuildData = Omit<Build, keyof HiddenBodyKeys>;
 
 @Tags("Build")
 @Route("build")
@@ -25,13 +28,13 @@ export default class BuildController extends BaseController<Build> {
 
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<Build, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: BuildData, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<Build, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: BuildData, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
@@ -75,6 +78,25 @@ export default class BuildController extends BaseController<Build> {
 
 		result.data = logs;
 		return result;
+	}
+
+	/**
+	 * Create a new {Build} instance, then start building container image.
+	 */
+	@Security("jwt")
+	@Post("/start")
+	async startBuild(@Body() body: StartBuildParams) {
+		// validate
+		const { appSlug, buildNumber } = body;
+
+		// start the build
+		startBuild(body);
+
+		const buildServerUrl = Config.BASE_URL;
+		const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
+		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}`;
+
+		return { status: 1, messages: [`Building...`], data: { logURL } } as ResponseData;
 	}
 
 	@Security("jwt")

@@ -11,7 +11,7 @@ import { execConfig, getCliConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
 import createApp from "@/modules/apps/new-app";
-import { startBuild } from "@/modules/build/start-build";
+import { startBuildV1 } from "@/modules/build/start-build";
 import { execCDN } from "@/modules/cdn";
 import { cliAuthenticate, cliLogin, cliLogout, parseCliOptions } from "@/modules/cli";
 import { execDatabase } from "@/modules/db";
@@ -194,7 +194,7 @@ export async function processCLI(options?: InputOptions) {
 			await cliAuthenticate(options);
 			options.isLocal = true;
 			await parseOptionsToAppConfig(options);
-			await startBuild(options, { shouldRollout: false });
+			await startBuildV1(options, { shouldRollout: false });
 			return;
 
 		case "run":

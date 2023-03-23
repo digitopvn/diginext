@@ -7,7 +7,7 @@ import type { SslIssuer } from "@/interfaces/SystemTypes";
 import { getAppConfig, resolveDockerfilePath, saveAppConfig } from "@/plugins";
 
 import { askForDomain } from "./ask-for-domain";
-import { startBuild } from "./start-build";
+import { startBuildV1 } from "./start-build";
 
 export const startBuildAndRun = async (options: InputOptions) => {
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
@@ -75,7 +75,7 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	options.buildNumber = makeDaySlug({ divider: "" }); // ! required
 	options.buildImage = `${imageURL}:${options.buildNumber}`; // ! required
 
-	const buildStatus = await startBuild(options, { shouldRollout: true });
+	const buildStatus = await startBuildV1(options, { shouldRollout: true });
 
 	return buildStatus;
 };

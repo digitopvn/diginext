@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { log, logError } from "diginext-utils/dist/console/log";
 
 import type { App, Build, Project } from "@/entities";
@@ -14,7 +15,11 @@ export async function updateBuildStatus(build: Build, status: BuildStatus) {
 	const appId = (build.app as any)?._id ? (build.app as any)._id : build.app;
 	log(`[START BUILD] updateBuildStatus > appId :>>`, appId);
 
-	const [updatedBuild] = await DB.update<Build>("build", { _id: build._id }, { status }, { populate: ["project"] });
+	const startTime = build.startTime ? dayjs(build.startTime) : undefined;
+	const endTime = status === "failed" || status === "success" ? new Date() : undefined;
+	const duration = endTime ? dayjs(endTime).diff(startTime, "millisecond") : undefined;
+
+	const [updatedBuild] = await DB.update<Build>("build", { _id: build._id }, { status, endTime, duration }, { populate: ["project"] });
 	if (!updatedBuild) {
 		logError(`[START BUILD] updateBuildStatus >> error!`);
 		return;
