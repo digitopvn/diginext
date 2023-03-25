@@ -35,13 +35,14 @@ services:
             - ./public:/usr/app/public
             - ./storage:/var/app/storage
         environment:
+            - DX_LICENSE_KEY= # <--- insert here
             - NODE_ENV=development
             - PORT=6969
             - BASE_URL=http://localhost:6969
             - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/digirelease?authSource=admin
             - CLI_MODE=server
             - BUILDER=podman # <---- select PODMAN as a main builder here
-            - JWT_SECRET=
+            - JWT_SECRET= # <--- insert here
             - JWT_EXPIRE_TIME=48h
-            - GOOGLE_CLIENT_ID=
-            - GOOGLE_CLIENT_SECRET=
+            - GOOGLE_CLIENT_ID= # <--- insert here
+            - GOOGLE_CLIENT_SECRET= # <--- insert here

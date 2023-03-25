@@ -1,6 +1,7 @@
-import { logWarn } from "diginext-utils/dist/console/log";
+import { logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
+import { isEmpty } from "lodash";
 
 import type InputOptions from "@/interfaces/InputOptions";
 import type { SslIssuer } from "@/interfaces/SystemTypes";
@@ -32,8 +33,15 @@ export async function execBuild(options: InputOptions) {
 		selectedSecretName;
 
 	// ask for generated domains:
-	domains = await askForDomain(env, project, slug, deployEnvironment);
-	if (domains.length < 1) {
+	try {
+		domains = await askForDomain(env, project, slug, deployEnvironment);
+	} catch (e) {
+		logError(`[EXEC_BUILD] ${e}`);
+		return;
+	}
+
+	if (isEmpty(domains)) {
+		domains = [];
 		logWarn(
 			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "dx.json" to expose this app to the internet anytime.`
 		);

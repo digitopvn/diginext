@@ -107,34 +107,17 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 	// Setup a domain for prerelease
 	if (env == "prod") {
-		const { status, domain } = await generateDomains({
+		const { status, domain, messages } = await generateDomains({
 			primaryDomain: DIGINEXT_DOMAIN,
 			subdomainName: prereleaseSubdomainName,
 			clusterShortName: deployEnvironmentConfig.cluster,
 		});
 		if (status === 0) {
-			throw new Error(`Can't create "prerelease" domain: ${domain}`);
+			throw new Error(`Can't create "prerelease" domain: ${domain} because "${messages.join(". ")}"`);
 		}
 		prereleaseDomain = domain;
 	}
 	if (env === "prod") log({ prereleaseDomain });
-
-	// ! Remove this ENV handling part (OLD TACTIC)
-	// Find the relevant ENV file:
-	// const currentEnvFile = resolveEnvFilePath({ targetDirectory: targetDirectory, env });
-
-	// let defaultEnvs: any = {};
-	// if (currentEnvFile) {
-	// 	defaultEnvs = dotenv.parse(fs.readFileSync(currentEnvFile));
-
-	// 	// Lấy BASE_PATH hoặc NEXT_PUBLIC_BASE_PATH từ user config ENV:
-	// 	basePath = typeof defaultEnvs.BASE_PATH == "undefined" ? basePath : defaultEnvs.BASE_PATH;
-	// 	basePath = trimFirstSlash(basePath);
-	// 	defaultEnvs.NODE_URL = BASE_URL;
-	// }
-
-	// convert ENV variables object to K8S environment:
-	// const containerEnvs = objectToKubeEnvVars(defaultEnvs);
 
 	// * [NEW TACTIC] Fetch ENV variables from database:
 	const app = await DB.findOne<App>("app", { slug });

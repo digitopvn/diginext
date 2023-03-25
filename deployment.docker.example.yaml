@@ -68,6 +68,8 @@ spec:
               value: # insert here
             - name: BUILDER
               value: docker
+            - name: DX_LICENSE_KEY
+              value: randomkey
           volumeMounts:
             # this is required for Docker but very dangerous !
             - name: docker-sock

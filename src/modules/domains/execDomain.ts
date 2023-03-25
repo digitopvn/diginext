@@ -1,9 +1,11 @@
-import { logError, logWarn } from "diginext-utils/dist/console/log";
+import { logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import yargs from "yargs";
 
 import type InputOptions from "@/interfaces/InputOptions";
 
-import { createRecordInDomain } from "../providers/digitalocean";
+import { createDiginextDomain } from "../diginext/dx-domain";
+
+const logTitle = `[EXEC_DOMAIN]`;
 
 export const execDomain = async (options?: InputOptions) => {
 	const { secondAction, name, input } = options;
@@ -14,14 +16,12 @@ export const execDomain = async (options?: InputOptions) => {
 		case "create":
 			if (!name) logError(`Subdomain "name" is required.`);
 			if (!input) logError(`Subdomain "input" data (IP address) is required.`);
-			try {
-				await createRecordInDomain({
-					name,
-					data: input,
-				});
-			} catch (e) {
-				logError(e);
+			const { status, messages, data } = await createDiginextDomain({ name, data: input });
+			if (status === 0) {
+				logError(logTitle, messages.join(". "));
+				return;
 			}
+			logSuccess(logTitle, `Created domain "${data.domain}" successfully.`);
 			break;
 
 		case "delete":

@@ -139,10 +139,11 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	// console.log("deployEnvironment.domains :>> ", deployEnvironment.domains);
 	if (isEmpty(localDeployDomains)) {
 		try {
-			localDeployEnvironment.domains = await askForDomain(env, project.slug, app.slug, localDeployEnvironment);
+			const domains = await askForDomain(env, project.slug, app.slug, localDeployEnvironment);
+			localDeployEnvironment.domains = isEmpty(domains) ? [] : domains;
 		} catch (e) {
-			logWarn(e);
-			localDeployEnvironment.domains = [];
+			logError(`[ASK_DEPLOY_INFO] ${e}`);
+			return;
 		}
 	} else {
 		// TODO: check for domain DNS ?

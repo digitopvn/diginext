@@ -1,0 +1,39 @@
+# =======================
+# ----- INSTRUCTION -----
+# =======================
+
+# 1. Generate one with: "openssl rand -base64 756 > storage/replica.key"
+# 2. Start the container by: "docker compose -f docker-compose.mongors.yaml up -d"
+# 3. After the container run the first time (AND ONLY THE FIRST TIME), exec in the container and run these commands:
+#   $ docker exec -it mongo bash
+#   $ mongosh mongodb://root:diginext@localhost:27017
+#   $ rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}]})
+#   Should receive: "{ ok: 1 }"
+# 4. Check the replica set status again:
+#   $ rs.status()
+# If everything's ok, you are good to go!
+
+# Connection URI: mongodb://root:diginext@localhost:27017/?authSource=admin&replicaSet=rs0
+
+version: '3.8'
+volumes:
+    home:
+    node:
+services:
+    mongo:
+        image: mongo
+        container_name: mongo
+        expose:
+            - 27017
+        ports:
+            - '27017:27017'
+        restart: always
+        environment:
+            - MONGO_USERNAME
+            - MONGO_PASSWORD
+            - MONGO_INITDB_ROOT_USERNAME=root
+            - MONGO_INITDB_ROOT_PASSWORD=diginext
+        volumes:
+            - ./storage/mongors:/data/db
+            - ./storage/replica.key:/data/replica.key
+        command: mongod --replSet rs0 --keyFile /data/replica.key

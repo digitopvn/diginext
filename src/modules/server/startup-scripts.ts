@@ -12,6 +12,7 @@ import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { generateSSH, sshKeysExisted, verifySSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
+import { seedSystemInitialData } from "@/seeds/seed-system";
 import { ClusterService, ContainerRegistryService, GitProviderService } from "@/services";
 
 /**
@@ -31,6 +32,9 @@ export async function startupScripts() {
 
 	const isSSHKeysExisted = await sshKeysExisted();
 	if (!isSSHKeysExisted) await generateSSH();
+
+	// seed system initial data
+	await seedSystemInitialData();
 
 	// connect git providers
 	const gitSvc = new GitProviderService();

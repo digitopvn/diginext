@@ -1,6 +1,7 @@
-import { logWarn } from "diginext-utils/dist/console/log";
+import { logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import inquirer from "inquirer";
+import { isEmpty } from "lodash";
 
 import type InputOptions from "@/interfaces/InputOptions";
 import type { SslIssuer } from "@/interfaces/SystemTypes";
@@ -26,8 +27,15 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	if (!dockerFile) return;
 
 	// ask for generated domains:
-	domains = await askForDomain(env, project, slug, deployEnvironment);
-	if (domains.length < 1) {
+	try {
+		domains = await askForDomain(env, project, slug, deployEnvironment);
+	} catch (e) {
+		logError(`[BUILD_AND_RUN] ${e}`);
+		return;
+	}
+
+	if (isEmpty(domains)) {
+		domains = [];
 		logWarn(
 			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "dx.json" to expose this app to the internet anytime.`
 		);
