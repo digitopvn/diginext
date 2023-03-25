@@ -1,13 +1,14 @@
-import { logWarn } from "diginext-utils/dist/console/log";
+import { logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
+import { isEmpty } from "lodash";
 
 import type InputOptions from "@/interfaces/InputOptions";
 import type { SslIssuer } from "@/interfaces/SystemTypes";
 
 import { getAppConfig, resolveDockerfilePath, saveAppConfig } from "../../plugins/utils";
 import { askForDomain } from "./ask-for-domain";
-import { startBuild } from "./start-build";
+import { startBuildV1 } from "./start-build";
 
 /**
  * This command allow you to build & deploy your application directly from your machine, without requesting to the build server.
@@ -32,8 +33,15 @@ export async function execBuild(options: InputOptions) {
 		selectedSecretName;
 
 	// ask for generated domains:
-	domains = await askForDomain(env, project, slug, deployEnvironment);
-	if (domains.length < 1) {
+	try {
+		domains = await askForDomain(env, project, slug, deployEnvironment);
+	} catch (e) {
+		logError(`[EXEC_BUILD] ${e}`);
+		return;
+	}
+
+	if (isEmpty(domains)) {
+		domains = [];
 		logWarn(
 			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "dx.json" to expose this app to the internet anytime.`
 		);
@@ -71,6 +79,6 @@ export async function execBuild(options: InputOptions) {
 	saveAppConfig(appConfig, { directory: targetDirectory });
 
 	// request build server to build & deploy:
-	const buildStatus = await startBuild(options);
+	const buildStatus = await startBuildV1(options);
 	return buildStatus;
 }

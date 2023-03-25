@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import inquirer from "inquirer";
 
@@ -35,15 +35,16 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 		});
 
 		if (useGeneratedDomain) {
-			const { status, ip } = await generateDomains({
+			const { status, ip, domain, messages } = await generateDomains({
 				primaryDomain: DIGINEXT_DOMAIN,
 				subdomainName,
 				clusterShortName,
 			});
-			if (status === 0) {
-				logError(`Can't generate this domain (${generatedDomain}).`);
-				return;
-			}
+
+			if (status === 0) throw new Error(messages.join("."));
+
+			// in case the domain was existed, it will automatically generate a new one
+			generatedDomain = domain;
 
 			// save app config:
 			if (!deployEnvironment.domains) deployEnvironment.domains = [];

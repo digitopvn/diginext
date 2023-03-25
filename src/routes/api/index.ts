@@ -9,7 +9,7 @@ import pkg from "@/../package.json";
 import { Config } from "@/app.config";
 import { sendLog } from "@/modules/build";
 import { testBuild } from "@/modules/build/build";
-import { startBuild } from "@/modules/build/start-build";
+import { startBuildV1 } from "@/modules/build/start-build";
 import { execCmd } from "@/plugins";
 // import userRouter from "./user";
 
@@ -88,7 +88,6 @@ if (CLI_MODE == "server") {
 		res.status(200).json(result);
 	});
 
-	// TODO: Convert this API route to controller
 	router.post("/deploy", (req, res) => {
 		const { options } = req.body;
 
@@ -111,7 +110,7 @@ if (CLI_MODE == "server") {
 			});
 
 		// start build in background:
-		startBuild(cliOptions);
+		startBuildV1(cliOptions);
 
 		res.status(200).json({ status: 1 });
 	});

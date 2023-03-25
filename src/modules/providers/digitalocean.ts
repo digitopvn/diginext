@@ -1,7 +1,7 @@
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
 import chalk from "chalk";
-import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import execa from "execa";
 import inquirer from "inquirer";
 import yaml from "js-yaml";
@@ -9,7 +9,6 @@ import { isEmpty } from "lodash";
 import yargs from "yargs";
 
 import { Config } from "@/app.config";
-import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
@@ -88,85 +87,69 @@ export const authenticate = async (options?: InputOptions) => {
 		}
 	}
 
-	// Save this cloud provider to database
-	if (!provider) {
-		const data = {
-			name: "Digital Ocean",
-			shortName: "digitalocean",
-			apiAccessToken: API_ACCESS_TOKEN,
-			owner: options.userId,
-			workspace: options.workspaceId,
-		};
-
-		// create new cloud provider if not existed
-		const newProvider = await DB.create<CloudProvider>("provider", data);
-		if (!newProvider) logError(`Can't create new cloud provider "digitalocean".`);
-	}
-
 	return true;
 };
 
 export const createRecordInDomain = async (input: DomainRecord) => {
-	const { name, data, type = "A" } = input;
+	logError(`[DO] createRecordInDomain() > This function is deprecated.`);
+	return;
+	// const { name, data, type = "A" } = input;
 
-	const domain = `${name}.${DIGINEXT_DOMAIN}`;
-	let record: DomainRecord;
+	// const domain = `${name}.${DIGINEXT_DOMAIN}`;
+	// let record: DomainRecord;
 
-	try {
-		// get "access_token" from "Digital Ocean" cloud provider
-		const doProvider = await DB.findOne<CloudProvider>("provider", { shortName: "digitalocean" });
-		if (!doProvider) {
-			logError(`Can't get cloud provider (Digital Ocean).`);
-			return;
-		}
+	// try {
+	// 	// get "access_token" from "Digital Ocean" cloud provider
+	// 	const doProvider = await DB.findOne<CloudProvider>("provider", { shortName: "digitalocean" });
+	// 	if (!doProvider) {
+	// 		logError(`Can't get cloud provider (Digital Ocean).`);
+	// 		return;
+	// 	}
 
-		const { apiAccessToken: access_token } = doProvider;
+	// 	const { apiAccessToken: access_token } = doProvider;
 
-		// log(`doProvider :>>`, doProvider);
-		// log(`createRecordInDomain > apiAccessToken :>>`, access_token);
+	// 	// check if this record existed
+	// 	const { domain_records } = await doApi({
+	// 		url: `/domains/${DIGINEXT_DOMAIN}/records?name=${domain}`,
+	// 		access_token,
+	// 	});
 
-		// check if this record existed
-		const { domain_records } = await doApi({
-			url: `/domains/${DIGINEXT_DOMAIN}/records?name=${domain}`,
-			access_token,
-		});
+	// 	const printSuccess = () => logSuccess(`Created the domain "${domain}" successfully.`);
 
-		const printSuccess = () => logSuccess(`Created the domain "${domain}" successfully.`);
+	// 	// if it's existed -> check if the "data" is different:
+	// 	if (domain_records && domain_records.length > 0) {
+	// 		record = domain_records[0];
 
-		// if it's existed -> check if the "data" is different:
-		if (domain_records && domain_records.length > 0) {
-			record = domain_records[0];
-
-			// if the "data" is different -> update new data:
-			if (record.data != data) {
-				logWarn(`This domain name is existed & will be overrided.`);
-				const { domain_record } = await doApi({
-					url: `/domains/${DIGINEXT_DOMAIN}/records/${record.id}`,
-					method: "PATCH",
-					data: { data },
-					access_token,
-				});
-				printSuccess();
-				return { status: 1, domain, domain_record };
-			} else {
-				printSuccess();
-				return { status: 1, domain, domain_record: record };
-			}
-		} else {
-			// if the record is not existed -> create new record:
-			const { domain_record } = await doApi({
-				method: "POST",
-				url: `/domains/${DIGINEXT_DOMAIN}/records`,
-				data: JSON.stringify({ name, data, type }),
-				access_token,
-			});
-			printSuccess();
-			return { status: 1, domain, domain_record };
-		}
-	} catch (e) {
-		logError(e);
-		return { status: 0, domain, domain_record: null };
-	}
+	// 		// if the "data" is different -> update new data:
+	// 		if (record.data != data) {
+	// 			logWarn(`This domain name is existed & will be overrided.`);
+	// 			const { domain_record } = await doApi({
+	// 				url: `/domains/${DIGINEXT_DOMAIN}/records/${record.id}`,
+	// 				method: "PATCH",
+	// 				data: { data },
+	// 				access_token,
+	// 			});
+	// 			printSuccess();
+	// 			return { status: 1, domain, domain_record };
+	// 		} else {
+	// 			printSuccess();
+	// 			return { status: 1, domain, domain_record: record };
+	// 		}
+	// 	} else {
+	// 		// if the record is not existed -> create new record:
+	// 		const { domain_record } = await doApi({
+	// 			method: "POST",
+	// 			url: `/domains/${DIGINEXT_DOMAIN}/records`,
+	// 			data: JSON.stringify({ name, data, type }),
+	// 			access_token,
+	// 		});
+	// 		printSuccess();
+	// 		return { status: 1, domain, domain_record };
+	// 	}
+	// } catch (e) {
+	// 	logError(e);
+	// 	return { status: 0, domain, domain_record: null };
+	// }
 };
 
 /**

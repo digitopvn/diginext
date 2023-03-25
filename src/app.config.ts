@@ -97,6 +97,18 @@ export class Config {
 		return process.env.CLI_MODE || "client";
 	}
 
+	static get DX_API_URL() {
+		return process.env.DX_API_URL
+			? process.env.DX_API_URL
+			: Config.ENV === "production"
+			? "https://diginext.site/api"
+			: "https://diginext-website.dev.diginext.site/api";
+	}
+
+	static get DX_LICENSE_KEY() {
+		return process.env.DX_LICENSE_KEY;
+	}
+
 	static get BUILDER() {
 		return process.env.BUILDER || "podman";
 	}

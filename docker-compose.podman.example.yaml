@@ -53,7 +53,7 @@ services:
             # HOST:CONTAINER
             - ./storage:/var/app/storage
         environment:
-            - TZ=Asia/Ho_Chi_Minh
+            - DX_LICENSE_KEY= # <--- insert here
             - NODE_ENV=production
             - PORT=6969
             - BASE_URL=http://localhost:6969

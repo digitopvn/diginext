@@ -43,22 +43,9 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"KubeEnvironmentVariable": {
-				"properties": {
-					"name": {
-						"type": "string"
-					},
-					"value": {
-						"type": "string"
-					}
-				},
-				"required": ["name", "value"],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"ObjectId": {
+			"RegistryProviderType": {
 				"type": "string",
-				"description": "A class representation of the BSON ObjectId type."
+				"enum": ["gcloud", "digitalocean", "dockerhub"]
 			},
 			"ProviderInfo": {
 				"properties": {
@@ -259,6 +246,363 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"KubeEnvironmentVariable": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": ["name", "value"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ObjectId": {
+				"type": "string",
+				"description": "A class representation of the BSON ObjectId type."
+			},
+			"ResourceQuotaSize": {
+				"type": "string",
+				"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"]
+			},
+			"SslType": {
+				"type": "string",
+				"enum": ["none", "letsencrypt", "custom"],
+				"default": "\"letsencrypt\""
+			},
+			"DeployEnvironment": {
+				"description": "A deployment's environment of the application.",
+				"properties": {
+					"imageURL": {
+						"type": "string",
+						"description": "Image URI of this app on the Container Registry.\n- Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`\n- If you build from the source code, don't specify `tag` at the end! (eg. `latest`, `beta`,...)"
+					},
+					"namespace": {
+						"type": "string",
+						"description": "Destination namespace name"
+					},
+					"registry": {
+						"type": "string",
+						"description": "Container registry slug"
+					},
+					"provider": {
+						"type": "string",
+						"description": "Cloud provider's short name"
+					},
+					"cluster": {
+						"type": "string",
+						"description": "Cluster's short name"
+					},
+					"project": {
+						"type": "string",
+						"description": "[Google Cloud] PROJECT_ID"
+					},
+					"region": {
+						"type": "string",
+						"description": "[Google Cloud] Region"
+					},
+					"zone": {
+						"type": "string",
+						"description": "[Google Cloud] Zone"
+					},
+					"size": {
+						"$ref": "#/components/schemas/ResourceQuotaSize",
+						"description": "Container quota resources"
+					},
+					"shouldInherit": {
+						"type": "boolean",
+						"description": "Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment",
+						"default": "true"
+					},
+					"redirect": {
+						"type": "boolean",
+						"description": "Set to `false` if you don't want to redirect all the secondary domains to the primary domain.",
+						"default": "true"
+					},
+					"replicas": {
+						"type": "number",
+						"format": "double",
+						"description": "Container's scaling replicas",
+						"default": "1"
+					},
+					"port": {
+						"type": "number",
+						"format": "double",
+						"description": "Container's port"
+					},
+					"basePath": {
+						"type": "string",
+						"description": "Application base path in the endpoint URL",
+						"default": "\"/\""
+					},
+					"domains": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "List of application's domains"
+					},
+					"cdn": {
+						"type": "boolean",
+						"description": "Flag to enable CDN for this application",
+						"default": "false;"
+					},
+					"ssl": {
+						"$ref": "#/components/schemas/SslType",
+						"description": "SSL Certificate Issuer"
+					},
+					"tlsSecret": {
+						"type": "string",
+						"description": "Secret name to hold the key of SSL, will be automatically generated.\nOnly need to specify when using \"custom\" SSL (which is the SSL from third-party issuer)"
+					},
+					"ingress": {
+						"type": "string",
+						"description": "Kubernetes Ingress Class"
+					},
+					"cliVersion": {
+						"type": "string",
+						"description": "The CLI version"
+					},
+					"namespaceYaml": {
+						"type": "string",
+						"description": "Content of namespace YAML file"
+					},
+					"deploymentYaml": {
+						"type": "string",
+						"description": "Content of deployment YAML file"
+					},
+					"prereleaseDeploymentYaml": {
+						"type": "string",
+						"description": "Content of prerelease deployment YAML file"
+					},
+					"prereleaseUrl": {
+						"type": "string",
+						"description": "Prerelease endpoint URL"
+					},
+					"envVars": {
+						"items": {
+							"$ref": "#/components/schemas/KubeEnvironmentVariable"
+						},
+						"type": "array",
+						"description": "Collection array of environment variables"
+					},
+					"createdBy": {
+						"type": "string",
+						"description": "User name of the first person who deploy on this environment."
+					},
+					"lastUpdatedBy": {
+						"type": "string",
+						"description": "User name of the last person who deploy or update this environment."
+					},
+					"creator": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							}
+						],
+						"description": "ID of the creator"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Update time"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Project": {
+				"description": "Projects",
+				"properties": {
+					"_id": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
+					},
+					"active": {
+						"type": "boolean",
+						"description": "Auto-generated by \"name\" column"
+					},
+					"metadata": {
+						"description": "Auto-generated by entity's columns\nEntity's metadata without unicode characters"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"name": {
+						"type": "string"
+					},
+					"image": {
+						"type": "string"
+					},
+					"apiKey": {
+						"type": "string"
+					},
+					"clientId": {
+						"type": "string"
+					},
+					"clientSecret": {
+						"type": "string"
+					},
+					"createdBy": {
+						"type": "string"
+					},
+					"lastUpdatedBy": {
+						"type": "string"
+					},
+					"latestBuild": {
+						"type": "string"
+					},
+					"appSlugs": {
+						"type": "string"
+					},
+					"apps": {
+						"anyOf": [
+							{
+								"items": {
+									"$ref": "#/components/schemas/ObjectID"
+								},
+								"type": "array"
+							},
+							{
+								"items": {
+									"$ref": "#/components/schemas/App"
+								},
+								"type": "array"
+							},
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							}
+						],
+						"description": "List of App IDs"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
+					},
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the workspace"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Workspace": {
+				"properties": {
+					"_id": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"slug": {
+						"type": "string",
+						"description": "Workspace slug: auto-generated by \"name\" column"
+					},
+					"active": {
+						"type": "boolean",
+						"description": "Auto-generated by \"name\" column"
+					},
+					"metadata": {
+						"description": "Auto-generated by entity's columns\nEntity's metadata without unicode characters"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"name": {
+						"type": "string",
+						"description": "Workspace name"
+					},
+					"public": {
+						"type": "boolean",
+						"description": "Is this a `public` workspace that anyone can join, otherwise it's a `private` workspace that needs approval on joining request."
+					},
+					"image": {
+						"type": "string",
+						"description": "Workspace profile picture"
+					},
+					"domain": {
+						"type": "string",
+						"description": "Workspace domain name"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
 			"App": {
 				"properties": {
 					"_id": {
@@ -405,193 +749,6 @@
 							}
 						],
 						"description": "Workspace ID of the app"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
-			},
-			"Workspace": {
-				"properties": {
-					"_id": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"type": "string"
-							}
-						]
-					},
-					"slug": {
-						"type": "string",
-						"description": "Workspace slug: auto-generated by \"name\" column"
-					},
-					"active": {
-						"type": "boolean",
-						"description": "Auto-generated by \"name\" column"
-					},
-					"metadata": {
-						"description": "Auto-generated by entity's columns\nEntity's metadata without unicode characters"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"deletedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"name": {
-						"type": "string",
-						"description": "Workspace name"
-					},
-					"public": {
-						"type": "boolean",
-						"description": "Is this a `public` workspace that anyone can join, otherwise it's a `private` workspace that needs approval on joining request."
-					},
-					"image": {
-						"type": "string",
-						"description": "Workspace profile picture"
-					},
-					"domain": {
-						"type": "string",
-						"description": "Workspace domain name"
-					},
-					"owner": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/User"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "User ID of the owner"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
-			},
-			"Project": {
-				"description": "Projects",
-				"properties": {
-					"_id": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"type": "string"
-							}
-						]
-					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
-					"active": {
-						"type": "boolean",
-						"description": "Auto-generated by \"name\" column"
-					},
-					"metadata": {
-						"description": "Auto-generated by entity's columns\nEntity's metadata without unicode characters"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"deletedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"name": {
-						"type": "string"
-					},
-					"image": {
-						"type": "string"
-					},
-					"apiKey": {
-						"type": "string"
-					},
-					"clientId": {
-						"type": "string"
-					},
-					"clientSecret": {
-						"type": "string"
-					},
-					"createdBy": {
-						"type": "string"
-					},
-					"lastUpdatedBy": {
-						"type": "string"
-					},
-					"latestBuild": {
-						"type": "string"
-					},
-					"appSlugs": {
-						"type": "string"
-					},
-					"apps": {
-						"anyOf": [
-							{
-								"items": {
-									"$ref": "#/components/schemas/ObjectID"
-								},
-								"type": "array"
-							},
-							{
-								"items": {
-									"$ref": "#/components/schemas/App"
-								},
-								"type": "array"
-							},
-							{
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							}
-						],
-						"description": "List of App IDs"
-					},
-					"owner": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/User"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "User ID of the owner"
-					},
-					"workspace": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/Workspace"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "ID of the workspace"
 					}
 				},
 				"type": "object",
@@ -775,154 +932,105 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ResourceQuotaSize": {
-				"type": "string",
-				"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"]
-			},
-			"SslType": {
-				"type": "string",
-				"enum": ["none", "letsencrypt", "custom"],
-				"default": "\"letsencrypt\""
-			},
-			"DeployEnvironment": {
-				"description": "A deployment's environment of the application.",
+			"ContainerRegistry": {
 				"properties": {
-					"imageURL": {
-						"type": "string",
-						"description": "Image URI of this app on the Container Registry.\n- Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`\n- If you build from the source code, don't specify `tag` at the end! (eg. `latest`, `beta`,...)"
-					},
-					"namespace": {
-						"type": "string",
-						"description": "Destination namespace name"
-					},
-					"registry": {
-						"type": "string",
-						"description": "Container registry slug"
-					},
-					"provider": {
-						"type": "string",
-						"description": "Cloud provider's short name"
-					},
-					"cluster": {
-						"type": "string",
-						"description": "Cluster's short name"
-					},
-					"project": {
-						"type": "string",
-						"description": "[Google Cloud] PROJECT_ID"
-					},
-					"region": {
-						"type": "string",
-						"description": "[Google Cloud] Region"
-					},
-					"zone": {
-						"type": "string",
-						"description": "[Google Cloud] Zone"
-					},
-					"size": {
-						"$ref": "#/components/schemas/ResourceQuotaSize",
-						"description": "Container quota resources"
-					},
-					"shouldInherit": {
-						"type": "boolean",
-						"description": "Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment",
-						"default": "true"
-					},
-					"redirect": {
-						"type": "boolean",
-						"description": "Set to `false` if you don't want to redirect all the secondary domains to the primary domain.",
-						"default": "true"
-					},
-					"replicas": {
-						"type": "number",
-						"format": "double",
-						"description": "Container's scaling replicas",
-						"default": "1"
-					},
-					"port": {
-						"type": "number",
-						"format": "double",
-						"description": "Container's port"
-					},
-					"basePath": {
-						"type": "string",
-						"description": "Application base path in the endpoint URL",
-						"default": "\"/\""
-					},
-					"domains": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "List of application's domains"
-					},
-					"cdn": {
-						"type": "boolean",
-						"description": "Flag to enable CDN for this application",
-						"default": "false;"
-					},
-					"ssl": {
-						"$ref": "#/components/schemas/SslType",
-						"description": "SSL Certificate Issuer"
-					},
-					"tlsSecret": {
-						"type": "string",
-						"description": "Secret name to hold the key of SSL, will be automatically generated.\nOnly need to specify when using \"custom\" SSL (which is the SSL from third-party issuer)"
-					},
-					"ingress": {
-						"type": "string",
-						"description": "Kubernetes Ingress Class"
-					},
-					"cliVersion": {
-						"type": "string",
-						"description": "The CLI version"
-					},
-					"namespaceYaml": {
-						"type": "string",
-						"description": "Content of namespace YAML file"
-					},
-					"deploymentYaml": {
-						"type": "string",
-						"description": "Content of deployment YAML file"
-					},
-					"prereleaseDeploymentYaml": {
-						"type": "string",
-						"description": "Content of prerelease deployment YAML file"
-					},
-					"prereleaseUrl": {
-						"type": "string",
-						"description": "Prerelease endpoint URL"
-					},
-					"envVars": {
-						"items": {
-							"$ref": "#/components/schemas/KubeEnvironmentVariable"
-						},
-						"type": "array",
-						"description": "Collection array of environment variables"
-					},
-					"createdBy": {
-						"type": "string",
-						"description": "User name of the first person who deploy on this environment."
-					},
-					"lastUpdatedBy": {
-						"type": "string",
-						"description": "User name of the last person who deploy or update this environment."
-					},
-					"creator": {
+					"_id": {
 						"anyOf": [
 							{
-								"$ref": "#/components/schemas/ObjectId"
+								"$ref": "#/components/schemas/ObjectID"
 							},
 							{
-								"$ref": "#/components/schemas/User"
+								"type": "string"
 							}
-						],
-						"description": "ID of the creator"
+						]
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
+					},
+					"active": {
+						"type": "boolean",
+						"description": "Auto-generated by \"name\" column"
+					},
+					"metadata": {
+						"description": "Auto-generated by entity's columns\nEntity's metadata without unicode characters"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"updatedAt": {
 						"type": "string",
-						"format": "date-time",
-						"description": "Update time"
+						"format": "date-time"
+					},
+					"name": {
+						"type": "string"
+					},
+					"isVerified": {
+						"type": "boolean"
+					},
+					"host": {
+						"type": "string",
+						"description": "The host (domain) of your container registry which you are using."
+					},
+					"imageBaseURL": {
+						"type": "string",
+						"description": "Base URL of the image, usually is the registry host URI combines with something else.\n- This will be used to combine with your project/app image path."
+					},
+					"provider": {
+						"$ref": "#/components/schemas/RegistryProviderType",
+						"description": "Provider's \"shortName\""
+					},
+					"serviceAccount": {
+						"type": "string",
+						"description": "Content of the Service Account credentials ti access services on this cloud provider\n- Apply for: Google Cloud, AWS,...\n- For example: Kubernetes Clusters, Single Sign-On,..."
+					},
+					"apiAccessToken": {
+						"type": "string",
+						"description": "Content of the API access token to use services on this cloud provider\n- Apply for: Digital Ocean"
+					},
+					"imagePullSecret": {
+						"properties": {
+							"value": {
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
+					},
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the workspace"
 					}
 				},
 				"type": "object",
@@ -970,13 +1078,31 @@
 						"type": "string"
 					},
 					"tag": {
-						"type": "string"
+						"type": "string",
+						"description": "Image tag is also \"buildNumber\""
+					},
+					"startTime": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Build start time"
+					},
+					"endTime": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Build end time"
+					},
+					"duration": {
+						"type": "number",
+						"format": "double",
+						"description": "Build duration in miliseconds"
 					},
 					"env": {
-						"type": "string"
+						"type": "string",
+						"description": "Build for which deploy environment\n- **[OPTIONAL] SHOULD NOT rely on this!**\n- A build should be able to used for any deploy environments."
 					},
 					"branch": {
-						"type": "string"
+						"type": "string",
+						"description": "Build from which git branch"
 					},
 					"cliVersion": {
 						"type": "string"
@@ -995,6 +1121,20 @@
 					},
 					"logs": {
 						"type": "string"
+					},
+					"registry": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/ContainerRegistry"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the container registry"
 					},
 					"app": {
 						"anyOf": [
@@ -1148,17 +1288,31 @@
 						"type": "string"
 					},
 					"tag": {
-						"type": "string"
-					},
-					"slug": {
 						"type": "string",
-						"description": "Auto-generated by \"name\" column"
+						"description": "Image tag is also \"buildNumber\""
+					},
+					"startTime": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Build start time"
+					},
+					"endTime": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Build end time"
+					},
+					"duration": {
+						"type": "number",
+						"format": "double",
+						"description": "Build duration in miliseconds"
 					},
 					"env": {
-						"type": "string"
+						"type": "string",
+						"description": "Build for which deploy environment\n- **[OPTIONAL] SHOULD NOT rely on this!**\n- A build should be able to used for any deploy environments."
 					},
 					"branch": {
-						"type": "string"
+						"type": "string",
+						"description": "Build from which git branch"
 					},
 					"cliVersion": {
 						"type": "string"
@@ -1177,6 +1331,20 @@
 					},
 					"logs": {
 						"type": "string"
+					},
+					"registry": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/ContainerRegistry"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the container registry"
 					},
 					"owner": {
 						"anyOf": [
@@ -1206,6 +1374,10 @@
 						],
 						"description": "ID of the project"
 					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
+					},
 					"active": {
 						"type": "boolean",
 						"description": "Auto-generated by \"name\" column"
@@ -1217,6 +1389,9 @@
 			"Omit_Build.keyofHiddenBodyKeys_": {
 				"$ref": "#/components/schemas/Pick_Build.Exclude_keyofBuild.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"BuildData": {
+				"$ref": "#/components/schemas/Omit_Build.keyofHiddenBodyKeys_"
 			},
 			"IPostQueryParams": {
 				"properties": {
@@ -1254,9 +1429,51 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"StartBuildParams": {
+				"properties": {
+					"isDebugging": {
+						"type": "boolean",
+						"default": "false"
+					},
+					"cliVersion": {
+						"type": "string",
+						"description": "Diginext CLI version of client user"
+					},
+					"buildDir": {
+						"type": "string",
+						"description": "Path to the source code directory\n* [OPTIONAL] Only apply for CLI command, has no effects on API call"
+					},
+					"env": {
+						"type": "string",
+						"description": "Select the deploy environment to build image, in this case, this info is using for selecting \"Dockerfile\"\nof specific deploy environment only, for example: \"Dockerfile.dev\" or \"Dockerfile.prod\",\nif you don't specify \"env\", a default \"Dockerfile\" will be selected.\n- **[OPTIONAL] SHOULD NOT rely on this!**\n- A build should be able to used for any deploy environments."
+					},
+					"registrySlug": {
+						"type": "string",
+						"description": "Slug of the Container Registry"
+					},
+					"userId": {
+						"type": "string",
+						"description": "ID of the author"
+					},
+					"gitBranch": {
+						"type": "string",
+						"description": "Select a git branch to pull source code & build"
+					},
+					"buildNumber": {
+						"type": "string",
+						"description": "Build number is also an container image's tag"
+					},
+					"appSlug": {
+						"type": "string",
+						"description": "App's slug"
+					}
+				},
+				"required": ["registrySlug", "userId", "gitBranch", "buildNumber", "appSlug"],
+				"type": "object"
+			},
 			"CloudProviderType": {
 				"type": "string",
-				"enum": ["custom", "gcloud", "digitalocean"]
+				"enum": ["gcloud", "digitalocean", "custom"]
 			},
 			"Cluster": {
 				"properties": {
@@ -1515,10 +1732,6 @@
 						"type": "string",
 						"description": "Cluster name"
 					},
-					"slug": {
-						"type": "string",
-						"description": "Cluster slug"
-					},
 					"owner": {
 						"anyOf": [
 							{
@@ -1532,6 +1745,10 @@
 							}
 						],
 						"description": "User ID of the owner"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Cluster slug"
 					},
 					"active": {
 						"type": "boolean",
@@ -2274,6 +2491,24 @@
 				"type": "object",
 				"description": "Các giá trị đầu vào của CLI"
 			},
+			"DeployBuildInput": {
+				"properties": {
+					"shouldUseFreshDeploy": {
+						"type": "boolean",
+						"description": "[DANGER]\n---\nShould delete old deployment and deploy a new one from scratch"
+					},
+					"author": {
+						"type": "string",
+						"description": "User ID of the author"
+					},
+					"env": {
+						"type": "string",
+						"description": "Deploy environment"
+					}
+				},
+				"required": ["author", "env"],
+				"type": "object"
+			},
 			"ClientDeployEnvironmentConfig": {
 				"properties": {
 					"imageURL": {
@@ -2623,6 +2858,322 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"KubeNamespace": {
+				"properties": {
+					"apiVersion": {
+						"type": "string"
+					},
+					"kind": {
+						"type": "string",
+						"enum": ["Namespace"],
+						"nullable": false
+					},
+					"metadata": {
+						"properties": {
+							"creationTimestamp": {
+								"type": "string"
+							},
+							"labels": {
+								"properties": {},
+								"additionalProperties": {
+									"type": "string"
+								},
+								"type": "object"
+							},
+							"namespace": {
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							}
+						},
+						"required": ["labels"],
+						"type": "object"
+					},
+					"spec": {
+						"properties": {
+							"finalizers": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							}
+						},
+						"type": "object"
+					},
+					"status": {
+						"properties": {
+							"phase": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"IResourceQuota": {
+				"properties": {
+					"limits": {
+						"properties": {
+							"memory": {
+								"type": "string"
+							},
+							"cpu": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"requests": {
+						"properties": {
+							"memory": {
+								"type": "string"
+							},
+							"cpu": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"KubeDeployment": {
+				"properties": {
+					"apiVersion": {
+						"type": "string"
+					},
+					"kind": {
+						"type": "string"
+					},
+					"metadata": {
+						"properties": {
+							"labels": {
+								"properties": {},
+								"additionalProperties": {
+									"type": "string"
+								},
+								"type": "object"
+							},
+							"namespace": {
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							}
+						},
+						"required": ["labels"],
+						"type": "object"
+					},
+					"spec": {
+						"properties": {
+							"template": {
+								"properties": {
+									"spec": {
+										"properties": {
+											"imagePullSecrets": {
+												"items": {
+													"properties": {
+														"name": {
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"type": "array"
+											},
+											"containers": {
+												"items": {
+													"properties": {
+														"env": {
+															"items": {
+																"properties": {
+																	"value": {},
+																	"name": {
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"type": "array"
+														},
+														"resources": {
+															"$ref": "#/components/schemas/IResourceQuota"
+														},
+														"ports": {
+															"items": {
+																"properties": {
+																	"containerPort": {
+																		"type": "number",
+																		"format": "double"
+																	}
+																},
+																"type": "object"
+															},
+															"type": "array"
+														},
+														"image": {
+															"type": "string"
+														},
+														"name": {
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"type": "array"
+											}
+										},
+										"type": "object"
+									},
+									"metadata": {
+										"properties": {
+											"labels": {
+												"properties": {
+													"project": {
+														"type": "string"
+													},
+													"app": {
+														"type": "string"
+													},
+													"owner": {
+														"type": "string"
+													}
+												},
+												"type": "object"
+											}
+										},
+										"type": "object"
+									}
+								},
+								"type": "object"
+							},
+							"selector": {
+								"properties": {
+									"matchLabels": {
+										"properties": {
+											"app": {
+												"type": "string"
+											}
+										},
+										"type": "object"
+									}
+								},
+								"type": "object"
+							},
+							"replicas": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"type": "object"
+					},
+					"status": {
+						"properties": {
+							"updatedReplicas": {
+								"type": "number",
+								"format": "double"
+							},
+							"replicas": {
+								"type": "number",
+								"format": "double"
+							},
+							"readyReplicas": {
+								"type": "number",
+								"format": "double"
+							},
+							"observedGeneration": {
+								"type": "number",
+								"format": "double"
+							},
+							"conditions": {
+								"items": {
+									"properties": {
+										"type": {
+											"type": "string"
+										},
+										"status": {
+											"type": "string"
+										},
+										"reason": {
+											"type": "string"
+										},
+										"message": {
+											"type": "string"
+										},
+										"lastUpdateTime": {
+											"type": "string"
+										},
+										"lastTransitionTime": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"availableReplicas": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"type": "object"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GenerateDeploymentResult": {
+				"properties": {
+					"prereleaseUrl": {
+						"type": "string"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"IMAGE_NAME": {
+						"type": "string"
+					},
+					"BUILD_NUMBER": {
+						"type": "string"
+					},
+					"prereleaseDeploymentContent": {
+						"type": "string"
+					},
+					"prereleaseYamlObject": {
+						"items": {},
+						"type": "array"
+					},
+					"deploymentCfg": {
+						"$ref": "#/components/schemas/KubeDeployment"
+					},
+					"deploymentContent": {
+						"type": "string"
+					},
+					"namespaceObject": {
+						"$ref": "#/components/schemas/KubeNamespace"
+					},
+					"namespaceContent": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"prereleaseUrl",
+					"endpoint",
+					"IMAGE_NAME",
+					"BUILD_NUMBER",
+					"prereleaseDeploymentContent",
+					"prereleaseYamlObject",
+					"deploymentCfg",
+					"deploymentContent",
+					"namespaceObject",
+					"namespaceContent"
+				],
+				"type": "object"
+			},
 			"Pick_Framework.Exclude_keyofFramework.keyofHiddenBodyKeys__": {
 				"properties": {
 					"workspace": {
@@ -2641,10 +3192,6 @@
 					},
 					"name": {
 						"type": "string"
-					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
 					},
 					"owner": {
 						"anyOf": [
@@ -2673,6 +3220,10 @@
 							}
 						],
 						"description": "ID of the project"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
 					},
 					"active": {
 						"type": "boolean",
@@ -2741,10 +3292,6 @@
 					"name": {
 						"type": "string"
 					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
 					"owner": {
 						"anyOf": [
 							{
@@ -2772,6 +3319,10 @@
 							}
 						],
 						"description": "ID of the project"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
 					},
 					"active": {
 						"type": "boolean",
@@ -2827,10 +3378,6 @@
 					"image": {
 						"type": "string"
 					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
 					"createdBy": {
 						"type": "string"
 					},
@@ -2847,6 +3394,10 @@
 							}
 						],
 						"description": "User ID of the owner"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
 					},
 					"active": {
 						"type": "boolean",
@@ -2921,10 +3472,6 @@
 						"type": "string",
 						"description": "Cloud provider name"
 					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
 					"owner": {
 						"anyOf": [
 							{
@@ -2938,6 +3485,10 @@
 							}
 						],
 						"description": "User ID of the owner"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
 					},
 					"active": {
 						"type": "boolean",
@@ -2980,114 +3531,6 @@
 				"$ref": "#/components/schemas/Pick_CloudProvider.Exclude_keyofCloudProvider.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"RegistryProviderType": {
-				"type": "string",
-				"enum": ["gcloud", "digitalocean", "dockerhub"]
-			},
-			"ContainerRegistry": {
-				"properties": {
-					"_id": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"type": "string"
-							}
-						]
-					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
-					"active": {
-						"type": "boolean",
-						"description": "Auto-generated by \"name\" column"
-					},
-					"metadata": {
-						"description": "Auto-generated by entity's columns\nEntity's metadata without unicode characters"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"deletedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"name": {
-						"type": "string"
-					},
-					"isVerified": {
-						"type": "boolean"
-					},
-					"host": {
-						"type": "string",
-						"description": "The host (domain) of your container registry which you are using."
-					},
-					"imageBaseURL": {
-						"type": "string",
-						"description": "Base URL of the image, usually is the registry host URI combines with something else.\n- This will be used to combine with your project/app image path."
-					},
-					"provider": {
-						"$ref": "#/components/schemas/RegistryProviderType",
-						"description": "Provider's \"shortName\""
-					},
-					"serviceAccount": {
-						"type": "string",
-						"description": "Content of the Service Account credentials ti access services on this cloud provider\n- Apply for: Google Cloud, AWS,...\n- For example: Kubernetes Clusters, Single Sign-On,..."
-					},
-					"apiAccessToken": {
-						"type": "string",
-						"description": "Content of the API access token to use services on this cloud provider\n- Apply for: Digital Ocean"
-					},
-					"imagePullSecret": {
-						"properties": {
-							"value": {
-								"type": "string"
-							},
-							"name": {
-								"type": "string"
-							}
-						},
-						"type": "object"
-					},
-					"owner": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/User"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "User ID of the owner"
-					},
-					"workspace": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/Workspace"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "ID of the workspace"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
-			},
 			"Pick_ContainerRegistry.Exclude_keyofContainerRegistry.keyofHiddenBodyKeys__": {
 				"properties": {
 					"workspace": {
@@ -3107,10 +3550,6 @@
 					"name": {
 						"type": "string"
 					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
 					"owner": {
 						"anyOf": [
 							{
@@ -3124,6 +3563,10 @@
 							}
 						],
 						"description": "User ID of the owner"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
 					},
 					"active": {
 						"type": "boolean",
@@ -3210,10 +3653,6 @@
 					"image": {
 						"type": "string"
 					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
 					"env": {
 						"type": "string",
 						"description": "Targeted environment."
@@ -3260,6 +3699,10 @@
 							}
 						],
 						"description": "ID of the project"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
 					},
 					"active": {
 						"type": "boolean",
@@ -3367,10 +3810,6 @@
 					"name": {
 						"type": "string"
 					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
 					"owner": {
 						"anyOf": [
 							{
@@ -3398,6 +3837,10 @@
 							}
 						],
 						"description": "ID of the project"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
 					},
 					"active": {
 						"type": "boolean",
@@ -3440,10 +3883,6 @@
 					"image": {
 						"type": "string"
 					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
 					"owner": {
 						"anyOf": [
 							{
@@ -3471,6 +3910,10 @@
 							}
 						],
 						"description": "ID of the project"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
 					},
 					"active": {
 						"type": "boolean",
@@ -3642,10 +4085,6 @@
 						"type": "string",
 						"description": "Workspace profile picture"
 					},
-					"slug": {
-						"type": "string",
-						"description": "Workspace slug: auto-generated by \"name\" column"
-					},
 					"owner": {
 						"anyOf": [
 							{
@@ -3659,6 +4098,10 @@
 							}
 						],
 						"description": "User ID of the owner"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Workspace slug: auto-generated by \"name\" column"
 					},
 					"active": {
 						"type": "boolean",
@@ -3718,10 +4161,6 @@
 					"image": {
 						"type": "string"
 					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
 					"createdBy": {
 						"type": "string"
 					},
@@ -3755,6 +4194,10 @@
 							}
 						],
 						"description": "Project ID of the app"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
 					},
 					"active": {
 						"type": "boolean",
@@ -3837,7 +4280,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.6.2",
+		"version": "2.6.4",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -4082,7 +4525,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/Omit_Build.keyofHiddenBodyKeys_"
+								"$ref": "#/components/schemas/BuildData"
 							}
 						}
 					}
@@ -4167,7 +4610,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/Omit_Build.keyofHiddenBodyKeys_"
+								"$ref": "#/components/schemas/BuildData"
 							}
 						}
 					}
@@ -4282,6 +4725,41 @@
 						}
 					}
 				]
+			}
+		},
+		"/build/start": {
+			"post": {
+				"operationId": "StartBuild",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "Create a new {Build} instance, then start building container image.",
+				"tags": ["Build"],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/StartBuildParams"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/build/stop": {
@@ -4764,6 +5242,7 @@
 						}
 					}
 				},
+				"description": "### [DEPRECATED SOON]\n#### Use `buildAndDeploy()` instead.\nBuild container image first, then deploy that build to target deploy environment.",
 				"tags": ["Deploy"],
 				"security": [
 					{
@@ -4826,9 +5305,136 @@
 				}
 			}
 		},
-		"/deploy/from-image": {
+		"/deploy/build-first": {
 			"post": {
-				"operationId": "DeployFromImage",
+				"operationId": "BuildAndDeploy",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"$ref": "#/components/schemas/ResponseData"
+										},
+										{
+											"properties": {
+												"data": {},
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"data": {
+													"properties": {
+														"logURL": {
+															"type": "string"
+														}
+													},
+													"required": ["logURL"],
+													"type": "object"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												},
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												}
+											},
+											"required": ["data", "status", "messages"],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"description": "Build container image first, then deploy that build to target deploy environment.",
+				"tags": ["Deploy"],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "owner,workspace"
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"deployParams": {
+										"$ref": "#/components/schemas/DeployBuildInput"
+									},
+									"buildParams": {
+										"$ref": "#/components/schemas/StartBuildParams"
+									}
+								},
+								"required": ["deployParams", "buildParams"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/deploy/from-build": {
+			"post": {
+				"operationId": "DeployFromBuild",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -4857,6 +5463,9 @@
 											"properties": {
 												"data": {
 													"properties": {
+														"deployment": {
+															"$ref": "#/components/schemas/GenerateDeploymentResult"
+														},
 														"release": {
 															"$ref": "#/components/schemas/Release"
 														},
@@ -4864,7 +5473,7 @@
 															"$ref": "#/components/schemas/Build"
 														}
 													},
-													"required": ["release", "build"],
+													"required": ["deployment", "release", "build"],
 													"type": "object"
 												},
 												"status": {
@@ -4934,35 +5543,21 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"properties": {
-									"envVars": {
-										"type": "string",
-										"description": "Kubernetes Environment Variables in JSON Array",
-										"example": [
-											{
-												"name": "TZ",
-												"value": "Asia/Ho_Chi_Minh"
+								"allOf": [
+									{
+										"properties": {
+											"buildSlug": {
+												"type": "string",
+												"description": "Build's slug"
 											}
-										]
+										},
+										"required": ["buildSlug"],
+										"type": "object"
 									},
-									"cliVersion": {
-										"type": "string",
-										"description": "CLI's version"
-									},
-									"env": {
-										"type": "string"
-									},
-									"slug": {
-										"type": "string",
-										"description": "App's slug"
-									},
-									"projectSlug": {
-										"type": "string",
-										"description": "Project's slug"
+									{
+										"$ref": "#/components/schemas/DeployBuildInput"
 									}
-								},
-								"required": ["slug", "projectSlug"],
-								"type": "object"
+								]
 							}
 						}
 					}

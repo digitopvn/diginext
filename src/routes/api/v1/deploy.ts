@@ -21,13 +21,31 @@ router
 		controller.apiRespond(controller.deployFromSource.bind(controller)).bind(controller)
 	)
 	/**
-	 * Deploy from an image URL
+	 * Build container image first, then deploy that build to target deploy environment.
 	 */
 	.post(
-		"/from-image",
+		"/build-first",
 		authenticate,
 		// authorization,
-		controller.apiRespond(controller.deployFromImage.bind(controller)).bind(controller)
+		controller.apiRespond(controller.buildAndDeploy.bind(controller)).bind(controller)
+	)
+	/**
+	 * Deploy from a build instance.
+	 */
+	.post(
+		"/from-build",
+		authenticate,
+		// authorization,
+		controller.apiRespond(controller.deployFromBuild.bind(controller)).bind(controller)
 	);
+/**
+ * Deploy from an image URL
+ */
+// .post(
+// 	"/from-image",
+// 	authenticate,
+// 	// authorization,
+// 	controller.apiRespond(controller.deployFromImage.bind(controller)).bind(controller)
+// );
 
 export default router;

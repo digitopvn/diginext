@@ -4,8 +4,9 @@ networks:
         driver: bridge
 volumes:
     mongo:
-        external: true
         name: mongo
+    home:
+    node:
 services:
     mongo:
         ports:
@@ -35,23 +36,25 @@ services:
         networks:
             - bridge
         privileged: true
+        user: root
         entrypoint: /usr/app/scripts/startup.sh
         volumes:
             # DOCKER SOCK
             - "/var/run/docker.sock:/var/run/docker.sock"
             # CACHE NODE_MODULES & HOME DIR
-            - /usr/app/node_modules/
-            - /home/app/
+            - node:/usr/app/node_modules/
+            - home:/home/app/
             # HOST:CONTAINER
             - ./storage:/var/app/storage
         environment:
+            - DX_LICENSE_KEY= # <--- insert here
             - NODE_ENV=production
             - PORT=6969
             - BASE_URL=http://localhost:6969
             - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/diginext?authSource=admin
             - CLI_MODE=server
             - BUILDER=docker
-            - JWT_SECRET=
+            - JWT_SECRET= # <--- insert here
             - JWT_EXPIRE_TIME=48h
-            - GOOGLE_CLIENT_ID=
-            - GOOGLE_CLIENT_SECRET=
+            - GOOGLE_CLIENT_ID= # <--- insert here
+            - GOOGLE_CLIENT_SECRET= # <--- insert here

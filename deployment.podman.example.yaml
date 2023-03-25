@@ -67,6 +67,8 @@ spec:
               value: # insert here
             - name: BUILDER
               value: podman
+            - name: DX_LICENSE_KEY
+              value: randomkey
           volumeMounts:
             - name: storage
               mountPath: /var/app/storage

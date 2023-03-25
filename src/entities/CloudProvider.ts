@@ -1,6 +1,6 @@
 import { CloudProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
-import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
+import { Column, Entity } from "@/libs/typeorm";
 
 import Base from "./Base";
 import type Cluster from "./Cluster";
@@ -31,7 +31,7 @@ export default class CloudProvider extends Base {
 	 * Content of the API access token to use services on this cloud provider
 	 * - Apply for: Digital Ocean
 	 */
-	@Column()
+	// @Column()
 	apiAccessToken?: string;
 
 	/**
@@ -39,13 +39,13 @@ export default class CloudProvider extends Base {
 	 * - Apply for: Google Cloud, AWS,...
 	 * - For example: Kubernetes Clusters, Single Sign-On,...
 	 */
-	@Column()
+	// @Column()
 	serviceAccount?: string;
 
 	/**
 	 * List of available clusters on this provider
 	 */
-	@ObjectIdColumn({ name: "clusters", array: true, default: [] })
+	// @ObjectIdColumn({ name: "clusters", array: true, default: [] })
 	clusters?: string[] | Cluster[];
 
 	/**
@@ -53,7 +53,7 @@ export default class CloudProvider extends Base {
 	 *
 	 * @remarks This can be populated to {User} data
 	 */
-	@ObjectIdColumn({ name: "users" })
+	// @ObjectIdColumn({ name: "users" })
 	owner?: ObjectID | User | string;
 
 	/**
@@ -61,7 +61,7 @@ export default class CloudProvider extends Base {
 	 *
 	 * @remarks This can be populated to {Workspace} data
 	 */
-	@ObjectIdColumn({ name: "workspaces" })
+	// @ObjectIdColumn({ name: "workspaces" })
 	workspace?: ObjectID | Workspace | string;
 
 	constructor(data?: CloudProvider) {

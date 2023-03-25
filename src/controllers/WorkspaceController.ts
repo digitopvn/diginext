@@ -5,7 +5,7 @@ import BaseController from "@/controllers/BaseController";
 import type { Role, User, Workspace } from "@/entities";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
-import seedInitialData from "@/seeds";
+import seedWorkspaceInitialData from "@/seeds";
 import { RoleService, UserService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
 
@@ -46,7 +46,7 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		/**
 		 * SEED INITIAL DATA
 		 */
-		await seedInitialData(newWorkspace._id.toString(), owner.toString());
+		await seedWorkspaceInitialData(newWorkspace._id.toString(), owner.toString());
 
 		return super.create(newWorkspace);
 	}
