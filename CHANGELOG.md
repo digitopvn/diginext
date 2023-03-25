@@ -1,3 +1,10 @@
+## [2.6.5](https://github.com/digitopvn/diginext/compare/v2.6.4...v2.6.5) (2023-03-25)
+
+
+### Bug Fixes
+
+* **server:** issue of logger is cutting messages ([fe183d1](https://github.com/digitopvn/diginext/commit/fe183d1a19f2e63edad8edba3a1370b5d8331b95))
+
 ## [2.6.4](https://github.com/digitopvn/diginext/compare/v2.6.3...v2.6.4) (2023-03-25)
 
 

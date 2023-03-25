@@ -20,7 +20,7 @@ type LogMessageOpts = {
 export function sendLog(options: LogMessageOpts) {
 	const { SOCKET_ROOM, message, type = "log" } = options;
 
-	const logger = new Logger(SOCKET_ROOM);
+	const logger = Logger.find(SOCKET_ROOM);
 
 	const now = dayjs().format("llll");
 	const messageWithoutANSI = now + " - " + stripAnsi(chalk.reset(message));

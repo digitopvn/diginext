@@ -3,6 +3,8 @@ import path from "path";
 
 import { CLI_DIR } from "@/config/const";
 
+const instances: { [name: string]: Logger }[] = [];
+
 export class Logger {
 	name: string;
 
@@ -23,6 +25,12 @@ export class Logger {
 		if (!fs.existsSync(this.dir)) fs.mkdirSync(this.dir, { recursive: true });
 
 		this.filePath = path.resolve(this.dir, this.fileName);
+
+		instances[name] = this;
+	}
+
+	static find(name: string) {
+		return instances[name] as Logger;
 	}
 
 	static getLogs(slug: string) {
