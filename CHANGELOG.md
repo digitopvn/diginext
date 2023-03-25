@@ -1,3 +1,10 @@
+## [2.6.4](https://github.com/digitopvn/diginext/compare/v2.6.3...v2.6.4) (2023-03-25)
+
+
+### Bug Fixes
+
+* **server api:** split build and deploy api to seperate process ([ed40148](https://github.com/digitopvn/diginext/commit/ed40148fb469d44bfefba6a1405e9ae36cde8c10))
+
 ## [2.6.3](https://github.com/digitopvn/diginext/compare/v2.6.2...v2.6.3) (2023-03-22)
 
 
