@@ -2491,25 +2491,22 @@
 				"type": "object",
 				"description": "Các giá trị đầu vào của CLI"
 			},
-			"DeployBuildOptions": {
+			"DeployBuildInput": {
 				"properties": {
 					"shouldUseFreshDeploy": {
-						"type": "boolean"
-					},
-					"buildDirectory": {
-						"type": "string"
-					},
-					"workspace": {
-						"$ref": "#/components/schemas/Workspace"
+						"type": "boolean",
+						"description": "[DANGER]\n---\nShould delete old deployment and deploy a new one from scratch"
 					},
 					"author": {
-						"$ref": "#/components/schemas/User"
+						"type": "string",
+						"description": "User ID of the author"
 					},
 					"env": {
-						"type": "string"
+						"type": "string",
+						"description": "Deploy environment"
 					}
 				},
-				"required": ["shouldUseFreshDeploy", "buildDirectory", "workspace", "author", "env"],
+				"required": ["author", "env"],
 				"type": "object"
 			},
 			"ClientDeployEnvironmentConfig": {
@@ -5421,7 +5418,7 @@
 							"schema": {
 								"properties": {
 									"deployParams": {
-										"$ref": "#/components/schemas/DeployBuildOptions"
+										"$ref": "#/components/schemas/DeployBuildInput"
 									},
 									"buildParams": {
 										"$ref": "#/components/schemas/StartBuildParams"
@@ -5558,7 +5555,7 @@
 										"type": "object"
 									},
 									{
-										"$ref": "#/components/schemas/DeployBuildOptions"
+										"$ref": "#/components/schemas/DeployBuildInput"
 									}
 								]
 							}

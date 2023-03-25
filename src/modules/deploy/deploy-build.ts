@@ -16,7 +16,7 @@ export type DeployBuildOptions = {
 	author: User;
 	workspace: Workspace;
 	buildDirectory: string;
-	shouldUseFreshDeploy: boolean;
+	shouldUseFreshDeploy?: boolean;
 };
 
 export const deployBuild = async (build: Build, options: DeployBuildOptions) => {

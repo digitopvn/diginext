@@ -1,18 +1,39 @@
 import { isJSON } from "class-validator";
 import { log } from "diginext-utils/dist/console/log";
 import type { NextFunction, Request, Response } from "express";
+import path from "path";
 import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import pkg from "@/../package.json";
 import { Config } from "@/app.config";
-import type { User } from "@/entities";
+import { CLI_CONFIG_DIR } from "@/config/const";
+import type { App, Build, User, Workspace } from "@/entities";
 import type { InputOptions, ResponseData } from "@/interfaces";
 import { IPostQueryParams } from "@/interfaces";
+import { DB } from "@/modules/api/DB";
 import type { StartBuildParams } from "@/modules/build";
 import { buildAndDeploy } from "@/modules/build/build-and-deploy";
 import { startBuildV1 } from "@/modules/build/start-build";
 import type { DeployBuildOptions } from "@/modules/deploy/deploy-build";
 import { deployWithBuildSlug } from "@/modules/deploy/deploy-build";
+
+type DeployBuildInput = {
+	/**
+	 * Deploy environment
+	 * @example "dev", "prod"
+	 */
+	env: string;
+	/**
+	 * User ID of the author
+	 */
+	author: string;
+	/**
+	 * [DANGER]
+	 * ---
+	 * Should delete old deployment and deploy a new one from scratch
+	 */
+	shouldUseFreshDeploy?: boolean;
+};
 
 @Tags("Deploy")
 @Route("deploy")
@@ -78,7 +99,7 @@ export default class DeployController {
 	 */
 	@Security("jwt")
 	@Post("/build-first")
-	buildAndDeploy(@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildOptions }, @Queries() queryParams?: IPostQueryParams) {
+	async buildAndDeploy(@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildInput }, @Queries() queryParams?: IPostQueryParams) {
 		let { buildParams: buildParamsJSON, deployParams: deployParamsJSON } = body;
 
 		// validation & conversion...
@@ -88,8 +109,21 @@ export default class DeployController {
 
 		if (!deployParamsJSON) return { status: 0, messages: [`Deploy "params" is required.`] } as ResponseData;
 		if (!isJSON(deployParamsJSON)) return { status: 0, messages: [`Invalid JSON format of deploy "params".`] } as ResponseData;
-		const deployParams = JSON.parse(deployParamsJSON as unknown as string) as DeployBuildOptions;
+		const deployInputs = JSON.parse(deployParamsJSON as unknown as string) as DeployBuildInput;
 
+		const app = await DB.findOne<App>("app", { slug: buildParams.appSlug });
+		const author = await DB.findOne<User>("user", { _id: deployInputs.author }, { populate: ["activeWorkspace"] });
+		const workspace = author.activeWorkspace as Workspace;
+		const SOURCE_CODE_DIR = `cache/${app.projectSlug}/${app.slug}/${buildParams.gitBranch}`;
+		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
+
+		const deployBuildOptions: DeployBuildOptions = {
+			author,
+			env: buildParams.env,
+			shouldUseFreshDeploy: deployInputs.shouldUseFreshDeploy,
+			workspace,
+			buildDirectory,
+		};
 		// log("[DEPLOY] options", options);
 
 		// TODO: Save client CLI version to server database for tracking purpose!
@@ -109,7 +143,7 @@ export default class DeployController {
 		}
 
 		log(`buildAndDeploy > buildParams.buildNumber :>>`, buildParams.buildNumber);
-		buildAndDeploy(buildParams, deployParams);
+		buildAndDeploy(buildParams, deployBuildOptions);
 
 		const { appSlug, buildNumber } = buildParams;
 		const buildServerUrl = Config.BASE_URL;
@@ -129,14 +163,29 @@ export default class DeployController {
 			 * Build's slug
 			 */
 			buildSlug: string;
-		} & DeployBuildOptions,
+		} & DeployBuildInput,
 		@Queries() queryParams?: IPostQueryParams
 	) {
 		const { buildSlug } = body;
 		if (!buildSlug) return { status: 0, messages: [`Build "slug" is required`] };
 
+		const build = await DB.findOne<Build>("build", { slug: buildSlug });
+		const workspace = await DB.findOne<Workspace>("workspace", { _id: build.workspace });
+		const author = await DB.findOne<User>("user", { _id: body.author });
+
+		const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
+		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
+
+		const deployBuildOptions: DeployBuildOptions = {
+			author,
+			env: body.env,
+			shouldUseFreshDeploy: body.shouldUseFreshDeploy,
+			workspace,
+			buildDirectory,
+		};
+
 		// DEPLOY A BUILD:
-		const result = await deployWithBuildSlug(buildSlug, body);
+		const result = await deployWithBuildSlug(buildSlug, deployBuildOptions);
 		const { release } = result;
 
 		if (!release) return { status: 0, messages: [`Failed to deploy from a build (${buildSlug}).`] };
