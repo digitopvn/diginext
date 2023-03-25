@@ -2,11 +2,11 @@ import "reflect-metadata";
 
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
+import session from "cookie-session";
 import { log, logSuccess } from "diginext-utils/dist/console/log";
 import type { Request, Response } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";
-import session from "express-session";
 import type { Server } from "http";
 import { createServer } from "http";
 import morgan from "morgan";
@@ -125,12 +125,7 @@ function initialize() {
 			session({
 				name: Config.grab(`SESSION_NAME`, `diginext-cli`),
 				secret: Config.grab(`JWT_SECRET`, "123"),
-				proxy: true,
-				resave: true,
-				saveUninitialized: true,
-				cookie: {
-					maxAge: 1000 * 60 * 100,
-				},
+				maxAge: 1000 * 60 * 100,
 			})
 		);
 
