@@ -20,30 +20,35 @@ export default class UserController extends BaseController<User> {
 		super(new UserService());
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/join-workspace")
 	async joinWorkspace(@Body() data: JoinWorkspaceBody) {

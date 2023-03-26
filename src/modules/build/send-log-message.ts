@@ -47,6 +47,6 @@ export function sendLog(options: LogMessageOpts) {
 	socketIO?.to(SOCKET_ROOM).emit("message", { action: "log", message: messageWithoutANSI });
 
 	// save logs to database
-	const logContent = logger.content ?? Logger.getLogs(SOCKET_ROOM);
-	if (logContent) saveLogs(SOCKET_ROOM, logger.content ?? Logger.getLogs(SOCKET_ROOM));
+	const logContent = logger?.content ?? Logger.getLogs(SOCKET_ROOM);
+	if (logContent) saveLogs(SOCKET_ROOM, logger?.content ?? Logger.getLogs(SOCKET_ROOM));
 }

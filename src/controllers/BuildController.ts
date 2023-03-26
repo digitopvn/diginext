@@ -20,30 +20,35 @@ export default class BuildController extends BaseController<Build> {
 		super(new BuildService());
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
 	create(@Body() body: BuildData, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: BuildData, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/logs")
 	async getLogs(@Queries() queryParams?: { slug: string }) {
@@ -83,6 +88,7 @@ export default class BuildController extends BaseController<Build> {
 	/**
 	 * Create a new {Build} instance, then start building container image.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/start")
 	async startBuild(@Body() body: StartBuildParams) {
@@ -99,6 +105,7 @@ export default class BuildController extends BaseController<Build> {
 		return { status: 1, messages: [`Building...`], data: { logURL } } as ResponseData;
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/stop")
 	async stopBuild(@Body() body: { slug: string }) {

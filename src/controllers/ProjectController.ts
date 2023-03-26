@@ -21,24 +21,28 @@ export default class ProjectController extends BaseController<Project> {
 		super(new ProjectService());
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
 	create(@Body() body: ProjectInputSchema, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: ProjectInputSchema, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	async delete(@Queries() queryParams?: IDeleteQueryParams) {
@@ -73,6 +77,7 @@ export default class ProjectController extends BaseController<Project> {
 		return super.delete();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/with-apps")
 	async getProjectsAndApps(@Queries() queryParams?: IGetQueryParams) {

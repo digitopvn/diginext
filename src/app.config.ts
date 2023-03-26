@@ -101,7 +101,7 @@ export class Config {
 		return process.env.DX_API_URL
 			? process.env.DX_API_URL
 			: Config.ENV === "production"
-			? "https://diginext.site/api"
+			? "https://diginext-website.prod.diginext.site/api"
 			: "https://diginext-website.dev.diginext.site/api";
 	}
 

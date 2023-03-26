@@ -16,30 +16,35 @@ export default class GitProviderController extends BaseController<GitProvider> {
 		super(new GitProviderService());
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<GitProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<GitProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/ssh/public-key")
 	async getPublicKey(@Queries() queryParams?: IGetQueryParams) {
@@ -49,6 +54,7 @@ export default class GitProviderController extends BaseController<GitProvider> {
 		return { status: 1, data: publicKey } as ResponseData;
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/ssh/create")
 	async createKeysSSH(@Body() body: { privateKey: string; publicKey: string }) {
@@ -62,6 +68,7 @@ export default class GitProviderController extends BaseController<GitProvider> {
 		}
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/ssh/generate")
 	async generateSSH() {
@@ -79,6 +86,7 @@ export default class GitProviderController extends BaseController<GitProvider> {
 		}
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/ssh/verify")
 	async verifySSH(@Queries() queryParams?: { provider: string }) {

@@ -7,6 +7,11 @@
 		"outputDirectory": "public",
 		"specVersion": 3,
 		"securityDefinitions": {
+			"api_key": {
+				"type": "apiKey",
+				"name": "API_ACCESS_TOKEN",
+				"in": "header"
+			},
 			"jwt": {
 				"type": "http",
 				"scheme": "bearer",

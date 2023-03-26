@@ -14,6 +14,13 @@ export interface ProviderInfo {
 	access_token?: string;
 }
 
+export interface AccessTokenInfo {
+	access_token: string;
+	expiredTimestamp: number;
+	expiredDate: Date;
+	expiredDateGTM7: string;
+}
+
 @Entity({ name: "users" })
 export default class User extends Base {
 	/**
@@ -29,6 +36,12 @@ export default class User extends Base {
 	 */
 	@Column()
 	username?: string;
+
+	/**
+	 * Service Account is User!
+	 */
+	@Column({ default: "user" })
+	type?: "user" | "service_account";
 
 	/**
 	 * User email address
@@ -66,26 +79,26 @@ export default class User extends Base {
 	 * User token
 	 */
 	@Column()
-	token?: any;
+	token?: AccessTokenInfo;
 
 	/**
 	 * User's roles
 	 * TODO: Thêm "workspace" cho "roles" vì mỗi workspace sẽ có roles khác nhau, trong khi mỗi user có thể nằm trong nhiều workspace
 	 */
 	@ObjectIdColumn({ name: "roles", array: true, default: [] })
-	roles?: ObjectID[] | Role[] | string[];
+	roles?: (ObjectID | Role | string)[];
 
 	/**
 	 * User's team IDs which this user is a member
 	 */
 	@ObjectIdColumn({ name: "teams", array: true, default: [] })
-	teams?: ObjectID[] | Team[] | string[];
+	teams?: (ObjectID | Team | string)[];
 
 	/**
 	 * List of workspace IDs which this user is a member
 	 */
 	@ObjectIdColumn({ name: "workspaces", array: true, default: [] })
-	workspaces?: ObjectID[] | Workspace[] | string[];
+	workspaces?: (ObjectID | Workspace | string)[];
 
 	/**
 	 * Active workspace of a user

@@ -1,16 +1,45 @@
 import { IsNotEmpty } from "class-validator";
+import { makeSlug } from "diginext-utils/dist/Slug";
 
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
 import type { IBase } from "./Base";
 import Base from "./Base";
+import type Role from "./Role";
 import type { User } from "./User";
 
 export interface IWorkspace extends IBase {
 	name: string;
 	image?: string;
 	owner?: ObjectID | User;
+}
+
+export class WorkspaceApiAccessToken {
+	/**
+	 *
+	 */
+	name: string;
+
+	/**
+	 *
+	 */
+	slug?: string;
+
+	/**
+	 *
+	 */
+	token: string;
+
+	/**
+	 *
+	 */
+	roles?: Role[];
+
+	constructor(data?: any) {
+		if (data.name) this.slug = makeSlug(data.name);
+		return Object.assign(this, data);
+	}
 }
 
 @Entity({ name: "workspaces" })
@@ -49,6 +78,12 @@ export default class Workspace extends Base {
 	domain?: string;
 
 	/**
+	 * List of this workspace's API Access Token
+	 */
+	@Column()
+	apiAccessTokens?: WorkspaceApiAccessToken[];
+
+	/**
 	 * User ID of the owner
 	 *
 	 * @remarks This can be populated to {User} data
@@ -56,7 +91,7 @@ export default class Workspace extends Base {
 	@ObjectIdColumn({ name: "users" })
 	owner?: ObjectID | User | string;
 
-	constructor(data?: Workspace) {
+	constructor(data?: any) {
 		super();
 		return Object.assign(this, data);
 	}

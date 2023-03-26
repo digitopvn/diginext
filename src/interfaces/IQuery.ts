@@ -123,8 +123,8 @@ export interface HiddenBodyKeys {
 	id?: unknown;
 	_id?: unknown;
 	metadata?: unknown;
-	// owner?: unknown;
-	// workspace?: unknown;
+	owner?: unknown;
+	workspace?: unknown;
 	createdAt?: unknown;
 	deletedAt?: unknown;
 	updatedAt?: unknown;

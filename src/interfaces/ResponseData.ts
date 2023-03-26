@@ -17,5 +17,5 @@ export const respondFailure = (params: { data?: any; msg?: string }) => {
 
 export const respondSuccess = (params: { data?: any; msg?: string }) => {
 	const { msg = "Ok.", data } = params;
-	return { status: 1, data, messages: [msg] } as ResponseData;
+	return { status: 1, data, messages: [msg] } as ResponseData & { data: typeof params.data };
 };

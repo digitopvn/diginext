@@ -86,9 +86,7 @@ function initialize() {
 			"/api-docs",
 			swaggerUi.serve,
 			swaggerUi.setup(undefined, {
-				swaggerOptions: {
-					url: "/swagger.json",
-				},
+				swaggerOptions: { url: "/swagger.json" },
 			})
 		);
 

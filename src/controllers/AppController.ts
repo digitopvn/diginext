@@ -164,6 +164,7 @@ export default class AppController extends BaseController<App> {
 		super(new AppService());
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	async read(@Queries() queryParams?: IGetQueryParams) {
@@ -199,6 +200,7 @@ export default class AppController extends BaseController<App> {
 		return { status: 1, data: apps } as ResponseData;
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: AppInputSchema, @Queries() queryParams?: IPostQueryParams) {
@@ -241,6 +243,7 @@ export default class AppController extends BaseController<App> {
 		return { status: 1, data: newApp, messages: [""] } as ResponseData;
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
@@ -272,6 +275,7 @@ export default class AppController extends BaseController<App> {
 		// return super.update(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	async delete(@Queries() queryParams?: IDeleteQueryParams) {
@@ -304,6 +308,7 @@ export default class AppController extends BaseController<App> {
 		return super.delete();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/config")
 	async getAppConfig(@Queries() queryParams?: { slug: string }) {
@@ -319,6 +324,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Create new deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/environment")
 	async getDeployEnvironment(
@@ -351,6 +357,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Create new deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/environment")
 	async createDeployEnvironment(
@@ -475,6 +482,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Delete a deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/environment")
 	async deleteDeployEnvironment(
@@ -567,6 +575,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Get list of variables on the deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/environment/variables")
 	async getEnvVarsOnDeployEnvironment(@Queries() queryParams?: { slug: string; env: string }) {
@@ -586,6 +595,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Create new variables on the deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/environment/variables")
 	async createEnvVarsOnDeployEnvironment(
@@ -641,6 +651,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Update a variable on the deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/environment/variables")
 	async updateSingleEnvVarOnDeployEnvironment(
@@ -720,6 +731,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Update a variable on the deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/environment/variables")
 	async deleteEnvVarsOnDeployEnvironment(

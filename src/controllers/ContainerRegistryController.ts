@@ -26,12 +26,14 @@ export default class ContainerRegistryController extends BaseController<Containe
 		super(new ContainerRegistryService());
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: MaskedContainerRegistry, @Queries() queryParams?: IPostQueryParams) {
@@ -73,6 +75,7 @@ export default class ContainerRegistryController extends BaseController<Containe
 		return { status: 1, data: isEmpty(verifiedRegistry) ? newRegistry : verifiedRegistry, messages: authRes ? [authRes] : [] } as ResponseData;
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: Omit<ContainerRegistry, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
@@ -104,12 +107,14 @@ export default class ContainerRegistryController extends BaseController<Containe
 		return { status: 1, data: updatedRegistry, messages: authRes ? [authRes] : [] } as ResponseData;
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/connect")
 	async connect(@Queries() queryParams?: { slug: string }) {

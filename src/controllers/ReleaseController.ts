@@ -20,12 +20,14 @@ export default class ReleaseController extends BaseController<Release> {
 		super(new ReleaseService());
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<Release, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
@@ -34,18 +36,21 @@ export default class ReleaseController extends BaseController<Release> {
 		return super.create(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<Release, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/from-build")
 	async createFromBuild(@Body() body: { build: string }) {
@@ -85,6 +90,7 @@ export default class ReleaseController extends BaseController<Release> {
 		return result;
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/rollout")
 	async rollout(@Body() data: { id: string }) {
@@ -111,6 +117,7 @@ export default class ReleaseController extends BaseController<Release> {
 		return result;
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/preview")
 	async previewPrerelease(@Body() data: { id: string }) {

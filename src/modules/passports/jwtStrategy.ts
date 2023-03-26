@@ -1,18 +1,22 @@
 // import passport from "passport";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { log } from "diginext-utils/dist/console/log";
+import type * as express from "express";
 import jwt from "jsonwebtoken";
+import { isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
+import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
+import type { AccessTokenInfo } from "@/entities";
 import UserService from "@/services/UserService";
 
 dayjs.extend(relativeTime);
 
 export type JWTOptions = {
-	expiresIn: string | number;
+	workspaceId?: string;
+	expiresIn?: string | number;
 };
 
 var cookieExtractor = function (req) {
@@ -24,12 +28,14 @@ var cookieExtractor = function (req) {
 };
 
 export const generateJWT = (userId: string, options?: JWTOptions) => {
-	const { expiresIn = "2d" } = options;
+	if (isEmpty(options.expiresIn)) options.expiresIn = process.env.JWT_EXPIRE_TIME || "2d";
+
+	const { expiresIn } = options;
+
 	const token = jwt.sign(
 		{
 			id: userId,
-			expiresIn,
-			// exp: Math.floor(Date.now() / 1000) + 2 * 24 * 60 * 60, // 2d
+			...options,
 		},
 		Config.grab("JWT_SECRET", "123"),
 		{
@@ -37,10 +43,45 @@ export const generateJWT = (userId: string, options?: JWTOptions) => {
 			expiresIn,
 		}
 	);
+
 	return token;
 };
 
 export const refreshAccessToken = () => {};
+
+function extractAccessTokenInfo(access_token: string, exp: number) {
+	let expiredDate = dayjs(new Date(exp * 1000));
+	let expiredTimestamp = dayjs(new Date(exp * 1000)).diff(dayjs());
+	let isExpired = expiredTimestamp <= 0;
+	// let expToNow = dayjs(new Date(exp * 1000)).fromNow();
+
+	// log("Expired date >", expiredTimestamp, ">>:", expiredDate.format("YYYY-MM-DD HH:mm:ss"));
+	// log(`Is token expired >>:`, isExpired, `(will expire ${expToNow})`);
+
+	// If token is < 1 hour to expire, refresh it:
+	// const expHourLeft = expiredTimestamp / 60 / 60 / 1000;
+	// if (expHourLeft < 2) {
+	// 	const userId = payload.id;
+	// 	access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+
+	// 	expiredDate = dayjs(new Date(payload.exp * 1000));
+	// 	expiredTimestamp = dayjs(new Date(payload.exp * 1000)).diff(dayjs());
+	// 	isExpired = expiredTimestamp <= 0;
+	// 	expToNow = dayjs(new Date(payload.exp * 1000)).fromNow();
+
+	// 	log(`The token is about to expired ${expToNow} > Refreshing it now...`);
+	// }
+
+	// assign "access_token" info to request:
+	const token: AccessTokenInfo = {
+		access_token,
+		expiredTimestamp: expiredTimestamp,
+		expiredDate: expiredDate.toDate(),
+		expiredDateGTM7: expiredDate.format("YYYY-MM-DD HH:mm:ss"),
+	};
+
+	return { token, isExpired };
+}
 
 export const jwtStrategy = new Strategy(
 	{
@@ -50,58 +91,52 @@ export const jwtStrategy = new Strategy(
 			ExtractJwt.fromUrlQueryParameter("access_token"),
 			cookieExtractor,
 		]),
-		// jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 		passReqToCallback: true,
 		algorithms: ["HS512"],
 	},
-	async function (req, payload, done) {
+	async function (req: express.Request, payload: any, done: VerifiedCallback) {
+		console.log(`[1] AUTHENTICATE: jwtStrategy > extract token`);
 		// log(`req.headers :>>`, req.headers);
 		// log(`req.query.access_token :>>`, req.query.access_token);
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		// log(`access_token >>:`, access_token);
 		// log(`JWT callback >>:`, payload);
 
-		let expiredDate = dayjs(new Date(payload.exp * 1000));
-		let expiredTimestamp = dayjs(new Date(payload.exp * 1000)).diff(dayjs());
-		let isExpired = expiredTimestamp <= 0;
-		let expToNow = dayjs(new Date(payload.exp * 1000)).fromNow();
+		const tokenInfo = extractAccessTokenInfo(access_token, payload.exp);
 
-		// log("Expired date >", expiredTimestamp, ">>:", expiredDate.format("YYYY-MM-DD HH:mm:ss"));
-		// log(`Is token expired >>:`, isExpired, `(will expire ${expToNow})`);
+		if (tokenInfo.isExpired) return done(JSON.stringify({ status: 0, messages: ["Access token was expired."] }), null);
 
-		// If token is < 1 hour to expire, refresh it:
-		const expHourLeft = expiredTimestamp / 60 / 60 / 1000;
-		if (expHourLeft < 2) {
-			const userId = payload.id;
-			access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "48h" });
+		// 1. Check if this access token is Workspace API Access Token?
 
-			expiredDate = dayjs(new Date(payload.exp * 1000));
-			expiredTimestamp = dayjs(new Date(payload.exp * 1000)).diff(dayjs());
-			isExpired = expiredTimestamp <= 0;
-			expToNow = dayjs(new Date(payload.exp * 1000)).fromNow();
+		// const workspaceFromApiAccessToken = await DB.findOne<Workspace>("workspace", { "apiAccessTokens.token": access_token });
+		// if (workspaceFromApiAccessToken) {
+		// 	const apiAccessToken = workspaceFromApiAccessToken.apiAccessTokens.find((apiToken) => apiToken.token === access_token);
 
-			log(`The token is about to expired ${expToNow} > Refreshing it now...`);
-		}
+		// 	// mock a {User} represent for this API Access Token
+		// 	const mockedApiAccessTokenUser = new User();
+		// 	mockedApiAccessTokenUser.name = mockedApiAccessTokenUser.slug = mockedApiAccessTokenUser.username = apiAccessToken.name;
+		// 	mockedApiAccessTokenUser.email = `${access_token}@${workspaceFromApiAccessToken.slug}.${DIGINEXT_DOMAIN}`;
+		// 	mockedApiAccessTokenUser.roles = apiAccessToken.roles;
+		// 	mockedApiAccessTokenUser.token = tokenInfo.token;
+		// 	mockedApiAccessTokenUser.active = true;
+		// 	mockedApiAccessTokenUser.workspaces = [workspaceFromApiAccessToken];
+		// 	mockedApiAccessTokenUser.activeWorkspace = workspaceFromApiAccessToken;
+		// 	mockedApiAccessTokenUser.createdAt = workspaceFromApiAccessToken.createdAt;
+		// 	mockedApiAccessTokenUser.updatedAt = workspaceFromApiAccessToken.updatedAt;
 
-		// assign "access_token" info to request:
-		req.token = {
-			access_token,
-			expiredTimestamp: expiredTimestamp,
-			expiredDate: expiredDate.toDate(),
-			expiredDateGTM7: expiredDate.format("YYYY-MM-DD HH:mm:ss"),
-		};
+		// 	return done(null, mockedApiAccessTokenUser);
+		// }
 
-		if (isExpired) {
-			return done(JSON.stringify({ status: 0, messages: ["Access token was expired."] }), null);
-		}
+		// 2. Check if this access token is {User} or {ServiceAccount}
 
 		const userSvc = new UserService();
 		let user = await userSvc.findOne({ _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces", "activeWorkspace"] });
-		user.token = req.token;
+		if (!user) done(null, false);
 
-		if (user) return done(null, user);
+		// assign token for user:
+		user.token = tokenInfo.token;
 
-		done(null, false);
+		return done(null, user);
 	}
 );
 
