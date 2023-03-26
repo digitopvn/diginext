@@ -2,6 +2,7 @@ import "reflect-metadata";
 
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import session from "cookie-session";
 import { log, logSuccess } from "diginext-utils/dist/console/log";
 import type { Request, Response } from "express";

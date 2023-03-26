@@ -31,6 +31,7 @@ type DeployBuildInput = {
 	 * [DANGER]
 	 * ---
 	 * Should delete old deployment and deploy a new one from scratch
+	 * @default false
 	 */
 	shouldUseFreshDeploy?: boolean;
 };

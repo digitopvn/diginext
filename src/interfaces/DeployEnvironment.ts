@@ -43,16 +43,19 @@ export interface ClientDeployEnvironmentConfig {
 
 	/**
 	 * [Google Cloud] PROJECT_ID
+	 * @deprecated
 	 */
 	project?: string;
 
 	/**
 	 * [Google Cloud] Region
+	 * @deprecated
 	 */
 	region?: string;
 
 	/**
 	 * [Google Cloud] Zone
+	 * @deprecated
 	 */
 	zone?: string;
 

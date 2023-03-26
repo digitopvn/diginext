@@ -42,6 +42,9 @@ export default class App extends Base {
 		repoSSH?: string;
 	};
 
+	/**
+	 * @deprecated
+	 */
 	@Column()
 	environment?: {
 		[key: string]: DeployEnvironment | string;

@@ -12,6 +12,8 @@ import ProjectService from "@/services/ProjectService";
 
 import BaseController from "./BaseController";
 
+export type ProjectInputSchema = Omit<Project, keyof HiddenBodyKeys>;
+
 @Tags("Project")
 @Route("project")
 export default class ProjectController extends BaseController<Project> {
@@ -27,13 +29,13 @@ export default class ProjectController extends BaseController<Project> {
 
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: ProjectInputSchema, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<Project, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: ProjectInputSchema, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
