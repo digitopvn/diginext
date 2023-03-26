@@ -4079,7 +4079,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.6.5",
+		"version": "2.6.6",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -4132,6 +4132,9 @@
 				},
 				"tags": ["Build"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -4277,6 +4280,9 @@
 				},
 				"tags": ["Build"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -4363,6 +4369,9 @@
 				"tags": ["Build"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -4455,6 +4464,9 @@
 				"tags": ["Build"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -4511,6 +4523,9 @@
 				"tags": ["Build"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -4544,6 +4559,9 @@
 				"description": "Create a new {Build} instance, then start building container image.",
 				"tags": ["Build"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -4591,6 +4609,9 @@
 				},
 				"tags": ["Build"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -4654,6 +4675,9 @@
 				},
 				"tags": ["Cluster"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -4787,6 +4811,9 @@
 				"tags": ["Cluster"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -4855,6 +4882,9 @@
 				},
 				"tags": ["Cluster"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -4948,6 +4978,9 @@
 				"tags": ["Cluster"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -4990,6 +5023,9 @@
 				},
 				"tags": ["Cluster"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -5044,6 +5080,9 @@
 				"description": "### [DEPRECATED SOON]\n#### Use `buildAndDeploy()` instead.\nBuild container image first, then deploy that build to target deploy environment.",
 				"tags": ["Deploy"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -5168,6 +5207,9 @@
 				"description": "Build container image first, then deploy that build to target deploy environment.",
 				"tags": ["Deploy"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -5296,6 +5338,9 @@
 				"tags": ["Deploy"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -5403,6 +5448,9 @@
 				},
 				"tags": ["Framework"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -5549,6 +5597,9 @@
 				"tags": ["Framework"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -5633,6 +5684,9 @@
 				},
 				"tags": ["Framework"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -5726,6 +5780,9 @@
 				"tags": ["Framework"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -5791,6 +5848,9 @@
 				},
 				"tags": ["Git Provider"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -5937,6 +5997,9 @@
 				"tags": ["Git Provider"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -6021,6 +6084,9 @@
 				},
 				"tags": ["Git Provider"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -6114,6 +6180,9 @@
 				"tags": ["Git Provider"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -6156,6 +6225,9 @@
 				},
 				"tags": ["Git Provider"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -6291,6 +6363,9 @@
 				"tags": ["Git Provider"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -6346,6 +6421,9 @@
 				"tags": ["Git Provider"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -6369,6 +6447,9 @@
 				},
 				"tags": ["Git Provider"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -6425,6 +6506,9 @@
 				},
 				"tags": ["Project"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -6571,6 +6655,9 @@
 				"tags": ["Project"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -6656,6 +6743,9 @@
 				"tags": ["Project"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -6725,6 +6815,9 @@
 				"tags": ["Project"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -6783,6 +6876,9 @@
 				},
 				"tags": ["Project"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -6941,6 +7037,9 @@
 				"tags": ["Cloud Provider"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -7086,6 +7185,9 @@
 				"tags": ["Cloud Provider"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -7170,6 +7272,9 @@
 				},
 				"tags": ["Cloud Provider"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -7263,6 +7368,9 @@
 				"tags": ["Cloud Provider"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -7328,6 +7436,9 @@
 				},
 				"tags": ["Container Registry"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -7461,6 +7572,9 @@
 				"tags": ["Container Registry"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -7529,6 +7643,9 @@
 				},
 				"tags": ["Container Registry"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -7622,6 +7739,9 @@
 				"tags": ["Container Registry"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -7679,6 +7799,9 @@
 				"tags": ["Container Registry"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -7734,6 +7857,9 @@
 				},
 				"tags": ["Release"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -7880,6 +8006,9 @@
 				"tags": ["Release"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -7964,6 +8093,9 @@
 				},
 				"tags": ["Release"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -8057,6 +8189,9 @@
 				"tags": ["Release"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -8113,6 +8248,9 @@
 				"tags": ["Release"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -8166,6 +8304,9 @@
 				"tags": ["Release"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -8218,6 +8359,9 @@
 				},
 				"tags": ["Release"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -8281,6 +8425,9 @@
 				},
 				"tags": ["Role"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -8427,6 +8574,9 @@
 				"tags": ["Role"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -8511,6 +8661,9 @@
 				},
 				"tags": ["Role"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -8604,6 +8757,9 @@
 				"tags": ["Role"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -8669,6 +8825,9 @@
 				},
 				"tags": ["Team"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -8815,6 +8974,9 @@
 				"tags": ["Team"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -8899,6 +9061,9 @@
 				},
 				"tags": ["Team"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -8992,6 +9157,9 @@
 				"tags": ["Team"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -9057,6 +9225,9 @@
 				},
 				"tags": ["User"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -9203,6 +9374,9 @@
 				"tags": ["User"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -9287,6 +9461,9 @@
 				},
 				"tags": ["User"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -9380,6 +9557,9 @@
 				"tags": ["User"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -9435,6 +9615,9 @@
 				},
 				"tags": ["User"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -9621,6 +9804,9 @@
 				"tags": ["Workspace"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -9668,6 +9854,9 @@
 				},
 				"tags": ["Workspace"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -9761,6 +9950,9 @@
 				"tags": ["Workspace"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -9819,6 +10011,9 @@
 				},
 				"tags": ["Workspace"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -9989,6 +10184,9 @@
 				"tags": ["App"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -10057,6 +10255,9 @@
 				},
 				"tags": ["App"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -10150,6 +10351,9 @@
 				"tags": ["App"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -10207,6 +10411,9 @@
 				"tags": ["App"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -10240,6 +10447,9 @@
 				"description": "Create new deploy environment of the application.",
 				"tags": ["App"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -10282,6 +10492,9 @@
 				"description": "Create new deploy environment of the application.",
 				"tags": ["App"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -10382,6 +10595,9 @@
 				"tags": ["App"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -10472,6 +10688,9 @@
 				"tags": ["App"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -10548,6 +10767,9 @@
 				"description": "Create new variables on the deploy environment of the application.",
 				"tags": ["App"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
@@ -10674,6 +10896,9 @@
 				"tags": ["App"],
 				"security": [
 					{
+						"api_key": []
+					},
+					{
 						"jwt": []
 					}
 				],
@@ -10795,6 +11020,9 @@
 				"description": "Update a variable on the deploy environment of the application.",
 				"tags": ["App"],
 				"security": [
+					{
+						"api_key": []
+					},
 					{
 						"jwt": []
 					}
