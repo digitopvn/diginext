@@ -20,12 +20,14 @@ export default class ClusterController extends BaseController<Cluster> {
 		super(new ClusterService());
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: Omit<Cluster, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
@@ -83,6 +85,7 @@ export default class ClusterController extends BaseController<Cluster> {
 		}
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: Omit<Cluster, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
@@ -139,12 +142,14 @@ export default class ClusterController extends BaseController<Cluster> {
 		return super.update(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/connect")
 	async connect(@Queries() queryParams?: { slug: string }) {

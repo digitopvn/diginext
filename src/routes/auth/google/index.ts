@@ -6,6 +6,7 @@ import path from "path";
 import { Config } from "@/app.config";
 import type User from "@/entities/User";
 import { generateJWT } from "@/modules/passports/jwtStrategy";
+import { extractWorkspaceIdFromUser } from "@/plugins";
 
 const router = express.Router();
 
@@ -37,8 +38,11 @@ router
 			let redirectUrl = (req.query.state as string) ?? "/";
 			// log("redirectUrl", redirectUrl);
 
-			const userId = (req.user as User)._id.toString();
-			const access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "48h" });
+			const user = req.user as User;
+			const userId = user._id.toString();
+			const workspaceId = extractWorkspaceIdFromUser(user);
+
+			const access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
 			// log("access_token", access_token);
 
 			// We can extract token from cookie (check "jwtStrategy.ts")

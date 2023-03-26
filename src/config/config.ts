@@ -15,10 +15,11 @@ import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { ResourceQuotaSize } from "@/interfaces/InputOptions";
 
-import { isWin, readJson, saveJson, showDocs } from "../plugins";
+import { readJson, saveJson, showDocs } from "../plugins";
 import { CLI_CONFIG_DIR, CLI_CONFIG_FILE, CLI_DIR } from "./const";
 
-export const cliOpts: execa.Options = isWin() ? {} : { shell: "bash" };
+// export const cliOpts: execa.Options = isWin() ? {} : { shell: "bash" };
+export const cliOpts: execa.Options = {};
 
 export const getContainerResourceBySize = (size: ResourceQuotaSize) => {
 	if (size == "none") return {};

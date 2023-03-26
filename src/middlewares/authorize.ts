@@ -34,17 +34,17 @@ export function authorize(req: Request, res: Response, next: NextFunction) {
 	 */
 	const { roles } = user;
 
-	// get "routes" -> find "key" as route & "value" as IRole
-	roles.map((role) =>
-		role.routes
-			.filter((routeRole) => routeRole.route == "*" || routeRole.route == route)
-			.map((routeRole) => {
-				const _route = routeRole.route;
-				const _permissions = routeRole[_route].permissions;
-				if (_permissions.includes("full") || _permissions.includes(permit)) isAllowed = true;
-				return routeRole;
-			})
-	);
+	// TODO: get "routes" -> find "key" as route & "value" as IRole
+	// roles.map((role) =>
+	// 	role.routes
+	// 		.filter((routeRole) => routeRole.route == "*" || routeRole.route == route)
+	// 		.map((routeRole) => {
+	// 			const _route = routeRole.route;
+	// 			const _permissions = routeRole[_route].permissions;
+	// 			if (_permissions.includes("full") || _permissions.includes(permit)) isAllowed = true;
+	// 			return routeRole;
+	// 		})
+	// );
 
 	if (!isAllowed) return ApiResponse.rejected(res);
 

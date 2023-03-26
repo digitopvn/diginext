@@ -6,9 +6,14 @@ import passport from "passport";
 const jwt_auth = (req, res, next) =>
 	passport.authenticate("jwt", { session: false }, function (err, user, info) {
 		// console.log(err, user, info);
-		// console.log(req);
+		// console.log("user :>> ", user);
 
-		if (err || !user || isEmpty(user)) {
+		// Should not care about this?
+		// Because it's already verified at "jwtStrategy" and pass token here!
+
+		console.log(`[2] AUTHORIZE: jwt_auth > assign token:`, user);
+
+		if (isEmpty(user)) {
 			/**
 			 * If the token is expired or invalid,
 			 * we should delete it in the cookies or HTTP response
@@ -20,7 +25,6 @@ const jwt_auth = (req, res, next) =>
 				? Response.ignore(res, "Access token was expired.")
 				: Response.ignore(res, info?.toString());
 		} else {
-			req.isAuthenticated = true;
 			req.user = user;
 			res.locals.user = user;
 
@@ -28,12 +32,10 @@ const jwt_auth = (req, res, next) =>
 			 * We can extract token from cookie / user (check "jwtStrategy.ts")
 			 * Then re-assign it into the HTTP response
 			 */
-			if (req.token?.access_token) {
-				res.cookie("x-auth-cookie", req.token.access_token);
-				res.header("Authorization", `Bearer ${req.token.access_token}`);
-			}
-
-			// console.log(req);
+			// if (user.token?.access_token) {
+			// 	res.cookie("x-auth-cookie", user.token.access_token);
+			// 	res.header("Authorization", `Bearer ${user.token.access_token}`);
+			// }
 
 			return next();
 		}

@@ -115,6 +115,34 @@ export class DB {
 		workspace,
 	};
 
+	static async count(collection: DBCollection, filter: any = {}, options?: IQueryOptions, pagination?: IQueryPagination) {
+		let amount: number;
+		if (isServerMode) {
+			const svc = DB.service[collection];
+			if (!svc) {
+				logError(`[DB] COUNT :>> Service "${collection}" not found.`);
+				return;
+			}
+			try {
+				amount = (await svc.count(filter, options)) || 0;
+			} catch (e) {
+				logError(`[DB] COUNT > Service "${collection}" :>>`, e);
+			}
+		} else {
+			const filterStr = queryFilterToUrlFilter(filter);
+			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
+			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr}`;
+
+			// TODO: Not working, since I hasn't create count API yet
+
+			const { data = [], status, messages } = await fetchApi({ url });
+			if (!status) logError(`[DB] COUNT - ${url} :>>`, messages);
+
+			amount = data;
+		}
+		return amount;
+	}
+
 	static async find<T = any>(collection: DBCollection, filter: any = {}, options?: IQueryOptions, pagination?: IQueryPagination) {
 		let items;
 		if (isServerMode) {

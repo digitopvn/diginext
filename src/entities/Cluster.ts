@@ -74,6 +74,8 @@ export default class Cluster extends Base {
 	projectID?: string;
 
 	/**
+	 * #### `REQUIRES`
+	 * ---
 	 * The PRIMARY domain of this cluster
 	 */
 	@Column()

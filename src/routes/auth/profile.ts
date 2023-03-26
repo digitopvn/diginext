@@ -11,13 +11,8 @@ import jwt_auth from "@/middlewares/jwt_auth";
 const router = express.Router();
 
 router.get("/", jwt_auth, (req: Request, res: Response, next: NextFunction) => {
-	// extract "token" from "jwtStrategy" callback
-	// console.log("req.token :>> ", req.token);
-
 	const user = req.user as any;
 	user.token = (req as any).token;
-
-	// console.log("[/auth/profile] user :>> ", user);
 
 	return ApiResponse.succeed(res, user);
 });

@@ -1,23 +1,161 @@
 import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
-import { isArray, isEmpty } from "lodash";
+import { makeSlug } from "diginext-utils/dist/Slug";
+import { isArray, isBoolean, isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { App, Cluster, Project } from "@/entities";
-import type { ClientDeployEnvironmentConfig, HiddenBodyKeys } from "@/interfaces";
+import type { App, Cluster, ContainerRegistry, Project } from "@/entities";
+import type { HiddenBodyKeys, ResourceQuotaSize, SslType } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
+import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
+import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environment";
 import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
+import { createDiginextDomain } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
 import BaseController from "./BaseController";
+
+export type AppInputSchema = Omit<App, keyof HiddenBodyKeys>;
+
+export interface DeployEnvironmentData {
+	/**
+	 * `REQUIRES`
+	 * ---
+	 * Container registry's slug
+	 * @requires
+	 */
+	registry: string;
+
+	/**
+	 * `REQUIRES`
+	 * ---
+	 * Cluster's short name
+	 * @requires
+	 */
+	cluster: string;
+
+	/**
+	 * `REQUIRES`
+	 * ---
+	 * Container's port
+	 * @requires
+	 */
+	port: number;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Container's scaling replicas
+	 * @default 1
+	 */
+	replicas?: number;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Image URI of this app on the Container Registry (without `TAG`).
+	 * - Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`
+	 * - **Don't** specify `tag` at the end! (eg. `latest`, `beta`,...)
+	 * @default <registry-image-base-url>/<project-slug>/<app-name-slug>
+	 * @example "asia.gcr.io/my-workspace/my-project/my-app"
+	 */
+	imageURL?: string;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Destination namespace name, will be generated automatically by `<project-slug>-<env>` if not specified.
+	 */
+	namespace?: string;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Container quota resources
+	 * @default 1x
+	 * @example
+	 * "none" - {}
+	 * "1x" - { requests: { cpu: `50m`, memory: `256Mi` }, limits: { cpu: `50m`, memory: `256Mi` } }
+	 * "2x" - { requests: { cpu: `100m`, memory: `512Mi` }, limits: { cpu: `100m`, memory: `512Mi` } }
+	 */
+	size?: ResourceQuotaSize;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment
+	 * @default true
+	 */
+	shouldInherit?: boolean;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Set to `false` if you don't want to redirect all the secondary domains to the primary domain.
+	 * @default true
+	 */
+	redirect?: boolean;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Set `true` if you want to use a generated domain for this deploy environment.
+	 * @default false
+	 */
+	useGeneratedDomain?: boolean;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * List of application's domains.
+	 * @default []
+	 */
+	domains?: string[];
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Flag to enable CDN for this application
+	 * @default false
+	 */
+	cdn?: boolean;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Select your SSL Certificate Issuer, one of:
+	 * - `letenscrypt`
+	 * - `custom`
+	 * - `none`
+	 * @default letsencrypt
+	 */
+	ssl?: SslType;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Secret name to hold the key of SSL, will be automatically generated with the primary domain.
+	 * Only need to specify when using "custom" SSL (which is the SSL from third-party issuer)
+	 */
+	tlsSecret?: string;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Kubernetes Ingress Class
+	 * @default nginx
+	 * @example "nginx" | "kong"
+	 */
+	ingress?: string;
+}
 
 @Tags("App")
 @Route("app")
@@ -26,6 +164,7 @@ export default class AppController extends BaseController<App> {
 		super(new AppService());
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	async read(@Queries() queryParams?: IGetQueryParams) {
@@ -61,17 +200,21 @@ export default class AppController extends BaseController<App> {
 		return { status: 1, data: apps } as ResponseData;
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: any, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: AppInputSchema, @Queries() queryParams?: IPostQueryParams) {
 		let project: Project,
 			projectSvc: ProjectService = new ProjectService();
 
 		if (body.project) {
-			project = await projectSvc.findOne({ _id: new ObjectId(body.project) });
+			project = await projectSvc.findOne({ _id: new ObjectId(body.project.toString()) });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
 		}
+
+		// TODO: projectSlug
+		// TODO: framework -> optional
 
 		// body.deployEnvironment = convertBodyDeployEnvironmentObject(body);
 		// console.log("AppController > body.deployEnvironment :>> ", JSON.stringify(body.deployEnvironment, null, 2));
@@ -100,6 +243,7 @@ export default class AppController extends BaseController<App> {
 		return { status: 1, data: newApp, messages: [""] } as ResponseData;
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
@@ -131,6 +275,7 @@ export default class AppController extends BaseController<App> {
 		// return super.update(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	async delete(@Queries() queryParams?: IDeleteQueryParams) {
@@ -163,6 +308,7 @@ export default class AppController extends BaseController<App> {
 		return super.delete();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/config")
 	async getAppConfig(@Queries() queryParams?: { slug: string }) {
@@ -178,6 +324,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Create new deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/environment")
 	async getDeployEnvironment(
@@ -195,64 +342,147 @@ export default class AppController extends BaseController<App> {
 		}
 	) {
 		const { slug, env } = this.filter;
-		if (!slug) return { status: 0, messages: [`App slug is required.`] };
-		if (!env) return { status: 0, messages: [`Deploy environment name is required.`] };
+		if (!slug) return respondFailure({ msg: `App slug is required.` });
+		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
 
 		const app = await this.service.findOne({ slug });
-		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
-		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
+		if (!app) return respondFailure({ msg: `App "${slug}" not found.` });
+		if (!app.deployEnvironment[env]) return respondFailure({ msg: `App "${slug}" doesn't have any deploy environment named "${env}".` });
 
 		const deployEnvironment = app.deployEnvironment[env];
-		let result = { status: 1, data: deployEnvironment, messages: [""] };
+		let result = respondSuccess({ data: deployEnvironment });
 		return result;
 	}
 
 	/**
 	 * Create new deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/environment")
 	async createDeployEnvironment(
 		@Body()
 		body: {
 			/**
+			 * `REQUIRES`
+			 * ---
 			 * App slug
 			 */
 			slug: string;
 			/**
+			 * `REQUIRES`
+			 * ---
 			 * Deploy environment name
-			 * @example "dev" | "prod"
+			 * @default dev
 			 */
 			env: string;
 			/**
+			 * `REQUIRES`
+			 * ---
 			 * Deploy environment configuration
 			 */
-			clientDeployEnvironment: ClientDeployEnvironmentConfig;
+			deployEnvironmentData: DeployEnvironmentData;
 		},
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		const { slug, env, clientDeployEnvironment } = body;
-		if (!slug) return { status: 0, messages: [`App slug is required.`] };
-		if (!env) return { status: 0, messages: [`Deploy environment name is required.`] };
-		if (!clientDeployEnvironment) return { status: 0, messages: [`Deploy environment configuration is required.`] };
+		const { slug, env, deployEnvironmentData } = body;
+		if (!slug) return respondFailure({ msg: `App slug is required.` });
+		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
+		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
 
+		// get app data:
+		const app = await DB.findOne<App>("app", { slug }, { populate: ["project"] });
+		if (isEmpty(app)) return respondFailure({ msg: `App "${slug}" not found.` });
+		if (isEmpty(app.project)) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
+		const project = app.project as Project;
+		const { slug: projectSlug } = project;
+
+		// Assign default values to optional params:
+
+		if (isEmpty(deployEnvironmentData.size)) deployEnvironmentData.size = "1x";
+		if (isEmpty(deployEnvironmentData.shouldInherit)) deployEnvironmentData.shouldInherit = true;
+		if (isEmpty(deployEnvironmentData.replicas)) deployEnvironmentData.replicas = 1;
+		if (isEmpty(deployEnvironmentData.redirect)) deployEnvironmentData.redirect = true;
+
+		// Validate deploy environment data:
+
+		// cluster
+		if (isEmpty(deployEnvironmentData.cluster)) return respondFailure({ msg: `Param "cluster" (Cluster's short name) is required.` });
+		const cluster = await DB.findOne<Cluster>("cluster", { shortName: deployEnvironmentData.cluster });
+		if (isEmpty(cluster)) return respondFailure({ msg: `Cluster "${deployEnvironmentData.cluster}" is not valid` });
+
+		// namespace
+		if (isEmpty(deployEnvironmentData.namespace)) {
+			deployEnvironmentData.namespace = `${projectSlug}-${env}`;
+		} else {
+			// Check if namespace is existed...
+			const isNamespaceExisted = await ClusterManager.isNamespaceExisted(deployEnvironmentData.namespace, { context: cluster.contextName });
+			if (isNamespaceExisted)
+				return respondFailure({
+					msg: `Namespace "${deployEnvironmentData.namespace}" was existed in "${deployEnvironmentData.cluster}" cluster, please choose different name or leave empty to use generated namespace name.`,
+				});
+		}
+
+		// container registry
+		if (isEmpty(deployEnvironmentData.registry)) return respondFailure({ msg: `Param "registry" (Container Registry's slug) is required.` });
+		const registry = await DB.findOne<ContainerRegistry>("registry", { slug: deployEnvironmentData.registry });
+		if (isEmpty(registry)) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
+
+		// build image
+		if (isEmpty(deployEnvironmentData.imageURL)) deployEnvironmentData.imageURL = `${registry.host}/${projectSlug}/${slug}`;
+
+		// Domains & SSL certificate...
+		if (isEmpty(deployEnvironmentData.domains)) deployEnvironmentData.domains = [];
+		if (deployEnvironmentData.useGeneratedDomain) {
+			const subdomain = `${projectSlug}-${slug}.${env}`;
+			const {
+				status,
+				messages,
+				data: { domain },
+			} = await createDiginextDomain({ name: subdomain, data: cluster.primaryIP });
+			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
+			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
+		}
+
+		if (isEmpty(deployEnvironmentData.ssl)) {
+			deployEnvironmentData.ssl = deployEnvironmentData.domains.length > 0 ? "letsencrypt" : "none";
+		}
+		if (!sslIssuerList.includes(deployEnvironmentData.ssl))
+			return respondFailure({ msg: `Param "ssl" issuer is invalid, should be one of: "letsencrypt", "custom" or "none".` });
+
+		if (deployEnvironmentData.ssl === "letsencrypt") {
+			deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
+		} else if (deployEnvironmentData.ssl === "custom") {
+			if (isEmpty(deployEnvironmentData.tlsSecret)) {
+				deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
+			}
+		} else {
+			deployEnvironmentData.tlsSecret = "";
+		}
+
+		// Exposing ports, enable/disable CDN, and select Ingress type
+		if (isEmpty(deployEnvironmentData.port)) return respondFailure({ msg: `Param "port" is required.` });
+		if (isEmpty(deployEnvironmentData.cdn) || !isBoolean(deployEnvironmentData.cdn)) deployEnvironmentData.cdn = false;
+		deployEnvironmentData.ingress = "nginx";
+
+		// create deploy environment in the app:
 		const [updatedApp] = await this.service.update(
 			{ slug },
 			{
-				[`deployEnvironment.${env}`]: clientDeployEnvironment,
+				[`deployEnvironment.${env}`]: deployEnvironmentData,
 			}
 		);
-		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
+		if (!updatedApp) return respondFailure({ msg: `Failed to create "${env}" deploy environment.` });
 
 		const { data: appConfig } = await this.getAppConfig({ slug });
 
-		let result = { status: 1, data: appConfig, messages: [] };
-		return result;
+		return respondSuccess({ data: appConfig });
 	}
 
 	/**
 	 * Delete a deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/environment")
 	async deleteDeployEnvironment(
@@ -345,6 +575,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Get list of variables on the deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/environment/variables")
 	async getEnvVarsOnDeployEnvironment(@Queries() queryParams?: { slug: string; env: string }) {
@@ -364,6 +595,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Create new variables on the deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/environment/variables")
 	async createEnvVarsOnDeployEnvironment(
@@ -419,6 +651,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Update a variable on the deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/environment/variables")
 	async updateSingleEnvVarOnDeployEnvironment(
@@ -498,6 +731,7 @@ export default class AppController extends BaseController<App> {
 	/**
 	 * Update a variable on the deploy environment of the application.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/environment/variables")
 	async deleteEnvVarsOnDeployEnvironment(

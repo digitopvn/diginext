@@ -605,7 +605,7 @@ export async function setEnvVarByFilter(envVars: KubeEnvironmentVariable[], name
 		return;
 	}
 
-	let envVarStrArr = envVars.map(({ name, value }) => `${name}=${value}`);
+	let envVarStrArr = envVars.map(({ name, value }) => `${name}="${value || ""}"`);
 
 	try {
 		const args = [];
@@ -614,7 +614,11 @@ export async function setEnvVarByFilter(envVars: KubeEnvironmentVariable[], name
 
 		args.push(...envVarStrArr);
 
-		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
+		if (!isEmpty(filterLabel)) {
+			args.push("-l", filterLabel);
+		} else {
+			args.push("--all");
+		}
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;

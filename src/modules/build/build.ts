@@ -211,7 +211,7 @@ export async function startBuild(params: StartBuildParams) {
 		projectSlug,
 		appSlug,
 		image: buildImage,
-		logs: logger.content,
+		logs: logger?.content,
 		cliVersion,
 		registry: registry._id,
 		app: app._id,

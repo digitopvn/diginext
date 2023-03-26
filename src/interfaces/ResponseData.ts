@@ -9,3 +9,13 @@ export interface ResponseData {
 	 */
 	messages: string[];
 }
+
+export const respondFailure = (params: { data?: any; msg?: string }) => {
+	const { msg = "Unexpected error.", data } = params;
+	return { status: 0, data, messages: [msg] } as ResponseData;
+};
+
+export const respondSuccess = (params: { data?: any; msg?: string }) => {
+	const { msg = "Ok.", data } = params;
+	return { status: 1, data, messages: [msg] } as ResponseData & { data: typeof params.data };
+};

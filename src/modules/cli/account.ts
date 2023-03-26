@@ -5,6 +5,7 @@ import open from "open";
 
 import { getCliConfig, saveCliConfig } from "@/config/config";
 import type User from "@/entities/User";
+import type { AccessTokenInfo } from "@/entities/User";
 import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
@@ -105,7 +106,7 @@ export const cliLogin = async (options: InputOptions) => {
 		currentWorkspace = activeWorkspace;
 	}
 
-	if (!currentUser.token) currentUser.token = {};
+	if (!currentUser.token) currentUser.token = {} as AccessTokenInfo;
 	currentUser.token.access_token = access_token;
 
 	// save this user & workspace to CLI config

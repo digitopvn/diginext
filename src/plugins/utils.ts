@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import { randomUUID } from "crypto";
 // import { compareVersions } from "compare-versions";
 import dayjs from "dayjs";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
@@ -17,6 +18,7 @@ import { simpleGit } from "simple-git";
 
 import pkg from "@/../package.json";
 import { cliOpts } from "@/config/config";
+import type { User, Workspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
@@ -1073,3 +1075,13 @@ export const getCurrentContainerEnvs = async (deployName: string, namespace = "d
 };
 
 export { logBitbucket, logBitbucketError, logHelp, toBase64, wait };
+
+export const extractWorkspaceIdFromUser = (user: User) => {
+	const workspaceId = (user.activeWorkspace as Workspace)._id
+		? (user.activeWorkspace as Workspace)._id.toString()
+		: user.activeWorkspace.toString();
+
+	return workspaceId;
+};
+
+export const generateWorkspaceApiAccessToken = () => `${randomUUID()}-${randomUUID()}`;

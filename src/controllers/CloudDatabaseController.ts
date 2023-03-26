@@ -12,24 +12,28 @@ export default class CloudDatabaseController extends BaseController<CloudDatabas
 		super(new CloudDatabaseService());
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {

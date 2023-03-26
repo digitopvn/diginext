@@ -118,7 +118,7 @@ export async function startBuildV1(
 		projectSlug,
 		appSlug,
 		image: buildImage,
-		logs: logger.content,
+		logs: logger?.content,
 		cliVersion: options.version,
 		app: app._id,
 		project: project._id,

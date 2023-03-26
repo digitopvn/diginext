@@ -1,3 +1,12 @@
+## [2.6.6](https://github.com/digitopvn/diginext/compare/v2.6.5...v2.6.6) (2023-03-26)
+
+
+### Bug Fixes
+
+* **admin:** display api access token in workspace settings ([219c0cc](https://github.com/digitopvn/diginext/commit/219c0cc8a6efa39feac67fb71b4bd92a1daa4243))
+* **server:** generate domain for create new deploy environment in app controller ([241029c](https://github.com/digitopvn/diginext/commit/241029ca0241208fb678e61286eed512d1555de6))
+* **server:** simplify app deploy environment api input params ([644fec6](https://github.com/digitopvn/diginext/commit/644fec6201f4c6bc8998d2b55060a6b89542ffe8))
+
 ## [2.6.5](https://github.com/digitopvn/diginext/compare/v2.6.4...v2.6.5) (2023-03-25)
 
 

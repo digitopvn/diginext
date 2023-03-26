@@ -20,7 +20,7 @@ export type DeployBuildOptions = {
 };
 
 export const deployBuild = async (build: Build, options: DeployBuildOptions) => {
-	const { env, author, workspace, buildDirectory, shouldUseFreshDeploy } = options;
+	const { env, author, workspace, buildDirectory, shouldUseFreshDeploy = false } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
 	const { slug: username } = author;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
@@ -154,7 +154,7 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 	 * ! If "--fresh" flag was specified, the deployment's namespace will be deleted & redeploy from scratch!
 	 */
 	// console.log("[START BUILD] options.shouldUseFreshDeploy :>> ", options.shouldUseFreshDeploy);
-	if (options.shouldUseFreshDeploy) {
+	if (shouldUseFreshDeploy) {
 		sendLog({
 			SOCKET_ROOM,
 			type: "warn",

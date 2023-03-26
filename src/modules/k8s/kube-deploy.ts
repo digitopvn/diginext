@@ -296,20 +296,22 @@ export async function rollout(id: string) {
 	// create new service if it's not existed
 	const currentServices = await ClusterManager.getAllServices(namespace, `phase=live,main-app=${mainAppName}`, { context });
 
-	if (!isEmpty(currentServices)) {
-		// The service is existed
-		service = currentServices[0];
-	} else {
-		// Create new PROD service
-		const SVC_CONTENT = objectToDeploymentYaml(service);
-		const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, namespace, { context });
-		if (!applySvcRes)
-			throw new Error(
-				`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`
-			);
+	// if (!isEmpty(currentServices)) {
+	// 	// The service is existed
+	// 	service = currentServices[0];
+	// } else {
 
-		log(`Created new production service named "${appSlug}".`);
-	}
+	// Always apply new service, since the PORT could be changed !!!
+
+	const SVC_CONTENT = objectToDeploymentYaml(service);
+	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, namespace, { context });
+	if (!applySvcRes)
+		throw new Error(
+			`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`
+		);
+
+	log(`Created new production service named "${appSlug}".`);
+	// }
 
 	// Apply "BASE_PATH" when neccessary
 	const BASE_PATH = getValueOfKubeEnvVarsByName("BASE_PATH", envVars);

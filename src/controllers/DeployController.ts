@@ -31,6 +31,7 @@ type DeployBuildInput = {
 	 * [DANGER]
 	 * ---
 	 * Should delete old deployment and deploy a new one from scratch
+	 * @default false
 	 */
 	shouldUseFreshDeploy?: boolean;
 };
@@ -58,6 +59,7 @@ export default class DeployController {
 	 * #### Use `buildAndDeploy()` instead.
 	 * Build container image first, then deploy that build to target deploy environment.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
 	deployFromSource(@Body() body: { options: InputOptions }, @Queries() queryParams?: IPostQueryParams) {
@@ -97,6 +99,7 @@ export default class DeployController {
 	/**
 	 * Build container image first, then deploy that build to target deploy environment.
 	 */
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/build-first")
 	async buildAndDeploy(@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildInput }, @Queries() queryParams?: IPostQueryParams) {
@@ -154,6 +157,7 @@ export default class DeployController {
 		return { messages: [`Building...`], status: 1, data: { logURL } };
 	}
 
+	@Security("api_key")
 	@Security("jwt")
 	@Post("/from-build")
 	async deployFromBuild(
@@ -193,6 +197,7 @@ export default class DeployController {
 		return { messages: [], status: 1, data: result };
 	}
 
+	// @Security("api_key")
 	// @Security("jwt")
 	// @Post("/from-image")
 	// async deployFromImage(
