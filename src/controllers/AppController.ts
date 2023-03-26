@@ -16,6 +16,7 @@ import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environm
 import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
+import { createDiginextDomain } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
@@ -42,21 +43,20 @@ export interface DeployEnvironmentData {
 	cluster: string;
 
 	/**
+	 * `REQUIRES`
+	 * ---
+	 * Container's port
+	 * @requires
+	 */
+	port: number;
+
+	/**
 	 * OPTIONAL
 	 * ---
 	 * Container's scaling replicas
 	 * @default 1
 	 */
 	replicas?: number;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Container's port
-	 * @requires
-	 * @default 3000
-	 */
-	port: number;
 
 	/**
 	 * OPTIONAL
@@ -105,12 +105,20 @@ export interface DeployEnvironmentData {
 	redirect?: boolean;
 
 	/**
-	 * `REQUIRES`
+	 * OPTIONAL
 	 * ---
-	 * List of application's domains
-	 * @requires
+	 * Set `true` if you want to use a generated domain for this deploy environment.
+	 * @default false
 	 */
-	domains: string[];
+	useGeneratedDomain?: boolean;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * List of application's domains.
+	 * @default []
+	 */
+	domains?: string[];
 
 	/**
 	 * OPTIONAL
@@ -418,6 +426,17 @@ export default class AppController extends BaseController<App> {
 
 		// Domains & SSL certificate...
 		if (isEmpty(deployEnvironmentData.domains)) deployEnvironmentData.domains = [];
+		if (deployEnvironmentData.useGeneratedDomain) {
+			const subdomain = `${projectSlug}-${slug}.${env}`;
+			const {
+				status,
+				messages,
+				data: { domain },
+			} = await createDiginextDomain({ name: subdomain, data: cluster.primaryIP });
+			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
+			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
+		}
+
 		if (isEmpty(deployEnvironmentData.ssl)) {
 			deployEnvironmentData.ssl = deployEnvironmentData.domains.length > 0 ? "letsencrypt" : "none";
 		}

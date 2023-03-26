@@ -4294,17 +4294,16 @@
 						"type": "string",
 						"description": "`REQUIRES`\n---\nCluster's short name"
 					},
+					"port": {
+						"type": "number",
+						"format": "double",
+						"description": "`REQUIRES`\n---\nContainer's port"
+					},
 					"replicas": {
 						"type": "number",
 						"format": "double",
 						"description": "OPTIONAL\n---\nContainer's scaling replicas",
 						"default": "1"
-					},
-					"port": {
-						"type": "number",
-						"format": "double",
-						"description": "`REQUIRES`\n---\nContainer's port",
-						"default": "3000"
 					},
 					"imageURL": {
 						"type": "string",
@@ -4335,7 +4334,7 @@
 							"type": "string"
 						},
 						"type": "array",
-						"description": "`REQUIRES`\n---\nList of application's domains"
+						"description": "OPTIONAL\n---\nList of application's domains, leave empty to use generated domain from Diginext."
 					},
 					"cdn": {
 						"type": "boolean",
@@ -4356,7 +4355,7 @@
 						"default": "nginx"
 					}
 				},
-				"required": ["registry", "cluster", "port", "domains"],
+				"required": ["registry", "cluster", "port"],
 				"type": "object",
 				"additionalProperties": false
 			}
