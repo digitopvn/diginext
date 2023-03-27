@@ -62,10 +62,13 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	if (!project) project = await createOrSelectProject(options);
 	localAppConfig.project = project.slug;
 
+	console.log("askForDeployEnvironmentInfo > project :>> ", project);
+
 	let app = localAppConfig.slug
 		? await DB.findOne<App>("app", { slug: localAppConfig.slug }, { populate: ["project", "owner", "workspace"] })
 		: undefined;
 	if (!app) app = await createOrSelectApp(project.slug, options);
+	console.log("askForDeployEnvironmentInfo > app :>> ", app);
 	localAppConfig.slug = app.slug;
 
 	// TODO: validate owner, workspace, git & framework ?

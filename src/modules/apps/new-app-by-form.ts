@@ -16,6 +16,7 @@ import { createOrSelectProject } from "./create-or-select-project";
 
 export async function createAppByForm(options?: InputOptions) {
 	if (!options.project) options.project = await createOrSelectProject(options);
+	console.log("options.project :>> ", options.project);
 
 	if (!options.name) {
 		const { name } = await inquirer.prompt({
@@ -161,7 +162,6 @@ export async function createAppByForm(options?: InputOptions) {
 		name: options.name,
 		createdBy: options.username,
 		owner: options.userId,
-		projectSlug: options.project.slug,
 		project: options.project._id,
 		workspace: options.workspaceId,
 		framework: {
@@ -170,10 +170,12 @@ export async function createAppByForm(options?: InputOptions) {
 			repoSSH: options.framework.repoSSH,
 			repoURL: options.framework.repoURL,
 		},
-		git: {},
+		git: currentGitData ? { repoSSH: currentGitData.remoteSSH, provider: currentGitData.provider, repoURL: currentGitData.remoteURL } : {},
 		environment: {},
 		deployEnvironment: {},
 	} as App;
+
+	console.log("createAppByForm > appData :>> ", appData);
 
 	if (options.shouldUseGit) {
 		appData.git.provider = options.gitProvider;

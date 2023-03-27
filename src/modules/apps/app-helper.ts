@@ -20,7 +20,7 @@ export const getAppConfigFromApp = (app: App) => {
 		slug: app.slug,
 		owner: (app.owner as User).slug,
 		workspace: (app.workspace as Workspace).slug,
-		project: (app.project as Project).slug,
+		project: app.projectSlug || (app.project as Project).slug,
 		framework: app.framework,
 		git: app.git,
 		environment: clientDeployEnvironment,

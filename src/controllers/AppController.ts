@@ -202,6 +202,8 @@ export default class AppController extends BaseController<App> {
 	async read(@Queries() queryParams?: IGetQueryParams) {
 		let apps = await DB.find<App>("app", this.filter, this.options, this.pagination);
 
+		if (isEmpty(apps)) return respondSuccess({ data: [] });
+
 		// TODO: remove this code after all "deployEnvironment.envVars" of apps are {Array}
 		// convert "envVars" Object to Array (if needed)
 		apps = apps.map((app) => {
@@ -240,12 +242,14 @@ export default class AppController extends BaseController<App> {
 			projectSvc: ProjectService = new ProjectService(),
 			appDto: App = {};
 
-		if (isEmpty(body.project)) return respondFailure({ msg: `Project ID or slug or instance is required.` });
+		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
+
+		// console.log("isValidObjectId(body.project) :>> ", isValidObjectId(body.project));
 
 		// find parent project of this app
 		project = isValidObjectId(body.project)
-			? await projectSvc.findOne({ _id: new ObjectId(body.project.toString()) })
-			: await projectSvc.findOne({ slug: body.project });
+			? await DB.findOne<Project>("project", { _id: body.project })
+			: await DB.findOne<Project>("project", { slug: body.project });
 
 		if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 		appDto.projectSlug = project.slug;
@@ -256,7 +260,7 @@ export default class AppController extends BaseController<App> {
 		appDto.framework = body.framework as Framework;
 
 		// git
-		if (isEmpty(body.git)) return respondFailure({ msg: `Git SSH URI or git repository information is required.` });
+		// if (isEmpty(body.git)) return respondFailure({ msg: `Git SSH URI or git repository information is required.` });
 		if (isString(body.git)) {
 			const gitData = parseGitRepoDataFromRepoSSH(body.git);
 			if (isEmpty(gitData)) return respondFailure({ msg: `Git repository information is not valid.` });
@@ -267,7 +271,7 @@ export default class AppController extends BaseController<App> {
 				provider: gitData.gitProvider,
 			};
 		} else {
-			if (!body.git.repoSSH) return respondFailure({ msg: `Git repository information is not valid.` });
+			// if (!body.git.repoSSH) return respondFailure({ msg: `Git repository information is not valid.` });
 		}
 		appDto.git = body.git;
 
@@ -291,7 +295,7 @@ export default class AppController extends BaseController<App> {
 		if (project) {
 			const projectApps = [...(project.apps || []), newAppId];
 			// console.log("projectApps :>> ", projectApps);
-			[project] = await projectSvc.update({ _id: project._id }, { apps: projectApps });
+			[project] = await DB.update<Project>("project", { _id: project._id }, { apps: projectApps });
 		}
 
 		return { status: 1, data: newApp, messages: [""] } as ResponseData;

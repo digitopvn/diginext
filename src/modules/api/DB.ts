@@ -163,6 +163,7 @@ export class DB {
 				items = (await svc.find(filter, options, pagination)) || [];
 			} catch (e) {
 				logError(`[DB] FIND > Service "${collection}" :>>`, e);
+				items = [];
 			}
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);

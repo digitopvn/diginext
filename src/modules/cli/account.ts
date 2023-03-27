@@ -57,7 +57,7 @@ export const cliLogin = async (options: InputOptions) => {
 	// const userId = currentUser._id;
 
 	// "access_token" is VALID -> save it to local machine!
-	saveCliConfig({ access_token });
+	saveCliConfig({ access_token, currentWorkspace: currentUser.activeWorkspace as Workspace });
 
 	// console.log(`[AUTH]`, { currentUser });
 	const { workspaces = [], activeWorkspace } = currentUser;
@@ -132,9 +132,9 @@ export const cliLogout = async () => {
 
 export async function cliAuthenticate(options: InputOptions) {
 	let accessToken, workspace: Workspace;
-	const { currentWorkspace, access_token: currentAccessToken, buildServerUrl } = getCliConfig();
+	const { access_token: currentAccessToken, buildServerUrl } = getCliConfig();
 	accessToken = currentAccessToken;
-	workspace = currentWorkspace;
+	// workspace = currentWorkspace;
 
 	const continueToLoginStep = async (url) => {
 		options.url = url;
@@ -153,7 +153,7 @@ export async function cliAuthenticate(options: InputOptions) {
 	if (isEmpty(accessToken) && buildServerUrl) {
 		const user = await continueToLoginStep(buildServerUrl);
 		if (!user) return;
-		workspace = getCliConfig().currentWorkspace;
+		// workspace = getCliConfig().currentWorkspace;
 	}
 	// if (isEmpty(currentWorkspace) && buildServerUrl) await continueToLoginStep(buildServerUrl);
 	// if (isEmpty(currentUser) && buildServerUrl) await continueToLoginStep(buildServerUrl);
@@ -181,12 +181,12 @@ export async function cliAuthenticate(options: InputOptions) {
 	// Assign user & workspace to use across all CLI commands
 	options.userId = user._id.toString();
 	options.username = user.username ?? user.slug;
-	options.workspace = workspace;
-	options.workspaceId = workspace._id.toString();
+	options.workspace = user.activeWorkspace as Workspace;
+	options.workspaceId = options.workspace._id.toString();
 	// console.log("userProfile :>> ", userProfile);
 
 	// Save "currentUser" & "access_token" for next API requests
-	saveCliConfig({ currentUser: user });
+	saveCliConfig({ currentUser: user, currentWorkspace: options.workspace });
 
 	return user;
 }
