@@ -5,8 +5,10 @@ import { isServerMode } from "@/app.config";
 import type { IQueryOptions, IQueryPagination } from "@/interfaces";
 import { flattenObjectPaths } from "@/plugins";
 import {
+	ApiKeyUserService,
 	AppService,
 	BuildService,
+	CloudDatabaseService,
 	CloudProviderService,
 	ClusterService,
 	ContainerRegistryService,
@@ -15,11 +17,11 @@ import {
 	ProjectService,
 	ReleaseService,
 	RoleService,
+	ServiceAccountService,
 	TeamService,
 	UserService,
 	WorkspaceService,
 } from "@/services";
-import CloudDatabaseService from "@/services/CloudDatabaseService";
 
 import fetchApi from "./fetchApi";
 
@@ -37,6 +39,8 @@ type DBCollection =
 	| "role"
 	| "team"
 	| "user"
+	| "api_key_user"
+	| "service_account"
 	| "workspace";
 
 export function queryFilterToUrlFilter(filter: any = {}) {
@@ -95,6 +99,8 @@ const release = new ReleaseService();
 const role = new RoleService();
 const team = new TeamService();
 const user = new UserService();
+const api_key_user = new ApiKeyUserService();
+const service_account = new ServiceAccountService();
 const workspace = new WorkspaceService();
 
 export class DB {
@@ -112,6 +118,8 @@ export class DB {
 		role,
 		team,
 		user,
+		api_key_user,
+		service_account,
 		workspace,
 	};
 
@@ -155,6 +163,7 @@ export class DB {
 				items = (await svc.find(filter, options, pagination)) || [];
 			} catch (e) {
 				logError(`[DB] FIND > Service "${collection}" :>>`, e);
+				items = [];
 			}
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);

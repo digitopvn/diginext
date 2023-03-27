@@ -341,7 +341,7 @@ export async function startBuildV1(
 	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
 	let releaseId: string, newRelease: Release;
 	try {
-		newRelease = await createReleaseFromBuild(newBuild, { author });
+		newRelease = await createReleaseFromBuild(newBuild, env, { author });
 		releaseId = newRelease._id.toString();
 		// log("Created new Release successfully:", newRelease);
 

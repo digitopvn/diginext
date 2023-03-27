@@ -1,6 +1,7 @@
 import { isJSON } from "class-validator";
 import { log } from "diginext-utils/dist/console/log";
 import type { NextFunction, Request, Response } from "express";
+import { isEmpty } from "lodash";
 import path from "path";
 import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
@@ -9,7 +10,7 @@ import { Config } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { App, Build, User, Workspace } from "@/entities";
 import type { InputOptions, ResponseData } from "@/interfaces";
-import { IPostQueryParams } from "@/interfaces";
+import { IPostQueryParams, respondFailure } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import type { StartBuildParams } from "@/modules/build";
 import { buildAndDeploy } from "@/modules/build/build-and-deploy";
@@ -175,7 +176,9 @@ export default class DeployController {
 
 		const build = await DB.findOne<Build>("build", { slug: buildSlug });
 		const workspace = await DB.findOne<Workspace>("workspace", { _id: build.workspace });
-		const author = await DB.findOne<User>("user", { _id: body.author });
+		const author = this.user || (await DB.findOne<User>("user", { _id: body.author }));
+
+		if (isEmpty(author)) return respondFailure({ msg: `Author is required.` });
 
 		const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
 		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
@@ -187,6 +190,7 @@ export default class DeployController {
 			workspace,
 			buildDirectory,
 		};
+		console.log("deployBuildOptions :>> ", deployBuildOptions);
 
 		// DEPLOY A BUILD:
 		const result = await deployWithBuildSlug(buildSlug, deployBuildOptions);

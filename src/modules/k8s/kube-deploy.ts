@@ -13,7 +13,7 @@ import { CLI_DIR } from "@/config/const";
 import type { Cluster, Release } from "@/entities";
 import type { IResourceQuota, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
-import { execCmd, getValueOfKubeEnvVarsByName, objectToDeploymentYaml, waitUntil } from "@/plugins";
+import { objectToDeploymentYaml, waitUntil } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
@@ -314,13 +314,13 @@ export async function rollout(id: string) {
 	// }
 
 	// Apply "BASE_PATH" when neccessary
-	const BASE_PATH = getValueOfKubeEnvVarsByName("BASE_PATH", envVars);
-	if (BASE_PATH) {
-		const basePathResult = await execCmd(
-			`kubectl --context=${context} -n ${namespace} patch ingress ${ingressName} --type='json' -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"${BASE_PATH}"}]'`
-		);
-		console.log("[INGRESS] basePathResult :>> ", basePathResult);
-	}
+	// const BASE_PATH = getValueOfKubeEnvVarsByName("BASE_PATH", envVars);
+	// if (BASE_PATH) {
+	// 	const basePathResult = await execCmd(
+	// 		`kubectl --context=${context} -n ${namespace} patch ingress ${ingressName} --type='json' -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"${BASE_PATH}"}]'`
+	// 	);
+	// 	console.log("[INGRESS] basePathResult :>> ", basePathResult);
+	// }
 
 	// log(`4`, { currentServices });
 

@@ -68,7 +68,7 @@ export async function kubectlApplyContent(yamlContent: string, namespace: string
 
 	// process kubectl apply command which point to that temporary YAML file:
 	const stdout = await execCmd(
-		`kubectl ${context ? `--context=${context} ` : ""}apply -f ${filePath} -n ${namespace} ${filterLabel ? `-l ${filterLabel} ` : ""}`,
+		`kubectl ${context ? `--context=${context} --namespace=${namespace} ` : ""}apply -f ${filePath} ${filterLabel ? `-l ${filterLabel} ` : ""}`,
 		`[KUBE_CTL] Failed to apply "${filePath}" in "${namespace}" namespace of "${context}" cluster context.`
 	);
 	if (stdout) logSuccess(stdout);

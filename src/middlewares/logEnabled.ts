@@ -1,5 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 
+/**
+ * @deprecated
+ */
 const logEnabled =
 	(enabled = true) =>
 	(req: Request, res: Response, next: NextFunction) => {

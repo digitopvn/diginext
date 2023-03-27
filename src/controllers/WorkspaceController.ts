@@ -1,18 +1,19 @@
-import dayjs from "dayjs";
-import { logWarn } from "diginext-utils/dist/console/log";
+import { log, logWarn } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
 import BaseController from "@/controllers/BaseController";
-import type { Role, User, Workspace } from "@/entities";
-import { WorkspaceApiAccessToken } from "@/entities";
+import type { Role, Workspace } from "@/entities";
+import { User } from "@/entities";
 import type Base from "@/entities/Base";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { ObjectID } from "@/libs/typeorm";
-import { generateWorkspaceApiAccessToken } from "@/plugins";
+import { DB } from "@/modules/api/DB";
+import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
+import { isValidObjectId } from "@/plugins/mongodb";
 import seedWorkspaceInitialData from "@/seeds";
 import { RoleService, UserService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
@@ -21,6 +22,13 @@ interface AddUserBody {
 	userId: string;
 	workspaceId: string;
 	roleId?: string;
+}
+
+interface ApiUserAndServiceAccountQueries extends IGetQueryParams {
+	/**
+	 * Workspace ID or slug
+	 */
+	workspace: string;
 }
 
 interface WorkspaceInputData extends Omit<Base, keyof HiddenBodyKeys> {
@@ -60,64 +68,71 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		const { owner, name } = body;
 
 		if (!name) return respondFailure({ msg: `Workspace "name" is required.` });
-		if (!owner) return respondFailure({ msg: `Workspace "owner" is required.` });
+		if (!owner) return respondFailure({ msg: `Workspace "owner" (UserID) is required.` });
 
-		// default values
+		// Assign some default values if it's missing
 		if (isEmpty(body.public)) body.public = true;
 
-		// default API access token
-		const defaultApiAccessToken = new WorkspaceApiAccessToken();
-		defaultApiAccessToken.name = "Default API access token";
-		defaultApiAccessToken.token = generateWorkspaceApiAccessToken();
-		defaultApiAccessToken.roles = [];
-
+		// [1] Create new workspace:
 		const workspaceDto = { ...body } as any;
-		workspaceDto.apiAccessTokens = [defaultApiAccessToken];
-
-		// create new workspace:
 		const result = await super.create(workspaceDto);
 		const { status = 0, messages } = result;
 		if (!status) return respondFailure({ msg: messages.join(". ") });
 
 		const newWorkspace = result.data as Workspace;
+		const workspaceId = newWorkspace._id.toString();
 
-		// add this workspace to that user:
-		const userSvc = new UserService();
-		const user = await userSvc.findOne({ id: owner });
+		// [2] Ownership: add this workspace to the creator {User} if it's not existed:
+		const user = await DB.findOne<User>("user", { id: owner });
 		if (user) {
-			const workspaces = [...user.workspaces, newWorkspace._id]
-				.filter((wsId) => typeof wsId !== "undefined")
-				.map((wsId) => new ObjectID(wsId.toString()));
-
-			await userSvc.update({ _id: new ObjectId(owner) }, { workspaces });
+			if (!(user.workspaces || []).map((wsId) => wsId.toString()).includes(newWorkspace._id.toString())) {
+				const workspaces = (user.workspaces || []).push(newWorkspace._id);
+				await DB.update<User>("user", { _id: new ObjectId(owner) }, { workspaces });
+			}
+			// set this workspace as "activeWorkspace" for this creator:
+			await DB.update<User>("user", { _id: new ObjectId(owner) }, { activeWorkspace: newWorkspace._id });
 		} else {
 			logWarn(`User "${owner}" is not existed.`);
 		}
 
-		/**
-		 * SEED INITIAL DATA
-		 */
-		const workspaceId = newWorkspace._id.toString();
-		await seedWorkspaceInitialData(workspaceId, owner);
+		// [2] Create "default" API access token user for this workspace:
+		const apiKeyToken = generateWorkspaceApiAccessToken();
 
-		// create default service account
-		const serviceAccount = await userSvc.create({
+		const apiKeyUserDto = new User();
+		apiKeyUserDto.type = "api_key";
+		apiKeyUserDto.name = "Default API_KEY Account";
+		apiKeyUserDto.email = `${apiKeyToken.name}@${newWorkspace.slug}.${DIGINEXT_DOMAIN}`;
+		apiKeyUserDto.active = true;
+		apiKeyUserDto.roles = [];
+		apiKeyUserDto.workspaces = [newWorkspace._id];
+		apiKeyUserDto.activeWorkspace = newWorkspace._id;
+		apiKeyUserDto.token = getUnexpiredAccessToken(apiKeyToken.value);
+
+		const apiKeyUser = await DB.create("user", apiKeyUserDto);
+		if (apiKeyUser) log(`[WORKSPACE_CONTROLLER] Created "${apiKeyUser.name}" successfully.`);
+
+		// [3] Create default service account for this workspace
+		const serviceAccountToken = generateWorkspaceApiAccessToken();
+		const serviceAccountDto: User = {
 			type: "service_account",
 			name: "Default Service Account",
-			email: `default@${newWorkspace.slug}.${DIGINEXT_DOMAIN}`,
+			email: `default.${serviceAccountToken.name}@${newWorkspace.slug}.${DIGINEXT_DOMAIN}`,
 			active: true,
+			roles: [],
 			workspaces: [workspaceId],
 			activeWorkspace: workspaceId,
-			token: {
-				access_token: generateWorkspaceApiAccessToken(),
-				expiredDate: dayjs("2999-12-31").toDate(),
-				expiredDateGTM7: dayjs("2999-12-31").format("YYYY-MM-DD HH:mm:ss"),
-				expiredTimestamp: dayjs("2999-12-31").diff(dayjs()),
-			},
-		});
+			token: getUnexpiredAccessToken(serviceAccountToken.value),
+		};
+		const serviceAccount = await DB.create<User>("user", serviceAccountDto);
+		if (apiKeyUser) log(`[WORKSPACE_CONTROLLER] Created "${serviceAccount.name}" successfully.`);
 
-		// add this service account to this workspace:
-		this.addUser({ userId: serviceAccount._id.toString(), workspaceId });
+		/**
+		 * SEED INITIAL DATA TO THIS WORKSPACE
+		 * - Default permissions of routes
+		 * - Default roles
+		 * ...
+		 */
+		await seedWorkspaceInitialData(workspaceId, owner);
 
 		return { status: 1, data: newWorkspace, messages: [] } as ResponseData & { data: Workspace };
 	}
@@ -172,5 +187,63 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		}
 
 		return result;
+	}
+
+	/**
+	 * ======================= SERVICE ACCOUNT ======================
+	 */
+
+	/**
+	 * Get Service Account list of a workspace
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/service-account")
+	async getServiceAccounts(
+		@Queries()
+		queryParams?: ApiUserAndServiceAccountQueries
+	) {
+		const { workspace } = this.filter;
+		if (isEmpty(workspace)) return respondFailure({ msg: `Workspace ID or slug is required.` });
+
+		let serviceAccounts: User[] = [];
+		if (isValidObjectId(workspace)) {
+			serviceAccounts = await DB.find<User>("service_account", { workspaces: { $in: [new ObjectId(workspace)] } });
+		} else {
+			const ws = await DB.findOne<Workspace>("workspace", { slug: workspace });
+			if (isEmpty(ws)) return respondFailure({ msg: `Workspace not found.` });
+			serviceAccounts = await DB.find<User>("service_account", { workspaces: { $in: [ws._id] } });
+		}
+
+		return respondSuccess({ data: serviceAccounts });
+	}
+
+	/**
+	 * ======================= API KEY USER ACCOUNT ======================
+	 */
+
+	/**
+	 * Get Service Account list of a workspace
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/api-user")
+	async getApiKeyUsers(
+		@Queries()
+		queryParams?: ApiUserAndServiceAccountQueries
+	) {
+		const { workspace } = this.filter;
+		if (isEmpty(workspace)) return respondFailure({ msg: `Workspace ID or slug is required.` });
+
+		let list: User[] = [];
+		if (isValidObjectId(workspace)) {
+			list = await DB.find<User>("api_key_user", { workspaces: { $in: [new ObjectId(workspace)] } });
+		} else {
+			const ws = await DB.findOne<Workspace>("workspace", { slug: workspace });
+			if (isEmpty(ws)) return respondFailure({ msg: `Workspace not found.` });
+			list = await DB.find<User>("api_key_user", { workspaces: { $in: [ws._id] } });
+		}
+
+		return respondSuccess({ data: list });
 	}
 }

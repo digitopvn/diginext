@@ -1,5 +1,7 @@
 import type { App, Framework, Project, Workspace } from "@/entities";
 
+import type { GitProviderType } from "./SystemTypes";
+
 export type ResourceQuotaSize = "none" | "1x" | "2x" | "3x" | "4x" | "5x" | "6x" | "7x" | "8x" | "9x" | "10x";
 
 /**
@@ -492,10 +494,9 @@ export type InputOptions = {
 	registry?: string;
 
 	/**
-	 * Git provider
-	 * @type {"bitbucket" | "github" | "gitlab"}
+	 * Git provider type
 	 */
-	gitProvider?: string;
+	gitProvider?: GitProviderType;
 
 	/**
 	 * Specify a git branch

@@ -9,7 +9,7 @@ import { isEmpty } from "lodash";
 import type { User } from "@/entities";
 import { respondFailure } from "@/interfaces";
 // Auth with JWT
-import jwt_auth from "@/middlewares/jwt_auth";
+import jwt_auth from "@/middlewares/auth-jwt";
 import { generateJWT } from "@/modules/passports/jwtStrategy";
 import { extractWorkspaceIdFromUser } from "@/plugins";
 

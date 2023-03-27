@@ -41,6 +41,7 @@ export default class BaseController<T extends Base> {
 		return async (req: Request, res: Response, next: NextFunction) => {
 			try {
 				this.user = req.user as User;
+				// console.log("this.user :>> ", this.user);
 
 				if (!isEmpty(this.user?.activeWorkspace)) {
 					const wsId = (this.user?.activeWorkspace as Workspace)._id || (this.user?.activeWorkspace as any);

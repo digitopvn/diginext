@@ -19,7 +19,7 @@ export interface IPaginationQueryParams {
 
 export interface IPostQueryParams {
 	/**
-	 * @example "owner,workspace"
+	 * Fields to populate, seperated by commas, for example: `owner,workspace`
 	 */
 	populate?: string;
 	select?: string;

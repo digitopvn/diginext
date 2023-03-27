@@ -122,7 +122,7 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	// create new release & roll it out if needed
 	let releaseId: string;
 	try {
-		const newRelease = await createReleaseFromBuild(newBuild, { author });
+		const newRelease = await createReleaseFromBuild(newBuild, env, { author });
 		releaseId = newRelease._id.toString();
 		// log("Created new Release successfully:", newRelease);
 	} catch (e) {

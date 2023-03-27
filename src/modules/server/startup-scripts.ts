@@ -8,8 +8,9 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
 import { migrateAllReleases } from "@/migration/migrate-all-releases";
+import { migrateAllUserTypes } from "@/migration/migrate-all-user-types";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
-import { migrateDefaultServiceAccount } from "@/migration/migrate-service-account";
+import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
 import { generateSSH, sshKeysExisted, verifySSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
@@ -85,5 +86,6 @@ export async function startupScripts() {
 	await migrateAllReleases();
 	await migrateAllFrameworks();
 	await migrateAllGitProviders();
-	await migrateDefaultServiceAccount();
+	await migrateAllUserTypes();
+	await migrateDefaultServiceAccountAndApiKeyUser();
 }

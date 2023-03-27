@@ -1,9 +1,9 @@
 import { isEmpty } from "lodash";
 
-import type { Build, Cluster, Release, User, Workspace } from "@/entities";
-import { App } from "@/entities";
+import type { App, Build, Cluster, Release, User, Workspace } from "@/entities";
 
 import { DB } from "../api/DB";
+import { getAppConfigFromApp } from "../apps/app-helper";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { createReleaseFromBuild, sendLog } from "../build";
 import ClusterManager from "../k8s";
@@ -25,7 +25,7 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 	const { slug: username } = author;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 
-	const app = build.app instanceof App ? build.app : await DB.findOne<App>("app", { slug: appSlug });
+	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
 	if (isEmpty(app)) {
 		sendLog({
 			SOCKET_ROOM,
@@ -73,6 +73,9 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
 	const { contextName: context } = cluster;
 
+	// get app config to generate deployment data
+	const appConfig = getAppConfigFromApp(app);
+
 	/**
 	 * !!! IMPORTANT !!!
 	 * Generate deployment data (YAML) & save the YAML deployment to "app.environment[env]"
@@ -86,9 +89,11 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 			username,
 			workspace,
 			buildNumber,
+			appConfig,
 			targetDirectory: buildDirectory,
 		});
 	} catch (e) {
+		console.log("e :>> ", e);
 		sendLog({ SOCKET_ROOM, type: "error", message: e.message });
 		return;
 	}
@@ -104,7 +109,7 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 	serverDeployEnvironment.lastUpdatedBy = username;
 
 	// Update {user}, {project}, {environment} to database before rolling out
-	const updatedAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as App;
+	const updatedAppData = { deployEnvironment: app.deployEnvironment || {} } as App;
 	updatedAppData.lastUpdatedBy = username;
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
@@ -117,12 +122,13 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
 	let releaseId: string, newRelease: Release;
 	try {
-		newRelease = await createReleaseFromBuild(build, { author });
+		newRelease = await createReleaseFromBuild(build, env, { author });
 		releaseId = newRelease._id.toString();
-		// log("Created new Release successfully:", newRelease);
+		console.log("Created new Release successfully:", newRelease);
 
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });
 	} catch (e) {
+		console.log("e :>> ", e);
 		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error" });
 		return;
 	}

@@ -25,12 +25,6 @@ router
 		// authorize,
 		controller.apiRespond(controller.getLogs.bind(controller))
 	)
-	.patch(
-		"/stop",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.stopBuild.bind(controller))
-	)
 	.post(
 		"/",
 		authenticate,
@@ -54,6 +48,18 @@ router
 		authenticate,
 		// authorize,
 		controller.apiRespond(controller.empty.bind(controller))
+	)
+	.post(
+		"/start",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.startBuild.bind(controller))
+	)
+	.patch(
+		"/stop",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.stopBuild.bind(controller))
 	);
 
 export default router;

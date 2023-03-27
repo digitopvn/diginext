@@ -16,6 +16,7 @@ import { createOrSelectProject } from "./create-or-select-project";
 
 export async function createAppByForm(options?: InputOptions) {
 	if (!options.project) options.project = await createOrSelectProject(options);
+	console.log("options.project :>> ", options.project);
 
 	if (!options.name) {
 		const { name } = await inquirer.prompt({
@@ -30,6 +31,7 @@ export async function createAppByForm(options?: InputOptions) {
 				}
 			},
 		});
+		console.log("createAppByForm > name :>> ", name);
 		options.name = name;
 	}
 
@@ -118,7 +120,7 @@ export async function createAppByForm(options?: InputOptions) {
 				}
 
 				const gitProviderChoices = [
-					{ name: "None", value: { name: "None", slug: "none" } },
+					{ name: "None", value: { name: "None", type: "none" } },
 					...gitProviders.map((g) => {
 						return { name: g.name, value: g };
 					}),
@@ -131,7 +133,7 @@ export async function createAppByForm(options?: InputOptions) {
 					choices: gitProviderChoices,
 				});
 
-				if (gitProvider.slug !== "none") {
+				if (gitProvider.type !== "none") {
 					currentGitProvider = gitProvider;
 					options.gitProvider = currentGitProvider.type;
 
@@ -142,13 +144,13 @@ export async function createAppByForm(options?: InputOptions) {
 				}
 			} else {
 				// search for this git provider
-				currentGitProvider = await DB.findOne<GitProvider>("git", { slug: options.gitProvider });
+				currentGitProvider = await DB.findOne<GitProvider>("git", { type: options.gitProvider });
 				if (!currentGitProvider) {
 					logError(`Git provider "${options.gitProvider}" not found.`);
 					return;
 				}
 
-				options.gitProvider = currentGitProvider.slug;
+				options.gitProvider = currentGitProvider.type;
 
 				// set this git provider to default:
 				saveCliConfig({ currentGitProvider });
@@ -161,7 +163,6 @@ export async function createAppByForm(options?: InputOptions) {
 		name: options.name,
 		createdBy: options.username,
 		owner: options.userId,
-		projectSlug: options.project.slug,
 		project: options.project._id,
 		workspace: options.workspaceId,
 		framework: {
@@ -170,10 +171,12 @@ export async function createAppByForm(options?: InputOptions) {
 			repoSSH: options.framework.repoSSH,
 			repoURL: options.framework.repoURL,
 		},
-		git: {},
+		git: currentGitData ? { repoSSH: currentGitData.remoteSSH, provider: currentGitData.provider, repoURL: currentGitData.remoteURL } : {},
 		environment: {},
 		deployEnvironment: {},
 	} as App;
+
+	console.log("createAppByForm > appData :>> ", appData);
 
 	if (options.shouldUseGit) {
 		appData.git.provider = options.gitProvider;

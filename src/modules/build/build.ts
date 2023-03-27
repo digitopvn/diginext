@@ -35,10 +35,19 @@ export type StartBuildParams = {
 	 * Select a git branch to pull source code & build
 	 */
 	gitBranch: string;
+
 	/**
 	 * ID of the author
+	 * - `If passing "userId", no need to pass "user" and vice versa.`
 	 */
-	userId: string;
+	userId?: string;
+
+	/**
+	 * {User} instance of the author
+	 * - `If passing "user", no need to pass "userId" and vice versa.`
+	 */
+	user?: User;
+
 	/**
 	 * Slug of the Container Registry
 	 */
@@ -121,6 +130,7 @@ export async function startBuild(params: StartBuildParams) {
 		gitBranch,
 		registrySlug,
 		userId,
+		user,
 		appSlug,
 		// optional
 		env,
@@ -128,9 +138,10 @@ export async function startBuild(params: StartBuildParams) {
 		cliVersion,
 	} = params;
 
-	const author = await DB.findOne<User>("user", { _id: new ObjectId(userId) }, { populate: ["workspace"] });
-	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
+	const author = user || (await DB.findOne<User>("user", { _id: new ObjectId(userId) }, { populate: ["workspaces", "activeWorkspaces"] }));
+	console.log("author :>> ", author);
 
+	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	// get workspace
 	const { activeWorkspace, slug: username } = author;
 	const workspace = activeWorkspace as Workspace;
@@ -148,10 +159,11 @@ export async function startBuild(params: StartBuildParams) {
 		return;
 	}
 
-	const { image: imageURL } = app;
+	// the container registry to store this build image
+	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
 
-	if (isEmpty(imageURL)) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" doesn't have "imageURL" configurated.` });
+	if (isEmpty(registry)) {
+		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
 		return;
 	}
 
@@ -165,8 +177,12 @@ export async function startBuild(params: StartBuildParams) {
 		return;
 	}
 
+	// project info
 	const project = app.project as Project;
 	const { slug: projectSlug } = project;
+
+	// build image
+	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}/${app.slug}` } = app;
 
 	// get latest build of this app to utilize the cache for this build process
 	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
@@ -178,14 +194,6 @@ export async function startBuild(params: StartBuildParams) {
 
 	// Build image
 	const buildImage = `${imageURL}:${buildNumber}`;
-
-	// the container registry to store this build image
-	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
-
-	if (isEmpty(registry)) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
-		return;
-	}
 
 	log("[START BUILD] Input params :>>", params);
 
@@ -202,15 +210,15 @@ export async function startBuild(params: StartBuildParams) {
 
 	// create new build on build server:
 	const buildData = {
-		name: buildImage,
 		slug: SOCKET_ROOM,
+		name: buildImage,
+		image: imageURL,
 		tag: buildNumber,
 		status: "building",
 		startTime: startTime.toDate(),
 		createdBy: username,
 		projectSlug,
 		appSlug,
-		image: buildImage,
 		logs: logger?.content,
 		cliVersion,
 		registry: registry._id,
@@ -295,7 +303,7 @@ export async function startBuild(params: StartBuildParams) {
 
 	// Update app so it can be sorted on top!
 	const updatedAppData = { lastUpdatedBy: username } as App;
-	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, updatedAppData);
+	const [updatedApp] = await DB.update<App>("app", { slug: appSlug, image: imageURL }, updatedAppData);
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
 
@@ -304,11 +312,25 @@ export async function startBuild(params: StartBuildParams) {
 	 * Build the app with BUILDER ENGINE (Docker or Podman):
 	 * ====================================================
 	 */
-	try {
-		sendLog({ SOCKET_ROOM, message: `[START BUILD] Start building the Docker image...` });
 
-		const buildEngine = process.env.BUILDER === "docker" ? builder.Docker : builder.Podman;
-		await buildEngine.build(buildImage, {
+	sendLog({ SOCKET_ROOM, message: `[START BUILD] Start building the Docker image...` });
+
+	const notifyClients = () => {
+		const endTime = dayjs();
+		const buildDuration = endTime.diff(startTime, "millisecond");
+		const humanDuration = humanizeDuration(buildDuration);
+
+		sendLog({
+			SOCKET_ROOM,
+			message: chalk.green(`✓ FINISHED BUILDING IMAGE AFTER ${humanDuration}`),
+			type: "success",
+		});
+	};
+
+	const buildEngineName = process.env.BUILDER || "podman";
+	const buildEngine = buildEngineName === "docker" ? builder.Docker : builder.Podman;
+	buildEngine
+		.build(buildImage, {
 			platforms: ["linux/amd64"],
 			builder: `${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`,
 			cacheFroms: latestBuild ? [{ type: "registry", value: latestBuild.image }] : [],
@@ -316,30 +338,24 @@ export async function startBuild(params: StartBuildParams) {
 			buildDirectory: buildDir,
 			shouldPush: true,
 			onBuilding: (message) => sendLog({ SOCKET_ROOM, message }),
+		})
+		.then(async () => {
+			// update build status as "success"
+			await updateBuildStatus(newBuild, "success");
+
+			sendLog({
+				SOCKET_ROOM,
+				message: `✓ Pushed to container registry (${registrySlug}) successfully!`,
+			});
+
+			notifyClients();
+		})
+		.catch(async (e) => {
+			await updateBuildStatus(newBuild, "failed");
+			sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
+
+			notifyClients();
 		});
 
-		// update build status as "success"
-		await updateBuildStatus(newBuild, "success");
-
-		sendLog({
-			SOCKET_ROOM,
-			message: `✓ Pushed to container registry (${registrySlug}) successfully!`,
-		});
-	} catch (e) {
-		await updateBuildStatus(newBuild, "failed");
-		sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
-		return;
-	}
-
-	const endTime = dayjs();
-	const buildDuration = endTime.diff(startTime, "millisecond");
-	const humanDuration = humanizeDuration(buildDuration);
-
-	sendLog({
-		SOCKET_ROOM,
-		message: chalk.green(`✓ FINISHED BUILDING IMAGE AFTER ${humanDuration}`),
-		type: "success",
-	});
-
-	return { SOCKET_ROOM, build: newBuild, startTime, endTime, duration: buildDuration, humanDuration };
+	return { SOCKET_ROOM, build: newBuild, imageURL, buildImage, startTime, builder: buildEngineName };
 }
