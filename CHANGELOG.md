@@ -1,3 +1,18 @@
+# [2.7.0](https://github.com/digitopvn/diginext/compare/v2.6.6...v2.7.0) (2023-03-27)
+
+
+### Bug Fixes
+
+* **admin:** display api key access token in workspace setting ([e3c0751](https://github.com/digitopvn/diginext/commit/e3c07518294da23df537b662f7e4c4c4a821f616))
+* **cli token:** fix empty token in profile api ([4621899](https://github.com/digitopvn/diginext/commit/462189945098d4edb32bc83acc4a7ffce803d9e3))
+* **server:** issue of missing params when create new app ([91bf189](https://github.com/digitopvn/diginext/commit/91bf189b35138b3f21063fb47048333a13ce6b77))
+
+
+### Features
+
+* **cli and server:** simplify app creation ([9d43299](https://github.com/digitopvn/diginext/commit/9d43299f0c3398e3ed690c751764cfaf0c362ae0))
+* **server:** implement service account and api key for workspace api access ([4802aa0](https://github.com/digitopvn/diginext/commit/4802aa0a36f6a9346daa737e63945377f9c59251))
+
 ## [2.6.6](https://github.com/digitopvn/diginext/compare/v2.6.5...v2.6.6) (2023-03-26)
 
 
