@@ -118,7 +118,7 @@ export async function createAppByForm(options?: InputOptions) {
 				}
 
 				const gitProviderChoices = [
-					{ name: "None", value: { name: "None", slug: "none" } },
+					{ name: "None", value: { name: "None", type: "none" } },
 					...gitProviders.map((g) => {
 						return { name: g.name, value: g };
 					}),
@@ -131,7 +131,7 @@ export async function createAppByForm(options?: InputOptions) {
 					choices: gitProviderChoices,
 				});
 
-				if (gitProvider.slug !== "none") {
+				if (gitProvider.type !== "none") {
 					currentGitProvider = gitProvider;
 					options.gitProvider = currentGitProvider.type;
 
@@ -142,13 +142,13 @@ export async function createAppByForm(options?: InputOptions) {
 				}
 			} else {
 				// search for this git provider
-				currentGitProvider = await DB.findOne<GitProvider>("git", { slug: options.gitProvider });
+				currentGitProvider = await DB.findOne<GitProvider>("git", { type: options.gitProvider });
 				if (!currentGitProvider) {
 					logError(`Git provider "${options.gitProvider}" not found.`);
 					return;
 				}
 
-				options.gitProvider = currentGitProvider.slug;
+				options.gitProvider = currentGitProvider.type;
 
 				// set this git provider to default:
 				saveCliConfig({ currentGitProvider });

@@ -12,18 +12,17 @@ type OwnershipParams = {
 	workspace?: Workspace;
 };
 
-export const createReleaseFromBuild = async (build: Build, ownership?: OwnershipParams) => {
+export const createReleaseFromBuild = async (build: Build, env?: string, ownership?: OwnershipParams) => {
 	// get app data
 	const app = await DB.findOne<App>("app", { id: build.app }, { populate: ["owner", "workspace"] });
 	if (!app) throw new Error(`App "${build.appSlug}" not found.`);
-	// console.log("app :>> ", app);
 
 	const project = await DB.findOne<Project>("project", { id: build.project });
 	if (!project) throw new Error(`Project "${build.projectSlug}" not found.`);
 	// console.log("project :>> ", project);
 
 	// get deployment data
-	const { env, branch, image, tag, cliVersion } = build;
+	const { branch, image, tag, cliVersion } = build;
 	const { slug: projectSlug } = project;
 	const { owner, workspace, slug: appSlug } = app;
 	const { slug: workspaceSlug } = workspace as Workspace;
@@ -99,8 +98,6 @@ export const createReleaseFromBuild = async (build: Build, ownership?: Ownership
 		data.preYaml = prereleaseDeploymentData.deployContent;
 		data.prereleaseUrl = prereleaseDeploymentData.domains[0];
 	}
-
-	// log(`createReleaseFromBuild :>>`, { data });
 
 	// create new release in the database
 	const newRelease = DB.create<Release>("release", data);

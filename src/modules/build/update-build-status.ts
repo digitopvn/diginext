@@ -43,18 +43,17 @@ export async function updateBuildStatusByAppSlug(appSlug: string, buildSlug: str
 	}
 
 	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
-	log(`[START BUILD] updateBuildStatus > app :>>`, app);
 
 	// update latest build to current project
 	let projectSlug = (app.project as Project).slug;
-	log(`[START BUILD] updateBuildStatus > projectSlug :>>`, projectSlug);
+	// log(`[START BUILD] updateBuildStatus > projectSlug :>>`, projectSlug);
 
 	const [updatedProject] = await DB.update<Project>("project", { slug: projectSlug }, { latestBuild: buildSlug });
-	log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject.latestBuild);
+	// log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject.latestBuild);
 
 	// update latest build to current app
 	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, { latestBuild: buildSlug });
-	log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp.latestBuild);
+	// log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp.latestBuild);
 
 	// update build's status on server
 	const [updatedBuild] = await DB.update<Build>("build", { slug: buildSlug }, { status: buildStatus }, { populate: ["project"] });

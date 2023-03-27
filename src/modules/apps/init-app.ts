@@ -2,7 +2,7 @@ import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 
 import { getCliConfig } from "@/config/config";
-import type { App } from "@/entities";
+import type { App, AppGitInfo } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { getAppConfig, getCurrentGitRepoData } from "@/plugins";
@@ -59,7 +59,7 @@ export async function execInitApp(options: InputOptions) {
 	if (framework) updateData.framework = framework;
 
 	if (options.shouldUseGit) {
-		updateData.git = {};
+		updateData.git = {} as AppGitInfo;
 		updateData.git.provider = options.gitProvider;
 		updateData.git.repoURL = options.remoteURL;
 		updateData.git.repoSSH = options.remoteSSH;

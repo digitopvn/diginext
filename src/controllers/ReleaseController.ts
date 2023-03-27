@@ -6,6 +6,7 @@ import type { Release } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
+import { respondFailure } from "@/interfaces/ResponseData";
 import { createReleaseFromBuild } from "@/modules/build/create-release-from-build";
 import ClusterManager from "@/modules/k8s";
 import BuildService from "@/services/BuildService";
@@ -53,7 +54,9 @@ export default class ReleaseController extends BaseController<Release> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/from-build")
-	async createFromBuild(@Body() body: { build: string }) {
+	async createFromBuild(@Body() body: { build: string; env: string }) {
+		if (isEmpty(body.env)) return respondFailure({ msg: `Deploy environment code is required.` });
+
 		let result: ResponseData & { data: Release } = { status: 1, data: {}, messages: [] };
 
 		const { build: buildId } = body;
@@ -72,7 +75,7 @@ export default class ReleaseController extends BaseController<Release> {
 			return result;
 		}
 
-		const newRelease = await createReleaseFromBuild(build);
+		const newRelease = await createReleaseFromBuild(build, body.env);
 		if (isEmpty(newRelease)) {
 			result.status = 0;
 			result.messages.push(`Failed to create new release from build data.`);

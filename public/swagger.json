@@ -81,6 +81,29 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"GitProviderType": {
+				"type": "string",
+				"enum": ["bitbucket", "github", "gitlab"]
+			},
+			"AppGitInfo": {
+				"properties": {
+					"repoSSH": {
+						"type": "string",
+						"description": "`REQUIRES`\n---\nA SSH URI of the source code repository"
+					},
+					"repoURL": {
+						"type": "string",
+						"description": "OPTIONAL\n---\nA SSH URI of the source code repository"
+					},
+					"provider": {
+						"$ref": "#/components/schemas/GitProviderType",
+						"description": "OPTIONAL\n---\nGit provider's type: `github`, `bitbucket`, `gitlab`"
+					}
+				},
+				"required": ["repoSSH"],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"ObjectID": {
 				"description": "Create a new ObjectID instance.",
 				"properties": {
@@ -93,23 +116,6 @@
 				"required": ["generationTime"],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"KubeEnvironmentVariable": {
-				"properties": {
-					"name": {
-						"type": "string"
-					},
-					"value": {
-						"type": "string"
-					}
-				},
-				"required": ["name", "value"],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"ObjectId": {
-				"type": "string",
-				"description": "A class representation of the BSON ObjectId type."
 			},
 			"ProviderInfo": {
 				"properties": {
@@ -319,6 +325,179 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"KubeEnvironmentVariable": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": ["name", "value"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ObjectId": {
+				"type": "string",
+				"description": "A class representation of the BSON ObjectId type."
+			},
+			"ResourceQuotaSize": {
+				"type": "string",
+				"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"]
+			},
+			"SslType": {
+				"type": "string",
+				"enum": ["none", "letsencrypt", "custom"],
+				"default": "\"letsencrypt\""
+			},
+			"DeployEnvironment": {
+				"description": "A deployment's environment of the application.",
+				"properties": {
+					"imageURL": {
+						"type": "string",
+						"description": "Image URI of this app on the Container Registry.\n- Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`\n- If you build from the source code, don't specify `tag` at the end! (eg. `latest`, `beta`,...)"
+					},
+					"namespace": {
+						"type": "string",
+						"description": "Destination namespace name"
+					},
+					"registry": {
+						"type": "string",
+						"description": "Container registry slug"
+					},
+					"provider": {
+						"type": "string",
+						"description": "Cloud provider's short name"
+					},
+					"cluster": {
+						"type": "string",
+						"description": "Cluster's short name"
+					},
+					"project": {
+						"type": "string",
+						"description": "[Google Cloud] PROJECT_ID",
+						"deprecated": true
+					},
+					"region": {
+						"type": "string",
+						"description": "[Google Cloud] Region",
+						"deprecated": true
+					},
+					"zone": {
+						"type": "string",
+						"description": "[Google Cloud] Zone",
+						"deprecated": true
+					},
+					"size": {
+						"$ref": "#/components/schemas/ResourceQuotaSize",
+						"description": "Container quota resources"
+					},
+					"shouldInherit": {
+						"type": "boolean",
+						"description": "Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment",
+						"default": "true"
+					},
+					"redirect": {
+						"type": "boolean",
+						"description": "Set to `false` if you don't want to redirect all the secondary domains to the primary domain.",
+						"default": "true"
+					},
+					"replicas": {
+						"type": "number",
+						"format": "double",
+						"description": "Container's scaling replicas",
+						"default": "1"
+					},
+					"port": {
+						"type": "number",
+						"format": "double",
+						"description": "Container's port"
+					},
+					"basePath": {
+						"type": "string",
+						"description": "Application base path in the endpoint URL",
+						"default": "\"/\""
+					},
+					"domains": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "List of application's domains"
+					},
+					"cdn": {
+						"type": "boolean",
+						"description": "Flag to enable CDN for this application",
+						"default": "false;"
+					},
+					"ssl": {
+						"$ref": "#/components/schemas/SslType",
+						"description": "SSL Certificate Issuer"
+					},
+					"tlsSecret": {
+						"type": "string",
+						"description": "Secret name to hold the key of SSL, will be automatically generated.\nOnly need to specify when using \"custom\" SSL (which is the SSL from third-party issuer)"
+					},
+					"ingress": {
+						"type": "string",
+						"description": "Kubernetes Ingress Class"
+					},
+					"cliVersion": {
+						"type": "string",
+						"description": "The CLI version"
+					},
+					"namespaceYaml": {
+						"type": "string",
+						"description": "Content of namespace YAML file"
+					},
+					"deploymentYaml": {
+						"type": "string",
+						"description": "Content of deployment YAML file"
+					},
+					"prereleaseDeploymentYaml": {
+						"type": "string",
+						"description": "Content of prerelease deployment YAML file"
+					},
+					"prereleaseUrl": {
+						"type": "string",
+						"description": "Prerelease endpoint URL"
+					},
+					"envVars": {
+						"items": {
+							"$ref": "#/components/schemas/KubeEnvironmentVariable"
+						},
+						"type": "array",
+						"description": "Collection array of environment variables"
+					},
+					"createdBy": {
+						"type": "string",
+						"description": "User name of the first person who deploy on this environment."
+					},
+					"lastUpdatedBy": {
+						"type": "string",
+						"description": "User name of the last person who deploy or update this environment."
+					},
+					"creator": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							}
+						],
+						"description": "ID of the creator"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Update time"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Project": {
 				"description": "Projects",
 				"properties": {
@@ -383,26 +562,20 @@
 						"type": "string"
 					},
 					"apps": {
-						"anyOf": [
-							{
-								"items": {
+						"items": {
+							"anyOf": [
+								{
 									"$ref": "#/components/schemas/ObjectID"
 								},
-								"type": "array"
-							},
-							{
-								"items": {
+								{
 									"$ref": "#/components/schemas/App"
 								},
-								"type": "array"
-							},
-							{
-								"items": {
+								{
 									"type": "string"
-								},
-								"type": "array"
-							}
-						],
+								}
+							]
+						},
+						"type": "array",
 						"description": "List of App IDs"
 					},
 					"owner": {
@@ -501,6 +674,149 @@
 							}
 						],
 						"description": "User ID of the owner"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"App": {
+				"properties": {
+					"_id": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
+					},
+					"active": {
+						"type": "boolean",
+						"description": "Auto-generated by \"name\" column"
+					},
+					"metadata": {
+						"description": "Auto-generated by entity's columns\nEntity's metadata without unicode characters"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"name": {
+						"type": "string"
+					},
+					"image": {
+						"type": "string",
+						"description": "OPTIONAL\n---\nImage URI of this app on the Container Registry (without `TAG`).\n- Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`\n- **Don't** specify `tag` at the end! (eg. `latest`, `beta`,...)",
+						"example": "asia.gcr.io/my-workspace/my-project/my-app"
+					},
+					"createdBy": {
+						"type": "string"
+					},
+					"lastUpdatedBy": {
+						"type": "string"
+					},
+					"git": {
+						"$ref": "#/components/schemas/AppGitInfo"
+					},
+					"framework": {
+						"properties": {
+							"repoSSH": {
+								"type": "string"
+							},
+							"repoURL": {
+								"type": "string"
+							},
+							"slug": {
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"environment": {
+						"properties": {},
+						"additionalProperties": {
+							"anyOf": [
+								{
+									"$ref": "#/components/schemas/DeployEnvironment"
+								},
+								{
+									"type": "string"
+								}
+							]
+						},
+						"type": "object",
+						"deprecated": true
+					},
+					"deployEnvironment": {
+						"properties": {},
+						"additionalProperties": {
+							"$ref": "#/components/schemas/DeployEnvironment"
+						},
+						"type": "object"
+					},
+					"latestBuild": {
+						"type": "string"
+					},
+					"projectSlug": {
+						"type": "string"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "Owner ID of the app"
+					},
+					"project": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Project"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "Project ID of the app"
+					},
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "Workspace ID of the app"
 					}
 				},
 				"type": "object",
@@ -684,163 +1000,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ResourceQuotaSize": {
-				"type": "string",
-				"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"]
-			},
-			"SslType": {
-				"type": "string",
-				"enum": ["none", "letsencrypt", "custom"],
-				"default": "\"letsencrypt\""
-			},
-			"DeployEnvironment": {
-				"description": "A deployment's environment of the application.",
-				"properties": {
-					"imageURL": {
-						"type": "string",
-						"description": "Image URI of this app on the Container Registry.\n- Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`\n- If you build from the source code, don't specify `tag` at the end! (eg. `latest`, `beta`,...)"
-					},
-					"namespace": {
-						"type": "string",
-						"description": "Destination namespace name"
-					},
-					"registry": {
-						"type": "string",
-						"description": "Container registry slug"
-					},
-					"provider": {
-						"type": "string",
-						"description": "Cloud provider's short name"
-					},
-					"cluster": {
-						"type": "string",
-						"description": "Cluster's short name"
-					},
-					"project": {
-						"type": "string",
-						"description": "[Google Cloud] PROJECT_ID",
-						"deprecated": true
-					},
-					"region": {
-						"type": "string",
-						"description": "[Google Cloud] Region",
-						"deprecated": true
-					},
-					"zone": {
-						"type": "string",
-						"description": "[Google Cloud] Zone",
-						"deprecated": true
-					},
-					"size": {
-						"$ref": "#/components/schemas/ResourceQuotaSize",
-						"description": "Container quota resources"
-					},
-					"shouldInherit": {
-						"type": "boolean",
-						"description": "Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment",
-						"default": "true"
-					},
-					"redirect": {
-						"type": "boolean",
-						"description": "Set to `false` if you don't want to redirect all the secondary domains to the primary domain.",
-						"default": "true"
-					},
-					"replicas": {
-						"type": "number",
-						"format": "double",
-						"description": "Container's scaling replicas",
-						"default": "1"
-					},
-					"port": {
-						"type": "number",
-						"format": "double",
-						"description": "Container's port"
-					},
-					"basePath": {
-						"type": "string",
-						"description": "Application base path in the endpoint URL",
-						"default": "\"/\""
-					},
-					"domains": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "List of application's domains"
-					},
-					"cdn": {
-						"type": "boolean",
-						"description": "Flag to enable CDN for this application",
-						"default": "false;"
-					},
-					"ssl": {
-						"$ref": "#/components/schemas/SslType",
-						"description": "SSL Certificate Issuer"
-					},
-					"tlsSecret": {
-						"type": "string",
-						"description": "Secret name to hold the key of SSL, will be automatically generated.\nOnly need to specify when using \"custom\" SSL (which is the SSL from third-party issuer)"
-					},
-					"ingress": {
-						"type": "string",
-						"description": "Kubernetes Ingress Class"
-					},
-					"cliVersion": {
-						"type": "string",
-						"description": "The CLI version"
-					},
-					"namespaceYaml": {
-						"type": "string",
-						"description": "Content of namespace YAML file"
-					},
-					"deploymentYaml": {
-						"type": "string",
-						"description": "Content of deployment YAML file"
-					},
-					"prereleaseDeploymentYaml": {
-						"type": "string",
-						"description": "Content of prerelease deployment YAML file"
-					},
-					"prereleaseUrl": {
-						"type": "string",
-						"description": "Prerelease endpoint URL"
-					},
-					"envVars": {
-						"items": {
-							"$ref": "#/components/schemas/KubeEnvironmentVariable"
-						},
-						"type": "array",
-						"description": "Collection array of environment variables"
-					},
-					"createdBy": {
-						"type": "string",
-						"description": "User name of the first person who deploy on this environment."
-					},
-					"lastUpdatedBy": {
-						"type": "string",
-						"description": "User name of the last person who deploy or update this environment."
-					},
-					"creator": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectId"
-							},
-							{
-								"$ref": "#/components/schemas/User"
-							}
-						],
-						"description": "ID of the creator"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time",
-						"description": "Update time"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
-			},
-			"App": {
+			"GitProvider": {
 				"properties": {
 					"_id": {
 						"anyOf": [
@@ -878,73 +1038,25 @@
 					"name": {
 						"type": "string"
 					},
-					"image": {
+					"host": {
 						"type": "string"
 					},
-					"createdBy": {
+					"gitWorkspace": {
 						"type": "string"
 					},
-					"lastUpdatedBy": {
-						"type": "string"
-					},
-					"git": {
+					"repo": {
 						"properties": {
-							"repoSSH": {
+							"sshPrefix": {
 								"type": "string"
 							},
-							"repoURL": {
-								"type": "string"
-							},
-							"provider": {
+							"url": {
 								"type": "string"
 							}
 						},
 						"type": "object"
 					},
-					"framework": {
-						"properties": {
-							"repoSSH": {
-								"type": "string"
-							},
-							"repoURL": {
-								"type": "string"
-							},
-							"slug": {
-								"type": "string"
-							},
-							"name": {
-								"type": "string"
-							}
-						},
-						"type": "object"
-					},
-					"environment": {
-						"properties": {},
-						"additionalProperties": {
-							"anyOf": [
-								{
-									"$ref": "#/components/schemas/DeployEnvironment"
-								},
-								{
-									"type": "string"
-								}
-							]
-						},
-						"type": "object",
-						"deprecated": true
-					},
-					"deployEnvironment": {
-						"properties": {},
-						"additionalProperties": {
-							"$ref": "#/components/schemas/DeployEnvironment"
-						},
-						"type": "object"
-					},
-					"latestBuild": {
-						"type": "string"
-					},
-					"projectSlug": {
-						"type": "string"
+					"type": {
+						"$ref": "#/components/schemas/GitProviderType"
 					},
 					"owner": {
 						"anyOf": [
@@ -958,7 +1070,7 @@
 								"type": "string"
 							}
 						],
-						"description": "Owner ID of the app"
+						"description": "User ID of the owner"
 					},
 					"project": {
 						"anyOf": [
@@ -972,7 +1084,7 @@
 								"type": "string"
 							}
 						],
-						"description": "Project ID of the app"
+						"description": "ID of the project"
 					},
 					"workspace": {
 						"anyOf": [
@@ -986,7 +1098,186 @@
 								"type": "string"
 							}
 						],
-						"description": "Workspace ID of the app"
+						"description": "ID of the workspace"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Framework": {
+				"properties": {
+					"_id": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"slug": {
+						"type": "string",
+						"description": "Auto-generated by \"name\" column"
+					},
+					"active": {
+						"type": "boolean",
+						"description": "Auto-generated by \"name\" column"
+					},
+					"metadata": {
+						"description": "Auto-generated by entity's columns\nEntity's metadata without unicode characters"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"name": {
+						"type": "string"
+					},
+					"host": {
+						"type": "string"
+					},
+					"gitProvider": {
+						"$ref": "#/components/schemas/GitProviderType",
+						"description": "Git provider name"
+					},
+					"isPrivate": {
+						"type": "boolean",
+						"description": "Git repository access privacy"
+					},
+					"git": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/GitProvider"
+							}
+						],
+						"description": "ID of the Git Provider"
+					},
+					"repoURL": {
+						"type": "string"
+					},
+					"repoSSH": {
+						"type": "string"
+					},
+					"mainBranch": {
+						"type": "string"
+					},
+					"downloads": {
+						"type": "number",
+						"format": "double",
+						"description": "Number of downloads"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the owner"
+					},
+					"project": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Project"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the project"
+					},
+					"workspace": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/Workspace"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the workspace"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AppInputSchema": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "`REQUIRES`\n---\nApp's name"
+					},
+					"project": {
+						"type": "string",
+						"description": "`REQUIRES`\n---\nApp's name"
+					},
+					"git": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"$ref": "#/components/schemas/AppGitInfo"
+							}
+						],
+						"description": "`REQUIRES`\n---\nA SSH URI of the source code repository or a detail information of this repository"
+					},
+					"framework": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"$ref": "#/components/schemas/Framework"
+							}
+						],
+						"description": "OPTIONAL\n---\nFramework's ID or slug or {Framework} instance"
+					}
+				},
+				"required": ["name", "project", "git"],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"IPostQueryParams": {
+				"properties": {
+					"populate": {
+						"type": "string",
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`"
+					},
+					"select": {
+						"type": "string"
+					},
+					"order": {
+						"type": "string",
+						"example": "-updatedAt,-createdAt"
+					},
+					"raw": {
+						"type": "boolean",
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"default": "false"
 					}
 				},
 				"type": "object",
@@ -995,18 +1286,7 @@
 			"Pick_App.Exclude_keyofApp.keyofHiddenBodyKeys__": {
 				"properties": {
 					"git": {
-						"properties": {
-							"repoSSH": {
-								"type": "string"
-							},
-							"repoURL": {
-								"type": "string"
-							},
-							"provider": {
-								"type": "string"
-							}
-						},
-						"type": "object"
+						"$ref": "#/components/schemas/AppGitInfo"
 					},
 					"framework": {
 						"properties": {
@@ -1043,7 +1323,9 @@
 						"type": "string"
 					},
 					"image": {
-						"type": "string"
+						"type": "string",
+						"description": "OPTIONAL\n---\nImage URI of this app on the Container Registry (without `TAG`).\n- Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`\n- **Don't** specify `tag` at the end! (eg. `latest`, `beta`,...)",
+						"example": "asia.gcr.io/my-workspace/my-project/my-app"
 					},
 					"slug": {
 						"type": "string",
@@ -1094,31 +1376,6 @@
 			"Omit_App.keyofHiddenBodyKeys_": {
 				"$ref": "#/components/schemas/Pick_App.Exclude_keyofApp.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
-			},
-			"AppInputSchema": {
-				"$ref": "#/components/schemas/Omit_App.keyofHiddenBodyKeys_"
-			},
-			"IPostQueryParams": {
-				"properties": {
-					"populate": {
-						"type": "string",
-						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`"
-					},
-					"select": {
-						"type": "string"
-					},
-					"order": {
-						"type": "string",
-						"example": "-updatedAt,-createdAt"
-					},
-					"raw": {
-						"type": "boolean",
-						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
-						"default": "false"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
 			},
 			"IDeleteQueryParams": {
 				"properties": {
@@ -1306,17 +1563,17 @@
 						"format": "double",
 						"description": "`REQUIRES`\n---\nContainer's port"
 					},
+					"imageURL": {
+						"type": "string",
+						"description": "`REQUIRES`\n---\nImage URI of this app on the Container Registry (without `TAG`).\n- Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`\n- **Don't** specify `tag` at the end! (eg. `latest`, `beta`,...)",
+						"example": "asia.gcr.io/my-workspace/my-project/my-app",
+						"default": "<registry-image-base-url>/<project-slug>/<app-name-slug>"
+					},
 					"replicas": {
 						"type": "number",
 						"format": "double",
 						"description": "OPTIONAL\n---\nContainer's scaling replicas",
 						"default": "1"
-					},
-					"imageURL": {
-						"type": "string",
-						"description": "OPTIONAL\n---\nImage URI of this app on the Container Registry (without `TAG`).\n- Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`\n- **Don't** specify `tag` at the end! (eg. `latest`, `beta`,...)",
-						"example": "asia.gcr.io/my-workspace/my-project/my-app",
-						"default": "<registry-image-base-url>/<project-slug>/<app-name-slug>"
 					},
 					"namespace": {
 						"type": "string",
@@ -1368,7 +1625,7 @@
 						"default": "nginx"
 					}
 				},
-				"required": ["registry", "cluster", "port"],
+				"required": ["registry", "cluster", "port", "imageURL"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -1712,6 +1969,9 @@
 						"type": "string",
 						"description": "Build for which deploy environment\n- **[OPTIONAL] SHOULD NOT rely on this!**\n- A build should be able to used for any deploy environments."
 					},
+					"appSlug": {
+						"type": "string"
+					},
 					"tag": {
 						"type": "string",
 						"description": "Image tag is also \"buildNumber\""
@@ -1740,9 +2000,6 @@
 					},
 					"status": {
 						"$ref": "#/components/schemas/BuildStatus"
-					},
-					"appSlug": {
-						"type": "string"
 					},
 					"logs": {
 						"type": "string"
@@ -2070,9 +2327,24 @@
 						"type": "boolean",
 						"description": "Auto-generated by \"name\" column"
 					},
+					"domains": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "Alternative domains or project's domains of this cluster"
+					},
 					"isVerified": {
 						"type": "boolean",
 						"description": "Is cluster verified"
+					},
+					"serviceAccount": {
+						"type": "string",
+						"description": "Content of the Service Account credentials to access this cluster"
+					},
+					"apiAccessToken": {
+						"type": "string",
+						"description": "Content of the API ACCESS TOKEN to access this cluster"
 					},
 					"shortName": {
 						"type": "string",
@@ -2106,24 +2378,9 @@
 						"type": "string",
 						"description": "The PRIMARY IP ADDRESS of this cluster"
 					},
-					"domains": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "Alternative domains or project's domains of this cluster"
-					},
 					"kubeConfig": {
 						"type": "string",
 						"description": "The KUBECONFIG data to access to this cluster"
-					},
-					"serviceAccount": {
-						"type": "string",
-						"description": "Content of the Service Account credentials to access this cluster"
-					},
-					"apiAccessToken": {
-						"type": "string",
-						"description": "Content of the API ACCESS TOKEN to access this cluster"
 					}
 				},
 				"type": "object",
@@ -2132,234 +2389,6 @@
 			"Omit_Cluster.keyofHiddenBodyKeys_": {
 				"$ref": "#/components/schemas/Pick_Cluster.Exclude_keyofCluster.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
-			},
-			"GitProviderType": {
-				"type": "string",
-				"enum": ["bitbucket", "github", "gitlab"]
-			},
-			"GitProvider": {
-				"properties": {
-					"_id": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"type": "string"
-							}
-						]
-					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
-					"active": {
-						"type": "boolean",
-						"description": "Auto-generated by \"name\" column"
-					},
-					"metadata": {
-						"description": "Auto-generated by entity's columns\nEntity's metadata without unicode characters"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"deletedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"name": {
-						"type": "string"
-					},
-					"host": {
-						"type": "string"
-					},
-					"gitWorkspace": {
-						"type": "string"
-					},
-					"repo": {
-						"properties": {
-							"sshPrefix": {
-								"type": "string"
-							},
-							"url": {
-								"type": "string"
-							}
-						},
-						"type": "object"
-					},
-					"type": {
-						"$ref": "#/components/schemas/GitProviderType"
-					},
-					"owner": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/User"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "User ID of the owner"
-					},
-					"project": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/Project"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "ID of the project"
-					},
-					"workspace": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/Workspace"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "ID of the workspace"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
-			},
-			"Framework": {
-				"properties": {
-					"_id": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"type": "string"
-							}
-						]
-					},
-					"slug": {
-						"type": "string",
-						"description": "Auto-generated by \"name\" column"
-					},
-					"active": {
-						"type": "boolean",
-						"description": "Auto-generated by \"name\" column"
-					},
-					"metadata": {
-						"description": "Auto-generated by entity's columns\nEntity's metadata without unicode characters"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"deletedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"name": {
-						"type": "string"
-					},
-					"host": {
-						"type": "string"
-					},
-					"gitProvider": {
-						"$ref": "#/components/schemas/GitProviderType",
-						"description": "Git provider name"
-					},
-					"isPrivate": {
-						"type": "boolean",
-						"description": "Git repository access privacy"
-					},
-					"git": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/GitProvider"
-							}
-						],
-						"description": "ID of the Git Provider"
-					},
-					"repoURL": {
-						"type": "string"
-					},
-					"repoSSH": {
-						"type": "string"
-					},
-					"mainBranch": {
-						"type": "string"
-					},
-					"downloads": {
-						"type": "number",
-						"format": "double",
-						"description": "Number of downloads"
-					},
-					"owner": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/User"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "User ID of the owner"
-					},
-					"project": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/Project"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "ID of the project"
-					},
-					"workspace": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/ObjectID"
-							},
-							{
-								"$ref": "#/components/schemas/Workspace"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "ID of the workspace"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
 			},
 			"InputOptions": {
 				"properties": {
@@ -2406,8 +2435,8 @@
 						"description": "Specify a git branch"
 					},
 					"gitProvider": {
-						"type": "string",
-						"description": "Git provider"
+						"$ref": "#/components/schemas/GitProviderType",
+						"description": "Git provider type"
 					},
 					"registry": {
 						"type": "string",
@@ -3490,26 +3519,20 @@
 						"type": "string"
 					},
 					"apps": {
-						"anyOf": [
-							{
-								"items": {
+						"items": {
+							"anyOf": [
+								{
 									"$ref": "#/components/schemas/ObjectID"
 								},
-								"type": "array"
-							},
-							{
-								"items": {
+								{
 									"$ref": "#/components/schemas/App"
 								},
-								"type": "array"
-							},
-							{
-								"items": {
+								{
 									"type": "string"
-								},
-								"type": "array"
-							}
-						],
+								}
+							]
+						},
+						"type": "array",
 						"description": "List of App IDs"
 					}
 				},
@@ -3537,10 +3560,6 @@
 						"type": "boolean",
 						"description": "Auto-generated by \"name\" column"
 					},
-					"shortName": {
-						"$ref": "#/components/schemas/CloudProviderType",
-						"description": "Cloud provider short name, without spacing & special characters"
-					},
 					"serviceAccount": {
 						"type": "string",
 						"description": "Content of the Service Account credentials ti access services on this cloud provider\n- Apply for: Google Cloud, AWS,...\n- For example: Kubernetes Clusters, Single Sign-On,..."
@@ -3548,6 +3567,10 @@
 					"apiAccessToken": {
 						"type": "string",
 						"description": "Content of the API access token to use services on this cloud provider\n- Apply for: Digital Ocean"
+					},
+					"shortName": {
+						"$ref": "#/components/schemas/CloudProviderType",
+						"description": "Cloud provider short name, without spacing & special characters"
 					},
 					"clusters": {
 						"anyOf": [
@@ -3594,14 +3617,6 @@
 					"isVerified": {
 						"type": "boolean"
 					},
-					"serviceAccount": {
-						"type": "string",
-						"description": "Content of the Service Account credentials ti access services on this cloud provider\n- Apply for: Google Cloud, AWS,...\n- For example: Kubernetes Clusters, Single Sign-On,..."
-					},
-					"apiAccessToken": {
-						"type": "string",
-						"description": "Content of the API access token to use services on this cloud provider\n- Apply for: Digital Ocean"
-					},
 					"host": {
 						"type": "string",
 						"description": "The host (domain) of your container registry which you are using."
@@ -3609,6 +3624,14 @@
 					"imageBaseURL": {
 						"type": "string",
 						"description": "Base URL of the image, usually is the registry host URI combines with something else.\n- This will be used to combine with your project/app image path."
+					},
+					"serviceAccount": {
+						"type": "string",
+						"description": "Content of the Service Account credentials ti access services on this cloud provider\n- Apply for: Google Cloud, AWS,...\n- For example: Kubernetes Clusters, Single Sign-On,..."
+					},
+					"apiAccessToken": {
+						"type": "string",
+						"description": "Content of the API access token to use services on this cloud provider\n- Apply for: Digital Ocean"
 					},
 					"imagePullSecret": {
 						"properties": {
@@ -3707,6 +3730,9 @@
 						"type": "string",
 						"description": "Targeted environment."
 					},
+					"appSlug": {
+						"type": "string"
+					},
 					"namespace": {
 						"type": "string"
 					},
@@ -3714,9 +3740,6 @@
 						"type": "string"
 					},
 					"cliVersion": {
-						"type": "string"
-					},
-					"appSlug": {
 						"type": "string"
 					},
 					"envVars": {
@@ -4648,12 +4671,12 @@
 										"description": "`REQUIRES`\n---\nDeploy environment name",
 										"default": "dev"
 									},
-									"slug": {
+									"appSlug": {
 										"type": "string",
 										"description": "`REQUIRES`\n---\nApp slug"
 									}
 								},
-								"required": ["deployEnvironmentData", "env", "slug"],
+								"required": ["deployEnvironmentData", "env", "appSlug"],
 								"type": "object"
 							}
 						}
@@ -6375,6 +6398,9 @@
 							"application/json": {
 								"schema": {
 									"anyOf": [
+										{
+											"$ref": "#/components/schemas/ResponseData"
+										},
 										{
 											"properties": {
 												"data": {},
@@ -9318,20 +9344,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/ResponseData"
-										},
-										{
-											"properties": {
-												"data": {
-													"$ref": "#/components/schemas/Release"
-												}
-											},
-											"required": ["data"],
-											"type": "object"
-										}
-									]
+									"$ref": "#/components/schemas/ResponseData"
 								}
 							}
 						}
@@ -9353,11 +9366,14 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"env": {
+										"type": "string"
+									},
 									"build": {
 										"type": "string"
 									}
 								},
-								"required": ["build"],
+								"required": ["env", "build"],
 								"type": "object"
 							}
 						}

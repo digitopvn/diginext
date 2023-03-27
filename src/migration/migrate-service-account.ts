@@ -11,6 +11,7 @@ import { DB } from "../modules/api/DB";
 export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 	const workspaces = await DB.find<Workspace>("workspace", {});
 
+	let affectedWs = 0;
 	const results = await Promise.all(
 		workspaces.map(async (ws) => {
 			// find default Service Account of this workspace:
@@ -32,6 +33,8 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 
 				const saUser = await DB.create("service_account", saDto);
 				if (saUser) log(`[MIGRATION] Workspace "${ws.name}" > Created "${saUser.name}" successfully.`);
+
+				affectedWs++;
 			}
 
 			// find default API_KEY user of this workspace
@@ -53,11 +56,13 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 
 				const apiKeyUser = await DB.create("api_key_user", apiUserDto);
 				if (apiKeyUser) log(`[MIGRATION] Workspace "${ws.name}" > Created "${apiKeyUser.name}" successfully.`);
+
+				affectedWs++;
 			}
 		})
 	);
 
-	log(`[MIGRATION] migrateDefaultApiAccessToken() > FINISH MIGRATION >> Affected ${results.length} workspaces.`);
+	if (affectedWs > 0) log(`[MIGRATION] migrateDefaultApiAccessToken() > FINISH MIGRATION >> Affected ${affectedWs} workspaces.`);
 
 	return results;
 };

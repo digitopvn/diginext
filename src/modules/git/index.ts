@@ -45,11 +45,18 @@ export function generateRepoSSH(provider: GitProviderType | string, repoSlug: st
  * @param repoSlug - Include username/org slug, exclude ".git" at the end
  * @example `digitopvn/diginext13`
  * @returns
- * @example "https://github.com/digitopvn/diginext13"
  */
 export function generateRepoURL(provider: GitProviderType | string, repoSlug: string) {
 	return `https://${gitProviderDomain[provider]}/${repoSlug}`;
 }
+
+/**
+ * Generate SSH URL of the git repository
+ * @param repoSlug - Include username/org slug, exclude ".git" at the end
+ * @example `digitopvn/diginext13`
+ * @returns
+ */
+export const getRepoURLFromRepoSSH = generateRepoURL;
 
 export const login = async (options?: InputOptions) => {
 	if (options.thirdAction && options.fourAction) {

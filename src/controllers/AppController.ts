@@ -1,11 +1,11 @@
 import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
-import { isArray, isBoolean, isEmpty } from "lodash";
+import { isArray, isBoolean, isEmpty, isString, isUndefined } from "lodash";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { App, Cluster, ContainerRegistry, Project } from "@/entities";
+import type { App, AppGitInfo, Cluster, ContainerRegistry, Framework, Project } from "@/entities";
 import type { HiddenBodyKeys, ResourceQuotaSize, SslType } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
@@ -17,13 +17,45 @@ import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createDiginextDomain } from "@/modules/diginext/dx-domain";
+import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
+import { parseGitRepoDataFromRepoSSH } from "@/plugins";
+import { isValidObjectId } from "@/plugins/mongodb";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
 import BaseController from "./BaseController";
 
-export type AppInputSchema = Omit<App, keyof HiddenBodyKeys>;
+export interface AppInputSchema {
+	/**
+	 * `REQUIRES`
+	 * ---
+	 * App's name
+	 */
+	name: string;
+
+	/**
+	 * `REQUIRES`
+	 * ---
+	 * App's name
+	 */
+	project: string;
+
+	/**
+	 * `REQUIRES`
+	 * ---
+	 * A SSH URI of the source code repository or a detail information of this repository
+	 * @example git@bitbucket.org:digitopvn/example-repo.git
+	 */
+	git: string | AppGitInfo;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Framework's ID or slug or {Framework} instance
+	 */
+	framework?: string | Framework;
+}
 
 export interface DeployEnvironmentData {
 	/**
@@ -51,15 +83,7 @@ export interface DeployEnvironmentData {
 	port: number;
 
 	/**
-	 * OPTIONAL
-	 * ---
-	 * Container's scaling replicas
-	 * @default 1
-	 */
-	replicas?: number;
-
-	/**
-	 * OPTIONAL
+	 * `REQUIRES`
 	 * ---
 	 * Image URI of this app on the Container Registry (without `TAG`).
 	 * - Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`
@@ -67,7 +91,15 @@ export interface DeployEnvironmentData {
 	 * @default <registry-image-base-url>/<project-slug>/<app-name-slug>
 	 * @example "asia.gcr.io/my-workspace/my-project/my-app"
 	 */
-	imageURL?: string;
+	imageURL: string;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Container's scaling replicas
+	 * @default 1
+	 */
+	replicas?: number;
 
 	/**
 	 * OPTIONAL
@@ -205,36 +237,58 @@ export default class AppController extends BaseController<App> {
 	@Post("/")
 	async create(@Body() body: AppInputSchema, @Queries() queryParams?: IPostQueryParams) {
 		let project: Project,
-			projectSvc: ProjectService = new ProjectService();
+			projectSvc: ProjectService = new ProjectService(),
+			appDto: App = {};
 
-		if (body.project) {
-			project = await projectSvc.findOne({ _id: new ObjectId(body.project.toString()) });
-			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
-			body.projectSlug = project.slug;
+		if (isEmpty(body.project)) return respondFailure({ msg: `Project ID or slug or instance is required.` });
+
+		// find parent project of this app
+		project = isValidObjectId(body.project)
+			? await projectSvc.findOne({ _id: new ObjectId(body.project.toString()) })
+			: await projectSvc.findOne({ slug: body.project });
+
+		if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
+		appDto.projectSlug = project.slug;
+
+		// framework
+		if (isEmpty(body.framework)) body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" };
+		if (body.framework === "none") body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" };
+		appDto.framework = body.framework as Framework;
+
+		// git
+		if (isEmpty(body.git)) return respondFailure({ msg: `Git SSH URI or git repository information is required.` });
+		if (isString(body.git)) {
+			const gitData = parseGitRepoDataFromRepoSSH(body.git);
+			if (isEmpty(gitData)) return respondFailure({ msg: `Git repository information is not valid.` });
+
+			body.git = {
+				repoSSH: body.git as string,
+				repoURL: getRepoURLFromRepoSSH(gitData.gitProvider, gitData.fullSlug),
+				provider: gitData.gitProvider,
+			};
+		} else {
+			if (!body.git.repoSSH) return respondFailure({ msg: `Git repository information is not valid.` });
 		}
-
-		// TODO: projectSlug
-		// TODO: framework -> optional
-
-		// body.deployEnvironment = convertBodyDeployEnvironmentObject(body);
-		// console.log("AppController > body.deployEnvironment :>> ", JSON.stringify(body.deployEnvironment, null, 2));
+		appDto.git = body.git;
 
 		let newApp: App;
-		// console.log("app create > newApp :>> ", newApp);
 
 		try {
-			newApp = await this.service.create(body);
+			newApp = await this.service.create(appDto);
 			if (!newApp) return { status: 0, messages: [`Failed to update app at "${JSON.stringify(this.filter)}"`] } as ResponseData;
 		} catch (e) {
 			return { status: 0, messages: [e.message] } as ResponseData;
 		}
+		// console.log("app create > newApp :>> ", newApp);
+
+		const newAppId = newApp._id;
 
 		// migrate app environment variables if needed (convert {Object} to {Array})
 		const migratedApp = await migrateAppEnvironmentVariables(newApp);
 		if (migratedApp) newApp = migratedApp;
 
+		// add this new app to the project info
 		if (project) {
-			const newAppId = (newApp as App)._id;
 			const projectApps = [...(project.apps || []), newAppId];
 			// console.log("projectApps :>> ", projectApps);
 			[project] = await projectSvc.update({ _id: project._id }, { apps: projectApps });
@@ -368,7 +422,7 @@ export default class AppController extends BaseController<App> {
 			 * ---
 			 * App slug
 			 */
-			slug: string;
+			appSlug: string;
 			/**
 			 * `REQUIRES`
 			 * ---
@@ -385,15 +439,22 @@ export default class AppController extends BaseController<App> {
 		},
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		const { slug, env, deployEnvironmentData } = body;
-		if (!slug) return respondFailure({ msg: `App slug is required.` });
-		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
-		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
+		// conversion if needed...
+		if (isJSON(body.deployEnvironmentData))
+			body.deployEnvironmentData = JSON.parse(body.deployEnvironmentData as unknown as string) as DeployEnvironmentData;
+
+		//
+		const { appSlug, env, deployEnvironmentData } = body;
+		if (isEmpty(appSlug)) return respondFailure({ msg: `App slug is required.` });
+		if (isEmpty(env)) return respondFailure({ msg: `Deploy environment name is required.` });
+		if (isEmpty(deployEnvironmentData)) return respondFailure({ msg: `Deploy environment configuration is required.` });
 
 		// get app data:
-		const app = await DB.findOne<App>("app", { slug }, { populate: ["project"] });
-		if (isEmpty(app)) return respondFailure({ msg: `App "${slug}" not found.` });
+		const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
+		if (isEmpty(app)) return respondFailure({ msg: `App "${appSlug}" not found.` });
 		if (isEmpty(app.project)) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
+		if (isEmpty(deployEnvironmentData.imageURL)) respondFailure({ msg: `Build image URL is required.` });
+
 		const project = app.project as Project;
 		const { slug: projectSlug } = project;
 
@@ -428,13 +489,10 @@ export default class AppController extends BaseController<App> {
 		const registry = await DB.findOne<ContainerRegistry>("registry", { slug: deployEnvironmentData.registry });
 		if (isEmpty(registry)) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
 
-		// build image
-		if (isEmpty(deployEnvironmentData.imageURL)) deployEnvironmentData.imageURL = `${registry.host}/${projectSlug}/${slug}`;
-
 		// Domains & SSL certificate...
 		if (isEmpty(deployEnvironmentData.domains)) deployEnvironmentData.domains = [];
 		if (deployEnvironmentData.useGeneratedDomain) {
-			const subdomain = `${projectSlug}-${slug}.${env}`;
+			const subdomain = `${projectSlug}-${appSlug}.${env}`;
 			const {
 				status,
 				messages,
@@ -461,20 +519,21 @@ export default class AppController extends BaseController<App> {
 		}
 
 		// Exposing ports, enable/disable CDN, and select Ingress type
-		if (isEmpty(deployEnvironmentData.port)) return respondFailure({ msg: `Param "port" is required.` });
+		if (isUndefined(deployEnvironmentData.port)) return respondFailure({ msg: `Param "port" is required.` });
 		if (isEmpty(deployEnvironmentData.cdn) || !isBoolean(deployEnvironmentData.cdn)) deployEnvironmentData.cdn = false;
 		deployEnvironmentData.ingress = "nginx";
 
 		// create deploy environment in the app:
 		const [updatedApp] = await this.service.update(
-			{ slug },
+			{ slug: appSlug },
 			{
 				[`deployEnvironment.${env}`]: deployEnvironmentData,
 			}
 		);
+		// console.log("updatedApp :>> ", updatedApp);
 		if (!updatedApp) return respondFailure({ msg: `Failed to create "${env}" deploy environment.` });
 
-		const { data: appConfig } = await this.getAppConfig({ slug });
+		const appConfig = await getAppConfigFromApp(updatedApp);
 
 		return respondSuccess({ data: appConfig });
 	}

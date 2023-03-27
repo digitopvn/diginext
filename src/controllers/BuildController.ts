@@ -1,3 +1,4 @@
+import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import { Config } from "@/app.config";
@@ -5,6 +6,7 @@ import type { Build } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
+import { respondFailure } from "@/interfaces/ResponseData";
 import { startBuild, StartBuildParams, stopBuild } from "@/modules/build";
 import { Logger } from "@/plugins";
 import BuildService from "@/services/BuildService";
@@ -92,17 +94,24 @@ export default class BuildController extends BaseController<Build> {
 	@Security("jwt")
 	@Post("/start")
 	async startBuild(@Body() body: StartBuildParams) {
-		// validate
-		const { appSlug, buildNumber } = body;
+		// default values
+		if (this.user) body.user = this.user;
 
+		// validates
+		const { appSlug, buildNumber, user, userId, gitBranch, registrySlug } = body;
+		if (isEmpty(appSlug)) return respondFailure({ msg: `App slug is required.` });
+		if (isEmpty(buildNumber)) return respondFailure({ msg: `Build number is required.` });
+		if (isEmpty(user) && isEmpty(userId)) return respondFailure({ msg: `User or UserID is required.` });
+		if (isEmpty(gitBranch)) return respondFailure({ msg: `Git branch is required.` });
+		if (isEmpty(registrySlug)) return respondFailure({ msg: `Container registry slug is required.` });
 		// start the build
-		startBuild(body);
+		const buildInfo = await startBuild(body);
 
 		const buildServerUrl = Config.BASE_URL;
 		const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}`;
 
-		return { status: 1, messages: [`Building...`], data: { logURL } } as ResponseData;
+		return { status: 1, messages: [`Building...`], data: { logURL, ...buildInfo } } as ResponseData;
 	}
 
 	@Security("api_key")

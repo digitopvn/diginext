@@ -13,6 +13,7 @@ import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { getAppConfig, objectToDeploymentYaml } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { createImagePullSecretsInNamespace } from "../k8s/image-pull-secret";
 import { generateDomains } from "./generate-domain";
 
 export type GenerateDeploymentParams = {
@@ -56,8 +57,10 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const currentAppConfig = appConfig || getAppConfig(targetDirectory);
 	const { slug } = currentAppConfig;
 
+	console.log("currentAppConfig :>> ", currentAppConfig);
+
 	// DEFINE DEPLOYMENT PARTS:
-	const BUILD_NUMBER = buildNumber || makeDaySlug({ divider: "" });
+	const BUILD_NUMBER = makeSlug(buildNumber) || makeDaySlug({ divider: "" });
 
 	const deployEnvironmentConfig = currentAppConfig.environment[env];
 
@@ -73,7 +76,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const { imageURL } = deployEnvironmentConfig;
 
 	// TODO: Replace BUILD_NUMBER so it can work with Skaffold
-	const IMAGE_NAME = `${imageURL}:${BUILD_NUMBER}`;
+	const IMAGE_NAME = `${imageURL}:${buildNumber}`;
 
 	let projectSlug = currentAppConfig.project;
 	let domains = deployEnvironmentConfig.domains;
@@ -87,6 +90,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (isEmpty(registry)) {
 		throw new Error(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
 	}
+	if (isEmpty(registry.imagePullSecret)) {
+		const imagePullSecret = await createImagePullSecretsInNamespace(slug, env, clusterShortName, nsName);
+		[registry] = await DB.update<ContainerRegistry>("registry", { _id: registry._id }, { imagePullSecret });
+	}
+	console.log("registry :>> ", registry);
 
 	// get destination cluster
 	let cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
@@ -124,8 +132,6 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (!app) {
 		throw new Error(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
 	}
-	// console.log("generate deployment > app :>> ", app);
-	// const deployEnvironment = await getDeployEvironmentByApp(app, env);
 
 	const deployEnvironment = (app.deployEnvironment || {})[env] || {};
 	// console.log("generate deployment > deployEnvironment :>> ", deployEnvironment);
@@ -421,6 +427,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const prereleaseUrl = `https://${prereleaseDomain}/${basePath}`;
 
 	return {
+		envVars: containerEnvs,
 		// namespace
 		namespaceContent,
 		namespaceObject,

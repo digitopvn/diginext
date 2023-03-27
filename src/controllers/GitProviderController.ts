@@ -4,6 +4,7 @@ import type { GitProvider } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
+import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
 import GitProviderService from "@/services/GitProviderService";
 
@@ -90,7 +91,7 @@ export default class GitProviderController extends BaseController<GitProvider> {
 	@Security("jwt")
 	@Post("/ssh/verify")
 	async verifySSH(@Queries() queryParams?: { provider: string }) {
-		const gitProvider = this.filter.provider as string;
+		const gitProvider = this.filter.provider as GitProviderType;
 		if (!gitProvider) {
 			return { status: 0, messages: [`Param "provider" is required.`] } as ResponseData;
 		}

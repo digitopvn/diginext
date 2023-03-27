@@ -7,7 +7,7 @@ import { isEmpty } from "lodash";
 import yargs from "yargs";
 
 import { Config, isServerMode } from "@/app.config";
-import { cliOpts, saveCliConfig } from "@/config/config";
+import { saveCliConfig } from "@/config/config";
 import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
 import type { GoogleServiceAccount } from "@/interfaces/GoogleServiceAccount";
 import type { InputOptions } from "@/interfaces/InputOptions";
@@ -209,7 +209,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 		`kubectl ${
 			context ? `--context=${context} ` : ""
 		}-n ${namespace} create secret docker-registry ${secretName} --docker-server=${host} --docker-username=_json_key --docker-password="${svcAccContentCmd}" -o json`,
-		cliOpts
+		isWin() ? {} : { shell: "bash" }
 	);
 
 	// delete temporary file

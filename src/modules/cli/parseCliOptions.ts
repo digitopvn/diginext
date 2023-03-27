@@ -5,6 +5,7 @@ import yargs from "yargs";
 import pkg from "@/../package.json";
 import type { Project } from "@/entities";
 import type { InputOptions, ResourceQuotaSize } from "@/interfaces/InputOptions";
+import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { checkForUpdate, currentVersion, getLatestCliVersion } from "@/plugins";
 
 const cliHeader =
@@ -464,7 +465,7 @@ export async function parseCliOptions() {
 		isLocal: (argv.local as boolean) ?? false,
 		overwrite: (argv.overwrite as boolean) ?? false,
 		shouldUseGit: (argv.git as boolean) ?? true,
-		gitProvider: argv["git-provider"] as string,
+		gitProvider: argv["git-provider"] as GitProviderType,
 
 		// project
 		projectName: argv.projectName as string,

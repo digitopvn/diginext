@@ -50,7 +50,7 @@ export default class Project extends Base {
 	 * @remarks This can be populated to {App} data
 	 */
 	@ObjectIdColumn({ name: "apps" })
-	apps?: ObjectID[] | App[] | string[];
+	apps?: (ObjectID | App | string)[];
 
 	/**
 	 * User ID of the owner
