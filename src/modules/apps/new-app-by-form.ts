@@ -31,6 +31,7 @@ export async function createAppByForm(options?: InputOptions) {
 				}
 			},
 		});
+		console.log("createAppByForm > name :>> ", name);
 		options.name = name;
 	}
 

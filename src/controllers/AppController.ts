@@ -240,9 +240,10 @@ export default class AppController extends BaseController<App> {
 	async create(@Body() body: AppInputSchema, @Queries() queryParams?: IPostQueryParams) {
 		let project: Project,
 			projectSvc: ProjectService = new ProjectService(),
-			appDto: App = {};
+			appDto: App = { ...(body as any) };
 
 		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
+		if (!body.name) return respondFailure({ msg: `App's name is required.` });
 
 		// console.log("isValidObjectId(body.project) :>> ", isValidObjectId(body.project));
 
