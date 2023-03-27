@@ -152,10 +152,11 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 
 	async findOne(filter?: IQueryFilter, options?: IQueryOptions) {
 		// log(`findOne > filter :>>`, filter);
+		// log(`findOne > options :>>`, options);
 		const results = await this.find(filter, options);
 
-		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
-		const author = `${user.name} (ID: ${user._id})`;
+		// const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
+		// const author = `${user.name} (ID: ${user._id})`;
 		// if (user.name !== "Unknown") log(author, `- BaseService.findOne :>>`, { filter, options });
 
 		return results.length > 0 ? results[0] : null;

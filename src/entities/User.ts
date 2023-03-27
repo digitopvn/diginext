@@ -41,7 +41,7 @@ export default class User extends Base {
 	 * Service Account is User!
 	 */
 	@Column({ default: "user" })
-	type?: "user" | "service_account";
+	type?: "user" | "service_account" | "api_key";
 
 	/**
 	 * User email address

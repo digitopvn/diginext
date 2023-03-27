@@ -80,8 +80,8 @@ export default class Workspace extends Base {
 	/**
 	 * List of this workspace's API Access Token
 	 */
-	@Column()
-	apiAccessTokens?: WorkspaceApiAccessToken[];
+	// @Column()
+	// apiAccessTokens?: WorkspaceApiAccessToken[];
 
 	/**
 	 * User ID of the owner

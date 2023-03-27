@@ -1,21 +1,27 @@
 import express from "express";
 
-import WorkspaceController from "@/controllers/WorkspaceController";
+import ApiKeyUserController from "@/controllers/ApiKeyUserController";
 import { authenticate } from "@/middlewares/authenticate";
 
 const router = express.Router();
 
-const controller = new WorkspaceController();
+const controller = new ApiKeyUserController();
 
 router
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))
-	.get("/", controller.apiRespond(controller.read.bind(controller)))
+	.get(
+		"/",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.read.bind(controller))
+	)
 	.post(
 		"/",
 		// temporary disable auth
-		// authenticate, authorize,
+		// authenticate,
+		// authorize,
 		controller.apiRespond(controller.create.bind(controller))
 	)
 	.patch(
@@ -35,24 +41,6 @@ router
 		authenticate,
 		// authorize,
 		controller.apiRespond(controller.empty.bind(controller))
-	)
-	.patch(
-		"/add-user",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.addUser.bind(controller))
-	)
-	.get(
-		"/service-account",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.getServiceAccounts.bind(controller))
-	)
-	.get(
-		"/api-user",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.getApiKeyUsers.bind(controller))
 	);
 
 export default router;

@@ -35,10 +35,19 @@ export type StartBuildParams = {
 	 * Select a git branch to pull source code & build
 	 */
 	gitBranch: string;
+
 	/**
 	 * ID of the author
+	 * - `If passing "userId", no need to pass "user" and vice versa.`
 	 */
-	userId: string;
+	userId?: string;
+
+	/**
+	 * {User} instance of the author
+	 * - `If passing "user", no need to pass "userId" and vice versa.`
+	 */
+	user?: User;
+
 	/**
 	 * Slug of the Container Registry
 	 */
@@ -121,6 +130,7 @@ export async function startBuild(params: StartBuildParams) {
 		gitBranch,
 		registrySlug,
 		userId,
+		user,
 		appSlug,
 		// optional
 		env,
@@ -128,7 +138,7 @@ export async function startBuild(params: StartBuildParams) {
 		cliVersion,
 	} = params;
 
-	const author = await DB.findOne<User>("user", { _id: new ObjectId(userId) }, { populate: ["workspace"] });
+	const author = user || (await DB.findOne<User>("user", { _id: new ObjectId(userId) }, { populate: ["workspace"] }));
 	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 
 	// get workspace

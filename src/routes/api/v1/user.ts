@@ -11,7 +11,12 @@ router
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))
-	.get("/", authenticate, controller.apiRespond(controller.read.bind(controller)))
+	.get(
+		"/",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.read.bind(controller))
+	)
 	.post(
 		"/",
 		// temporary disable auth

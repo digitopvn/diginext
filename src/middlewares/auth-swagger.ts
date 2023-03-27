@@ -3,6 +3,13 @@ import * as jwt from "jsonwebtoken";
 
 import { Config } from "@/app.config";
 
+/**
+ * I HAVE NOT USE THIS YET !!! (lol)
+ * ---
+ * But SwaggerUI authentication is still working (I don't know why, but who cares), so I just leave this function here just in case.
+ * @copyright https://tsoa-community.github.io/docs/authentication.html
+ */
+
 export function swaggerAuthentication(request: express.Request, securityName: string, scopes?: string[]): Promise<any> {
 	if (securityName === "jwt") {
 		const token = request.body.access_token || request.query.access_token || request.headers.Authorization || request.cookies["x-auth-cookie"];

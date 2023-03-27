@@ -3,15 +3,15 @@ import { Response } from "diginext-utils/dist/response";
 import isEmpty from "lodash/isEmpty";
 import passport from "passport";
 
+/**
+ * Why you don't need to care about this file?
+ * ---
+ * Because the {User} was already verified at "jwtStrategy" step before passing the token here!
+ */
 const jwt_auth = (req, res, next) =>
 	passport.authenticate("jwt", { session: false }, function (err, user, info) {
 		// console.log(err, user, info);
-		// console.log("user :>> ", user);
-
-		// Should not care about this?
-		// Because it's already verified at "jwtStrategy" and pass token here!
-
-		console.log(`[2] AUTHORIZE: jwt_auth > assign token:`, user);
+		// console.log(`[2] AUTHORIZE: jwt_auth > assign token:`, user);
 
 		if (isEmpty(user)) {
 			/**
