@@ -9,7 +9,7 @@ import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
-import type { AccessTokenInfo } from "@/entities";
+import type { AccessTokenInfo, User } from "@/entities";
 
 import { DB } from "../api/DB";
 
@@ -111,6 +111,7 @@ export const jwtStrategy = new Strategy(
 		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
 		let user = await DB.findOne("user", { _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces", "activeWorkspace"] });
+		[user] = await DB.update<User>("user", { _id: new ObjectId(payload.id) }, { token: tokenInfo.token });
 
 		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
 		if (isEmpty(user))
@@ -122,6 +123,7 @@ export const jwtStrategy = new Strategy(
 
 		// 4. Everything is good -> assign token for user and pass it to next request:
 		user.token = tokenInfo.token;
+
 		return done(null, user);
 	}
 );
