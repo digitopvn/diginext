@@ -111,7 +111,7 @@ export default class BuildController extends BaseController<Build> {
 	async stopBuild(@Body() body: { slug: string }) {
 		let result: ResponseData & { data: Build } = { status: 1, data: [], messages: [] };
 		const { slug } = body;
-		console.log("slug :>> ", slug);
+		// console.log("slug :>> ", slug);
 		// return ApiResponse.failed(res, `${slug}`);
 
 		if (!slug) {

@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import express from "express";
 
 // Auth with JWT
-import jwt_auth from "@/middlewares/jwt_auth";
+import jwt_auth from "@/middlewares/auth-jwt";
 
 // Auth with session
 // import { authenticate } from "@/middlewares/authenticate";

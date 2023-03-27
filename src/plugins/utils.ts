@@ -18,7 +18,7 @@ import { simpleGit } from "simple-git";
 
 import pkg from "@/../package.json";
 import { cliOpts } from "@/config/config";
-import type { User, Workspace } from "@/entities";
+import type { AccessTokenInfo, User, Workspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
@@ -1084,4 +1084,22 @@ export const extractWorkspaceIdFromUser = (user: User) => {
 	return workspaceId;
 };
 
-export const generateWorkspaceApiAccessToken = () => `${randomUUID()}-${randomUUID()}`;
+export function getUnexpiredAccessToken(access_token: string) {
+	let expiredDate = dayjs("2999-12-31");
+	let expiredTimestamp = expiredDate.diff(dayjs());
+
+	// assign "access_token" info to request:
+	const token: AccessTokenInfo = {
+		access_token,
+		expiredTimestamp: expiredTimestamp,
+		expiredDate: expiredDate.toDate(),
+		expiredDateGTM7: expiredDate.format("YYYY-MM-DD HH:mm:ss"),
+	};
+
+	return token;
+}
+
+export const generateWorkspaceApiAccessToken = () => {
+	const name = randomUUID();
+	return { name, value: `${name}-${randomUUID()}` };
+};

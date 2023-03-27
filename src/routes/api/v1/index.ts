@@ -1,5 +1,6 @@
 import express from "express";
 
+import apiKeyUserRouter from "./api_key";
 import appRouter from "./app";
 import buildRouter from "./build";
 import clusterRouter from "./cluster";
@@ -12,6 +13,7 @@ import providerRouter from "./provider";
 import registryRouter from "./registry";
 import releaseRouter from "./release";
 import roleRouter from "./role";
+import serviceAccountRouter from "./service_account";
 import teamRouter from "./team";
 import userRouter from "./user";
 import workspaceRouter from "./workspace";
@@ -28,6 +30,8 @@ const router = express.Router();
  */
 router.get("/healthz", (req, res) => res.status(200).json({ status: 1 }));
 router.use("/user", userRouter);
+router.use("/service_account", serviceAccountRouter);
+router.use("/api_key", apiKeyUserRouter);
 router.use("/team", teamRouter);
 router.use("/role", roleRouter);
 router.use("/workspace", workspaceRouter);

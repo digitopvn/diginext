@@ -10,7 +10,8 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
 import type { AccessTokenInfo } from "@/entities";
-import UserService from "@/services/UserService";
+
+import { DB } from "../api/DB";
 
 dayjs.extend(relativeTime);
 
@@ -95,47 +96,32 @@ export const jwtStrategy = new Strategy(
 		algorithms: ["HS512"],
 	},
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
-		console.log(`[1] AUTHENTICATE: jwtStrategy > extract token`);
-		// log(`req.headers :>>`, req.headers);
-		// log(`req.query.access_token :>>`, req.query.access_token);
+		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`);
+
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
-		// log(`access_token >>:`, access_token);
-		// log(`JWT callback >>:`, payload);
+
+		// 1. Extract token info
 
 		const tokenInfo = extractAccessTokenInfo(access_token, payload.exp);
 
+		// validating token...
 		if (tokenInfo.isExpired) return done(JSON.stringify({ status: 0, messages: ["Access token was expired."] }), null);
+		if (!tokenInfo.token) return done(JSON.stringify({ status: 0, messages: ["Missing access token."] }), null);
 
-		// 1. Check if this access token is Workspace API Access Token?
+		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
-		// const workspaceFromApiAccessToken = await DB.findOne<Workspace>("workspace", { "apiAccessTokens.token": access_token });
-		// if (workspaceFromApiAccessToken) {
-		// 	const apiAccessToken = workspaceFromApiAccessToken.apiAccessTokens.find((apiToken) => apiToken.token === access_token);
+		let user = await DB.findOne("user", { _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces", "activeWorkspace"] });
 
-		// 	// mock a {User} represent for this API Access Token
-		// 	const mockedApiAccessTokenUser = new User();
-		// 	mockedApiAccessTokenUser.name = mockedApiAccessTokenUser.slug = mockedApiAccessTokenUser.username = apiAccessToken.name;
-		// 	mockedApiAccessTokenUser.email = `${access_token}@${workspaceFromApiAccessToken.slug}.${DIGINEXT_DOMAIN}`;
-		// 	mockedApiAccessTokenUser.roles = apiAccessToken.roles;
-		// 	mockedApiAccessTokenUser.token = tokenInfo.token;
-		// 	mockedApiAccessTokenUser.active = true;
-		// 	mockedApiAccessTokenUser.workspaces = [workspaceFromApiAccessToken];
-		// 	mockedApiAccessTokenUser.activeWorkspace = workspaceFromApiAccessToken;
-		// 	mockedApiAccessTokenUser.createdAt = workspaceFromApiAccessToken.createdAt;
-		// 	mockedApiAccessTokenUser.updatedAt = workspaceFromApiAccessToken.updatedAt;
+		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
+		if (isEmpty(user))
+			user = await DB.findOne("service_account", { _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces", "activeWorkspace"] });
 
-		// 	return done(null, mockedApiAccessTokenUser);
-		// }
+		// 3. Validating logged in user...
 
-		// 2. Check if this access token is {User} or {ServiceAccount}
+		if (isEmpty(user)) done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
 
-		const userSvc = new UserService();
-		let user = await userSvc.findOne({ _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces", "activeWorkspace"] });
-		if (!user) done(null, false);
-
-		// assign token for user:
+		// 4. Everything is good -> assign token for user and pass it to next request:
 		user.token = tokenInfo.token;
-
 		return done(null, user);
 	}
 );

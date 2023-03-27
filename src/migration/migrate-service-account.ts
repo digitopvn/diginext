@@ -2,49 +2,60 @@ import { log } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { User, Workspace } from "@/entities";
-import { WorkspaceApiAccessToken } from "@/entities";
-import { generateWorkspaceApiAccessToken } from "@/plugins";
+import type { Workspace } from "@/entities";
+import { User } from "@/entities";
+import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
 
 import { DB } from "../modules/api/DB";
 
-export const migrateDefaultServiceAccount = async () => {
-	const workspaces = (await DB.find<Workspace>("workspace", {})).filter((ws) => isEmpty(ws.apiAccessTokens));
-	if (isEmpty(workspaces)) return;
+export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
+	const workspaces = await DB.find<Workspace>("workspace", {});
 
-	log(`[MIGRATION] migrateDefaultApiAccessToken() > Found ${workspaces.length} workspaces need migration.`);
+	const results = await Promise.all(
+		workspaces.map(async (ws) => {
+			// find default Service Account of this workspace:
+			const serviceAccounts = await DB.find<User>("service_account", { workspaces: { $in: [ws._id] } });
+			if (isEmpty(serviceAccounts)) {
+				log(`[MIGRATION] migrateDefaultServiceAccount() > Found "${ws.name}" workspace doesn't have any Service Account.`);
 
-	const results = (
-		await Promise.all(
-			workspaces.map(async (ws) => {
-				// default API access token
-				const defaultApiAccessToken = new WorkspaceApiAccessToken();
-				defaultApiAccessToken.name = "default";
-				defaultApiAccessToken.token = generateWorkspaceApiAccessToken();
-				defaultApiAccessToken.roles = [];
+				const newToken = generateWorkspaceApiAccessToken();
 
-				// find default service account of this workspace:
-				const sas = await DB.find<User>("user", { type: "service_account", workspaces: { $in: [ws._id] } });
-				if (isEmpty(sas)) {
-					const serviceAccount = await DB.create<User>("user", {
-						type: "service_account",
-						name: "Default Service Account",
-						email: `default@${ws.slug}.${DIGINEXT_DOMAIN}`,
-						active: true,
-						workspaces: [ws._id],
-						activeWorkspace: ws._id,
-						token: generateWorkspaceApiAccessToken(),
-					});
+				const saDto = new User();
+				saDto.type = "service_account";
+				saDto.name = "Default Service Account";
+				saDto.email = `default.${newToken.name}@${ws.slug}.${DIGINEXT_DOMAIN}`;
+				saDto.active = true;
+				saDto.roles = [];
+				saDto.workspaces = [ws._id];
+				saDto.activeWorkspace = ws._id;
+				saDto.token = getUnexpiredAccessToken(newToken.value);
 
-					log(`[MIGRATION] migrateDefaultServiceAccount() > Created "${serviceAccount.name}" for "${ws.name}" workspace.`);
-				}
+				const saUser = await DB.create("service_account", saDto);
+				if (saUser) log(`[MIGRATION] Workspace "${ws.name}" > Created "${saUser.name}" successfully.`);
+			}
 
-				return DB.update<Workspace>("workspace", { _id: ws._id }, { apiAccessTokens: [defaultApiAccessToken] });
-			})
-		)
-	)
-		.filter((updatedItems) => updatedItems.length > 0)
-		.map((updatedItems) => updatedItems[0]);
+			// find default API_KEY user of this workspace
+			const apiKeyUsers = await DB.find<User>("api_key_user", { workspaces: { $in: [ws._id] } });
+			if (isEmpty(apiKeyUsers)) {
+				log(`[MIGRATION] migrateDefaultServiceAccount() > Found "${ws.name}" workspace doesn't have any default API_KEY user.`);
+
+				const newToken = generateWorkspaceApiAccessToken();
+
+				const apiUserDto = new User();
+				apiUserDto.type = "api_key";
+				apiUserDto.name = "Default API_KEY Account";
+				apiUserDto.email = `api.${newToken.name}@${ws.slug}.${DIGINEXT_DOMAIN}`;
+				apiUserDto.active = true;
+				apiUserDto.roles = [];
+				apiUserDto.workspaces = [ws._id];
+				apiUserDto.activeWorkspace = ws._id;
+				apiUserDto.token = getUnexpiredAccessToken(newToken.value);
+
+				const apiKeyUser = await DB.create("api_key_user", apiUserDto);
+				if (apiKeyUser) log(`[MIGRATION] Workspace "${ws.name}" > Created "${apiKeyUser.name}" successfully.`);
+			}
+		})
+	);
 
 	log(`[MIGRATION] migrateDefaultApiAccessToken() > FINISH MIGRATION >> Affected ${results.length} workspaces.`);
 

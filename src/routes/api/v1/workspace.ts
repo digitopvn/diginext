@@ -41,6 +41,18 @@ router
 		authenticate,
 		// authorize,
 		controller.apiRespond(controller.addUser.bind(controller))
+	)
+	.get(
+		"/service-account",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.getServiceAccounts.bind(controller))
+	)
+	.get(
+		"/api-user",
+		authenticate,
+		// authorize,
+		controller.apiRespond(controller.getApiKeyUsers.bind(controller))
 	);
 
 export default router;
