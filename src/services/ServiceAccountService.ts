@@ -16,7 +16,6 @@ export default class ServiceAccountService extends BaseService<ServiceAccount> {
 	async create(data: ServiceAccount) {
 		if (!data.username) data.username = data.slug;
 		data.type = "service_account";
-		console.log("data :>> ", data);
 		return super.create(data);
 	}
 
