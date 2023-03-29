@@ -59,8 +59,8 @@ export default class ServiceAccountController extends BaseController<User> {
 		try {
 			if (!userId) throw new Error(`"userId" is required.`);
 			if (!workspaceSlug) throw new Error(`"workspaceSlug" is required.`);
-			console.log("===========");
-			console.log("userId, workspaceSlug :>> ", userId, workspaceSlug);
+			// console.log("===========");
+			// console.log("userId, workspaceSlug :>> ", userId, workspaceSlug);
 
 			const workspaceSvc = new WorkspaceService();
 			const workspace = await workspaceSvc.findOne({ slug: workspaceSlug });
@@ -70,8 +70,8 @@ export default class ServiceAccountController extends BaseController<User> {
 
 			const wsId = workspace._id.toString();
 			const user = await this.service.findOne({ id: new ObjectId(userId) });
-			console.log("user :>> ", user);
-			console.log("wsId :>> ", wsId);
+			// console.log("user :>> ", user);
+			// console.log("wsId :>> ", wsId);
 
 			// validations
 			if (!user) throw new Error(`User not found.`);
@@ -80,21 +80,21 @@ export default class ServiceAccountController extends BaseController<User> {
 			let updatedUser = [user];
 
 			const isUserJoinedThisWorkspace = (user.workspaces || []).map((id) => id.toString()).includes(wsId);
-			console.log("isUserJoinedThisWorkspace :>> ", isUserJoinedThisWorkspace);
+			// console.log("isUserJoinedThisWorkspace :>> ", isUserJoinedThisWorkspace);
 
 			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && user.activeWorkspace.toString() === wsId;
-			console.log("isWorkspaceActive :>> ", isWorkspaceActive);
+			// console.log("isWorkspaceActive :>> ", isWorkspaceActive);
 
-			console.log("user.workspaces :>> ", user.workspaces);
+			// console.log("user.workspaces :>> ", user.workspaces);
 			if (!isUserJoinedThisWorkspace) {
 				updatedUser = await this.service.update({ _id: userId }, { $push: { workspaces: workspace._id } }, { raw: true });
 			}
-			console.log("[1] updatedUser :>> ", updatedUser[0]);
+			// console.log("[1] updatedUser :>> ", updatedUser[0]);
 
 			// make this workspace active
 			if (!isWorkspaceActive) updatedUser = await this.service.update({ _id: userId }, { activeWorkspace: wsId });
 
-			console.log("[2] updatedUser :>> ", updatedUser[0]);
+			// console.log("[2] updatedUser :>> ", updatedUser[0]);
 
 			result.data = updatedUser[0];
 		} catch (e) {

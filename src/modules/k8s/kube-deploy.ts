@@ -19,6 +19,10 @@ import { isValidObjectId } from "@/plugins/mongodb";
 import { DB } from "../api/DB";
 import ClusterManager from ".";
 
+export interface RolloutOptions {
+	onUpdate?: (msg?: string) => void;
+}
+
 /**
  * Clean up PRERELEASE resources by ID or release data
  * @param idOrRelease - Release ID or {Release} data
@@ -94,7 +98,9 @@ export async function cleanUp(idOrRelease: string | Release) {
  * Roll out a release - VER 1.0
  * @param  {String} id - Release ID
  */
-export async function previewPrerelease(id: string) {
+export async function previewPrerelease(id: string, options: RolloutOptions = {}) {
+	const { onUpdate } = options;
+
 	let releaseData = await DB.findOne<Release>("release", { id });
 
 	if (isEmpty(releaseData)) return { error: `Release not found.` };
@@ -102,6 +108,7 @@ export async function previewPrerelease(id: string) {
 	const { slug: releaseSlug, cluster: clusterShortName, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
 
 	log(`Preview the release: "${releaseSlug}" (${id})...`);
+	if (onUpdate) onUpdate(`Preview the release: "${releaseSlug}" (${id})...`);
 
 	let cluster: Cluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
@@ -171,12 +178,12 @@ export async function previewPrerelease(id: string) {
 }
 
 /**
- * Roll out a release - VER 1.0
- * @param  {String} id - Release ID
+ * Roll out a release
  */
-export async function rollout(id: string) {
-	const releaseData = await DB.findOne<Release>("release", { id });
+export async function rollout(id: string, options: RolloutOptions = {}) {
+	const { onUpdate } = options;
 
+	const releaseData = await DB.findOne<Release>("release", { id });
 	if (isEmpty(releaseData)) return { error: `Release" ${id}" not found.` };
 
 	const {
@@ -192,6 +199,7 @@ export async function rollout(id: string) {
 	} = releaseData as Release;
 
 	log(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
+	if (onUpdate) onUpdate(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
 
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
@@ -434,6 +442,13 @@ export async function rollout(id: string) {
 
 		let isDeploymentReady = false;
 		newDeploys.forEach((deploy) => {
+			log(deploy.status.conditions);
+			if (onUpdate) {
+				deploy.status.conditions.map((condition) => {
+					onUpdate(`DEPLOY STATUS: ${condition.status} - ${condition.reason} - ${condition.message}`);
+				});
+			}
+
 			// log(`deploy.status.replicas =`, deploy.status.replicas);
 			if (deploy.status.readyReplicas >= 1) isDeploymentReady = true;
 		});

@@ -11,57 +11,60 @@ export const migrateAllRoles = async () => {
 		let memberRole: Role;
 		const wsMemberRole = await DB.findOne<Role>("role", { name: "Member", workspace: ws._id });
 		if (!wsMemberRole) {
-			memberRole = new Role();
-			memberRole.name = "Member";
-			memberRole.routes = [{ route: "*", permissions: ["own", "read"] }];
-			memberRole.workspace = ws._id;
+			const memberRoleDto = new Role();
+			memberRoleDto.name = "Member";
+			memberRoleDto.routes = [{ route: "*", permissions: ["own", "read"] }];
+			memberRoleDto.workspace = ws._id;
 
-			memberRole = await DB.create<Role>("role", memberRole);
-			if (memberRole) console.log(`Workspace "${ws.name}" > Created default member role :>> `, memberRole.name);
+			memberRole = await DB.create<Role>("role", memberRoleDto);
+			if (memberRole) console.log(`Workspace "${ws.name}" > Created default member role :>> `, memberRoleDto.name);
 		} else {
 			memberRole = wsMemberRole;
 		}
 
 		// find other members of the workspace and assign "Member" role
-		const members = await DB.find<User>("user", { workspaces: ws._id });
+		const members = await DB.find<User>("user", { workspaces: ws._id, roles: memberRole._id });
 		if (members.length > 0) {
 			await DB.update<User>("user", { workspaces: ws._id }, { roles: [wsMemberRole] });
 			console.log(`Workspace "${ws.name}" > Assign "Member" role to ${members.length} members`);
 		}
 
 		// Admin
-		let admin: Role;
+		let adminRole: Role;
 		const wsAdminRole = await DB.findOne<Role>("role", { name: "Administrator", workspace: ws._id });
+
 		if (!wsAdminRole) {
-			const adminRole = new Role();
-			adminRole.name = "Administrator";
-			adminRole.routes = [{ route: "*", permissions: ["full"] }];
-			adminRole.workspace = ws._id;
-			admin = await DB.create<Role>("role", adminRole);
-			if (admin) console.log(`Workspace "${ws.name}" > Created default admin role :>> `, admin.name);
+			const adminRoleDto = new Role();
+			adminRoleDto.name = "Administrator";
+			adminRoleDto.routes = [{ route: "*", permissions: ["full"] }];
+			adminRoleDto.workspace = ws._id;
+
+			adminRole = await DB.create<Role>("role", adminRoleDto);
+			if (adminRole) console.log(`Workspace "${ws.name}" > Created default admin role :>> `, adminRoleDto.name);
 		} else {
-			admin = wsAdminRole;
+			adminRole = wsAdminRole;
 		}
 
 		// find owner of the workspace and assign "Administrator" role
-		let owner = await DB.findOne<User>("user", { roles: { $nin: [admin._id] }, workspaces: ws._id });
+		let owner = await DB.findOne<User>("user", { roles: adminRole._id, workspaces: ws._id });
 		if (owner) {
 			[owner] = await DB.update<User>("user", { _id: ws.owner }, { roles: [wsAdminRole] });
 			console.log(`Workspace "${ws.name}" > Assign "Administrator" role to "${owner.name}"`);
 		}
 
 		// Moderator
-		let moderator: Role;
+		let moderatorRole: Role;
 		const wsModeratorRole = await DB.findOne<Role>("role", { name: "Moderator", workspace: ws._id });
 		if (!wsModeratorRole) {
-			const moderatorRole = new Role();
-			moderatorRole.name = "Moderator";
-			moderatorRole.routes = [{ route: "*", permissions: ["read", "create", "update"] }];
-			moderatorRole.workspace = ws._id;
-			moderator = await DB.create<Role>("role", moderatorRole);
-			if (moderator) console.log(`Workspace "${ws.name}" > Created default moderator role :>> `, moderator.name);
+			const moderatorRoleDto = new Role();
+			moderatorRoleDto.name = "Moderator";
+			moderatorRoleDto.routes = [{ route: "*", permissions: ["read", "create", "update"] }];
+			moderatorRoleDto.workspace = ws._id;
+
+			moderatorRole = await DB.create<Role>("role", moderatorRoleDto);
+			if (moderatorRole) console.log(`Workspace "${ws.name}" > Created default moderator role :>> `, moderatorRole.name);
 		} else {
-			moderator = wsModeratorRole;
+			moderatorRole = wsModeratorRole;
 		}
 	});
 };
