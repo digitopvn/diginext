@@ -440,21 +440,22 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		const newDeploys = await ClusterManager.getAllDeploys(namespace, { context, filterLabel: `phase=live,app=${deploymentName}` });
 		// log(`${namespace} > ${deploymentName} > newDeploys :>>`, newDeploys);
 
-		let isDeploymentReady = false;
+		let isReady = false;
 		newDeploys.forEach((deploy) => {
 			log(deploy.status.conditions);
 			if (onUpdate) {
 				deploy.status.conditions.map((condition) => {
-					onUpdate(`DEPLOY STATUS: ${condition.status} - ${condition.reason} - ${condition.message}`);
+					// if (condition.type === "False") isReady = true;
+					onUpdate(`DEPLOY STATUS: [${condition.type.toUpperCase()}] - ${condition.reason} - ${condition.message}`);
 				});
 			}
 
 			// log(`deploy.status.replicas =`, deploy.status.replicas);
-			if (deploy.status.readyReplicas >= 1) isDeploymentReady = true;
+			if (deploy.status.readyReplicas >= 1) isReady = true;
 		});
 
-		log(`[INTERVAL] Checking new deployment's status -> Is Ready:`, isDeploymentReady);
-		return isDeploymentReady;
+		log(`[INTERVAL] Checking new deployment's status -> Is Ready:`, isReady);
+		return isReady;
 	};
 	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 5 * 60);
 	if (!isReallyReady) {

@@ -87,10 +87,10 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 	// get container registry
 	let registry: ContainerRegistry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
-	if (isEmpty(registry)) {
+	if (!registry) {
 		throw new Error(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
 	}
-	if (isEmpty(registry.imagePullSecret)) {
+	if (!registry.imagePullSecret) {
 		const imagePullSecret = await createImagePullSecretsInNamespace(slug, env, clusterShortName, nsName);
 		[registry] = await DB.update<ContainerRegistry>("registry", { _id: registry._id }, { imagePullSecret });
 	}
@@ -98,7 +98,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 	// get destination cluster
 	let cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
-	if (isEmpty(cluster)) {
+	if (!cluster) {
 		throw new Error(`Cannot find any clusters with short name as "${clusterShortName}", please contact your admin or create a new one.`);
 	}
 

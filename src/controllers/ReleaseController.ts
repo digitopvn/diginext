@@ -1,5 +1,4 @@
 import { toBool } from "diginext-utils/dist/object";
-import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { Release } from "@/entities";
@@ -55,7 +54,7 @@ export default class ReleaseController extends BaseController<Release> {
 	@Security("jwt")
 	@Post("/from-build")
 	async createFromBuild(@Body() body: { build: string; env: string }) {
-		if (isEmpty(body.env)) return respondFailure({ msg: `Deploy environment code is required.` });
+		if (!body.env) return respondFailure({ msg: `Deploy environment code is required.` });
 
 		let result: ResponseData & { data: Release } = { status: 1, data: {}, messages: [] };
 
@@ -69,14 +68,14 @@ export default class ReleaseController extends BaseController<Release> {
 
 		const buildSvc = new BuildService();
 		const build = await buildSvc.findOne({ _id: buildId });
-		if (isEmpty(build)) {
+		if (!build) {
 			result.status = 0;
 			result.messages.push(`Build (${buildId}) not found.`);
 			return result;
 		}
 
 		const newRelease = await createReleaseFromBuild(build, body.env);
-		if (isEmpty(newRelease)) {
+		if (!newRelease) {
 			result.status = 0;
 			result.messages.push(`Failed to create new release from build data.`);
 			return result;

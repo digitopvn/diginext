@@ -1,7 +1,6 @@
 import { isNotIn } from "class-validator";
 import { logError } from "diginext-utils/dist/console/log";
 import { unlink } from "fs";
-import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { ContainerRegistry } from "@/entities";
@@ -40,19 +39,19 @@ export default class ContainerRegistryController extends BaseController<Containe
 		const { name, serviceAccount, provider: providerShortName, host, imageBaseURL, apiAccessToken } = body;
 
 		const errors: string[] = [];
-		if (isEmpty(name)) errors.push(`Name is required.`);
-		if (isEmpty(host)) errors.push(`Host is required (eg. us.gcr.io, hub.docker.com,...)`);
-		if (isEmpty(imageBaseURL)) errors.push(`Base image URL is required (eg. asia.gcr.io/my-workspace)`);
-		if (isEmpty(providerShortName)) errors.push(`Container registry provider is required (eg. gcloud, digitalocean, dockerhub,...)`);
+		if (!name) errors.push(`Name is required.`);
+		if (!host) errors.push(`Host is required (eg. us.gcr.io, hub.docker.com,...)`);
+		if (!imageBaseURL) errors.push(`Base image URL is required (eg. asia.gcr.io/my-workspace)`);
+		if (!providerShortName) errors.push(`Container registry provider is required (eg. gcloud, digitalocean, dockerhub,...)`);
 		if (isNotIn(providerShortName, registryProviderList))
 			errors.push(`Container registry provider should be one of [${registryProviderList.join(", ")}]`);
 
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 
-		if (providerShortName === "gcloud" && isEmpty(serviceAccount))
+		if (providerShortName === "gcloud" && !serviceAccount)
 			return { status: 0, messages: [`Service Account (JSON) is required to authenticate Google Container Registry.`] } as ResponseData;
 
-		if (providerShortName === "digitalocean" && isEmpty(apiAccessToken))
+		if (providerShortName === "digitalocean" && !apiAccessToken)
 			return { status: 0, messages: [`API access token is required to authenticate DigitalOcean Container Registry.`] } as ResponseData;
 
 		const newRegistryData = {
@@ -72,7 +71,7 @@ export default class ContainerRegistryController extends BaseController<Containe
 		const authRes = await connectRegistry(newRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
 		if (authRes) [verifiedRegistry] = await DB.update<ContainerRegistry>("registry", { _id: newRegistry._id }, { isVerified: true });
 
-		return { status: 1, data: isEmpty(verifiedRegistry) ? newRegistry : verifiedRegistry, messages: authRes ? [authRes] : [] } as ResponseData;
+		return { status: 1, data: !verifiedRegistry ? newRegistry : verifiedRegistry, messages: authRes ? [authRes] : [] } as ResponseData;
 	}
 
 	@Security("api_key")
@@ -84,19 +83,19 @@ export default class ContainerRegistryController extends BaseController<Containe
 		const { name, serviceAccount, provider: providerShortName, host, imageBaseURL, apiAccessToken } = updatedRegistry;
 
 		const errors: string[] = [];
-		if (isEmpty(name)) errors.push(`Name is required.`);
-		if (isEmpty(host)) errors.push(`Host is required (eg. us.gcr.io, hub.docker.com,...)`);
-		if (isEmpty(imageBaseURL)) errors.push(`Base image URL is required (eg. asia.gcr.io/my-workspace)`);
-		if (isEmpty(providerShortName)) errors.push(`Container registry provider is required (eg. gcloud, digitalocean, dockerhub,...)`);
+		if (!name) errors.push(`Name is required.`);
+		if (!host) errors.push(`Host is required (eg. us.gcr.io, hub.docker.com,...)`);
+		if (!imageBaseURL) errors.push(`Base image URL is required (eg. asia.gcr.io/my-workspace)`);
+		if (!providerShortName) errors.push(`Container registry provider is required (eg. gcloud, digitalocean, dockerhub,...)`);
 		if (isNotIn(providerShortName, registryProviderList))
 			errors.push(`Container registry provider should be one of [${registryProviderList.join(", ")}]`);
 
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 
-		if (providerShortName === "gcloud" && isEmpty(serviceAccount))
+		if (providerShortName === "gcloud" && !serviceAccount)
 			return { status: 0, messages: [`Service Account (JSON) is required to authenticate Google Container Registry.`] } as ResponseData;
 
-		if (providerShortName === "digitalocean" && isEmpty(apiAccessToken))
+		if (providerShortName === "digitalocean" && !apiAccessToken)
 			return { status: 0, messages: [`API access token is required to authenticate DigitalOcean Container Registry.`] } as ResponseData;
 
 		// verify...
