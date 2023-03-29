@@ -1,3 +1,11 @@
+## [2.8.1](https://github.com/digitopvn/diginext/compare/v2.8.0...v2.8.1) (2023-03-29)
+
+
+### Bug Fixes
+
+* **server:** issue of project validation when deploying ([c4774c1](https://github.com/digitopvn/diginext/commit/c4774c1e396e0c69018cc96ca1e3a347e92a0cde))
+* **server:** lodash isEmpty is not validating properly ([3bcbb4b](https://github.com/digitopvn/diginext/commit/3bcbb4bb4e333e9733f5a6ba5a61501b27cb7b1a))
+
 # [2.8.0](https://github.com/digitopvn/diginext/compare/v2.7.0...v2.8.0) (2023-03-29)
 
 
