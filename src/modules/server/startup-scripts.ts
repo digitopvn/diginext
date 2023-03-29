@@ -9,7 +9,6 @@ import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
 import { migrateAllReleases } from "@/migration/migrate-all-releases";
 import { migrateAllRoles } from "@/migration/migrate-all-roles";
-import { migrateAllUserTypes } from "@/migration/migrate-all-user-types";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
 import { generateSSH, sshKeysExisted, verifySSH } from "@/modules/git";
@@ -87,7 +86,10 @@ export async function startupScripts() {
 	await migrateAllReleases();
 	await migrateAllFrameworks();
 	await migrateAllGitProviders();
-	await migrateAllUserTypes();
+
+	// await migrateAllUserTypes();
+	// await wait(5000);
+
 	await migrateDefaultServiceAccountAndApiKeyUser();
 	await migrateAllRoles();
 }

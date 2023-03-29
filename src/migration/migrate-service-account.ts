@@ -1,8 +1,7 @@
 import { log } from "diginext-utils/dist/console/log";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { Workspace } from "@/entities";
-import { User } from "@/entities";
+import type { User, Workspace } from "@/entities";
 import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
 
 import { DB } from "../modules/api/DB";
@@ -21,7 +20,7 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 
 				const newToken = generateWorkspaceApiAccessToken();
 
-				const saDto = new User();
+				const saDto = {} as User;
 				saDto.type = "service_account";
 				saDto.name = "Default Service Account";
 				saDto.email = `default.${newToken.name}@${ws.slug}.${DIGINEXT_DOMAIN}`;
@@ -44,7 +43,7 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 
 				const newToken = generateWorkspaceApiAccessToken();
 
-				const apiUserDto = new User();
+				const apiUserDto = {} as User;
 				apiUserDto.type = "api_key";
 				apiUserDto.name = "Default API_KEY Account";
 				apiUserDto.email = `api.${newToken.name}@${ws.slug}.${DIGINEXT_DOMAIN}`;

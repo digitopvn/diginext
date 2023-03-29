@@ -78,7 +78,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 			}
 
 			// const author = `${user.name} (ID: ${user._id})`;
-			// if (user.name !== "Unknown") log(author, `- BaseService.create :>>`, { data });
+			// console.log(`BaseService.create :>>`, { data });
 
 			const item = await this.query.create(data);
 

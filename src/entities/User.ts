@@ -38,10 +38,10 @@ export default class User extends Base {
 	username?: string;
 
 	/**
-	 * Service Account is User!
+	 * Service Account is also a User with unexpired access token.
 	 */
-	@Column()
-	type?: "user" | "service_account" | "api_key";
+	@Column({ default: "user" })
+	type?: string;
 
 	/**
 	 * User email address
