@@ -22,11 +22,11 @@ export async function execInitApp(options: InputOptions) {
 	options.skipCreatingDirectory = true;
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
 
-	console.log("execInitApp > options.name :>> ", options.name);
 	// to make sure it write down the correct app "slug" in "dx.json"
 	options.slug = initApp.slug;
 	options.name = initApp.name;
 	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`;
+	// console.log("execInitApp > options.name :>> ", options.name);
 
 	// get current GIT remote url:
 	const currentGitData = await getCurrentGitRepoData(options.targetDirectory);

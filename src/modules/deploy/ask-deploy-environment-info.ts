@@ -97,7 +97,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		// Call API to terminate previous deployment
 		const { buildServerUrl } = getCliConfig();
 		const terminateData = { slug: serverAppConfig.slug, env };
-		console.log("terminateData :>> ", terminateData);
+		// console.log("terminateData :>> ", terminateData);
 		const { status, messages } = await fetchApi({
 			url: `${buildServerUrl}/api/v1/app/environment`,
 			method: "DELETE",

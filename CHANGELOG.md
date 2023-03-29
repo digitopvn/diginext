@@ -1,3 +1,11 @@
+## [2.8.3](https://github.com/digitopvn/diginext/compare/v2.8.2...v2.8.3) (2023-03-29)
+
+
+### Bug Fixes
+
+* **server:** config global user for git commands ([c9c2552](https://github.com/digitopvn/diginext/commit/c9c2552811d6a6af73427a0351eeffb1b3feab02))
+* **server:** setup global identity for git config ([5cbbe8d](https://github.com/digitopvn/diginext/commit/5cbbe8d293525beb903b22db6b60337e97c021ef))
+
 ## [2.8.2](https://github.com/digitopvn/diginext/compare/v2.8.1...v2.8.2) (2023-03-29)
 
 
