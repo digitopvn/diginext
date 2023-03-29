@@ -8,6 +8,7 @@ build:
       ignoreChanges: true
   artifacts:
     - image: digitop/diginext
+      platforms: ["linux/arm64", "linux/amd64"]
       docker:
         dockerfile: Dockerfile
 manifests:
