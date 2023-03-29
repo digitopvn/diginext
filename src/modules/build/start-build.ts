@@ -85,7 +85,7 @@ export async function startBuildV1(
 	socketIO?.to(SOCKET_ROOM).emit("message", { action: "start" });
 
 	// Validating...
-	if (isEmpty(app)) {
+	if (!app) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" not found.` });
 		return;
 	}

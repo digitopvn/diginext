@@ -80,7 +80,7 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 	 * docker buildx build -f Dockerfile --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
 	 **/
 
-	const buildContextNameFlag = !isEmpty(builder) ? `--name ${builder}` : "";
+	const buildContextNameFlag = builder ? `--name ${builder}` : "";
 	const platformFlag = !isEmpty(platforms) && `--platform=${platforms.join(",")}`;
 
 	await execCmd(

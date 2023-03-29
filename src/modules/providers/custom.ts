@@ -89,7 +89,7 @@ export const authenticate = async (options?: InputOptions) => {
 	const existed = await await DB.findOne<Cluster>("cluster", { shortName: currentContext });
 	const createdCluster = existed || (await DB.create<Cluster>("cluster", createdData));
 
-	if (isEmpty(createdCluster)) return;
+	if (!createdCluster) return;
 	const newCluster = createdCluster as Cluster;
 
 	// Save this cloud provider to database

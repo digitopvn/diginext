@@ -53,7 +53,7 @@ export async function kubectlApply(filePath: string, namespace: string = "defaul
 export async function kubectlApplyContent(yamlContent: string, namespace: string = "default", options: KubeCommandOptions = {}) {
 	const { context, filterLabel } = options;
 
-	if (isEmpty(yamlContent)) {
+	if (!yamlContent) {
 		logError(`[KUBE_CTL] kubectlApplyContent > YAML content is empty.`);
 		return;
 	}
@@ -254,7 +254,7 @@ export async function deleteIngressByFilter(namespace = "default", options: Kube
 		if (context) args.push(`--context=${context}`);
 		args.push("-n", namespace, "delete", "ing");
 
-		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
+		if (filterLabel) args.push("-l", filterLabel);
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
@@ -422,7 +422,7 @@ export async function getAllDeploys(namespace = "default", options: KubeCommandO
 
 		args.push("-n", namespace, "get", "deploy");
 
-		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
+		if (filterLabel) args.push("-l", filterLabel);
 
 		args.push("-o", "json");
 
@@ -471,7 +471,7 @@ export async function getAllServices(namespace = "default", labelFilter = "", op
 
 		args.push("-n", namespace, "get", "svc");
 
-		if (!isEmpty(labelFilter)) args.push("-l", labelFilter);
+		if (labelFilter) args.push("-l", labelFilter);
 
 		args.push("-o", "json");
 
@@ -556,7 +556,7 @@ export async function getAllPods(namespace = "default", options: KubeCommandOpti
 
 		args.push("-n", namespace, "get", "pod");
 
-		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
+		if (filterLabel) args.push("-l", filterLabel);
 
 		args.push("-o", "json");
 
@@ -614,7 +614,7 @@ export async function setEnvVarByFilter(envVars: KubeEnvironmentVariable[], name
 
 		args.push(...envVarStrArr);
 
-		if (!isEmpty(filterLabel)) {
+		if (filterLabel) {
 			args.push("-l", filterLabel);
 		} else {
 			args.push("--all");
@@ -672,7 +672,7 @@ export async function deleteEnvVarByFilter(envVarNames: string[], namespace = "d
 
 		args.push(...envVarStrArr);
 
-		if (!isEmpty(filterLabel)) args.push("-l", filterLabel);
+		if (filterLabel) args.push("-l", filterLabel);
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;

@@ -83,7 +83,7 @@ export const cliLogin = async (options: InputOptions) => {
 
 		// create new workspace:
 		const newWorkspace = await DB.create<Workspace>("workspace", { name: workspaceName, owner: currentUser._id });
-		if (isEmpty(newWorkspace)) return;
+		if (!newWorkspace) return;
 
 		currentWorkspace = newWorkspace as Workspace;
 
@@ -98,7 +98,7 @@ export const cliLogin = async (options: InputOptions) => {
 			{ populate: ["workspaces", "activeWorkspace"], raw: true }
 		);
 
-		if (isEmpty(updatedUser)) return;
+		if (!updatedUser) return;
 
 		// TODO: seed default data: frameworks, git ?
 		currentUser = updatedUser[0];
@@ -150,7 +150,7 @@ export async function cliAuthenticate(options: InputOptions) {
 		return user;
 	};
 
-	if (isEmpty(accessToken) && buildServerUrl) {
+	if (!accessToken && buildServerUrl) {
 		const user = await continueToLoginStep(buildServerUrl);
 		if (!user) return;
 		// workspace = getCliConfig().currentWorkspace;

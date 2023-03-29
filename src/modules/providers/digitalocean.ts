@@ -28,7 +28,7 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
 	options.baseURL = DIGITAL_OCEAN_API_BASE_URL;
 
 	if (isEmpty(options.headers)) options.headers = {};
-	if (isEmpty(access_token)) {
+	if (!access_token) {
 		logError(`Digital Ocean API access token is required.`);
 		return;
 	}
@@ -172,7 +172,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	// get Container Registry data:
 	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
 
-	if (isEmpty(registry)) {
+	if (!registry) {
 		logError(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
 		return;
 	}
