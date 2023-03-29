@@ -33,22 +33,22 @@ export async function startupScripts() {
 	// config dir
 	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);
 
+	// connect git providers
 	const isSSHKeysExisted = await sshKeysExisted();
 	if (!isSSHKeysExisted) await generateSSH();
 
-	// seed system initial data
-	await seedSystemInitialData();
-
-	// connect git providers
 	const gitSvc = new GitProviderService();
 	const gitProviders = await gitSvc.find({});
 	if (!isEmpty(gitProviders)) {
 		for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
-
-		// set global identity
-		execCmd(`git config --global user.email "server@diginext.site"`);
-		execCmd(`git config --global user.name "Diginext Server"`);
 	}
+
+	// set global identity
+	execCmd(`git config --global user.email "server@diginext.site"`);
+	execCmd(`git config --global user.name "Diginext Server"`);
+
+	// seed system initial data
+	await seedSystemInitialData();
 
 	// connect cloud providers
 	// const providerSvc = new CloudProviderService();
