@@ -5,8 +5,9 @@ import cookieParser from "cookie-parser";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import session from "cookie-session";
 import { log, logSuccess } from "diginext-utils/dist/console/log";
-import type { Request, Response } from "express";
+import type { Express, Request, Response } from "express";
 import express from "express";
+import listEndpoints from "express-list-endpoints";
 import { queryParser } from "express-query-parser";
 import type { Server } from "http";
 import { createServer } from "http";
@@ -174,6 +175,8 @@ function initialize() {
 		 * - Connect K8S clusters (if any)
 		 */
 		startupScripts();
+
+		console.log(listEndpoints(routes as Express));
 	}
 }
 

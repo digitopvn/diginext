@@ -207,6 +207,8 @@ export async function parseCliOptions() {
 		.alias("h", "help")
 		.alias("v", "version")
 		.global(["D", "s", "local", "h"])
+		// command: TEST
+		.command("test", "Nothing")
 		// command: CLI management
 		.command("info", "Show CLI & SERVER information")
 		// command: login

@@ -70,7 +70,7 @@ export default class BaseController<T extends Base> {
 			data = await this.service.find(this.filter, this.options, this.pagination);
 		}
 
-		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		// assign refreshed token if any:
 		// const { token } = req as any;
@@ -82,21 +82,21 @@ export default class BaseController<T extends Base> {
 	async create(inputData) {
 		const data = await this.service.create(inputData);
 
-		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		return result;
 	}
 
 	async update(updateData) {
 		const data = await this.service.update(this.filter, updateData, this.options);
-		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		return result;
 	}
 
 	async delete() {
 		const data = await this.service.delete(this.filter);
-		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		return result;
 	}
@@ -104,13 +104,13 @@ export default class BaseController<T extends Base> {
 	async softDelete() {
 		const data = await this.service.softDelete(this.filter);
 
-		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 		return result;
 	}
 
 	async empty() {
 		let data: { ok: number };
-		let result: ResponseData & { data: typeof data } = { status: 1, data, messages: [] };
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		if (Config.ENV === "development") {
 			const emptyRes = await this.service.empty(this.filter);

@@ -1,3 +1,17 @@
+# [2.8.0](https://github.com/digitopvn/diginext/compare/v2.7.0...v2.8.0) (2023-03-29)
+
+
+### Bug Fixes
+
+* **admin:** remove unneccessary info of cloud providers ([713d41d](https://github.com/digitopvn/diginext/commit/713d41dbdf0cc88a95e066a268265ac183d4bbe3))
+* **server:** issue of cluster validation when creating new ([0830337](https://github.com/digitopvn/diginext/commit/0830337243a415cdae7c6031f638154de73216b3))
+* **server:** migrate default roles for all workspaces ([a09a92e](https://github.com/digitopvn/diginext/commit/a09a92e07beb1d9cd5fe892a5271cd0937d341e4))
+
+
+### Features
+
+* **server:** create default roles and assign to workspace members ([7930c11](https://github.com/digitopvn/diginext/commit/7930c11f64f679ce2ea68b5da4e393fbf96a8c11))
+
 # [2.7.0](https://github.com/digitopvn/diginext/compare/v2.6.6...v2.7.0) (2023-03-27)
 
 

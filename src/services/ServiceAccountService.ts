@@ -1,25 +1,25 @@
-import User from "@/entities/User";
+import ServiceAccount from "@/entities/ServiceAccount";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 
 import BaseService from "./BaseService";
 
-export default class ServiceAccountService extends BaseService<User> {
+export default class ServiceAccountService extends BaseService<ServiceAccount> {
 	constructor() {
-		super(User);
+		super(ServiceAccount);
 	}
 
-	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<User[]> {
+	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<ServiceAccount[]> {
 		if (filter) filter.type = "service_account";
 		return super.find(filter, options, pagination);
 	}
 
-	async create(data: User) {
+	async create(data: ServiceAccount) {
 		if (!data.username) data.username = data.slug;
 		data.type = "service_account";
 		return super.create(data);
 	}
 
-	async update(filter: IQueryFilter, data: User, options?: IQueryOptions) {
+	async update(filter: IQueryFilter, data: ServiceAccount, options?: IQueryOptions) {
 		if (data.username) data.slug = data.username;
 		if (data.slug) data.username = data.slug;
 		if (data.type !== "service_account") data.type = "service_account";

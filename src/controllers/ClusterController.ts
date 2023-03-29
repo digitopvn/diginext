@@ -33,8 +33,8 @@ export default class ClusterController extends BaseController<Cluster> {
 	async create(@Body() body: Omit<Cluster, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
 		// validation - round 1
 		let errors: string[] = [];
-		if (isEmpty(body.provider)) errors.push(`Cloud Provider ID is required.`);
-		if (isEmpty(body.shortName)) errors.push(`Cluster short name is required, find it on your cloud provider dashboard.`);
+		if (!body.provider) errors.push(`Cloud Provider ID is required.`);
+		if (!body.shortName) errors.push(`Cluster short name is required, find it on your cloud provider dashboard.`);
 
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 
@@ -50,17 +50,17 @@ export default class ClusterController extends BaseController<Cluster> {
 		// validation - round 2
 		errors = [];
 		if (cloudProvider.shortName === "gcloud") {
-			if (isEmpty(body.serviceAccount)) errors.push(`Google Service Account (JSON) is required.`);
-			if (isEmpty(body.projectID)) errors.push(`Google Project ID is required.`);
-			if (isEmpty(body.region)) errors.push(`Google cluster region is required.`);
-			if (isEmpty(body.zone)) errors.push(`Google cluster zone is required.`);
+			if (!body.serviceAccount) errors.push(`Google Service Account (JSON) is required.`);
+			if (!body.projectID) errors.push(`Google Project ID is required.`);
+			if (!body.region) errors.push(`Google cluster region is required.`);
+			if (!body.zone) errors.push(`Google cluster zone is required.`);
 		}
 		if (cloudProvider.shortName === "digitalocean") {
-			if (isEmpty(body.apiAccessToken)) errors.push(`Digital Ocean API Access Token is required.`);
-			if (isEmpty(body.region)) errors.push(`Digital Ocean cluster region is required.`);
+			if (!body.apiAccessToken) errors.push(`Digital Ocean API Access Token is required.`);
+			// if (!body.region) errors.push(`Digital Ocean cluster region is required.`);
 		}
 		if (cloudProvider.shortName === "custom") {
-			if (isEmpty(body.kubeConfig)) errors.push(`Kube config data (YAML) is required.`);
+			if (!body.kubeConfig) errors.push(`Kube config data (YAML) is required.`);
 		}
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 

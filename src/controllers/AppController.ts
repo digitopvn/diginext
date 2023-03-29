@@ -248,9 +248,13 @@ export default class AppController extends BaseController<App> {
 		// console.log("isValidObjectId(body.project) :>> ", isValidObjectId(body.project));
 
 		// find parent project of this app
-		project = isValidObjectId(body.project)
-			? await DB.findOne<Project>("project", { _id: body.project })
-			: await DB.findOne<Project>("project", { slug: body.project });
+		if (isValidObjectId(body.project)) {
+			project = await DB.findOne<Project>("project", { _id: body.project });
+		} else if (isString(body.project)) {
+			project = await DB.findOne<Project>("project", { slug: body.project });
+		} else {
+			return respondFailure({ msg: `"project" is not a valid ID or slug.` });
+		}
 
 		if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 		appDto.projectSlug = project.slug;
