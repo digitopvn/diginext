@@ -14,6 +14,7 @@ import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-s
 import { generateSSH, sshKeysExisted, verifySSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
+import { execCmd } from "@/plugins";
 import { seedSystemInitialData } from "@/seeds/seed-system";
 import { ClusterService, ContainerRegistryService, GitProviderService } from "@/services";
 
@@ -43,6 +44,10 @@ export async function startupScripts() {
 	const gitProviders = await gitSvc.find({});
 	if (!isEmpty(gitProviders)) {
 		for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
+
+		// set global identity
+		execCmd(`git config --global user.email "server@diginext.site"`);
+		execCmd(`git config --global user.name "Diginext Server"`);
 	}
 
 	// connect cloud providers

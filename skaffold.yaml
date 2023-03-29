@@ -3,12 +3,12 @@ kind: Config
 metadata:
   name: diginext
 build:
+  platforms: ["linux/arm64", "linux/amd64"]
   tagPolicy:
     gitCommit: 
       ignoreChanges: true
   artifacts:
     - image: digitop/diginext
-      platforms: ["linux/arm64", "linux/amd64"]
       docker:
         dockerfile: Dockerfile
 manifests:
