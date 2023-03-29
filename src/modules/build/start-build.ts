@@ -104,6 +104,14 @@ export async function startBuildV1(
 	options.targetDirectory = buildDir;
 	options.buildDir = buildDir;
 
+	// switch process to the build directory
+	try {
+		process.chdir(buildDir);
+	} catch (e) {
+		sendLog({ SOCKET_ROOM, message: e.toString() });
+		return;
+	}
+
 	// detect "gitProvider":
 	const gitProvider = getGitProviderFromRepoSSH(options.remoteSSH);
 
@@ -145,10 +153,12 @@ export async function startBuildV1(
 	// Git SSH verified -> start pulling now...
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Pulling latest source code from "${options.remoteSSH}" at "${gitBranch}" branch...` });
 
+	console.log(`[START BUILD] existsSync(${buildDir}) :>> `, existsSync(buildDir));
+
 	if (existsSync(buildDir)) {
 		try {
 			sendLog({ SOCKET_ROOM, message: `[START BUILD] Trying to check out existing directory and do git pull at: ${buildDir}` });
-			await execCmd(`cd '${buildDir}' && git checkout -f && git pull --rebase`);
+			await execCmd(`git pull --no-ff`);
 		} catch (e) {
 			sendLog({ SOCKET_ROOM, message: `[START BUILD] Removing a directory: ${buildDir} :>> ${e}` });
 			fs.rmSync(buildDir, { recursive: true, force: true });

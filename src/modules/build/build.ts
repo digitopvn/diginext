@@ -205,6 +205,14 @@ export async function startBuild(params: StartBuildParams) {
 	const SOURCE_CODE_DIR = `cache/${projectSlug}/${appSlug}/${gitBranch}`;
 	let buildDir = isServerMode ? path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR) : params.buildDir;
 
+	// switch process to the build directory
+	try {
+		process.chdir(buildDir);
+	} catch (e) {
+		sendLog({ SOCKET_ROOM, message: e.toString() });
+		return;
+	}
+
 	// detect "gitProvider" from git repo SSH URI:
 	const gitProvider = getGitProviderFromRepoSSH(repoSSH);
 
@@ -250,7 +258,7 @@ export async function startBuild(params: StartBuildParams) {
 	if (existsSync(buildDir)) {
 		try {
 			sendLog({ SOCKET_ROOM, message: `[START BUILD] Trying to check out existing directory and do git pull at: ${buildDir}` });
-			await execCmd(`cd '${buildDir}' && git checkout -f && git pull --rebase`);
+			await execCmd(`git checkout -f && git pull --rebase`);
 		} catch (e) {
 			sendLog({ SOCKET_ROOM, message: `[START BUILD] Removing a directory: ${buildDir} :>> ${e}` });
 			rmSync(buildDir, { recursive: true, force: true });

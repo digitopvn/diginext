@@ -11,11 +11,12 @@ const expect = require("chai").expect;
 
 const { cliOpts } = require("../dist/config/config");
 const { execCmd } = require("../dist/plugins");
+const { CLI_CONFIG_DIR } = require("../dist/config/const");
 
 // Demo project data:
 const newProject = { name: "CLI Test Project", framework: "diginext13" };
 const projectSlug = makeSlug(newProject.name)
-const targetDir = path.resolve(os.homedir(), "diginext-cli", projectSlug);
+const targetDir = path.resolve(CLI_CONFIG_DIR, "test", projectSlug);
 
 describe("Create new project", function () {
 	this.timeout(5 * 60 * 1000);
@@ -25,7 +26,7 @@ describe("Create new project", function () {
 		if (fs.existsSync(targetDir)) await del([targetDir], { force: true });
 	});
 
-	it("with 'Diginext' framework & create Bitbucket repository", async function () {
+	it("with 'Static' framework & create Bitbucket repository", async function () {
 		const newProjectCommand = `dx new --force --install=false --git=false --fw=${newProject.framework} --namespace=\"${projectSlug}\" --projectName=\"${newProject.name}\" --projectSlug=\"${projectSlug}\" --targetDir=${targetDir}`;
 		await execCmd(newProjectCommand);
 
@@ -39,19 +40,11 @@ describe("Create new project", function () {
 		expect(cliConfigFileExisted).to.be.equal(true, `"${projectSlug}/dx.json" is not existed.`);
 
 		expect(gitDirExisted).to.be.equal(true, "GIT was not initialized properly.");
-
-		// expect(envFileExisted).to.be.equal(true, "ENV file was not created properly.");
-
-		// const envContent = fs.readFileSync(path.resolve(targetDir, "deployment/.env.dev"), "utf8");
-		// expect(envContent).to.contain.oneOf([
-		// 	`BASE_PATH="${projectSlug}"`,
-		// 	`BASE_PATH=${projectSlug}`,
-		// 	`BASE_PATH="${projectSlug}/backend"`,
-		// 	`BASE_PATH=${projectSlug}/backend`
-		// ], "BASE_PATH was not setup properly.");
 	});
 
 	afterEach(async function () {
+		// hard delete project in database
+
 		// clean up test dir
 		if (fs.existsSync(targetDir)) await del([targetDir], { force: true });
 	});
