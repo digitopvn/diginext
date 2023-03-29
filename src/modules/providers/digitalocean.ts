@@ -29,7 +29,7 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
 
 	if (isEmpty(options.headers)) options.headers = {};
 	if (!access_token) {
-		logError(`Digital Ocean API access token is required.`);
+		logError(`[DIGITAL_OCEAN] Digital Ocean API access token is required.`);
 		return;
 	}
 
@@ -47,7 +47,7 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
 		// log(`doApi > responseData :>>`, responseData);
 		return responseData;
 	} catch (e) {
-		logError(`Something went wrong:`, e);
+		logError(`[DIGITAL_OCEAN] Something went wrong:`, e);
 		return { status: 0, messages: [`Something went wrong.`] };
 	}
 }
@@ -62,7 +62,7 @@ export const authenticate = async (options?: InputOptions) => {
 	let API_ACCESS_TOKEN;
 
 	if (!options.key && !options.input)
-		logError(`API ACCESS TOKEN not found. Learn more: https://docs.digitalocean.com/reference/api/create-personal-access-token/`);
+		logError(`[DIGITAL_OCEAN] API ACCESS TOKEN not found. Learn more: https://docs.digitalocean.com/reference/api/create-personal-access-token/`);
 
 	API_ACCESS_TOKEN = options.key ? options.key : options.input;
 
@@ -72,7 +72,7 @@ export const authenticate = async (options?: InputOptions) => {
 		await execa.command(`doctl auth init --access-token ${API_ACCESS_TOKEN}`);
 		shouldRetry = false;
 	} catch (e) {
-		logWarn(e);
+		logWarn(`[DIGITAL_OCEAN]`, e);
 		shouldRetry = true;
 	}
 
@@ -82,7 +82,7 @@ export const authenticate = async (options?: InputOptions) => {
 		try {
 			await execa.command(`doctl auth init --access-token ${API_ACCESS_TOKEN}`);
 		} catch (e) {
-			logError(e);
+			logError(`[DIGITAL_OCEAN]`, e);
 			return false;
 		}
 	}
@@ -91,7 +91,7 @@ export const authenticate = async (options?: InputOptions) => {
 };
 
 export const createRecordInDomain = async (input: DomainRecord) => {
-	logError(`[DO] createRecordInDomain() > This function is deprecated.`);
+	logError(`[DIGITAL_OCEAN] createRecordInDomain() > This function is deprecated.`);
 	return;
 	// const { name, data, type = "A" } = input;
 
@@ -160,12 +160,12 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const { registrySlug, clusterShortName, namespace = "default", shouldCreateSecretInNamespace = false } = options;
 
 	if (!registrySlug) {
-		logError(`Container Registry's slug is required.`);
+		logError(`[DIGITAL_OCEAN] Container Registry's slug is required.`);
 		return;
 	}
 
 	if (!clusterShortName) {
-		logError(`Cluster's short name is required.`);
+		logError(`[DIGITAL_OCEAN] Cluster's short name is required.`);
 		return;
 	}
 
@@ -173,7 +173,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
 
 	if (!registry) {
-		logError(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
+		logError(`[DIGITAL_OCEAN] Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
 		return;
 	}
 
@@ -183,7 +183,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
 	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
 	if (!cluster) {
-		logError(`Cluster "${clusterShortName}" not found.`);
+		logError(`[DIGITAL_OCEAN] Cluster "${clusterShortName}" not found.`);
 		return;
 	}
 
@@ -193,7 +193,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 	if (shouldCreateSecretInNamespace && namespace == "default") {
 		logWarn(
-			`You are creating "imagePullSecrets" in "default" namespace, if you want to create in other namespaces:`,
+			`[DIGITAL_OCEAN] You are creating "imagePullSecrets" in "default" namespace, if you want to create in other namespaces:`,
 			chalk.cyan("\n  dx registry allow --create --provider=digitalocean --namespace=") + "<CLUSTER_NAMESPACE_NAME>",
 			chalk.gray(`\n  # Examples / alias:`),
 			"\n  dx registry allow --create --provider=digitalocean --namespace=my-website-namespace",
@@ -205,19 +205,26 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	if (shouldCreateSecretInNamespace) {
 		const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 		if (!isNsExisted) {
-			logError(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+			logError(`[DIGITAL_OCEAN] Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
 			return;
 		}
 	}
+
+	const { apiAccessToken: API_ACCESS_TOKEN } = registry;
 
 	// create secret in the namespace (if needed)
 	const applyCommand = shouldCreateSecretInNamespace ? `| kubectl apply -f -` : "";
 
 	// command: "doctl registry kubernetes-manifest"
 	const registryYaml = await execCmd(
-		`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} ${applyCommand}`
+		`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} --access-token ${API_ACCESS_TOKEN} ${applyCommand}`
 	);
 	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
+
+	if (!registrySecretData) {
+		logError(`[DIGITAL_OCEAN] Failed to create "imagePullSecrets" in "${namespace}" namespace of "${context}" cluster.`);
+		return;
+	}
 
 	// Save to database
 	const imagePullSecret = {
@@ -226,7 +233,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	};
 
 	const [updatedRegistry] = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, { imagePullSecret });
-	if (!updatedRegistry) logError(`[API] Can't update container registry of Digital Ocean.`);
+	if (!updatedRegistry) logError(`[DIGITAL_OCEAN] Can't update container registry of Digital Ocean.`);
 	// log(`DigitalOcean.createImagePullingSecret() :>>`, { updatedRegistry });
 
 	return imagePullSecret;
@@ -312,7 +319,7 @@ export const execDigitalOcean = async (options?: InputOptions) => {
 		case "create-image-pull-secret":
 			const registries = await DB.find<ContainerRegistry>("registry", {});
 			if (isEmpty(registries)) {
-				logError(`This workspace doesn't have any registered Container Registries.`);
+				logError(`[DIGITAL_OCEAN] This workspace doesn't have any registered Container Registries.`);
 				return;
 			}
 
