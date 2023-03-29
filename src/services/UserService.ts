@@ -9,8 +9,13 @@ export default class UserService extends BaseService<User> {
 	}
 
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<User[]> {
-		if (filter) filter.type = { $in: ["user", undefined] };
+		if (filter) filter.type = { $nin: ["service_account", "api_key"] };
 		return super.find(filter, options, pagination);
+	}
+
+	async findOne(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination) {
+		if (filter) filter.type = { $nin: ["service_account", "api_key"] };
+		return super.findOne(filter, options);
 	}
 
 	async create(data: User) {

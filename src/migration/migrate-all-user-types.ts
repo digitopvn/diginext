@@ -11,9 +11,7 @@ export const migrateAllUserTypes = async () => {
 
 	log(`[MIGRATION] migrateAllUserTypes() > Found ${users.length} users need migration.`);
 
-	const results = (await Promise.all(users.map(async (user) => DB.update<User>("user", { _id: user._id }, { type: "user" }))))
-		.filter((updatedItems) => updatedItems.length > 0)
-		.map((updatedItems) => updatedItems[0]);
+	const results = await DB.update<User>("user", { type: undefined }, { type: "user" });
 
 	log(`[MIGRATION] migrateAllUserTypes() > FINISH MIGRATION >> Affected ${results.length} users.`);
 

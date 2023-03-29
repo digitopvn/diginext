@@ -38,10 +38,10 @@ export default class User extends Base {
 	username?: string;
 
 	/**
-	 * Service Account is User!
+	 * Service Account is also a User with unexpired access token.
 	 */
 	@Column({ default: "user" })
-	type?: "user" | "service_account" | "api_key";
+	type?: string;
 
 	/**
 	 * User email address
@@ -82,8 +82,7 @@ export default class User extends Base {
 	token?: AccessTokenInfo;
 
 	/**
-	 * User's roles
-	 * TODO: Thêm "workspace" cho "roles" vì mỗi workspace sẽ có roles khác nhau, trong khi mỗi user có thể nằm trong nhiều workspace
+	 * User's roles (should be filtered by "workspace")
 	 */
 	@ObjectIdColumn({ name: "roles", array: true, default: [] })
 	roles?: (ObjectID | Role | string)[];
