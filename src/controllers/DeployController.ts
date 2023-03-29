@@ -98,6 +98,7 @@ export default class DeployController {
 
 	/**
 	 * Build container image first, then deploy that build to target deploy environment.
+	 * - `Alias of "/api/v1/deploy/from-source"`
 	 */
 	@Security("api_key")
 	@Security("jwt")
@@ -155,6 +156,20 @@ export default class DeployController {
 
 		// start build in background:
 		return { messages: [`Building...`], status: 1, data: { logURL } };
+	}
+
+	/**
+	 * Build container image first, then deploy that build to target deploy environment.
+	 * - `Alias of "/api/v1/deploy/build-first"`
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/from-source")
+	buildFromSourceAndDeploy(
+		@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildInput },
+		@Queries() queryParams?: IPostQueryParams
+	) {
+		return this.buildAndDeploy(body);
 	}
 
 	@Security("api_key")

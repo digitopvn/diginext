@@ -192,8 +192,13 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 					: `Rolling out the deployment to "${env.toUpperCase()}" environment...`,
 		});
 
+		const onRolloutUpdate = (msg: string) => sendLog({ SOCKET_ROOM, message: msg });
+
 		try {
-			const result = env === "prod" ? await ClusterManager.previewPrerelease(releaseId) : await ClusterManager.rollout(releaseId);
+			const result =
+				env === "prod"
+					? await ClusterManager.previewPrerelease(releaseId, { onUpdate: onRolloutUpdate })
+					: await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
 
 			if (result.error) {
 				sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${result.error}.` });
