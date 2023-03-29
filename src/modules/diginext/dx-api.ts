@@ -11,7 +11,7 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig) {
 	const licenseKey = Config.DX_LICENSE_KEY;
 
 	if (isEmpty(options.headers)) options.headers = {};
-	if (isEmpty(licenseKey)) return { status: 0, messages: [`Diginext License Key is required.`] } as T;
+	if (!licenseKey) return { status: 0, messages: [`Diginext License Key is required.`] } as T;
 
 	options.baseURL = Config.DX_API_URL;
 

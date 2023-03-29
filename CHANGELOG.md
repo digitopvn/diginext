@@ -1,3 +1,11 @@
+## [2.8.2](https://github.com/digitopvn/diginext/compare/v2.8.1...v2.8.2) (2023-03-29)
+
+
+### Bug Fixes
+
+* **server:** optimizing isEmpty validation ([0a0e62d](https://github.com/digitopvn/diginext/commit/0a0e62dfdf3ee44854ba83db11bb6d346a956ac2))
+* **server:** source git pull now using --no-ff ([0911edc](https://github.com/digitopvn/diginext/commit/0911edccf6b8417019a0a9d0a1ab81815c6c32d9))
+
 ## [2.8.1](https://github.com/digitopvn/diginext/compare/v2.8.0...v2.8.1) (2023-03-29)
 
 

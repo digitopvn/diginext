@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import type * as express from "express";
 import jwt from "jsonwebtoken";
-import { isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
 import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
@@ -29,7 +28,7 @@ var cookieExtractor = function (req) {
 };
 
 export const generateJWT = (userId: string, options?: JWTOptions) => {
-	if (isEmpty(options.expiresIn)) options.expiresIn = process.env.JWT_EXPIRE_TIME || "2d";
+	if (!options.expiresIn) options.expiresIn = process.env.JWT_EXPIRE_TIME || "2d";
 
 	const { expiresIn } = options;
 
@@ -114,12 +113,12 @@ export const jwtStrategy = new Strategy(
 		[user] = await DB.update<User>("user", { _id: new ObjectId(payload.id) }, { token: tokenInfo.token });
 
 		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
-		if (isEmpty(user))
+		if (!user)
 			user = await DB.findOne("service_account", { _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces", "activeWorkspace"] });
 
 		// 3. Validating logged in user...
 
-		if (isEmpty(user)) done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
+		if (!user) done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
 
 		// 4. Everything is good -> assign token for user and pass it to next request:
 		user.token = tokenInfo.token;

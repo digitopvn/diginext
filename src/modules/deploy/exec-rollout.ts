@@ -14,7 +14,7 @@ export const execRollOut = async (options?: InputOptions) => {
 
 	let releaseId = secondAction;
 
-	if (isEmpty(releaseId)) {
+	if (!releaseId) {
 		logWarn(`Release ID is required, for example: "dx rollout <release-id>", trying to get some latest releases of this app...`);
 
 		const appConfig = getAppConfig(targetDirectory);

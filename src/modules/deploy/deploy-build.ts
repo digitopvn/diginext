@@ -26,7 +26,7 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 
 	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
-	if (isEmpty(app)) {
+	if (!app) {
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
@@ -48,7 +48,7 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 		isPassedDeployEnvironmentValidation = false;
 	}
 
-	if (isEmpty(serverDeployEnvironment.cluster)) {
+	if (!serverDeployEnvironment.cluster) {
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
@@ -57,7 +57,7 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 		isPassedDeployEnvironmentValidation = false;
 	}
 
-	if (isEmpty(serverDeployEnvironment.namespace)) {
+	if (!serverDeployEnvironment.namespace) {
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",

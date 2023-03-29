@@ -141,7 +141,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const { registrySlug, namespace = "default", shouldCreateSecretInNamespace = false, clusterShortName } = options;
 	// log(`providerShortName :>>`, providerShortName);
 
-	if (isEmpty(clusterShortName)) {
+	if (!clusterShortName) {
 		logError(`Cluster's short name is required.`);
 		return;
 	}
@@ -149,7 +149,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	// get Container Registry data:
 	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
 
-	if (isEmpty(registry)) {
+	if (!registry) {
 		logError(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
 		return;
 	}
@@ -159,7 +159,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
 	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
-	if (isEmpty(cluster)) {
+	if (!cluster) {
 		logError(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterShortName}" cluster.`);
 		return;
 	}

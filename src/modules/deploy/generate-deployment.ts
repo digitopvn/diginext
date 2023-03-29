@@ -57,12 +57,14 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const currentAppConfig = appConfig || getAppConfig(targetDirectory);
 	const { slug } = currentAppConfig;
 
-	console.log("currentAppConfig :>> ", currentAppConfig);
+	// console.log("generateDeployment() > params :>> ", params);
+	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
 
 	// DEFINE DEPLOYMENT PARTS:
 	const BUILD_NUMBER = makeSlug(buildNumber) || makeDaySlug({ divider: "" });
 
 	const deployEnvironmentConfig = currentAppConfig.environment[env];
+	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);
 
 	const registrySlug = deployEnvironmentConfig.registry;
 	let nsName = deployEnvironmentConfig.namespace;
@@ -94,7 +96,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		const imagePullSecret = await createImagePullSecretsInNamespace(slug, env, clusterShortName, nsName);
 		[registry] = await DB.update<ContainerRegistry>("registry", { _id: registry._id }, { imagePullSecret });
 	}
-	console.log("registry :>> ", registry);
+	// console.log("registry :>> ", registry);
 
 	// get destination cluster
 	let cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
@@ -161,7 +163,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			return envVar;
 		});
 	}
-	console.log("[3] prereleaseEnvs :>> ", prereleaseEnvs);
+	// console.log("[3] prereleaseEnvs :>> ", prereleaseEnvs);
 
 	// Should inherit the "Ingress" config from the previous deployment?
 	let previousDeployment,

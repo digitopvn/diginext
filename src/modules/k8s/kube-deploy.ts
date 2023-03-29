@@ -227,12 +227,13 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 	if (!isNsExisted) {
 		log(`Namespace "${namespace}" not found, creating one...`);
+		if (onUpdate) onUpdate(`Namespace "${namespace}" not found, creating one...`);
 
 		const createNsRes = await ClusterManager.createNamespace(namespace, { context });
 		if (!createNsRes) {
-			logError(
-				`[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`
-			);
+			const err = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
+			logError(err);
+			if (onUpdate) onUpdate(err);
 			return;
 		}
 	}
