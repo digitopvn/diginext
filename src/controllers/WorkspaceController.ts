@@ -1,5 +1,5 @@
 import { log, logWarn } from "diginext-utils/dist/console/log";
-import { isEmpty } from "lodash";
+import { isUndefined } from "lodash";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
@@ -71,7 +71,7 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		if (!owner) return respondFailure({ msg: `Workspace "owner" (UserID) is required.` });
 
 		// Assign some default values if it's missing
-		if (isEmpty(body.public)) body.public = true;
+		if (isUndefined(body.public)) body.public = true;
 
 		// [1] Create new workspace:
 		const workspaceDto = { ...body } as any;
@@ -204,14 +204,14 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		queryParams?: ApiUserAndServiceAccountQueries
 	) {
 		const { workspace } = this.filter;
-		if (isEmpty(workspace)) return respondFailure({ msg: `Workspace ID or slug is required.` });
+		if (!workspace) return respondFailure({ msg: `Workspace ID or slug is required.` });
 
 		let serviceAccounts: User[] = [];
 		if (isValidObjectId(workspace)) {
 			serviceAccounts = await DB.find<User>("service_account", { workspaces: { $in: [new ObjectId(workspace)] } });
 		} else {
 			const ws = await DB.findOne<Workspace>("workspace", { slug: workspace });
-			if (isEmpty(ws)) return respondFailure({ msg: `Workspace not found.` });
+			if (!ws) return respondFailure({ msg: `Workspace not found.` });
 			serviceAccounts = await DB.find<User>("service_account", { workspaces: { $in: [ws._id] } });
 		}
 
@@ -233,14 +233,14 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		queryParams?: ApiUserAndServiceAccountQueries
 	) {
 		const { workspace } = this.filter;
-		if (isEmpty(workspace)) return respondFailure({ msg: `Workspace ID or slug is required.` });
+		if (!workspace) return respondFailure({ msg: `Workspace ID or slug is required.` });
 
 		let list: User[] = [];
 		if (isValidObjectId(workspace)) {
 			list = await DB.find<User>("api_key_user", { workspaces: { $in: [new ObjectId(workspace)] } });
 		} else {
 			const ws = await DB.findOne<Workspace>("workspace", { slug: workspace });
-			if (isEmpty(ws)) return respondFailure({ msg: `Workspace not found.` });
+			if (!ws) return respondFailure({ msg: `Workspace not found.` });
 			list = await DB.find<User>("api_key_user", { workspaces: { $in: [ws._id] } });
 		}
 

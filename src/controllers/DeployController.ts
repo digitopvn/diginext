@@ -1,7 +1,6 @@
 import { isJSON } from "class-validator";
 import { log } from "diginext-utils/dist/console/log";
 import type { NextFunction, Request, Response } from "express";
-import { isEmpty } from "lodash";
 import path from "path";
 import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
@@ -178,7 +177,7 @@ export default class DeployController {
 		const workspace = await DB.findOne<Workspace>("workspace", { _id: build.workspace });
 		const author = this.user || (await DB.findOne<User>("user", { _id: body.author }));
 
-		if (isEmpty(author)) return respondFailure({ msg: `Author is required.` });
+		if (!author) return respondFailure({ msg: `Author is required.` });
 
 		const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
 		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);

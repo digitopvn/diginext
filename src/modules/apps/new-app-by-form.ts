@@ -16,7 +16,7 @@ import { createOrSelectProject } from "./create-or-select-project";
 
 export async function createAppByForm(options?: InputOptions) {
 	if (!options.project) options.project = await createOrSelectProject(options);
-	console.log("options.project :>> ", options.project);
+	// console.log("options.project :>> ", options.project);
 
 	if (!options.name) {
 		const { name } = await inquirer.prompt({

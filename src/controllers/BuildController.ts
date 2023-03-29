@@ -1,4 +1,3 @@
-import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import { Config } from "@/app.config";
@@ -99,11 +98,11 @@ export default class BuildController extends BaseController<Build> {
 
 		// validates
 		const { appSlug, buildNumber, user, userId, gitBranch, registrySlug } = body;
-		if (isEmpty(appSlug)) return respondFailure({ msg: `App slug is required.` });
-		if (isEmpty(buildNumber)) return respondFailure({ msg: `Build number is required.` });
-		if (isEmpty(user) && isEmpty(userId)) return respondFailure({ msg: `User or UserID is required.` });
-		if (isEmpty(gitBranch)) return respondFailure({ msg: `Git branch is required.` });
-		if (isEmpty(registrySlug)) return respondFailure({ msg: `Container registry slug is required.` });
+		if (!appSlug) return respondFailure({ msg: `App slug is required.` });
+		if (!buildNumber) return respondFailure({ msg: `Build number is required.` });
+		if (!user && !userId) return respondFailure({ msg: `User or UserID is required.` });
+		if (!gitBranch) return respondFailure({ msg: `Git branch is required.` });
+		if (!registrySlug) return respondFailure({ msg: `Container registry slug is required.` });
 		// start the build
 		const buildInfo = await startBuild(body);
 

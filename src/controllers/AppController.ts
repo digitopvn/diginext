@@ -20,7 +20,7 @@ import { createDiginextDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { parseGitRepoDataFromRepoSSH } from "@/plugins";
-import { isValidObjectId } from "@/plugins/mongodb";
+import { isObjectId } from "@/plugins/mongodb";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
@@ -245,10 +245,10 @@ export default class AppController extends BaseController<App> {
 		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
 		if (!body.name) return respondFailure({ msg: `App's name is required.` });
 
-		// console.log("isValidObjectId(body.project) :>> ", isValidObjectId(body.project));
+		console.log(`isObjectId(${body.project}) :>> `, isObjectId(body.project));
 
 		// find parent project of this app
-		if (isValidObjectId(body.project)) {
+		if (isObjectId(body.project)) {
 			project = await DB.findOne<Project>("project", { _id: body.project });
 		} else if (isString(body.project)) {
 			project = await DB.findOne<Project>("project", { slug: body.project });
@@ -260,7 +260,7 @@ export default class AppController extends BaseController<App> {
 		appDto.projectSlug = project.slug;
 
 		// framework
-		if (isEmpty(body.framework)) body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" };
+		if (!body.framework) body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" };
 		if (body.framework === "none") body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" };
 		appDto.framework = body.framework as Framework;
 
@@ -268,7 +268,7 @@ export default class AppController extends BaseController<App> {
 		// if (isEmpty(body.git)) return respondFailure({ msg: `Git SSH URI or git repository information is required.` });
 		if (isString(body.git)) {
 			const gitData = parseGitRepoDataFromRepoSSH(body.git);
-			if (isEmpty(gitData)) return respondFailure({ msg: `Git repository information is not valid.` });
+			if (!gitData) return respondFailure({ msg: `Git repository information is not valid.` });
 
 			body.git = {
 				repoSSH: body.git as string,
@@ -454,35 +454,35 @@ export default class AppController extends BaseController<App> {
 
 		//
 		const { appSlug, env, deployEnvironmentData } = body;
-		if (isEmpty(appSlug)) return respondFailure({ msg: `App slug is required.` });
-		if (isEmpty(env)) return respondFailure({ msg: `Deploy environment name is required.` });
-		if (isEmpty(deployEnvironmentData)) return respondFailure({ msg: `Deploy environment configuration is required.` });
+		if (!appSlug) return respondFailure({ msg: `App slug is required.` });
+		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
+		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
 
 		// get app data:
 		const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
-		if (isEmpty(app)) return respondFailure({ msg: `App "${appSlug}" not found.` });
-		if (isEmpty(app.project)) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
-		if (isEmpty(deployEnvironmentData.imageURL)) respondFailure({ msg: `Build image URL is required.` });
+		if (!app) return respondFailure({ msg: `App "${appSlug}" not found.` });
+		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
+		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
 
 		const project = app.project as Project;
 		const { slug: projectSlug } = project;
 
 		// Assign default values to optional params:
 
-		if (isEmpty(deployEnvironmentData.size)) deployEnvironmentData.size = "1x";
-		if (isEmpty(deployEnvironmentData.shouldInherit)) deployEnvironmentData.shouldInherit = true;
-		if (isEmpty(deployEnvironmentData.replicas)) deployEnvironmentData.replicas = 1;
-		if (isEmpty(deployEnvironmentData.redirect)) deployEnvironmentData.redirect = true;
+		if (!deployEnvironmentData.size) deployEnvironmentData.size = "1x";
+		if (!deployEnvironmentData.shouldInherit) deployEnvironmentData.shouldInherit = true;
+		if (!deployEnvironmentData.replicas) deployEnvironmentData.replicas = 1;
+		if (!deployEnvironmentData.redirect) deployEnvironmentData.redirect = true;
 
 		// Validate deploy environment data:
 
 		// cluster
-		if (isEmpty(deployEnvironmentData.cluster)) return respondFailure({ msg: `Param "cluster" (Cluster's short name) is required.` });
+		if (!deployEnvironmentData.cluster) return respondFailure({ msg: `Param "cluster" (Cluster's short name) is required.` });
 		const cluster = await DB.findOne<Cluster>("cluster", { shortName: deployEnvironmentData.cluster });
-		if (isEmpty(cluster)) return respondFailure({ msg: `Cluster "${deployEnvironmentData.cluster}" is not valid` });
+		if (!cluster) return respondFailure({ msg: `Cluster "${deployEnvironmentData.cluster}" is not valid` });
 
 		// namespace
-		if (isEmpty(deployEnvironmentData.namespace)) {
+		if (!deployEnvironmentData.namespace) {
 			deployEnvironmentData.namespace = `${projectSlug}-${env}`;
 		} else {
 			// Check if namespace is existed...
@@ -494,12 +494,12 @@ export default class AppController extends BaseController<App> {
 		}
 
 		// container registry
-		if (isEmpty(deployEnvironmentData.registry)) return respondFailure({ msg: `Param "registry" (Container Registry's slug) is required.` });
+		if (!deployEnvironmentData.registry) return respondFailure({ msg: `Param "registry" (Container Registry's slug) is required.` });
 		const registry = await DB.findOne<ContainerRegistry>("registry", { slug: deployEnvironmentData.registry });
-		if (isEmpty(registry)) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
+		if (!registry) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
 
 		// Domains & SSL certificate...
-		if (isEmpty(deployEnvironmentData.domains)) deployEnvironmentData.domains = [];
+		if (!deployEnvironmentData.domains) deployEnvironmentData.domains = [];
 		if (deployEnvironmentData.useGeneratedDomain) {
 			const subdomain = `${projectSlug}-${appSlug}.${env}`;
 			const {
@@ -511,7 +511,7 @@ export default class AppController extends BaseController<App> {
 			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
 		}
 
-		if (isEmpty(deployEnvironmentData.ssl)) {
+		if (!deployEnvironmentData.ssl) {
 			deployEnvironmentData.ssl = deployEnvironmentData.domains.length > 0 ? "letsencrypt" : "none";
 		}
 		if (!sslIssuerList.includes(deployEnvironmentData.ssl))
@@ -520,7 +520,7 @@ export default class AppController extends BaseController<App> {
 		if (deployEnvironmentData.ssl === "letsencrypt") {
 			deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
 		} else if (deployEnvironmentData.ssl === "custom") {
-			if (isEmpty(deployEnvironmentData.tlsSecret)) {
+			if (!deployEnvironmentData.tlsSecret) {
 				deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
 			}
 		} else {
@@ -529,7 +529,7 @@ export default class AppController extends BaseController<App> {
 
 		// Exposing ports, enable/disable CDN, and select Ingress type
 		if (isUndefined(deployEnvironmentData.port)) return respondFailure({ msg: `Param "port" is required.` });
-		if (isEmpty(deployEnvironmentData.cdn) || !isBoolean(deployEnvironmentData.cdn)) deployEnvironmentData.cdn = false;
+		if (isUndefined(deployEnvironmentData.cdn) || !isBoolean(deployEnvironmentData.cdn)) deployEnvironmentData.cdn = false;
 		deployEnvironmentData.ingress = "nginx";
 
 		// create deploy environment in the app:

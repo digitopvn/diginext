@@ -1,6 +1,5 @@
 // import { log } from "diginext-utils/dist/console/log";
 import { Response } from "diginext-utils/dist/response";
-import isEmpty from "lodash/isEmpty";
 import passport from "passport";
 
 /**
@@ -13,7 +12,7 @@ const jwt_auth = (req, res, next) =>
 		// console.log(err, user, info);
 		// console.log(`[2] AUTHORIZE: jwt_auth > assign token:`, user);
 
-		if (isEmpty(user)) {
+		if (!user) {
 			/**
 			 * If the token is expired or invalid,
 			 * we should delete it in the cookies or HTTP response

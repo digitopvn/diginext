@@ -16,7 +16,7 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 		workspaces.map(async (ws) => {
 			// find default Service Account of this workspace:
 			const serviceAccounts = await DB.find<ServiceAccount>("service_account", { workspaces: ws._id });
-			console.log("serviceAccounts :>> ", serviceAccounts);
+			// console.log("serviceAccounts :>> ", serviceAccounts);
 			if (!serviceAccounts || serviceAccounts.length === 0) {
 				log(`[MIGRATION] migrateDefaultServiceAccount() > Found "${ws.name}" workspace doesn't have any Service Account.`);
 

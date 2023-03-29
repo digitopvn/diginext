@@ -35,7 +35,7 @@ export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) =
 };
 
 export const migrateAppEnvironmentVariables = async (app: App) => {
-	if (isEmpty(app)) return;
+	if (!app) return;
 	if (isEmpty(app.deployEnvironment)) return;
 
 	const updateData = {} as any;
