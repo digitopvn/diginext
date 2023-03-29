@@ -8,7 +8,6 @@ import { Config } from "../app.config";
 
 dayjs.extend(timezone);
 
-import cliApi from "@/routes/api/index";
 import apiV1 from "@/routes/api/v1";
 
 import googleAuth from "./auth/google";
@@ -37,13 +36,11 @@ router.get("/", (req, res) => res.send(defaultHTML()));
 router.use(Config.getBasePath(`/auth/profile`), authProfileApi);
 router.use(Config.getBasePath(`/auth/google`), googleAuth);
 
-if (cliApi) {
-	const deployApiPath = Config.getBasePath(`/api`);
-	router.use(deployApiPath, cliApi);
-}
+// if (cliApi) {
+// 	const deployApiPath = Config.getBasePath(`/api`);
+// 	router.use(deployApiPath, cliApi);
+// }
 
-if (apiV1) {
-	router.use(Config.getBasePath(`/api/v1`), apiV1);
-}
+if (apiV1) router.use(Config.getBasePath(`/api/v1`), apiV1);
 
 export default router;

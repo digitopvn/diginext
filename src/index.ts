@@ -38,6 +38,7 @@ import { requestDeploy } from "./modules/deploy/request-deploy";
 import { requestDeployImage } from "./modules/deploy/request-deploy-image";
 import { execKubectl } from "./modules/k8s/kubectl-cli";
 import { showServerInfo } from "./modules/server/server-info";
+import { testCommand } from "./modules/test";
 
 /**
  * Initialize CONFIG STORE (in document directory of the local machine)
@@ -70,6 +71,10 @@ export async function processCLI(options?: InputOptions) {
 	if (options.env) env = options.env;
 
 	switch (options.action) {
+		case "test":
+			await testCommand(options);
+			break;
+
 		case "info":
 			await showServerInfo(options);
 			break;

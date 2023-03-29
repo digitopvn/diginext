@@ -1,7 +1,6 @@
 import { IsNotEmpty } from "class-validator";
 
-import type { IRoutePermission } from "@/interfaces/IPermission";
-import { IRouteScope } from "@/interfaces/IPermission";
+import type { IRoutePermission, IRouteScope } from "@/interfaces/IPermission";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
@@ -10,16 +9,22 @@ import type { Project } from "./Project";
 import type User from "./User";
 import type Workspace from "./Workspace";
 
-@Entity({ name: "role_routes" })
-export class RoleRoute {
-	@Column()
+export interface RoleRoute {
+	/**
+	 * Route path
+	 * @example /api/v1/healthz
+	 */
 	route: string;
-
-	@Column()
-	scope: IRouteScope;
-
-	@Column({ array: true })
+	/**
+	 * @default ["full"]
+	 */
 	permissions: IRoutePermission[];
+	/**
+	 * (TBC)
+	 * @default all
+	 * @example all
+	 */
+	scope?: IRouteScope;
 }
 
 @Entity({ name: "roles" })
@@ -55,7 +60,7 @@ export default class Role extends Base {
 	@ObjectIdColumn({ name: "workspaces" })
 	workspace?: ObjectID | Workspace | string;
 
-	constructor(data?: Role) {
+	constructor(data?: Role | any) {
 		super();
 		Object.assign(this, data);
 	}

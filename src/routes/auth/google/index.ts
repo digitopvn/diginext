@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
 import passport from "passport";
-import path from "path";
 
 import { Config } from "@/app.config";
 import type User from "@/entities/User";
@@ -61,9 +60,6 @@ router
 				res.redirect(redirectUrl + "?access_token=" + access_token);
 			}
 		}
-	)
-	.get("/test", function (req, res) {
-		res.sendFile(path.resolve(process.cwd(), "views/google-auth.html"));
-	});
+	);
 
 export default router;

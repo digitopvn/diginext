@@ -1,5 +1,4 @@
 import { log } from "diginext-utils/dist/console/log";
-import { isEmpty } from "lodash";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { Workspace } from "@/entities";
@@ -15,8 +14,9 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 	const results = await Promise.all(
 		workspaces.map(async (ws) => {
 			// find default Service Account of this workspace:
-			const serviceAccounts = await DB.find<User>("service_account", { workspaces: { $in: [ws._id] } });
-			if (isEmpty(serviceAccounts)) {
+			const serviceAccounts = await DB.find<User>("service_account", { workspaces: ws._id });
+			console.log("serviceAccounts :>> ", serviceAccounts);
+			if (!serviceAccounts || serviceAccounts.length === 0) {
 				log(`[MIGRATION] migrateDefaultServiceAccount() > Found "${ws.name}" workspace doesn't have any Service Account.`);
 
 				const newToken = generateWorkspaceApiAccessToken();
@@ -31,15 +31,15 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 				saDto.activeWorkspace = ws._id;
 				saDto.token = getUnexpiredAccessToken(newToken.value);
 
-				const saUser = await DB.create("service_account", saDto);
+				const saUser = await DB.create<User>("service_account", saDto);
 				if (saUser) log(`[MIGRATION] Workspace "${ws.name}" > Created "${saUser.name}" successfully.`);
 
 				affectedWs++;
 			}
 
 			// find default API_KEY user of this workspace
-			const apiKeyUsers = await DB.find<User>("api_key_user", { workspaces: { $in: [ws._id] } });
-			if (isEmpty(apiKeyUsers)) {
+			const apiKeyUsers = await DB.find<User>("api_key_user", { workspaces: ws._id });
+			if (!apiKeyUsers || apiKeyUsers.length === 0) {
 				log(`[MIGRATION] migrateDefaultServiceAccount() > Found "${ws.name}" workspace doesn't have any default API_KEY user.`);
 
 				const newToken = generateWorkspaceApiAccessToken();
@@ -54,7 +54,7 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 				apiUserDto.activeWorkspace = ws._id;
 				apiUserDto.token = getUnexpiredAccessToken(newToken.value);
 
-				const apiKeyUser = await DB.create("api_key_user", apiUserDto);
+				const apiKeyUser = await DB.create<User>("api_key_user", apiUserDto);
 				if (apiKeyUser) log(`[MIGRATION] Workspace "${ws.name}" > Created "${apiKeyUser.name}" successfully.`);
 
 				affectedWs++;

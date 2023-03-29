@@ -8,6 +8,7 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
 import { migrateAllReleases } from "@/migration/migrate-all-releases";
+import { migrateAllRoles } from "@/migration/migrate-all-roles";
 import { migrateAllUserTypes } from "@/migration/migrate-all-user-types";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
@@ -88,4 +89,5 @@ export async function startupScripts() {
 	await migrateAllGitProviders();
 	await migrateAllUserTypes();
 	await migrateDefaultServiceAccountAndApiKeyUser();
+	await migrateAllRoles();
 }
