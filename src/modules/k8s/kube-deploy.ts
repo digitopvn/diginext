@@ -169,7 +169,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, namespace, { context });
 	if (!prereleaseDeploymentRes)
 		throw new Error(
-			`Can't preview the pre-release "${id}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}).`
+			`Can't preview the pre-release "${id}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${preYaml}`
 		);
 
 	logSuccess(`The PRE-RELEASE environment is ready to preview: https://${prereleaseUrl}`);
@@ -316,7 +316,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, namespace, { context });
 	if (!applySvcRes)
 		throw new Error(
-			`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`
+			`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`
 		);
 
 	log(`Created new production service named "${appSlug}".`);
@@ -338,7 +338,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, namespace, { context });
 	if (!ingCreateResult)
 		throw new Error(
-			`Failed to apply invalid INGRESS config (${env.toUpperCase()}) to "${ingressName}" in "${namespace}" namespace of "${context}" context.`
+			`Failed to apply invalid INGRESS config (${env.toUpperCase()}) to "${ingressName}" in "${namespace}" namespace of "${context}" context:\n${ING_CONTENT}`
 		);
 
 	// log(`5`);
@@ -393,7 +393,9 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		let APP_CONTENT = objectToDeploymentYaml(newApp);
 		const appCreateResult = await ClusterManager.kubectlApplyContent(APP_CONTENT, namespace, { context });
 		if (!appCreateResult)
-			throw new Error(`Failed to apply APP DEPLOYMENT config to "${newAppName}" in "${namespace}" namespace of "${context}" context.`);
+			throw new Error(
+				`Failed to apply APP DEPLOYMENT config to "${newAppName}" in "${namespace}" namespace of "${context}" context:\n${APP_CONTENT}`
+			);
 
 		log(`Created new deployment "${newAppName}" successfully.`);
 
