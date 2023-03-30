@@ -1,3 +1,12 @@
+## [2.8.5](https://github.com/digitopvn/diginext/compare/v2.8.4...v2.8.5) (2023-03-30)
+
+
+### Bug Fixes
+
+* **clean up:** remove logging messages ([cb1eb24](https://github.com/digitopvn/diginext/commit/cb1eb2458f05695a8f490d24c859bc5ba51a9227))
+* **server:** api user list all incorrect filter ([56c4d7c](https://github.com/digitopvn/diginext/commit/56c4d7c875872cbbf605928ee0407141e064b519))
+* **server:** set active workspace in jwt verification ([f12e71a](https://github.com/digitopvn/diginext/commit/f12e71a5815a11081ea8d75c1bb3f8e9bd7fc31d))
+
 ## [2.8.4](https://github.com/digitopvn/diginext/compare/v2.8.3...v2.8.4) (2023-03-30)
 
 
