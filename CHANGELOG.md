@@ -1,3 +1,11 @@
+## [2.8.4](https://github.com/digitopvn/diginext/compare/v2.8.3...v2.8.4) (2023-03-30)
+
+
+### Bug Fixes
+
+* **server:** add deploy from source code api ([5d74ffb](https://github.com/digitopvn/diginext/commit/5d74ffbbe5002dbb6b5e29ae3a8f718bd29d004f))
+* **server:** issue of incorrect login access token ([4867b26](https://github.com/digitopvn/diginext/commit/4867b26fed1f055e7285b8c1640a3cc2e4b7aa1f))
+
 ## [2.8.3](https://github.com/digitopvn/diginext/compare/v2.8.2...v2.8.3) (2023-03-29)
 
 

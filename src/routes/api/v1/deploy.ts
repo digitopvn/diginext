@@ -22,6 +22,17 @@ router
 	)
 	/**
 	 * Build container image first, then deploy that build to target deploy environment.
+	 * - `Alias of "/api/v1/deploy/build-first"`
+	 */
+	.post(
+		"/from-source",
+		authenticate,
+		// authorization,
+		controller.apiRespond(controller.buildFromSourceAndDeploy.bind(controller)).bind(controller)
+	)
+	/**
+	 * Build container image first, then deploy that build to target deploy environment.
+	 * - `Alias of "/api/v1/deploy/from-source"`
 	 */
 	.post(
 		"/build-first",

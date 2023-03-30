@@ -47,7 +47,7 @@ export async function startupScripts() {
 	execCmd(`git config --global user.email "server@diginext.site"`);
 	execCmd(`git config --global user.name "Diginext Server"`);
 
-	// seed system initial data
+	// seed system initial data: Cloud Providers
 	await seedSystemInitialData();
 
 	// connect cloud providers

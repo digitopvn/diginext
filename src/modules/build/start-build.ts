@@ -13,7 +13,7 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import type { App, Build, Cluster, Project, Release, User } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
-import { execCmd, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
+import { execCmd, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath, wait } from "@/plugins";
 import { socketIO } from "@/server";
 
 import { DB } from "../api/DB";
@@ -454,6 +454,9 @@ export async function startBuildV1(
 	} else {
 		sendLog({ SOCKET_ROOM, message: chalk.bold(chalk.yellow(`✓ Preview at: ${endpoint}`)), type: "success" });
 	}
+
+	// i don't know, just for sure...
+	await wait(2000);
 
 	// disconnect CLI client:
 	socketIO?.to(SOCKET_ROOM).emit("message", { action: "end" });

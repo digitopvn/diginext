@@ -15,12 +15,13 @@ export const googleStrategy = new GoogleStrategy(
 	},
 	function (request, accessToken, refreshToken, profile, done) {
 		process.nextTick(async function () {
-			// console.log(profile);
+			// console.log(`googleStrategy :>>`, { profile });
 			// console.log(accessToken);
 
 			const userSvc = new UserService();
 			let user = await userSvc.findOne({ email: profile.email }, { populate: ["roles"] });
 			// console.log("[google login] user :>> ", user);
+			// console.log(`googleStrategy :>>`, { user });
 
 			if (user) {
 				if (user.image != profile.picture) {
