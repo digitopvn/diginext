@@ -191,7 +191,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		const updateData = options?.raw ? data : { $set: data };
 		// logFull({ updateData });
 
-		const updateRes = await this.query.updateMany(filter, updateData);
+		const updateRes = await this.query.updateMany(filter, updateData, { upsert: true });
 
 		// const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
 		// const author = `${user.name} (ID: ${user._id})`;

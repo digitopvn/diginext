@@ -24,7 +24,8 @@ export default class UserController extends BaseController<User> {
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
-		this.filter.workspaces = this.user.activeWorkspace;
+		// console.log("this.user.activeWorkspace :>> ", this.user.activeWorkspace);
+		this.filter.workspaces = this.workspace._id;
 		return super.read();
 	}
 
