@@ -290,7 +290,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 			const { shouldUploadEnv } = await inquirer.prompt({
 				type: "confirm",
 				name: "shouldUploadEnv",
-				default: false,
+				default: true,
 				message: `Do you want to use your "${envFile}" on ${env.toUpperCase()} environment?`,
 			});
 
