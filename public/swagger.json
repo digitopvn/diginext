@@ -299,6 +299,9 @@
 									"$ref": "#/components/schemas/ObjectID"
 								},
 								{
+									"$ref": "#/components/schemas/ObjectId"
+								},
+								{
 									"$ref": "#/components/schemas/Workspace"
 								},
 								{
@@ -313,6 +316,9 @@
 						"anyOf": [
 							{
 								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/ObjectId"
 							},
 							{
 								"$ref": "#/components/schemas/Workspace"
@@ -3938,6 +3944,9 @@
 									"$ref": "#/components/schemas/ObjectID"
 								},
 								{
+									"$ref": "#/components/schemas/ObjectId"
+								},
+								{
 									"$ref": "#/components/schemas/Workspace"
 								},
 								{
@@ -3952,6 +3961,9 @@
 						"anyOf": [
 							{
 								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/ObjectId"
 							},
 							{
 								"$ref": "#/components/schemas/Workspace"
@@ -4141,7 +4153,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.8.4",
+		"version": "2.8.5",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"

@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import type * as express from "express";
 import jwt from "jsonwebtoken";
+import { isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
 import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
@@ -96,7 +97,9 @@ export const jwtStrategy = new Strategy(
 		algorithms: ["HS512"],
 	},
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
-		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`);
+		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`, { payload });
+
+		const workspaceId = new ObjectId(payload.workspaceId);
 
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		// console.log("jwtStrategy > access_token :>> ", access_token);
@@ -118,27 +121,52 @@ export const jwtStrategy = new Strategy(
 		);
 		// console.log(`[1] jwtStrategy > User :>> `, user.name, user._id);
 
-		// update the access token in database:
-		[user] = await DB.update<User>(
-			"user",
-			{ _id: new ObjectId(payload.id) },
-			{ token: tokenInfo.token },
-			{ populate: ["roles", "workspaces", "activeWorkspace"] }
-		);
-		// console.log(`[2] jwtStrategy > User :>> `, user.name, user._id);
+		if (user) {
+			// console.log("user.workspaces :>> ", user.workspaces);
+			// console.log("workspaceId :>> ", workspaceId);
+			// console.log("user.workspaces.includes(workspaceId) :>> ", user.workspaces.includes(workspaceId));
 
-		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
-		if (!user) {
-			user = await DB.findOne<ServiceAccount>(
-				"service_account",
+			// set active workspace to this user:
+			if (isEmpty(user.workspaces)) {
+				[user] = await DB.update<User>(
+					"user",
+					{ _id: user._id },
+					{ workspaces: [workspaceId], activeWorkspace: workspaceId },
+					{ populate: ["roles", "workspaces", "activeWorkspace"] }
+				);
+				// console.log("[2] user.workspaces :>> ", user.workspaces);
+			} else {
+				if (!user.workspaces.includes(workspaceId)) {
+					[user] = await DB.update<User>(
+						"user",
+						{ _id: user._id },
+						{ activeWorkspace: workspaceId, workspaces: [...user.workspaces, workspaceId] },
+						{ populate: ["roles", "workspaces", "activeWorkspace"] }
+					);
+				}
+				// console.log("[2] user.workspaces :>> ", user.workspaces);
+			}
+
+			// update the access token in database:
+			[user] = await DB.update<User>(
+				"user",
 				{ _id: new ObjectId(payload.id) },
+				{ token: tokenInfo.token, activeWorkspace: workspaceId },
 				{ populate: ["roles", "workspaces", "activeWorkspace"] }
 			);
+			// console.log(`[2] jwtStrategy > User :>> `, user);
 
-			// console.log(`[3] jwtStrategy > ServiceAccount :>> `, user.name, user._id);
+			return done(null, user);
 		}
 
-		// 3. Validating logged in user...
+		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
+		user = await DB.findOne<ServiceAccount>(
+			"service_account",
+			{ _id: new ObjectId(payload.id) },
+			{ populate: ["roles", "workspaces", "activeWorkspace"] }
+		);
+
+		// console.log(`[3] jwtStrategy > ServiceAccount :>> `, user.name, user._id);
 
 		if (!user) done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
 

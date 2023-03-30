@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty } from "class-validator";
+import type { ObjectId } from "mongodb";
 
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
@@ -97,13 +98,13 @@ export default class User extends Base {
 	 * List of workspace IDs which this user is a member
 	 */
 	@ObjectIdColumn({ name: "workspaces", array: true, default: [] })
-	workspaces?: (ObjectID | Workspace | string)[];
+	workspaces?: (ObjectID | ObjectId | Workspace | string)[];
 
 	/**
 	 * Active workspace of a user
 	 */
 	@ObjectIdColumn({ name: "workspaces" })
-	activeWorkspace?: ObjectID | Workspace | string;
+	activeWorkspace?: ObjectID | ObjectId | Workspace | string;
 
 	constructor(data?: User) {
 		super();

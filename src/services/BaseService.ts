@@ -165,38 +165,16 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	async update(filter: IQueryFilter, data: ObjectLiteral, options?: IQueryOptions) {
 		// log(`update :>>`, { data });
 
-		// generate slug (if needed)
-		// ! danger: when update "name" only -> it generates new slug !
-		// if (!data.slug && data.name) {
-		// 	let slug = makeSlug(data.name);
-		// 	const count = await this.count({ slug });
-		// 	if (count > 0) slug = makeSlug(data.name) + "-" + generatePassword(4, false).toLowerCase();
-		// 	data.slug = slug;
-		// }
-
-		// generate metadata (for searching)
-		// TODO: update metadata instead of create new
-
-		// data.metadata = {};
-		// for (const [key, value] of Object.entries(data)) {
-		// 	if (key != "_id" && key != "metadata" && key != "slug" && !isValidObjectId(value))
-		// 		data.metadata[key] = clearUnicodeCharacters(value.toString());
-		// }
-
-		// console.log(`Service > UPDATE :>>`, { filter }, { data });
-
 		// update new date
 		data.updatedAt = new Date();
 
+		// const transformedData = traverse(data, ({ key, val }) => {
+		// 	data[key] = isValidObjectId(val) ? new ObjectId(val) : val;
+		// });
+		// console.log("transformedData :>> ", transformedData);
 		const updateData = options?.raw ? data : { $set: data };
-		// logFull({ updateData });
 
 		const updateRes = await this.query.updateMany(filter, updateData);
-
-		// const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
-		// const author = `${user.name} (ID: ${user._id})`;
-		// if (user.name !== "Unknown") log(author, `- BaseService > UPDATE :>>`);
-		// logFull({ filter, updateData, updateRes });
 
 		if (updateRes.matchedCount > 0) {
 			const results = await this.find(filter, options);
