@@ -132,7 +132,14 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		});
 		localDeployEnvironment.cluster = cluster.shortName;
 		localDeployEnvironment.provider = (cluster.provider as CloudProvider).shortName;
+	} else {
+		const cluster = await DB.findOne<Cluster>("cluster", { shortName: localDeployEnvironment.cluster });
+		if (!cluster) {
+			logError(`Cluster "${localDeployEnvironment.cluster}" not found.`);
+			return;
+		}
 	}
+
 	localAppConfig.environment[env].cluster = localDeployEnvironment.cluster;
 	localAppConfig.environment[env].provider = localDeployEnvironment.provider;
 	options.cluster = localDeployEnvironment.cluster;
@@ -283,7 +290,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 			const { shouldUploadEnv } = await inquirer.prompt({
 				type: "confirm",
 				name: "shouldUploadEnv",
-				default: false,
+				default: true,
 				message: `Do you want to use your "${envFile}" on ${env.toUpperCase()} environment?`,
 			});
 

@@ -1,3 +1,12 @@
+## [2.8.6](https://github.com/digitopvn/diginext/compare/v2.8.5...v2.8.6) (2023-03-30)
+
+
+### Bug Fixes
+
+* **cli:** upload dot env file first time deploy as default ([4412c50](https://github.com/digitopvn/diginext/commit/4412c50f3678bdaf4862f4b94f93c830bc5c2c6c))
+* **cli:** validate cluster before requesting deployment ([e8e9a5e](https://github.com/digitopvn/diginext/commit/e8e9a5e3bff61244404b5b5e7da77f591e0a9fed))
+* **server:** issue of git pulling cache previous build ([873eead](https://github.com/digitopvn/diginext/commit/873eead16413cac6ec3890cb077bf13812cd1de6))
+
 ## [2.8.5](https://github.com/digitopvn/diginext/compare/v2.8.4...v2.8.5) (2023-03-30)
 
 
