@@ -134,7 +134,7 @@ export const jwtStrategy = new Strategy(
 					{ workspaces: [workspaceId], activeWorkspace: workspaceId },
 					{ populate: ["roles", "workspaces", "activeWorkspace"] }
 				);
-				console.log("[2] user.workspaces :>> ", user.workspaces);
+				// console.log("[2] user.workspaces :>> ", user.workspaces);
 			} else {
 				if (!user.workspaces.includes(workspaceId)) {
 					[user] = await DB.update<User>(
@@ -144,7 +144,7 @@ export const jwtStrategy = new Strategy(
 						{ populate: ["roles", "workspaces", "activeWorkspace"] }
 					);
 				}
-				console.log("[2] user.workspaces :>> ", user.workspaces);
+				// console.log("[2] user.workspaces :>> ", user.workspaces);
 			}
 
 			// update the access token in database:
@@ -154,7 +154,7 @@ export const jwtStrategy = new Strategy(
 				{ token: tokenInfo.token, activeWorkspace: workspaceId },
 				{ populate: ["roles", "workspaces", "activeWorkspace"] }
 			);
-			console.log(`[2] jwtStrategy > User :>> `, user);
+			// console.log(`[2] jwtStrategy > User :>> `, user);
 
 			return done(null, user);
 		}
