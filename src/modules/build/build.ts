@@ -1,7 +1,6 @@
 import chalk from "chalk";
 import dayjs from "dayjs";
 import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
-import { existsSync, rmSync } from "fs";
 import humanizeDuration from "humanize-duration";
 import { isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
@@ -11,7 +10,7 @@ import path from "path";
 import { isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { App, Build, ContainerRegistry, Project, User, Workspace } from "@/entities";
-import { execCmd, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
+import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
 import { getIO, socketIO } from "@/server";
 
 import { DB } from "../api/DB";
@@ -205,14 +204,6 @@ export async function startBuild(params: StartBuildParams) {
 	const SOURCE_CODE_DIR = `cache/${projectSlug}/${appSlug}/${gitBranch}`;
 	let buildDir = isServerMode ? path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR) : params.buildDir;
 
-	// switch process to the build directory
-	try {
-		process.chdir(buildDir);
-	} catch (e) {
-		sendLog({ SOCKET_ROOM, message: e.toString() });
-		return;
-	}
-
 	// detect "gitProvider" from git repo SSH URI:
 	const gitProvider = getGitProviderFromRepoSSH(repoSSH);
 
@@ -255,41 +246,7 @@ export async function startBuild(params: StartBuildParams) {
 	// Git SSH verified -> start pulling now...
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Pulling latest source code from "${repoSSH}" at "${gitBranch}" branch...` });
 
-	if (existsSync(buildDir)) {
-		try {
-			sendLog({ SOCKET_ROOM, message: `[START BUILD] Trying to check out existing directory and do git pull at: ${buildDir}` });
-			await execCmd(`git checkout -f && git pull --rebase`);
-		} catch (e) {
-			sendLog({ SOCKET_ROOM, message: `[START BUILD] Removing a directory: ${buildDir} :>> ${e}` });
-			rmSync(buildDir, { recursive: true, force: true });
-
-			sendLog({ SOCKET_ROOM, message: `[START BUILD] Clone new source code into directory: ${buildDir}` });
-			try {
-				await execCmd(`git clone ${repoSSH} --branch ${gitBranch} --single-branch ${buildDir}`);
-			} catch (e2) {
-				sendLog({
-					SOCKET_ROOM,
-					type: "error",
-					message: `[START BUILD] Failed to clone new branch "${gitBranch}" to "${buildDir}": ${e2}`,
-				});
-				await updateBuildStatus(newBuild, "failed");
-				return;
-			}
-		}
-	} else {
-		try {
-			sendLog({ SOCKET_ROOM, message: `[START BUILD] Clone new source code into: ${buildDir}` });
-			await execCmd(`git clone ${repoSSH} --branch ${gitBranch} --single-branch ${buildDir}`);
-		} catch (e) {
-			sendLog({
-				SOCKET_ROOM,
-				type: "error",
-				message: `[START BUILD] Failed to Clone new branch "${gitBranch}" to "${buildDir}": ${e}`,
-			});
-			// await updateBuildStatus(newBuild, "failed");
-			// return;
-		}
-	}
+	await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, { onUpdate: (message) => sendLog({ SOCKET_ROOM, message }) });
 
 	// emit socket message to "digirelease" app:
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Finished pulling latest files of "${gitBranch}"...` });

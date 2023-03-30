@@ -1,15 +1,11 @@
-import { logWarn } from "diginext-utils/dist/console/log";
+import { simpleGit } from "simple-git";
 
-import { execCmd } from "@/plugins";
 // import execa from "execa";
 
 export const getCurrentGitBranch = async (dir = process.cwd()) => {
-	try {
-		process.chdir(dir);
-	} catch (e) {
-		logWarn(`getCurrentGitBranch >`, e);
-	}
-
-	const branch = await execCmd(`git branch --show-current`);
-	return branch;
+	const git = simpleGit(dir, { binary: "git" });
+	const status = await git.status();
+	const curBranch = status.current;
+	// logWarn(`getCurrentGitBranch >`, { curBranch });
+	return curBranch;
 };

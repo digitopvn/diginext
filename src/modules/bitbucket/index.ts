@@ -23,7 +23,7 @@ import { conf } from "@/index";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
 // import { conf } from "../cli/update-cli";
-import { deleteFolderRecursive, execCmd, logBitbucketError } from "../../plugins";
+import { deleteFolderRecursive, logBitbucketError, pullOrCloneGitRepo } from "../../plugins";
 
 export let bitbucket, workspaceId;
 
@@ -196,7 +196,7 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	}
 	await mkdir(tmpDir);
 
-	await execCmd(`git clone -b ${frameworkVersion} --single-branch ${repoSSH} ${tmpDir}`, "Failed to connect to the git provider.");
+	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, { onUpdate: (msg) => console.log(msg) });
 
 	// delete unneccessary files
 	if (fs.existsSync(".fw/dx.json")) await deleteFolderRecursive(".fw/dx.json");

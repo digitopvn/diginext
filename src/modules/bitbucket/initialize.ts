@@ -96,7 +96,6 @@ export async function initializeBitbucket(options: InputOptions) {
 
 	if (options.shouldUseGit) {
 		// add git origin:
-		// await execa.command(`cd ${options.targetDirectory} && git remote add origin ${options.remoteURL} && git push origin --all`);
 		const git = simpleGit(options.targetDirectory, { binary: "git" });
 		await git.addRemote("origin", options.remoteURL);
 		await git.push("origin", "master");

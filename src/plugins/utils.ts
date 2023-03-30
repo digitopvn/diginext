@@ -14,6 +14,7 @@ import _, { isArray, isEmpty, isString, toNumber } from "lodash";
 import * as m from "marked";
 import TerminalRenderer from "marked-terminal";
 import path from "path";
+import type { SimpleGit, SimpleGitProgressEvent } from "simple-git";
 import { simpleGit } from "simple-git";
 
 import pkg from "@/../package.json";
@@ -632,14 +633,45 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
 };
 
+interface PullOrCloneGitRepoOptions {
+	onUpdate?: (msg) => void;
+}
+
+export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
+	let git: SimpleGit;
+
+	const { onUpdate } = options;
+
+	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
+		const message = `git.${method} ${stage} stage ${progress}% complete`;
+		if (onUpdate) onUpdate(message);
+	};
+
+	if (fs.existsSync(dir)) {
+		git = simpleGit(dir, { progress: onProgress });
+		const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
+		const originRemote = remotes[0];
+		if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
+
+		if (originRemote.refs.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
+
+		const curBranch = await getCurrentGitBranch(dir);
+		await git.pull("origin", curBranch, ["--no-ff"]);
+	} else {
+		git = simpleGit({ progress: onProgress });
+		await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+	}
+};
+
 /**
  * Get current remote SSH & URL
  */
 export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 	try {
-		process.chdir(dir);
+		const git = simpleGit(dir, { binary: "git" });
+		const remotes = await git.getRemotes(true);
 
-		const remoteSSH = await execCmd(`git remote get-url origin`);
+		const remoteSSH = remotes[0].refs.fetch;
 		if (!remoteSSH) return;
 
 		if (remoteSSH.indexOf("https://") > -1) {

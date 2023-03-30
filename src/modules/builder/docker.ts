@@ -71,11 +71,6 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 	} = options;
 
 	/**
-	 * ! Change current working directory to the root of this project repository
-	 **/
-	if (buildDirectory) process.chdir(buildDirectory);
-
-	/**
 	 * @example
 	 * docker buildx build -f Dockerfile --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
 	 **/
