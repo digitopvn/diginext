@@ -9,6 +9,7 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
 import type { AccessTokenInfo, User } from "@/entities";
+import type ServiceAccount from "@/entities/ServiceAccount";
 
 import { DB } from "../api/DB";
 
@@ -98,7 +99,8 @@ export const jwtStrategy = new Strategy(
 		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`);
 
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
-
+		// console.log("jwtStrategy > access_token :>> ", access_token);
+		// console.log("jwtStrategy > payload :>> ", payload);
 		// 1. Extract token info
 
 		const tokenInfo = extractAccessTokenInfo(access_token, payload.exp);
@@ -109,19 +111,36 @@ export const jwtStrategy = new Strategy(
 
 		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
-		let user = await DB.findOne("user", { _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces", "activeWorkspace"] });
-		[user] = await DB.update<User>("user", { _id: new ObjectId(payload.id) }, { token: tokenInfo.token });
+		let user = await DB.findOne<User | ServiceAccount>(
+			"user",
+			{ _id: new ObjectId(payload.id) },
+			{ populate: ["roles", "workspaces", "activeWorkspace"] }
+		);
+		// console.log(`[1] jwtStrategy > User :>> `, user.name, user._id);
+
+		// update the access token in database:
+		[user] = await DB.update<User>(
+			"user",
+			{ _id: new ObjectId(payload.id) },
+			{ token: tokenInfo.token },
+			{ populate: ["roles", "workspaces", "activeWorkspace"] }
+		);
+		// console.log(`[2] jwtStrategy > User :>> `, user.name, user._id);
 
 		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
-		if (!user)
-			user = await DB.findOne("service_account", { _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces", "activeWorkspace"] });
+		if (!user) {
+			user = await DB.findOne<ServiceAccount>(
+				"service_account",
+				{ _id: new ObjectId(payload.id) },
+				{ populate: ["roles", "workspaces", "activeWorkspace"] }
+			);
+
+			// console.log(`[3] jwtStrategy > ServiceAccount :>> `, user.name, user._id);
+		}
 
 		// 3. Validating logged in user...
 
 		if (!user) done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
-
-		// 4. Everything is good -> assign token for user and pass it to next request:
-		user.token = tokenInfo.token;
 
 		return done(null, user);
 	}

@@ -32,7 +32,7 @@ const argvOptions = {
 	data: { describe: "Input data", alias: "d" },
 	value: { describe: "Input value" },
 	file: { describe: "Input file path", alias: "f" },
-	key: { describe: "Input key in string", alias: "k" },
+	key: { describe: "Input key in string", alias: "token" },
 	url: { describe: "Input URL address with http" },
 	host: { describe: "Input host address (withou http)" },
 	overwrite: { describe: "[DANGER] Force execute a command (skip any errors)", alias: "force" },
@@ -111,6 +111,7 @@ const newProjectOptions = {
 const userInputOptions = {
 	input: argvOptions.input,
 	key: argvOptions.key,
+	token: argvOptions.key,
 	file: argvOptions.file,
 	url: argvOptions.url,
 	host: argvOptions.host,
@@ -212,7 +213,12 @@ export async function parseCliOptions() {
 		// command: CLI management
 		.command("info", "Show CLI & SERVER information")
 		// command: login
-		.command("login", "Authenticate Diginext CLI with BUILD server")
+		.command("login", "Authenticate Diginext CLI with BUILD server", (_yargs) =>
+			_yargs
+				.usage("$0 <server_url> --token=<access_token>")
+				.option("url", { ...argvOptions.url, describe: "URL of your Diginext server.", alias: "u" })
+				.option("token", { ...argvOptions.key, describe: "Value of ACCESS_TOKEN.", alias: "key" })
+		)
 		.command("logout", "Sign out Diginext CLI from BUILD server")
 		.usage("$0 login <build_server_url>", "Login into your build server")
 		.usage("$0 login --url=<build_server_url>", "Login into your build server")
@@ -455,6 +461,7 @@ export async function parseCliOptions() {
 		input: argv.input as string,
 		filePath: argv.file as string,
 		key: argv.key as string,
+		token: argv.key as string,
 		url: argv.url as string,
 		host: argv.host as string,
 		name: argv.name as string,

@@ -12,10 +12,33 @@ import { fetchApi } from "@/modules/api/fetchApi";
 
 import { DB } from "../api/DB";
 
-export const cliLogin = async (options: InputOptions) => {
-	const { secondAction, url } = options;
+interface CliLoginOptions {
+	/**
+	 * URL of the build server, specify with the second action of CLI
+	 */
+	secondAction?: string;
 
-	let buildServerUrl = url ?? secondAction;
+	/**
+	 * URL of the build server, specify with `--url` flag
+	 */
+	url?: string;
+
+	/**
+	 * The access token to authenticate, specify with `--token` or `--key` flag
+	 */
+	accessToken?: string;
+}
+
+export const cliLogin = async (options: CliLoginOptions) => {
+	const { secondAction, url, accessToken } = options;
+
+	const { buildServerUrl: currentServerUrl } = getCliConfig();
+
+	// console.log("cliLogin > accessToken :>> ", accessToken);
+
+	let access_token = accessToken;
+
+	let buildServerUrl = url ?? secondAction ?? currentServerUrl;
 	if (!buildServerUrl) {
 		logError(`Please provide your build server URL: "dx login <workspace_url>" or "dx login --help". Eg. https://build.example.com`);
 		return;
@@ -27,23 +50,26 @@ export const cliLogin = async (options: InputOptions) => {
 	});
 
 	// open login page of build server:
-	open(tokenDisplayUrl);
+	if (!access_token) open(tokenDisplayUrl);
 	// open(`${cliConfig.buildServerUrl}/auth/google?redirect_url=${cliConfig.buildServerUrl}/auth/profile`);
 
-	const { access_token } = await inquirer.prompt([
-		{
-			type: "password",
-			name: "access_token",
-			message: "Enter your access token:",
-			validate: function (value) {
-				if (value.length) {
-					return true;
-				} else {
-					return `Access token is required.`;
-				}
+	if (!access_token) {
+		const { inputAccessToken } = await inquirer.prompt<{ inputAccessToken: string }>([
+			{
+				type: "password",
+				name: "inputAccessToken",
+				message: "Enter your access token:",
+				validate: function (value) {
+					if (value.length) {
+						return true;
+					} else {
+						return `Access token is required.`;
+					}
+				},
 			},
-		},
-	]);
+		]);
+		access_token = inputAccessToken;
+	}
 
 	let currentUser: User;
 

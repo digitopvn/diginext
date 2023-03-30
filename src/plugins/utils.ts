@@ -1076,6 +1076,14 @@ export const getCurrentContainerEnvs = async (deployName: string, namespace = "d
 
 export { logBitbucket, logBitbucketError, logHelp, toBase64, wait };
 
+export const extractWorkspaceSlugFromUrl = (url: string) => {
+	try {
+		return url.split("//")[1].split(".")[0];
+	} catch (e: any) {
+		return;
+	}
+};
+
 export const extractWorkspaceIdFromUser = (user: User) => {
 	const workspaceId = (user.activeWorkspace as Workspace)._id
 		? (user.activeWorkspace as Workspace)._id.toString()
