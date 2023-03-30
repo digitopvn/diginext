@@ -26,6 +26,22 @@ import AppService from "@/services/AppService";
 
 import BaseController from "./BaseController";
 
+export interface CreateEnvVarsDto {
+	/**
+	 * App slug
+	 */
+	slug: string;
+	/**
+	 * Deploy environment name
+	 * @example "dev" | "prod"
+	 */
+	env: string;
+	/**
+	 * Array of variables to be created on deploy environment in JSON format
+	 */
+	envVars: string;
+}
+
 export interface AppInputSchema {
 	/**
 	 * `REQUIRES`
@@ -333,6 +349,8 @@ export default class AppController extends BaseController<App> {
 		// migrate app environment variables if needed (convert {Object} to {Array})
 		const migratedApp = await migrateAppEnvironmentVariables(app);
 		if (migratedApp) app = migratedApp;
+
+		// apply environment variables?
 
 		return { status: 1, data: [app] } as ResponseData;
 		// return super.update(body);
@@ -668,21 +686,7 @@ export default class AppController extends BaseController<App> {
 	@Post("/environment/variables")
 	async createEnvVarsOnDeployEnvironment(
 		@Body()
-		body: {
-			/**
-			 * App slug
-			 */
-			slug: string;
-			/**
-			 * Deploy environment name
-			 * @example "dev" | "prod"
-			 */
-			env: string;
-			/**
-			 * Array of variables to be created on deploy environment
-			 */
-			envVars: KubeEnvironmentVariable[];
-		},
+		body: CreateEnvVarsDto,
 		@Queries() queryParams?: IPostQueryParams
 	) {
 		// console.log("body :>> ", body);
@@ -693,7 +697,7 @@ export default class AppController extends BaseController<App> {
 		if (!envVars) return { status: 0, messages: [`Array of variables in JSON format (envVars) is required.`] };
 		if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
 
-		const newEnvVars = JSON.parse(envVars as unknown as string) as KubeEnvironmentVariable[];
+		const newEnvVars = JSON.parse(envVars) as KubeEnvironmentVariable[];
 		// console.log("updateEnvVars :>> ", updateEnvVars);
 		const [updatedApp] = await this.service.update(
 			{ slug },

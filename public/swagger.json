@@ -1637,6 +1637,25 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"CreateEnvVarsDto": {
+				"properties": {
+					"slug": {
+						"type": "string",
+						"description": "App slug"
+					},
+					"env": {
+						"type": "string",
+						"description": "Deploy environment name"
+					},
+					"envVars": {
+						"type": "string",
+						"description": "Array of variables to be created on deploy environment in JSON format"
+					}
+				},
+				"required": ["slug", "env", "envVars"],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"BuildStatus": {
 				"type": "string",
 				"enum": ["start", "building", "failed", "success"]
@@ -4959,25 +4978,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"properties": {
-									"envVars": {
-										"items": {
-											"$ref": "#/components/schemas/KubeEnvironmentVariable"
-										},
-										"type": "array",
-										"description": "Array of variables to be created on deploy environment"
-									},
-									"env": {
-										"type": "string",
-										"description": "Deploy environment name"
-									},
-									"slug": {
-										"type": "string",
-										"description": "App slug"
-									}
-								},
-								"required": ["envVars", "env", "slug"],
-								"type": "object"
+								"$ref": "#/components/schemas/CreateEnvVarsDto"
 							}
 						}
 					}
