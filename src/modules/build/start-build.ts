@@ -204,6 +204,7 @@ export async function startBuildV1(
 	 * Because it will generate the name of secret to put into deployment yaml
 	 */
 	const cluster = await DB.findOne<Cluster>("cluster", { shortName: serverDeployEnvironment.cluster });
+	console.log("startBuildV1 > cluster :>> ", cluster);
 	const { contextName: context } = cluster;
 
 	const isNsExisted = await ClusterManager.isNamespaceExisted(serverDeployEnvironment.namespace, { context });

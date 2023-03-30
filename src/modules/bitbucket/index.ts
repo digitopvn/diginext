@@ -161,19 +161,19 @@ interface GitStageOptions {
  *
  */
 export async function stageAllFiles(options: GitStageOptions) {
-	const { directory = "./", message = "build(prepare for building) commit all files, push to origin" } = options;
+	const { directory = "./", message = "build(prepare): commit all files & push to origin" } = options;
 	const git = simpleGit(directory, { binary: "git" });
 	const gitStatus = await git.status(["-s"]);
-	log("[current branch]", gitStatus.current);
+	// log("[current branch]", gitStatus.current);
 
 	const currentBranch = gitStatus.current;
 	const currentBranchKebab = _.kebabCase(currentBranch);
-	const commitMessage = message;
 
 	// commit & push everything, then try to merge "master" to current branch
 	try {
+		await git.pull("origin", currentBranch, ["--no-ff"]);
 		await git.add("./*");
-		await git.commit(commitMessage);
+		await git.commit(message);
 		await git.push("origin", currentBranch);
 	} catch (e) {
 		logError(e);

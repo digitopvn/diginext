@@ -132,7 +132,14 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		});
 		localDeployEnvironment.cluster = cluster.shortName;
 		localDeployEnvironment.provider = (cluster.provider as CloudProvider).shortName;
+	} else {
+		const cluster = await DB.findOne<Cluster>("cluster", { shortName: localDeployEnvironment.cluster });
+		if (!cluster) {
+			logError(`Cluster "${localDeployEnvironment.cluster}" not found.`);
+			return;
+		}
 	}
+
 	localAppConfig.environment[env].cluster = localDeployEnvironment.cluster;
 	localAppConfig.environment[env].provider = localDeployEnvironment.provider;
 	options.cluster = localDeployEnvironment.cluster;
