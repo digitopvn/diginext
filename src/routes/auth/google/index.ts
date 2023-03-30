@@ -54,23 +54,7 @@ router
 
 			const workspaceId = workspace._id.toString();
 
-			// set active workspace to this user:
-			if (!user.workspaces) {
-				[user] = await DB.update<User>(
-					"user",
-					{ _id: user._id },
-					{ workspaces: [workspace._id], activeWorkspace: workspace._id },
-					{ populate: ["workspaces", "activeWorkspace"] }
-				);
-			} else {
-				[user] = await DB.update<User>(
-					"user",
-					{ _id: user._id },
-					{ $addToSet: { workspaces: [workspace._id] }, activeWorkspace: workspace._id },
-					{ populate: ["workspaces", "activeWorkspace"], raw: true }
-				);
-			}
-			console.log("googleLoginCallback > user :>> ", user);
+			// console.log("googleLoginCallback > user :>> ", user);
 
 			const access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
 			// log("access_token", access_token);
