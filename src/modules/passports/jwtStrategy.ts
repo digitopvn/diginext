@@ -119,7 +119,7 @@ export const jwtStrategy = new Strategy(
 			{ _id: new ObjectId(payload.id) },
 			{ populate: ["roles", "workspaces", "activeWorkspace"] }
 		);
-		// console.log(`[1] jwtStrategy > User :>> `, user.name, user._id);
+		// console.log(`[1] jwtStrategy > User :>> `, user);
 
 		if (user) {
 			// console.log("user.workspaces :>> ", user.workspaces);
@@ -160,7 +160,7 @@ export const jwtStrategy = new Strategy(
 
 		// console.log(`[3] jwtStrategy > ServiceAccount :>> `, user.name, user._id);
 
-		if (!user) done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
+		if (!user) return done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
 
 		return done(null, user);
 	}

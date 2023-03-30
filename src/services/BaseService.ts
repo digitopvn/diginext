@@ -10,6 +10,7 @@ import type { EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeor
 import type { MongoFindManyOptions } from "@/libs/typeorm/find-options/mongodb/MongoFindManyOptions";
 import { manager, query } from "@/modules/AppDatabase";
 import { isValidObjectId } from "@/plugins/mongodb";
+import { parseRequestFilter } from "@/plugins/parse-request-filter";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
 
@@ -33,7 +34,9 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
 		const author = `${user.name} (ID: ${user._id})`;
 		if (user.name !== "Unknown") log(author, `- BaseService.count :>>`, { filter, options });
-		return this.query.count({ ...filter, ...options });
+
+		const parsedFilter = parseRequestFilter(filter);
+		return this.query.count({ ...parsedFilter, ...options });
 	}
 
 	async create(data: E) {
@@ -163,6 +166,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	}
 
 	async update(filter: IQueryFilter, data: ObjectLiteral, options?: IQueryOptions) {
+		log(`filter :>>`, { filter });
 		// log(`update :>>`, { data });
 
 		// update new date
