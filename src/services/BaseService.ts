@@ -31,11 +31,8 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	}
 
 	async count(filter?: IQueryFilter, options?: IQueryOptions) {
-		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
-		const author = `${user.name} (ID: ${user._id})`;
-		if (user.name !== "Unknown") log(author, `- BaseService.count :>>`, { filter, options });
-
 		const parsedFilter = parseRequestFilter(filter);
+		log(`- BaseService.count :>>`, { filter: parsedFilter, options });
 		return this.query.count({ ...parsedFilter, ...options });
 	}
 
@@ -158,24 +155,13 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		// log(`findOne > options :>>`, options);
 		const results = await this.find(filter, options);
 
-		// const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
-		// const author = `${user.name} (ID: ${user._id})`;
-		// if (user.name !== "Unknown") log(author, `- BaseService.findOne :>>`, { filter, options });
-
 		return results.length > 0 ? results[0] : null;
 	}
 
 	async update(filter: IQueryFilter, data: ObjectLiteral, options?: IQueryOptions) {
-		// log(`filter :>>`, { filter });
-		// log(`update :>>`, { data });
-
-		// update new date
+		// Manually update date to "updatedAt" column
 		data.updatedAt = new Date();
 
-		// const transformedData = traverse(data, ({ key, val }) => {
-		// 	data[key] = isValidObjectId(val) ? new ObjectId(val) : val;
-		// });
-		// console.log("transformedData :>> ", transformedData);
 		const updateData = options?.raw ? data : { $set: data };
 
 		const updateRes = await this.query.updateMany(filter, updateData);
@@ -191,15 +177,10 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {
 		// Manually update "deleteAt" to database since TypeORM MongoDB doesn't support "softDelete" yet
 		const deleteRes = await this.query.updateMany(filter, { $set: { deletedAt: new Date() } });
-
-		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
-		const author = `${user.name} (ID: ${user._id})`;
-		if (user.name !== "Unknown") log(author, `- BaseService.softDelete :>>`, { filter });
-
 		return { ok: deleteRes.matchedCount };
 
 		/**
-		 * MongoDB driver doesn't support "softDelete"
+		 * MongoDB driver doesn't support "softDelete" yet
 		 */
 		// const deleteRes = await this.query.softDelete(filter);
 		// console.log("deleteRes", deleteRes);
@@ -209,17 +190,11 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 
 	async delete(filter?: IQueryFilter) {
 		const deleteRes = await this.query.deleteMany(filter);
-		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
-		const author = `${user.name} (ID: ${user._id})`;
-		if (user.name !== "Unknown") log(author, `- BaseService.delete :>>`, { filter });
 		return deleteRes.result;
 	}
 
 	async empty(filter?: IQueryFilter) {
 		if (filter?.pass != EMPTY_PASS_PHRASE) return { ok: 0, n: 0, error: "[DANGER] You need a password to process this, buddy!" };
-		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
-		const author = `${user.name} (ID: ${user._id})`;
-		if (user.name !== "Unknown") log(author, `- BaseService.empty :>>`, { filter });
 		const deleteRes = await this.query.deleteMany({});
 		return { ...deleteRes.result, error: null };
 	}
