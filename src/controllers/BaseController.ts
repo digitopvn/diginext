@@ -15,6 +15,7 @@ import type { BaseService } from "@/services/BaseService";
 
 import type { IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
 import type { ResponseData } from "../interfaces/ResponseData";
+import { respondFailure } from "../interfaces/ResponseData";
 
 const DEFAULT_PAGE_SIZE = 100;
 
@@ -22,8 +23,6 @@ export default class BaseController<T extends Base> {
 	user: User;
 
 	workspace: Workspace;
-
-	// service: BaseService<T>;
 
 	filter: IQueryOptions & FindManyOptions<any>;
 
@@ -70,6 +69,8 @@ export default class BaseController<T extends Base> {
 			data = await this.service.find(this.filter, this.options, this.pagination);
 		}
 
+		if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		// assign refreshed token if any:
@@ -89,6 +90,8 @@ export default class BaseController<T extends Base> {
 
 	async update(updateData) {
 		const data = await this.service.update(this.filter, updateData, this.options);
+		if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		return result;
@@ -96,6 +99,8 @@ export default class BaseController<T extends Base> {
 
 	async delete() {
 		const data = await this.service.delete(this.filter);
+		if (!data || !data.ok) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		return result;
@@ -103,6 +108,7 @@ export default class BaseController<T extends Base> {
 
 	async softDelete() {
 		const data = await this.service.softDelete(this.filter);
+		if (!data || !data.ok) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 		return result;

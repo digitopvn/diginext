@@ -34,6 +34,18 @@ export interface IPostQueryParams {
 	raw?: boolean;
 }
 
+export interface IPatchQueryParams extends IPostQueryParams {
+	/**
+	 * Find one item by `{ObjectID}`
+	 */
+	_id?: string;
+
+	/**
+	 * Find one item by slug
+	 */
+	slug?: string;
+}
+
 export interface IDeleteQueryParams {
 	/**
 	 * Delete one item by `{ObjectID}`

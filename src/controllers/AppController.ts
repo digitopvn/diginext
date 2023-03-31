@@ -7,7 +7,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import type { App, AppGitInfo, Cluster, ContainerRegistry, Framework, Project } from "@/entities";
 import type { HiddenBodyKeys, ResourceQuotaSize, SslType } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -325,7 +325,7 @@ export default class AppController extends BaseController<App> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPatchQueryParams) {
 		let project: Project,
 			projectSvc = new ProjectService();
 
@@ -341,18 +341,11 @@ export default class AppController extends BaseController<App> {
 		let app: App;
 		try {
 			[app] = await this.service.update(this.filter, body, this.options);
-			if (!app) return { status: 0, messages: [`Failed to update app at "${JSON.stringify(this.filter)}"`] } as ResponseData;
+			if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		} catch (e) {
 			return { status: 0, messages: [e.message] } as ResponseData;
 		}
 
-		// migrate app environment variables if needed (convert {Object} to {Array})
-		const migratedApp = await migrateAppEnvironmentVariables(app);
-		if (migratedApp) app = migratedApp;
-
-		// apply environment variables?
-
-		return { status: 1, data: [app] } as ResponseData;
 		// return super.update(body);
 	}
 
@@ -361,6 +354,8 @@ export default class AppController extends BaseController<App> {
 	@Delete("/")
 	async delete(@Queries() queryParams?: IDeleteQueryParams) {
 		const app = await this.service.findOne(this.filter, { populate: ["project"] });
+
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
 		// also delete app's namespace on the cluster:
 		Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
@@ -394,7 +389,7 @@ export default class AppController extends BaseController<App> {
 	@Get("/config")
 	async getAppConfig(@Queries() queryParams?: { slug: string }) {
 		const app = await this.service.findOne(this.filter, { populate: ["project", "owner", "workspace"] });
-		if (!app) return { status: 0, messages: [`App not found.`], data: undefined };
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
 		const appConfig = getAppConfigFromApp(app);
 
@@ -427,6 +422,7 @@ export default class AppController extends BaseController<App> {
 		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
 
 		const app = await this.service.findOne({ slug });
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app) return respondFailure({ msg: `App "${slug}" not found.` });
 		if (!app.deployEnvironment[env]) return respondFailure({ msg: `App "${slug}" doesn't have any deploy environment named "${env}".` });
 
@@ -478,7 +474,7 @@ export default class AppController extends BaseController<App> {
 
 		// get app data:
 		const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
-		if (!app) return respondFailure({ msg: `App "${appSlug}" not found.` });
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
 
@@ -614,11 +610,7 @@ export default class AppController extends BaseController<App> {
 		const app = await this.service.findOne(appFilter);
 
 		// check if the environment is existed
-		if (!app) {
-			result.status = 0;
-			result.messages.push(`App not found.`);
-			return result;
-		}
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
 		const deployEnvironment = (app.deployEnvironment || {})[env.toString()];
 		if (!deployEnvironment) {
@@ -670,7 +662,7 @@ export default class AppController extends BaseController<App> {
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
 
 		const app = await this.service.findOne({ slug });
-		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
 		const envVars = app.deployEnvironment[env].envVars || [];
 
@@ -696,6 +688,9 @@ export default class AppController extends BaseController<App> {
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
 		if (!envVars) return { status: 0, messages: [`Array of variables in JSON format (envVars) is required.`] };
 		if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
+
+		const app = await this.service.findOne({ ...this.filter, slug });
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
 		const newEnvVars = JSON.parse(envVars) as KubeEnvironmentVariable[];
 		// console.log("updateEnvVars :>> ", updateEnvVars);
@@ -751,8 +746,8 @@ export default class AppController extends BaseController<App> {
 		if (!envVar) return { status: 0, messages: [`A variable (envVar { name, value }) is required.`] };
 		if (!isJSON(envVar)) return { status: 0, messages: [`A variable (envVar { name, value }) should be a valid JSON format.`] };
 
-		const app = await this.service.findOne({ slug });
-		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
+		const app = await this.service.findOne({ ...this.filter, slug });
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 
 		envVar = JSON.parse(envVar as unknown as string) as KubeEnvironmentVariable;
@@ -825,8 +820,8 @@ export default class AppController extends BaseController<App> {
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
 
-		const app = await this.service.findOne({ slug });
-		if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
+		const app = await this.service.findOne({ ...this.filter, slug });
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 		if (isEmpty(app.deployEnvironment[env]))
 			return { status: 0, messages: [`This deploy environment (${env}) of "${slug}" app doesn't have any environment variables.`] };
