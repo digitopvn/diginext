@@ -3,6 +3,7 @@ import express from "express";
 import AppController from "@/controllers/AppController";
 import { authenticate } from "@/middlewares/authenticate";
 import { authorize } from "@/middlewares/authorize";
+import { processApiRequest } from "@/middlewares/process-api-request";
 
 const router = express.Router();
 
@@ -13,18 +14,18 @@ router
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))
-	.get("/", controller.apiRespond(controller.read.bind(controller)).bind(controller))
-	.get("/config", controller.apiRespond(controller.getAppConfig.bind(controller)).bind(controller))
-	.post("/", controller.apiRespond(controller.create.bind(controller)).bind(controller))
-	.patch("/", controller.apiRespond(controller.update.bind(controller)).bind(controller))
-	.delete("/", controller.apiRespond(controller.delete.bind(controller)).bind(controller))
-	.delete("/empty", controller.apiRespond(controller.empty.bind(controller)).bind(controller))
-	.get("/environment", controller.apiRespond(controller.getDeployEnvironment.bind(controller)).bind(controller))
-	.post("/environment", controller.apiRespond(controller.createDeployEnvironment.bind(controller)).bind(controller))
-	.delete("/environment", controller.apiRespond(controller.deleteDeployEnvironment.bind(controller)).bind(controller))
-	.get("/environment/variables", controller.apiRespond(controller.getEnvVarsOnDeployEnvironment.bind(controller)).bind(controller))
-	.post("/environment/variables", controller.apiRespond(controller.createEnvVarsOnDeployEnvironment.bind(controller)).bind(controller))
-	.patch("/environment/variables", controller.apiRespond(controller.updateSingleEnvVarOnDeployEnvironment.bind(controller)).bind(controller))
-	.delete("/environment/variables", controller.apiRespond(controller.deleteEnvVarsOnDeployEnvironment.bind(controller)).bind(controller));
+	.get("/", processApiRequest(controller.read.bind(controller)))
+	.get("/config", processApiRequest(controller.getAppConfig.bind(controller)))
+	.post("/", processApiRequest(controller.create.bind(controller)))
+	.patch("/", processApiRequest(controller.update.bind(controller)))
+	.delete("/", processApiRequest(controller.delete.bind(controller)))
+	.delete("/empty", processApiRequest(controller.empty.bind(controller)))
+	.get("/environment", processApiRequest(controller.getDeployEnvironment.bind(controller)))
+	.post("/environment", processApiRequest(controller.createDeployEnvironment.bind(controller)))
+	.delete("/environment", processApiRequest(controller.deleteDeployEnvironment.bind(controller)))
+	.get("/environment/variables", processApiRequest(controller.getEnvVarsOnDeployEnvironment.bind(controller)))
+	.post("/environment/variables", processApiRequest(controller.createEnvVarsOnDeployEnvironment.bind(controller)))
+	.patch("/environment/variables", processApiRequest(controller.updateSingleEnvVarOnDeployEnvironment.bind(controller)))
+	.delete("/environment/variables", processApiRequest(controller.deleteEnvVarsOnDeployEnvironment.bind(controller)));
 
 export default router;

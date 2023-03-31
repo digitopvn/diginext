@@ -3,6 +3,7 @@ import express from "express";
 import BuildController from "@/controllers/BuildController";
 import { authenticate } from "@/middlewares/authenticate";
 import { authorize } from "@/middlewares/authorize";
+import { processApiRequest } from "@/middlewares/process-api-request";
 
 const router = express.Router();
 
@@ -15,53 +16,13 @@ router
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))
-	.get(
-		"/",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.read.bind(controller))
-	)
-	.get(
-		"/logs",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.getLogs.bind(controller))
-	)
-	.post(
-		"/",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.create.bind(controller))
-	)
-	.patch(
-		"/",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.update.bind(controller))
-	)
-	.delete(
-		"/",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.delete.bind(controller))
-	)
-	.delete(
-		"/empty",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.empty.bind(controller))
-	)
-	.post(
-		"/start",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.startBuild.bind(controller))
-	)
-	.patch(
-		"/stop",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.stopBuild.bind(controller))
-	);
+	.get("/", processApiRequest(controller.read.bind(controller)))
+	.get("/logs", processApiRequest(controller.getLogs.bind(controller)))
+	.post("/", processApiRequest(controller.create.bind(controller)))
+	.patch("/", processApiRequest(controller.update.bind(controller)))
+	.delete("/", processApiRequest(controller.delete.bind(controller)))
+	.delete("/empty", processApiRequest(controller.empty.bind(controller)))
+	.post("/start", processApiRequest(controller.startBuild.bind(controller)))
+	.patch("/stop", processApiRequest(controller.stopBuild.bind(controller)));
 
 export default router;

@@ -1,6 +1,5 @@
 import { isJSON } from "class-validator";
 import { log } from "diginext-utils/dist/console/log";
-import type { NextFunction, Request, Response } from "express";
 import path from "path";
 import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
@@ -40,19 +39,6 @@ type DeployBuildInput = {
 @Route("deploy")
 export default class DeployController {
 	user?: User;
-
-	apiRespond(executor) {
-		return async (req: Request, res: Response, next: NextFunction) => {
-			try {
-				this.user = req.user as User;
-				let result = await executor(req.body);
-				res.status(200).json(result);
-			} catch (e) {
-				// forward the error to Express.js Error Handling Route
-				next(e);
-			}
-		};
-	}
 
 	/**
 	 * ### [DEPRECATED SOON]
