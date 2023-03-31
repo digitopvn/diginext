@@ -305,7 +305,7 @@ export default class BaseController<T extends Base> {
 		if (pageOptions.page > 0) current_page = pageOptions.page;
 
 		// const totalSkip = skip > 0 ? pageOptions.skip : current_page > 0 ? (current_page - 1) * page_size : undefined;
-		const totalLimit = limit > 0 ? pageOptions.limit : page_size > 0 ? page_size : undefined;
+		const totalLimit = pageOptions.limit > 0 ? pageOptions.limit : page_size > 0 ? page_size : undefined;
 
 		if (totalLimit) total_pages = Math.ceil(total_items / totalLimit);
 		// if (totalSkip) page_size = totalSkip;
