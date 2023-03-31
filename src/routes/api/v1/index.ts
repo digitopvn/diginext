@@ -6,6 +6,7 @@ import buildRouter from "./build";
 import clusterRouter from "./cluster";
 import databaseRouter from "./database";
 import deployRouter from "./deploy";
+import domainRouter from "./domain";
 import frameworkRouter from "./framework";
 import gitRouter from "./git-provider";
 import projectRouter from "./project";
@@ -19,11 +20,6 @@ import userRouter from "./user";
 import workspaceRouter from "./workspace";
 
 const router = express.Router();
-
-/**
- * Default route
- */
-// router.get("/", (req, res) => Response.ignore(res, `What do you want?`));
 
 /**
  * Register API routes
@@ -46,5 +42,6 @@ router.use("/framework", frameworkRouter);
 router.use("/database", databaseRouter);
 router.use("/registry", registryRouter);
 router.use("/deploy", deployRouter);
+router.use("/domain", domainRouter);
 
 export default router;

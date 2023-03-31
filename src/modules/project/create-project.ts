@@ -49,7 +49,7 @@ export default async function createProjectByForm(options: InputOptions) {
 		return;
 	}
 
-	console.log("createProjectByForm > newProject :>> ", newProject);
+	// console.log("createProjectByForm > newProject :>> ", newProject);
 
 	options.project = newProject;
 	options.projectName = newProject.name;

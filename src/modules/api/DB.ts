@@ -295,7 +295,8 @@ export class DB {
 				method: "PATCH",
 				data: updateData,
 			});
-			// console.log("[DB] UPDATE > result :>> ", result);
+
+			// console.log("[DB] UPDATE > result :>> ", status, "-", result, "-", messages);
 			if (!status || isEmpty(result)) logError(`[DB] UPDATE - ${url} :>>`, messages);
 			items = result;
 		}

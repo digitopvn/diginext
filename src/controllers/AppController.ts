@@ -335,18 +335,15 @@ export default class AppController extends BaseController<App> {
 			body.projectSlug = project.slug;
 		}
 
-		// body.deployEnvironment = convertBodyDeployEnvironmentObject(body);
-		// console.log("body :>> ", body);
-
-		let app: App;
+		let apps: App[];
 		try {
-			[app] = await this.service.update(this.filter, body, this.options);
-			if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+			apps = await this.service.update(this.filter, body, this.options);
+			if (isEmpty(apps)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		} catch (e) {
 			return { status: 0, messages: [e.message] } as ResponseData;
 		}
 
-		// return super.update(body);
+		return respondSuccess({ data: apps });
 	}
 
 	@Security("api_key")
@@ -706,6 +703,8 @@ export default class AppController extends BaseController<App> {
 		const deployEnvironment = updatedApp.deployEnvironment[env];
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
 		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		if (!cluster) return respondFailure({ msg: `Cluster "${clusterShortName}" not found.` });
+
 		const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
 			context: cluster.contextName,
 			filterLabel: `main-app=${slug}`,

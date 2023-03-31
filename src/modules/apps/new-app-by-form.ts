@@ -31,7 +31,7 @@ export async function createAppByForm(options?: InputOptions) {
 				}
 			},
 		});
-		console.log("createAppByForm > name :>> ", name);
+		// console.log("createAppByForm > name :>> ", name);
 		options.name = name;
 	}
 
@@ -176,7 +176,7 @@ export async function createAppByForm(options?: InputOptions) {
 		deployEnvironment: {},
 	} as App;
 
-	console.log("createAppByForm > appData :>> ", appData);
+	// console.log("createAppByForm > appData :>> ", appData);
 
 	if (options.shouldUseGit) {
 		appData.git.provider = options.gitProvider;

@@ -3,14 +3,28 @@ import { randomStringByLength } from "diginext-utils/dist/string/random";
 
 import type { Cluster } from "@/entities";
 
+import { fetchApi } from "../api";
 import { DB } from "../api/DB";
 import { createDiginextDomain } from "../diginext/dx-domain";
 
-interface GenerateDomainOptions {
+export interface GenerateDomainOptions {
+	/**
+	 * Subdomain name
+	 */
 	subdomainName: string;
+	/**
+	 * @default diginext.site
+	 */
 	primaryDomain: string;
-	clusterShortName?: string;
+	/**
+	 * Value of A RECORD
+	 */
 	ipAddress?: string;
+	/**
+	 * If cluster's short name is specify, IP address will be ignored and
+	 * the primary IP address of the cluster will be used as the A RECORD value
+	 */
+	clusterShortName?: string;
 }
 
 interface GenerateDomainResult {
@@ -46,7 +60,9 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	}
 
 	// create new subdomain:
-	let res = await createDiginextDomain({ name: subdomainName, data: targetIP });
+	const domainData = { name: subdomainName, data: targetIP };
+	let res = await fetchApi({ url: `/api/v1/domain`, method: "POST", data: domainData });
+	console.log("generateDomain > res :>> ", res);
 	let { status, messages } = res;
 
 	if (status === 0) {

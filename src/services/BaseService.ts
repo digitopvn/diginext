@@ -1,4 +1,4 @@
-import { log, logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
@@ -32,7 +32,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 
 	async count(filter?: IQueryFilter, options?: IQueryOptions) {
 		const parsedFilter = parseRequestFilter(filter);
-		log(`- BaseService.count :>>`, { filter: parsedFilter, options });
+		// log(`- BaseService.count :>>`, { filter: parsedFilter, options });
 		return this.query.count({ ...parsedFilter, ...options });
 	}
 
@@ -116,12 +116,6 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		const [results, totalItems] = await Promise.all([this.query.find(findOptions), this.query.count(filter)]);
 		// log(`results >>`, results);
 
-		// LOG this for further investigation:
-		const user = (this.req?.user as User) || { name: `Unknown`, _id: `N/A` };
-		const author = `${user.name} (ID: ${user._id})`;
-		// if (user.name !== "Unknown") log(author, `- find :>>`, { filter, options, pagination });
-		// console.log("BaseService.find > this.req :>> ", this.req);
-
 		if (pagination) {
 			pagination.total_items = totalItems || results.length;
 			pagination.total_pages = pagination.page_size ? Math.ceil(totalItems / pagination.page_size) : 1;
@@ -163,7 +157,6 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		data.updatedAt = new Date();
 
 		const updateData = options?.raw ? data : { $set: data };
-
 		const updateRes = await this.query.updateMany(filter, updateData);
 
 		if (updateRes.matchedCount > 0) {
