@@ -2,7 +2,7 @@ import type { ResponseData } from "@/interfaces";
 
 import { dxApi } from "./dx-api";
 
-type CreateDiginextDomainParams = {
+export type CreateDiginextDomainParams = {
 	/**
 	 * Subdomain name
 	 * @example myworkspace, yourworkspace, ourteam
@@ -11,7 +11,7 @@ type CreateDiginextDomainParams = {
 	data: string;
 };
 
-type CreateDiginextDomainResponse = ResponseData & {
+export type CreateDiginextDomainResponse = ResponseData & {
 	data: { domain: string; domain_record: string };
 };
 

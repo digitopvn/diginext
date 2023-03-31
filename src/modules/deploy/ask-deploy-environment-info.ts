@@ -266,8 +266,34 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	localAppConfig.environment[env].ssl = localDeployEnvironment.ssl;
 	localAppConfig.environment[env].tlsSecret = localDeployEnvironment.tlsSecret;
 
-	// environment variables
-	// check database to see should sync ENV variables or not...
+	// save deploy environment to "dx.json"
+	const appConfig = saveAppConfig(localAppConfig, { directory: appDirectory });
+	if (options.isDebugging) log(`[ASK DEPLOY INFO] appConfig :>>`, appConfig);
+
+	/**
+	 * PUSH LOCAL APP CONFIG TO SERVER:
+	 * (save app & its deploy environment data to database)
+	 */
+	const deployEnvironment = appConfig.environment[env];
+	const updateAppData = {
+		slug: appConfig.slug, // <-- update old app slug -> new app slug (if any)
+		projectSlug: appConfig.project, // <-- update old app projectSlug -> new app projectSlug (if any)
+		project: project._id, // <-- update old app's project -> new app's project (if any)
+		deployEnvironment: {
+			[env]: deployEnvironment, // <-- update new app's deploy environment
+		},
+	};
+	if (options.isDebugging) log(`[ASK DEPLOY INFO] updateAppData :>>`, updateAppData);
+
+	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updateAppData);
+
+	if (options.isDebugging) log(`[ASK DEPLOY INFO] updatedApp :>>`, updatedApp);
+
+	/**
+	 * UPLOAD ENVIRONMENT VARIABLES
+	 * ---
+	 * Check database to see should sync ENV variables or not...
+	 */
 	const { envVars: serverEnvironmentVariables = [] } = await getDeployEvironmentByApp(app, env);
 
 	let envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
@@ -300,28 +326,6 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 
 	// [SECURITY CHECK] warns if DOTENV files are not listed in ".gitignore" file
 	await checkGitignoreContainsDotenvFiles({ targetDir: appDirectory });
-
-	const appConfig = saveAppConfig(localAppConfig, { directory: appDirectory });
-	if (options.isDebugging) log(`[ASK DEPLOY INFO] appConfig :>>`, appConfig);
-
-	const deployEnvironment = appConfig.environment[env];
-	/**
-	 * PUSH LOCAL APP CONFIG TO SERVER:
-	 * (save app & its deploy environment data to database)
-	 */
-	const updateAppData = {
-		slug: appConfig.slug, // <-- update old app slug -> new app slug (if any)
-		projectSlug: appConfig.project, // <-- update old app projectSlug -> new app projectSlug (if any)
-		project: project._id, // <-- update old app's project -> new app's project (if any)
-		deployEnvironment: {
-			[env]: deployEnvironment, // <-- update new app's deploy environment
-		},
-	};
-	if (options.isDebugging) log(`[ASK DEPLOY INFO] updateAppData :>>`, updateAppData);
-
-	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updateAppData);
-
-	if (options.isDebugging) log(`[ASK DEPLOY INFO] updatedApp :>>`, updatedApp);
 
 	return { project, app, appConfig, deployEnvironment };
 };

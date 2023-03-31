@@ -1,3 +1,18 @@
+## [2.8.7](https://github.com/digitopvn/diginext/compare/v2.8.6...v2.8.7) (2023-03-31)
+
+
+### Bug Fixes
+
+* **admin:** change api to fetch build logs ([6f4fb88](https://github.com/digitopvn/diginext/commit/6f4fb883b8c38c242c0743d633523d8148054966))
+* **admin:** display error message when authorization failure ([2bd861e](https://github.com/digitopvn/diginext/commit/2bd861e1fd45f8ab53d0bd92232735d4fca52dbd))
+* **cli and server:** generate domain, process api middleware, init failed old app ([fa682ad](https://github.com/digitopvn/diginext/commit/fa682ad95249bbe636b09c13304c5dfc45627c8f))
+* **cli and server:** issue of uploading dotenv file to prod environment ([c0eff35](https://github.com/digitopvn/diginext/commit/c0eff355abecc30d38e0fad0aaf36b879c5eec38))
+* **cli:** re-generate domain with app slug if domain length is over 64 chars ([301f6e1](https://github.com/digitopvn/diginext/commit/301f6e1f266d6f17b4d45802030cb2e4f688024b))
+* **server:** add authorization to app controller ([2251595](https://github.com/digitopvn/diginext/commit/22515954e0ab64342d45fa6051df3981ed3a7f89))
+* **server:** apply rbac middleware to all api routes ([a6225a8](https://github.com/digitopvn/diginext/commit/a6225a8099b9a43932dbbba8f6a84678bb82614c))
+* **server:** limit in pagination should be number ([a0d0d51](https://github.com/digitopvn/diginext/commit/a0d0d510462c69dd0faa68cf836282e4baf03bb5))
+* **server:** print content of yaml if deploy error ([43d3238](https://github.com/digitopvn/diginext/commit/43d3238fa1813309b52065fe2e6d22c5de9aee3a))
+
 ## [2.8.6](https://github.com/digitopvn/diginext/compare/v2.8.5...v2.8.6) (2023-03-30)
 
 

@@ -37,6 +37,16 @@ export default class Role extends Base {
 	routes: RoleRoute[];
 
 	/**
+	 * One of:
+	 * - undefined | "custom": custom role
+	 * - "admin": default super admin role
+	 * - "member": default member role
+	 * - "moderator": default moderator role
+	 */
+	@Column({ default: "member" })
+	type?: string;
+
+	/**
 	 * User ID of the owner
 	 *
 	 * @remarks This can be populated to {User} data

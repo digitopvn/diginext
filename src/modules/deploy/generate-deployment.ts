@@ -160,7 +160,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				// replace all production domains with PRERELEASE domains
 				envVar.value = curValue.replace(new RegExp(domains[0], "gi"), prereleaseDomain);
 			}
-			return envVar;
+			return { ...envVar };
 		});
 	}
 	// console.log("[3] prereleaseEnvs :>> ", prereleaseEnvs);

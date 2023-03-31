@@ -91,10 +91,7 @@ export async function startupScripts() {
 	await migrateAllReleases();
 	await migrateAllFrameworks();
 	await migrateAllGitProviders();
-
-	// await migrateAllUserTypes();
-	// await wait(5000);
-
-	await migrateDefaultServiceAccountAndApiKeyUser();
 	await migrateAllRoles();
+	await migrateDefaultServiceAccountAndApiKeyUser();
+	// await migrateAllUsers();
 }

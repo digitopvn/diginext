@@ -85,7 +85,7 @@ export async function startBuildV1(
 
 	// Validating...
 	if (!app) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" not found.` });
+		sendLog({ SOCKET_ROOM, type: "error", message: `App "${appSlug}" not found.` });
 		return;
 	}
 
@@ -142,12 +142,12 @@ export async function startBuildV1(
 	}
 
 	// Git SSH verified -> start pulling now...
-	sendLog({ SOCKET_ROOM, message: `[START BUILD] Pulling latest source code from "${options.remoteSSH}" at "${gitBranch}" branch...` });
+	sendLog({ SOCKET_ROOM, message: `Pulling latest source code from "${options.remoteSSH}" at "${gitBranch}" branch...` });
 
 	await pullOrCloneGitRepo(options.remoteSSH, buildDir, gitBranch, { onUpdate: (message) => sendLog({ SOCKET_ROOM, message }) });
 
 	// emit socket message to "digirelease" app:
-	sendLog({ SOCKET_ROOM, message: `[START BUILD] Finished pulling latest files of "${gitBranch}"...` });
+	sendLog({ SOCKET_ROOM, message: `Finished pulling latest files of "${gitBranch}"...` });
 
 	/**
 	 * Check if Dockerfile existed
@@ -158,7 +158,7 @@ export async function startBuildV1(
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
-			message: `[START BUILD] Missing "Dockerfile" to build the application, please create your "Dockerfile" in the root directory of the source code.`,
+			message: `Missing "Dockerfile" to build the application, please create your "Dockerfile" in the root directory of the source code.`,
 		});
 		return;
 	}
@@ -174,7 +174,7 @@ export async function startBuildV1(
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
-			message: `[START BUILD] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app is empty (probably deleted?).`,
+			message: `Deploy environment (${env.toUpperCase()}) of "${appSlug}" app is empty (probably deleted?).`,
 		});
 		isPassedDeployEnvironmentValidation = false;
 	}
@@ -183,7 +183,7 @@ export async function startBuildV1(
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
-			message: `[START BUILD] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`,
+			message: `Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`,
 		});
 		isPassedDeployEnvironmentValidation = false;
 	}
@@ -192,7 +192,7 @@ export async function startBuildV1(
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
-			message: `[START BUILD] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`,
+			message: `Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`,
 		});
 		isPassedDeployEnvironmentValidation = false;
 	}
@@ -204,13 +204,26 @@ export async function startBuildV1(
 	 * Because it will generate the name of secret to put into deployment yaml
 	 */
 	const cluster = await DB.findOne<Cluster>("cluster", { shortName: serverDeployEnvironment.cluster });
-	console.log("startBuildV1 > cluster :>> ", cluster);
+
+	if (!cluster) {
+		sendLog({ SOCKET_ROOM, type: "error", message: `Cluster "${serverDeployEnvironment.cluster}" not found` });
+		return;
+	}
+
 	const { contextName: context } = cluster;
+
+	if (!cluster) {
+		sendLog({ SOCKET_ROOM, type: "error", message: `Cannot connect to cluster "${serverDeployEnvironment.cluster}" (context not found).` });
+		return;
+	}
 
 	const isNsExisted = await ClusterManager.isNamespaceExisted(serverDeployEnvironment.namespace, { context });
 	if (!isNsExisted) {
 		const createNsResult = await ClusterManager.createNamespace(serverDeployEnvironment.namespace, { context });
-		if (!createNsResult) return;
+		if (!createNsResult) {
+			sendLog({ SOCKET_ROOM, type: "error", message: `Failed to create "${serverDeployEnvironment.namespace}" namespace.` });
+			return;
+		}
 	}
 
 	try {
@@ -219,7 +232,7 @@ export async function startBuildV1(
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
-			message: `[PREVIEW] Can't create "imagePullSecrets" in the "${namespace}" namespace.`,
+			message: `Can't create "imagePullSecrets" in the "${serverDeployEnvironment.namespace}" namespace of "${serverDeployEnvironment.cluster}" cluster.`,
 		});
 		return;
 	}
@@ -230,7 +243,7 @@ export async function startBuildV1(
 	 * So it can be used to create release from build
 	 */
 	let deployment: GenerateDeploymentResult;
-	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generating the deployment files on server...` });
+	sendLog({ SOCKET_ROOM, message: `Generating the deployment files on server...` });
 
 	try {
 		deployment = await generateDeployment({
@@ -261,7 +274,7 @@ export async function startBuildV1(
 
 	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, updatedAppData);
 
-	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
+	sendLog({ SOCKET_ROOM, message: `Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// build the app with Docker:
@@ -333,7 +346,7 @@ export async function startBuildV1(
 	 * ! [WARNING]
 	 * ! If "--fresh" flag was specified, the deployment's namespace will be deleted & redeploy from scratch!
 	 */
-	console.log("[START BUILD] options.shouldUseFreshDeploy :>> ", options.shouldUseFreshDeploy);
+	console.log("options.shouldUseFreshDeploy :>> ", options.shouldUseFreshDeploy);
 	if (options.shouldUseFreshDeploy) {
 		sendLog({
 			SOCKET_ROOM,

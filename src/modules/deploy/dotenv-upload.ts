@@ -1,11 +1,12 @@
-import { log } from "diginext-utils/dist/console/log";
+import { log, logError } from "diginext-utils/dist/console/log";
 import { existsSync } from "fs";
 import path from "path";
 
+import type { CreateEnvVarsDto } from "@/controllers/AppController";
 import type { App } from "@/entities";
-import type { DeployEnvironment } from "@/interfaces";
-import { getAppConfig, loadEnvFileAsContainerEnvVars } from "@/plugins";
+import { flattenObjectPaths, getAppConfig, loadEnvFileAsContainerEnvVars } from "@/plugins";
 
+import { fetchApi } from "../api";
 import { DB } from "../api/DB";
 import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
 
@@ -30,10 +31,26 @@ export const uploadDotenvFileByApp = async (envFile: string, app: App, env: stri
 	// log({ containerEnvVars });
 
 	// update env vars to database:
-	const updateAppData = { deployEnvironment: app.deployEnvironment || {} } as App;
-	updateAppData.deployEnvironment[env] = { envVars: containerEnvVars } as DeployEnvironment;
+	const updateAppData = {} as CreateEnvVarsDto;
+	updateAppData.envVars = JSON.stringify(containerEnvVars);
+	updateAppData.slug = appSlug;
+	updateAppData.env = env;
 
-	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, updateAppData);
+	const url = `/api/v1/app/environment/variables`;
+	const updateData = flattenObjectPaths(updateAppData);
+
+	const { status, data, messages } = await fetchApi<App>({
+		url,
+		method: "POST",
+		data: updateData,
+	});
+
+	let updatedApp: App;
+	if (data && (data as App[]).length > 0) updatedApp = (data as App[])[0];
+	// console.log("[DB] UPDATE > result :>> ", result);
+	if (!status) logError(`Upload DOTENV file by app :>>`, messages);
+
+	// const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, updateAppData);
 	if (!updatedApp) throw new Error(`Can't upload dotenv variables to "${env}" deploy environment of "${appSlug}" app.`);
 
 	log(`Your local ENV variables (${containerEnvVars.length}) of "${appSlug}" app has been uploaded to ${env.toUpperCase()} deploy environment.`);

@@ -1,6 +1,7 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Request, Response } from "express";
 
+import type { Role } from "@/entities";
 import type User from "@/entities/User";
 
 export function authorize(req: Request, res: Response, next: NextFunction) {
@@ -8,43 +9,76 @@ export function authorize(req: Request, res: Response, next: NextFunction) {
 
 	const { originalUrl: route, method } = req;
 
-	let permit;
+	let requestPermission;
 	switch (method.toLowerCase()) {
 		case "post":
-			permit = "create";
+			requestPermission = "create";
 			break;
 		case "patch":
-			permit = "update";
+			requestPermission = "update";
 			break;
 		case "delete":
-			permit = "delete";
+			requestPermission = "delete";
 			break;
 		default:
-			permit = "read";
+			requestPermission = "read";
 			break;
 	}
-
-	let isAllowed = false;
 
 	// if the user doesn't have roles, reject the request!
 	if (!user || !user.roles || user.roles.length == 0) return ApiResponse.rejected(res);
 
+	let isAllowed = false;
+
 	/**
 	 * authorization logic here!
 	 */
-	const { roles } = user;
+	// const { roles } = user;
+	const roles = user.roles as Role[];
+	// console.log("authorize > requestPermission :>> ", requestPermission);
+	// console.log("authorize > roles :>> ", roles);
+	// console.log("authorize > user :>> ", user.name, "-", user._id);
 
-	// TODO: get "routes" -> find "key" as route & "value" as IRole
-	// roles.map((role) =>
-	// 	role.routes
-	// 		.filter((routeRole) => routeRole.route == "*" || routeRole.route == route)
-	// 		.map((routeRole) => {
-	// 			const _route = routeRole.route;
-	// 			const _permissions = routeRole[_route].permissions;
-	// 			if (_permissions.includes("full") || _permissions.includes(permit)) isAllowed = true;
-	// 			return routeRole;
-	// 		})
-	// );
+	// get "routes" -> find "key" as route & "value" as IRole
+	roles.map((role) => {
+		// If wildcard "*" route is specified:
+		role.routes
+			.filter((routeInfo) => routeInfo.route === "*")
+			.map((routeInfo) => {
+				if (routeInfo.permissions.includes(requestPermission)) {
+					isAllowed = true;
+				} else {
+					// if permisions have "own" -> only have access to items which "owner" is "userID":
+					if (routeInfo.permissions.includes("full")) {
+						isAllowed = true;
+					} else if (routeInfo.permissions.includes("own")) {
+						req.query.owner = user._id.toString();
+						isAllowed = true;
+					} else {
+						isAllowed = false;
+					}
+				}
+			});
+
+		// Check again if a specific route is specified:
+		role.routes
+			.filter((routeInfo) => routeInfo.route == route)
+			.map((routeInfo) => {
+				if (routeInfo.permissions.includes(requestPermission)) {
+					isAllowed = true;
+				} else {
+					// if permisions have "own" -> only have access to items which "owner" is "userID":
+					if (routeInfo.permissions.includes("full")) {
+						isAllowed = true;
+					} else if (routeInfo.permissions.includes("own")) {
+						req.query.owner = user._id.toString();
+						isAllowed = true;
+					} else {
+						isAllowed = false;
+					}
+				}
+			});
+	});
 
 	if (!isAllowed) return ApiResponse.rejected(res);
 

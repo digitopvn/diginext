@@ -14,7 +14,7 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 
 	let generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
 	if (generatedDomain.length > 60) {
-		subdomainName = `web-${makeDaySlug({ divider: "" })}`;
+		subdomainName = `${appSlug}-${makeDaySlug({ divider: "" })}`;
 		generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
 		logWarn(`This app's domain is too long, it will be shorten randomly to: ${generatedDomain}`);
 	}

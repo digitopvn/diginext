@@ -198,7 +198,7 @@ export default class WorkspaceController extends BaseController<Workspace> {
 	 */
 	@Security("api_key")
 	@Security("jwt")
-	@Get("/service-account")
+	@Get("/service_account")
 	async getServiceAccounts(
 		@Queries()
 		queryParams?: ApiUserAndServiceAccountQueries
@@ -227,7 +227,7 @@ export default class WorkspaceController extends BaseController<Workspace> {
 	 */
 	@Security("api_key")
 	@Security("jwt")
-	@Get("/api-user")
+	@Get("/api_key")
 	async getApiKeyUsers(
 		@Queries()
 		queryParams?: ApiUserAndServiceAccountQueries

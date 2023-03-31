@@ -45,8 +45,6 @@ export async function requestDeployImage(imageURL: string, options: InputOptions
 	 * Deploy image URL -> no need build -> no build number
 	 * Build image = imageURL
 	 */
-	// options.buildNumber = makeDaySlug({ divider: "" });
-	// options.buildImage = `${imageURL}:${options.buildNumber}`;
 	options.buildImage = imageURL;
 
 	const SOCKET_ROOM = `${options.slug}-${options.buildNumber}`;

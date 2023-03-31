@@ -9,21 +9,19 @@ import { Config } from "@/app.config";
 import type { User, Workspace } from "@/entities";
 import type Base from "@/entities/Base";
 import type { FindManyOptions, FindOptionsWhere } from "@/libs/typeorm";
-import { DB } from "@/modules/api/DB";
 import { isValidObjectId } from "@/plugins/mongodb";
 import type { BaseService } from "@/services/BaseService";
 
 import type { IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
 import type { ResponseData } from "../interfaces/ResponseData";
+import { respondFailure } from "../interfaces/ResponseData";
 
 const DEFAULT_PAGE_SIZE = 100;
 
-export default class BaseController<T extends Base> {
+export default class BaseController<T extends Base = any> {
 	user: User;
 
 	workspace: Workspace;
-
-	// service: BaseService<T>;
 
 	filter: IQueryOptions & FindManyOptions<any>;
 
@@ -37,29 +35,6 @@ export default class BaseController<T extends Base> {
 		// if (service) this.service = service;
 	}
 
-	apiRespond(executor) {
-		return async (req: Request, res: Response, next: NextFunction) => {
-			try {
-				this.user = req.user as User;
-				// console.log("this.user :>> ", this.user);
-
-				if (this.user?.activeWorkspace) {
-					const wsId = (this.user?.activeWorkspace as Workspace)._id || (this.user?.activeWorkspace as any);
-					this.workspace =
-						typeof (this.user?.activeWorkspace as any)._id === "undefined"
-							? (this.user?.activeWorkspace as Workspace)
-							: await DB.findOne<Workspace>("workspace", { _id: wsId });
-				}
-
-				let result = await executor(req.body);
-				res.status(200).json(result);
-			} catch (e) {
-				// forward the error to Express.js Error Handling Route
-				next(e);
-			}
-		};
-	}
-
 	async read() {
 		// console.log("this.filter :>> ", this.filter);
 
@@ -69,6 +44,8 @@ export default class BaseController<T extends Base> {
 		} else {
 			data = await this.service.find(this.filter, this.options, this.pagination);
 		}
+
+		if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
@@ -89,6 +66,8 @@ export default class BaseController<T extends Base> {
 
 	async update(updateData) {
 		const data = await this.service.update(this.filter, updateData, this.options);
+		if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		return result;
@@ -96,6 +75,8 @@ export default class BaseController<T extends Base> {
 
 	async delete() {
 		const data = await this.service.delete(this.filter);
+		if (!data || !data.ok) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		return result;
@@ -103,6 +84,7 @@ export default class BaseController<T extends Base> {
 
 	async softDelete() {
 		const data = await this.service.softDelete(this.filter);
+		if (!data || !data.ok) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 		return result;
@@ -299,7 +281,7 @@ export default class BaseController<T extends Base> {
 		if (pageOptions.page > 0) current_page = pageOptions.page;
 
 		// const totalSkip = skip > 0 ? pageOptions.skip : current_page > 0 ? (current_page - 1) * page_size : undefined;
-		const totalLimit = limit > 0 ? pageOptions.limit : page_size > 0 ? page_size : undefined;
+		const totalLimit = pageOptions.limit > 0 ? pageOptions.limit : page_size > 0 ? page_size : undefined;
 
 		if (totalLimit) total_pages = Math.ceil(total_items / totalLimit);
 		// if (totalSkip) page_size = totalSkip;

@@ -9,7 +9,7 @@ import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
-import type { AccessTokenInfo, User } from "@/entities";
+import type { AccessTokenInfo, Role, User } from "@/entities";
 import type ServiceAccount from "@/entities/ServiceAccount";
 
 import { DB } from "../api/DB";
@@ -119,42 +119,34 @@ export const jwtStrategy = new Strategy(
 			{ _id: new ObjectId(payload.id) },
 			{ populate: ["roles", "workspaces", "activeWorkspace"] }
 		);
-		// console.log(`[1] jwtStrategy > User :>> `, user.name, user._id);
+		// console.log(`[1] jwtStrategy > User :>> `, user);
 
 		if (user) {
 			// console.log("user.workspaces :>> ", user.workspaces);
 			// console.log("workspaceId :>> ", workspaceId);
 			// console.log("user.workspaces.includes(workspaceId) :>> ", user.workspaces.includes(workspaceId));
 
+			const updateData = {} as any;
+			updateData.token = tokenInfo.token;
+			updateData.activeWorkspace = workspaceId;
+
 			// set active workspace to this user:
 			if (isEmpty(user.workspaces)) {
-				[user] = await DB.update<User>(
-					"user",
-					{ _id: user._id },
-					{ workspaces: [workspaceId], activeWorkspace: workspaceId },
-					{ populate: ["roles", "workspaces", "activeWorkspace"] }
-				);
-				// console.log("[2] user.workspaces :>> ", user.workspaces);
+				updateData.workspaces = [workspaceId];
 			} else {
-				if (!user.workspaces.includes(workspaceId)) {
-					[user] = await DB.update<User>(
-						"user",
-						{ _id: user._id },
-						{ activeWorkspace: workspaceId, workspaces: [...user.workspaces, workspaceId] },
-						{ populate: ["roles", "workspaces", "activeWorkspace"] }
-					);
-				}
-				// console.log("[2] user.workspaces :>> ", user.workspaces);
+				if (!user.workspaces.includes(workspaceId)) updateData.workspaces = [...user.workspaces, workspaceId];
+			}
+
+			// set default roles if this user doesn't have one
+			if (!user.roles || isEmpty(user.roles)) {
+				const memberRole = await DB.findOne<Role>("role", { name: "Member", workspace: workspaceId });
+				updateData.roles = [memberRole._id];
 			}
 
 			// update the access token in database:
-			[user] = await DB.update<User>(
-				"user",
-				{ _id: new ObjectId(payload.id) },
-				{ token: tokenInfo.token, activeWorkspace: workspaceId },
-				{ populate: ["roles", "workspaces", "activeWorkspace"] }
-			);
-			// console.log(`[2] jwtStrategy > User :>> `, user);
+			[user] = await DB.update<User>("user", { _id: new ObjectId(payload.id) }, updateData, {
+				populate: ["roles", "workspaces", "activeWorkspace"],
+			});
 
 			return done(null, user);
 		}
@@ -168,7 +160,7 @@ export const jwtStrategy = new Strategy(
 
 		// console.log(`[3] jwtStrategy > ServiceAccount :>> `, user.name, user._id);
 
-		if (!user) done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
+		if (!user) return done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
 
 		return done(null, user);
 	}

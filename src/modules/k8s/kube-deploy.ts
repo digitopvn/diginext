@@ -169,7 +169,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, namespace, { context });
 	if (!prereleaseDeploymentRes)
 		throw new Error(
-			`Can't preview the pre-release "${id}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}).`
+			`Can't preview the pre-release "${id}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${preYaml}`
 		);
 
 	logSuccess(`The PRE-RELEASE environment is ready to preview: https://${prereleaseUrl}`);
@@ -316,10 +316,10 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, namespace, { context });
 	if (!applySvcRes)
 		throw new Error(
-			`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`
+			`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`
 		);
 
-	log(`Created new production service named "${appSlug}".`);
+	if (onUpdate) onUpdate(`Created new service named "${appSlug}".`);
 	// }
 
 	// Apply "BASE_PATH" when neccessary
@@ -338,7 +338,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, namespace, { context });
 	if (!ingCreateResult)
 		throw new Error(
-			`Failed to apply invalid INGRESS config (${env.toUpperCase()}) to "${ingressName}" in "${namespace}" namespace of "${context}" context.`
+			`Failed to apply invalid INGRESS config (${env.toUpperCase()}) to "${ingressName}" in "${namespace}" namespace of "${context}" context:\n${ING_CONTENT}`
 		);
 
 	// log(`5`);
@@ -351,7 +351,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		});
 
 		if (!prereleaseAppName) return { error: `"prereleaseAppName" is invalid.` };
-		log(`prereleaseAppName =`, prereleaseAppName);
+		if (onUpdate) onUpdate(`prereleaseAppName = ${prereleaseAppName}`);
 
 		// deploymentName = prereleaseAppName;
 		// deployment = prereleaseApp;
@@ -363,10 +363,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	 */
 
 	const oldDeploys = await ClusterManager.getAllDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${mainAppName}` });
-	log(
-		`Current app deployments (to be deleted later on) >>`,
-		oldDeploys.map((d) => d.metadata.name)
-	);
+	if (onUpdate) onUpdate(`Current app deployments (to be deleted later on): ${oldDeploys.map((d) => d.metadata.name).join(",")}`);
 
 	const createNewDeployment = async (appDoc) => {
 		const newApp = appDoc;
@@ -393,9 +390,11 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		let APP_CONTENT = objectToDeploymentYaml(newApp);
 		const appCreateResult = await ClusterManager.kubectlApplyContent(APP_CONTENT, namespace, { context });
 		if (!appCreateResult)
-			throw new Error(`Failed to apply APP DEPLOYMENT config to "${newAppName}" in "${namespace}" namespace of "${context}" context.`);
+			throw new Error(
+				`Failed to apply APP DEPLOYMENT config to "${newAppName}" in "${namespace}" namespace of "${context}" context:\n${APP_CONTENT}`
+			);
 
-		log(`Created new deployment "${newAppName}" successfully.`);
+		if (onUpdate) onUpdate(`Created new deployment "${newAppName}" successfully.`);
 
 		return newApp;
 	};
@@ -417,8 +416,9 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 				`'{ "metadata": { "labels": { "phase": "live" } } }'`,
 			];
 			await execa(`kubectl`, args, cliOpts);
+			if (onUpdate) onUpdate(`Patched "${deploymentName}" deployment successfully.`);
 		} catch (e) {
-			log(`[ROLL OUT] Patch "deployment" failed >>`, e.message);
+			// if (onUpdate) onUpdate(`Patched "${deploymentName}" deployment failure: ${e.message}`);
 			await createNewDeployment(deployment);
 		}
 	}
@@ -432,7 +432,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 		if (!isEmpty(prodEnvVars)) {
 			const setPreEnvVarRes = await ClusterManager.setEnvVar(prodEnvVars, prereleaseAppName, namespace, { context });
-			if (setPreEnvVarRes) log(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
+			if (setPreEnvVarRes) if (onUpdate) onUpdate(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
 		}
 	}
 
@@ -479,13 +479,13 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 				"-n",
 				namespace,
 				"--patch",
-				`'{ "spec": { "selector": { "app": "${deploymentName}" } } }'`,
+				`{ "spec": { "selector": { "app": "${deploymentName}" } } }`,
 			],
 			cliOpts
 		);
-		log(`Patched "${svcName}" service successfully >> new deployment:`, deploymentName);
+		if (onUpdate) onUpdate(`Patched "${svcName}" service successfully >> new deployment: ${deploymentName}`);
 	} catch (e) {
-		log(`Patched "${svcName}" service unsuccessful >>`, e.message);
+		if (onUpdate) onUpdate(`Patched "${svcName}" service failure: ${e.message}`);
 		// return { error: e.message };
 	}
 
@@ -494,9 +494,9 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	 */
 	try {
 		await execa("kubectl", [`--context=${context}`, "scale", `--replicas=${replicas}`, `deploy`, deploymentName, `-n`, namespace], cliOpts);
-		log(`Scaled "${deploymentName}" replicas to ${replicas} successfully`);
+		if (onUpdate) onUpdate(`Scaled "${deploymentName}" replicas to ${replicas} successfully`);
 	} catch (e) {
-		log(`Scaled "${deploymentName}" replicas to ${replicas} unsuccessful >>`, e.message);
+		if (onUpdate) onUpdate(`Scaled "${deploymentName}" replicas to ${replicas} failure: ${e.message}`);
 	}
 
 	/**
@@ -507,16 +507,17 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		const resouceCommand = `kubectl set resources deployment/${deploymentName} ${resourcesStr} -n ${namespace}`;
 		try {
 			await execa.command(resouceCommand);
-			log(`Applied resource quotas to ${deploymentName} successfully`);
+			if (onUpdate) onUpdate(`Applied resource quotas to ${deploymentName} successfully`);
 		} catch (e) {
-			log(`Command failed: ${resouceCommand}`);
-			log(`Applied "resources" quotas failed >>`, e.message);
+			if (onUpdate) onUpdate(`Command failed: ${resouceCommand}`);
+			if (onUpdate) onUpdate(`Applied "resources" quotas failure: ${e.message}`);
 		}
 	}
 
 	// Print success:
 	const prodUrlInCLI = chalk.bold(`https://${endpointUrl}`);
-	logSuccess(`🎉 PUBLISHED AT: ${prodUrlInCLI} 🎉`);
+	const successMsg = `🎉 PUBLISHED AT: ${prodUrlInCLI} 🎉`;
+	logSuccess(successMsg);
 
 	// Filter previous releases:
 	const filter = [{ projectSlug, appSlug, active: true }];
@@ -552,7 +553,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 				async function (_commands) {
 					try {
 						await Promise.all(_commands);
-						log(`Deleted ${_commands.length} app deployments.`);
+						if (onUpdate) onUpdate(`[CLEAN UP] Deleted ${_commands.length} app deployments.`);
 					} catch (e) {
 						logWarn(e.toString());
 					}
@@ -563,7 +564,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		} else {
 			try {
 				await Promise.all(oldDeploysCleanUpCommands);
-				log(`Deleted ${oldDeploysCleanUpCommands.length} app deployments.`);
+				if (onUpdate) onUpdate(`[CLEAN UP] Deleted ${oldDeploysCleanUpCommands.length} app deployments.`);
 			} catch (e) {
 				logWarn(e.toString());
 			}
@@ -578,6 +579,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 			.then(({ error }) => {
 				if (error) throw new Error(`Unable to clean up PRERELEASE of release id [${id}]`);
 				logSuccess(`Clean up PRERELEASE of release id [${id}] SUCCESSFULLY.`);
+				if (onUpdate) onUpdate(`Clean up PRERELEASE of release id [${id}] SUCCESSFULLY.`);
 			})
 			.catch((e) => logError(`Unable to clean up PRERELEASE of release id [${id}]:`, e));
 	}
