@@ -4,6 +4,7 @@ import express from "express";
 
 import DeployController from "@/controllers/DeployController";
 import { authenticate } from "@/middlewares/authenticate";
+import { authorize } from "@/middlewares/authorize";
 
 dayjs.extend(localizedFormat);
 
@@ -11,44 +12,25 @@ const controller = new DeployController();
 const router = express.Router();
 
 router
+	.use(authenticate, authorize)
 	/**
 	 * Deploy from a source code (git repository)
 	 */
-	.post(
-		"/",
-		authenticate,
-		// authorization,
-		controller.apiRespond(controller.deployFromSource.bind(controller)).bind(controller)
-	)
+	.post("/", controller.apiRespond(controller.deployFromSource.bind(controller)).bind(controller))
 	/**
 	 * Build container image first, then deploy that build to target deploy environment.
 	 * - `Alias of "/api/v1/deploy/build-first"`
 	 */
-	.post(
-		"/from-source",
-		authenticate,
-		// authorization,
-		controller.apiRespond(controller.buildFromSourceAndDeploy.bind(controller)).bind(controller)
-	)
+	.post("/from-source", controller.apiRespond(controller.buildFromSourceAndDeploy.bind(controller)).bind(controller))
 	/**
 	 * Build container image first, then deploy that build to target deploy environment.
 	 * - `Alias of "/api/v1/deploy/from-source"`
 	 */
-	.post(
-		"/build-first",
-		authenticate,
-		// authorization,
-		controller.apiRespond(controller.buildAndDeploy.bind(controller)).bind(controller)
-	)
+	.post("/build-first", controller.apiRespond(controller.buildAndDeploy.bind(controller)).bind(controller))
 	/**
 	 * Deploy from a build instance.
 	 */
-	.post(
-		"/from-build",
-		authenticate,
-		// authorization,
-		controller.apiRespond(controller.deployFromBuild.bind(controller)).bind(controller)
-	);
+	.post("/from-build", controller.apiRespond(controller.deployFromBuild.bind(controller)).bind(controller));
 /**
  * Deploy from an image URL
  */

@@ -2,6 +2,7 @@ import express from "express";
 
 import BuildController from "@/controllers/BuildController";
 import { authenticate } from "@/middlewares/authenticate";
+import { authorize } from "@/middlewares/authorize";
 
 const router = express.Router();
 
@@ -10,6 +11,7 @@ const controller = new BuildController();
 // TODO: add view build logs
 
 router
+	.use(authenticate, authorize)
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))

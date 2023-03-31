@@ -15,7 +15,12 @@ export const migrateAllRoles = async () => {
 		if (!wsMemberRole) {
 			const memberRoleDto = new Role();
 			memberRoleDto.name = "Member";
-			memberRoleDto.routes = [{ route: "*", permissions: ["own", "read"] }];
+			memberRoleDto.routes = [
+				{ route: "*", permissions: ["own", "read"] },
+				{ route: "/api/v1/role", permissions: ["read"] },
+				{ route: "/api/v1/api_key", permissions: ["read"] },
+				{ route: "/api/v1/service_account", permissions: ["read"] },
+			];
 			memberRoleDto.workspace = ws._id;
 			memberRoleDto.type = "member";
 
@@ -27,10 +32,10 @@ export const migrateAllRoles = async () => {
 
 		// find other members of the workspace and assign "Member" role
 		let members = await DB.find<User>("user", { workspaces: ws._id, roles: memberRole._id });
-		if (!members || members.length === 0) {
-			members = await DB.update<User>("user", { workspaces: ws._id }, { roles: [memberRole._id] });
-			console.log(`Workspace "${ws.name}" > Assign "Member" role to ${members.length} members`);
-		}
+		// if (!members || members.length === 0) {
+		members = await DB.update<User>("user", { workspaces: ws._id }, { roles: [memberRole._id] });
+		console.log(`Workspace "${ws.name}" > Assign "Member" role to ${members.length} members`);
+		// }
 
 		// Admin
 		let adminRole: Role;
@@ -51,10 +56,10 @@ export const migrateAllRoles = async () => {
 
 		// find owner of the workspace and assign "Administrator" role
 		let owner = await DB.findOne<User>("user", { _id: ws.owner, roles: wsAdminRole._id });
-		if (!owner) {
-			[owner] = await DB.update<User>("user", { _id: ws.owner }, { roles: [wsAdminRole._id] });
-			console.log(`Workspace "${ws.name}" > Assign "Administrator" role to "${owner.name}"`);
-		}
+		// if (!owner) {
+		[owner] = await DB.update<User>("user", { _id: ws.owner }, { roles: [wsAdminRole._id] });
+		console.log(`Workspace "${ws.name}" > Assign "Administrator" role to "${owner.name}"`);
+		// }
 
 		// Moderator
 		let moderatorRole: Role;

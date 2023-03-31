@@ -166,7 +166,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	}
 
 	async update(filter: IQueryFilter, data: ObjectLiteral, options?: IQueryOptions) {
-		log(`filter :>>`, { filter });
+		// log(`filter :>>`, { filter });
 		// log(`update :>>`, { data });
 
 		// update new date

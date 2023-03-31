@@ -140,7 +140,7 @@ export const jwtStrategy = new Strategy(
 			// set default roles if this user doesn't have one
 			if (!user.roles || isEmpty(user.roles)) {
 				const memberRole = await DB.findOne<Role>("role", { name: "Member", workspace: workspaceId });
-				updateData.roles = [memberRole];
+				updateData.roles = [memberRole._id];
 			}
 
 			// update the access token in database:

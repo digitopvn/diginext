@@ -2,12 +2,14 @@ import express from "express";
 
 import CloudProviderController from "@/controllers/CloudProviderController";
 import { authenticate } from "@/middlewares/authenticate";
+import { authorize } from "@/middlewares/authorize";
 
 const router = express.Router();
 
 const controller = new CloudProviderController();
 
 router
+	.use(authenticate, authorize)
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))

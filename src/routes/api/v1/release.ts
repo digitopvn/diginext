@@ -2,6 +2,7 @@ import express from "express";
 
 import ReleaseController from "@/controllers/ReleaseController";
 import { authenticate } from "@/middlewares/authenticate";
+import { authorize } from "@/middlewares/authorize";
 
 const router = express.Router();
 
@@ -14,58 +15,18 @@ const controller = new ReleaseController();
  */
 
 router
+	.use(authenticate, authorize)
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))
-	.get(
-		"/",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.read.bind(controller))
-	)
-	.post(
-		"/",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.create.bind(controller))
-	)
-	.patch(
-		"/",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.update.bind(controller))
-	)
-	.delete(
-		"/",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.delete.bind(controller))
-	)
-	.delete(
-		"/empty",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.empty.bind(controller))
-	)
-	.patch(
-		"/rollout",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.rollout.bind(controller))
-	)
-	.patch(
-		"/preview",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.previewPrerelease.bind(controller))
-	)
-	// Create new {Release} from {Build} data
-	.post(
-		"/from-build",
-		authenticate,
-		// authorize,
-		controller.apiRespond(controller.createFromBuild.bind(controller))
-	);
+	.get("/", controller.apiRespond(controller.read.bind(controller)))
+	.post("/", controller.apiRespond(controller.create.bind(controller)))
+	.post("/from-build", controller.apiRespond(controller.createFromBuild.bind(controller)))
+	.patch("/", controller.apiRespond(controller.update.bind(controller)))
+	.delete("/", controller.apiRespond(controller.delete.bind(controller)))
+	.delete("/empty", controller.apiRespond(controller.empty.bind(controller)))
+	.patch("/rollout", controller.apiRespond(controller.rollout.bind(controller)))
+	.patch("/preview", controller.apiRespond(controller.previewPrerelease.bind(controller)));
 // Turn this migration off
 // .get("/migrate", authenticate, controller.migrate.bind(controller));
 
