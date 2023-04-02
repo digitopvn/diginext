@@ -48,8 +48,16 @@ export default class RoleController extends BaseController<Role> {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
-		// TODO: can't delete default roles: Administrator & Member
+	async delete(@Queries() queryParams?: IDeleteQueryParams) {
+		// Can't delete default roles: Administrator, Moderator & Member
+		const tobeDeletedItems = await this.service.find(this.filter);
+
+		if (tobeDeletedItems && tobeDeletedItems.length > 0) {
+			const defaultRoles = tobeDeletedItems.filter((item) => item.type === "admin" || item.type === "member" || item.type === "moderator");
+			if (defaultRoles.length > 0)
+				return respondFailure({ msg: `Default roles can't be deleted: ${defaultRoles.map((r) => r.name).join(", ")}` });
+		}
+
 		return super.delete();
 	}
 

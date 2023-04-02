@@ -74,8 +74,12 @@ export default class BaseController<T extends Base = any> {
 	}
 
 	async delete() {
+		const tobeDeletedItems = await this.service.find(this.filter);
+
+		if (tobeDeletedItems && tobeDeletedItems.length === 0)
+			return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+
 		const data = await this.service.delete(this.filter);
-		if (!data || !data.ok) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 

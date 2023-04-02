@@ -23,10 +23,23 @@ export default class UserController extends BaseController<User> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	async read(@Queries() queryParams?: IGetQueryParams) {
 		// console.log("this.user.activeWorkspace :>> ", this.user.activeWorkspace);
-		this.filter.workspaces = this.workspace._id;
-		return super.read();
+		// this.filter.workspaces = this.workspace._id;
+		const wsId = this.workspace._id;
+
+		const list = await super.read();
+		list.data = (list.data || []).map((item) => {
+			if (item.roles && item.roles.length > 0) {
+				item.roles = item.roles.filter((role) => role.workspace === wsId);
+			}
+			if (item.workspaces && item.workspaces.length > 0) {
+				item.workspaces = item.workspaces.filter((ws) => ws._id === wsId);
+			}
+			return item;
+		});
+
+		return list;
 	}
 
 	@Security("api_key")

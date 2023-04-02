@@ -90,7 +90,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	}
 
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<E[]> {
-		// log(`Service > find :>> filter:`, filter);
+		console.log(`Service > find :>> filter:`, filter);
 		// const query = this.query;
 		// let results;
 		// log("options.populate >>", options.populate);
@@ -145,8 +145,8 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	}
 
 	async findOne(filter?: IQueryFilter, options?: IQueryOptions) {
-		// log(`findOne > filter :>>`, filter);
-		// log(`findOne > options :>>`, options);
+		// console.log(`findOne > filter :>>`, filter);
+		// console.log(`findOne > options :>>`, options);
 		const results = await this.find(filter, options);
 
 		return results.length > 0 ? results[0] : null;
@@ -173,7 +173,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		return { ok: deleteRes.matchedCount };
 
 		/**
-		 * MongoDB driver doesn't support "softDelete" yet
+		 * [TypeORM] MongoDB driver doesn't support "softDelete" yet (or maybe it doesn't work because of bugs)
 		 */
 		// const deleteRes = await this.query.softDelete(filter);
 		// console.log("deleteRes", deleteRes);

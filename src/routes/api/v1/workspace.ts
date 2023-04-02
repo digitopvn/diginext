@@ -2,7 +2,6 @@ import express from "express";
 
 import WorkspaceController from "@/controllers/WorkspaceController";
 import { authenticate } from "@/middlewares/authenticate";
-import { authorize } from "@/middlewares/authorize";
 import { processApiRequest } from "@/middlewares/process-api-request";
 
 const router = express.Router();
@@ -10,7 +9,7 @@ const router = express.Router();
 const controller = new WorkspaceController();
 
 router
-	.use(authenticate, authorize)
+	.use(authenticate)
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))
