@@ -6,3 +6,4 @@ src/libs/typeorm
 **/templates/**
 **/storage/**
 storage/**
+__tests__/**/*

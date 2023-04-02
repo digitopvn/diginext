@@ -205,12 +205,11 @@ export async function parseCliOptions() {
 		// .usage("$0 <module> [gcloud|do] <action> - Manage cloud provider accessibility")
 		.options(globalOptions)
 		// aliases
-		// .alias("target-dir", "--targetDir")
 		.alias("h", "help")
 		.alias("v", "version")
 		.global(["D", "s", "local", "h"])
 		// command: TEST
-		.command("test", "Nothing")
+		.command("test", "")
 		// command: CLI management
 		.command("info", "Show CLI & SERVER information")
 		// command: login
@@ -234,20 +233,13 @@ export async function parseCliOptions() {
 		)
 		// command: update
 		.command("update", "Update your CLI version")
-		.usage("$0 update", "Update your CLI to latest version")
 		.usage("$0 update <version>", "Update your CLI to specific version")
 		// command: new
 		.command("new", "Create new project & application", newProjectOptions)
-		// .usage("$0 new", "Create new project")
-		// .usage("$0 new --force", "[DANGER] Force create new project & overwrite if it's existed")
-		// .usage("$0 new --fw <framework>", "Create new project with specific framework")
-		// .usage("$0 new --install", "Create new project then install all dependencies")
 		// command: init
 		.command("init", "Initialize CLI in the current project directory")
-		// .usage("$0 init")
 		// command: upgrade
 		.command("upgrade", "Update your project's framework version")
-		// .usage("$0 upgrade")
 		// command: cdn
 		.command("cdn", "Manage cloud storages (CDN)")
 		// command: domain
@@ -436,7 +428,6 @@ export async function parseCliOptions() {
 				.command("restart", "Restart the BUILD SERVER")
 				.demandCommand(1)
 		)
-		// .usage("$0 server")
 		// command: help
 		.command("help", "Show usage documentation")
 		// .usage("$0 help")
@@ -543,9 +534,9 @@ export async function parseCliOptions() {
 	}
 
 	if (options.shouldShowInputOptions) log(options);
-
+	// console.log("options :>> ", options);
 	return options;
 }
 
-// TEST: yarn ts-node src/modules/cli/parseCliOptions.ts [...options]
+// TEST: pnpm ts-node src/modules/cli/parseCliOptions.ts [...options]
 // parseCliOptions();

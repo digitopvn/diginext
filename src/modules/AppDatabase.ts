@@ -64,6 +64,14 @@ export async function connect(onConnected?: any) {
 	}
 }
 
+export async function disconnect() {
+	try {
+		appDataSource.destroy();
+	} catch (e) {
+		logError(e);
+	}
+}
+
 export function query(entity: EntityTarget<ObjectLiteral>) {
 	return appDataSource ? appDataSource.getMongoRepository(entity) : null;
 }
@@ -72,6 +80,6 @@ export function metadata(entity: EntityTarget<ObjectLiteral>) {
 	return appDataSource ? appDataSource.getMetadata(entity) : null;
 }
 
-const AppDatabase = { appDataSource, manager, connect, query, metadata };
+const AppDatabase = { appDataSource, manager, connect, disconnect, query, metadata };
 
 export default AppDatabase;

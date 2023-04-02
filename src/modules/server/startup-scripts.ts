@@ -16,6 +16,7 @@ import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { execCmd } from "@/plugins";
 import { seedSystemInitialData } from "@/seeds/seed-system";
+import { setServerStatus } from "@/server";
 import { ClusterService, ContainerRegistryService, GitProviderService } from "@/services";
 
 /**
@@ -49,15 +50,6 @@ export async function startupScripts() {
 
 	// seed system initial data: Cloud Providers
 	await seedSystemInitialData();
-
-	// connect cloud providers
-	// const providerSvc = new CloudProviderService();
-	// const providers = await providerSvc.find({});
-	// if (providers.length > 0) {
-	// 	for (const provider of providers) {
-	// 		providerAuthenticate(provider);
-	// 	}
-	// }
 
 	// connect container registries
 	const registrySvc = new ContainerRegistryService();
@@ -94,4 +86,6 @@ export async function startupScripts() {
 	await migrateAllRoles();
 	await migrateDefaultServiceAccountAndApiKeyUser();
 	// await migrateAllUsers();
+
+	setServerStatus(true);
 }

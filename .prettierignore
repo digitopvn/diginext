@@ -26,5 +26,5 @@ node_modules
 **/*.yaml
 **/templates/**
 
-__tests__/**
-**/__tests__/**
+# __tests__/**
+# **/__tests__/**

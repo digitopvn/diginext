@@ -1,5 +1,5 @@
 {
-	"ignorePatterns": ["__tests__/**/*.ts"],
+	// "ignorePatterns": ["__tests__/**/*.ts"],
 	"env": {
 		"browser": true,
 		"es2021": true,

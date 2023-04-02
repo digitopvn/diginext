@@ -27,6 +27,7 @@ const httpsKeepAliveAgent = new HttpsAgent({
 interface FetchApiOptions<T = any> extends AxiosRequestConfig {
 	url: string;
 	access_token?: string;
+	method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 	data?: T | any;
 }
 
