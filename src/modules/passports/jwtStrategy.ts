@@ -51,7 +51,7 @@ export const generateJWT = (userId: string, options?: JWTOptions) => {
 
 export const refreshAccessToken = () => {};
 
-function extractAccessTokenInfo(access_token: string, exp: number) {
+export function extractAccessTokenInfo(access_token: string, exp: number) {
 	let expiredDate = dayjs(new Date(exp * 1000));
 	let expiredTimestamp = dayjs(new Date(exp * 1000)).diff(dayjs());
 	let isExpired = expiredTimestamp <= 0;

@@ -42,6 +42,8 @@ export class WorkspaceApiAccessToken {
 	}
 }
 
+export type WorkspaceDto = Omit<User, keyof Workspace>;
+
 @Entity({ name: "workspaces" })
 export default class Workspace extends Base {
 	/**

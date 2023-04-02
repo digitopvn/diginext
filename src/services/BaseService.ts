@@ -21,7 +21,7 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interface
  */
 const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 
-export default class BaseService<E extends Base & { owner?: any; workspace?: any } & ObjectLiteral> {
+export default class BaseService<E extends Base & { owner?: any; workspace?: any } & ObjectLiteral = any> {
 	protected query: MongoRepository<ObjectLiteral>;
 
 	req?: Request;
@@ -36,7 +36,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		return this.query.count({ ...parsedFilter, ...options });
 	}
 
-	async create(data: E) {
+	async create(data: any) {
 		try {
 			// generate slug (if needed)
 			const scope = this;
@@ -80,9 +80,9 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 			// const author = `${user.name} (ID: ${user._id})`;
 			// console.log(`BaseService.create :>>`, { data });
 
-			const item = await this.query.create(data);
-
-			return (await manager.save(item)) as E;
+			const entity = await this.query.create(data);
+			const newItem = await manager.save(entity);
+			return newItem as unknown as E;
 		} catch (e) {
 			logError(e);
 			return;
@@ -97,7 +97,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		// log("pagination >>", pagination);
 		const findOptions: MongoFindManyOptions<ObjectLiteral> = {};
 
-		if (filter) findOptions.where = filter;
+		if (filter) findOptions.where = parseRequestFilter(filter);
 		if (options?.order) findOptions.order = options.order;
 		if (options?.select && options.select.length > 0) findOptions.select = options.select;
 		// if (pagination?.page_size) findOptions.take = pagination.page_size;
@@ -147,7 +147,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	async findOne(filter?: IQueryFilter, options?: IQueryOptions) {
 		// log(`findOne > filter :>>`, filter);
 		// log(`findOne > options :>>`, options);
-		const results = await this.find(filter, options);
+		const results = await this.find(filter, options, { limit: 1 });
 
 		return results.length > 0 ? results[0] : null;
 	}
@@ -156,11 +156,12 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		// Manually update date to "updatedAt" column
 		data.updatedAt = new Date();
 
+		const updateFilter = parseRequestFilter(filter);
 		const updateData = options?.raw ? data : { $set: data };
-		const updateRes = await this.query.updateMany(filter, updateData);
+		const updateRes = await this.query.updateMany(updateFilter, updateData);
 
 		if (updateRes.matchedCount > 0) {
-			const results = await this.find(filter, options);
+			const results = await this.find(updateFilter, options);
 			return results;
 		} else {
 			return [];
@@ -169,7 +170,8 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 
 	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {
 		// Manually update "deleteAt" to database since TypeORM MongoDB doesn't support "softDelete" yet
-		const deleteRes = await this.query.updateMany(filter, { $set: { deletedAt: new Date() } });
+		const deleteFilter = parseRequestFilter(filter);
+		const deleteRes = await this.query.updateMany(deleteFilter, { $set: { deletedAt: new Date() } });
 		return { ok: deleteRes.matchedCount };
 
 		/**
@@ -182,7 +184,8 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	}
 
 	async delete(filter?: IQueryFilter) {
-		const deleteRes = await this.query.deleteMany(filter);
+		const deleteFilter = parseRequestFilter(filter);
+		const deleteRes = await this.query.deleteMany(deleteFilter);
 		return deleteRes.result;
 	}
 

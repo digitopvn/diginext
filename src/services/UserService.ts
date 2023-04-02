@@ -18,16 +18,14 @@ export default class UserService extends BaseService<User> {
 		return super.findOne(filter, options);
 	}
 
-	async create(data: User) {
+	async create(data) {
 		if (!data.username) data.username = data.slug;
-		// if (data.type !== "user") data.type = "user";
 		return super.create(data);
 	}
 
 	async update(filter: IQueryFilter, data: User, options?: IQueryOptions) {
 		if (data.username) data.slug = data.username;
 		if (data.slug) data.username = data.slug;
-		// if (data.type !== "user") data.type = "user";
 		return super.update(filter, data, options);
 	}
 }

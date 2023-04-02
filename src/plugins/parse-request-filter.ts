@@ -2,7 +2,6 @@ import { isJSON } from "class-validator";
 import { isString, trim } from "lodash";
 import { ObjectId } from "mongodb";
 
-import type { IQueryOptions } from "@/interfaces";
 import type { FindManyOptions } from "@/libs/typeorm";
 
 import { isValidObjectId } from "./mongodb";
@@ -31,11 +30,13 @@ export const parseRequestFilter = (requestQuery: any) => {
 
 	// convert search to boolean
 	Object.entries(_filter).forEach(([key, val]) => {
-		if (val == null || val == undefined) {
-			_filter[key] = null;
-		} else if (key == "id" || key == "_id") {
+		if (key == "id" || key == "_id") {
 			_filter._id = isValidObjectId(val) ? new ObjectId(val) : val;
 			delete _filter.id;
+		}
+
+		if (val == null || val == undefined) {
+			_filter[key] = null;
 		} else if (isValidObjectId(val)) {
 			_filter[key] = new ObjectId(val);
 		} else if (isJSON(val)) {
@@ -71,5 +72,5 @@ export const parseRequestFilter = (requestQuery: any) => {
 	}
 
 	// save to local storage of response
-	return _filter as IQueryOptions & FindManyOptions<any>;
+	return _filter as FindManyOptions<any>;
 };

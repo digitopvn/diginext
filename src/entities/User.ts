@@ -1,6 +1,7 @@
 import { IsEmail, IsNotEmpty } from "class-validator";
 import type { ObjectId } from "mongodb";
 
+import type { HiddenBodyKeys } from "@/interfaces";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
@@ -21,6 +22,8 @@ export interface AccessTokenInfo {
 	expiredDate: Date;
 	expiredDateGTM7: string;
 }
+
+export type UserDto = Omit<User, keyof HiddenBodyKeys>;
 
 @Entity({ name: "users" })
 export default class User extends Base {

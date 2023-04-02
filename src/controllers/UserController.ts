@@ -3,7 +3,8 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import BaseController from "@/controllers/BaseController";
 import type { User } from "@/entities";
-import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
+import { UserDto } from "@/entities";
+import type { ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
@@ -32,14 +33,14 @@ export default class UserController extends BaseController<User> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
