@@ -179,21 +179,6 @@ export const writeCustomSSHKeys = async (params: { privateKey: string; publicKey
 		throw new Error(`[GIT] Can't assign permission [400] to "id_rsa" private key.`);
 	}
 
-	// await execCmd(`touch ~/.ssh/known_hosts`);
-	// await execCmd(`ssh-keyscan ${gitProviderDomain[gitProvider]} >> ~/.ssh/known_hosts`);
-	// await execCmd(`touch ~/.ssh/config`);
-
-	// if (isMac()) {
-	// 	await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}" >> ~/.ssh/config`);
-	// 	await execCmd(`echo "  UseKeychain yes" >> ~/.ssh/config`);
-	// 	await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
-	// 	await execCmd(`echo "  IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
-	// } else {
-	// 	await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}" >> ~/.ssh/config`);
-	// 	await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
-	// 	await execCmd(`echo "  IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
-	// }
-
 	log(`Added new SSH keys on this machine:`);
 	log(`- Public key:`, publicIdRsaFile);
 	log(`- Private key:`, privateIdRsaFile);
@@ -224,12 +209,12 @@ export const generateSSH = async (options?: InputOptions) => {
 			await execCmd(`chmod -R 400 ${privateIdRsaFile}`, `Can't assign permission [400] to "id_rsa" private key.`);
 		}
 	} else {
-		// create "~/.ssh" directory
+		// create "$HOME/.ssh" directory
 		// mkdirSync(idRsaDir, { recursive: true });
 		await execCmd(`mkdir -p ${idRsaDir}`, `Can't create '${idRsaDir}' directory`);
 	}
 
-	// If no "id_rsa" existed -> generate one: ssh-keygen -b 2048 -t rsa -p -f ~/.ssh -q -N "" -> id_rsa  id_rsa.pub
+	// If no "id_rsa" existed -> generate one: ssh-keygen -b 2048 -t rsa -p -f $HOME/.ssh -q -N "" -> id_rsa  id_rsa.pub
 	if (!publicIdRsaFile) {
 		privateIdRsaFile = path.resolve(idRsaDir, "id_rsa");
 		publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
@@ -252,41 +237,6 @@ export const generateSSH = async (options?: InputOptions) => {
 
 	// Start SSH agent & add private keys: eval `ssh-agent`
 	await execCmd(`eval $(ssh-agent -s) && ssh-add ${privateIdRsaFile}`);
-	// await execCmd(`mkdir -p ~/.ssh`);
-	// await execCmd(`touch ~/.ssh/known_hosts`);
-	// await execCmd(`ssh-keyscan ${gitProviderDomain[gitProvider]} >> ~/.ssh/known_hosts`);
-	// await execCmd(`touch ~/.ssh/config`);
-	// if (isMac()) {
-	// 	await execCmd(
-	// 		`echo "Host ${gitProviderDomain[gitProvider]}\n	UseKeychain yes\n	AddKeysToAgent yes\n	IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`
-	// 	);
-	// } else {
-	// 	await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}\n	AddKeysToAgent yes\n	IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
-	// }
-	// await execCmd(`ssh -T git@${gitProviderDomain[gitProvider]}`);
-
-	/**
-	 * macOS only: So that your computer remembers your password each time it restarts,
-	 * open (or create) the ~/.ssh/config file and add these lines to the file:
-	 * @examples
-	 * ```
-	 * Host *
-	 * UseKeychain yes
-	 * ```
-	 */
-	// const sshConfigKeychainFile = path.resolve(HOME_DIR, ".ssh/config");
-	// if (!existsSync(sshConfigKeychainFile)) {
-	// 	const sshConfigKeychainContent = isMac()
-	// 		? `Host *\n	UseKeychain yes`
-	// 		: `Host *\n	AddKeysToAgent yes\n	UseKeychain yes\n	IdentityFile ${privateIdRsaFile}`;
-	// 	writeFileSync(sshConfigKeychainFile, sshConfigKeychainContent, "utf8");
-	// } else {
-	// 	log(`SKIP >> SSH keychain was configurated already.`);
-	// }
-
-	// Add private key with: ssh-add -K ~/.ssh/id_rsa
-	// await execCmd(`ssh-add ${privateIdRsaFile}`, `Can't add private key`);
-	// await execCmd(`${CLI_DIR}/ssh_add ${privateIdRsaFile}`, `Can't add private key`);
 
 	// Return PUBLIC key to add to GIT provider
 	const publicKeyContent = readFileSync(publicIdRsaFile, "utf8");
@@ -388,21 +338,19 @@ export const verifySSH = async (options?: InputOptions) => {
 
 	const gitDomain = gitProviderDomain[gitProvider];
 
-	await execCmd(`mkdir -p ~/.ssh`);
-	await execCmd(`touch ~/.ssh/known_hosts`);
-	await execCmd(`ssh-keyscan ${gitDomain} >> ~/.ssh/known_hosts`);
-	await execCmd(`touch ~/.ssh/config`);
+	await execCmd(`mkdir -p ${HOME_DIR}/.ssh`);
+	await execCmd(`touch ${HOME_DIR}/.ssh/known_hosts`);
+	await execCmd(`ssh-keyscan ${gitDomain} >> ${HOME_DIR}/.ssh/known_hosts`);
+	await execCmd(`touch ${HOME_DIR}/.ssh/config`);
 
 	if (!isEmpty(privateIdRsaFiles)) {
-		const sshConfigContent = (await execCmd(`cat ~/.ssh/config`)) || "";
+		const sshConfigContent = (await execCmd(`cat ${HOME_DIR}/.ssh/config`)) || "";
 		for (const idRsaFile of privateIdRsaFiles) {
-			// log(`[GIT] sshConfigContent.indexOf("${idRsaFile}"):`, sshConfigContent.indexOf(idRsaFile));
-			// log(`[GIT] sshConfigContent.indexOf("${gitDomain}"):`, sshConfigContent.indexOf(gitDomain));
 			if (sshConfigContent.indexOf(idRsaFile) === -1 || sshConfigContent.indexOf(gitDomain) === -1) {
-				await execCmd(`echo "Host ${gitDomain}" >> ~/.ssh/config`);
-				if (isMac()) await execCmd(`echo "  UseKeychain yes" >> ~/.ssh/config`);
-				await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
-				await execCmd(`echo "  IdentityFile ${idRsaFile}" >> ~/.ssh/config`);
+				await execCmd(`echo "Host ${gitDomain}" >> ${HOME_DIR}/.ssh/config`);
+				if (isMac()) await execCmd(`echo "  UseKeychain yes" >> ${HOME_DIR}/.ssh/config`);
+				await execCmd(`echo "  AddKeysToAgent yes" >> ${HOME_DIR}/.ssh/config`);
+				await execCmd(`echo "  IdentityFile ${idRsaFile}" >> ${HOME_DIR}/.ssh/config`);
 			}
 		}
 	}

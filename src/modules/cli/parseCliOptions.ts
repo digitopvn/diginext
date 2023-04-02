@@ -187,6 +187,7 @@ const kubectlOptions = {
 export async function parseCliOptions() {
 	// check for new version
 	const shouldUpdateCLI = await checkForUpdate();
+
 	if (shouldUpdateCLI) {
 		const latestVersion = await getLatestCliVersion();
 		logWarn(`-----------------------------------------------------------`);

@@ -1,4 +1,5 @@
 {
+	"ignorePatterns": ["__tests__/**/*.ts"],
 	"env": {
 		"browser": true,
 		"es2021": true,
@@ -37,6 +38,7 @@
 		"import/extensions": ["error", "always", { "": "never", "ts": "never", "js": "never" }], // This is problem about airbnb -> override with this
 		"import/no-unresolved": "off",
 		"import/no-named-as-default-member": "off",
-		"import/no-named-as-default": "off"
+		"import/no-named-as-default": "off",
+		"import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
 	}
 }

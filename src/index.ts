@@ -1,13 +1,11 @@
 #! /usr/bin/env node
 
-import chalk from "chalk";
 import Configstore from "configstore";
 import { log, logWarn } from "diginext-utils/dist/console/log";
-import execa from "execa";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
-import { execConfig, getCliConfig } from "@/config/config";
+import { execConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
 import createApp from "@/modules/apps/new-app";
@@ -24,9 +22,8 @@ import DigitalOcean, { execDigitalOcean } from "@/modules/providers/digitalocean
 import GCloud, { execGoogleCloud } from "@/modules/providers/gcloud";
 import { execRegistry } from "@/modules/registry";
 import { execServer } from "@/modules/server";
-import { currentVersion, freeUp, getOS } from "@/plugins";
+import { currentVersion, freeUp } from "@/plugins";
 
-import { CLI_CONFIG_FILE, CLI_DIR } from "./config/const";
 import { execInitApp } from "./modules/apps/init-app";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
 import { updateCli } from "./modules/cli/update-cli";
@@ -38,7 +35,7 @@ import { requestDeploy } from "./modules/deploy/request-deploy";
 import { requestDeployImage } from "./modules/deploy/request-deploy-image";
 import { execKubectl } from "./modules/k8s/kubectl-cli";
 import { showServerInfo } from "./modules/server/server-info";
-import { testCommand } from "./modules/test";
+import { testCommand } from "./modules/test-command";
 
 /**
  * Initialize CONFIG STORE (in document directory of the local machine)
@@ -48,27 +45,13 @@ export const conf = new Configstore(pkg.name);
 export async function processCLI(options?: InputOptions) {
 	options.version = currentVersion();
 
-	const { buildServerUrl } = getCliConfig();
-
-	if (options.isDebugging) {
-		log(chalk.cyan("---------------- DEBUG ----------------"));
-		log(`• OS:		`, getOS().toUpperCase());
-		log("• Node:		", (await execa("node", ["-v"])).stdout);
-		log("• NPM:			", (await execa("npm", ["-v"])).stdout);
-		log("• Docker:		", (await execa("docker", ["-v"])).stdout);
-		log("• Mode:		", process.env.CLI_MODE || "client");
-		log("• CLI Version:	", options.version);
-		log("• CLI Dir:	", CLI_DIR);
-		log("• CLI Config:	", CLI_CONFIG_FILE);
-		log("• Working dir:	", process.cwd());
-		log("• Server URL:	", buildServerUrl);
-		log(chalk.cyan("---------------------------------------"));
-	}
-
 	let env = "dev";
 	if (options.isStaging) env = "staging";
 	if (options.isProd) env = "prod";
 	if (options.env) env = options.env;
+
+	// debugging info
+	if (options.isDebugging) await showServerInfo(options);
 
 	switch (options.action) {
 		case "test":
@@ -113,11 +96,6 @@ export async function processCLI(options?: InputOptions) {
 			break;
 
 		case "upgrade":
-			// await promptForAuthOptions(options);
-			// await authenticateBitbucket(options);
-			// await parseOptions(options);
-			// await upgradeFramework(options);
-			// break;
 			return logWarn(`This command is deprecated.`);
 
 		case "cdn":
@@ -251,11 +229,11 @@ export async function processCLI(options?: InputOptions) {
 	}
 }
 
-if (process.env.CLI_MODE == "server") {
+if (process.env.CLI_MODE == "test") {
+	//
+} else if (process.env.CLI_MODE == "server") {
 	import("@/server");
 } else {
 	// Execute CLI commands...
-	parseCliOptions().then((inputOptions) => {
-		processCLI(inputOptions).then(() => process.exit(0));
-	});
+	parseCliOptions().then((inputOptions) => processCLI(inputOptions).then(() => process.exit(0)));
 }
