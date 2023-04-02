@@ -89,7 +89,7 @@ export default class User extends Base {
 	 * User's roles (should be filtered by "workspace")
 	 */
 	@ObjectIdColumn({ name: "roles", array: true, default: [] })
-	roles?: (ObjectID | Role | string)[];
+	roles?: (ObjectId | ObjectID | Role | string)[];
 
 	/**
 	 * User's team IDs which this user is a member

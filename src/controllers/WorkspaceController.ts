@@ -1,18 +1,15 @@
-import { log, logWarn } from "diginext-utils/dist/console/log";
+import { logWarn } from "diginext-utils/dist/console/log";
 import { isUndefined } from "lodash";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { DIGINEXT_DOMAIN } from "@/config/const";
 import BaseController from "@/controllers/BaseController";
-import type { Role, Workspace } from "@/entities";
-import { User } from "@/entities";
+import type { Role, User, Workspace } from "@/entities";
 import type Base from "@/entities/Base";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { ObjectID } from "@/libs/typeorm";
 import { DB } from "@/modules/api/DB";
-import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
 import seedWorkspaceInitialData from "@/seeds";
 import { RoleService, UserService } from "@/services";
@@ -80,59 +77,30 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		if (!status) return respondFailure({ msg: messages.join(". ") });
 
 		const newWorkspace = result.data as Workspace;
-		const workspaceId = newWorkspace._id.toString();
+		const ownerId = new ObjectId(owner);
 
 		// [2] Ownership: add this workspace to the creator {User} if it's not existed:
-		const user = await DB.findOne<User>("user", { id: owner });
+		const user = await DB.findOne<User>("user", { id: ownerId });
 		if (user) {
 			if (!(user.workspaces || []).map((wsId) => wsId.toString()).includes(newWorkspace._id.toString())) {
 				const workspaces = (user.workspaces || []).push(newWorkspace._id);
-				await DB.update<User>("user", { _id: new ObjectId(owner) }, { workspaces });
+				await DB.update<User>("user", { _id: ownerId }, { workspaces });
 			}
 			// set this workspace as "activeWorkspace" for this creator:
-			await DB.update<User>("user", { _id: new ObjectId(owner) }, { activeWorkspace: newWorkspace._id });
+			await DB.update<User>("user", { _id: ownerId }, { activeWorkspace: newWorkspace._id });
 		} else {
 			logWarn(`User "${owner}" is not existed.`);
 		}
 
-		// [2] Create "default" API access token user for this workspace:
-		const apiKeyToken = generateWorkspaceApiAccessToken();
-
-		const apiKeyUserDto = new User();
-		apiKeyUserDto.type = "api_key";
-		apiKeyUserDto.name = "Default API_KEY Account";
-		apiKeyUserDto.email = `${apiKeyToken.name}@${newWorkspace.slug}.${DIGINEXT_DOMAIN}`;
-		apiKeyUserDto.active = true;
-		apiKeyUserDto.roles = [];
-		apiKeyUserDto.workspaces = [newWorkspace._id];
-		apiKeyUserDto.activeWorkspace = newWorkspace._id;
-		apiKeyUserDto.token = getUnexpiredAccessToken(apiKeyToken.value);
-
-		const apiKeyUser = await DB.create("user", apiKeyUserDto);
-		if (apiKeyUser) log(`[WORKSPACE_CONTROLLER] Created "${apiKeyUser.name}" successfully.`);
-
-		// [3] Create default service account for this workspace
-		const serviceAccountToken = generateWorkspaceApiAccessToken();
-		const serviceAccountDto: User = {
-			type: "service_account",
-			name: "Default Service Account",
-			email: `default.${serviceAccountToken.name}@${newWorkspace.slug}.${DIGINEXT_DOMAIN}`,
-			active: true,
-			roles: [],
-			workspaces: [workspaceId],
-			activeWorkspace: workspaceId,
-			token: getUnexpiredAccessToken(serviceAccountToken.value),
-		};
-		const serviceAccount = await DB.create<User>("user", serviceAccountDto);
-		if (apiKeyUser) log(`[WORKSPACE_CONTROLLER] Created "${serviceAccount.name}" successfully.`);
-
 		/**
 		 * SEED INITIAL DATA TO THIS WORKSPACE
+		 * - Default API_KEY
+		 * - Default service account
 		 * - Default permissions of routes
 		 * - Default roles
 		 * ...
 		 */
-		await seedWorkspaceInitialData(workspaceId, owner);
+		await seedWorkspaceInitialData(newWorkspace, ownerId);
 
 		return { status: 1, data: newWorkspace, messages: [] } as ResponseData & { data: Workspace };
 	}

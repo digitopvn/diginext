@@ -25,12 +25,30 @@ import {
 	WorkspaceService,
 } from "../src/services";
 
+import AppController from "../src/controllers/AppController";
+import BuildController from "../src/controllers/BuildController";
+import CloudDatabaseController from "../src/controllers/CloudDatabaseController";
+import CloudProviderController from "../src/controllers/CloudProviderController";
+import ClusterController from "../src/controllers/ClusterController";
+import ContainerRegistryController from "../src/controllers/ContainerRegistryController";
+import FrameworkController from "../src/controllers/FrameworkController";
+import GitProviderController from "../src/controllers/GitProviderController";
+import ProjectController from "../src/controllers/ProjectController";
+import ReleaseController from "../src/controllers/ReleaseController";
+import RoleController from "../src/controllers/RoleController";
+import TeamController from "../src/controllers/TeamController";
+import UserController from "../src/controllers/UserController";
+import ApiKeyUserController from "../src/controllers/ApiKeyUserController";
+import ServiceAccountController from "../src/controllers/ServiceAccountController";
+import WorkspaceController from "../src/controllers/WorkspaceController";
+
 import { isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
 
 const user1 = new User({ name: "Test User 1", email: "user1@test.local" });
 const user2 = new User({ name: "Test User 2", email: "user2@test.local" });
 
+// for directly interact with the database...
 export const appSvc = new AppService();
 export const buildSvc = new BuildService();
 export const databaseSvc = new CloudDatabaseService();
@@ -47,6 +65,24 @@ export const userSvc = new UserService();
 export const apiKeySvc = new ApiKeyUserService();
 export const serviceAccountSvc = new ServiceAccountService();
 export const workspaceSvc = new WorkspaceService();
+
+// for API testing...
+export const appCtl = new AppController();
+export const buildCtl = new BuildController();
+export const databaseCtl = new CloudDatabaseController();
+export const providerCtl = new CloudProviderController();
+export const clusterCtl = new ClusterController();
+export const registryCtl = new ContainerRegistryController();
+export const frameworkCtl = new FrameworkController();
+export const gitCtl = new GitProviderController();
+export const projectCtl = new ProjectController();
+export const releaseCtl = new ReleaseController();
+export const roleCtl = new RoleController();
+export const teamCtl = new TeamController();
+export const userCtl = new UserController();
+export const apiKeyCtl = new ApiKeyUserController();
+export const serviceAccountCtl = new ServiceAccountController();
+export const workspaceCtl = new WorkspaceController();
 
 // current logged in user
 export let currentUser: User;
@@ -72,8 +108,16 @@ export const createUser = async (data: UserDto) => {
 	return user as User;
 };
 
-export const createWorkspace = async (user: User, data: WorkspaceDto) => {
-	const workspace = await workspaceSvc.create({ ...data, owner: user._id });
+export const createWorkspace = async (name: string) => {
+	if (!currentUser) throw new Error(`Unauthenticated.`);
+	
+	const workspace = await workspaceCtl.create({
+		name,
+		owner: currentUser._id,
+	});
+
+	currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "workspaces", "roles"] });
+
 	return workspace as Workspace;
 };
 

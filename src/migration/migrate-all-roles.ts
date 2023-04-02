@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 import type { User, Workspace } from "@/entities";
 import { Role } from "@/entities";
 import type ApiKeyAccount from "@/entities/ApiKeyAccount";
@@ -9,9 +11,10 @@ export const migrateAllRoles = async () => {
 
 	// create default roles for each workspace: Admin, Moderator & Member
 	for (const ws of workspaces) {
+		const wsId = new ObjectId(ws._id.toString());
 		// Member
 		let memberRole: Role;
-		const wsMemberRole = await DB.findOne<Role>("role", { type: "member", workspace: ws._id });
+		const wsMemberRole = await DB.findOne<Role>("role", { type: "member", workspace: wsId });
 		if (!wsMemberRole) {
 			const memberRoleDto = new Role();
 			memberRoleDto.name = "Member";
@@ -21,7 +24,7 @@ export const migrateAllRoles = async () => {
 				{ route: "/api/v1/api_key", permissions: ["read"] },
 				{ route: "/api/v1/service_account", permissions: ["read"] },
 			];
-			memberRoleDto.workspace = ws._id;
+			memberRoleDto.workspace = wsId;
 			memberRoleDto.type = "member";
 
 			memberRole = await DB.create<Role>("role", memberRoleDto);
