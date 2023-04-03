@@ -1,3 +1,12 @@
+## [2.8.9](https://github.com/digitopvn/diginext/compare/v2.8.8...v2.8.9) (2023-04-03)
+
+
+### Bug Fixes
+
+* **cli and server:** deploy issue of unauthorized, missing route permisions ([9af10b5](https://github.com/digitopvn/diginext/commit/9af10b5563597948a4738321869d9d3b3ca82aef))
+* **cli:** login is missing workspaces ([7de65a2](https://github.com/digitopvn/diginext/commit/7de65a2527d95562a7dcb73544b94123764d4bf4))
+* **server:** delete existing ingress rule if any when deploy ([892bc46](https://github.com/digitopvn/diginext/commit/892bc4630c935b4d042903750514903fea6e99d5))
+
 ## [2.8.8](https://github.com/digitopvn/diginext/compare/v2.8.7...v2.8.8) (2023-04-03)
 
 
