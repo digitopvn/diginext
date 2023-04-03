@@ -41,11 +41,11 @@ export default class BaseController<T extends Base = any> {
 		let data: T | T[];
 		if (this.filter._id) {
 			data = await this.service.findOne(this.filter, this.options);
+			if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 		} else {
 			data = await this.service.find(this.filter, this.options, this.pagination);
+			if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: "" });
 		}
-
-		if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
@@ -65,6 +65,7 @@ export default class BaseController<T extends Base = any> {
 	}
 
 	async update(updateData) {
+		console.log("BaseController > this.filter :>> ", this.filter);
 		const data = await this.service.update(this.filter, updateData, this.options);
 		if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 
@@ -74,8 +75,12 @@ export default class BaseController<T extends Base = any> {
 	}
 
 	async delete() {
+		const tobeDeletedItems = await this.service.find(this.filter);
+
+		if (tobeDeletedItems && tobeDeletedItems.length === 0)
+			return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+
 		const data = await this.service.delete(this.filter);
-		if (!data || !data.ok) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 
 		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 

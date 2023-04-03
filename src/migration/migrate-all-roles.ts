@@ -1,3 +1,5 @@
+import { isEmpty } from "lodash";
+
 import type { User, Workspace } from "@/entities";
 import { Role } from "@/entities";
 import type ApiKeyAccount from "@/entities/ApiKeyAccount";
@@ -30,13 +32,6 @@ export const migrateAllRoles = async () => {
 			memberRole = wsMemberRole;
 		}
 
-		// find other members of the workspace and assign "Member" role
-		let members = await DB.find<User>("user", { workspaces: ws._id, roles: memberRole._id });
-		// if (!members || members.length === 0) {
-		members = await DB.update<User>("user", { workspaces: ws._id }, { roles: [memberRole._id] });
-		console.log(`Workspace "${ws.name}" > Assign "Member" role to ${members.length} members`);
-		// }
-
 		// Admin
 		let adminRole: Role;
 		const wsAdminRole = await DB.findOne<Role>("role", { type: "admin", workspace: ws._id });
@@ -53,13 +48,6 @@ export const migrateAllRoles = async () => {
 		} else {
 			adminRole = wsAdminRole;
 		}
-
-		// find owner of the workspace and assign "Administrator" role
-		let owner = await DB.findOne<User>("user", { _id: ws.owner, roles: wsAdminRole._id });
-		// if (!owner) {
-		[owner] = await DB.update<User>("user", { _id: ws.owner }, { roles: [wsAdminRole._id] });
-		console.log(`Workspace "${ws.name}" > Assign "Administrator" role to "${owner.name}"`);
-		// }
 
 		// Moderator
 		let moderatorRole: Role;
@@ -82,6 +70,34 @@ export const migrateAllRoles = async () => {
 		console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${sas.length} service accounts`);
 
 		let keys = await DB.update<ApiKeyAccount>("api_key_user", { workspaces: ws._id }, { roles: [moderatorRole._id] });
-		console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${sas.length} API keys`);
+		console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${keys.length} API keys`);
+
+		// find members of workspace and assign role:
+		let owner = await DB.findOne<User>("user", { _id: ws.owner }, { populate: ["roles"] });
+		if (!owner.roles) owner.roles = [];
+
+		// assign admin role to workspace's owner
+		const ownerAdminRoles = owner.roles.filter((role) => (role as Role).type === "admin" && (role as Role).workspace === ws._id);
+		if (ownerAdminRoles.length === 0) {
+			owner.roles.push(adminRole);
+			[owner] = await DB.update<User>("user", { _id: owner._id }, { roles: owner.roles.map((role) => (role as Role)._id) });
+		}
+
+		// assign member role to other users of the workspace
+		let members = await DB.find<User>("user", { workspaces: ws._id }, { populate: ["roles", "workspaces"] });
+		if (!isEmpty(members)) {
+			members
+				.filter((member) => member._id.toString() !== owner._id.toString())
+				.map(async (member) => {
+					if (!member.roles) member.roles = [];
+					const memberRoles = member.roles.filter((role) => (role as Role).type === "member" && (role as Role).workspace === ws._id);
+					if (memberRoles.length === 0) {
+						member.roles.push(memberRole);
+						[member] = await DB.update<User>("user", { _id: member._id }, { roles: member.roles.map((role) => (role as Role)._id) });
+					}
+				});
+		}
+		// members = await DB.update<User>("user", { workspaces: ws._id }, { roles: [memberRole._id] });
+		// console.log(`Workspace "${ws.name}" > Assign "Member" role to ${members.length} members`);
 	}
 };

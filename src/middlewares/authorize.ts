@@ -1,14 +1,19 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Request, Response } from "express";
 
-import type { Role } from "@/entities";
+import type { Role, Workspace } from "@/entities";
 import type User from "@/entities/User";
+import { filterRole } from "@/plugins/user-utils";
 
-export function authorize(req: Request, res: Response, next: NextFunction) {
-	const user = (req as any).user as User;
+export async function authorize(req: Request, res: Response, next: NextFunction) {
+	let user = (req as any).user as User;
 
 	const { originalUrl: route, method } = req;
 
+	// filter roles
+	[user] = await filterRole((user.activeWorkspace as Workspace)._id.toString() || user.activeWorkspace.toString(), [user]);
+
+	// request permission:
 	let requestPermission;
 	switch (method.toLowerCase()) {
 		case "post":
@@ -81,6 +86,17 @@ export function authorize(req: Request, res: Response, next: NextFunction) {
 	});
 
 	if (!isAllowed) return ApiResponse.rejected(res);
+
+	// always lock query filter to workspace scope
+
+	if (req.baseUrl === "/api/v1/user" || req.baseUrl === "/api/v1/service_account" || req.baseUrl === "/api/v1/api_key") {
+		req.query.workspaces = (user.activeWorkspace as Workspace)._id.toString();
+	} else {
+		req.query.workspace = (user.activeWorkspace as Workspace)._id.toString();
+	}
+
+	// re-assign user to express.Request
+	req.user = user;
 
 	next();
 }

@@ -16,6 +16,8 @@ import { startBuildV1 } from "@/modules/build/start-build";
 import type { DeployBuildOptions } from "@/modules/deploy/deploy-build";
 import { deployWithBuildSlug } from "@/modules/deploy/deploy-build";
 
+import BaseController from "./BaseController";
+
 type DeployBuildInput = {
 	/**
 	 * Deploy environment
@@ -37,8 +39,8 @@ type DeployBuildInput = {
 
 @Tags("Deploy")
 @Route("deploy")
-export default class DeployController {
-	user?: User;
+export default class DeployController extends BaseController {
+	user: User;
 
 	/**
 	 * ### [DEPRECATED SOON]

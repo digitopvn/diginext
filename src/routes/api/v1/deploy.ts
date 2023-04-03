@@ -6,6 +6,7 @@ import DeployController from "@/controllers/DeployController";
 import { authenticate } from "@/middlewares/authenticate";
 import { authorize } from "@/middlewares/authorize";
 import { processApiRequest } from "@/middlewares/process-api-request";
+import { registerController } from "@/middlewares/register-controller";
 
 dayjs.extend(localizedFormat);
 
@@ -14,6 +15,7 @@ const router = express.Router();
 
 router
 	.use(authenticate, authorize)
+	.use(registerController(controller))
 	/**
 	 * Deploy from a source code (git repository)
 	 */

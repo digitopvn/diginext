@@ -4,6 +4,7 @@ import BuildController from "@/controllers/BuildController";
 import { authenticate } from "@/middlewares/authenticate";
 import { authorize } from "@/middlewares/authorize";
 import { processApiRequest } from "@/middlewares/process-api-request";
+import { registerController } from "@/middlewares/register-controller";
 
 const router = express.Router();
 
@@ -13,6 +14,7 @@ const controller = new BuildController();
 
 router
 	.use(authenticate, authorize)
+	.use(registerController(controller))
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))
