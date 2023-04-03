@@ -33,13 +33,16 @@ export const apiAccessTokenHandler = async (req: any, res: Response, next: NextF
 	const access_token = req.headers.api_access_token.toString();
 	if (!access_token) return ApiResponse.rejected(res, "Authorization header missing");
 
-	const user = await DB.findOne<User>(
+	let user = await DB.findOne<User>(
 		"api_key_user",
 		{ "token.access_token": access_token },
 		{ populate: ["workspaces", "activeWorkspace", "roles"] }
 	);
 
 	if (user) {
+		// filter roles
+		// [user] = await filterRole(user.activeWorkspace.toString(), [user]);
+
 		// Set the flag to indicate that the user has been authenticated -> skip JWT
 		req.user = user;
 		req.isAuthenticated = true;

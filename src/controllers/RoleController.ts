@@ -54,7 +54,7 @@ export default class RoleController extends BaseController<Role> {
 		if (tobeDeletedItems && tobeDeletedItems.length > 0) {
 			const defaultRoles = tobeDeletedItems.filter((item) => item.type === "admin" || item.type === "member" || item.type === "moderator");
 			if (defaultRoles.length > 0)
-				return respondFailure({ msg: `Default roles can't be deleted: ${defaultRoles.map((r) => r.name).join(", ")}` });
+				return respondFailure({ msg: `Default roles (${defaultRoles.map((r) => r.name).join(", ")}) can't be deleted.` });
 		}
 
 		return super.delete();

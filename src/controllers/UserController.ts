@@ -1,12 +1,13 @@
+import { isArray } from "lodash";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import BaseController from "@/controllers/BaseController";
-import type { Role, User, Workspace } from "@/entities";
+import type { Role, User } from "@/entities";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
-import { isObjectId } from "@/plugins/mongodb";
+import { filterRole } from "@/plugins/user-utils";
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
 
@@ -18,41 +19,27 @@ interface JoinWorkspaceBody {
 @Tags("User")
 @Route("user")
 export default class UserController extends BaseController<User> {
+	service: UserService;
+
 	constructor() {
 		super(new UserService());
-	}
-
-	filterRole(list: User[] = []) {
-		const wsId = this.workspace._id.toString();
-		return list.map((item) => {
-			if (item.roles && item.roles.length > 0) {
-				item.roles = item.roles.filter(async (role) => {
-					let _role: Role;
-					if (isObjectId(role)) _role = await DB.findOne<Role>("role", { _id: role });
-					if (!_role) return false;
-					return _role.workspace.toString() === wsId;
-				});
-			}
-			if (item.workspaces && item.workspaces.length > 0) {
-				item.workspaces = item.workspaces.filter(async (ws) => (ws as Workspace)._id?.toString() === wsId || ws.toString() === wsId);
-			}
-			return item;
-		});
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	async read(@Queries() queryParams?: IGetQueryParams) {
-		const wsId = this.workspace._id.toString();
+		const res = await super.read();
 
-		const list = await super.read();
-		list.data = this.filterRole(list.data);
-
-		return list;
+		// console.log("[1] res.data :>> ", res.data);
+		res.data = isArray(res.data)
+			? await filterRole(this.workspace._id.toString(), res.data)
+			: await filterRole(this.workspace._id.toString(), [res.data]);
+		// console.log("[2] res.data :>> ", res.data);
+		return res;
 	}
 
-	@Security("api_key")
+	@Security("api_key2")
 	@Security("jwt")
 	@Post("/")
 	create(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
@@ -62,7 +49,21 @@ export default class UserController extends BaseController<User> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		if (body.roles) {
+			const roleId = body.roles;
+			const oldRoles = this.user.roles.filter((role) => (role as Role).workspace.toString() === this.workspace._id.toString());
+
+			const newRole = await DB.findOne<Role>("role", { _id: roleId });
+			const newRoles = [
+				...this.user.roles.filter((role) => !oldRoles.map((r) => (r as Role)._id.toString()).includes((role as Role)._id.toString())),
+				newRole,
+			];
+
+			const newRoleIds = newRoles.map((role) => (role as Role)._id);
+
+			body.roles = newRoleIds;
+		}
 		return super.update(body);
 	}
 
@@ -97,7 +98,7 @@ export default class UserController extends BaseController<User> {
 		if (!updatedUser) return respondFailure({ msg: `Failed to assign "${newRole.name}" role to "${this.user.slug}" user.` });
 
 		// filter roles & workspaces before returning
-		[updatedUser] = this.filterRole([updatedUser]);
+		[updatedUser] = await filterRole(this.workspace._id.toString(), [updatedUser]);
 
 		return respondSuccess({ data: updatedUser });
 	}

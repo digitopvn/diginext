@@ -24,7 +24,7 @@ export default class UserService extends BaseService<User> {
 		return super.create(data);
 	}
 
-	async update(filter: IQueryFilter, data: User, options?: IQueryOptions) {
+	async update(filter: IQueryFilter, data: User | any, options?: IQueryOptions) {
 		if (data.username) data.slug = data.username;
 		if (data.slug) data.username = data.slug;
 		// if (data.type !== "user") data.type = "user";

@@ -149,6 +149,9 @@ export const jwtStrategy = new Strategy(
 				populate: ["roles", "workspaces", "activeWorkspace"],
 			});
 
+			// filter roles
+			// [user] = await filterRole(user.activeWorkspace.toString(), [user]);
+
 			return done(null, user);
 		}
 
@@ -158,6 +161,9 @@ export const jwtStrategy = new Strategy(
 			{ _id: new ObjectId(payload.id) },
 			{ populate: ["roles", "workspaces", "activeWorkspace"] }
 		);
+
+		// filter roles
+		// if (user) [user] = await filterRole(user.activeWorkspace.toString(), [user]);
 
 		// console.log(`[3] jwtStrategy > ServiceAccount :>> `, user.name, user._id);
 
