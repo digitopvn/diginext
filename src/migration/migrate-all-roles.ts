@@ -17,7 +17,7 @@ export const migrateAllRoles = async () => {
 		// Member
 		let memberRole: Role;
 		const wsMemberRole = await DB.findOne<Role>("role", { type: "member", workspace: ws._id });
-		console.log("wsMemberRole :>> ", wsMemberRole);
+		// console.log("wsMemberRole :>> ", wsMemberRole);
 		if (!wsMemberRole) {
 			const memberRoleDto = new Role();
 			memberRoleDto.name = "Member";
@@ -51,7 +51,7 @@ export const migrateAllRoles = async () => {
 		// Admin
 		let adminRole: Role;
 		const wsAdminRole = await DB.findOne<Role>("role", { type: "admin", workspace: ws._id });
-		console.log("wsAdminRole :>> ", wsAdminRole);
+		// console.log("wsAdminRole :>> ", wsAdminRole);
 
 		if (!wsAdminRole) {
 			const adminRoleDto = new Role();
@@ -83,11 +83,17 @@ export const migrateAllRoles = async () => {
 		}
 
 		// find all service accounts & API keys of this workspace and assign "moderator" role:
-		let sas = await DB.update<ServiceAccount>("service_account", { workspaces: ws._id }, { roles: [moderatorRole._id] });
-		console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${sas.length} service accounts`);
+		let sas = await DB.find<ServiceAccount>("service_account", { workspaces: ws._id, roles: { $nin: [moderatorRole._id] } });
+		if (sas.length > 0) {
+			sas = await DB.update<ServiceAccount>("service_account", { workspaces: ws._id }, { roles: [moderatorRole._id] });
+			console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${sas.length} service accounts`);
+		}
 
-		let keys = await DB.update<ApiKeyAccount>("api_key_user", { workspaces: ws._id }, { roles: [moderatorRole._id] });
-		console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${keys.length} API keys`);
+		let keys = await DB.find<ApiKeyAccount>("api_key_user", { workspaces: ws._id, roles: { $nin: [moderatorRole._id] } });
+		if (keys.length > 0) {
+			keys = await DB.update<ApiKeyAccount>("api_key_user", { workspaces: ws._id }, { roles: [moderatorRole._id] });
+			console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${keys.length} API keys`);
+		}
 
 		// find members of workspace and assign role:
 		let owner = await DB.findOne<User>("user", { _id: ws.owner }, { populate: ["roles"] });
