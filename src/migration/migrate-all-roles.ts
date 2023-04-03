@@ -17,6 +17,7 @@ export const migrateAllRoles = async () => {
 		// Member
 		let memberRole: Role;
 		const wsMemberRole = await DB.findOne<Role>("role", { type: "member", workspace: ws._id });
+		console.log("wsMemberRole :>> ", wsMemberRole);
 		if (!wsMemberRole) {
 			const memberRoleDto = new Role();
 			memberRoleDto.name = "Member";
@@ -50,6 +51,7 @@ export const migrateAllRoles = async () => {
 		// Admin
 		let adminRole: Role;
 		const wsAdminRole = await DB.findOne<Role>("role", { type: "admin", workspace: ws._id });
+		console.log("wsAdminRole :>> ", wsAdminRole);
 
 		if (!wsAdminRole) {
 			const adminRoleDto = new Role();
