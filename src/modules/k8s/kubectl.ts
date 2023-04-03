@@ -218,7 +218,7 @@ export async function getAllIngresses(options: KubeGenericOptions = {}) {
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
-		args.push("-A", "get", "ing");
+		args.push("get", "ing", "-A");
 
 		args.push("-o", "json");
 
