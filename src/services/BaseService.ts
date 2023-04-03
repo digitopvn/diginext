@@ -90,7 +90,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	}
 
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<E[]> {
-		console.log(`Service > find :>> filter:`, filter);
+		// console.log(`Service > find :>> filter:`, filter);
 		// const query = this.query;
 		// let results;
 		// log("options.populate >>", options.populate);

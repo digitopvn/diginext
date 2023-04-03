@@ -1,10 +1,9 @@
 import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { Role, User } from "@/entities";
+import type { Role } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
-import { DB } from "@/modules/api/DB";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure } from "@/interfaces";
 import RoleService from "@/services/RoleService";
 
 import BaseController from "./BaseController";
@@ -59,28 +58,5 @@ export default class RoleController extends BaseController<Role> {
 		}
 
 		return super.delete();
-	}
-
-	@Security("api_key")
-	@Security("jwt")
-	@Post("/assign")
-	async assign(
-		@Body()
-		body: {
-			userId: string;
-			roleId: string;
-		},
-		@Queries() queryParams?: IPostQueryParams
-	) {
-		// validation
-		if (!body.userId) return respondFailure({ msg: `User ID is required.` });
-		if (!body.roleId) return respondFailure({ msg: `Role ID is required.` });
-
-		const role = await DB.findOne<Role>("role", { _id: body.roleId });
-		if (!role) return respondFailure({ msg: `Role not found.` });
-
-		const [user] = await DB.update<User>("user", { _id: body.userId }, { $addToSet: { roles: role._id } }, { raw: true });
-
-		return respondSuccess({ data: { role, user } });
 	}
 }

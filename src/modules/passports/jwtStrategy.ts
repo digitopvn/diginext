@@ -9,7 +9,7 @@ import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
-import type { AccessTokenInfo, Role, User } from "@/entities";
+import type { AccessTokenInfo, Role, User, Workspace } from "@/entities";
 import type ServiceAccount from "@/entities/ServiceAccount";
 
 import { DB } from "../api/DB";
@@ -134,7 +134,8 @@ export const jwtStrategy = new Strategy(
 			if (isEmpty(user.workspaces)) {
 				updateData.workspaces = [workspaceId];
 			} else {
-				if (!user.workspaces.includes(workspaceId)) updateData.workspaces = [...user.workspaces, workspaceId];
+				if (!user.workspaces.includes(workspaceId))
+					updateData.workspaces = [...(user.workspaces || []).map((ws) => (ws as Workspace)._id), workspaceId];
 			}
 
 			// set default roles if this user doesn't have one

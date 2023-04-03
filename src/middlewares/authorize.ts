@@ -84,7 +84,7 @@ export function authorize(req: Request, res: Response, next: NextFunction) {
 
 	// always lock query filter to workspace scope
 
-	if (req.baseUrl === "/api/v1/user") {
+	if (req.baseUrl === "/api/v1/user" || req.baseUrl === "/api/v1/service_account" || req.baseUrl === "/api/v1/api_key") {
 		req.query.workspaces = (user.activeWorkspace as Workspace)._id.toString();
 	} else {
 		req.query.workspace = (user.activeWorkspace as Workspace)._id.toString();

@@ -2,9 +2,11 @@ import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import BaseController from "@/controllers/BaseController";
-import type { User } from "@/entities";
+import type { Role, User, Workspace } from "@/entities";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import { DB } from "@/modules/api/DB";
+import { isObjectId } from "@/plugins/mongodb";
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
 
@@ -20,24 +22,32 @@ export default class UserController extends BaseController<User> {
 		super(new UserService());
 	}
 
+	filterRole(list: User[] = []) {
+		const wsId = this.workspace._id.toString();
+		return list.map((item) => {
+			if (item.roles && item.roles.length > 0) {
+				item.roles = item.roles.filter(async (role) => {
+					let _role: Role;
+					if (isObjectId(role)) _role = await DB.findOne<Role>("role", { _id: role });
+					if (!_role) return false;
+					return _role.workspace.toString() === wsId;
+				});
+			}
+			if (item.workspaces && item.workspaces.length > 0) {
+				item.workspaces = item.workspaces.filter(async (ws) => (ws as Workspace)._id?.toString() === wsId || ws.toString() === wsId);
+			}
+			return item;
+		});
+	}
+
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	async read(@Queries() queryParams?: IGetQueryParams) {
-		// console.log("this.user.activeWorkspace :>> ", this.user.activeWorkspace);
-		// this.filter.workspaces = this.workspace._id;
-		const wsId = this.workspace._id;
+		const wsId = this.workspace._id.toString();
 
 		const list = await super.read();
-		list.data = (list.data || []).map((item) => {
-			if (item.roles && item.roles.length > 0) {
-				item.roles = item.roles.filter((role) => role.workspace === wsId);
-			}
-			if (item.workspaces && item.workspaces.length > 0) {
-				item.workspaces = item.workspaces.filter((ws) => ws._id === wsId);
-			}
-			return item;
-		});
+		list.data = this.filterRole(list.data);
 
 		return list;
 	}
@@ -61,6 +71,35 @@ export default class UserController extends BaseController<User> {
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/assign-role")
+	async assignRole(@Body() data: { roleId: string }) {
+		if (!data.roleId) return respondFailure({ msg: `Role ID is required.` });
+		if (!this.user) return respondFailure({ msg: `User not found.` });
+
+		const { roleId } = data;
+		const currentRoles = this.user.roles.filter((role) => (role as Role).workspace.toString() === this.workspace._id.toString());
+		const prevRole = currentRoles[0] as Role;
+
+		const newRole = await DB.findOne<Role>("role", { _id: roleId });
+		const newRoles = [...this.user.roles.filter((role) => (role as Role)._id.toString() !== prevRole._id.toString()), newRole];
+		const newRoleIds = newRoles.map((role) => (role as Role)._id);
+
+		let [updatedUser] = await DB.update<User>(
+			"user",
+			{ _id: this.user._id },
+			{ roles: newRoleIds },
+			{ populate: ["roles", "workspaces", "activeWorkspace"] }
+		);
+		if (!updatedUser) return respondFailure({ msg: `Failed to assign "${newRole.name}" role to "${this.user.slug}" user.` });
+
+		// filter roles & workspaces before returning
+		[updatedUser] = this.filterRole([updatedUser]);
+
+		return respondSuccess({ data: updatedUser });
 	}
 
 	@Security("api_key")

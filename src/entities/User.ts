@@ -86,13 +86,13 @@ export default class User extends Base {
 	 * User's roles (should be filtered by "workspace")
 	 */
 	@ObjectIdColumn({ name: "roles", array: true, default: [] })
-	roles?: (ObjectID | Role | string)[];
+	roles?: (ObjectID | ObjectId | Role | string)[];
 
 	/**
 	 * User's team IDs which this user is a member
 	 */
 	@ObjectIdColumn({ name: "teams", array: true, default: [] })
-	teams?: (ObjectID | Team | string)[];
+	teams?: (ObjectID | ObjectId | Team | string)[];
 
 	/**
 	 * List of workspace IDs which this user is a member
@@ -105,6 +105,14 @@ export default class User extends Base {
 	 */
 	@ObjectIdColumn({ name: "workspaces" })
 	activeWorkspace?: ObjectID | ObjectId | Workspace | string;
+
+	/**
+	 * User ID of the user who invited this user
+	 *
+	 * @remarks This can be populated to {User} data
+	 */
+	@ObjectIdColumn({ name: "users" })
+	owner?: ObjectId | ObjectID | User | string;
 
 	constructor(data?: User) {
 		super();
