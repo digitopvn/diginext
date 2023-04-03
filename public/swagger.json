@@ -154,6 +154,10 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ObjectId": {
+				"type": "string",
+				"description": "A class representation of the BSON ObjectId type."
+			},
 			"IRoutePermission": {
 				"type": "string",
 				"enum": ["full", "own", "create", "read", "update", "delete"]
@@ -265,6 +269,9 @@
 									"$ref": "#/components/schemas/ObjectID"
 								},
 								{
+									"$ref": "#/components/schemas/ObjectId"
+								},
+								{
 									"$ref": "#/components/schemas/Role"
 								},
 								{
@@ -280,6 +287,9 @@
 							"anyOf": [
 								{
 									"$ref": "#/components/schemas/ObjectID"
+								},
+								{
+									"$ref": "#/components/schemas/ObjectId"
 								},
 								{
 									"$ref": "#/components/schemas/Team"
@@ -328,6 +338,23 @@
 							}
 						],
 						"description": "Active workspace of a user"
+					},
+					"owner": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/ObjectID"
+							},
+							{
+								"$ref": "#/components/schemas/User"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "User ID of the user who invited this user"
 					}
 				},
 				"type": "object",
@@ -345,10 +372,6 @@
 				"required": ["name", "value"],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"ObjectId": {
-				"type": "string",
-				"description": "A class representation of the BSON ObjectId type."
 			},
 			"ResourceQuotaSize": {
 				"type": "string",
@@ -3980,6 +4003,9 @@
 									"$ref": "#/components/schemas/ObjectID"
 								},
 								{
+									"$ref": "#/components/schemas/ObjectId"
+								},
+								{
 									"$ref": "#/components/schemas/Role"
 								},
 								{
@@ -3995,6 +4021,9 @@
 							"anyOf": [
 								{
 									"$ref": "#/components/schemas/ObjectID"
+								},
+								{
+									"$ref": "#/components/schemas/ObjectId"
 								},
 								{
 									"$ref": "#/components/schemas/Team"
@@ -4223,7 +4252,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.8.7",
+		"version": "2.8.8",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -9693,89 +9722,6 @@
 				]
 			}
 		},
-		"/role/assign": {
-			"post": {
-				"operationId": "Assign",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ResponseData"
-								}
-							}
-						}
-					}
-				},
-				"tags": ["Role"],
-				"security": [
-					{
-						"api_key": []
-					},
-					{
-						"jwt": []
-					}
-				],
-				"parameters": [
-					{
-						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
-						"in": "query",
-						"name": "populate",
-						"required": false,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "select",
-						"required": false,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "order",
-						"required": false,
-						"schema": {
-							"type": "string"
-						},
-						"example": "-updatedAt,-createdAt"
-					},
-					{
-						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
-						"in": "query",
-						"name": "raw",
-						"required": false,
-						"schema": {
-							"default": "false",
-							"type": "boolean"
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"properties": {
-									"roleId": {
-										"type": "string"
-									},
-									"userId": {
-										"type": "string"
-									}
-								},
-								"required": ["roleId", "userId"],
-								"type": "object"
-							}
-						}
-					}
-				}
-			}
-		},
 		"/service_account": {
 			"get": {
 				"operationId": "Read",
@@ -10689,7 +10635,7 @@
 				"tags": ["User"],
 				"security": [
 					{
-						"api_key": []
+						"api_key2": []
 					},
 					{
 						"jwt": []
@@ -10859,6 +10805,49 @@
 						}
 					}
 				]
+			}
+		},
+		"/user/assign-role": {
+			"patch": {
+				"operationId": "AssignRole",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["User"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"roleId": {
+										"type": "string"
+									}
+								},
+								"required": ["roleId"],
+								"type": "object"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/user/join-workspace": {
