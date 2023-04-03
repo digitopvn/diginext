@@ -11,6 +11,7 @@ import { migrateAllReleases } from "@/migration/migrate-all-releases";
 import { migrateAllRoles } from "@/migration/migrate-all-roles";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
+import { migrateUserWorkspaces } from "@/migration/migrate-user-workspaces";
 import { generateSSH, sshKeysExisted, verifySSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
@@ -94,4 +95,5 @@ export async function startupScripts() {
 	await migrateAllRoles();
 	await migrateDefaultServiceAccountAndApiKeyUser();
 	// await migrateAllUsers();
+	await migrateUserWorkspaces();
 }

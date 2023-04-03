@@ -12,7 +12,7 @@ export const migrateAllRoles = async () => {
 	// create default roles for each workspace: Admin, Moderator & Member
 	for (const ws of workspaces) {
 		// reset all roles
-		// await DB.delete<Role>("role", { workspace: ws._id });
+		await DB.delete<Role>("role", { workspace: ws._id });
 
 		// Member
 		let memberRole: Role;
@@ -23,8 +23,11 @@ export const migrateAllRoles = async () => {
 			memberRoleDto.routes = [
 				{ route: "*", permissions: ["own", "read"] },
 				{ route: "/api/v1/deploy", permissions: ["read", "create", "update"] },
-				{ route: "/api/v1/project", permissions: ["read", "create", "update"] },
-				{ route: "/api/v1/app", permissions: ["read", "create", "update"] },
+				{ route: "/api/v1/domain", permissions: ["read", "create", "update"] },
+				{ route: "/api/v1/project", permissions: ["own", "read", "create", "update"] },
+				{ route: "/api/v1/app", permissions: ["own", "read", "create", "update"] },
+				{ route: "/api/v1/app/environment", permissions: ["full"] },
+				{ route: "/api/v1/app/environment/variables", permissions: ["full"] },
 				{ route: "/api/v1/role", permissions: ["read"] },
 				{ route: "/api/v1/api_key", permissions: ["read"] },
 				{ route: "/api/v1/service_account", permissions: ["read"] },

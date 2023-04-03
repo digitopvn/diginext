@@ -7,7 +7,7 @@ import path from "path";
 
 import { CLI_DIR } from "@/config/const";
 import type { Cluster } from "@/entities";
-import type { KubeDeployment, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
+import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { execCmd } from "@/plugins";
 
@@ -208,6 +208,24 @@ export async function deleteSecretsByFilter(namespace = "default", options: Kube
 		return JSON.parse(stdout);
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] deleteSecretsByFilter >`, e);
+		return;
+	}
+}
+
+export async function getAllIngresses(options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-A", "get", "ing");
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout).items as KubeIngress[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllIngresses >`, e);
 		return;
 	}
 }

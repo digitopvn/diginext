@@ -11,7 +11,7 @@ import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
 import type { Cluster, Release } from "@/entities";
-import type { IResourceQuota, KubeService } from "@/interfaces";
+import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { objectToDeploymentYaml, waitUntil } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
@@ -196,6 +196,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		endpoint: endpointUrl,
 		namespace,
 		env,
+		appConfig,
 	} = releaseData as Release;
 
 	log(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
@@ -332,6 +333,30 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	// }
 
 	// log(`4`, { currentServices });
+
+	// check ingress domain has been used yet or not:
+	let isDomainUsed = false,
+		usedDomain: string,
+		deleteIng: KubeIngress;
+
+	const allIngresses = await ClusterManager.getAllIngresses({ context });
+	allIngresses.filter((ing) => {
+		(appConfig.environment[env].domains || []).map((domain) => {
+			if (ing.spec.rules.map((rule) => rule.host).includes(domain)) {
+				isDomainUsed = true;
+				usedDomain = domain;
+				deleteIng = ing;
+			}
+		});
+	});
+	if (isDomainUsed) {
+		await ClusterManager.deleteIngress(deleteIng.metadata.name, deleteIng.metadata.namespace, { context });
+
+		if (onUpdate)
+			onUpdate(
+				`Domain "${usedDomain}" has been used before at "${deleteIng.metadata.namespace}" namespace -> Deleted "${deleteIng.metadata.name}" ingress to create a new one.`
+			);
+	}
 
 	// ! ALWAYS Create new ingress
 	const ING_CONTENT = objectToDeploymentYaml(ingress);
