@@ -1,3 +1,13 @@
+## [2.8.8](https://github.com/digitopvn/diginext/compare/v2.8.7...v2.8.8) (2023-04-03)
+
+
+### Bug Fixes
+
+* **admin:** assign role to users ([0e2272d](https://github.com/digitopvn/diginext/commit/0e2272db3ecb198f34f63c4629a6f707c450820c))
+* **server:** filter user roles by workspace and assign new role to user ([e10298b](https://github.com/digitopvn/diginext/commit/e10298ba9faf5a607336d07511f86c13dcb561f3))
+* **server:** migrate and assign role to user ([913c743](https://github.com/digitopvn/diginext/commit/913c743d9dc59b36629eb6afc0c3a0beb8133e2e))
+* **server:** register controller for all api routes ([678826f](https://github.com/digitopvn/diginext/commit/678826f04b91b9d33b3b0a8a8e49d0f3498f9411))
+
 ## [2.8.7](https://github.com/digitopvn/diginext/compare/v2.8.6...v2.8.7) (2023-03-31)
 
 
