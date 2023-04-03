@@ -31,11 +31,11 @@ export default class UserController extends BaseController<User> {
 	async read(@Queries() queryParams?: IGetQueryParams) {
 		const res = await super.read();
 
-		// console.log("[1] res.data :>> ", res.data);
+		console.log("[1] res.data :>> ", res.data);
 		res.data = isArray(res.data)
 			? await filterRole(this.workspace._id.toString(), res.data)
 			: await filterRole(this.workspace._id.toString(), [res.data]);
-		// console.log("[2] res.data :>> ", res.data);
+		console.log("[2] res.data :>> ", res.data);
 		return res;
 	}
 
@@ -134,7 +134,8 @@ export default class UserController extends BaseController<User> {
 
 			let updatedUser = [user];
 
-			const isUserJoinedThisWorkspace = (user.workspaces || []).map((id) => id.toString()).includes(wsId);
+			const workspaceIds = user.workspaces || [];
+			const isUserJoinedThisWorkspace = workspaceIds.map((id) => id.toString()).includes(wsId);
 			// console.log("isUserJoinedThisWorkspace :>> ", isUserJoinedThisWorkspace);
 
 			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && user.activeWorkspace.toString() === wsId;
@@ -142,7 +143,7 @@ export default class UserController extends BaseController<User> {
 
 			// console.log("user.workspaces :>> ", user.workspaces);
 			if (!isUserJoinedThisWorkspace) {
-				updatedUser = await this.service.update({ _id: userId }, { $push: { workspaces: workspace._id } }, { raw: true });
+				updatedUser = await this.service.update({ _id: userId }, { workspaces: [...workspaceIds, wsId] });
 			}
 			// console.log("[1] updatedUser :>> ", updatedUser[0]);
 

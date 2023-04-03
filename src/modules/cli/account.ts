@@ -85,9 +85,10 @@ export const cliLogin = async (options: CliLoginOptions) => {
 	// "access_token" is VALID -> save it to local machine!
 	saveCliConfig({ access_token, currentWorkspace: currentUser.activeWorkspace as Workspace });
 
-	// console.log(`[AUTH]`, { currentUser });
+	console.log(`[AUTH]`, { currentUser });
 	const { workspaces = [], activeWorkspace } = currentUser;
 	let currentWorkspace;
+	console.log("workspaces :>> ", workspaces);
 	// console.log(`[AUTH]`, { activeWorkspace });
 
 	// If no workspace existed, create new here!

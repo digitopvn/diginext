@@ -29,7 +29,7 @@ export async function filterRole(workspaceId: string, list: User[] = []) {
 				if (isObjectId(ws)) {
 					return wsId === ws.toString();
 				} else if ((ws as Workspace)._id) {
-					return (ws as Workspace)._id.toString() === ws.toString();
+					return wsId === (ws as Workspace)._id.toString();
 				} else {
 					return false;
 				}
