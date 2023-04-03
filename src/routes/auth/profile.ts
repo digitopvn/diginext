@@ -3,12 +3,13 @@ import type { NextFunction, Request, Response } from "express";
 import express from "express";
 
 import { authenticate } from "@/middlewares/authenticate";
+import { authorize } from "@/middlewares/authorize";
 
 // Auth with session
 // import { authenticate } from "@/middlewares/authenticate";
 
 const router = express.Router();
 
-router.get("/", authenticate, async (req: Request, res: Response, next: NextFunction) => ApiResponse.succeed(res, req.user));
+router.get("/", authenticate, authorize, async (req: Request, res: Response, next: NextFunction) => ApiResponse.succeed(res, req.user));
 
 export default router;

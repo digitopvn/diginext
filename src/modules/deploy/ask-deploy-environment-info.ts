@@ -88,6 +88,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	if (typeof serverAppConfig.environment === "undefined") serverAppConfig.environment = {};
 	const serverDeployEnvironment = serverAppConfig.environment[env] || {};
 
+	// TODO: move this part to server side?
 	if (
 		serverAppConfig.project !== localAppConfig.project ||
 		serverAppConfig.slug !== localAppConfig.slug ||
@@ -286,6 +287,11 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	if (options.isDebugging) log(`[ASK DEPLOY INFO] updateAppData :>>`, updateAppData);
 
 	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updateAppData);
+
+	if (!updatedApp) {
+		logError(`App not found (probably deleted?)`);
+		return;
+	}
 
 	if (options.isDebugging) log(`[ASK DEPLOY INFO] updatedApp :>>`, updatedApp);
 

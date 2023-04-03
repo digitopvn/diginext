@@ -11,7 +11,7 @@ import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
 import type { Cluster, Release } from "@/entities";
-import type { IResourceQuota, KubeService } from "@/interfaces";
+import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { objectToDeploymentYaml, waitUntil } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
@@ -196,6 +196,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		endpoint: endpointUrl,
 		namespace,
 		env,
+		appConfig,
 	} = releaseData as Release;
 
 	log(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
@@ -238,31 +239,12 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		}
 	}
 
-	// log(`1`, { isNsExisted });
-
-	/**
-	 * Check if there is "imagePullSecrets" within the namespace, if not -> create one
-	 */
-	// const allSecrets = await ClusterManager.getAllSecrets(namespace, { context });
-	// let isImagePullSecretExisted = false;
-	// if (allSecrets && allSecrets.length > 0) {
-	// 	const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
-	// 	if (imagePullSecret) isImagePullSecretExisted = true;
-	// }
-	// if (!isImagePullSecretExisted) {
-	// 	try {
-	// 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
-	// 	} catch (e) {
-	// 		throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
-	// 	}
-	// }
+	// create "imagePullSecret" in namespace:
 	try {
 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
 	} catch (e) {
 		throw new Error(`[ROLL OUT] Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
 	}
-
-	// log(`2`, { isImagePullSecretExisted });
 
 	/**
 	 * 1. Create SERVICE & INGRESS
@@ -274,7 +256,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		resourceQuota: IResourceQuota = {},
 		service: KubeService,
 		svcName,
-		ingress,
+		ingress: KubeIngress,
 		ingressName,
 		deployment,
 		deploymentName;
@@ -320,18 +302,36 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		);
 
 	if (onUpdate) onUpdate(`Created new service named "${appSlug}".`);
-	// }
 
-	// Apply "BASE_PATH" when neccessary
-	// const BASE_PATH = getValueOfKubeEnvVarsByName("BASE_PATH", envVars);
-	// if (BASE_PATH) {
-	// 	const basePathResult = await execCmd(
-	// 		`kubectl --context=${context} -n ${namespace} patch ingress ${ingressName} --type='json' -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"${BASE_PATH}"}]'`
-	// 	);
-	// 	console.log("[INGRESS] basePathResult :>> ", basePathResult);
-	// }
+	// check ingress domain has been used yet or not:
+	let isDomainUsed = false,
+		usedDomain: string,
+		deleteIng: KubeIngress;
 
-	// log(`4`, { currentServices });
+	const domains = ingress.spec.rules.map((rule) => rule.host) || [];
+	console.log("domains :>> ", domains);
+
+	if (domains.length > 0) {
+		const allIngresses = await ClusterManager.getAllIngresses({ context });
+
+		allIngresses.filter((ing) => {
+			domains.map((domain) => {
+				if (ing.spec.rules.map((rule) => rule.host).includes(domain)) {
+					isDomainUsed = true;
+					usedDomain = domain;
+					deleteIng = ing;
+				}
+			});
+		});
+		if (isDomainUsed) {
+			await ClusterManager.deleteIngress(deleteIng.metadata.name, deleteIng.metadata.namespace, { context });
+
+			if (onUpdate)
+				onUpdate(
+					`Domain "${usedDomain}" has been used before at "${deleteIng.metadata.namespace}" namespace -> Deleted "${deleteIng.metadata.name}" ingress to create a new one.`
+				);
+		}
+	}
 
 	// ! ALWAYS Create new ingress
 	const ING_CONTENT = objectToDeploymentYaml(ingress);

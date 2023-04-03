@@ -326,6 +326,7 @@ export default class AppController extends BaseController<App> {
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPatchQueryParams) {
+		console.log("AppController > this.filter :>> ", this.filter);
 		let project: Project,
 			projectSvc = new ProjectService();
 
