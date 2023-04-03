@@ -56,6 +56,8 @@ export async function fetchApi<T = any>(options: AxiosRequestConfig & { access_t
 		options.headers = { ...options.headers, Authorization: `Bearer ${cachedAccessToken}` };
 	} else if (currentUser?.token?.access_token) {
 		options.headers = { ...options.headers, Authorization: `Bearer ${currentUser.token?.access_token}` };
+	} else {
+		options.headers = { ...options.headers };
 	}
 
 	if (["POST", "PATCH"].includes(method?.toUpperCase())) {
