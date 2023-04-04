@@ -23,7 +23,7 @@ import { createAppByForm } from "./new-app-by-form";
 export default async function createApp(options: InputOptions) {
 	// FORM > Create new project & app:
 	const newApp = await createAppByForm(options);
-	console.log("newApp :>> ", newApp);
+	// console.log("newApp :>> ", newApp);
 
 	// make sure it always create new directory:
 	options.skipCreatingDirectory = false;
