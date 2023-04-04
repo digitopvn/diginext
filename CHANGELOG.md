@@ -1,3 +1,14 @@
+## [2.8.10](https://github.com/digitopvn/diginext/compare/v2.8.9...v2.8.10) (2023-04-04)
+
+
+### Bug Fixes
+
+* **admin:** add profile page ([6fa1056](https://github.com/digitopvn/diginext/commit/6fa10564451992794ecd7c25e254d673869dde5f))
+* **server and admin:** improve ux when create or update cluster ([d523acb](https://github.com/digitopvn/diginext/commit/d523acbac420cf9abe0c5eab5b44ad50bdf98024))
+* **server:** add member permissions to release and build api ([acf421e](https://github.com/digitopvn/diginext/commit/acf421e5e713d6257ffcfa0620b02e0a19c6b71f))
+* **server:** generate domain on server will not use api but direct function ([e47ec5c](https://github.com/digitopvn/diginext/commit/e47ec5ce154aa37ae27e4b42975f6902c0cd60d7))
+* **server:** workspace id is string issue when create new build ([aef411e](https://github.com/digitopvn/diginext/commit/aef411e45c9dbc0091483228c3c429fd2b62102d))
+
 ## [2.8.9](https://github.com/digitopvn/diginext/compare/v2.8.8...v2.8.9) (2023-04-03)
 
 
