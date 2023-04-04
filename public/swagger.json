@@ -9303,20 +9303,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/ResponseData"
-										},
-										{
-											"properties": {
-												"data": {
-													"$ref": "#/components/schemas/Release"
-												}
-											},
-											"required": ["data"],
-											"type": "object"
-										}
-									]
+									"$ref": "#/components/schemas/ResponseData"
 								}
 							}
 						}
@@ -9359,20 +9346,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/ResponseData"
-										},
-										{
-											"properties": {
-												"data": {
-													"$ref": "#/components/schemas/Release"
-												}
-											},
-											"required": ["data"],
-											"type": "object"
-										}
-									]
+									"$ref": "#/components/schemas/ResponseData"
 								}
 							}
 						}

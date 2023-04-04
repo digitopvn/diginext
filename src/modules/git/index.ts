@@ -309,6 +309,8 @@ export const verifySSH = async (options?: InputOptions) => {
 	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
 	const idRsaDir = SSH_DIR;
 
+	if (!existsSync(SSH_DIR)) await execCmd(`mkdir -p ${HOME_DIR}/.ssh`);
+
 	let publicIdRsaFile: string, privateIdRsaFile: string;
 	let privateIdRsaFiles: string[];
 
@@ -336,21 +338,23 @@ export const verifySSH = async (options?: InputOptions) => {
 
 	const gitDomain = gitProviderDomain[gitProvider];
 
-	await execCmd(`mkdir -p ${HOME_DIR}/.ssh`);
-	await execCmd(`touch ${HOME_DIR}/.ssh/known_hosts`);
+	const KNOWN_HOSTS_PATH = path.resolve(SSH_DIR, "known_hosts");
+	if (!existsSync(KNOWN_HOSTS_PATH)) await execCmd(`touch ${HOME_DIR}/.ssh/known_hosts`);
+
+	const KNOWN_HOSTS_CONTENT = readFileSync(KNOWN_HOSTS_PATH, "utf8");
 	await execCmd(`ssh-keyscan ${gitDomain} >> ${HOME_DIR}/.ssh/known_hosts`);
-	await execCmd(`touch ${HOME_DIR}/.ssh/config`);
 
 	if (!isEmpty(privateIdRsaFiles)) {
+		await execCmd(`touch ${HOME_DIR}/.ssh/config`);
 		const sshConfigContent = (await execCmd(`cat ${HOME_DIR}/.ssh/config`)) || "";
 		for (const idRsaFile of privateIdRsaFiles) {
 			// log(`[GIT] sshConfigContent.indexOf("${idRsaFile}"):`, sshConfigContent.indexOf(idRsaFile));
 			// log(`[GIT] sshConfigContent.indexOf("${gitDomain}"):`, sshConfigContent.indexOf(gitDomain));
 			if (sshConfigContent.indexOf(idRsaFile) === -1 || sshConfigContent.indexOf(gitDomain) === -1) {
 				await execCmd(`echo "Host ${gitDomain}" >> ${HOME_DIR}/.ssh/config`);
-				if (isMac()) await execCmd(`echo "  UseKeychain yes" >> ${HOME_DIR}/.ssh/config`);
-				await execCmd(`echo "  AddKeysToAgent yes" >> ${HOME_DIR}/.ssh/config`);
-				await execCmd(`echo "  IdentityFile ${idRsaFile}" >> ${HOME_DIR}/.ssh/config`);
+				if (isMac()) await execCmd(`echo "	UseKeychain yes" >> ${HOME_DIR}/.ssh/config`);
+				await execCmd(`echo "	AddKeysToAgent yes" >> ${HOME_DIR}/.ssh/config`);
+				await execCmd(`echo "	IdentityFile ${idRsaFile}" >> ${HOME_DIR}/.ssh/config`);
 			}
 		}
 	}

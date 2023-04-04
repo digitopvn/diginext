@@ -648,15 +648,21 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	};
 
 	if (fs.existsSync(dir)) {
-		git = simpleGit(dir, { progress: onProgress });
-		const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
-		const originRemote = remotes[0];
-		if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
+		try {
+			git = simpleGit(dir, { progress: onProgress });
+			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
+			const originRemote = remotes[0];
+			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
+			console.log("originRemote :>> ", originRemote);
+			if (originRemote.refs.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
 
-		if (originRemote.refs.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
-
-		const curBranch = await getCurrentGitBranch(dir);
-		await git.pull("origin", curBranch, ["--no-ff"]);
+			const curBranch = await getCurrentGitBranch(dir);
+			await git.pull("origin", curBranch, ["--no-ff"]);
+		} catch (e) {
+			// for CLI create new app from a framework
+			git = simpleGit({ progress: onProgress });
+			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+		}
 	} else {
 		git = simpleGit({ progress: onProgress });
 		await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
@@ -689,7 +695,7 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 
 		return { remoteSSH, remoteURL, provider, slug, fullSlug, namespace, gitDomain, branch };
 	} catch (e) {
-		logWarn(`getCurrentGitRepoData() :>>`, e);
+		logWarn(`getCurrentGitRepoData() :>>`, e.toString());
 		return;
 	}
 };
