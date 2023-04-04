@@ -9,7 +9,7 @@ export async function authorize(req: Request, res: Response, next: NextFunction)
 	let user = (req as any).user as User;
 
 	const { baseUrl: route, method } = req;
-	console.log("authorize > route :>> ", route);
+	// console.log("authorize > route :>> ", route);
 
 	// filter roles
 	const wsId = (user.activeWorkspace as Workspace)._id ? (user.activeWorkspace as Workspace)._id.toString() : user.activeWorkspace.toString();
@@ -43,16 +43,6 @@ export async function authorize(req: Request, res: Response, next: NextFunction)
 	 */
 	// const { roles } = user;
 	const roles = user.roles as Role[];
-	console.log("authorize > requestPermission :>> ", requestPermission);
-	console.log(
-		`authorize > roles :>> `,
-		roles.map((role) =>
-			role.routes.map((r) => {
-				return { route: r.route, permissions: r.permissions.join(",") };
-			})
-		)
-	);
-	// console.log("authorize > user :>> ", user.name, "-", user._id);
 
 	// get "routes" -> find "key" as route & "value" as IRole
 	roles.map((role) => {
@@ -96,8 +86,16 @@ export async function authorize(req: Request, res: Response, next: NextFunction)
 				}
 			});
 	});
-	console.log("authorize > req.query :>> ", req.query);
-	console.log("authorize > isAllowed :>> ", isAllowed);
+	// console.log("authorize > requestPermission :>> ", requestPermission);
+	console.log(
+		`authorize > request [${requestPermission}] > roles :>> `,
+		roles.map((role) => role.routes.map((r) => `${r.route} - ${r.permissions.join(",")}`)),
+		`>> ALLOW:`,
+		isAllowed
+	);
+	// console.log("authorize > user :>> ", user.name, "-", user._id);
+	// console.log("authorize > req.query :>> ", req.query);
+	// console.log("authorize > isAllowed :>> ", isAllowed);
 	if (!isAllowed) return ApiResponse.rejected(res);
 
 	// always lock query filter to workspace scope
