@@ -1,77 +1,67 @@
-import { log } from "diginext-utils/dist/console/log";
+import dayjs from "dayjs";
+import { log, logError } from "diginext-utils/dist/console/log";
 
-import { isServerMode } from "@/app.config";
 import type { App, Build, Project } from "@/entities";
-import { logError } from "@/plugins";
-import { AppService, BuildService, ProjectService } from "@/services";
+import type { BuildStatus } from "@/interfaces/SystemTypes";
 
-import { fetchApi } from "../api";
+import { DB } from "../api/DB";
 
-export async function updateBuildStatus(appSlug: string, buildSlug: string, buildStatus: "start" | "building" | "failed" | "success") {
-	const buildSvc = new BuildService();
-
-	// find the existing project
-	if (!appSlug) {
-		logError(`updateBuildStatus > "appSlug" is required.`);
+export async function updateBuildStatus(build: Build, status: BuildStatus) {
+	if (!build) {
+		logError(`[START BUILD] updateBuildStatus > "build" is required.`);
 		return;
 	}
 
-	let app, appSvc;
-	if (isServerMode) {
-		appSvc = new AppService();
-		app = await appSvc.findOne({ slug: appSlug });
-	} else {
-		const { data: apps } = await fetchApi<App>({ url: `/api/v1/app?slug=${appSlug}` });
-		app = apps[0];
+	const appId = (build.app as any)?._id ? (build.app as any)._id : build.app;
+	log(`[START BUILD] updateBuildStatus > appId :>>`, appId);
+
+	const startTime = build.startTime ? dayjs(build.startTime) : undefined;
+	const endTime = status === "failed" || status === "success" ? new Date() : undefined;
+	const duration = endTime ? dayjs(endTime).diff(startTime, "millisecond") : undefined;
+
+	const [updatedBuild] = await DB.update<Build>("build", { _id: build._id }, { status, endTime, duration }, { populate: ["project"] });
+	if (!updatedBuild) {
+		logError(`[START BUILD] updateBuildStatus >> error!`);
+		return;
 	}
 
-	// log(`updateBuildStatus >`, { app });
+	// update latest build to current app
+	const [updatedApp] = await DB.update<App>("app", { _id: appId }, { latestBuild: build.slug });
+	log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp.latestBuild);
+
+	const [updatedProject] = await DB.update<Project>("project", { _id: updatedApp.project }, { latestBuild: build.slug });
+	log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject.latestBuild);
+
+	return updatedBuild;
+}
+
+export async function updateBuildStatusByAppSlug(appSlug: string, buildSlug: string, buildStatus: BuildStatus) {
+	// find the existing project
+	if (!appSlug) {
+		logError(`[START BUILD] updateBuildStatus > "appSlug" is required.`);
+		return;
+	}
+
+	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
 
 	// update latest build to current project
 	let projectSlug = (app.project as Project).slug;
-	if (isServerMode) {
-		const projectSvc = new ProjectService();
-		await projectSvc.update({ slug: projectSlug }, { latestBuild: buildSlug });
-	} else {
-		await fetchApi<Project>({
-			url: "/api/v1/project?slug=" + projectSlug,
-			method: "PATCH",
-			data: { latestBuild: buildSlug },
-		});
-	}
-	// log(`updateBuildStatus >`, { project });
+	// log(`[START BUILD] updateBuildStatus > projectSlug :>>`, projectSlug);
+
+	const [updatedProject] = await DB.update<Project>("project", { slug: projectSlug }, { latestBuild: buildSlug });
+	// log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject.latestBuild);
 
 	// update latest build to current app
-	if (isServerMode) {
-		await appSvc.update({ slug: appSlug }, { latestBuild: buildSlug });
-	} else {
-		await fetchApi<App>({
-			url: "/api/v1/app?slug=" + appSlug,
-			method: "PATCH",
-			data: { latestBuild: buildSlug },
-		});
-	}
-	// log(`updateBuildStatus >`, { updatedApp });
+	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, { latestBuild: buildSlug });
+	// log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp.latestBuild);
 
-	// update build's status on Digirelease
-	let updatedBuild;
-	if (isServerMode) {
-		updatedBuild = await buildSvc.update({ slug: buildSlug }, { status: buildStatus });
+	// update build's status on server
+	const [updatedBuild] = await DB.update<Build>("build", { slug: buildSlug }, { status: buildStatus }, { populate: ["project"] });
+	if (updatedBuild) {
+		// log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> new status: ${buildStatus.toUpperCase()}`);
+		return updatedBuild;
 	} else {
-		const res = await fetchApi<Build>({
-			url: "/api/v1/build?slug=" + buildSlug,
-			method: "PATCH",
-			data: { status: buildStatus },
-		});
-		updatedBuild = res.data;
-	}
-	// log(`updateBuildStatus >> res:`, res);
-
-	if (updatedBuild && updatedBuild.length > 0) {
-		log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> ${buildStatus}`);
-		return updatedBuild[0] ?? updatedBuild;
-	} else {
-		logError(`updateBuildStatus >> error!`);
-		return { error: "Something is wrong..." };
+		logError(`[START BUILD] updateBuildStatus >> error!`);
+		return;
 	}
 }

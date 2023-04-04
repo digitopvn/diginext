@@ -1,16 +1,18 @@
 import { IsNotEmpty } from "class-validator";
 
+import { BuildStatus } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
 import type { App } from "./App";
 import Base from "./Base";
+import type ContainerRegistry from "./ContainerRegistry";
 import type Project from "./Project";
 import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "builds" })
-export default class Build extends Base<Build> {
+export default class Build extends Base {
 	@Column({ length: 250 })
 	@IsNotEmpty({ message: `Build name is required.` })
 	name?: string;
@@ -18,29 +20,69 @@ export default class Build extends Base<Build> {
 	@Column({ type: "string" })
 	image?: string;
 
+	/**
+	 * Image tag is also "buildNumber"
+	 */
 	@Column({ type: "string" })
 	tag?: string;
 
-	@Column({ type: "string" })
-	slug?: string;
+	/**
+	 * Build start time
+	 */
+	@Column({ type: "datetime" })
+	startTime?: Date;
 
+	/**
+	 * Build end time
+	 */
+	@Column({ type: "datetime" })
+	endTime?: Date;
+
+	/**
+	 * Build duration in miliseconds
+	 */
+	@Column({ type: "number" })
+	duration?: number;
+
+	/**
+	 * Build for which deploy environment
+	 * - **[OPTIONAL] SHOULD NOT rely on this!**
+	 * - A build should be able to used for any deploy environments.
+	 */
 	@Column({ type: "string" })
 	env?: string;
 
+	/**
+	 * Build from which git branch
+	 */
 	@Column()
 	branch?: string;
+
+	@Column()
+	cliVersion?: string;
 
 	@Column({ type: "string" })
 	createdBy?: string;
 
 	@Column({ type: "string" })
-	status?: "start" | "building" | "failed" | "success";
+	status?: BuildStatus;
 
 	@Column({ type: "string" })
 	projectSlug?: string;
 
 	@Column({ type: "string" })
 	appSlug?: string;
+
+	@Column({ type: "string" })
+	logs?: string;
+
+	/**
+	 * ID of the container registry
+	 *
+	 * @remarks This can be populated to {ContainerRegistry} data
+	 */
+	@Column({ type: "string" })
+	registry?: ObjectID | ContainerRegistry | string;
 
 	/**
 	 * ID of the app

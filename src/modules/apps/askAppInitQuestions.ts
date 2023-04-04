@@ -1,13 +1,13 @@
 import { logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 
-import { getCliConfig, saveCliConfig } from "@/config/config";
+import { saveCliConfig } from "@/config/config";
 import Framework from "@/entities/Framework";
 import type GitProvider from "@/entities/GitProvider";
 import type Project from "@/entities/Project";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
-import createProject from "@/modules/project/createProject";
+import createProjectByForm from "@/modules/project/create-project";
 
 export async function askAppInitQuestions(options?: InputOptions) {
 	if (!options.project) {
@@ -48,14 +48,14 @@ export async function askAppInitQuestions(options?: InputOptions) {
 			options.projectSlug = selectedProject.slug;
 			options.projectName = selectedProject.name;
 		} else {
-			const newProject = await createProject(options);
+			const newProject = await createProjectByForm(options);
 			options.project = newProject;
 			options.projectSlug = newProject.slug;
 			options.projectName = newProject.name;
 		}
 	}
 
-	options.namespace = options.projectSlug;
+	options.namespace = `${options.projectSlug}-${options.env || "dev"}`;
 
 	if (!options.name) {
 		const { name } = await inquirer.prompt({
@@ -76,9 +76,9 @@ export async function askAppInitQuestions(options?: InputOptions) {
 	options.framework = new Framework({ name: "unknown", slug: "unknown" });
 	options.frameworkVersion = "unknown";
 
-	if (options.git) {
-		if (options.gitProvider) {
-			let currentGitProvider;
+	if (options.shouldUseGit) {
+		let currentGitProvider;
+		if (!options.gitProvider) {
 			const { status, data, messages } = await fetchApi<GitProvider>({
 				url: `/api/v1/git`,
 			});
@@ -107,12 +107,18 @@ export async function askAppInitQuestions(options?: InputOptions) {
 				// set this git provider to default:
 				saveCliConfig({ currentGitProvider });
 			} else {
-				options.git = false;
+				options.shouldUseGit = false;
 			}
 		} else {
-			// select default git provider
-			const { currentGitProvider } = getCliConfig();
-			if (currentGitProvider) options.gitProvider = currentGitProvider.slug;
+			// search for this git provider
+			const { status, data, messages } = await fetchApi<GitProvider>({
+				url: `/api/v1/git?slug=${options.gitProvider}`,
+			});
+			if (!status) return logError(messages);
+			currentGitProvider = data[0] as GitProvider;
+
+			// set this git provider to default:
+			saveCliConfig({ currentGitProvider });
 		}
 	}
 

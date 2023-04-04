@@ -30,9 +30,6 @@ RUN rm -rf ./.env.local
 RUN rm -rf ./.env.production
 RUN rm -rf ./.env
 
-# Copy ENV file
-COPY ./deployment/.env.{{env}} ./.env
-
 # Build app
 RUN yarn build
 

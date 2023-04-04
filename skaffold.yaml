@@ -1,12 +1,18 @@
 apiVersion: skaffold/v4beta1
 kind: Config
 metadata:
-  name: diginext-cli
+  name: diginext
 build:
+  platforms: ["linux/arm64", "linux/amd64"]
+  tagPolicy:
+    gitCommit: 
+      ignoreChanges: true
   artifacts:
-    - image: digitop/diginext-cli
+    - image: digitop/diginext
       docker:
         dockerfile: Dockerfile
 manifests:
   rawYaml:
     - deployment.yaml
+deploy:
+  kubeContext: topgroup-k3s

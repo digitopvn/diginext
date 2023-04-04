@@ -2,6 +2,7 @@ import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 import execa from "execa";
 import yargs from "yargs";
 
+import { Config } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
 import type InputOptions from "@/interfaces/InputOptions";
@@ -21,7 +22,7 @@ export const startBuildServer = async () => {
 	await checkPackageDependency("kubectl", "config view");
 	await checkPackageDependency("doctl", "version");
 	await checkPackageDependency("git", "--version");
-	await checkPackageDependency("docker", "--version");
+	await checkPackageDependency(Config.BUILDER, "--version");
 
 	// switch working directory to CLI directory
 	process.chdir(CLI_DIR);

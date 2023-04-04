@@ -7,11 +7,11 @@ import execa from "execa";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
-import { execConfig } from "@/config/config";
+import { execConfig, getCliConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
-import createApp from "@/modules/apps/createApp";
-import { startBuild } from "@/modules/build/start-build";
+import createApp from "@/modules/apps/new-app";
+import { startBuildV1 } from "@/modules/build/start-build";
 import { execCDN } from "@/modules/cdn";
 import { cliAuthenticate, cliLogin, cliLogout, parseCliOptions } from "@/modules/cli";
 import { execDatabase } from "@/modules/db";
@@ -24,11 +24,21 @@ import DigitalOcean, { execDigitalOcean } from "@/modules/providers/digitalocean
 import GCloud, { execGoogleCloud } from "@/modules/providers/gcloud";
 import { execRegistry } from "@/modules/registry";
 import { execServer } from "@/modules/server";
-import { freeUp, getOS, logInfo, logVersion } from "@/plugins";
+import { currentVersion, freeUp, getOS } from "@/plugins";
 
-import { execInitApp } from "./modules/apps/initApp";
+import { CLI_CONFIG_FILE, CLI_DIR } from "./config/const";
+import { execInitApp } from "./modules/apps/init-app";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
+import { updateCli } from "./modules/cli/update-cli";
+import { execCluster } from "./modules/cluster/cli-cluster";
+import { execDotenvCommand } from "./modules/deploy/dotenv-exec";
 import { execRollOut } from "./modules/deploy/exec-rollout";
+import { parseOptionsToAppConfig } from "./modules/deploy/parse-options-to-app-config";
+import { requestDeploy } from "./modules/deploy/request-deploy";
+import { requestDeployImage } from "./modules/deploy/request-deploy-image";
+import { execKubectl } from "./modules/k8s/kubectl-cli";
+import { showServerInfo } from "./modules/server/server-info";
+import { testCommand } from "./modules/test";
 
 /**
  * Initialize CONFIG STORE (in document directory of the local machine)
@@ -36,40 +46,24 @@ import { execRollOut } from "./modules/deploy/exec-rollout";
 export const conf = new Configstore(pkg.name);
 
 export async function processCLI(options?: InputOptions) {
-	// let options = parseArgumentsIntoOptions(args);
+	options.version = currentVersion();
+
+	const { buildServerUrl } = getCliConfig();
 
 	if (options.isDebugging) {
-		logVersion();
-		logInfo(chalk.cyan("---------------- DEBUG ----------------"));
-		logInfo(`• OS:	`, getOS().toUpperCase());
-		logInfo("• Node:	", (await execa("node", ["-v"])).stdout);
-		logInfo("• NPM:	", (await execa("npm", ["-v"])).stdout);
-		logInfo("• Docker:	", (await execa("docker", ["-v"])).stdout);
-		logInfo("• Mode:	", process.env.CLI_MODE || "client");
-		logInfo(chalk.cyan("---------------------------------------"));
+		log(chalk.cyan("---------------- DEBUG ----------------"));
+		log(`• OS:		`, getOS().toUpperCase());
+		log("• Node:		", (await execa("node", ["-v"])).stdout);
+		log("• NPM:			", (await execa("npm", ["-v"])).stdout);
+		log("• Docker:		", (await execa("docker", ["-v"])).stdout);
+		log("• Mode:		", process.env.CLI_MODE || "client");
+		log("• CLI Version:	", options.version);
+		log("• CLI Dir:	", CLI_DIR);
+		log("• CLI Config:	", CLI_CONFIG_FILE);
+		log("• Working dir:	", process.cwd());
+		log("• Server URL:	", buildServerUrl);
+		log(chalk.cyan("---------------------------------------"));
 	}
-
-	// TODO: Add checking for new CLI version
-	// if (options.shouldUpdateCli || options.action == "update") {
-	// 	options = await promptForAuthOptions(options);
-	// 	await authenticateBitbucket(options);
-	// 	await parseOptions(options);
-	// 	await updateCli();
-	// 	return;
-	// }
-
-	// check for new version
-	// const newVersion = await checkForUpdate();
-
-	// print help
-	// if (options.shouldShowHelp) {
-	// 	printHelp();
-	// 	return;
-	// }
-
-	// if (typeof options.action === "undefined") {
-	// 	return;
-	// }
 
 	let env = "dev";
 	if (options.isStaging) env = "staging";
@@ -77,8 +71,16 @@ export async function processCLI(options?: InputOptions) {
 	if (options.env) env = options.env;
 
 	switch (options.action) {
+		case "test":
+			await testCommand(options);
+			break;
+
+		case "info":
+			await showServerInfo(options);
+			break;
+
 		case "login":
-			await cliLogin(options);
+			await cliLogin({ secondAction: options.secondAction, url: options.url, accessToken: options.token });
 			break;
 
 		case "logout":
@@ -96,9 +98,9 @@ export async function processCLI(options?: InputOptions) {
 			await execConfig(options);
 			break;
 
-		// case "update":
-		// 	await updateCli(newVersion || options.secondAction);
-		// 	break;
+		case "update":
+			await updateCli();
+			break;
 
 		case "new":
 			await cliAuthenticate(options);
@@ -173,6 +175,11 @@ export async function processCLI(options?: InputOptions) {
 			await execGit(options);
 			return;
 
+		case "cluster":
+			await cliAuthenticate(options);
+			await execCluster(options);
+			return;
+
 		case "db":
 			await cliAuthenticate(options);
 			await execDatabase(options, env);
@@ -183,21 +190,39 @@ export async function processCLI(options?: InputOptions) {
 			await execPipeline(options);
 			return;
 
+		case "kb":
+			await cliAuthenticate(options);
+			await execKubectl(options);
+			return;
+
 		case "build":
 			await cliAuthenticate(options);
 			options.isLocal = true;
-			await startBuild(options, { shouldRollout: false });
+			await parseOptionsToAppConfig(options);
+			await startBuildV1(options, { shouldRollout: false });
 			return;
 
 		case "run":
 			await cliAuthenticate(options);
 			options.isLocal = true;
+			await parseOptionsToAppConfig(options);
 			await startBuildAndRun(options);
+			return;
+
+		case "dotenv":
+			await cliAuthenticate(options);
+			await execDotenvCommand(options);
 			return;
 
 		case "deploy":
 			await cliAuthenticate(options);
-			await deploy.execDeploy(options);
+			if (options.secondAction) {
+				// deploy from image url
+				await requestDeployImage(options.secondAction, options);
+			} else {
+				// deploy from source
+				await requestDeploy(options);
+			}
 			return;
 
 		case "rollout":
@@ -230,6 +255,7 @@ if (process.env.CLI_MODE == "server") {
 	import("@/server");
 } else {
 	// Execute CLI commands...
-	const inputOptions = parseCliOptions();
-	processCLI(inputOptions).then(() => process.exit(0));
+	parseCliOptions().then((inputOptions) => {
+		processCLI(inputOptions).then(() => process.exit(0));
+	});
 }

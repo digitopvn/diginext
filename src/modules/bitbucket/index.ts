@@ -19,10 +19,11 @@ const writeFile = util.promisify(fs.writeFile);
 
 import { simpleGit } from "simple-git";
 
+import { conf } from "@/index";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
-import { conf } from "../../main";
-import { deleteFolderRecursive, execCmd, logBitbucketError } from "../../plugins";
+// import { conf } from "../cli/update-cli";
+import { deleteFolderRecursive, logBitbucketError, pullOrCloneGitRepo } from "../../plugins";
 
 export let bitbucket, workspaceId;
 
@@ -160,19 +161,19 @@ interface GitStageOptions {
  *
  */
 export async function stageAllFiles(options: GitStageOptions) {
-	const { directory = "./", message = "build(prepare for building) commit all files, push to origin" } = options;
+	const { directory = "./", message = "build(prepare): commit all files & push to origin" } = options;
 	const git = simpleGit(directory, { binary: "git" });
 	const gitStatus = await git.status(["-s"]);
-	log("[current branch]", gitStatus.current);
+	// log("[current branch]", gitStatus.current);
 
 	const currentBranch = gitStatus.current;
 	const currentBranchKebab = _.kebabCase(currentBranch);
-	const commitMessage = message;
 
 	// commit & push everything, then try to merge "master" to current branch
 	try {
+		await git.pull("origin", currentBranch, ["--no-ff"]);
 		await git.add("./*");
-		await git.commit(commitMessage);
+		await git.commit(message);
 		await git.push("origin", currentBranch);
 	} catch (e) {
 		logError(e);
@@ -195,16 +196,11 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	}
 	await mkdir(tmpDir);
 
-	await execCmd(`git clone -b ${frameworkVersion} --single-branch ${repoSSH} ${tmpDir}`, "Failed to connect to the git provider.");
+	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, { onUpdate: (msg) => console.log(msg) });
 
 	// delete unneccessary files
+	if (fs.existsSync(".fw/dx.json")) await deleteFolderRecursive(".fw/dx.json");
 	if (fs.existsSync(".fw/.git")) await deleteFolderRecursive(".fw/.git");
-	if (fs.existsSync(".fw/deployment")) await deleteFolderRecursive(".fw/deployment");
-	if (fs.existsSync(".fw/bitbucket-pipelines.yaml")) fs.unlinkSync(".fw/bitbucket-pipelines.yaml");
-	if (fs.existsSync(".fw/pages/dashkit")) await deleteFolderRecursive(".fw/pages/dashkit");
-	if (fs.existsSync(".fw/pages/examples")) await deleteFolderRecursive(".fw/pages/examples");
-	if (fs.existsSync(".fw/release")) fs.unlinkSync(".fw/release");
-	if (fs.existsSync(".fw/beta")) fs.unlinkSync(".fw/beta");
 	if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
 	if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
 	if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
@@ -214,6 +210,10 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	return true;
 };
 
+/**
+ * @deprecated
+ * @param all
+ */
 export const patchResources = async (all = true) => {
 	// await copyFile();
 	const updateList = [

@@ -1,19 +1,25 @@
 import { IsNotEmpty } from "class-validator";
 
+import { AppConfig } from "@/interfaces";
+import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
+import { BuildStatus } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
 import Base from "./Base";
-import type { App, Project, User, Workspace } from "./index";
+import type { App, Build, Project, User, Workspace } from "./index";
 
 @Entity({ name: "releases" })
-export default class Release extends Base<Release> {
+export default class Release extends Base {
 	@Column({ length: 250 })
 	@IsNotEmpty({ message: `User name is required.` })
 	name?: string;
 
 	@Column()
 	image?: string;
+
+	@Column()
+	cliVersion?: string;
 
 	/**
 	 * Targeted environment.
@@ -26,7 +32,7 @@ export default class Release extends Base<Release> {
 	 * Environment variables
 	 */
 	@Column()
-	envVars?: any[] | string;
+	envVars?: KubeEnvironmentVariable[];
 
 	/**
 	 * ONLY PRE-RELEASE - Environment variables
@@ -34,8 +40,14 @@ export default class Release extends Base<Release> {
 	@Column()
 	prereleaseEnvironment?: any[] | string;
 
+	/**
+	 * Old "diginext.json"
+	 */
 	@Column()
 	diginext?: any;
+
+	@Column()
+	appConfig?: AppConfig;
 
 	@Column()
 	namespace?: string;
@@ -89,15 +101,23 @@ export default class Release extends Base<Release> {
 	providerProjectId?: string;
 
 	@Column()
-	buildStatus?: "start" | "building" | "failed" | "success";
+	buildStatus?: BuildStatus;
 
 	@Column({ type: "boolean" })
 	active?: boolean;
 
 	/**
+	 * ID of the build
+	 *
+	 * @remarks This can be populated to {Build} data
+	 */
+	@ObjectIdColumn({ name: "builds" })
+	build?: ObjectID | Build | string;
+
+	/**
 	 * ID of the app
 	 *
-	 * @remarks This can be populated to {Project} data
+	 * @remarks This can be populated to {App} data
 	 */
 	@ObjectIdColumn({ name: "apps" })
 	app?: ObjectID | App | string;

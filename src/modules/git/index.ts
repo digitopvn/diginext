@@ -1,16 +1,20 @@
 import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import execa from "execa";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import globby from "globby";
+import { isEmpty } from "lodash";
 import capitalize from "lodash/capitalize";
 import path from "path";
 import { simpleGit } from "simple-git";
 import yargs from "yargs";
 
 import { cliOpts } from "@/config/config";
-import { CLI_DIR } from "@/config/const";
+import { HOME_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
+import type { GitProviderType } from "@/interfaces/SystemTypes";
+import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { execCmd, isMac, wait } from "@/plugins";
 
 import { conf } from "../..";
@@ -22,14 +26,6 @@ import { bitbucketAuthentication } from "../bitbucket/promptForAuthOptions";
 
 // git@github.com:digitopvn/fluffy-dollop.git
 
-export const availableGitProviders = ["bitbucket", "github", "gitlab"];
-
-export const gitProviderDomain = {
-	bitbucket: "bitbucket.org",
-	github: "github.com",
-	gitlab: "gitlab.com",
-};
-
 // TODO: Implement CRUD of git provider
 
 /**
@@ -40,21 +36,27 @@ export const gitProviderDomain = {
  * @example `digitopvn/diginext13`
  * @returns
  */
-export function getRepoSSH(provider: "bitbucket" | "github" | "gitlab" | string, repoSlug: string) {
+export function generateRepoSSH(provider: GitProviderType | string, repoSlug: string) {
 	return `git@${gitProviderDomain[provider]}:${repoSlug}.git`;
 }
 
 /**
  * Generate SSH URL of the git repository
- * @param provider
- * @example `github`
  * @param repoSlug - Include username/org slug, exclude ".git" at the end
  * @example `digitopvn/diginext13`
  * @returns
  */
-export function getRepoURL(provider: "bitbucket" | "github" | "gitlab" | string, repoSlug: string) {
+export function generateRepoURL(provider: GitProviderType | string, repoSlug: string) {
 	return `https://${gitProviderDomain[provider]}/${repoSlug}`;
 }
+
+/**
+ * Generate SSH URL of the git repository
+ * @param repoSlug - Include username/org slug, exclude ".git" at the end
+ * @example `digitopvn/diginext13`
+ * @returns
+ */
+export const getRepoURLFromRepoSSH = generateRepoURL;
 
 export const login = async (options?: InputOptions) => {
 	if (options.thirdAction && options.fourAction) {
@@ -93,16 +95,16 @@ export async function initializeGitRemote(options: InputOptions) {
 	// log("options.gitProvider :>> ", options.gitProvider);
 	// log("options.repoSlug :>> ", options.repoSlug);
 	// log(`options.remoteURL >>`, options.remoteURL);
-	// log(`options.remoteSSH >>`, options.remoteSSH);
+	log(`options.remoteSSH >>`, options.remoteSSH);
 	// log(`options.repoURL >>`, options.repoURL);
 
-	if (options.git && options.gitProvider == "bitbucket") await createBitbucketRepo(options);
+	if (options.shouldUseGit && options.gitProvider == "bitbucket") await createBitbucketRepo(options);
 	// TODO: Create new repo on "github"
 	// TODO: Create new repo on "gitlab"
 
 	log(`Created new repository on ${options.gitProvider}`);
 
-	if (options.git) {
+	if (options.shouldUseGit) {
 		// add git origin:
 		const git = simpleGit(options.targetDirectory, { binary: "git" });
 		await git.addRemote("origin", options.remoteSSH);
@@ -150,14 +152,64 @@ export const createNewPullRequest = async (options?: InputOptions) => {
 	return createPullRequest(options);
 };
 
+export const writeCustomSSHKeys = async (params: { privateKey: string; publicKey: string }) => {
+	const { privateKey, publicKey } = params;
+	if (!privateKey) throw new Error(`[GIT] Write SSH keys > "privateKey" content is required.`);
+	if (!publicKey) throw new Error(`[GIT] Write SSH keys > "publicKey" content is required.`);
+
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	const slug = makeDaySlug({ divider: "" });
+	const privateIdRsaFile = path.resolve(idRsaDir, `id_rsa${slug}`);
+	const publicIdRsaFile = path.resolve(idRsaDir, `id_rsa${slug}.pub`);
+
+	// delete existing files
+	if (existsSync(privateIdRsaFile)) unlinkSync(privateIdRsaFile);
+	if (existsSync(publicIdRsaFile)) unlinkSync(publicIdRsaFile);
+
+	// write content to files
+	writeFileSync(privateIdRsaFile, privateKey, "utf8");
+	writeFileSync(publicIdRsaFile, publicKey, "utf8");
+
+	// Make sure the private key is assigned correct permissions (400)
+	try {
+		await execa.command(`chmod -R 400 ${privateIdRsaFile}`);
+	} catch (e) {
+		throw new Error(`[GIT] Can't assign permission [400] to "id_rsa" private key.`);
+	}
+
+	// await execCmd(`touch ~/.ssh/known_hosts`);
+	// await execCmd(`ssh-keyscan ${gitProviderDomain[gitProvider]} >> ~/.ssh/known_hosts`);
+	// await execCmd(`touch ~/.ssh/config`);
+
+	// if (isMac()) {
+	// 	await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}" >> ~/.ssh/config`);
+	// 	await execCmd(`echo "  UseKeychain yes" >> ~/.ssh/config`);
+	// 	await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
+	// 	await execCmd(`echo "  IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
+	// } else {
+	// 	await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}" >> ~/.ssh/config`);
+	// 	await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
+	// 	await execCmd(`echo "  IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
+	// }
+
+	log(`Added new SSH keys on this machine:`);
+	log(`- Public key:`, publicIdRsaFile);
+	log(`- Private key:`, privateIdRsaFile);
+
+	return { privateIdRsaFile, publicIdRsaFile };
+};
+
 export const generateSSH = async (options?: InputOptions) => {
 	// const { gitProvider } = options;
 	// Check if any "id_rsa" existed
 
-	const idRsaDir = process.env.STORAGE ? path.resolve(process.env.STORAGE, "home/ssh") : path.resolve(CLI_DIR, "storage/home/ssh");
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
 
 	// const idRsaDir = path.resolve(CLI_DIR, "storage/home/ssh");
-	log(`idRsaDir:`, idRsaDir, `>> Existed: ${existsSync(idRsaDir)}`);
+	// log(`idRsaDir:`, idRsaDir, `>> Existed: ${existsSync(idRsaDir)}`);
 
 	let publicIdRsaFile: string, privateIdRsaFile: string;
 	if (existsSync(idRsaDir)) {
@@ -240,13 +292,13 @@ export const generateSSH = async (options?: InputOptions) => {
 	const publicKeyContent = readFileSync(publicIdRsaFile, "utf8");
 	logSuccess(`Copy this public key content & paste to GIT provider:`);
 	log(publicKeyContent);
+
 	return publicKeyContent;
 };
 
-export const verifySSH = async (options?: InputOptions) => {
-	const { gitProvider } = options;
-
-	const idRsaDir = process.env.STORAGE ? path.resolve(process.env.STORAGE, "home/ssh") : path.resolve(CLI_DIR, "storage/home/ssh");
+export const sshKeysExisted = async () => {
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
 
 	let publicIdRsaFile: string, privateIdRsaFile: string;
 	if (existsSync(idRsaDir)) {
@@ -257,50 +309,176 @@ export const verifySSH = async (options?: InputOptions) => {
 			privateIdRsaFile = files.find((f) => f.indexOf(".pub") == -1);
 
 			// Make sure the private key is assigned correct permissions (400)
+			try {
+				await execa.command(`chmod -R 400 ${privateIdRsaFile}`);
+			} catch (e) {
+				logError(`[GIT] Can't assign permission [400] to "id_rsa" private key.`);
+				return false;
+			}
+		} else {
+			return false;
+		}
+	} else {
+		logError(`[GIT] PUBLIC_KEY and PRIVATE_KEY are not existed.`);
+		return false;
+	}
+
+	return true;
+};
+
+export const getSshKeys = async () => {
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	const privateIdRsaFile = path.resolve(idRsaDir, "id_rsa");
+	const publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
+
+	if (!existsSync(privateIdRsaFile)) throw new Error(`PRIVATE_KEY is not existed.`);
+	if (!existsSync(publicIdRsaFile)) throw new Error(`PUBLIC_KEY is not existed.`);
+
+	const privateKey = readFileSync(privateIdRsaFile, "utf8");
+	const publicKey = readFileSync(publicIdRsaFile, "utf8");
+
+	return { privateKey, publicKey };
+};
+
+export const getPublicKey = async () => {
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	const publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
+
+	if (!existsSync(publicIdRsaFile)) throw new Error(`PUBLIC_KEY is not existed.`);
+
+	const publicKey = readFileSync(publicIdRsaFile, "utf8");
+
+	return { publicKey };
+};
+
+export const verifySSH = async (options?: InputOptions) => {
+	const { gitProvider } = options;
+
+	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
+	const idRsaDir = SSH_DIR;
+
+	let publicIdRsaFile: string, privateIdRsaFile: string;
+	let privateIdRsaFiles: string[];
+
+	if (existsSync(idRsaDir)) {
+		const files = await globby(idRsaDir + "/id_*");
+		// log(`existed "id_rsa" files >>`, files);
+		privateIdRsaFiles = files.filter((f) => f.indexOf(".pub") === -1);
+
+		if (files.length > 0) {
+			publicIdRsaFile = files.find((f) => f.indexOf(".pub") > -1);
+			privateIdRsaFile = files.find((f) => f.indexOf(".pub") == -1);
+
+			// Make sure the private key is assigned correct permissions (400)
 			await execCmd(`chmod -R 400 ${privateIdRsaFile}`, `Can't assign permission [400] to "id_rsa" private key.`);
 		}
 	} else {
-		logError(`PUBLIC_KEY and PRIVATE_KEY are not existed.`);
+		logError(`[GIT] PUBLIC_KEY and PRIVATE_KEY are not existed.`);
 		return false;
 	}
+
+	// log(`[GIT] privateIdRsaFiles:`, privateIdRsaFiles);
 
 	privateIdRsaFile = path.resolve(idRsaDir, "id_rsa");
 	publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
 
+	const gitDomain = gitProviderDomain[gitProvider];
+
 	await execCmd(`mkdir -p ~/.ssh`);
 	await execCmd(`touch ~/.ssh/known_hosts`);
-	await execCmd(`ssh-keyscan ${gitProviderDomain[gitProvider]} >> ~/.ssh/known_hosts`);
+	await execCmd(`ssh-keyscan ${gitDomain} >> ~/.ssh/known_hosts`);
 	await execCmd(`touch ~/.ssh/config`);
 
-	if (isMac()) {
-		await execCmd(
-			`echo "Host ${gitProviderDomain[gitProvider]}\n	UseKeychain yes\n	AddKeysToAgent yes\n	IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`
-		);
-	} else {
-		await execCmd(`echo "Host ${gitProviderDomain[gitProvider]}\n	AddKeysToAgent yes\n	IdentityFile ${privateIdRsaFile}" >> ~/.ssh/config`);
+	if (!isEmpty(privateIdRsaFiles)) {
+		const sshConfigContent = (await execCmd(`cat ~/.ssh/config`)) || "";
+		for (const idRsaFile of privateIdRsaFiles) {
+			// log(`[GIT] sshConfigContent.indexOf("${idRsaFile}"):`, sshConfigContent.indexOf(idRsaFile));
+			// log(`[GIT] sshConfigContent.indexOf("${gitDomain}"):`, sshConfigContent.indexOf(gitDomain));
+			if (sshConfigContent.indexOf(idRsaFile) === -1 || sshConfigContent.indexOf(gitDomain) === -1) {
+				await execCmd(`echo "Host ${gitDomain}" >> ~/.ssh/config`);
+				if (isMac()) await execCmd(`echo "  UseKeychain yes" >> ~/.ssh/config`);
+				await execCmd(`echo "  AddKeysToAgent yes" >> ~/.ssh/config`);
+				await execCmd(`echo "  IdentityFile ${idRsaFile}" >> ~/.ssh/config`);
+			}
+		}
 	}
-	// await execCmd(`ssh -T git@${gitProviderDomain[gitProvider]}`);
 
+	let authResult;
 	switch (gitProvider) {
 		case "bitbucket":
-			await execCmd(`ssh -o StrictHostKeyChecking=no -T git@bitbucket.org`, "Bitbucket authentication failed");
+			authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@bitbucket.org`, "[GIT] Bitbucket authentication failed");
+			authResult = typeof authResult !== "undefined";
 			break;
 
 		case "github":
-			await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "Github authentication failed");
+			try {
+				await execa.command(`ssh -o StrictHostKeyChecking=no -T git@github.com`);
+				authResult = true;
+			} catch (e) {
+				authResult = e.toString().indexOf("successfully authenticated") > -1;
+			}
+
+			// authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "[GIT] Github authentication failed");
+			// authResult = typeof authResult !== "undefined";
 			break;
 
 		case "gitlab":
-			await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "Gitlab authentication failed");
+			authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "[GIT] Gitlab authentication failed");
+			authResult = typeof authResult !== "undefined";
+			break;
 
 		default:
-			logError(`Provider "${gitProvider}" is not valid.`);
-			return false;
+			authResult = false;
 			break;
 	}
 
-	logSuccess(`${capitalize(gitProvider)} was authenticated successfully.`);
-	return true;
+	if (authResult) {
+		logSuccess(`[GIT] ✓ ${capitalize(gitProvider)} was authenticated successfully.`);
+	} else {
+		logError(`[GIT] ❌ Provider "${gitProvider}" is not valid.`);
+	}
+
+	return authResult;
+};
+
+/**
+ * Check if the client machine can access to the git provider publicly.
+ */
+export const checkGitProviderAccess = async (gitProvider: GitProviderType) => {
+	let result: any;
+	switch (gitProvider) {
+		case "bitbucket":
+			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@bitbucket.org`, "Bitbucket authentication failed");
+			break;
+
+		case "github":
+			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "Github authentication failed");
+			break;
+
+		case "gitlab":
+			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "Gitlab authentication failed");
+			break;
+
+		default:
+			logError(`Git provider "${gitProvider}" is not valid.`);
+			result = false;
+			break;
+	}
+
+	return result ? true : false;
+};
+
+/**
+ * Check if the client machine can access to the PRIVATE git repository.
+ */
+export const checkGitRepoAccess = async (repoSSH: string) => {
+	let result = await execCmd(`git ls-remote ${repoSSH}`, `You don't have access to this repo: ${repoSSH}`);
+
+	return result ? true : false;
 };
 
 export async function execGit(options) {

@@ -13,9 +13,6 @@ RUN yarn install --only=production
 # Copy existing application directory contents
 COPY . .
 
-# Copy ENV file
-COPY ./deployment/.env.{{env}} ./.env
-
 RUN yarn build
 
 EXPOSE 80

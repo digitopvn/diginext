@@ -5,16 +5,42 @@ import open from "open";
 
 import { getCliConfig, saveCliConfig } from "@/config/config";
 import type User from "@/entities/User";
+import type { AccessTokenInfo } from "@/entities/User";
 import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 
-export const cliLogin = async (options: InputOptions) => {
-	const { secondAction, url } = options;
+import { DB } from "../api/DB";
 
-	let buildServerUrl = url ?? secondAction;
+interface CliLoginOptions {
+	/**
+	 * URL of the build server, specify with the second action of CLI
+	 */
+	secondAction?: string;
+
+	/**
+	 * URL of the build server, specify with `--url` flag
+	 */
+	url?: string;
+
+	/**
+	 * The access token to authenticate, specify with `--token` or `--key` flag
+	 */
+	accessToken?: string;
+}
+
+export const cliLogin = async (options: CliLoginOptions) => {
+	const { secondAction, url, accessToken } = options;
+
+	const { buildServerUrl: currentServerUrl } = getCliConfig();
+
+	// console.log("cliLogin > accessToken :>> ", accessToken);
+
+	let access_token = accessToken;
+
+	let buildServerUrl = url ?? secondAction ?? currentServerUrl;
 	if (!buildServerUrl) {
-		logError(`Please provide your build server URL: "di login <workspace_url>" or "di login --help". Eg. https://build.example.com`);
+		logError(`Please provide your build server URL: "dx login <workspace_url>" or "dx login --help". Eg. https://build.example.com`);
 		return;
 	}
 
@@ -24,23 +50,26 @@ export const cliLogin = async (options: InputOptions) => {
 	});
 
 	// open login page of build server:
-	open(tokenDisplayUrl);
+	if (!access_token) open(tokenDisplayUrl);
 	// open(`${cliConfig.buildServerUrl}/auth/google?redirect_url=${cliConfig.buildServerUrl}/auth/profile`);
 
-	const { access_token } = await inquirer.prompt([
-		{
-			type: "password",
-			name: "access_token",
-			message: "Enter your access token:",
-			validate: function (value) {
-				if (value.length) {
-					return true;
-				} else {
-					return `Access token is required.`;
-				}
+	if (!access_token) {
+		const { inputAccessToken } = await inquirer.prompt<{ inputAccessToken: string }>([
+			{
+				type: "password",
+				name: "inputAccessToken",
+				message: "Enter your access token:",
+				validate: function (value) {
+					if (value.length) {
+						return true;
+					} else {
+						return `Access token is required.`;
+					}
+				},
 			},
-		},
-	]);
+		]);
+		access_token = inputAccessToken;
+	}
 
 	let currentUser: User;
 
@@ -54,11 +83,13 @@ export const cliLogin = async (options: InputOptions) => {
 	// const userId = currentUser._id;
 
 	// "access_token" is VALID -> save it to local machine!
-	saveCliConfig({ access_token });
+	saveCliConfig({ access_token, currentWorkspace: currentUser.activeWorkspace as Workspace });
 
+	console.log(`[AUTH]`, { currentUser });
 	const { workspaces = [], activeWorkspace } = currentUser;
 	let currentWorkspace;
-	// console.log({ workspaces });
+	console.log("workspaces :>> ", workspaces);
+	// console.log(`[AUTH]`, { activeWorkspace });
 
 	// If no workspace existed, create new here!
 	if (workspaces.length < 1) {
@@ -78,71 +109,40 @@ export const cliLogin = async (options: InputOptions) => {
 		]);
 
 		// create new workspace:
-		const { data: newWorkspace, messages: wsMsgs } = await fetchApi<Workspace>({
-			url: `/api/v1/workspace`,
-			method: "POST",
-			data: { name: workspaceName, owner: currentUser._id },
-		});
-
-		if (isEmpty(newWorkspace)) {
-			logError(`Can't create a workspace.`, wsMsgs.join(". "));
-			return;
-		}
+		const newWorkspace = await DB.create<Workspace>("workspace", { name: workspaceName, owner: currentUser._id });
+		if (!newWorkspace) return;
 
 		currentWorkspace = newWorkspace as Workspace;
 
-		// update workspaceId to this user:
-		const { data: updatedUser, messages: updateUserMsgs } = await fetchApi<User>({
-			url: `/api/v1/user`,
-			method: "PATCH",
-			data: { "workspaces[]": currentWorkspace._id },
-		});
+		// update workspaceId to this user and set it as an active workspace:
+		const [updatedUser] = await DB.update<User>(
+			"user",
+			{ _id: currentUser._id },
+			{
+				$set: { activeWorkspace: currentWorkspace._id },
+				$addToSet: { workspaces: currentWorkspace._id },
+			},
+			{ populate: ["workspaces", "activeWorkspace"], raw: true }
+		);
 
-		if (isEmpty(updatedUser)) {
-			logError(updateUserMsgs.join(". "));
-			return;
-		}
+		if (!updatedUser) return;
 
 		// TODO: seed default data: frameworks, git ?
-
 		currentUser = updatedUser[0];
-	} else if (workspaces.length > 1) {
-		// if this user is already has a few workspaces, let them select one:
-		const { workspace } = await inquirer.prompt([
-			{
-				type: "list",
-				name: "workspace",
-				message: "Select your workspace:",
-				choices: workspaces.map((w) => {
-					return { name: `${w.name} (${w.slug})`, value: w };
-				}),
-			},
-		]);
-
-		currentWorkspace = workspace;
 	} else {
-		// This user has only 1 workspace, select it !
-		currentWorkspace = workspaces[0];
+		currentWorkspace = activeWorkspace;
 	}
 
-	if (!currentUser.token) currentUser.token = {};
+	if (!currentUser.token) currentUser.token = {} as AccessTokenInfo;
 	currentUser.token.access_token = access_token;
 
 	// save this user & workspace to CLI config
-	saveCliConfig({ currentWorkspace });
+	saveCliConfig({ currentUser, currentWorkspace });
 
-	// set active workspace:
-	const { data: updatedUser } = await fetchApi<User>({
-		url: `/api/v1/user?id=${currentUser._id}`,
-		method: "PATCH",
-		data: { activeWorkspace: currentWorkspace._id },
-	});
-	// console.log("updatedUser :>> ", updatedUser);
+	// console.log("updatedUser :>> ", updatedUser[0]);
+	// if (updatedUser) currentUser = updatedUser[0] as User;
 
-	currentUser = updatedUser as User;
-	saveCliConfig({ currentUser });
-
-	logSuccess(`Congrats, ${currentUser.name}! You're logged into "${currentWorkspace.name}" workspace.`);
+	logSuccess(`Hello, ${currentUser.name}! You're logged into "${currentWorkspace.name}" workspace.`);
 
 	return currentUser;
 };
@@ -159,17 +159,16 @@ export const cliLogout = async () => {
 
 export async function cliAuthenticate(options: InputOptions) {
 	let accessToken, workspace: Workspace;
-	const { currentWorkspace, access_token: currentAccessToken, buildServerUrl } = getCliConfig();
+	const { access_token: currentAccessToken, buildServerUrl } = getCliConfig();
 	accessToken = currentAccessToken;
-	workspace = currentWorkspace;
-	// if (isEmpty(access_token) || isEmpty(currentWorkspace) || isEmpty(currentUser)) return logError(`Please login first: "di login <workspace_url>"`);
+	// workspace = currentWorkspace;
 
 	const continueToLoginStep = async (url) => {
 		options.url = url;
 		const user = await cliLogin(options);
 
 		if (!user) {
-			logError(`Can't login to the build server...`);
+			logError(`Failed to login: User not found.`);
 			return;
 		}
 
@@ -178,10 +177,10 @@ export async function cliAuthenticate(options: InputOptions) {
 		return user;
 	};
 
-	if (isEmpty(accessToken) && buildServerUrl) {
+	if (!accessToken && buildServerUrl) {
 		const user = await continueToLoginStep(buildServerUrl);
 		if (!user) return;
-		workspace = getCliConfig().currentWorkspace;
+		// workspace = getCliConfig().currentWorkspace;
 	}
 	// if (isEmpty(currentWorkspace) && buildServerUrl) await continueToLoginStep(buildServerUrl);
 	// if (isEmpty(currentUser) && buildServerUrl) await continueToLoginStep(buildServerUrl);
@@ -198,7 +197,7 @@ export async function cliAuthenticate(options: InputOptions) {
 	// log(`user :>>`, user);
 
 	if (!status || isEmpty(user)) {
-		logError(`Authentication failed.`, messages);
+		// logError(`Authentication failed.`, messages);
 		if (buildServerUrl) user = await continueToLoginStep(buildServerUrl);
 	}
 
@@ -209,12 +208,12 @@ export async function cliAuthenticate(options: InputOptions) {
 	// Assign user & workspace to use across all CLI commands
 	options.userId = user._id.toString();
 	options.username = user.username ?? user.slug;
-	options.workspace = workspace;
-	options.workspaceId = workspace._id.toString();
+	options.workspace = user.activeWorkspace as Workspace;
+	options.workspaceId = options.workspace._id.toString();
 	// console.log("userProfile :>> ", userProfile);
 
 	// Save "currentUser" & "access_token" for next API requests
-	saveCliConfig({ currentUser: user });
+	saveCliConfig({ currentUser: user, currentWorkspace: options.workspace });
 
 	return user;
 }

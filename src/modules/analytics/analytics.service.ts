@@ -3,9 +3,10 @@
 import { AnalyticsAdminServiceClient, protos } from "@google-analytics/admin";
 import chalk from "chalk";
 import Table from "cli-table";
+import { log, logError } from "diginext-utils/dist/console/log";
 
 import { ANALYTICS_SA_PATH } from "../../config/const";
-import { getAppConfig, logError, logInfo, saveAppConfig } from "../../plugins/utils";
+import { getAppConfig, saveAppConfig } from "../../plugins/utils";
 
 // const { Account } = v1alpha;
 const { google } = protos;
@@ -21,7 +22,7 @@ export async function getAnalyticsAccount() {
 	// the response for each account.
 
 	// const [accounts] = await analyticsAdminClient.listAccounts();
-	// accounts.forEach((account) => logInfo(account));
+	// accounts.forEach((account) => log(account));
 
 	// return accounts[0];
 	return null;
@@ -35,14 +36,14 @@ export const listAnalyticsProperties = async () => {
 };
 
 export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
-	const diginext = getAppConfig();
+	const appConfig = getAppConfig();
 
 	// if (!name) logError(`"name" is required`);
 	// if (!url) logError(`"url" is required`);
 
-	const accountName = name || diginext.name;
-	let websiteUrl = url || (diginext.environment[env].domains && diginext[env].domains[0]);
-	if (typeof websiteUrl == "undefined" && env == "dev") websiteUrl = `https://dev3.digitop.vn/${diginext.slug}`;
+	const accountName = name || appConfig.name;
+	let websiteUrl = url || (appConfig.environment[env].domains && appConfig[env].domains[0]);
+	if (typeof websiteUrl == "undefined" && env == "dev") websiteUrl = `https://dev3.digitop.vn/${appConfig.slug}`;
 
 	if (!websiteUrl) logError(`[${env.toUpperCase()}] Website URL is required, double check domain name in your "dx.json".`);
 
@@ -55,7 +56,7 @@ export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
 	// // delete properties
 	// try {
 	// 	properties = await analyticsAdminClient.listProperties({ filter: `parent:${account.name}` });
-	// 	logInfo(`properties:`, properties[0]);
+	// 	log(`properties:`, properties[0]);
 	// } catch (e) {
 	// 	logError(e);
 	// }
@@ -69,7 +70,7 @@ export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
 	// // list properties
 	// try {
 	// 	properties = await analyticsAdminClient.listProperties({ filter: `parent:${account.name}` });
-	// 	logInfo(`properties:`, properties[0]);
+	// 	log(`properties:`, properties[0]);
 	// } catch (e) {
 	// 	logError(e);
 	// }
@@ -95,7 +96,7 @@ export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
 			},
 		});
 		property = createPropertyResults[0];
-		// logInfo(req);
+		// log(req);
 	} catch (e) {
 		logError(e);
 	}
@@ -112,18 +113,18 @@ export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
 		webStream = webStreams[0];
 		let table = new Table();
 		table.push(["GA4 ID:", chalk.cyan(webStream.measurementId)]);
-		logInfo(`\n` + table.toString());
+		log(`\n` + table.toString());
 	} catch (e) {
 		logError(e);
 	}
 
-	// logInfo(webStream);
-	// logInfo(webStream.name);
+	// log(webStream);
+	// log(webStream.name);
 	// let tag;
 	// try {
 	// 	const tags = await analyticsAdminClient.getGlobalSiteTag({ name: webStream.name + "/globalSiteTag" });
 	// 	tag = tags[0];
-	// 	logInfo("Global Site Tag:", tag);
+	// 	log("Global Site Tag:", tag);
 	// } catch (e) {
 	// 	logError(e);
 	// }
@@ -131,7 +132,7 @@ export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
 	// diginext.ga = diginext.ga || {};
 	// diginext.ga[env] = diginext.ga[env] ? [...diginext.ga[env], webStream.measurementId] : [webStream.measurementId];
 
-	saveAppConfig(diginext);
+	saveAppConfig(appConfig);
 };
 
 // main(...process.argv.slice(2)).catch((err) => {

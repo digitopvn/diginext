@@ -2,6 +2,7 @@ import "reflect-metadata";
 
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
 
+import ApiKeyAccount from "@/entities/ApiKeyAccount";
 import App from "@/entities/App";
 // entities
 import Build from "@/entities/Build";
@@ -14,6 +15,7 @@ import GitProvider from "@/entities/GitProvider";
 import Project from "@/entities/Project";
 import Release from "@/entities/Release";
 import Role from "@/entities/Role";
+import ServiceAccount from "@/entities/ServiceAccount";
 import Team from "@/entities/Team";
 import User from "@/entities/User";
 import Workspace from "@/entities/Workspace";
@@ -30,6 +32,8 @@ export const appDataSource = new DataSource({
 	entities: [
 		App,
 		User,
+		ServiceAccount,
+		ApiKeyAccount,
 		Role,
 		Team,
 		Workspace,
@@ -53,7 +57,7 @@ export const manager = appDataSource.manager;
 export async function connect(onConnected?: any) {
 	try {
 		const dataSource = await appDataSource.initialize();
-		if (process.env.CLI_MODE == "server") logSuccess("Database is connected!");
+		if (process.env.CLI_MODE == "server") logSuccess("[DATABASE] MongoDB is connected!");
 		if (typeof onConnected != "undefined") onConnected(dataSource);
 	} catch (e) {
 		logError(e);

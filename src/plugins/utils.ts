@@ -1,27 +1,36 @@
 import chalk from "chalk";
+import { randomUUID } from "crypto";
 // import { compareVersions } from "compare-versions";
 import dayjs from "dayjs";
+import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import dns from "dns";
+import dotenv from "dotenv";
 import execa from "execa";
 import * as fs from "fs";
 import * as afs from "fs/promises";
 import yaml from "js-yaml";
-import _, { isArray, isString } from "lodash";
+import _, { isArray, isEmpty, isString, toNumber } from "lodash";
 import * as m from "marked";
 import TerminalRenderer from "marked-terminal";
 import path from "path";
+import type { SimpleGit, SimpleGitProgressEvent } from "simple-git";
 import { simpleGit } from "simple-git";
 
 import pkg from "@/../package.json";
 import { cliOpts } from "@/config/config";
+import type { AccessTokenInfo, User, Workspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
+import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { getRepoURL } from "@/modules/git";
+import type { GitProviderType } from "@/interfaces/SystemTypes";
+import { generateRepoURL } from "@/modules/git";
+import { getCurrentGitBranch } from "@/modules/git/git-utils";
 
-import { DIGITOP_CDN_URL } from "../config/const";
+import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
 import { checkMonorepo } from "./monorepo";
+import { isNumeric } from "./number";
 import { isWin } from "./os";
-
 // import cliMd from "@/plugins/cli-md";
 
 const { marked } = m;
@@ -31,12 +40,6 @@ const CLI_DIR = path.resolve(__dirname, "../../");
 
 export function nowStr() {
 	return dayjs().format("YYYY-MM-DD HH:mm:ss");
-}
-
-export async function getLatestCliVersion() {
-	const git = simpleGit(CLI_DIR, { binary: "git" });
-	const tags = (await git.tags(["--sort", "creatordate"])).all.filter((tag) => !tag.includes("beta"));
-	return _.last(tags) as string;
 }
 
 /**
@@ -74,33 +77,6 @@ export async function waitUntil(condition: Function, interval: number = 10, maxW
 		timeWaited += interval;
 	}
 	return false;
-}
-
-function log(...msg) {
-	console.log(...msg);
-}
-
-function logInfo(...msg) {
-	console.log(chalk.green(`[INFO ${nowStr()}]`), ...msg);
-}
-
-async function logError(...msg) {
-	const { error } = msg[0];
-	// console.log("error", error);
-	if (error && error.error && error.error.message) {
-		console.trace(chalk.red(`[ERROR ${nowStr()}]`, error.error.message));
-	} else {
-		console.trace(chalk.red(`[ERROR ${nowStr()}]`, ...msg));
-	}
-
-	await wait(200);
-
-	// process.exit(1);
-	throw new Error(msg[0]);
-}
-
-async function logWarn(...msg) {
-	console.warn(chalk.yellow(`[WARN]`, ...msg));
 }
 
 async function logBitbucket(title, message, delay) {
@@ -157,6 +133,52 @@ export const showDocs = async (filePath: string) => {
 };
 
 /**
+ * Create temporary file with provided content
+ * @param fileName - File name (include the extension)
+ * @param content - Content of the file
+ * @returns Path to the file
+ */
+export const createTmpFile = (
+	fileName: string,
+	content: string,
+	options: { recursive?: boolean; encoding?: BufferEncoding } = { recursive: true, encoding: "utf8" }
+) => {
+	const { encoding, recursive } = options;
+
+	const tmpDir = path.resolve(HOME_DIR, `tmp/${makeDaySlug({ divider: "" })}`);
+	if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive });
+
+	const tmpFilePath = path.resolve(tmpDir, fileName);
+	fs.writeFileSync(tmpFilePath, content, encoding);
+
+	return tmpFilePath;
+};
+
+/**
+ * Convert string-array-like to array
+ * @example "1" -> ["1"] | "123,555,abc,def" -> ["123","555","abc","def"]
+ */
+export const stringToArray = (
+	str: string,
+	options: {
+		/**
+		 * Convert items to number if it's valid
+		 * @default false
+		 * @example "1,a,2" -> [1, "a", 2]
+		 */
+		typeTransform?: boolean;
+		/**
+		 * @default ","
+		 */
+		divider?: string;
+	} = { typeTransform: false, divider: "," }
+) => {
+	const { typeTransform = false, divider = "," } = options;
+	const arr = str.indexOf(divider) === -1 ? [str] : str.split(divider);
+	return typeTransform ? arr.map((item) => (isNumeric(item) ? toNumber(item) : item)) : arr;
+};
+
+/**
  * Get full name of the environment, such as: `development`, `production` (instead of `dev`, `prod`)
  * @param {String} env
  * @returns {String}
@@ -197,11 +219,11 @@ export function printHelp(options?: InputOptions) {
 	console.info(chalk.yellow(`[Diginext CLI - v${pkg.version}] USAGE DOCUMENTATION:`));
 	console.info(pkg.description);
 
-	console.info(chalk.redBright("\n  [TIPS] Alternatively you can use 'di' as an alias of 'diginext' command (for faster typing):"));
+	console.info(chalk.redBright("\n  [TIPS] Alternatively you can use 'dx' as an alias of 'diginext' command (for faster typing):"));
 	console.info("\n" + chalk.gray("  # This command:"));
 	console.info(" ", chalk.yellow("diginext"), "--help");
 	console.info(chalk.gray("  # is equivalent with:"));
-	console.info(" ", chalk.yellow("di"), "--help");
+	console.info(" ", chalk.yellow("dx"), "--help");
 
 	console.info(chalk.yellowBright("\n  Create new project:"));
 	console.info("  diginext new");
@@ -327,64 +349,61 @@ export function logVersion() {
 	console.warn(chalk.bgWhite(chalk.bold(chalk.black(` [ Diginext CLI - v${pkg.version} | ${nowStr()} ] `))));
 }
 
-export function currentVersion() {
-	return pkg.version;
-}
-
 type ErrorCallback = (e: string) => void;
 
 export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCallback = "") {
 	try {
 		let { stdout } = await execa.command(cmd, cliOpts);
-
 		// console.log(`[execCmd]`, { stdout });
-
 		return stdout;
 	} catch (e) {
 		if (typeof errorMsgOrCallback == "string") {
-			if (errorMsgOrCallback != "") {
-				logError(`${errorMsgOrCallback}:\n`, e);
+			const errorMsg = errorMsgOrCallback;
+			if (errorMsg != "") {
+				logError(`${errorMsg} (${e.message})`);
 			} else {
-				logWarn(`[FAILED_BUT_IGNORE]`, e);
+				logWarn(`[FAILED_BUT_IGNORE] ${e.message}`);
 			}
 			return;
 		} else {
-			return errorMsgOrCallback(e);
+			// if it's a callback function
+			try {
+				errorMsgOrCallback(e);
+			} catch (f) {
+				logWarn(`[FAILED_BUT_IGNORE] ${f.message}`);
+				return;
+			}
 		}
 	}
 }
 
-export async function checkForUpdate() {
-	// const git = SimpleGit(CLI_DIR, { binary: "git" });
-
-	// const curVersion = pkg.version;
-	// const _cv = curVersion.split(".");
-	// const latestVersion: string = (await getLatestCliVersion()).substr(1);
-	// const _lv = latestVersion.split(".");
-
-	// // logInfo(`isValid >>`, currentVersion, ">>", validate(currentVersion));
-	// // logInfo(`latestVersion >>`, latestVersion);
-	// // logInfo(`currentVersion >>`, currentVersion);
-	// // logInfo(`Should update >>`, compareVersions(latestVersion, currentVersion));
-	// const newVersion = compareVersions(latestVersion, curVersion) > 0 ? latestVersion : null;
-
-	// if (newVersion) {
-	// 	logWarn(`===================================================`);
-	// 	logWarn(chalk.bgBlack(chalk.whiteBright(chalk.bold(`[ !!! IMPORTANT: New CLI version available: v$${newVersion} !!! ]`))));
-	// 	logWarn(`-> Update CLI with command: ${chalk.cyan("diginext update")} or ${chalk.cyan("diginext -u")}`);
-	// 	logWarn(`===================================================`);
-	// 	// return;
-	// }
-
-	// return newVersion;
-
-	// TODO: Check for update CLI on NPM
-
-	return "latest";
+export function currentVersion() {
+	return pkg.version;
 }
 
-export function logSuccess(...msg) {
-	console.warn(chalk.green("[SUCCESS]"), ...msg);
+/**
+ * Get latest tag of the git repository
+ */
+export async function getLatestTagOfGitRepo() {
+	const git = simpleGit(CLI_DIR, { binary: "git" });
+	const tags = (await git.tags(["--sort", "creatordate"])).all.filter((tag) => !tag.includes("beta"));
+	return _.last(tags) as string;
+}
+
+/**
+ * Get latest version of the CLI from NPM
+ */
+export async function getLatestCliVersion() {
+	const latestVersion = await execCmd(`npm show ${pkg.name} version`);
+	return latestVersion;
+}
+
+/**
+ * Check if CLI version is latest or not, if not -> return FALSE
+ */
+export async function checkForUpdate() {
+	const latestVersion = await getLatestCliVersion();
+	return latestVersion !== currentVersion();
 }
 
 async function logBitbucketError(error: any, delay?: number, location?: string, shouldExit = false) {
@@ -421,6 +440,50 @@ export const deleteFolderRecursive = async (filePath) => {
 	}
 };
 
+/**
+ * Flatten the object into 1-level-object (with key paths)
+ * @example {a: {b: [{c: 1}, {c: 2}]}, e: 3} -> {"a.b[0].c": 1, "a.b[1].c": 2, "e": 3}
+ */
+export function flattenObjectToPost(object: any = {}, initialPathPrefix = "") {
+	if (!object || typeof object !== "object") return [{ [initialPathPrefix]: object }];
+
+	const prefix = initialPathPrefix ? (Array.isArray(object) ? initialPathPrefix : `${initialPathPrefix}`) : "";
+
+	const _arr = Object.entries(object).flatMap(([key]) =>
+		flattenObjectToPost(object[key], Array.isArray(object) ? `${prefix}[${key}]` : `${prefix}[${key}]`)
+	);
+	// console.log("_arr :>> ", _arr);
+
+	if (isEmpty(_arr)) return {};
+
+	const res = _arr.reduce((acc, _path) => ({ ...acc, ..._path }));
+	// console.log("res :>> ", res);
+
+	return res;
+}
+
+/**
+ * Flatten the object into 1-level-object (with key paths)
+ * @example {a: {b: [{c: 1}, {c: 2}]}, e: 3} -> {"a.b.0.c": 1, "a.b.1.c": 2, "e": 3}
+ */
+export function flattenObjectPaths(object: any = {}, initialPathPrefix = "") {
+	if (!object || typeof object !== "object") return [{ [initialPathPrefix]: object }];
+
+	const prefix = initialPathPrefix ? (Array.isArray(object) ? initialPathPrefix : `${initialPathPrefix}.`) : "";
+
+	const _arr = Object.entries(object).flatMap(([key]) =>
+		flattenObjectPaths(object[key], Array.isArray(object) ? `${prefix}.${key}` : `${prefix}${key}`)
+	);
+	// console.log("_arr :>> ", _arr);
+
+	if (isEmpty(_arr)) return {};
+
+	const res = _arr.reduce((acc, _path) => ({ ...acc, ..._path }));
+	// console.log("res :>> ", res);
+
+	return res;
+}
+
 type SaveOpts = {
 	/**
 	 * Absolute path to project directory
@@ -440,10 +503,7 @@ type SaveOpts = {
 export const getAppConfig = (directory?: string) => {
 	const filePath = path.resolve(directory || process.cwd(), "dx.json");
 
-	if (!fs.existsSync(filePath)) {
-		logError(`Không tìm thấy "dx.json"`);
-		return;
-	}
+	if (!fs.existsSync(filePath)) return;
 
 	const cfg = readJson(filePath);
 	return cfg as AppConfig;
@@ -451,19 +511,20 @@ export const getAppConfig = (directory?: string) => {
 
 /**
  * Save object of project configuration to "dx.json"
- * @param  {Object} _config - Object data of the config
+ * @param  {Object} appConfig - Object data of the config
  * @param  {SaveOpts} [options] - Save options
- * @param  {String} [options.directory] - Absolute path to project directory
- * @param  {Boolean} [options.create] - TRUE will create new file if not existed.
+ * @param  {String} [options.directory] - Absolute path to project directory @default process.cwd()
+ * @param  {Boolean} [options.create] - TRUE will create new file if not existed. @default false
  */
-export const saveAppConfig = (_config: AppConfig, options?: SaveOpts) => {
-	// TODO: change "dx.json" to "dx.json" to avoid conflicts
-	const { directory } = options;
+export const saveAppConfig = (appConfig: AppConfig, options: SaveOpts = { directory: process.cwd(), create: false }) => {
+	const { directory, create } = options;
 	const filePath = path.resolve(directory || process.cwd(), "dx.json");
 
-	if (!options.create && !fs.existsSync(filePath)) logError(`Không tìm thấy "dx.json"`);
+	if (!create && !fs.existsSync(filePath)) logError(`Không tìm thấy "dx.json"`);
 
-	const content = JSON.stringify(_config, null, 2);
+	if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+	const content = JSON.stringify(appConfig, null, 2);
 	fs.writeFileSync(filePath, content, "utf8");
 
 	return getAppConfig(directory);
@@ -473,14 +534,18 @@ export const saveAppConfig = (_config: AppConfig, options?: SaveOpts) => {
  * Update values of app config ("dx.json")
  * @param updatedData - updated data
  */
-export const updateDiginextConfig = (updatedData: AppConfig, options?: SaveOpts) => {
-	const { directory } = options;
+export const updateAppConfig = (updatedData: AppConfig, options: SaveOpts = {}) => {
+	const { directory = process.cwd() } = options;
 	const currentAppConfig = getAppConfig(directory);
-	const updatedAppConfig = { ...currentAppConfig, ...updatedData };
 
-	saveAppConfig(updatedAppConfig, { directory });
+	const updatedDataMap = flattenObjectPaths(updatedData);
+	Object.entries(updatedDataMap).map(([keyPath, value]) => {
+		_.set(currentAppConfig, keyPath, value);
+	});
 
-	return updatedAppConfig as AppConfig;
+	saveAppConfig(currentAppConfig, { directory });
+
+	return currentAppConfig;
 };
 
 /**
@@ -531,25 +596,109 @@ export const savePackageConfig = (_config, options: SaveOpts) => {
 	}
 };
 
-/**
- * Get current remote SSH & URL
- * @param dir - target directory
- * @returns
- */
-export const getCurrentRepoURIs = async (dir = process.cwd()) => {
-	const remoteSSH = await execCmd(`git remote get-url origin`);
-	if (!remoteSSH) return;
-	const slug = remoteSSH.split(":")[1];
-	const provider = remoteSSH.split(":")[0].split("@")[1].split(".")[0];
-	const remoteURL = getRepoURL(provider, slug);
-	return { remoteSSH, remoteURL, provider };
+export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
+	// git@bitbucket.org:<namespace>/<git-repo-slug>.git
+	let namespace: string, fullSlug: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+
+	try {
+		namespace = repoSSH.split(":")[1].split("/")[0];
+	} catch (e) {
+		logError(`Repository SSH (${repoSSH}) is invalid`);
+		return;
+	}
+
+	try {
+		repoSlug = repoSSH.split(":")[1].split("/")[1].split(".")[0];
+	} catch (e) {
+		logError(`Repository SSH (${repoSSH}) is invalid`);
+		return;
+	}
+
+	try {
+		gitDomain = repoSSH.split(":")[0].split("@")[1];
+	} catch (e) {
+		logError(`Repository SSH (${repoSSH}) is invalid`);
+		return;
+	}
+
+	try {
+		gitProvider = gitDomain.split(".")[0] as GitProviderType;
+	} catch (e) {
+		logError(`Repository SSH (${repoSSH}) is invalid`);
+		return;
+	}
+
+	fullSlug = `${namespace}/${repoSlug}`;
+
+	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
 };
 
-export const getGitProviderFromRepoSSH = (repoSSH: string) => {
+interface PullOrCloneGitRepoOptions {
+	onUpdate?: (msg) => void;
+}
+
+export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
+	let git: SimpleGit;
+
+	const { onUpdate } = options;
+
+	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
+		const message = `git.${method} ${stage} stage ${progress}% complete`;
+		if (onUpdate) onUpdate(message);
+	};
+
+	if (fs.existsSync(dir)) {
+		git = simpleGit(dir, { progress: onProgress });
+		const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
+		const originRemote = remotes[0];
+		if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
+
+		if (originRemote.refs.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
+
+		const curBranch = await getCurrentGitBranch(dir);
+		await git.pull("origin", curBranch, ["--no-ff"]);
+	} else {
+		git = simpleGit({ progress: onProgress });
+		await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+	}
+};
+
+/**
+ * Get current remote SSH & URL
+ */
+export const getCurrentGitRepoData = async (dir = process.cwd()) => {
+	try {
+		const git = simpleGit(dir, { binary: "git" });
+		const remotes = await git.getRemotes(true);
+
+		const remoteSSH = remotes[0].refs.fetch;
+		if (!remoteSSH) return;
+
+		if (remoteSSH.indexOf("https://") > -1) {
+			logError(`Git repository using HTTPS origin is not supported, please use SSH origin.`);
+			log(`For example: "git remote set-url origin git@bitbucket.org:<namespace>/<git-repo-slug>.git"`);
+			return;
+		}
+
+		const branch = await getCurrentGitBranch(dir);
+		if (!branch) return;
+
+		const { repoSlug: slug, gitProvider: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(remoteSSH);
+
+		const remoteURL = generateRepoURL(provider, fullSlug);
+
+		return { remoteSSH, remoteURL, provider, slug, fullSlug, namespace, gitDomain, branch };
+	} catch (e) {
+		logWarn(`getCurrentGitRepoData() :>>`, e);
+		return;
+	}
+};
+
+export const getGitProviderFromRepoSSH = (repoSSH: string): GitProviderType => {
 	if (repoSSH.indexOf("bitbucket") > -1) return "bitbucket";
 	if (repoSSH.indexOf("github") > -1) return "github";
 	if (repoSSH.indexOf("gitlab") > -1) return "gitlab";
-	return "unknown";
+	return;
 };
 
 export const isUsingExpressjsFramework = (options) => {
@@ -650,7 +799,7 @@ export const getCurrentFramework = (options) => {
 export const getImageFromYaml = (docs) => {
 	let value = "";
 	docs.map((doc) => {
-		// logInfo("doc", doc);
+		// log("doc", doc);
 		if (doc && doc.kind == "Deployment") {
 			value = doc.spec.template.spec.containers[0].image;
 		}
@@ -661,7 +810,7 @@ export const getImageFromYaml = (docs) => {
 export const getReplicasFromYaml = (docs) => {
 	let value = 1;
 	docs.map((doc) => {
-		// logInfo("doc", doc);
+		// log("doc", doc);
 		if (doc && doc.kind == "Deployment") {
 			value = doc.spec.replicas;
 		}
@@ -686,17 +835,11 @@ export const trimFirstSlash = (input) => {
 /**
  * Convert {Object} to environment variables of Kuberketes container
  * @param {Object} object - Input raw object, **not containing any methods**
- * @returns {[{name,value}]}
  */
-export const objectToContainerEnv = (object) => {
-	let containerEnvs = [];
-	for (const [key, val] of Object.entries(object)) {
-		containerEnvs.push({
-			name: key,
-			value: val.toString(),
-		});
-	}
-	return containerEnvs;
+export const objectToKubeEnvVars = (object: any) => {
+	return Object.entries(object).map(([name, value]) => {
+		return { name, value } as KubeEnvironmentVariable;
+	});
 };
 
 /**
@@ -714,11 +857,27 @@ export const objectToDotenv = (object) => {
 };
 
 /**
+ * Load ENV file (.env.*) and parse to array of K8S container environment variables
+ */
+export const loadEnvFileAsContainerEnvVars = (filePath: string) => {
+	const envObject = dotenv.config({ path: filePath }).parsed;
+	if (isEmpty(envObject)) return [];
+	return objectToKubeEnvVars(envObject);
+};
+
+/**
+ * Grab value of Kube ENV variables by name
+ */
+export const getValueOfKubeEnvVarsByName = (name: string, envVars: KubeEnvironmentVariable[]) => {
+	return envVars.find((envVar) => envVar.name === name)?.value;
+};
+
+/**
  * Convert K8S container's ENV to .env content
  * @param {[{name,value}]} inputEnvs - Input raw object, **not containing any methods**
  * @returns {String}
  */
-export const containerEnvToDotenv = (inputEnvs) => {
+export const kubeEnvToDotenv = (inputEnvs: KubeEnvironmentVariable[]) => {
 	let content = "";
 	inputEnvs.map((envVar) => {
 		content += envVar.name + "=" + `"${envVar.value}"` + "\n";
@@ -784,6 +943,56 @@ export const sequentialExec = async (array, func) => {
 	}, Promise.resolve([]));
 };
 
+interface ResolveApplicationFilePathOptions {
+	targetDirectory?: string;
+	env?: string;
+	ignoreIfNotExisted?: boolean;
+}
+
+/**
+ * Resolve a location path of the file within the application.
+ */
+export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicationFilePathOptions) => {
+	const { targetDirectory = process.cwd(), env, ignoreIfNotExisted = false } = options;
+
+	let filePath = env ? path.resolve(targetDirectory, `${fileNamePrefix}.${env}`) : path.resolve(targetDirectory, fileNamePrefix);
+	if (fs.existsSync(filePath)) return filePath;
+
+	filePath = env
+		? path.resolve(targetDirectory, `deployment/${fileNamePrefix}.${env}`)
+		: path.resolve(targetDirectory, `deployment/${fileNamePrefix}`);
+	if (fs.existsSync(filePath)) return filePath;
+
+	filePath = path.resolve(targetDirectory, fileNamePrefix);
+	if (fs.existsSync(filePath)) return filePath;
+
+	filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}`);
+	if (fs.existsSync(filePath)) return filePath;
+
+	if (!fs.existsSync(filePath)) {
+		if (!ignoreIfNotExisted) {
+			const message = `Missing "${targetDirectory}/${fileNamePrefix}" file, please create one.`;
+			logError(message);
+			return;
+		}
+	}
+	return filePath;
+};
+
+/**
+ * Resolve a location path of the "Dockerfile".
+ */
+export const resolveDockerfilePath = (options: ResolveApplicationFilePathOptions) => resolveFilePath("Dockerfile", options);
+
+/**
+ * Resolve a location path of the DOTENV (`.env.*`) file.
+ */
+export const resolveEnvFilePath = (options: ResolveApplicationFilePathOptions) => resolveFilePath(".env", options);
+
+/**
+ * Execute an command within a Docker container
+ * @deprecated
+ */
 export const cliContainerExec = async (command, options) => {
 	let getContainerName, cliContainerName;
 
@@ -801,15 +1010,15 @@ export const cliContainerExec = async (command, options) => {
 	}
 
 	cliContainerName = getContainerName.stdout;
-	logInfo("[cliContainerExec] cliContainerName:", cliContainerName);
+	log("[cliContainerExec] cliContainerName:", cliContainerName);
 
 	if (cliContainerName) {
 		if (options.isDebugging) {
-			logInfo(chalk.cyan("---------------- DIGINEXT-CLI DOCKER VERSION ------------------"));
+			log(chalk.cyan("---------------- DIGINEXT-CLI DOCKER VERSION ------------------"));
 			await execa("docker", ["exec", "-ti", cliContainerName, "docker", "-v"], { stdio: "inherit" });
-			logInfo(chalk.cyan("---------------- INSIDE DIGINEXT-CLI CONTAINER ----------------"));
+			log(chalk.cyan("---------------- INSIDE DIGINEXT-CLI CONTAINER ----------------"));
 			await execa("docker", ["exec", "-ti", cliContainerName, "ls"], { stdio: "inherit" });
-			logInfo(chalk.cyan("---------------------------------------"));
+			log(chalk.cyan("---------------------------------------"));
 		}
 		const args = command.split(" ");
 		const { stdout } = await execa("docker", ["exec", "-ti", cliContainerName, ...args], {
@@ -897,4 +1106,40 @@ export const getCurrentContainerEnvs = async (deployName: string, namespace = "d
 	return deployObj.spec.template.spec.containers[0].env || {};
 };
 
-export { log, logBitbucket, logBitbucketError, logError, logHelp, logInfo, logWarn, toBase64, wait };
+export { logBitbucket, logBitbucketError, logHelp, toBase64, wait };
+
+export const extractWorkspaceSlugFromUrl = (url: string) => {
+	try {
+		return url.split("//")[1].split(".")[0];
+	} catch (e: any) {
+		return;
+	}
+};
+
+export const extractWorkspaceIdFromUser = (user: User) => {
+	const workspaceId = (user.activeWorkspace as Workspace)._id
+		? (user.activeWorkspace as Workspace)._id.toString()
+		: user.activeWorkspace.toString();
+
+	return workspaceId;
+};
+
+export function getUnexpiredAccessToken(access_token: string) {
+	let expiredDate = dayjs("2999-12-31");
+	let expiredTimestamp = expiredDate.diff(dayjs());
+
+	// assign "access_token" info to request:
+	const token: AccessTokenInfo = {
+		access_token,
+		expiredTimestamp: expiredTimestamp,
+		expiredDate: expiredDate.toDate(),
+		expiredDateGTM7: expiredDate.format("YYYY-MM-DD HH:mm:ss"),
+	};
+
+	return token;
+}
+
+export const generateWorkspaceApiAccessToken = () => {
+	const name = randomUUID();
+	return { name, value: `${name}-${randomUUID()}` };
+};

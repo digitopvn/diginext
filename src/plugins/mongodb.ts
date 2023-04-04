@@ -1,9 +1,13 @@
 import { ObjectId } from "mongodb";
 
+export function isObjectId(id) {
+	return id instanceof ObjectId;
+}
+
 export function isValidObjectId(id) {
-	try {
-		return new ObjectId(id).toString() === id;
-	} catch (e: any) {
+	if (ObjectId.isValid(id)) {
+		if (String(new ObjectId(id)) === id) return true;
 		return false;
 	}
+	return false;
 }

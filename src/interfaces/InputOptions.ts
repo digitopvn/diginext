@@ -1,5 +1,9 @@
 import type { App, Framework, Project, Workspace } from "@/entities";
 
+import type { GitProviderType } from "./SystemTypes";
+
+export type ResourceQuotaSize = "none" | "1x" | "2x" | "3x" | "4x" | "5x" | "6x" | "7x" | "8x" | "9x" | "10x";
+
 /**
  * Các giá trị đầu vào của CLI
  */
@@ -8,6 +12,7 @@ export type InputOptions = {
 	 * For testing purpose
 	 */
 	isDebugging?: boolean;
+
 	/**
 	 * Follow the output logs until the command is finished.
 	 */
@@ -49,6 +54,9 @@ export type InputOptions = {
 	 * Target's name
 	 */
 	name?: string;
+	/**
+	 * {App} slug
+	 */
 	slug?: string;
 
 	/**
@@ -142,12 +150,6 @@ export type InputOptions = {
 	frameworkVersion?: string;
 
 	/**
-	 * Enable GIT for the application
-	 * @default true
-	 */
-	git?: boolean;
-
-	/**
 	 * @default false
 	 */
 	overwrite?: boolean;
@@ -200,7 +202,7 @@ export type InputOptions = {
 	/**
 	 * Specify environment code:
 	 * - One of: `dev, prod, staging,...`
-	 * @default `dev`
+	 * @default "dev"
 	 */
 	env?: "dev" | "prod" | "staging" | string;
 
@@ -265,10 +267,17 @@ export type InputOptions = {
 	shouldShowVersion?: boolean;
 
 	/**
+	 * Should update CLI version before running the command
 	 * @type {Boolean}
 	 * @default false
 	 */
 	shouldUpdateCli?: boolean;
+
+	/**
+	 * Enable GIT when create new or initialize app
+	 * @default true
+	 */
+	shouldUseGit?: boolean;
 
 	/**
 	 * @type {Boolean}
@@ -301,7 +310,7 @@ export type InputOptions = {
 	shouldInherit?: boolean;
 
 	/**
-	 *
+	 * @deprecated
 	 */
 	shouldUpdatePipeline?: boolean;
 
@@ -312,9 +321,21 @@ export type InputOptions = {
 	shouldInstallPackage?: boolean;
 
 	/**
-	 *
+	 * @default true
 	 */
 	shouldClose?: boolean;
+
+	/**
+	 * [Use when deploying an app] Force upload local DOTENV file to deployed environment.
+	 * @default false
+	 */
+	shouldUploadDotenv?: boolean;
+
+	/**
+	 * [Use when deploying an app] Should enable CDN for this app
+	 * @default false
+	 */
+	shouldEnableCDN?: boolean;
 
 	/**
 	 * Should create something
@@ -324,9 +345,17 @@ export type InputOptions = {
 	shouldCreate?: boolean;
 
 	/**
-	 *
+	 * Should apply something
 	 */
 	shouldApply?: boolean;
+
+	/**
+	 * ! Should deploy app from a fresh namespace
+	 * ## [WARNING]
+	 * - **With this flag enabled, the server will wipe out all current deployments within the target namespace, then deploy your app completely from scratch!**
+	 * - Use at your own risk, make sure you understand what you're doing, double check the namespace before deploying to avoid accidently take down other apps.
+	 */
+	shouldUseFreshDeploy?: boolean;
 
 	/**
 	 * Content of the deployment yaml (Namespace, Ingress, Service, Deploy,...)
@@ -335,7 +364,6 @@ export type InputOptions = {
 
 	/**
 	 * @type {Number}
-	 * @default 3000
 	 */
 	port?: number;
 
@@ -356,12 +384,12 @@ export type InputOptions = {
 	projectId?: string;
 
 	/**
-	 *
+	 * {Project} slug
 	 */
 	projectSlug?: string;
 
 	/**
-	 *
+	 * {Project} name
 	 */
 	projectName?: string;
 
@@ -371,9 +399,15 @@ export type InputOptions = {
 	remoteURL?: string;
 
 	/**
-	 *
+	 * Kubernetes namespace
 	 */
 	namespace?: string;
+
+	/**
+	 * Application's domain
+	 * @example "myapp.example.com"
+	 */
+	domain?: string;
 
 	/**
 	 * @type {Boolean}
@@ -405,12 +439,17 @@ export type InputOptions = {
 	/**
 	 *
 	 */
+	imageURL?: string;
+
+	/**
+	 *
+	 */
 	buildId?: string;
 
 	/**
 	 * @default "1x"
 	 */
-	size?: "none" | "1x" | "2x" | "3x" | "4x" | "5x" | "6x" | "7x" | "8x" | "9x" | "10x";
+	size?: ResourceQuotaSize;
 
 	/**
 	 * Specify an {App} instance
@@ -450,11 +489,14 @@ export type InputOptions = {
 	provider?: string;
 
 	/**
-	 * Git provider
-	 * @type {"bitbucket" | "github" | "gitlab"}
-	 * @default "custom"
+	 * Container Registry's slug
 	 */
-	gitProvider?: string;
+	registry?: string;
+
+	/**
+	 * Git provider type
+	 */
+	gitProvider?: GitProviderType;
 
 	/**
 	 * Specify a git branch
@@ -466,9 +508,41 @@ export type InputOptions = {
 	 */
 	providerProject?: string;
 
-	output?: any;
+	/**
+	 * Output type: `string`, `json`, `yaml`.
+	 * @default "string"
+	 * @example "string" | "json" | "yaml"
+	 */
+	output?: string;
 
+	/**
+	 * Output directory location.
+	 * @default "string"
+	 * @example "/path/to/output/"
+	 */
+	outputDir?: any;
+
+	/**
+	 * Output file name.
+	 * @default "string"
+	 * @example "output.txt"
+	 */
+	outputName?: any;
+
+	/**
+	 * Output path (include directory path + file name).
+	 * @default "string"
+	 * @example "/path/to/output.file"
+	 */
+	outputPath?: any;
+
+	/**
+	 * @deprecated
+	 */
 	stagingDomains?: string[];
+	/**
+	 * @deprecated
+	 */
 	prodDomains?: string[];
 };
 

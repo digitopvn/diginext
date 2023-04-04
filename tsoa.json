@@ -1,0 +1,36 @@
+{
+	"entryFile": "src/server.ts",
+	"noImplicitAdditionalProperties": "throw-on-extras",
+	"controllerPathGlobs": ["src/**/*Controller.ts"],
+	"spec": {
+		"basePath": "api/v1",
+		"outputDirectory": "public",
+		"specVersion": 3,
+		"securityDefinitions": {
+			"api_key": {
+				"type": "apiKey",
+				"name": "API_ACCESS_TOKEN",
+				"in": "header"
+			},
+			"jwt": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "JWT"
+			}
+		},
+		"operationIdTemplate": "{{titleCase method.name}}"
+	},
+	"routes": {
+		"authenticationModule": "./src/middlewares/swagger_auth.ts",
+		"basePath": "api/v1",
+		"routesDir": "./src",
+		"middleware": "express"
+	},
+	"ignore": ["**/node_modules/**"],
+	"compilerOptions": {
+		"baseUrl": "./",
+		"paths": {
+			"@/*": ["./src/*"]
+		}
+	}
+}

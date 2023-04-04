@@ -2,7 +2,7 @@ import type { ObjectID } from "@/libs/typeorm";
 import { Column, CreateDateColumn, DeleteDateColumn, ObjectIdColumn, UpdateDateColumn } from "@/libs/typeorm";
 
 export interface IBase {
-	_id: ObjectID;
+	_id: string;
 	createdAt?: Date;
 	deletedAt?: Date;
 	updatedAt?: Date;
@@ -10,7 +10,7 @@ export interface IBase {
 
 // export interface SchemaMetadata<T extends Base> {}
 
-export default abstract class Base<T extends Object> {
+export default abstract class Base {
 	@ObjectIdColumn({ name: "_id" })
 	_id?: ObjectID | string;
 
@@ -31,7 +31,7 @@ export default abstract class Base<T extends Object> {
 	 * Entity's metadata without unicode characters
 	 */
 	@Column()
-	metadata?: T;
+	metadata?: any;
 
 	// Metadata
 	// metadata?: SchemaMetadata;

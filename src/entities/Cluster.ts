@@ -1,3 +1,4 @@
+import { CloudProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
@@ -7,7 +8,7 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "clusters" })
-export default class Cluster extends Base<Cluster> {
+export default class Cluster extends Base {
 	/**
 	 * Cluster name
 	 */
@@ -21,22 +22,36 @@ export default class Cluster extends Base<Cluster> {
 	slug?: string;
 
 	/**
-	 * Cluster short name (to access via `kubectl context`)
+	 * Is cluster verified
+	 */
+	@Column({ default: false })
+	isVerified?: boolean;
+
+	/**
+	 * A cluster name on the cloud provider
+	 * - This is **NOT** a cluster name in `kubeconfig`
 	 */
 	@Column()
 	shortName?: string;
 
 	/**
+	 * Cluster context name (to access via `kubectl context`)
+	 */
+	@Column()
+	contextName?: string;
+
+	/**
 	 * Cloud provider of this cluster
 	 */
 	@ObjectIdColumn({ name: "cloud_providers" })
-	provider?: ObjectID | CloudProvider;
+	provider?: string | ObjectID | CloudProvider;
 
 	/**
 	 * Short name of the cloud provider
+	 * @example "gcloud", "digitalocean", "custom"
 	 */
 	@Column()
-	providerShortName?: string;
+	providerShortName?: CloudProviderType;
 
 	/**
 	 * Cloud zone of this cluster
@@ -59,6 +74,8 @@ export default class Cluster extends Base<Cluster> {
 	projectID?: string;
 
 	/**
+	 * #### `REQUIRES`
+	 * ---
 	 * The PRIMARY domain of this cluster
 	 */
 	@Column()

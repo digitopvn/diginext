@@ -5,6 +5,9 @@ import type { AppConfig } from "@/interfaces/AppConfig";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { getPackageConfig, saveAppConfig } from "@/plugins";
 
+/**
+ * Generate "dx.json" (app configuration file)
+ */
 export function generateAppConfig(options: InputOptions) {
 	const pkgConfig = getPackageConfig({ directory: options.targetDirectory });
 	const cliConfig = getCliConfig();
@@ -18,12 +21,7 @@ export function generateAppConfig(options: InputOptions) {
 	appConfig.project = options.projectSlug;
 
 	// git
-
-	// log(`options.git >>`, options.git);
-	// log(`options.repoURL >>`, options.repoURL);
-	// log(`options.remoteSSH >>`, options.remoteSSH);
-
-	if (options.git) {
+	if (options.shouldUseGit) {
 		appConfig.git = {
 			provider: options.gitProvider,
 			repoURL: options.repoURL,
@@ -33,10 +31,10 @@ export function generateAppConfig(options: InputOptions) {
 
 	// framework
 	appConfig.framework = {
-		name: options.framework.name,
-		slug: options.framework.slug,
-		repoSSH: options.framework.repoSSH,
-		version: pkgConfig.version ?? options.frameworkVersion ?? "",
+		name: options.framework?.name || "Unknown",
+		slug: options.framework?.slug || "unknown",
+		repoSSH: options.framework?.repoSSH || "unknown",
+		version: pkgConfig.version ?? options.frameworkVersion ?? "unknown",
 	};
 
 	// environment

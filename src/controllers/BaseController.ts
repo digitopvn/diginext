@@ -1,21 +1,27 @@
-import { isBooleanString, isJSON } from "class-validator";
+import { isBooleanString, isJSON, isNumberString } from "class-validator";
 import { iterate, toBool, toInt } from "diginext-utils/dist/object";
-import { Response as ApiResponse } from "diginext-utils/dist/response";
+// import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Request, Response } from "express";
-import { isEmpty, isNull, isString, trim } from "lodash";
+import { isEmpty, isString, toNumber, trim } from "lodash";
 import { ObjectId } from "mongodb";
 
 import { Config } from "@/app.config";
-import type { FindManyOptions, FindOptionsWhere, ObjectLiteral } from "@/libs/typeorm";
+import type { User, Workspace } from "@/entities";
+import type Base from "@/entities/Base";
+import type { FindManyOptions, FindOptionsWhere } from "@/libs/typeorm";
 import { isValidObjectId } from "@/plugins/mongodb";
+import type { BaseService } from "@/services/BaseService";
 
 import type { IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
-import type BaseService from "../services/BaseService";
+import type { ResponseData } from "../interfaces/ResponseData";
+import { respondFailure } from "../interfaces/ResponseData";
 
 const DEFAULT_PAGE_SIZE = 100;
 
-export default class BaseController<T extends BaseService<ObjectLiteral>> {
-	service: T;
+export default class BaseController<T extends Base = any> {
+	user: User;
+
+	workspace: Workspace;
 
 	filter: IQueryOptions & FindManyOptions<any>;
 
@@ -25,125 +31,108 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 
 	where: FindOptionsWhere<any>;
 
-	constructor(service: T) {
-		this.service = service;
+	constructor(protected service?: BaseService<T>) {
+		// if (service) this.service = service;
 	}
 
-	async read(req: Request, res: Response, next: NextFunction) {
-		let data;
+	async read() {
+		// console.log("this.filter :>> ", this.filter);
+
+		let data: T | T[];
 		if (this.filter._id) {
 			data = await this.service.findOne(this.filter, this.options);
+			if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 		} else {
 			data = await this.service.find(this.filter, this.options, this.pagination);
+			if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: "" });
 		}
 
-		let result: any = { status: 1, data };
-		if (this.pagination) result = { ...result, ...this.pagination };
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
 		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		const { token } = req as any;
-		if (token) result.token = token;
+		// const { token } = req as any;
+		// if (token) result.token = token;
 
-		return res.status(200).json(result);
+		return result;
 	}
 
-	async create(req: Request, res: Response, next: NextFunction) {
-		const data = await this.service.create(req.body);
-		let result: any = { status: 1, data };
+	async create(inputData) {
+		const data = await this.service.create(inputData);
 
-		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		const { token } = req as any;
-		if (token) result.token = token;
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
-		// return ApiResponse.succeed(res, data);
-		return res.status(200).json(result);
+		return result;
 	}
 
-	async update(req: Request, res: Response, next: NextFunction) {
-		const results = await this.service.update(this.filter, req.body, this.options);
+	async update(updateData) {
+		// console.log("BaseController > this.filter :>> ", this.filter);
+		const data = await this.service.update(this.filter, updateData, this.options);
+		if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 
-		let result: any = { status: 1, data: results };
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
-		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		const { token } = req as any;
-		if (token) result.token = token;
-
-		// if (results.length == 0) return ApiResponse.failed(res, "Items not found.");
-		if (results.length == 0) {
-			result.status = 0;
-			result.messages = ["Items not found."];
-			return res.status(200).json(result);
-		}
-
-		// return ApiResponse.succeed(res, results);
-		return res.status(200).json(result);
+		return result;
 	}
 
-	async delete(req: Request, res: Response, next: NextFunction) {
+	async delete() {
+		const tobeDeletedItems = await this.service.find(this.filter);
+
+		if (tobeDeletedItems && tobeDeletedItems.length === 0)
+			return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+
 		const data = await this.service.delete(this.filter);
-		// console.log(`delete result >>`, result);
 
-		let result: any = { status: 1, data };
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
 
-		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		const { token } = req as any;
-		if (token) result.token = token;
-
-		// if (result.ok == 0) return ApiResponse.failed(res, "Items not found.");
-		if (result.ok == 0) {
-			result.status = 0;
-			result.messages = ["Items not found."];
-			return res.status(200).json(result);
-			// return ApiResponse.failed(res, "Items not found.");
-		}
-
-		// return ApiResponse.succeed(res, data);
-		return res.status(200).json(result);
+		return result;
 	}
 
-	async softDelete(req: Request, res: Response, next: NextFunction) {
+	async softDelete() {
 		const data = await this.service.softDelete(this.filter);
+		if (!data || !data.ok) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 
-		let result: any = { status: 1, data };
-
-		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		const { token } = req as any;
-		if (token) result.token = token;
-
-		return res.status(200).json(result);
-		// return ApiResponse.succeed(res, data);
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
+		return result;
 	}
 
-	async empty(req: Request, res: Response, next: NextFunction) {
+	async empty() {
+		let data: { ok: number };
+		let result: ResponseData | (ResponseData & { data: typeof data }) = { status: 1, data, messages: [] };
+
 		if (Config.ENV === "development") {
-			const data = await this.service.empty(this.filter);
-			if (data.ok == 0) return ApiResponse.failed(res, data.error);
-			return ApiResponse.succeed(res, data);
+			const emptyRes = await this.service.empty(this.filter);
+			result.data.ok = emptyRes.ok;
 		} else {
-			return ApiResponse.failed(`This function is restricted to use on development environment only.`);
+			result.data = { ok: 0 };
+			result.messages.push(`This function is restricted to use on development environment only.`);
 		}
+
+		return result;
 	}
 
 	parseDateRange(req: Request, res: Response, next: NextFunction) {
 		// TODO: process date range filter: from_date, to_date, from_time, to_time, date
+		this.service.req = req;
+
 		next();
 	}
 
 	parseBody(req: Request, res: Response, next: NextFunction) {
 		// log("req.body [1] >>", req.body);
+		this.service.req = req;
 
 		req.body = iterate(req.body, (obj, key, val) => {
 			// log(`key, val =>`, key, val);
-			if (isValidObjectId(val)) obj[key] = new ObjectId(val);
-			if (isBooleanString(val)) obj[key] = toBool(val);
+			if (isValidObjectId(val)) {
+				obj[key] = new ObjectId(val);
+			} else if (isNumberString(val)) {
+				obj[key] = toNumber(val);
+			} else if (isBooleanString(val)) {
+				obj[key] = toBool(val);
+			} else {
+				obj[key] = val;
+			}
 		});
-
-		// log("req.body >>", req.body);
 
 		next();
 	}
@@ -170,7 +159,9 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			sort, // @example: -updatedAt,-createdAt
 			order, // @example: -updatedAt,-createdAt
 			search = false,
+			raw = false,
 			where = {},
+			access_token,
 			...filter
 		} = req.query as any;
 
@@ -178,12 +169,12 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 		let _sortOptions: string[];
 		if (sort) _sortOptions = sort.indexOf(",") > -1 ? sort.split(",") : [sort];
 		if (order) _sortOptions = order.indexOf(",") > -1 ? order.split(",") : [order];
-		const sortOptions: { [key: string]: string } = {};
+		const sortOptions: { [key: string]: "DESC" | "ASC" } = {};
 		if (_sortOptions)
 			_sortOptions.forEach((s) => {
 				const isDesc = s.charAt(0) === "-";
 				const key = isDesc ? s.substring(1) : s;
-				const sortValue: string = isDesc ? "DESC" : "ASC";
+				const sortValue: "DESC" | "ASC" = isDesc ? "DESC" : "ASC";
 				sortOptions[key] = sortValue;
 			});
 
@@ -196,10 +187,11 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			select: _select == "" ? [] : _select.indexOf(",") > -1 ? _select.split(",") : [_select],
 		};
 		if (!isEmpty(sortOptions)) options.order = sortOptions;
+		if (raw === "true" || raw === true) options.raw = true;
 
 		// pagination
 		if (this.pagination.page_size) {
-			options.skip = (this.pagination.current_page ?? 1) * this.pagination.page_size;
+			options.skip = ((this.pagination.current_page ?? 1) - 1) * this.pagination.page_size;
 			options.limit = this.pagination.page_size;
 		}
 
@@ -207,9 +199,10 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 		if (skip) options.skip = skip;
 
 		this.options = options;
+		// console.log(`this.options :>>`, this.options);
 
 		// filter
-		const _filter: { [key: string]: any } = { id, ...filter };
+		const _filter: { [key: string]: any } = id ? { id, ...filter } : filter;
 
 		// convert search to boolean
 		// log("search >>", search);
@@ -218,19 +211,18 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			if (val == null || val == undefined) {
 				_filter[key] = null;
 			} else if (key == "id" || key == "_id") {
-				_filter.id = isValidObjectId(val) ? new ObjectId(val) : val;
+				_filter._id = isValidObjectId(val) ? new ObjectId(val) : val;
+				delete _filter.id;
 			} else if (isValidObjectId(val)) {
 				_filter[key] = new ObjectId(val);
 			} else if (isJSON(val)) {
 				_filter[key] = JSON.parse(val);
-			}
-			// else if (isBooleanString(val)) {
-			// 	_filter[key] = toBool(val);
-			// }
-			else {
+			} else {
 				_filter[key] = val;
 			}
 		});
+
+		if (!_filter.id) delete _filter.id;
 
 		// manipulate "$or" & "$and" filter:
 		if (_filter.or) {
@@ -254,15 +246,6 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			});
 		}
 
-		// * remove "id" in filter if undefined
-		if (isNull(_filter.id)) {
-			delete _filter.id;
-		} else {
-			// * if it's existed, convert to mongo's style -> _id
-			_filter._id = _filter.id;
-			delete _filter.id;
-		}
-
 		// save to local storage of response
 		this.filter = _filter as IQueryOptions & FindManyOptions<any>;
 		// log({ filter: this.filter });
@@ -271,6 +254,8 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 	}
 
 	async parsePagination(req: Request, res: Response, next: NextFunction) {
+		this.service.req = req;
+
 		let total_items = 0,
 			total_pages = 0,
 			current_page = 1,
@@ -287,6 +272,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 			select,
 			sort = "createdAt",
 			search = false,
+			access_token,
 			...filter
 		} = req.query;
 
@@ -300,7 +286,7 @@ export default class BaseController<T extends BaseService<ObjectLiteral>> {
 		if (pageOptions.page > 0) current_page = pageOptions.page;
 
 		// const totalSkip = skip > 0 ? pageOptions.skip : current_page > 0 ? (current_page - 1) * page_size : undefined;
-		const totalLimit = limit > 0 ? pageOptions.limit : page_size > 0 ? page_size : undefined;
+		const totalLimit = pageOptions.limit > 0 ? pageOptions.limit : page_size > 0 ? page_size : undefined;
 
 		if (totalLimit) total_pages = Math.ceil(total_items / totalLimit);
 		// if (totalSkip) page_size = totalSkip;

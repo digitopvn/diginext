@@ -1,15 +1,10 @@
-import { isJSON } from "class-validator";
 import { isEmpty } from "lodash";
 
-import { isServerMode } from "@/app.config";
-import type { App, Build, Release, User, Workspace } from "@/entities";
+import type { App, Build, Project, Release, User, Workspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
-import type { DeployEnvironment } from "@/interfaces/DeployEnvironment";
-import AppService from "@/services/AppService";
-import ProjectService from "@/services/ProjectService";
-import ReleaseService from "@/services/ReleaseService";
 
-import { fetchApi } from "../api";
+import { DB } from "../api/DB";
+import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { fetchDeploymentFromContent } from "../deploy/fetch-deployment";
 
 type OwnershipParams = {
@@ -17,55 +12,24 @@ type OwnershipParams = {
 	workspace?: Workspace;
 };
 
-export const createReleaseFromBuild = async (build: Build, ownership?: OwnershipParams) => {
+export const createReleaseFromBuild = async (build: Build, env?: string, ownership?: OwnershipParams) => {
 	// get app data
-	let app;
-	if (isServerMode) {
-		const appSvc = new AppService();
-		app = await appSvc.findOne({ id: build.app }, { populate: ["owner", "workspace"] });
-	} else {
-		const { data } = await fetchApi<App>({ url: `/api/v1/app?id=${build.app}` });
-		app = data;
-	}
+	const app = await DB.findOne<App>("app", { id: build.app }, { populate: ["owner", "workspace"] });
+	if (!app) throw new Error(`App "${build.appSlug}" not found.`);
 
-	if (!app) {
-		throw new Error(`App "${build.appSlug}" not found.`);
-		return;
-	}
-
-	// console.log("app :>> ", app);
-
-	// get project data
-	let project;
-	if (isServerMode) {
-		const projectSvc = new ProjectService();
-		project = await projectSvc.findOne({ id: build.project });
-	} else {
-		const { data } = await fetchApi<App>({ url: `/api/v1/project?id=${build.project}` });
-		project = data;
-	}
-
-	if (!project) {
-		throw new Error(`Project "${build.projectSlug}" not found.`);
-		return;
-	}
+	const project = await DB.findOne<Project>("project", { id: build.project });
+	if (!project) throw new Error(`Project "${build.projectSlug}" not found.`);
 	// console.log("project :>> ", project);
 
 	// get deployment data
-	const { env, branch, image, tag } = build;
+	const { branch, image, tag, cliVersion } = build;
 	const { slug: projectSlug } = project;
-	const { owner, workspace, environment, slug: appSlug } = app;
+	const { owner, workspace, slug: appSlug } = app;
+	const { slug: workspaceSlug } = workspace as Workspace;
 
-	const BUILD_NUMBER = tag ?? image.split(":")[1];
-	// console.log("BUILD_NUMBER :>> ", BUILD_NUMBER);
+	const buildNumber = tag ?? image.split(":")[1];
 
-	// traverse and parse "environment":
-	Object.entries(environment).forEach(([key, val]) => {
-		environment[key] = isJSON(val) ? JSON.parse(val as string) : {};
-	});
-	// console.log("environment :>> ", environment);
-
-	const deployedEnvironment = environment[env] as DeployEnvironment;
+	const deployedEnvironment = await getDeployEvironmentByApp(app, env);
 	// console.log(`deployedEnvironment > ${env} :>>`, deployedEnvironment);
 
 	const { deploymentYaml, prereleaseDeploymentYaml, namespace, provider, project: providerProject, cluster } = deployedEnvironment;
@@ -76,10 +40,9 @@ export const createReleaseFromBuild = async (build: Build, ownership?: Ownership
 	// log({ deploymentData });
 	// log({ prereleaseDeploymentData });
 
-	const { IMAGE_NAME, APP_ENV } = deploymentData;
+	const { IMAGE_NAME } = deploymentData;
 
 	const defaultAuthor = owner as User;
-	const workspaceSlug = (workspace as Workspace).slug;
 
 	// declare AppConfig
 	const appConfig = {
@@ -90,42 +53,45 @@ export const createReleaseFromBuild = async (build: Build, ownership?: Ownership
 		workspace: workspaceSlug,
 		framework: app.framework,
 		git: app.git,
-		environment,
+		environment: app.deployEnvironment || {},
 	} as AppConfig;
 
 	// prepare release data
 	const data = {
 		env,
-		name: `${projectSlug}/${appSlug}:${BUILD_NUMBER}`,
+		cliVersion,
+		name: `${projectSlug}/${appSlug}:${buildNumber}`,
 		image: IMAGE_NAME,
+		// old diginext.json
 		diginext: JSON.stringify(appConfig),
-		projectSlug: projectSlug,
-		appSlug: appSlug,
-		// build
+		appConfig: appConfig,
+		// build status
 		branch: branch,
-		buildStatus: "success" as "success" | "start" | "building" | "failed",
+		buildStatus: "success",
 		active: env !== "prod",
 		// deployment target
-		namespace: namespace,
-		provider: provider,
-		cluster: cluster,
+		namespace,
+		provider,
+		cluster,
 		providerProjectId: providerProject,
 		// deployment
 		endpoint: !isEmpty(deploymentData.domains) ? deploymentData.domains[0] : "",
 		deploymentYaml: deploymentData.deployContent,
+		envVars: app.deployEnvironment[env].envVars || [],
 		// production
 		productionUrl: !isEmpty(deploymentData.domains) ? deploymentData.domains[0] : "",
 		prodYaml: deploymentData.deployContent,
 		// relationship
+		build: build._id,
 		app: app._id,
 		project: project._id,
 		// ownership
+		projectSlug,
+		appSlug,
 		createdBy: isEmpty(ownership) ? defaultAuthor.slug : ownership.author.slug,
 		owner: isEmpty(ownership) ? defaultAuthor._id : ownership.author._id,
 		workspace: workspaceSlug,
 	} as Release;
-
-	data.envVars = !isEmpty(APP_ENV) ? JSON.stringify(APP_ENV) : "[]";
 
 	if (env === "prod") {
 		// prerelease
@@ -133,19 +99,10 @@ export const createReleaseFromBuild = async (build: Build, ownership?: Ownership
 		data.prereleaseUrl = prereleaseDeploymentData.domains[0];
 	}
 
-	// log(`createReleaseFromBuild :>>`, { data });
-
 	// create new release in the database
-	let newRelease;
-	if (isServerMode) {
-		const releaseSvc = new ReleaseService();
-		newRelease = await releaseSvc.create(data);
-	} else {
-		const res = await fetchApi<Release>({ url: `/api/v1/release`, method: "POST", data });
-		newRelease = res.data;
-	}
+	const newRelease = DB.create<Release>("release", data);
+
 	// log("Created new Release successfully:", newRelease);
 
-	// return new release
 	return newRelease;
 };

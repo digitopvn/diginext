@@ -1,10 +1,10 @@
 export interface KubeService {
-	apiVersion?: "v1";
+	apiVersion?: string;
 	kind?: "Service";
 	metadata?: {
 		name?: string;
 		namespace?: string;
-		labels: {
+		labels?: {
 			[key: string]: string;
 		};
 	};

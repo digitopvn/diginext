@@ -1,59 +1,189 @@
 import { logError } from "diginext-utils/dist/console/log";
-import type { NextFunction, Request, Response } from "express";
-import type { ParamsDictionary } from "express-serve-static-core";
-import type { ParsedQs } from "qs";
+import { ObjectId } from "mongodb";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { User } from "@/entities";
+import type { CloudProvider, Cluster } from "@/entities";
+import type { HiddenBodyKeys } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import type { ResponseData } from "@/interfaces/ResponseData";
+import { respondFailure } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
+import { CloudProviderService } from "@/services";
 import ClusterService from "@/services/ClusterService";
 
 import BaseController from "./BaseController";
 
-export default class ClusterController extends BaseController<ClusterService> {
+export type ClusterDto = Omit<Cluster, keyof HiddenBodyKeys>;
+
+@Tags("Cluster")
+@Route("cluster")
+export default class ClusterController extends BaseController<Cluster> {
 	constructor() {
 		super(new ClusterService());
 	}
 
-	async connect(
-		req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>,
-		res: Response<any, Record<string, any>>,
-		next: NextFunction
-	): Promise<Response<any, Record<string, any>>> {
-		const result: { status: number; messages: string[]; data: any } = { status: 1, messages: [], data: {} };
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/")
+	read(@Queries() queryParams?: IGetQueryParams) {
+		return super.read();
+	}
 
-		const options = { userId: (req.user as User)._id as string, workspaceId: (req.user as User).activeWorkspace as string };
-		// console.log("options :>> ", options);
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/")
+	async create(@Body() body: ClusterDto, @Queries() queryParams?: IPostQueryParams) {
+		// validation - round 1
+		let errors: string[] = [];
+		if (!body.provider) errors.push(`Cloud Provider ID is required.`);
+		if (!body.shortName) errors.push(`Cluster short name is required, find it on your cloud provider dashboard.`);
+		if (typeof body.isVerified === "undefined") body.isVerified = false;
 
-		const { slug } = req.query;
+		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+
+		// validate cloud provider...
+		const cloudProviderSvc = new CloudProviderService();
+
+		const cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
+		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
+
+		body.providerShortName = cloudProvider.shortName;
+
+		// validation - round 2
+		errors = [];
+		if (cloudProvider.shortName === "gcloud") {
+			if (!body.serviceAccount) errors.push(`Google Service Account (JSON) is required.`);
+			if (!body.projectID) errors.push(`Google Project ID is required.`);
+			if (!body.region) errors.push(`Google cluster region is required.`);
+			if (!body.zone) errors.push(`Google cluster zone is required.`);
+		}
+		if (cloudProvider.shortName === "digitalocean") {
+			if (!body.apiAccessToken) errors.push(`Digital Ocean API Access Token is required.`);
+			// if (!body.region) errors.push(`Digital Ocean cluster region is required.`);
+		}
+		if (cloudProvider.shortName === "custom") {
+			if (!body.kubeConfig) errors.push(`Kube config data (YAML) is required.`);
+		}
+		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+
+		// create new cluster
+		let newCluster = (await this.service.create(body)) as Cluster;
+
+		if (newCluster) {
+			try {
+				const auth = await ClusterManager.authCluster(newCluster.shortName);
+				if (!auth) {
+					return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
+				}
+
+				[newCluster] = await this.service.update({ _id: newCluster._id }, { isVerified: true });
+
+				return { status: 1, data: newCluster } as ResponseData;
+			} catch (e) {
+				return { status: 0, messages: [`Failed to connect to the cluster: ${e}`] } as ResponseData;
+			}
+		} else {
+			return { status: 0, messages: [`Can't create new cluster`] } as ResponseData;
+		}
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/")
+	async update(@Body() body: ClusterDto, @Queries() queryParams?: IPostQueryParams) {
+		const cloudProviderSvc = new CloudProviderService();
+		let cloudProvider: CloudProvider;
+
+		// validation - round 1: valid input params
+		if (body.provider) {
+			cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
+			if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
+		}
+
+		let cluster = await this.service.findOne(this.filter);
+		if (!cluster) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Cluster not found.` });
+
+		// validate cloud provider...
+		if (!cloudProvider) cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(cluster.provider as string) });
+		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider is not valid.`] } as ResponseData;
+
+		const updateData = { ...body, provider: new ObjectId(body.provider.toString()), providerShortName: cloudProvider.shortName } as ClusterDto;
+		[cluster] = await this.service.update({ _id: cluster._id }, updateData);
+		console.log("cluster :>> ", cluster);
+
+		// validation - round 2: check cluster accessibility
+		let errors: string[] = [];
+		if (cloudProvider.shortName === "gcloud") {
+			if (!cluster.serviceAccount && !body.serviceAccount) errors.push(`Google Service Account (JSON) is required.`);
+			if (!cluster.projectID && !body.projectID) errors.push(`Google Project ID is required.`);
+			if (!cluster.region && !body.region) errors.push(`Google cluster region is required.`);
+			if (!cluster.zone && !body.zone) errors.push(`Google cluster zone is required.`);
+		}
+		if (cloudProvider.shortName === "digitalocean") {
+			if (!cluster.apiAccessToken) errors.push(`Digital Ocean API Access Token is required.`);
+			// if (!cluster.region && !body.region) errors.push(`Digital Ocean cluster region is required.`);
+		}
+		if (cloudProvider.shortName === "custom") {
+			if (!cluster.kubeConfig && !body.kubeConfig) errors.push(`Kube config data (YAML) is required.`);
+		}
+		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+
+		// verify...
+		try {
+			await ClusterManager.authCluster(cluster.shortName);
+			[cluster] = await this.service.update({ _id: cluster._id }, { isVerified: true });
+		} catch (e) {
+			console.log("Failed to connect cluster :>> ", e);
+			return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
+		}
+
+		return super.update(body);
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/")
+	delete(@Queries() queryParams?: IDeleteQueryParams) {
+		// TODO: find deleted items before deleting
+		return super.delete();
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/connect")
+	async connect(@Queries() queryParams?: { slug: string }) {
+		const result: ResponseData = { status: 1, messages: [], data: {} };
+
+		const { slug } = this.filter;
 		if (!slug) {
 			result.status = 0;
-			result.messages = [`Param "slug" is required.`];
-			return res.status(200).json(result);
+			result.messages.push(`Param "slug" is required.`);
+			return result;
 		}
 
 		const cluster = await this.service.findOne({ slug });
 		if (!cluster) {
 			result.status = 0;
-			result.messages = [`Cluster not found: ${slug}.`];
-			return res.status(200).json(result);
+			result.messages.push(`Cluster not found: ${slug}.`);
+			return result;
 		}
 		// console.log("registry :>> ", registry);
 
 		const { shortName } = cluster;
 		try {
-			const authResult = await ClusterManager.auth(shortName);
+			const authResult = await ClusterManager.authCluster(shortName);
 			if (authResult) {
 				result.status = 1;
-				result.messages = ["Ok"];
+				result.messages.push("Ok");
 			} else {
 				result.status = 0;
-				result.messages = [`Cluster authentication failed.`];
+				result.messages.push(`Cluster authentication failed.`);
 			}
 		} catch (e) {
 			logError(e);
 			result.status = 0;
-			result.messages = [`Cluster authentication failed: ${e}`];
+			result.messages.push(`Cluster authentication failed: ${e}`);
 		}
-		return res.status(200).json(result);
+		return result;
 	}
 }

@@ -2,37 +2,29 @@ import "reflect-metadata";
 
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import session from "cookie-session";
+import { log, logSuccess } from "diginext-utils/dist/console/log";
+import type { Request, Response } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";
-import session from "express-session";
-import * as fs from "fs";
 import type { Server } from "http";
 import { createServer } from "http";
+import morgan from "morgan";
 import passport from "passport";
 import path from "path";
 import { Server as SocketServer } from "socket.io";
+import swaggerUi from "swagger-ui-express";
 
-// routes
 import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
-import { Config } from "./app.config";
-import { CLI_CONFIG_DIR } from "./config/const";
-/**
- * CUSTOM MIDDLEWARES
- */
-import logEnabled from "./middlewares/logEnabled";
+import { Config, IsDev, IsProd } from "./app.config";
+import { failSafeHandler } from "./middlewares/failSafeHandler";
 import { route404_handler } from "./middlewares/route404";
-// import listEndpoints from "express-list-endpoints";
-// database
 import AppDatabase from "./modules/AppDatabase";
-import ClusterManager from "./modules/k8s";
-import { providerAuthenticate } from "./modules/providers";
-import { connect } from "./modules/registry";
-import { logInfo } from "./plugins";
-import main from "./routes/main";
-import { CloudProviderService, ClusterService, ContainerRegistryService } from "./services";
+import { startupScripts } from "./modules/server/startup-scripts";
+import routes from "./routes/routes";
 
 /**
  * ENVIRONMENT CONFIG
@@ -44,60 +36,14 @@ const { BASE_PATH, PORT, CLI_MODE } = Config;
  */
 let app;
 let server: Server;
-let io: SocketServer;
-
-if (process.env.CLI_MODE == "server") log(`Connecting to database. Please wait...`);
-
-/**
- * BUILD SERVER INITIAL START-UP SCRIPTS:
- * - Create config directory in {HOME_DIR}
- * - Connect GIT providers (if any)
- * - Connect container registries (if any)
- * - Connect K8S clusters (if any)
- */
-async function startupScripts() {
-	log(`-------------- RUNNING INITIAL SCRIPTS -----------------`);
-
-	// config dir
-	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);
-
-	// connect cloud providers
-	const providerSvc = new CloudProviderService();
-	const providers = await providerSvc.find({});
-	if (providers.length > 0) {
-		providers.forEach(async (provider) => {
-			await providerAuthenticate(provider);
-		});
-	}
-
-	// connect container registries
-	const registrySvc = new ContainerRegistryService();
-	const registries = await registrySvc.find({});
-	if (registries.length > 0) {
-		registries.forEach(async (registry) => {
-			await connect(registry);
-		});
-	}
-
-	// connect clusters
-	const clusterSvc = new ClusterService();
-	const clusters = await clusterSvc.find({});
-	if (clusters.length > 0) {
-		clusters.forEach(async (cluster) => {
-			// only switch current context to cluster if provider is "custom"?
-			await ClusterManager.auth(cluster.shortName, { shouldSwitchContextToThisCluster: cluster.providerShortName === "custom" }).catch((e) =>
-				logError(e)
-			);
-		});
-	}
-}
+let socketIO: SocketServer;
 
 function initialize() {
 	/**
 	 * ! ONLY START THE BUILD SERVER UP IF RUNNING CLI AS "SERVER" MODE
 	 */
-	if (CLI_MODE == "server") {
-		log(`Server is initializing...`);
+	if (CLI_MODE === "server") {
+		// log(`Server is initializing...`);
 
 		app = express();
 		server = createServer(app);
@@ -105,8 +51,8 @@ function initialize() {
 		/**
 		 * Websocket / SOCKET.IO
 		 */
-		io = new SocketServer(server);
-		io.on("connection", (socket) => {
+		socketIO = new SocketServer(server, { transports: ["websocket"] });
+		socketIO.on("connection", (socket) => {
 			console.log("a user connected");
 
 			socket.on("join", (data) => {
@@ -116,16 +62,13 @@ function initialize() {
 		});
 
 		/**
-		 * TODO: Enable SWAGGER for API Docs
-		 */
-
-		/**
 		 * CORS MIDDLEWARE
+		 * Access-Control-Allow-Headers
 		 */
 		app.use((req, res, next) => {
 			res.header("Access-Control-Allow-Origin", "*");
 			res.header("Access-Control-Allow-Methods", "GET, PATCH, POST, DELETE");
-			res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+			res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control");
 			res.header("X-Powered-By", "TOP GROUP");
 			next();
 		});
@@ -134,6 +77,18 @@ function initialize() {
 		 * SERVING STATIC FILES
 		 */
 		app.use(express.static(path.resolve(process.cwd(), "public")));
+
+		/**
+		 * TODO: Enable SWAGGER for API Docs
+		 * SWAGGER API DOCS
+		 */
+		app.use(
+			"/api-docs",
+			swaggerUi.serve,
+			swaggerUi.setup(undefined, {
+				swaggerOptions: { url: "/swagger.json" },
+			})
+		);
 
 		/**
 		 * PASSPORT STRATEGY
@@ -169,12 +124,7 @@ function initialize() {
 			session({
 				name: Config.grab(`SESSION_NAME`, `diginext-cli`),
 				secret: Config.grab(`JWT_SECRET`, "123"),
-				proxy: true,
-				resave: true,
-				saveUninitialized: true,
-				cookie: {
-					maxAge: 1000 * 60 * 100,
-				},
+				maxAge: 1000 * 60 * 100,
 			})
 		);
 
@@ -188,21 +138,24 @@ function initialize() {
 		 * LOGGING SYSTEM MIDDLEWARE - ENABLED
 		 * Enable when running on server
 		 */
-		app.use(logEnabled(Config.ENV !== "development"));
+		morgan.token("user", (req: Request) => (req.user ? `[${(req.user as any)?.slug}]` : "[unauthenticated]"));
+		const morganMessage = IsDev()
+			? "[REQUEST :date[clf]] :method - :user - :url :status :response-time ms - :res[content-length]"
+			: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;
+		const morganOptions = {
+			skip: (req, res) => req.method.toUpperCase() === "OPTIONS",
+		} as morgan.Options<Request, Response>;
+		app.use(morgan(morganMessage, morganOptions));
 
 		// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
-		app.use(`/${BASE_PATH}`, main);
+		app.use(`/${BASE_PATH}`, routes);
 
 		/**
-		 * ROUTE 404 MIDDLEWARE
+		 * ROUTE 404 & FAIL SAFE HANDLING MIDDLEWARE
 		 */
-		// app.use(route404);
 		app.use("*", route404_handler);
 
-		/**
-		 * LIST ENDPOINTS
-		 */
-		// console.log("listEndpoints >>", listEndpoints(app));
+		if (IsProd()) app.use(failSafeHandler);
 
 		/**
 		 * SERVER HANDLING
@@ -211,7 +164,7 @@ function initialize() {
 			logSuccess(`Server is UP & listening at port ${PORT}...`);
 		}
 
-		server.on("error", (e: any) => logInfo(`ERROR:`, e));
+		server.on("error", (e: any) => log(`ERROR:`, e));
 		server.listen(PORT, onConnect);
 
 		/**
@@ -224,9 +177,11 @@ function initialize() {
 	}
 }
 
-// export const db = new AppDatabase();
-AppDatabase.connect(initialize);
+if (CLI_MODE === "server") {
+	log(`Connecting to database. Please wait...`);
+	AppDatabase.connect(initialize);
+}
 
-export const getIO = () => io;
+export const getIO = () => socketIO;
 
-export { app, io, server };
+export { app, server, socketIO };

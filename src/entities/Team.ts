@@ -16,7 +16,7 @@ export interface ITeam extends IBase {
 }
 
 @Entity({ name: "teams" })
-export default class Team extends Base<Team> {
+export default class Team extends Base {
 	@Column({ length: 250 })
 	@IsNotEmpty({ message: `Team name is required.` })
 	name?: string;

@@ -784,15 +784,7 @@ class MongoEntityManager extends EntityManager_1.EntityManager {
                 pipeline.push(selectWithProjectPipeline);
                 // console.log(selectWithProjectPipeline)
             }
-            if (optionsOrConditions.skip)
-                pipeline.push({ $skip: optionsOrConditions.skip });
-            if (optionsOrConditions.take)
-                pipeline.push({ $limit: optionsOrConditions.take });
-            if (optionsOrConditions.order) {
-                pipeline.push({
-                    $sort: this.convertFindOptionsOrderToOrderCriteria(optionsOrConditions.order),
-                });
-            }
+
             if (deleteDateColumn && !optionsOrConditions.withDeleted) {
                 if (firstPipeline) {
                     if (firstPipeline.$match) {
@@ -844,24 +836,36 @@ class MongoEntityManager extends EntityManager_1.EntityManager {
                 },
             });
         }
+
+        if (optionsOrConditions.order) {
+            pipeline.push({
+                $sort: this.convertFindOptionsOrderToOrderCriteria(optionsOrConditions.order),
+            });
+        }
+
+        if (optionsOrConditions.skip)
+            pipeline.push({ $skip: optionsOrConditions.skip });
+        if (optionsOrConditions.take)
+            pipeline.push({ $limit: optionsOrConditions.take });
+
         // console.dir(pipeline, { depth: null })
         results = await this.aggregateEntity(entityClassOrName, pipeline).toArray();
-        
+
         // "aggregate" always returns array
         // if the relation column is not an array, we should return an object
-        
+
         // console.dir(refTables, { depth: 5 })
         // console.dir({ results }, { depth: 5 });
 
         results = results.map((result) => {
             populate.forEach((column) => {
                 const metadata = refTables.find(ref => ref[column]);
-                if (!metadata[column].isArray) result[column] = result[column][0];
+                if (metadata[column] && !metadata[column].isArray) result[column] = result[column][0];
             });
             return result;
         });
         // console.dir(results, { depth: null })
-        
+
         // transform document to entity
         return results;
         // const query =

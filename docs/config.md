@@ -73,4 +73,4 @@ diginext config provider current
 
 More documentation: 
 -
-`diginext --help` or `di -h`
+`diginext --help` or `dx -h`

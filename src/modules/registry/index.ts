@@ -1,58 +1,77 @@
-import { logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
-import * as fs from "fs";
-import path from "path";
+import { logError, logWarn } from "diginext-utils/dist/console/log";
 
-import { CLI_CONFIG_DIR } from "@/config/const";
-import type { ContainerRegistry } from "@/entities";
+import type { Cluster } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 
+import { DB } from "../api/DB";
+import { askForCluster } from "../cluster/ask-for-cluster";
+import { askForNamespace } from "../k8s/ask-for-namespace";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
+import { askToConnectRegistry } from "./ask-connect-registry";
+import { askForRegistry } from "./ask-for-registry";
 
-export const connect = async (registry: ContainerRegistry, options?: { userId?: any; workspaceId?: any }) => {
-	const { provider, host } = registry;
-
-	switch (provider) {
-		case "gcloud":
-			const { serviceAccount } = registry;
-
-			const tmpDir = path.resolve(CLI_CONFIG_DIR, `registry`);
-			if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-			const tmpFilePath = path.resolve(tmpDir, `gcloud-service-account.json`);
-			fs.writeFileSync(tmpFilePath, serviceAccount, "utf8");
-
-			const authResult = await gcloud.authenticate({ filePath: tmpFilePath, ...options });
-			const connectResult = await gcloud.connectDockerRegistry({ filePath: tmpFilePath, host, ...options });
-			if (connectResult) logSuccess(`[CONTAINER REGISTRY] Connected to Container Registry: "gcloud"`);
-			// console.log("authResult :>> ", authResult);
-			return authResult;
-
-		case "digitalocean":
-			const { apiAccessToken } = registry;
-			const doResult = await digitalocean.authenticate({ key: apiAccessToken, ...options });
-			if (doResult) logSuccess(`[CONTAINER REGISTRY] Connected to Container Registry: "digitalocean"`);
-			return doResult;
-
-		default:
-			logError(`[CONTAINER REGISTRY] This container registry is not supported (${provider}), only "gcloud" and "digitalocean" are supported.`);
-			return false;
-	}
-};
-
-export const execRegistry = (options: InputOptions) => {
-	const { provider, secondAction } = options;
+export const execRegistry = async (options: InputOptions) => {
+	const { secondAction, provider, registry, namespace, shouldCreate: shouldCreateSecretInNamespace } = options;
 
 	switch (secondAction) {
 		case "connect":
-			if (provider == "gcloud") return gcloud.connectDockerRegistry(options);
-			if (provider == "digitalocean") return digitalocean.connectDockerRegistry(options);
+			if (typeof provider === "undefined") {
+				// logWarn(`Cloud Provider's short name is required.`);
+				return askToConnectRegistry(options);
+			}
+
+			if (provider == "gcloud") {
+				return gcloud.connectDockerRegistry(options);
+			}
+
+			if (provider == "digitalocean") {
+				return digitalocean.connectDockerRegistry(options);
+			}
+
 			logWarn(`Provider "${provider}" is not valid.`);
 			break;
 
 		case "allow":
-			if (provider == "gcloud") return gcloud.createImagePullingSecret(options);
-			if (provider == "digitalocean") return digitalocean.createImagePullingSecret(options);
-			logWarn(`Provider "${provider}" is not valid.`);
+			let cluster: Cluster;
+			if (options.cluster) {
+				cluster = await DB.findOne<Cluster>("cluster", { shortName: options.cluster });
+				if (!cluster) {
+					logError(`No cluster named "${options.cluster}" found.`);
+					return;
+				}
+			} else {
+				cluster = await askForCluster();
+			}
+			const { providerShortName } = cluster;
+
+			let registrySlug: string;
+			if (registry) {
+				registrySlug = registry;
+			} else {
+				const selectedRegistry = await askForRegistry();
+				registrySlug = selectedRegistry.slug;
+			}
+
+			const targetNamespace = namespace || (await askForNamespace(cluster));
+
+			if (providerShortName == "gcloud")
+				return gcloud.createImagePullingSecret({
+					clusterShortName: cluster.shortName,
+					registrySlug,
+					namespace: targetNamespace,
+					shouldCreateSecretInNamespace,
+				});
+
+			if (providerShortName == "digitalocean")
+				return digitalocean.createImagePullingSecret({
+					clusterShortName: cluster.shortName,
+					registrySlug,
+					namespace: targetNamespace,
+					shouldCreateSecretInNamespace,
+				});
+
+			logWarn(`Provider "${providerShortName}" is not valid.`);
 			break;
 
 		case "secret":

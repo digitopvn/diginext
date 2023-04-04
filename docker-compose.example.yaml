@@ -1,0 +1,60 @@
+version: "3"
+networks:
+    bridge:
+        driver: bridge
+volumes:
+    mongo:
+        name: mongo
+    home:
+    node:
+services:
+    mongo:
+        ports:
+            - '27017'
+        container_name: mongo
+        restart: always
+        logging:
+            options:
+                max-size: 1g
+        networks:
+            - bridge
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=root
+            - MONGO_INITDB_ROOT_PASSWORD=diginext
+        image: mongo
+        volumes:
+            - mongo:/data/db
+    diginext:
+        image: "digitop/diginext:latest"
+        container_name: diginext
+        working_dir: /usr/app/
+        ports:
+            - "6969:6969"
+        restart: unless-stopped
+        depends_on:
+            - mongo
+        networks:
+            - bridge
+        privileged: true
+        user: root
+        entrypoint: /usr/app/scripts/startup.sh
+        volumes:
+            # DOCKER SOCK
+            - "/var/run/docker.sock:/var/run/docker.sock"
+            # CACHE NODE_MODULES & HOME DIR
+            - node:/usr/app/node_modules/
+            - home:/home/app/
+            # HOST:CONTAINER
+            - ./storage:/var/app/storage
+        environment:
+            - DX_LICENSE_KEY= # <--- insert here
+            - NODE_ENV=production
+            - PORT=6969
+            - BASE_URL=http://localhost:6969
+            - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/diginext?authSource=admin
+            - CLI_MODE=server
+            - BUILDER=docker
+            - JWT_SECRET= # <--- insert here
+            - JWT_EXPIRE_TIME=48h
+            - GOOGLE_CLIENT_ID= # <--- insert here
+            - GOOGLE_CLIENT_SECRET= # <--- insert here

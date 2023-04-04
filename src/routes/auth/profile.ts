@@ -2,24 +2,14 @@ import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
 
-// Auth with JWT
-import jwt_auth from "@/middlewares/jwt_auth";
+import { authenticate } from "@/middlewares/authenticate";
+import { authorize } from "@/middlewares/authorize";
 
 // Auth with session
 // import { authenticate } from "@/middlewares/authenticate";
 
 const router = express.Router();
 
-router.get("/", jwt_auth, (req: Request, res: Response, next: NextFunction) => {
-	// extract "token" from "jwtStrategy" callback
-	// console.log("req.token :>> ", req.token);
-
-	const user = req.user as any;
-	user.token = (req as any).token;
-
-	// console.log("[/auth/profile] user :>> ", user);
-
-	return ApiResponse.succeed(res, user);
-});
+router.get("/", authenticate, authorize, async (req: Request, res: Response, next: NextFunction) => ApiResponse.succeed(res, req.user));
 
 export default router;

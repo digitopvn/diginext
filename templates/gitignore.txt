@@ -46,7 +46,14 @@ yarn.lock
 !.vscode/extensions.json
 
 # Kubernetes Deployment
-deployment/deployment_dev1.yaml
-deployment/deployment_dev1.yaml
-deployment/deployment.dev.yaml
-deployment/deployment.dev.yaml
+deployment/
+.env
+.env.dev
+.env.prod
+.env.local
+.env.canary
+deployment.yaml
+deployment.dev.yaml
+deployment.prerelease.yaml
+deployment.prod.yaml
+deployment.canary.yaml

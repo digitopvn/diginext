@@ -1,5 +1,7 @@
+import { log } from "diginext-utils/dist/console/log";
 import type execa from "execa";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { toNumber } from "lodash";
 import path from "path";
 
 import type CloudDatabase from "@/entities/CloudDatabase";
@@ -11,18 +13,17 @@ import type GitProvider from "@/entities/GitProvider";
 import type User from "@/entities/User";
 import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
+import type { ResourceQuotaSize } from "@/interfaces/InputOptions";
 
-import { log, logInfo, readJson, saveJson, showDocs } from "../plugins";
+import { readJson, saveJson, showDocs } from "../plugins";
 import { CLI_CONFIG_DIR, CLI_CONFIG_FILE, CLI_DIR } from "./const";
 
-export const cliOpts: execa.Options = {
-	// stdio: "inherit",
-	shell: "bash",
-};
+// export const cliOpts: execa.Options = isWin() ? {} : { shell: "bash" };
+export const cliOpts: execa.Options = {};
 
-export const getContainerResourceBySize = (size: "none" | "1x" | "2x" | "3x" | "4x" | "5x" | "6x" | "7x" | "8x" | "9x" | "10x") => {
+export const getContainerResourceBySize = (size: ResourceQuotaSize) => {
 	if (size == "none") return {};
-	const scale = parseInt(size.substring(1, size.length - 1));
+	const scale = toNumber(size.substring(size.length - 1));
 	return {
 		requests: {
 			cpu: `${50 * scale}m`,
@@ -93,7 +94,7 @@ export const execConfig = async (options?: InputOptions) => {
 				case "current":
 					try {
 						const curProvider = getCliConfig().currentProvider;
-						logInfo(curProvider.name);
+						log(curProvider.name);
 						return curProvider;
 					} catch (e) {
 						return null;
@@ -102,7 +103,7 @@ export const execConfig = async (options?: InputOptions) => {
 				case "list":
 					try {
 						const list = getCliConfig().gitProviders;
-						logInfo(list.map((item) => item.name));
+						log(list.map((item) => item.name));
 						return list;
 					} catch (e) {
 						return null;

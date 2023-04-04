@@ -1,13 +1,16 @@
 import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
-import generatePassword from "diginext-utils/dist/string/generatePassword";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
+import { randomStringByLength } from "diginext-utils/dist/string/random";
 import type { Request } from "express";
 
+import type { User } from "@/entities";
+import type Base from "@/entities/Base";
 import type { EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeorm";
 import type { MongoFindManyOptions } from "@/libs/typeorm/find-options/mongodb/MongoFindManyOptions";
 import { manager, query } from "@/modules/AppDatabase";
 import { isValidObjectId } from "@/plugins/mongodb";
+import { parseRequestFilter } from "@/plugins/parse-request-filter";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
 
@@ -18,7 +21,7 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interface
  */
 const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 
-export default class BaseService<E extends ObjectLiteral> {
+export default class BaseService<E extends Base & { owner?: any; workspace?: any } & ObjectLiteral> {
 	protected query: MongoRepository<ObjectLiteral>;
 
 	req?: Request;
@@ -28,18 +31,34 @@ export default class BaseService<E extends ObjectLiteral> {
 	}
 
 	async count(filter?: IQueryFilter, options?: IQueryOptions) {
-		return this.query.count({ ...filter, ...options });
+		const parsedFilter = parseRequestFilter(filter);
+		// log(`- BaseService.count :>>`, { filter: parsedFilter, options });
+		return this.query.count({ ...parsedFilter, ...options });
 	}
 
-	async create(data: E & { slug?: string; metadata?: any; error?: any }) {
+	async create(data: E) {
 		try {
 			// generate slug (if needed)
-			if (!data.slug && data.name) {
-				let slug = makeSlug(data.name);
-				const count = await this.count({ slug });
-				if (count > 0) slug = makeSlug(data.name) + "-" + generatePassword(4, false).toLowerCase();
+			const scope = this;
+			const slugRange = "zxcvbnmasdfghjklqwertyuiop1234567890";
+			async function generateUniqueSlug(input, attempt = 1) {
+				let slug = makeSlug(input);
 
-				data.slug = slug;
+				let count = await scope.count({ slug });
+				if (count > 0) slug = slug + "-" + randomStringByLength(attempt, slugRange).toLowerCase();
+
+				// check unique again
+				count = await scope.count({ slug });
+				if (count > 0) return generateUniqueSlug(input, attempt + 1);
+
+				return slug;
+			}
+
+			if (data.slug) {
+				let count = await scope.count({ slug: data.slug });
+				if (count > 0) data.slug = await generateUniqueSlug(data.slug, 1);
+			} else {
+				data.slug = await generateUniqueSlug(data.name || "item", 1);
 			}
 
 			// generate metadata (for searching)
@@ -49,30 +68,42 @@ export default class BaseService<E extends ObjectLiteral> {
 					data.metadata[key] = clearUnicodeCharacters(value.toString());
 			}
 
+			// assign item authority:
+			if (this.req?.user) {
+				const user = this.req?.user as User;
+				const userId = user?._id;
+				const workspaceId = (user.activeWorkspace as any)._id ? (user.activeWorkspace as any)._id : (user.activeWorkspace as any);
+				data.owner = userId;
+				data.workspace = workspaceId;
+			}
+
+			// const author = `${user.name} (ID: ${user._id})`;
+			// console.log(`BaseService.create :>>`, { data });
+
 			const item = await this.query.create(data);
 
-			return (await manager.save(item)) as E & { slug?: string; metadata?: any };
+			return (await manager.save(item)) as E;
 		} catch (e) {
 			logError(e);
-			return { error: e };
+			return;
 		}
 	}
 
-	async find(filter?: IQueryFilter, options?: IQueryOptions, pagination?: IQueryPagination): Promise<E[]> {
-		// log(`Service > find :>> filter:`, filter);
+	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<E[]> {
+		// console.log(`Service > find :>> filter:`, filter);
 		// const query = this.query;
 		// let results;
 		// log("options.populate >>", options.populate);
 		// log("pagination >>", pagination);
 		const findOptions: MongoFindManyOptions<ObjectLiteral> = {};
 
-		// console.log({ filter });
-
 		if (filter) findOptions.where = filter;
 		if (options?.order) findOptions.order = options.order;
 		if (options?.select && options.select.length > 0) findOptions.select = options.select;
-		if (pagination?.page_size) findOptions.take = pagination.page_size;
-		if (pagination?.current_page > 0 && pagination.page_size > 0) findOptions.skip = (pagination.current_page - 1) * pagination.page_size;
+		// if (pagination?.page_size) findOptions.take = pagination.page_size;
+		// if (pagination?.current_page > 0 && pagination.page_size > 0) findOptions.skip = (pagination.current_page - 1) * pagination.page_size;
+		if (options?.skip) findOptions.skip = options.skip;
+		if (options?.limit) findOptions.take = options.limit;
 
 		if (options?.populate && options?.populate.length > 0) {
 			findOptions.relations = {};
@@ -114,37 +145,20 @@ export default class BaseService<E extends ObjectLiteral> {
 	}
 
 	async findOne(filter?: IQueryFilter, options?: IQueryOptions) {
-		// log(`findOne > filter :>>`, filter);
+		// console.log(`findOne > filter :>>`, filter);
+		// console.log(`findOne > options :>>`, options);
 		const results = await this.find(filter, options);
 
 		return results.length > 0 ? results[0] : null;
 	}
 
 	async update(filter: IQueryFilter, data: ObjectLiteral, options?: IQueryOptions) {
-		// log(`update :>>`, { data });
+		// Manually update date to "updatedAt" column
+		data.updatedAt = new Date();
 
-		// generate slug (if needed)
-		// ! danger: when update "name" only -> it generates new slug !
-		// if (!data.slug && data.name) {
-		// 	let slug = makeSlug(data.name);
-		// 	const count = await this.count({ slug });
-		// 	if (count > 0) slug = makeSlug(data.name) + "-" + generatePassword(4, false).toLowerCase();
-		// 	data.slug = slug;
-		// }
+		const updateData = options?.raw ? data : { $set: data };
+		const updateRes = await this.query.updateMany(filter, updateData);
 
-		// generate metadata (for searching)
-		// TODO: update metadata instead of create new
-
-		// data.metadata = {};
-		// for (const [key, value] of Object.entries(data)) {
-		// 	if (key != "_id" && key != "metadata" && key != "slug" && !isValidObjectId(value))
-		// 		data.metadata[key] = clearUnicodeCharacters(value.toString());
-		// }
-
-		console.log(`Service > UPDATE :>>`, { filter }, { data });
-
-		const updateRes = await this.query.updateMany(filter, { $set: data });
-		console.log(`Service > UPDATE :>>`, { updateRes });
 		if (updateRes.matchedCount > 0) {
 			const results = await this.find(filter, options);
 			return results;
@@ -153,13 +167,13 @@ export default class BaseService<E extends ObjectLiteral> {
 		}
 	}
 
-	async softDelete(filter?: IQueryFilter) {
+	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {
 		// Manually update "deleteAt" to database since TypeORM MongoDB doesn't support "softDelete" yet
 		const deleteRes = await this.query.updateMany(filter, { $set: { deletedAt: new Date() } });
 		return { ok: deleteRes.matchedCount };
 
 		/**
-		 * MongoDB driver doesn't support "softDelete"
+		 * [TypeORM] MongoDB driver doesn't support "softDelete" yet (or maybe it doesn't work because of bugs)
 		 */
 		// const deleteRes = await this.query.softDelete(filter);
 		// console.log("deleteRes", deleteRes);

@@ -1,47 +1,92 @@
 import { logError } from "diginext-utils/dist/console/log";
+import { randomStringByLength } from "diginext-utils/dist/string/random";
 
+import { isServerMode } from "@/app.config";
 import type { Cluster } from "@/entities";
 
-import { fetchApi } from "../api/fetchApi";
-import { createRecordInDomain } from "../providers/digitalocean";
+import { fetchApi } from "../api";
+import { DB } from "../api/DB";
+import type { CreateDiginextDomainParams } from "../diginext/dx-domain";
+import { createDiginextDomain } from "../diginext/dx-domain";
 
-interface GenerateDomainOptions {
+export interface GenerateDomainOptions {
+	/**
+	 * Subdomain name
+	 */
 	subdomainName: string;
+	/**
+	 * @default diginext.site
+	 */
 	primaryDomain: string;
-	clusterShortName?: string;
+	/**
+	 * Value of A RECORD
+	 */
 	ipAddress?: string;
+	/**
+	 * If cluster's short name is specify, IP address will be ignored and
+	 * the primary IP address of the cluster will be used as the A RECORD value
+	 */
+	clusterShortName?: string;
+}
+
+interface GenerateDomainResult {
+	status: number;
+	domain: string;
+	ip?: string;
+	messages: string[];
 }
 
 export const generateDomains = async (params: GenerateDomainOptions) => {
 	// Manage domains in database to avoid duplication
 
-	const { subdomainName, clusterShortName, ipAddress, primaryDomain } = params;
-	const domain = `${subdomainName}.${primaryDomain}`;
-	let targetIP;
+	let { subdomainName, clusterShortName, ipAddress, primaryDomain } = params;
+	let domain = `${subdomainName}.${primaryDomain}`;
+	let targetIP: string;
 
 	if (clusterShortName) {
-		const { status, data: clusters } = await fetchApi<Cluster>({ url: `/api/v1/cluster?shortName=${clusterShortName}` });
-
-		if (status === 0) {
+		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		if (!cluster) {
 			logError(`Cluster "${clusterShortName}" not found.`);
-			return { status: 0, domain, ip: null };
+			return { status: 0, domain, ip: null, messages: [`Cluster "${clusterShortName}" not found.`] } as GenerateDomainResult;
 		}
-		const cluster = clusters[0];
-
 		targetIP = cluster.primaryIP;
 	}
 
 	if (!targetIP) {
 		if (!ipAddress) {
 			logError(`Failed to generate domain: "clusterShortName" or "ipAddress" is required.`);
-			return { status: 0 };
+			return { status: 0, messages: [`Failed to generate domain: "clusterShortName" or "ipAddress" is required.`] } as GenerateDomainResult;
 		} else {
 			targetIP = ipAddress;
 		}
 	}
 
 	// create new subdomain:
-	await createRecordInDomain({ name: subdomainName, data: targetIP, type: "A" });
+	const domainData: CreateDiginextDomainParams = { name: subdomainName, data: targetIP };
+	let res = isServerMode ? await createDiginextDomain(domainData) : await fetchApi({ url: `/api/v1/domain`, method: "POST", data: domainData });
 
-	return { status: 1, domain, ip: targetIP };
+	// console.log("generateDomain > res :>> ", res);
+	let { status, messages } = res;
+
+	if (status === 0) {
+		const [msg = ""] = messages;
+		if (msg.indexOf("domain name is existed")) {
+			const randomStr = randomStringByLength(6, "zxcvbnmasdfghjklqwertyuiop1234567890");
+			subdomainName = `${randomStr}-${subdomainName}`;
+			domain = `${subdomainName}.${primaryDomain}`;
+
+			// create new domain again if domain was existed
+			res = await createDiginextDomain({ name: subdomainName, data: targetIP });
+
+			messages = res.messages;
+			status = res.status;
+
+			if (status === 1) return { status: 1, domain, ip: targetIP } as GenerateDomainResult;
+		}
+
+		if (msg) logError(`[DOMAIN] ${msg}`);
+		return { status: 0, domain, ip: null, messages } as GenerateDomainResult;
+	}
+
+	return { status: 1, domain, ip: targetIP } as GenerateDomainResult;
 };

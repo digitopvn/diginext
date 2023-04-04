@@ -1,0 +1,48 @@
+version: "3"
+networks:
+    bridge:
+        driver: bridge
+services:
+    # build server
+    diginext:
+        container_name: diginext
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        working_dir: /usr/app/
+        ports:
+            - "6969:6969"
+        networks:
+            - bridge
+        # ----------- [START] FOR PODMAN TO RUN INSIDE DOCKER WITHOUT PRIVILEDGE MODE ----------
+        devices:
+            - "/dev/fuse"
+        security_opt:
+            - "seccomp=unconfined"
+            - "label=disable"
+        cap_add:
+            - sys_admin
+            - mknod
+        # ----------- [END] FOR PODMAN TO RUN INSIDE DOCKER WITHOUT PRIVILEDGE MODE ----------
+        entrypoint: /usr/app/scripts/startup-dev.sh
+        volumes:
+            # PERSIST NODE_MODULES & HOME DIR
+            - /usr/app/node_modules/
+            - /home/app/
+            # HOST:CONTAINER
+            - ./dist:/usr/app/dist
+            - ./templates:/usr/app/templates
+            - ./public:/usr/app/public
+            - ./storage:/var/app/storage
+        environment:
+            - DX_LICENSE_KEY= # <--- insert here
+            - NODE_ENV=development
+            - PORT=6969
+            - BASE_URL=http://localhost:6969
+            - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/digirelease?authSource=admin
+            - CLI_MODE=server
+            - BUILDER=podman # <---- select PODMAN as a main builder here
+            - JWT_SECRET= # <--- insert here
+            - JWT_EXPIRE_TIME=48h
+            - GOOGLE_CLIENT_ID= # <--- insert here
+            - GOOGLE_CLIENT_SECRET= # <--- insert here

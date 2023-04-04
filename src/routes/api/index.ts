@@ -1,18 +1,16 @@
+import { isJSON } from "class-validator";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import { log, logWarn } from "diginext-utils/dist/console/log";
+import { logWarn } from "diginext-utils/dist/console/log";
 import { Response } from "diginext-utils/dist/response";
 import express from "express";
-import cronjob from "node-cron";
 
 import pkg from "@/../package.json";
 import { Config } from "@/app.config";
-import { cleanUp, listImages } from "@/build/system";
+import { sendLog } from "@/modules/build";
 import { testBuild } from "@/modules/build/build";
-import { startBuild } from "@/modules/build/start-build";
 import { execCmd } from "@/plugins";
 // import userRouter from "./user";
-import { io } from "@/server";
 
 const CLI_MODE = Config.grab("CLI_MODE", "client");
 
@@ -54,15 +52,13 @@ if (CLI_MODE == "server") {
 		res.status(200).json({ status: "Ok" });
 	});
 
-	router.get("/images", (req, res) => {
-		listImages()
-			.then((list) => res.send("<p>" + list + "</p>"))
-			.catch((e) => res.send(`Error: ${e.message}`));
-	});
-
 	router.get("/send-message", (req, res) => {
-		log(io);
-		io.to("2021-08-18-18-33-20").emit("message", { action: "start", message: "Hello" });
+		const { room, message } = req.query;
+		// log(io);
+		// io.to("2021-08-18-18-33-20").emit("message", { action: "start", message: "Hello" });
+
+		sendLog({ SOCKET_ROOM: room.toString(), message: message.toString() });
+
 		res.send("done");
 	});
 
@@ -72,35 +68,24 @@ if (CLI_MODE == "server") {
 	});
 
 	router.get("/docker/healthz", async (req, res) => {
-		const resullt = await execCmd(`docker version --format "{{json .}}" | jq`);
-		res.send(resullt);
+		const resultJson = await execCmd(`docker version --format "{{json .}}"`);
+		const result = resultJson && isJSON(resultJson) ? JSON.parse(resultJson) : {};
+		res.status(200).json(result);
 	});
 
 	router.get("/docker/images", async (req, res) => {
-		const result = await execCmd(`docker images --format "{{json .}}" | jq --slurp`);
-		res.send(result);
+		const resultStr = (await execCmd(`docker images --format "{{json .}}"`)) || "";
+		const resultJson = "[" + resultStr.split("\n").join(",") + "]";
+		const result = resultJson && isJSON(resultJson) ? JSON.parse(resultJson) : {};
+		res.status(200).json(result);
 	});
 
 	router.get("/docker/containers", async (req, res) => {
-		const result = await execCmd(`docker ps --format "{{json .}}" | jq --slurp`);
-		res.send(result);
+		const resultStr = (await execCmd(`docker ps --format "{{json .}}"`)) || "";
+		const resultJson = "[" + resultStr.split("\n").join(",") + "]";
+		const result = resultJson && isJSON(resultJson) ? JSON.parse(resultJson) : {};
+		res.status(200).json(result);
 	});
-
-	router.post("/deploy", (req, res) => {
-		const { options } = req.body;
-		const cliOptions = JSON.parse(options);
-		log("[API] cliOptions", cliOptions);
-
-		// start build in background:
-		startBuild(cliOptions);
-
-		res.status(200).json({ status: 1 });
-	});
-
-	/**
-	 * Schedule a clean up task every 3 days at 00:00 AM
-	 */
-	cronjob.schedule("0 0 */3 * *", () => cleanUp());
 }
 
 export default router;

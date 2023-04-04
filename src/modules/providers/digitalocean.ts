@@ -1,22 +1,23 @@
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
 import chalk from "chalk";
-import { logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import execa from "execa";
+import inquirer from "inquirer";
 import yaml from "js-yaml";
 import { isEmpty } from "lodash";
 import yargs from "yargs";
 
-import { isServerMode } from "@/app.config";
-import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { CloudProvider, ContainerRegistry } from "@/entities";
+import { Config } from "@/app.config";
+import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
 import { execCmd, wait } from "@/plugins";
-import { CloudProviderService } from "@/services";
 
 import type { DomainRecord } from "../../interfaces/DomainRecord";
-import { fetchApi } from "../api/fetchApi";
+import { DB } from "../api/DB";
+import ClusterManager from "../k8s";
+import { getKubeContextByCluster } from "../k8s/kube-config";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
 
 const DIGITAL_OCEAN_API_BASE_URL = `https://api.digitalocean.com/v2`;
@@ -27,8 +28,8 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
 	options.baseURL = DIGITAL_OCEAN_API_BASE_URL;
 
 	if (isEmpty(options.headers)) options.headers = {};
-	if (isEmpty(access_token)) {
-		logError(`Digital Ocean API access token is required.`);
+	if (!access_token) {
+		logError(`[DIGITAL_OCEAN] Digital Ocean API access token is required.`);
 		return;
 	}
 
@@ -46,7 +47,7 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
 		// log(`doApi > responseData :>>`, responseData);
 		return responseData;
 	} catch (e) {
-		logError(`Something went wrong:`, e);
+		logError(`[DIGITAL_OCEAN] Something went wrong:`, e);
 		return { status: 0, messages: [`Something went wrong.`] };
 	}
 }
@@ -56,24 +57,12 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
  * @param {InputOptions} options
  */
 export const authenticate = async (options?: InputOptions) => {
-	// Not support multiple "Digital Ocean" providers yet!
-	let provider, providerSvc: CloudProviderService;
-
-	if (isServerMode) {
-		providerSvc = new CloudProviderService();
-		provider = await providerSvc.findOne({ shortName: "digitalocean" });
-	} else {
-		const { data: providers } = await fetchApi<CloudProvider>({ url: `/api/v1/provider?shortName=digitalocean` });
-		if ((providers as CloudProvider[]).length == 1) {
-			logWarn(`Digital Ocean provider is existed. Multiple "Digital Ocean" providers are not supported yet.`);
-		}
-		provider = providers[0];
-	}
+	const provider = await DB.findOne<CloudProvider>("provider", { shortName: "digitalocean" });
 
 	let API_ACCESS_TOKEN;
 
 	if (!options.key && !options.input)
-		logError(`API ACCESS TOKEN not found. Learn more: https://docs.digitalocean.com/reference/api/create-personal-access-token/`);
+		logError(`[DIGITAL_OCEAN] API ACCESS TOKEN not found. Learn more: https://docs.digitalocean.com/reference/api/create-personal-access-token/`);
 
 	API_ACCESS_TOKEN = options.key ? options.key : options.input;
 
@@ -83,7 +72,7 @@ export const authenticate = async (options?: InputOptions) => {
 		await execa.command(`doctl auth init --access-token ${API_ACCESS_TOKEN}`);
 		shouldRetry = false;
 	} catch (e) {
-		logWarn(e);
+		logWarn(`[DIGITAL_OCEAN]`, e);
 		shouldRetry = true;
 	}
 
@@ -93,37 +82,8 @@ export const authenticate = async (options?: InputOptions) => {
 		try {
 			await execa.command(`doctl auth init --access-token ${API_ACCESS_TOKEN}`);
 		} catch (e) {
-			logError(e);
+			logError(`[DIGITAL_OCEAN]`, e);
 			return false;
-		}
-	}
-
-	// Check if this cloud provider is existed:
-	// const {
-	// 	data: [provider],
-	// } = await fetchApi<CloudProvider>({ url: `/api/v1/provider?apiAccessToken=${API_ACCESS_TOKEN}` });
-
-	// Save this cloud provider to database
-	if (!provider) {
-		const data = {
-			name: "Digital Ocean",
-			shortName: "digitalocean",
-			apiAccessToken: API_ACCESS_TOKEN,
-			owner: options.userId,
-			workspace: options.workspaceId,
-		};
-
-		// create new cloud provider if not existed
-		if (isServerMode) {
-			const newProvider = await providerSvc.create(data);
-			if (!newProvider) logError(`Can't create new cloud provider "digitalocean"`);
-		} else {
-			const { status, messages } = await fetchApi<CloudProvider>({
-				url: `/api/v1/provider`,
-				method: "POST",
-				data,
-			});
-			if (status === 0) logError(`Can't save this Cloud Provider to database:`, messages.join(". "));
 		}
 	}
 
@@ -131,116 +91,152 @@ export const authenticate = async (options?: InputOptions) => {
 };
 
 export const createRecordInDomain = async (input: DomainRecord) => {
-	const { name, data, type = "A" } = input;
+	logError(`[DIGITAL_OCEAN] createRecordInDomain() > This function is deprecated.`);
+	return;
+	// const { name, data, type = "A" } = input;
 
-	const domain = `${name}.${DIGINEXT_DOMAIN}`;
-	let record: DomainRecord;
+	// const domain = `${name}.${DIGINEXT_DOMAIN}`;
+	// let record: DomainRecord;
 
-	try {
-		// get "access_token" from "Digital Ocean" cloud provider
-		const { status, data: providers, messages } = await fetchApi<CloudProvider>({ url: "/api/v1/provider?shortName=digitalocean" });
+	// try {
+	// 	// get "access_token" from "Digital Ocean" cloud provider
+	// 	const doProvider = await DB.findOne<CloudProvider>("provider", { shortName: "digitalocean" });
+	// 	if (!doProvider) {
+	// 		logError(`Can't get cloud provider (Digital Ocean).`);
+	// 		return;
+	// 	}
 
-		if (status === 0 || isEmpty(providers)) {
-			logError(`Can't get cloud provider (Digital Ocean):`, messages.join(". "));
-			return;
-		}
+	// 	const { apiAccessToken: access_token } = doProvider;
 
-		const doProvider = (providers as CloudProvider[])[0];
-		const { apiAccessToken: access_token } = doProvider;
+	// 	// check if this record existed
+	// 	const { domain_records } = await doApi({
+	// 		url: `/domains/${DIGINEXT_DOMAIN}/records?name=${domain}`,
+	// 		access_token,
+	// 	});
 
-		// log(`doProvider :>>`, doProvider);
-		// log(`createRecordInDomain > apiAccessToken :>>`, access_token);
+	// 	const printSuccess = () => logSuccess(`Created the domain "${domain}" successfully.`);
 
-		// check if this record existed
-		const { domain_records } = await doApi({
-			url: `/domains/${DIGINEXT_DOMAIN}/records?name=${domain}`,
-			access_token,
-		});
+	// 	// if it's existed -> check if the "data" is different:
+	// 	if (domain_records && domain_records.length > 0) {
+	// 		record = domain_records[0];
 
-		const printSuccess = () => logSuccess(`Created the domain "${domain}" successfully.`);
-
-		// if it's existed -> check if the "data" is different:
-		if (domain_records && domain_records.length > 0) {
-			record = domain_records[0];
-
-			// if the "data" is different -> update new data:
-			if (record.data != data) {
-				logWarn(`This domain name is existed & will be overrided.`);
-				const { domain_record } = await doApi({
-					url: `/domains/${DIGINEXT_DOMAIN}/records/${record.id}`,
-					method: "PATCH",
-					data: { data },
-					access_token,
-				});
-				printSuccess();
-				return { status: 1, domain, domain_record };
-			} else {
-				printSuccess();
-				return { status: 1, domain, domain_record: record };
-			}
-		} else {
-			// if the record is not existed -> create new record:
-			const { domain_record } = await doApi({
-				method: "POST",
-				url: `/domains/${DIGINEXT_DOMAIN}/records`,
-				data: JSON.stringify({ name, data, type }),
-				access_token,
-			});
-			printSuccess();
-			return { status: 1, domain, domain_record };
-		}
-	} catch (e) {
-		logError(e);
-		return { status: 0, domain, domain_record: null };
-	}
+	// 		// if the "data" is different -> update new data:
+	// 		if (record.data != data) {
+	// 			logWarn(`This domain name is existed & will be overrided.`);
+	// 			const { domain_record } = await doApi({
+	// 				url: `/domains/${DIGINEXT_DOMAIN}/records/${record.id}`,
+	// 				method: "PATCH",
+	// 				data: { data },
+	// 				access_token,
+	// 			});
+	// 			printSuccess();
+	// 			return { status: 1, domain, domain_record };
+	// 		} else {
+	// 			printSuccess();
+	// 			return { status: 1, domain, domain_record: record };
+	// 		}
+	// 	} else {
+	// 		// if the record is not existed -> create new record:
+	// 		const { domain_record } = await doApi({
+	// 			method: "POST",
+	// 			url: `/domains/${DIGINEXT_DOMAIN}/records`,
+	// 			data: JSON.stringify({ name, data, type }),
+	// 			access_token,
+	// 		});
+	// 		printSuccess();
+	// 		return { status: 1, domain, domain_record };
+	// 	}
+	// } catch (e) {
+	// 	logError(e);
+	// 	return { status: 0, domain, domain_record: null };
+	// }
 };
 
 /**
  * Create DigitalOcean Container Registry image's pull secret
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
-	// Implement create "imagePullingSecret" of Digital Ocean
-	const { registrySlug, providerShortName, namespace = "default", shouldCreateSecretInNamespace = false } = options;
-	// const { name, namespace = "default", providerShortName, shouldCreateSecretInNamespace = false } = options;
-	const secretName = `${providerShortName}-docker-registry-key`;
+	// Implement create "imagePullSecret" of Digital Ocean
+	const { registrySlug, clusterShortName, namespace = "default", shouldCreateSecretInNamespace = false } = options;
 
-	// get Service Account data:
-	const { data: gcloudProviders } = await fetchApi<CloudProvider>({ url: `/api/v1/provider?shortName=${providerShortName}` });
-	if (isEmpty(gcloudProviders)) {
-		logError(`No Google Cloud (short name: "${providerShortName}") provider found. Please contact your admin or create a new one.`);
+	if (!registrySlug) {
+		logError(`[DIGITAL_OCEAN] Container Registry's slug is required.`);
 		return;
 	}
-	// const [provider] = gcloudProviders as CloudProvider[];
-	// const { serviceAccount } = provider;
+
+	if (!clusterShortName) {
+		logError(`[DIGITAL_OCEAN] Cluster's short name is required.`);
+		return;
+	}
+
+	// get Container Registry data:
+	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
+
+	if (!registry) {
+		logError(`[DIGITAL_OCEAN] Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
+		return;
+	}
+
+	// Get SERVICE ACCOUNT from CONTAINER REGISTRY -> to authenticate & generate "imagePullSecrets"
+	const { host, serviceAccount, provider: providerShortName } = registry;
+
+	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
+	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+	if (!cluster) {
+		logError(`[DIGITAL_OCEAN] Cluster "${clusterShortName}" not found.`);
+		return;
+	}
+
+	const { name: context } = await getKubeContextByCluster(cluster);
+
+	const secretName = `${providerShortName}-docker-registry-key`;
 
 	if (shouldCreateSecretInNamespace && namespace == "default") {
 		logWarn(
-			`You are creating "imagePullSecrets" in "default" namespace, if you want to create in other namespaces:`,
-			chalk.cyan("\n  di registry allow --create --provider=digitalocean --namespace=") + "<CLUSTER_NAMESPACE_NAME>",
+			`[DIGITAL_OCEAN] You are creating "imagePullSecrets" in "default" namespace, if you want to create in other namespaces:`,
+			chalk.cyan("\n  dx registry allow --create --provider=digitalocean --namespace=") + "<CLUSTER_NAMESPACE_NAME>",
 			chalk.gray(`\n  # Examples / alias:`),
-			"\n  di registry allow --create --provider=digitalocean --namespace=my-website-namespace",
-			"\n  di registry allow --create --do create -n my-website-namespace"
+			"\n  dx registry allow --create --provider=digitalocean --namespace=my-website-namespace",
+			"\n  dx registry allow --create --do create -n my-website-namespace"
 		);
 	}
+
+	// check if namespace is existed
+	if (shouldCreateSecretInNamespace) {
+		const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+		if (!isNsExisted) {
+			logError(`[DIGITAL_OCEAN] Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+			return;
+		}
+	}
+
+	const { apiAccessToken: API_ACCESS_TOKEN } = registry;
 
 	// create secret in the namespace (if needed)
 	const applyCommand = shouldCreateSecretInNamespace ? `| kubectl apply -f -` : "";
 
 	// command: "doctl registry kubernetes-manifest"
-	const registryYaml = await execCmd(`doctl registry kubernetes-manifest --namespace ${namespace} --name ${secretName} ${applyCommand}`);
+	const registryYaml = await execCmd(
+		`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} --access-token ${API_ACCESS_TOKEN} ${applyCommand}`
+	);
 	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
 
-	// Save to database
-	const { status, data: currentRegistry } = await fetchApi<ContainerRegistry>({
-		url: `/api/v1/registry?provider=digitalocean`,
-		method: "PATCH",
-		data: {
-			"imagePullingSecret[name]": secretName,
-			"imagePullingSecret[value]": registrySecretData.data[".dockerconfigjson"],
-		},
-	});
+	if (!registrySecretData) {
+		logError(`[DIGITAL_OCEAN] Failed to create "imagePullSecrets" in "${namespace}" namespace of "${context}" cluster.`);
+		return;
+	}
 
-	return registrySecretData;
+	// Save to database
+	const imagePullSecret = {
+		name: secretName,
+		value: registrySecretData.data[".dockerconfigjson"],
+	};
+
+	const [updatedRegistry] = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, { imagePullSecret });
+	if (!updatedRegistry) logError(`[DIGITAL_OCEAN] Can't update container registry of Digital Ocean.`);
+	// log(`DigitalOcean.createImagePullingSecret() :>>`, { updatedRegistry });
+
+	return imagePullSecret;
 };
 
 /**
@@ -248,34 +244,56 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
  * @param {InputOptions} options
  */
 export const connectDockerRegistry = async (options?: InputOptions) => {
+	const { host, key: API_ACCESS_TOKEN, userId, workspaceId } = options;
+
 	try {
-		await execa.command(`doctl registry login`);
+		let connectRes;
+		// connect DOCKER to CONTAINER REGISTRY
+		if (API_ACCESS_TOKEN) {
+			connectRes = await execCmd(`doctl registry login --access-token ${API_ACCESS_TOKEN}`);
+		} else {
+			connectRes = await execCmd(`doctl registry login`);
+		}
+
+		if (Config.BUILDER === "podman") {
+			// connect PODMAN to CONTAINER REGISTRY
+			connectRes = await execCmd(`podman login`);
+		}
+
+		if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { authRes: connectRes });
 	} catch (e) {
 		logError(e);
-		return false;
+		return;
 	}
 
+	const existingRegistry = await DB.findOne<ContainerRegistry>("registry", { provider: "digitalocean", host });
+	if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { existingRegistry });
+
+	if (existingRegistry) return existingRegistry;
+
 	// Save this container registry to database
-	const { status, data: currentRegistry } = await fetchApi<ContainerRegistry>({
-		url: `/api/v1/registry`,
-		method: "POST",
-		data: {
-			name: "Digital Ocean Container Registry",
-			host: "registry.digitalocean.com",
-			provider: "digitalocean",
-			owner: options.userId,
-			workspace: options.workspaceId,
-		},
+	const registryHost = host || "registry.digitalocean.com";
+	const imageBaseURL = `${registryHost}/${options.workspace?.slug || "diginext"}`;
+	let newRegistry = await DB.create<ContainerRegistry>("registry", {
+		name: "Digital Ocean Container Registry",
+		provider: "digitalocean",
+		host: registryHost,
+		imageBaseURL,
+		apiAccessToken: API_ACCESS_TOKEN,
+		owner: userId,
+		workspace: workspaceId,
 	});
 
-	await createImagePullingSecret({ ...options, shouldCreateSecretInNamespace: false });
+	// await createImagePullingSecret({
+	// 	clusterShortName: options.cluster,
+	// 	registrySlug: currentRegistry.slug,
+	// 	shouldCreateSecretInNamespace: false,
+	// });
 
 	// save registry to local config:
 	// saveCliConfig({ currentRegistry });
 
-	logSuccess(`Connected to DigitalOcean Container Registry!`);
-
-	return currentRegistry;
+	return newRegistry;
 };
 
 export const execDigitalOcean = async (options?: InputOptions) => {
@@ -297,6 +315,34 @@ export const execDigitalOcean = async (options?: InputOptions) => {
 				logError(e);
 			}
 			break;
+
+		case "create-image-pull-secret":
+			const registries = await DB.find<ContainerRegistry>("registry", {});
+			if (isEmpty(registries)) {
+				logError(`[DIGITAL_OCEAN] This workspace doesn't have any registered Container Registries.`);
+				return;
+			}
+
+			const { selectedRegistry } = await inquirer.prompt<{ selectedRegistry: ContainerRegistry }>({
+				message: `Select the container registry:`,
+				type: "list",
+				choices: registries.map((reg, i) => {
+					return { name: `[${i + 1}] ${reg.name} (${reg.provider})`, value: reg };
+				}),
+			});
+
+			try {
+				await createImagePullingSecret({
+					clusterShortName: options.cluster,
+					registrySlug: selectedRegistry.slug,
+					namespace: options.namespace,
+					shouldCreateSecretInNamespace: options.shouldCreate,
+				});
+			} catch (e) {
+				logError(e);
+			}
+			break;
+
 		default:
 			yargs.showHelp();
 			break;

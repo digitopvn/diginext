@@ -1,3 +1,4 @@
+import { GitProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
@@ -8,12 +9,24 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "frameworks" })
-export default class Framework extends Base<Framework> {
+export default class Framework extends Base {
 	@Column()
-	name: string;
+	name?: string;
 
 	@Column()
 	host?: string;
+
+	/**
+	 * Git provider name
+	 */
+	@Column()
+	gitProvider?: GitProviderType;
+
+	/**
+	 * Git repository access privacy
+	 */
+	@Column()
+	isPrivate?: boolean;
 
 	/**
 	 * ID of the Git Provider

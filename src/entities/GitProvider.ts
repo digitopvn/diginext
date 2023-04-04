@@ -1,3 +1,4 @@
+import { GitProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
@@ -7,7 +8,7 @@ import type User from "./User";
 import type Workspace from "./Workspace";
 
 @Entity({ name: "git_providers" })
-export default class GitProvider extends Base<GitProvider> {
+export default class GitProvider extends Base {
 	@Column()
 	name?: string;
 
@@ -22,6 +23,9 @@ export default class GitProvider extends Base<GitProvider> {
 		url?: string;
 		sshPrefix?: string;
 	};
+
+	@Column()
+	type?: GitProviderType;
 
 	/**
 	 * User ID of the owner

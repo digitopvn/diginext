@@ -12,6 +12,10 @@ yarn-error.log*
 .yarn
 .yarnrc
 .yarnrc.yaml
+.yarnrc.yml
+pnpm-lock.yaml
+.pnpm-store/
+/.pnpm-store
 
 # dependencies
 node_modules/
@@ -53,10 +57,15 @@ fw/
 storage
 ./storage
 storage/**/*
+!storage/containers
+!./storage/containers
+!./storage/containers/**/*
+!storage/note.txt
+
 # public/uploads
 ./redis_data/*
 redis_data/
-public/
+public/logs
 redis_data/
 # /public.__image-compressed__
 !public/assets/images/nextjs-starter-banner.png
@@ -74,15 +83,31 @@ keys
 # .env.test.local
 # .env.production.local
 
-# deployment config
-deployment.yaml
+# docker
 !templates/deployment.yaml
 docker-compose*.yaml
+!docker-compose.example.yaml
 !templates/docker-compose*.yaml
+Dockerfile.podman
+
+# kubernetes
+deployment.yaml
+deployment-*.yaml
+deployment.*.yaml
+
+00-namespace.yaml
 01-cert-secret.yaml
 02-cert-issuer.yaml
-04-certificate.yaml
+03-certificate.yaml
+04-ingress.yaml
+05-podman-fuse-device-plugin.yaml
 gcloud-secret.yaml
+
+# diginext
+dx.json
+
+# exclude examples
+!*.example.yaml
 
 # dev api
 thunder-tests/

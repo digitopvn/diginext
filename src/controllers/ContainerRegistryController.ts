@@ -1,43 +1,139 @@
-import type { NextFunction, Request, Response } from "express";
-import type { ParamsDictionary } from "express-serve-static-core";
-import * as fs from "fs";
-import path from "path";
-import type { ParsedQs } from "qs";
+import { isNotIn } from "class-validator";
+import { logError } from "diginext-utils/dist/console/log";
+import { unlink } from "fs";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { User } from "@/entities";
+import type { ContainerRegistry } from "@/entities";
+import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import { registryProviderList } from "@/interfaces/SystemTypes";
+import { DB } from "@/modules/api/DB";
 import digitalocean from "@/modules/providers/digitalocean";
 import gcloud from "@/modules/providers/gcloud";
+import { connectRegistry } from "@/modules/registry/connect-registry";
+import { createTmpFile } from "@/plugins";
 import ContainerRegistryService from "@/services/ContainerRegistryService";
 
 import BaseController from "./BaseController";
 
-export default class ContainerRegistryController extends BaseController<ContainerRegistryService> {
+type MaskedContainerRegistry = Omit<ContainerRegistry, keyof HiddenBodyKeys>;
+
+@Tags("Container Registry")
+@Route("registry")
+export default class ContainerRegistryController extends BaseController<ContainerRegistry> {
 	constructor() {
 		super(new ContainerRegistryService());
 	}
 
-	async connect(
-		req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>,
-		res: Response<any, Record<string, any>>,
-		next: NextFunction
-	): Promise<Response<any, Record<string, any>>> {
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/")
+	read(@Queries() queryParams?: IGetQueryParams) {
+		return super.read();
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/")
+	async create(@Body() body: MaskedContainerRegistry, @Queries() queryParams?: IPostQueryParams) {
+		const { name, serviceAccount, provider: providerShortName, host, imageBaseURL, apiAccessToken } = body;
+
+		const errors: string[] = [];
+		if (!name) errors.push(`Name is required.`);
+		if (!host) errors.push(`Host is required (eg. us.gcr.io, hub.docker.com,...)`);
+		if (!imageBaseURL) errors.push(`Base image URL is required (eg. asia.gcr.io/my-workspace)`);
+		if (!providerShortName) errors.push(`Container registry provider is required (eg. gcloud, digitalocean, dockerhub,...)`);
+		if (isNotIn(providerShortName, registryProviderList))
+			errors.push(`Container registry provider should be one of [${registryProviderList.join(", ")}]`);
+
+		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+
+		if (providerShortName === "gcloud" && !serviceAccount)
+			return { status: 0, messages: [`Service Account (JSON) is required to authenticate Google Container Registry.`] } as ResponseData;
+
+		if (providerShortName === "digitalocean" && !apiAccessToken)
+			return { status: 0, messages: [`API access token is required to authenticate DigitalOcean Container Registry.`] } as ResponseData;
+
+		const newRegistryData = {
+			name,
+			provider: providerShortName,
+			host,
+			serviceAccount,
+			imageBaseURL,
+			apiAccessToken,
+			isVerified: false,
+		} as MaskedContainerRegistry;
+
+		const newRegistry = await this.service.create(newRegistryData);
+
+		// verify...
+		let verifiedRegistry: ContainerRegistry;
+		const authRes = await connectRegistry(newRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
+		if (authRes) [verifiedRegistry] = await DB.update<ContainerRegistry>("registry", { _id: newRegistry._id }, { isVerified: true });
+
+		return { status: 1, data: !verifiedRegistry ? newRegistry : verifiedRegistry, messages: authRes ? [authRes] : [] } as ResponseData;
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/")
+	async update(@Body() body: Omit<ContainerRegistry, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+		const [updatedRegistry] = await DB.update<ContainerRegistry>("registry", this.filter, body);
+
+		const { name, serviceAccount, provider: providerShortName, host, imageBaseURL, apiAccessToken } = updatedRegistry;
+
+		const errors: string[] = [];
+		if (!name) errors.push(`Name is required.`);
+		if (!host) errors.push(`Host is required (eg. us.gcr.io, hub.docker.com,...)`);
+		if (!imageBaseURL) errors.push(`Base image URL is required (eg. asia.gcr.io/my-workspace)`);
+		if (!providerShortName) errors.push(`Container registry provider is required (eg. gcloud, digitalocean, dockerhub,...)`);
+		if (isNotIn(providerShortName, registryProviderList))
+			errors.push(`Container registry provider should be one of [${registryProviderList.join(", ")}]`);
+
+		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+
+		if (providerShortName === "gcloud" && !serviceAccount)
+			return { status: 0, messages: [`Service Account (JSON) is required to authenticate Google Container Registry.`] } as ResponseData;
+
+		if (providerShortName === "digitalocean" && !apiAccessToken)
+			return { status: 0, messages: [`API access token is required to authenticate DigitalOcean Container Registry.`] } as ResponseData;
+
+		// verify...
+		let verifiedRegistry: ContainerRegistry;
+		const authRes = await connectRegistry(updatedRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
+		[verifiedRegistry] = await DB.update<ContainerRegistry>("registry", { _id: updatedRegistry._id }, { isVerified: authRes ? true : false });
+
+		return { status: 1, data: updatedRegistry, messages: authRes ? [authRes] : [] } as ResponseData;
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/")
+	delete(@Queries() queryParams?: IDeleteQueryParams) {
+		return super.delete();
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/connect")
+	async connect(@Queries() queryParams?: { slug: string }) {
 		const result: { status: number; messages: string[]; data: any } = { status: 1, messages: [], data: {} };
 
-		const options = { userId: (req.user as User)._id as string, workspaceId: (req.user as User).activeWorkspace as string };
+		const options = { userId: this.user?._id.toString(), workspaceId: this.user?.activeWorkspace.toString() };
 		// console.log("options :>> ", options);
 
-		const { slug } = req.query;
+		const { slug } = this.filter.query;
 		if (!slug) {
 			result.status = 0;
 			result.messages = [`Param "slug" is required.`];
-			return res.status(200).json(result);
+			return result;
 		}
 
 		const registry = await this.service.findOne({ slug });
 		if (!registry) {
 			result.status = 0;
 			result.messages = [`Container Registry not found: ${slug}.`];
-			return res.status(200).json(result);
+			return result;
 		}
 		// console.log("registry :>> ", registry);
 
@@ -45,10 +141,8 @@ export default class ContainerRegistryController extends BaseController<Containe
 		switch (provider) {
 			case "gcloud":
 				const { serviceAccount } = registry;
-				const tmpDir = path.resolve(process.env.STORAGE, `registry`);
-				if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-				const tmpFilePath = path.resolve(tmpDir, `gcloud-service-account.json`);
-				fs.writeFileSync(tmpFilePath, serviceAccount, "utf8");
+
+				const tmpFilePath = createTmpFile(`gsa.json`, serviceAccount);
 
 				const authResult = await gcloud.authenticate({ filePath: tmpFilePath, host, ...options });
 				// console.log("authResult :>> ", authResult);
@@ -59,8 +153,11 @@ export default class ContainerRegistryController extends BaseController<Containe
 					result.status = 0;
 					result.messages = [`Google Cloud Container Registry authentication failed.`];
 				}
-				return res.status(200).json(result);
-				break;
+
+				// delete temporary service account
+				unlink(tmpFilePath, (err) => err && logError(`[REGISTRY CONTROLLER] Remove tmp file:`, err));
+
+				return result;
 
 			case "digitalocean":
 				const { apiAccessToken } = registry;
@@ -72,14 +169,12 @@ export default class ContainerRegistryController extends BaseController<Containe
 					result.status = 0;
 					result.messages = [`Digital Ocean Container Registry authentication failed.`];
 				}
-				return res.status(200).json(result);
-				break;
+				return result;
 
 			default:
 				result.status = 0;
 				result.messages = [`This container registry is not supported (${provider}), only "gcloud" and "digitalocean" are supported.`];
-				return res.status(200).json(result);
-				break;
+				return result;
 		}
 	}
 }

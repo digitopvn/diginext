@@ -8,4 +8,4 @@ export default class AppService extends BaseService<App> {
 	}
 }
 
-export { AppService };
+// export { AppService };

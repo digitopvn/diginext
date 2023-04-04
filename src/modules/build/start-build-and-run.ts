@@ -1,28 +1,41 @@
-import { logWarn } from "diginext-utils/dist/console/log";
+import { logError, logWarn } from "diginext-utils/dist/console/log";
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import inquirer from "inquirer";
+import { isEmpty } from "lodash";
 
-import type { App } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
-import { getAppConfig, saveAppConfig } from "@/plugins";
+import type { SslIssuer } from "@/interfaces/SystemTypes";
+import { getAppConfig, resolveDockerfilePath, saveAppConfig } from "@/plugins";
 
-import fetchApi from "../api/fetchApi";
-import { generateDeployment } from "../deploy/generate-deployment";
 import { askForDomain } from "./ask-for-domain";
-import { startBuild } from "./start-build";
+import { startBuildV1 } from "./start-build";
 
 export const startBuildAndRun = async (options: InputOptions) => {
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 	const appConfig = getAppConfig(options.targetDirectory);
 
 	const { env = "dev", targetDirectory } = options;
+	const { project, slug } = appConfig;
+	const deployEnvironment = appConfig.environment[env];
 
 	let domains: string[],
-		selectedSSL: "letsencrypt" | "custom" | "none" = "letsencrypt",
+		selectedSSL: SslIssuer = "letsencrypt",
 		selectedSecretName;
 
+	// try to find any "Dockerfile" to build, it it's not existed, throw error!
+	const dockerFile = resolveDockerfilePath({ targetDirectory, env });
+	if (!dockerFile) return;
+
 	// ask for generated domains:
-	domains = await askForDomain(options);
-	if (domains.length < 1) {
+	try {
+		domains = await askForDomain(env, project, slug, deployEnvironment);
+	} catch (e) {
+		logError(`[BUILD_AND_RUN] ${e}`);
+		return;
+	}
+
+	if (isEmpty(domains)) {
+		domains = [];
 		logWarn(
 			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "dx.json" to expose this app to the internet anytime.`
 		);
@@ -59,31 +72,18 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	// save domains & SSL configs
 	saveAppConfig(appConfig, { directory: targetDirectory });
 
-	// Generate the deployment before build & deploy
-	const { deploymentContent, prereleaseDeploymentContent, nsName, IMAGE_NAME, BUILD_NUMBER } = await generateDeployment(options);
-	options.namespace = nsName;
-	options.buildImage = IMAGE_NAME;
-	options.buildNumber = BUILD_NUMBER;
+	/**
+	 * Generate build number as docker image tag
+	 */
+	const { imageURL, namespace } = appConfig.environment[env];
 
-	// ! IMPORTANT: Save the YAML deployment to "app.environment[env]" !
-	// So it can be used to create release from build
-	appConfig.environment[env].deploymentYaml = deploymentContent;
-	appConfig.environment[env].prereleaseDeploymentYaml = prereleaseDeploymentContent;
+	options.slug = appConfig.slug; // ! required
+	options.projectSlug = appConfig.project; // ! required
+	options.namespace = namespace; // ! required
+	options.buildNumber = makeDaySlug({ divider: "" }); // ! required
+	options.buildImage = `${imageURL}:${options.buildNumber}`; // ! required
 
-	// update this app's environment in database:
-	const updatedApp: any = {};
-	updatedApp[`environment.${env}`] = JSON.stringify(appConfig.environment[env]);
-	updatedApp.lastUpdatedBy = options.username;
-	// console.log("updatedApp :>> ", updatedApp);
-
-	// Update user, project when deploying
-	const { status, data: app } = await fetchApi<App>({
-		url: `/api/v1/app?slug=${appConfig.slug}`,
-		method: "PATCH",
-		data: updatedApp,
-	});
-
-	const buildStatus = await startBuild(options, { shouldRollout: true });
+	const buildStatus = await startBuildV1(options, { shouldRollout: true });
 
 	return buildStatus;
 };

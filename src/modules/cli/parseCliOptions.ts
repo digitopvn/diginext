@@ -1,21 +1,24 @@
 import chalk from "chalk";
-import { log } from "diginext-utils/dist/console/log";
+import { log, logWarn } from "diginext-utils/dist/console/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
-import type { InputOptions } from "@/interfaces/InputOptions";
+import type { Project } from "@/entities";
+import type { InputOptions, ResourceQuotaSize } from "@/interfaces/InputOptions";
+import type { GitProviderType } from "@/interfaces/SystemTypes";
+import { checkForUpdate, currentVersion, getLatestCliVersion } from "@/plugins";
 
 const cliHeader =
 	chalk.bold.underline.green(`Diginext CLI USAGE - VERSION ${pkg.version}`.toUpperCase()) +
-	chalk.redBright("\n\n  [TIPS] You can use 'di' as an alias of 'diginext' command (for faster typing):") +
+	chalk.redBright("\n\n  [TIPS] You can use 'dx' as an alias of 'diginext' command (for faster typing):") +
 	chalk.gray("\n\n  # This command:") +
 	chalk.yellow("\ndiginext") +
 	" --help" +
 	chalk.gray("\n  # is equivalent with:") +
-	chalk.yellow("\ndi") +
+	chalk.yellow("\ndx") +
 	" --help\n\n---" +
 	chalk.gray("\n\n  # also type -h or --help to see the command usage:") +
-	chalk.yellow("\ndi [command]") +
+	chalk.yellow("\ndx [command]") +
 	" --help";
 
 const argvOptions = {
@@ -25,18 +28,20 @@ const argvOptions = {
 	"show-options": { describe: "Show current input options [for debugging].", alias: "s" },
 	local: { describe: "[TEST] For testing CLI & BUILD SERVER on local machine" },
 	input: { describe: "Input string", alias: "i" },
+	type: { describe: "Input type as string" },
 	data: { describe: "Input data", alias: "d" },
 	value: { describe: "Input value" },
 	file: { describe: "Input file path", alias: "f" },
-	key: { describe: "Input key in string", alias: "k" },
+	key: { describe: "Input key in string", alias: "token" },
 	url: { describe: "Input URL address with http" },
 	host: { describe: "Input host address (withou http)" },
 	overwrite: { describe: "[DANGER] Force execute a command (skip any errors)", alias: "force" },
-	output: { describe: "Output type (yaml | json)", alias: "o" },
+	output: { describe: "Output type - default is 'string' (string | yaml | json)", alias: "o" },
 	git: { describe: "Create new remote repository or not" },
 	merge: { describe: "Force git merge" },
 	close: { describe: "Should close or not" },
 	create: { describe: "Should create something" },
+	"upload-env": { describe: "Should upload local DOTENV to deployed environment" },
 	inherit: { describe: "Should inherit from previous deployment or not", alias: "ihr" },
 	update: { describe: "Should update CLI before execute a command or not", alias: "U" },
 	app: { describe: "Input app name", alias: "a" },
@@ -58,20 +63,26 @@ const argvOptions = {
 	do: { describe: "Select Digital Ocean as a provider", alias: "digitalocean" },
 	gcloud: { describe: "Select Google Cloud as a provider", alias: "gcp" },
 	cluster: { describe: "Specify selected cluster" },
-	registry: { describe: "Specify selected container registry" },
+	registry: { describe: "Specify container registry's slug", alias: "reg" },
 	project: { describe: "Specify selected project id (for Google Cloud)", alias: "pro" },
 	zone: { describe: "Specify selected zone (for Google Cloud)" },
 	region: { describe: "Specify selected region (for Google Cloud)" },
+	domain: { describe: "Specify primary application's domain" },
 	namespace: { describe: "Specify selected namespace inside the cluster", alias: "n" },
 	port: { describe: "Specify app listening port / mapping port", alias: "p" },
+	image: { describe: "Specify app's image URL on container registry", alias: "img" },
 	replicas: { describe: "Specify app scale replicas", alias: "rep" },
 	size: { describe: "Assign resource quotas to workload / deploy", alias: "s" },
 	ssl: { describe: "Should generate SSL for the deploy or not" },
+	ingress: { describe: "Ingress of Kubernetes", alias: "ing" },
+	service: { describe: "Service of Kubernetes", alias: "svc" },
+	deployment: { describe: "Deployment of Kubernetes", alias: "deploy" },
 	compress: { describe: "Should compress static files or not", alias: "zip" },
 	redirect: { describe: "Should redirect all alternative domains to the primary or not" },
 	generate: { describe: "Should generate config file or not", alias: "G" },
 	pipeline: { describe: "Should generate Bitbucket pipeline YAML or not" },
 	template: { describe: "Should replace current deployment with the templates or not", alias: "tpl" },
+	fresh: { describe: "Should do a fresh deploy [WARN - this will wipe out the current namespace]", alias: "fr" },
 };
 
 const globalOptions = {
@@ -100,10 +111,18 @@ const newProjectOptions = {
 const userInputOptions = {
 	input: argvOptions.input,
 	key: argvOptions.key,
+	token: argvOptions.key,
 	file: argvOptions.file,
 	url: argvOptions.url,
 	host: argvOptions.host,
 	output: argvOptions.output,
+};
+
+const dotenvOptions = {
+	targetDir: argvOptions.targetDir,
+	file: argvOptions.file,
+	env: argvOptions.env,
+	slug: argvOptions.slug,
 };
 
 const deployOptions = {
@@ -119,6 +138,7 @@ const deployOptions = {
 	framework: argvOptions.framework,
 	provider: argvOptions.provider,
 	cluster: argvOptions.cluster,
+	domain: argvOptions.domain,
 	namespace: argvOptions.namespace,
 	template: argvOptions.template,
 	registry: argvOptions.registry,
@@ -132,11 +152,53 @@ const deployOptions = {
 	gcloud: argvOptions.gcloud,
 	custom: argvOptions.custom,
 	create: argvOptions.create,
+	shouldUploadDotenv: argvOptions["upload-env"],
+	fresh: argvOptions.fresh,
 };
 
-export function parseCliOptions() {
-	// end
-	const argv: any = yargs(process.argv.slice(2))
+const kubectlDeploymentOptions = {
+	image: argvOptions.image,
+	port: argvOptions.port,
+	size: argvOptions.size,
+};
+
+const kubectlOptions = {
+	debug: argvOptions.debug,
+	tail: argvOptions.tail,
+	targetDir: argvOptions.targetDir,
+	overwrite: argvOptions.overwrite,
+	cluster: argvOptions.cluster,
+	name: argvOptions.name,
+	// resources
+	namespace: argvOptions.namespace,
+	ingress: argvOptions.ingress,
+	service: argvOptions.service,
+	deployment: argvOptions.deployment,
+	// resource > namespace
+	// resource > ingress
+	// annotations: argvOptions.annotations,
+	// resource > service
+	type: argvOptions.type,
+	// resource > deployment
+	...kubectlDeploymentOptions,
+	// env: argvOptions["env-vars"],
+};
+
+export async function parseCliOptions() {
+	// check for new version
+	const shouldUpdateCLI = await checkForUpdate();
+	if (shouldUpdateCLI) {
+		const latestVersion = await getLatestCliVersion();
+		logWarn(`-----------------------------------------------------------`);
+		logWarn(chalk.yellow(`There is new version of the CLI (${latestVersion}), update with:`));
+		logWarn("  dx update");
+		logWarn(chalk.gray("  OR"));
+		logWarn("  npm update @topgroup/diginext --global");
+		logWarn(`-----------------------------------------------------------`);
+	}
+
+	// start parsing...
+	const argv = await yargs(process.argv.slice(2))
 		// header
 		.usage(cliHeader)
 		// .usage("$0 <module> [gcloud|do] <action> - Manage cloud provider accessibility")
@@ -146,9 +208,17 @@ export function parseCliOptions() {
 		.alias("h", "help")
 		.alias("v", "version")
 		.global(["D", "s", "local", "h"])
+		// command: TEST
+		.command("test", "Nothing")
 		// command: CLI management
+		.command("info", "Show CLI & SERVER information")
 		// command: login
-		.command("login", "Authenticate Diginext CLI with BUILD server")
+		.command("login", "Authenticate Diginext CLI with BUILD server", (_yargs) =>
+			_yargs
+				.usage("$0 <server_url> --token=<access_token>")
+				.option("url", { ...argvOptions.url, describe: "URL of your Diginext server.", alias: "u" })
+				.option("token", { ...argvOptions.key, describe: "Value of ACCESS_TOKEN.", alias: "key" })
+		)
 		.command("logout", "Sign out Diginext CLI from BUILD server")
 		.usage("$0 login <build_server_url>", "Login into your build server")
 		.usage("$0 login --url=<build_server_url>", "Login into your build server")
@@ -161,12 +231,10 @@ export function parseCliOptions() {
 				.command("cluster", "View/add/remove kubernetes cluster")
 				.demandCommand(1)
 		)
-		// .usage("$0 config [get|provider|cluster]", "Configurate your CLI")
 		// command: update
 		.command("update", "Update your CLI version")
-		// .usage("$0 update", "Update your CLI to latest version")
-		// .usage("$0 update <version>", "Update your CLI to specific version")
-		// .example("$0 update", "Update CLI to latest version")
+		.usage("$0 update", "Update your CLI to latest version")
+		.usage("$0 update <version>", "Update your CLI to specific version")
 		// command: new
 		.command("new", "Create new project & application", newProjectOptions)
 		// .usage("$0 new", "Create new project")
@@ -272,6 +340,69 @@ export function parseCliOptions() {
 				.command("add-user", "Add new user to a database")
 				.demandCommand(1)
 		)
+		// command: cluster
+		.command("cluster", "Manage your clusters", (_yargs) =>
+			_yargs
+				.command("connect", "Connect your machine to the cluster")
+				.command("get", "Get cluster info")
+				.command("set", "Set value to cluster's property")
+				.command({
+					command: "delete",
+					aliases: ["del", "rm"],
+					describe: "Delete a cluster",
+					handler: (_argv) => {},
+				})
+				.demandCommand(1)
+		)
+		// command: kubectl
+		.command("kb", "Just kubectl commands with better developer experience", (_yargs) =>
+			_yargs
+				.command("get", "Get information of a specific K8S resource", (__yargs) =>
+					__yargs
+						.command("namespace", "Namespace")
+						.command("ingress", "Ingress")
+						.command("service", "Service")
+						.command("deploy", "Deployment")
+						.command("secret", "Secret")
+				)
+				.command("set", "Set information of a specific K8S resource", (__yargs) =>
+					__yargs
+						// .command("namespace", "Namespace")
+						.command("service", "Service")
+						.command({
+							command: "deployment",
+							aliases: ["dep", "deploy"],
+							describe: "Deployment",
+							builder: (___yargs) =>
+								___yargs
+									.command("namespace", "Namespace")
+									.command("ingress", "Ingress")
+									.command("service", "Service")
+									.command("deploy", "Deployment")
+									.command("secret", "Secret"),
+							handler: (_argv) => {
+								console.log("key :>> ", _argv.key);
+								// _argv.thirdAction = _argv.key;
+							},
+						})
+						.option("secret", { desc: `Name of "imagePullSecret" (create one with: "dx registry allow")`, alias: "key" })
+						.option("image", { desc: "", alias: "img" })
+				)
+				.command("del", "Delete information of a specific K8S resource", kubectlOptions)
+				.command({
+					command: "delete",
+					aliases: ["del", "rm"],
+					describe: "Delete specific K8S resources",
+					builder: (___yargs) =>
+						___yargs
+							.command("namespace", "Namespace")
+							.command("ingress", "Ingress")
+							.command("service", "Service")
+							.command("deploy", "Deployment")
+							.command("secret", "Secret"),
+					handler: (_argv) => {},
+				})
+		)
 		// command: pipeline
 		// .command("pipeline", "Run your pipeline workflow")
 		// command: dev
@@ -282,8 +413,13 @@ export function parseCliOptions() {
 		.command("run", "Build your project locally & deploy on the cluster.", deployOptions)
 		// command: deploy
 		.command("deploy", "Request BUILD SERVER to build your project & deploy it", deployOptions)
+		// command: dotenv
+		.command("dotenv", "Download/upload DOTENV files from/to deploy environment", (_yargs) =>
+			_yargs
+				.command("upload", "Upload local DOTENV file to a deploy environment.", dotenvOptions)
+				.command("download", "Download DOTENV file to local from a deploy environment.", dotenvOptions)
+		)
 		// command: release
-		// .command("release", "Roll out your PRE-RELEASE deployment", deployOptions)
 		.command("rollout", "Roll out your PRE-RELEASE deployment", deployOptions)
 		// command: down
 		.command("down", "Take down your deployment project", deployOptions)
@@ -306,75 +442,84 @@ export function parseCliOptions() {
 		.help("help")
 		.wrap(yargs.terminalWidth())
 		// copyright
-		.epilog("Copyright by DIGITOP © 2022").argv;
+		.epilog("Copyright by TOP GROUP VIETNAM © 2023").argv;
 
 	// log(`argv >>`, argv);
 
 	const options: InputOptions = {
+		// always attach current version to input options
+		version: currentVersion(),
+
 		// actions
-		action: argv._[0],
-		secondAction: argv._[1],
-		thirdAction: argv._[2],
-		fourAction: argv._[3],
-		fifthAction: argv._[4],
+		action: argv._[0] as string,
+		secondAction: argv._[1] as string,
+		thirdAction: argv._[2] as string,
+		fourAction: argv._[3] as string,
+		fifthAction: argv._[4] as string,
 
 		// inputs
-		input: argv.input,
-		filePath: argv.file,
-		key: argv.key,
-		url: argv.url,
-		host: argv.host,
-		name: argv.name,
-		data: argv.data,
-		value: argv.value,
+		input: argv.input as string,
+		filePath: argv.file as string,
+		key: argv.key as string,
+		token: argv.key as string,
+		url: argv.url as string,
+		host: argv.host as string,
+		name: argv.name as string,
+		data: argv.data as string,
+		value: argv.value as string,
 
 		// definitions
-		isDebugging: argv.debug ?? false,
-		isTail: argv.tail ?? false,
-		isLocal: argv.local ?? false,
-		overwrite: argv.overwrite ?? false,
-		git: argv.git ?? true,
-		gitProvider: argv["git-provider"],
+		isDebugging: (argv.debug as boolean) ?? false,
+		isTail: (argv.tail as boolean) ?? false,
+		isLocal: (argv.local as boolean) ?? false,
+		overwrite: (argv.overwrite as boolean) ?? false,
+		shouldUseGit: (argv.git as boolean) ?? true,
+		gitProvider: argv["git-provider"] as GitProviderType,
 
 		// project
-		projectName: argv.projectName,
-		projectSlug: argv.projectSlug,
-		targetDirectory: argv.targetDir,
-		framework: argv.framework,
+		projectName: argv.projectName as string,
+		projectSlug: argv.projectSlug as string,
+		targetDirectory: argv.targetDir as string,
+		framework: argv.framework as any,
 
 		// environment
-		env: argv.env ?? "dev",
-		isDev: argv.dev ?? true,
-		isStaging: argv.staging ?? argv.env == "staging" ?? false,
-		isCanary: argv.canary ?? argv.env == "canary" ?? false,
-		isProd: argv.prod ?? argv.env == "prod" ?? false,
+		env: (argv.env as string) ?? "dev",
+		isDev: (argv.dev as boolean) ?? true,
+		isStaging: (argv.staging as boolean) ?? argv.env === "staging" ?? false,
+		isCanary: (argv.canary as boolean) ?? argv.env === "canary" ?? false,
+		isProd: (argv.prod as boolean) ?? argv.env === "prod" ?? false,
 
 		// helper
-		shouldShowInputOptions: argv["show-options"] ?? false,
-		shouldInstallPackage: argv.install ?? true,
-		shouldShowHelp: argv.help ?? false,
-		shouldShowVersion: argv.version ?? true,
-		shouldUpdateCli: argv.update ?? false,
-		shouldCompress: argv.compress ?? false,
-		shouldGenerate: argv.generate ?? false,
-		shouldUseTemplate: argv.template ?? false,
-		shouldUpdatePipeline: argv.pipeline ?? false,
-		shouldMerge: argv.merge ?? false,
-		shouldClose: argv.close ?? false,
-		shouldInherit: argv.inherit ?? true,
+		shouldShowInputOptions: (argv["show-options"] as boolean) ?? false,
+		shouldInstallPackage: (argv.install as boolean) ?? true,
+		shouldShowHelp: (argv.help as boolean) ?? false,
+		shouldShowVersion: (argv.version as boolean) ?? true,
+		shouldUpdateCli: (argv.update as boolean) ?? false,
+		shouldCompress: (argv.compress as boolean) ?? false,
+		shouldGenerate: (argv.generate as boolean) ?? false,
+		shouldUseTemplate: (argv.template as boolean) ?? false,
+		shouldUpdatePipeline: (argv.pipeline as boolean) ?? false,
+		shouldMerge: (argv.merge as boolean) ?? false,
+		shouldClose: (argv.close as boolean) ?? false,
+		shouldInherit: (argv.inherit as boolean) ?? true,
+		shouldUploadDotenv: argv["upload-env"] as boolean,
+		shouldUseFreshDeploy: argv.fresh as boolean,
 
 		// deployment
-		app: argv.app, // monorepo app's name
-		port: argv.port,
-		replicas: argv.replicas,
-		size: argv.size ?? "none",
-		provider: argv.provider,
-		cluster: argv.cluster,
-		zone: argv.zone,
-		project: argv.project,
-		namespace: argv.namespace,
-		redirect: argv.redirect,
-		ssl: argv.ssl, // [FLAG] --no-ssl
+		app: argv.app,
+		domain: argv.domain as string,
+		port: argv.port as number,
+		replicas: argv.replicas as number,
+		size: (argv.size as ResourceQuotaSize) ?? "none",
+		provider: argv.provider as string,
+		registry: argv.registry as string,
+		cluster: argv.cluster as string,
+		zone: argv.zone as string,
+		project: argv.project as Project,
+		namespace: argv.namespace as string,
+		redirect: argv.redirect as boolean,
+		ssl: argv.ssl as boolean, // [FLAG] --no-ssl
+		imageURL: argv.image as string,
 	};
 
 	if (argv.do === true) options.provider = "digitalocean";

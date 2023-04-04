@@ -8,8 +8,11 @@ import Base from "./Base";
 import type User from "./User";
 import type Workspace from "./Workspace";
 
+/**
+ * Projects
+ */
 @Entity({ name: "projects" })
-export default class Project extends Base<Project> {
+export default class Project extends Base {
 	@Column({ length: 250 })
 	@IsNotEmpty({ message: `Project name is required.` })
 	name?: string;
@@ -47,7 +50,7 @@ export default class Project extends Base<Project> {
 	 * @remarks This can be populated to {App} data
 	 */
 	@ObjectIdColumn({ name: "apps" })
-	apps?: ObjectID[] | App[] | string[];
+	apps?: (ObjectID | App | string)[];
 
 	/**
 	 * User ID of the owner

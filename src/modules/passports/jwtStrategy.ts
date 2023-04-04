@@ -1,18 +1,24 @@
 // import passport from "passport";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { log } from "diginext-utils/dist/console/log";
+import type * as express from "express";
 import jwt from "jsonwebtoken";
+import { isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
+import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
-import UserService from "@/services/UserService";
+import type { AccessTokenInfo, Role, User, Workspace } from "@/entities";
+import type ServiceAccount from "@/entities/ServiceAccount";
+
+import { DB } from "../api/DB";
 
 dayjs.extend(relativeTime);
 
 export type JWTOptions = {
-	expiresIn: string | number;
+	workspaceId?: string;
+	expiresIn?: string | number;
 };
 
 var cookieExtractor = function (req) {
@@ -24,12 +30,14 @@ var cookieExtractor = function (req) {
 };
 
 export const generateJWT = (userId: string, options?: JWTOptions) => {
-	const { expiresIn = "2d" } = options;
+	if (!options.expiresIn) options.expiresIn = process.env.JWT_EXPIRE_TIME || "2d";
+
+	const { expiresIn } = options;
+
 	const token = jwt.sign(
 		{
 			id: userId,
-			expiresIn,
-			// exp: Math.floor(Date.now() / 1000) + 2 * 24 * 60 * 60, // 2d
+			...options,
 		},
 		Config.grab("JWT_SECRET", "123"),
 		{
@@ -37,10 +45,45 @@ export const generateJWT = (userId: string, options?: JWTOptions) => {
 			expiresIn,
 		}
 	);
+
 	return token;
 };
 
 export const refreshAccessToken = () => {};
+
+function extractAccessTokenInfo(access_token: string, exp: number) {
+	let expiredDate = dayjs(new Date(exp * 1000));
+	let expiredTimestamp = dayjs(new Date(exp * 1000)).diff(dayjs());
+	let isExpired = expiredTimestamp <= 0;
+	// let expToNow = dayjs(new Date(exp * 1000)).fromNow();
+
+	// log("Expired date >", expiredTimestamp, ">>:", expiredDate.format("YYYY-MM-DD HH:mm:ss"));
+	// log(`Is token expired >>:`, isExpired, `(will expire ${expToNow})`);
+
+	// If token is < 1 hour to expire, refresh it:
+	// const expHourLeft = expiredTimestamp / 60 / 60 / 1000;
+	// if (expHourLeft < 2) {
+	// 	const userId = payload.id;
+	// 	access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+
+	// 	expiredDate = dayjs(new Date(payload.exp * 1000));
+	// 	expiredTimestamp = dayjs(new Date(payload.exp * 1000)).diff(dayjs());
+	// 	isExpired = expiredTimestamp <= 0;
+	// 	expToNow = dayjs(new Date(payload.exp * 1000)).fromNow();
+
+	// 	log(`The token is about to expired ${expToNow} > Refreshing it now...`);
+	// }
+
+	// assign "access_token" info to request:
+	const token: AccessTokenInfo = {
+		access_token,
+		expiredTimestamp: expiredTimestamp,
+		expiredDate: expiredDate.toDate(),
+		expiredDateGTM7: expiredDate.format("YYYY-MM-DD HH:mm:ss"),
+	};
+
+	return { token, isExpired };
+}
 
 export const jwtStrategy = new Strategy(
 	{
@@ -50,56 +93,83 @@ export const jwtStrategy = new Strategy(
 			ExtractJwt.fromUrlQueryParameter("access_token"),
 			cookieExtractor,
 		]),
-		// jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 		passReqToCallback: true,
 		algorithms: ["HS512"],
 	},
-	async function (req, payload, done) {
-		// log(`req.headers :>>`, req.headers);
+	async function (req: express.Request, payload: any, done: VerifiedCallback) {
+		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`, { payload });
+
+		const workspaceId = new ObjectId(payload.workspaceId);
+
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
-		// log(`access_token >>:`, access_token);
-		// log(`JWT callback >>:`, payload);
+		// console.log("jwtStrategy > access_token :>> ", access_token);
+		// console.log("jwtStrategy > payload :>> ", payload);
+		// 1. Extract token info
 
-		let expiredDate = dayjs(new Date(payload.exp * 1000));
-		let expiredTimestamp = dayjs(new Date(payload.exp * 1000)).diff(dayjs());
-		let isExpired = expiredTimestamp <= 0;
-		let expToNow = dayjs(new Date(payload.exp * 1000)).fromNow();
+		const tokenInfo = extractAccessTokenInfo(access_token, payload.exp);
 
-		// log("Expired date >", expiredTimestamp, ">>:", expiredDate.format("YYYY-MM-DD HH:mm:ss"));
-		// log(`Is token expired >>:`, isExpired, `(will expire ${expToNow})`);
+		// validating token...
+		if (tokenInfo.isExpired) return done(JSON.stringify({ status: 0, messages: ["Access token was expired."] }), null);
+		if (!tokenInfo.token) return done(JSON.stringify({ status: 0, messages: ["Missing access token."] }), null);
 
-		// If token is < 1 hour to expire, refresh it:
-		const expHourLeft = expiredTimestamp / 60 / 60 / 1000;
-		if (expHourLeft < 2) {
-			const userId = payload.id;
-			access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "24h" });
+		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
-			expiredDate = dayjs(new Date(payload.exp * 1000));
-			expiredTimestamp = dayjs(new Date(payload.exp * 1000)).diff(dayjs());
-			isExpired = expiredTimestamp <= 0;
-			expToNow = dayjs(new Date(payload.exp * 1000)).fromNow();
+		let user = await DB.findOne<User | ServiceAccount>(
+			"user",
+			{ _id: new ObjectId(payload.id) },
+			{ populate: ["roles", "workspaces", "activeWorkspace"] }
+		);
+		// console.log(`[1] jwtStrategy > User :>> `, user);
 
-			log(`The token is about to expired ${expToNow} > Refreshing it now...`);
+		if (user) {
+			// console.log("user.workspaces :>> ", user.workspaces);
+			// console.log("workspaceId :>> ", workspaceId);
+			// console.log("user.workspaces.includes(workspaceId) :>> ", user.workspaces.includes(workspaceId));
+
+			const updateData = {} as any;
+			updateData.token = tokenInfo.token;
+			updateData.activeWorkspace = workspaceId;
+
+			// set active workspace to this user:
+			if (isEmpty(user.workspaces)) {
+				updateData.workspaces = [workspaceId];
+			} else {
+				if (!user.workspaces.includes(workspaceId))
+					updateData.workspaces = [...(user.workspaces || []).map((ws) => (ws as Workspace)._id), workspaceId];
+			}
+
+			// set default roles if this user doesn't have one
+			if (!user.roles || isEmpty(user.roles)) {
+				const memberRole = await DB.findOne<Role>("role", { name: "Member", workspace: workspaceId });
+				updateData.roles = [memberRole._id];
+			}
+
+			// update the access token in database:
+			[user] = await DB.update<User>("user", { _id: new ObjectId(payload.id) }, updateData, {
+				populate: ["roles", "workspaces", "activeWorkspace"],
+			});
+
+			// filter roles
+			// [user] = await filterRole(user.activeWorkspace.toString(), [user]);
+
+			return done(null, user);
 		}
 
-		// assign "access_token" info to request:
-		req.token = {
-			access_token,
-			expiredTimestamp: expiredTimestamp,
-			expiredDate: expiredDate.toDate(),
-			expiredDateGTM7: expiredDate.format("YYYY-MM-DD HH:mm:ss"),
-		};
+		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
+		user = await DB.findOne<ServiceAccount>(
+			"service_account",
+			{ _id: new ObjectId(payload.id) },
+			{ populate: ["roles", "workspaces", "activeWorkspace"] }
+		);
 
-		if (isExpired) {
-			return done(JSON.stringify({ status: 0, messages: ["Access token was expired."] }), null);
-		}
+		// filter roles
+		// if (user) [user] = await filterRole(user.activeWorkspace.toString(), [user]);
 
-		const userSvc = new UserService();
-		let user = await userSvc.findOne({ _id: new ObjectId(payload.id) }, { populate: ["roles", "workspaces"] });
+		// console.log(`[3] jwtStrategy > ServiceAccount :>> `, user.name, user._id);
 
-		if (user) return done(null, user);
+		if (!user) return done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
 
-		done(null, false);
+		return done(null, user);
 	}
 );
 

@@ -2,6 +2,9 @@ import express from "express";
 
 import ReleaseController from "@/controllers/ReleaseController";
 import { authenticate } from "@/middlewares/authenticate";
+import { authorize } from "@/middlewares/authorize";
+import { processApiRequest } from "@/middlewares/process-api-request";
+import { registerController } from "@/middlewares/register-controller";
 
 const router = express.Router();
 
@@ -14,58 +17,19 @@ const controller = new ReleaseController();
  */
 
 router
+	.use(authenticate, authorize)
+	.use(registerController(controller))
 	.use(controller.parsePagination.bind(controller))
 	.use(controller.parseFilter.bind(controller))
 	.use(controller.parseBody.bind(controller))
-	.get(
-		"/",
-		authenticate,
-		// authorize,
-		controller.read.bind(controller)
-	)
-	.post(
-		"/",
-		authenticate,
-		// authorize,
-		controller.create.bind(controller)
-	)
-	.patch(
-		"/",
-		authenticate,
-		// authorize,
-		controller.update.bind(controller)
-	)
-	.delete(
-		"/",
-		authenticate,
-		// authorize,
-		controller.softDelete.bind(controller)
-	)
-	.delete(
-		"/empty",
-		authenticate,
-		// authorize,
-		controller.empty.bind(controller)
-	)
-	.patch(
-		"/rollout",
-		authenticate,
-		// authorize,
-		controller.rollout.bind(controller)
-	)
-	.patch(
-		"/preview",
-		authenticate,
-		// authorize,
-		controller.previewPrerelease.bind(controller)
-	)
-	// Create new {Release} from {Build} data
-	.post(
-		"/from-build",
-		authenticate,
-		// authorize,
-		controller.createFromBuild.bind(controller)
-	);
+	.get("/", processApiRequest(controller.read.bind(controller)))
+	.post("/", processApiRequest(controller.create.bind(controller)))
+	.post("/from-build", processApiRequest(controller.createFromBuild.bind(controller)))
+	.patch("/", processApiRequest(controller.update.bind(controller)))
+	.delete("/", processApiRequest(controller.delete.bind(controller)))
+	.delete("/empty", processApiRequest(controller.empty.bind(controller)))
+	.patch("/rollout", processApiRequest(controller.rollout.bind(controller)))
+	.patch("/preview", processApiRequest(controller.previewPrerelease.bind(controller)));
 // Turn this migration off
 // .get("/migrate", authenticate, controller.migrate.bind(controller));
 
