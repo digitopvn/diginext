@@ -12,11 +12,12 @@ export const migrateAllRoles = async () => {
 	// create default roles for each workspace: Admin, Moderator & Member
 	for (const ws of workspaces) {
 		// reset all roles
-		await DB.delete<Role>("role", { workspace: ws._id });
+		// await DB.delete<Role>("role", { workspace: ws._id });
 
 		// Member
 		let memberRole: Role;
 		const wsMemberRole = await DB.findOne<Role>("role", { type: "member", workspace: ws._id });
+		// console.log("wsMemberRole :>> ", wsMemberRole);
 		if (!wsMemberRole) {
 			const memberRoleDto = new Role();
 			memberRoleDto.name = "Member";
@@ -28,6 +29,12 @@ export const migrateAllRoles = async () => {
 				{ route: "/api/v1/app", permissions: ["own", "read", "create", "update"] },
 				{ route: "/api/v1/app/environment", permissions: ["full"] },
 				{ route: "/api/v1/app/environment/variables", permissions: ["full"] },
+				{ route: "/api/v1/build/start", permissions: ["full"] },
+				{ route: "/api/v1/build/stop", permissions: ["full"] },
+				{ route: "/api/v1/user/join-workspace", permissions: ["update"] },
+				{ route: "/api/v1/release", permissions: ["own", "read", "create", "update"] },
+				{ route: "/api/v1/release/from-build", permissions: ["own", "read", "create", "update"] },
+				{ route: "/api/v1/release/preview", permissions: ["own", "read", "create", "update"] },
 				{ route: "/api/v1/role", permissions: ["read"] },
 				{ route: "/api/v1/api_key", permissions: ["read"] },
 				{ route: "/api/v1/service_account", permissions: ["read"] },
@@ -44,6 +51,7 @@ export const migrateAllRoles = async () => {
 		// Admin
 		let adminRole: Role;
 		const wsAdminRole = await DB.findOne<Role>("role", { type: "admin", workspace: ws._id });
+		// console.log("wsAdminRole :>> ", wsAdminRole);
 
 		if (!wsAdminRole) {
 			const adminRoleDto = new Role();
@@ -64,7 +72,7 @@ export const migrateAllRoles = async () => {
 		if (!wsModeratorRole) {
 			const moderatorRoleDto = new Role();
 			moderatorRoleDto.name = "Moderator";
-			moderatorRoleDto.routes = [{ route: "*", permissions: ["read", "create", "update"] }];
+			moderatorRoleDto.routes = [{ route: "*", permissions: ["own", "read", "create", "update"] }];
 			moderatorRoleDto.workspace = ws._id;
 			moderatorRoleDto.type = "moderator";
 
@@ -75,11 +83,17 @@ export const migrateAllRoles = async () => {
 		}
 
 		// find all service accounts & API keys of this workspace and assign "moderator" role:
-		let sas = await DB.update<ServiceAccount>("service_account", { workspaces: ws._id }, { roles: [moderatorRole._id] });
-		console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${sas.length} service accounts`);
+		let sas = await DB.find<ServiceAccount>("service_account", { workspaces: ws._id, roles: { $nin: [moderatorRole._id] } });
+		if (sas.length > 0) {
+			sas = await DB.update<ServiceAccount>("service_account", { workspaces: ws._id }, { roles: [moderatorRole._id] });
+			console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${sas.length} service accounts`);
+		}
 
-		let keys = await DB.update<ApiKeyAccount>("api_key_user", { workspaces: ws._id }, { roles: [moderatorRole._id] });
-		console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${keys.length} API keys`);
+		let keys = await DB.find<ApiKeyAccount>("api_key_user", { workspaces: ws._id, roles: { $nin: [moderatorRole._id] } });
+		if (keys.length > 0) {
+			keys = await DB.update<ApiKeyAccount>("api_key_user", { workspaces: ws._id }, { roles: [moderatorRole._id] });
+			console.log(`Workspace "${ws.name}" > Assign "moderator" role to ${keys.length} API keys`);
+		}
 
 		// find members of workspace and assign role:
 		let owner = await DB.findOne<User>("user", { _id: ws.owner }, { populate: ["roles"] });

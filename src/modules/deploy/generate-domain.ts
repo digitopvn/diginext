@@ -1,10 +1,12 @@
 import { logError } from "diginext-utils/dist/console/log";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
 
+import { isServerMode } from "@/app.config";
 import type { Cluster } from "@/entities";
 
 import { fetchApi } from "../api";
 import { DB } from "../api/DB";
+import type { CreateDiginextDomainParams } from "../diginext/dx-domain";
 import { createDiginextDomain } from "../diginext/dx-domain";
 
 export interface GenerateDomainOptions {
@@ -39,7 +41,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 
 	let { subdomainName, clusterShortName, ipAddress, primaryDomain } = params;
 	let domain = `${subdomainName}.${primaryDomain}`;
-	let targetIP;
+	let targetIP: string;
 
 	if (clusterShortName) {
 		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
@@ -60,13 +62,14 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	}
 
 	// create new subdomain:
-	const domainData = { name: subdomainName, data: targetIP };
-	let res = await fetchApi({ url: `/api/v1/domain`, method: "POST", data: domainData });
-	console.log("generateDomain > res :>> ", res);
+	const domainData: CreateDiginextDomainParams = { name: subdomainName, data: targetIP };
+	let res = isServerMode ? await createDiginextDomain(domainData) : await fetchApi({ url: `/api/v1/domain`, method: "POST", data: domainData });
+
+	// console.log("generateDomain > res :>> ", res);
 	let { status, messages } = res;
 
 	if (status === 0) {
-		const [msg] = messages;
+		const [msg = ""] = messages;
 		if (msg.indexOf("domain name is existed")) {
 			const randomStr = randomStringByLength(6, "zxcvbnmasdfghjklqwertyuiop1234567890");
 			subdomainName = `${randomStr}-${subdomainName}`;
@@ -81,7 +84,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 			if (status === 1) return { status: 1, domain, ip: targetIP } as GenerateDomainResult;
 		}
 
-		logError(`[DOMAIN]`, messages.join(". "));
+		if (msg) logError(`[DOMAIN] ${msg}`);
 		return { status: 0, domain, ip: null, messages } as GenerateDomainResult;
 	}
 

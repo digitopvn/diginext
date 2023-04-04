@@ -2,15 +2,18 @@ import { logError } from "diginext-utils/dist/console/log";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { Cluster } from "@/entities";
+import type { CloudProvider, Cluster } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
+import { respondFailure } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
 import { CloudProviderService } from "@/services";
 import ClusterService from "@/services/ClusterService";
 
 import BaseController from "./BaseController";
+
+export type ClusterDto = Omit<Cluster, keyof HiddenBodyKeys>;
 
 @Tags("Cluster")
 @Route("cluster")
@@ -29,11 +32,12 @@ export default class ClusterController extends BaseController<Cluster> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: Omit<Cluster, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: ClusterDto, @Queries() queryParams?: IPostQueryParams) {
 		// validation - round 1
 		let errors: string[] = [];
 		if (!body.provider) errors.push(`Cloud Provider ID is required.`);
 		if (!body.shortName) errors.push(`Cluster short name is required, find it on your cloud provider dashboard.`);
+		if (typeof body.isVerified === "undefined") body.isVerified = false;
 
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 
@@ -44,7 +48,6 @@ export default class ClusterController extends BaseController<Cluster> {
 		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
 
 		body.providerShortName = cloudProvider.shortName;
-		body.isVerified = false;
 
 		// validation - round 2
 		errors = [];
@@ -87,54 +90,50 @@ export default class ClusterController extends BaseController<Cluster> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: Omit<Cluster, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: ClusterDto, @Queries() queryParams?: IPostQueryParams) {
+		const cloudProviderSvc = new CloudProviderService();
+		let cloudProvider: CloudProvider;
+
+		// validation - round 1: valid input params
 		if (body.provider) {
-			const cloudProviderSvc = new CloudProviderService();
-
-			const cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
+			cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
 			if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
-
-			body.providerShortName = cloudProvider.shortName;
 		}
 
 		let cluster = await this.service.findOne(this.filter);
-
-		// validation - round 1
-		let errors: string[] = [];
-		if (!cluster.provider) errors.push(`Cloud Provider ID is required.`);
-		if (!cluster.shortName) errors.push(`Cluster short name is required, find it on your cloud provider dashboard.`);
-
-		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+		if (!cluster) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Cluster not found.` });
 
 		// validate cloud provider...
-		const cloudProviderSvc = new CloudProviderService();
+		if (!cloudProvider) cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(cluster.provider as string) });
+		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider is not valid.`] } as ResponseData;
 
-		const cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(cluster.provider as string) });
-		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${cluster.provider}" not found.`] } as ResponseData;
+		const updateData = { ...body, provider: new ObjectId(body.provider.toString()), providerShortName: cloudProvider.shortName } as ClusterDto;
+		[cluster] = await this.service.update({ _id: cluster._id }, updateData);
+		console.log("cluster :>> ", cluster);
 
-		// validation - round 2
-		errors = [];
+		// validation - round 2: check cluster accessibility
+		let errors: string[] = [];
 		if (cloudProvider.shortName === "gcloud") {
-			if (!cluster.serviceAccount) errors.push(`Google Service Account (JSON) is required.`);
-			if (!cluster.projectID) errors.push(`Google Project ID is required.`);
-			if (!cluster.region) errors.push(`Google cluster region is required.`);
-			if (!cluster.zone) errors.push(`Google cluster zone is required.`);
+			if (!cluster.serviceAccount && !body.serviceAccount) errors.push(`Google Service Account (JSON) is required.`);
+			if (!cluster.projectID && !body.projectID) errors.push(`Google Project ID is required.`);
+			if (!cluster.region && !body.region) errors.push(`Google cluster region is required.`);
+			if (!cluster.zone && !body.zone) errors.push(`Google cluster zone is required.`);
 		}
 		if (cloudProvider.shortName === "digitalocean") {
 			if (!cluster.apiAccessToken) errors.push(`Digital Ocean API Access Token is required.`);
-			// if (!(cluster.region)) errors.push(`Digital Ocean cluster region is required.`);
+			// if (!cluster.region && !body.region) errors.push(`Digital Ocean cluster region is required.`);
 		}
 		if (cloudProvider.shortName === "custom") {
-			if (!cluster.kubeConfig) errors.push(`Kube config data (YAML) is required.`);
+			if (!cluster.kubeConfig && !body.kubeConfig) errors.push(`Kube config data (YAML) is required.`);
 		}
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 
 		// verify...
 		try {
 			await ClusterManager.authCluster(cluster.shortName);
-
 			[cluster] = await this.service.update({ _id: cluster._id }, { isVerified: true });
 		} catch (e) {
+			console.log("Failed to connect cluster :>> ", e);
 			return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
 		}
 
@@ -145,6 +144,7 @@ export default class ClusterController extends BaseController<Cluster> {
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
+		// TODO: find deleted items before deleting
 		return super.delete();
 	}
 

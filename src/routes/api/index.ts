@@ -1,7 +1,7 @@
 import { isJSON } from "class-validator";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import { log, logWarn } from "diginext-utils/dist/console/log";
+import { logWarn } from "diginext-utils/dist/console/log";
 import { Response } from "diginext-utils/dist/response";
 import express from "express";
 
@@ -9,7 +9,6 @@ import pkg from "@/../package.json";
 import { Config } from "@/app.config";
 import { sendLog } from "@/modules/build";
 import { testBuild } from "@/modules/build/build";
-import { startBuildV1 } from "@/modules/build/start-build";
 import { execCmd } from "@/plugins";
 // import userRouter from "./user";
 
@@ -86,33 +85,6 @@ if (CLI_MODE == "server") {
 		const resultJson = "[" + resultStr.split("\n").join(",") + "]";
 		const result = resultJson && isJSON(resultJson) ? JSON.parse(resultJson) : {};
 		res.status(200).json(result);
-	});
-
-	router.post("/deploy", (req, res) => {
-		const { options } = req.body;
-
-		// TODO: Save client CLI version to server database for tracking purpose!
-		const cliOptions = JSON.parse(options);
-		log("[DEPLOY] cliOptions", cliOptions);
-
-		// check for version compatibility between CLI & SERVER:
-		const cliVersion = cliOptions.version || "0.0.0";
-		const breakingChangeVersionCli = cliVersion.split(".")[0];
-		const serverVersion = pkg.version;
-		const breakingChangeVersionServer = serverVersion.split(".")[0];
-
-		if (breakingChangeVersionCli != breakingChangeVersionServer)
-			res.status(200).json({
-				status: 0,
-				messages: [
-					`Your CLI version (${cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please upgrade: "dx update"`,
-				],
-			});
-
-		// start build in background:
-		startBuildV1(cliOptions);
-
-		res.status(200).json({ status: 1 });
 	});
 }
 

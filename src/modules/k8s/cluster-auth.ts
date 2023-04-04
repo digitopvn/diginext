@@ -120,8 +120,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			if (context) {
 				[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { contextName: context.name });
 			} else {
-				logError(`Context of "${clusterShortName}" cluster not found.`);
-				return;
+				throw new Error(`Context of "${clusterShortName}" cluster not found.`);
 			}
 
 			if (shouldSwitchContextToThisCluster) switchContext(context.name);
@@ -151,8 +150,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			if (context) {
 				[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { contextName: context.name });
 			} else {
-				logError(`Context of "${clusterShortName}" cluster not found.`);
-				return;
+				throw new Error(`Context of "${clusterShortName}" cluster not found.`);
 			}
 
 			if (shouldSwitchContextToThisCluster) switchContext(context.name);
@@ -176,8 +174,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			if (contextName) {
 				[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { contextName: contextName });
 			} else {
-				logError(`Context of "${clusterShortName}" cluster not found.`);
-				return;
+				throw new Error(`Context of "${clusterShortName}" cluster not found.`);
 			}
 
 			// delete temporary file
