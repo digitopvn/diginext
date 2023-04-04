@@ -1,3 +1,12 @@
+## [2.8.11](https://github.com/digitopvn/diginext/compare/v2.8.10...v2.8.11) (2023-04-04)
+
+
+### Bug Fixes
+
+* **admin:** build list: add env to roll out build api call ([db4af38](https://github.com/digitopvn/diginext/commit/db4af38ab80da37ab7f8c1ad2e67dc88654438e3))
+* **server:** correct owner of release when create from a build ([ad207b9](https://github.com/digitopvn/diginext/commit/ad207b9271d346306c09c478f7183b6cf17f217b))
+* **server:** use workspace id to create release from build ([505f8c5](https://github.com/digitopvn/diginext/commit/505f8c59c13082297d2abf8917c20d188ca801c9))
+
 ## [2.8.10](https://github.com/digitopvn/diginext/compare/v2.8.9...v2.8.10) (2023-04-04)
 
 
