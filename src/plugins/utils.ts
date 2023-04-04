@@ -695,7 +695,7 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 
 		return { remoteSSH, remoteURL, provider, slug, fullSlug, namespace, gitDomain, branch };
 	} catch (e) {
-		logWarn(`getCurrentGitRepoData() :>>`, e.toString());
+		// logWarn(`getCurrentGitRepoData() :>>`, e.toString());
 		return;
 	}
 };

@@ -8,6 +8,8 @@ import { getCliConfig } from "@/config/config";
 import type { App, CloudProvider, Cluster, ContainerRegistry, Project } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
+import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
+import { availableResourceSizes } from "@/interfaces/SystemTypes";
 import { getAppConfig, resolveEnvFilePath, saveAppConfig } from "@/plugins";
 import { isNumeric } from "@/plugins/number";
 
@@ -236,6 +238,21 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	if (!isNumeric(localDeployEnvironment.replicas)) localDeployEnvironment.replicas = 1;
 	options.replicas = localDeployEnvironment.replicas;
 	localAppConfig.environment[env].replicas = localDeployEnvironment.replicas;
+
+	// request container size
+	if (typeof localDeployEnvironment.size === "undefined") {
+		const { selectedSize } = await inquirer.prompt<{ selectedSize: ResourceQuotaSize }>({
+			type: "list",
+			name: "selectedSize",
+			message: "Please select your default container registry:",
+			choices: availableResourceSizes.map((r) => {
+				return { name: r, value: r };
+			}),
+		});
+		localDeployEnvironment.size = selectedSize;
+	}
+	options.size = localDeployEnvironment.size;
+	localAppConfig.environment[env].size = localDeployEnvironment.size;
 
 	// request SSL config
 	if (localDeployEnvironment.domains.length > 0) {

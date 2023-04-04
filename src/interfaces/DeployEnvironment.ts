@@ -3,7 +3,7 @@ import type { ObjectId } from "mongodb";
 import type { User } from "@/entities";
 
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
-import type { ResourceQuotaSize } from "./InputOptions";
+import type { ResourceQuotaSize } from "./SystemTypes";
 
 export const availableSslTypes = ["letsencrypt", "custom", "none"] as const;
 /**

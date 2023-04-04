@@ -10,6 +10,9 @@ export type RegistryProviderType = (typeof registryProviderList)[number];
 export const availableGitProviders = ["bitbucket", "github", "gitlab"] as const;
 export type GitProviderType = (typeof availableGitProviders)[number];
 
+export const availableResourceSizes = ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"] as const;
+export type ResourceQuotaSize = (typeof availableResourceSizes)[number];
+
 export const gitProviderDomain = {
 	bitbucket: "bitbucket.org",
 	github: "github.com",
