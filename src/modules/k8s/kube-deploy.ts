@@ -146,6 +146,20 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	}
 
 	/**
+	 * Delete current PRE-RELEASE deployments
+	 */
+	const curPrereleaseDeployments = await ClusterManager.getDeployByFilter(namespace, {
+		context,
+		filterLabel: `phase=prerelease,main-app=${appSlug}`,
+	});
+	if (!isEmpty(curPrereleaseDeployments)) {
+		await ClusterManager.deleteDeploymentsByFilter(namespace, {
+			context,
+			filterLabel: `phase=prerelease,main-app=${appSlug}`,
+		});
+	}
+
+	/**
 	 * Apply PRE-RELEASE deployment YAML
 	 */
 	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, namespace, { context });
@@ -513,9 +527,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const latestRelease = latestReleases[0];
 	// log({ latestRelease });
 
-	if (!latestRelease) {
-		throw new Error(`Cannot set the latest release (${id}) status as "active".`);
-	}
+	if (!latestRelease) throw new Error(`Cannot set the latest release (${id}) status as "active".`);
 
 	/**
 	 * 5. Clean up > Delete old deployments
