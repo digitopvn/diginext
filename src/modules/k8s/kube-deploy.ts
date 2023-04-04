@@ -121,9 +121,6 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	const { contextName: context } = cluster;
 	if (!context) throw new Error(`[KUBE_DEPLOY] previewPrerelease > Cluster context not found.`);
 
-	const tmpDir = path.resolve(CLI_DIR, `storage/releases/${releaseSlug}`);
-	if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
-
 	/**
 	 * Check if there is any prod namespace, if not -> create one
 	 */
@@ -140,23 +137,8 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	}
 
 	/**
-	 * Check if there is "imagePullSecrets" within prod namespace, if not -> create one
+	 * Create "imagePullSecrets" in a namespace
 	 */
-	// const allSecrets = await ClusterManager.getAllSecrets(namespace, { context });
-	// let isImagePullSecretExisted = false;
-	// if (allSecrets && allSecrets.length > 0) {
-	// 	const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
-	// 	if (imagePullSecret) isImagePullSecretExisted = true;
-	// }
-
-	// log(`isImagePullSecretExisted :>>`, isImagePullSecretExisted);
-	// if (!isImagePullSecretExisted) {
-	// 	try {
-	// 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
-	// 	} catch (e) {
-	// 		throw new Error(e.message);
-	// 	}
-	// }
 	try {
 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
 	} catch (e) {
