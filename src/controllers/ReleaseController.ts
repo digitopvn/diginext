@@ -1,11 +1,10 @@
-import { toBool } from "diginext-utils/dist/object";
+import { logError } from "diginext-utils/dist/console/log";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { Release } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
-import type { ResponseData } from "@/interfaces/ResponseData";
-import { respondFailure } from "@/interfaces/ResponseData";
+import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { createReleaseFromBuild } from "@/modules/build/create-release-from-build";
 import ClusterManager from "@/modules/k8s";
 import BuildService from "@/services/BuildService";
@@ -54,109 +53,73 @@ export default class ReleaseController extends BaseController<Release> {
 	@Security("jwt")
 	@Post("/from-build")
 	async createFromBuild(@Body() body: { build: string; env: string }) {
-		if (!body.env) return respondFailure({ msg: `Deploy environment code is required.` });
-
-		let result: ResponseData & { data: Release } = { status: 1, data: {}, messages: [] };
+		if (!body.env) return respondFailure({ msg: `Param "env" (deploy environment code) is required.` });
 
 		const { build: buildId } = body;
 
-		if (!buildId) {
-			result.status = 0;
-			result.messages.push(`Param "build" (ID) is required.`);
-			return result;
-		}
+		if (!buildId) return respondFailure({ msg: `Param "build" (ID) is required.` });
 
 		const buildSvc = new BuildService();
 		const build = await buildSvc.findOne({ _id: buildId });
-		if (!build) {
-			result.status = 0;
-			result.messages.push(`Build (${buildId}) not found.`);
-			return result;
-		}
+		if (!build) return respondFailure({ msg: `Build (${buildId}) not found.` });
 
 		const newRelease = await createReleaseFromBuild(build, body.env, { author: this.user });
-		if (!newRelease) {
-			result.status = 0;
-			result.messages.push(`Failed to create new release from build data.`);
-			return result;
-		}
+		if (!newRelease) return respondFailure({ msg: `Failed to create new release from build data.` });
 
-		result.data = newRelease;
-
-		// assign refreshed token if any:
-		// TODO: this is not safe -> should use refresh token!
-		// const { token } = req as any;
-		// if (token) result.token = token;
-
-		// return ApiResponse.succeed(res, data);
-		return result;
+		return respondSuccess({ data: newRelease });
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/rollout")
 	async rollout(@Body() data: { id: string }) {
+		const { id: idInFilter } = this.filter;
 		const { id } = data;
 
-		let result: ResponseData & { data: Release } = { status: 1, data: {}, messages: [] };
+		const releaseId = id || idInFilter;
 
 		// console.log("controller > rollout > id :>> ", id);
-		if (!id) {
-			result.status = 0;
-			result.messages.push("Release ID is required.");
-			return result;
+		if (!releaseId) return respondFailure({ msg: `Release ID is required.` });
+
+		try {
+			const rolloutResult = await ClusterManager.rollout(id.toString());
+			if (rolloutResult.error) {
+				return respondFailure({ msg: rolloutResult.error });
+			}
+
+			return respondSuccess({ data: rolloutResult.data });
+		} catch (e) {
+			return respondFailure({ msg: e.toString() });
 		}
-
-		const rolloutResult = await ClusterManager.rollout(id.toString());
-		if (rolloutResult.error) {
-			result.status = 0;
-			result.messages.push(rolloutResult.error);
-			return result;
-		}
-
-		result.data = rolloutResult.data;
-
-		return result;
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/preview")
 	async previewPrerelease(@Body() data: { id: string }) {
+		const { id: idInFilter } = this.filter;
 		const { id } = data;
 
-		let result: ResponseData & { data: Release } = { status: 1, data: {}, messages: [] };
-		// console.log("controller > rollout > id :>> ", id);
-		if (!id) {
-			result.status = 0;
-			result.messages.push("Release ID is required.");
-			return result;
+		const releaseId = id || idInFilter;
+		if (!releaseId) return respondFailure({ msg: `Release ID is required.` });
+
+		try {
+			const previewRes = await ClusterManager.previewPrerelease(id.toString());
+
+			if (previewRes.error) {
+				return respondFailure({ msg: previewRes.error });
+			}
+
+			return respondSuccess({ data: previewRes.data });
+		} catch (e) {
+			return respondFailure({ msg: e.toString() });
 		}
-
-		const previewRes = await ClusterManager.previewPrerelease(id.toString());
-		if (previewRes.error) {
-			result.status = 0;
-			result.messages.push(previewRes.error);
-			return result;
-		}
-
-		result.data = previewRes.data;
-
-		return result;
-
-		// return ApiResponse.succeed(res, data.data);
 	}
 
+	/**
+	 * @deprecated
+	 */
 	async migrate() {
-		let result: ResponseData & { data: Release[] } = { status: 1, data: [], messages: [] };
-
-		const allReleases = await this.service.find({});
-		const updatedReleases = allReleases.map(async (re) => {
-			return this.service.update({ _id: re._id }, { active: toBool(re.active.toString()) });
-		});
-		const data = await Promise.all(updatedReleases);
-		result.data = data.map((re) => (re && re.length > 0 ? re[0] : null));
-
-		return result;
+		logError(`This function was deprecated.`);
 	}
 }
