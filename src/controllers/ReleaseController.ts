@@ -74,7 +74,7 @@ export default class ReleaseController extends BaseController<Release> {
 			return result;
 		}
 
-		const newRelease = await createReleaseFromBuild(build, body.env);
+		const newRelease = await createReleaseFromBuild(build, body.env, { author: this.user });
 		if (!newRelease) {
 			result.status = 0;
 			result.messages.push(`Failed to create new release from build data.`);
