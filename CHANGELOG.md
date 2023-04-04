@@ -1,3 +1,14 @@
+## [2.8.12](https://github.com/digitopvn/diginext/compare/v2.8.11...v2.8.12) (2023-04-04)
+
+
+### Bug Fixes
+
+* **cli:** issue: cannot pull framework when create new app ([175b930](https://github.com/digitopvn/diginext/commit/175b9309ea92dd83d90fa5bb5cf65935ddf0d4b5))
+* **server and cli:** correct home directory when generate ssh keys ([4a2c203](https://github.com/digitopvn/diginext/commit/4a2c203207e191a7e231521458197b536d30c27b))
+* **server:** delete current prerelease deployments when preview a release ([aec5f43](https://github.com/digitopvn/diginext/commit/aec5f43b66ea69147f89294aa776e630354e8531))
+* **server:** error checking in release controller ([e6e18a4](https://github.com/digitopvn/diginext/commit/e6e18a48118bd55f5d9e13e2dec2d52589745368))
+* **template:** remove secrets ([b7878c7](https://github.com/digitopvn/diginext/commit/b7878c73fe1879e1dcd48bb5d1331a88dab2c4ed))
+
 ## [2.8.11](https://github.com/digitopvn/diginext/compare/v2.8.10...v2.8.11) (2023-04-04)
 
 
