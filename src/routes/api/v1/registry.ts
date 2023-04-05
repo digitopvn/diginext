@@ -13,9 +13,6 @@ const controller = new ContainerRegistryController();
 router
 	.use(authenticate, authorize)
 	.use(registerController(controller))
-	.use(controller.parsePagination.bind(controller))
-	.use(controller.parseFilter.bind(controller))
-	.use(controller.parseBody.bind(controller))
 	.get("/", processApiRequest(controller.read.bind(controller)))
 	.get("/connect", processApiRequest(controller.connect.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))

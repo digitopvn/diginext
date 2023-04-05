@@ -110,14 +110,14 @@ export default class BaseController<T extends Base = any> {
 		return result;
 	}
 
-	parseDateRange(req: Request, res: Response, next: NextFunction) {
+	parseDateRange(req: Request, res?: Response, next?: NextFunction) {
 		// TODO: process date range filter: from_date, to_date, from_time, to_time, date
 		this.service.req = req;
 
-		next();
+		if (next) next();
 	}
 
-	parseBody(req: Request, res: Response, next: NextFunction) {
+	parseBody(req: Request, res?: Response, next?: NextFunction) {
 		// log("req.body [1] >>", req.body);
 		this.service.req = req;
 
@@ -134,7 +134,7 @@ export default class BaseController<T extends Base = any> {
 			}
 		});
 
-		next();
+		if (next) next();
 	}
 
 	/**
@@ -142,7 +142,7 @@ export default class BaseController<T extends Base = any> {
 	 * - List (first page, 10 item per page, sort "desc" by "updatedAt" first, then "desc" by "createdAt"): `https://example.com/api/v1/user?page=1&size=10&sort=-updatedAt,-createdAt`
 	 * - Search (by username that contains "john"): `https://example.com/api/v1/user?page=1&size=10&username=john&search=true`
 	 */
-	parseFilter(req: Request, res: Response, next: NextFunction) {
+	parseFilter(req: Request, res?: Response, next?: NextFunction) {
 		// log("req.query >>", req.query);
 		// return req.query;
 		this.service.req = req;
@@ -250,10 +250,10 @@ export default class BaseController<T extends Base = any> {
 		this.filter = _filter as IQueryOptions & FindManyOptions<any>;
 		// log({ filter: this.filter });
 
-		next();
+		if (next) next();
 	}
 
-	async parsePagination(req: Request, res: Response, next: NextFunction) {
+	async parsePagination(req: Request, res?: Response, next?: NextFunction) {
 		this.service.req = req;
 
 		let total_items = 0,
@@ -300,6 +300,6 @@ export default class BaseController<T extends Base = any> {
 		};
 		// log(`this.pagination >>`, this.pagination);
 
-		next();
+		if (next) next();
 	}
 }

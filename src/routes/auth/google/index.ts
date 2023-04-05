@@ -28,52 +28,49 @@ router
 			passport.authenticate("google", {
 				session: false,
 				successReturnToOrRedirect: req.query.redirect_url as string,
-				failureRedirect: Config.getBasePath("/auth/google/fail"),
+				failureRedirect: Config.getBasePath("/login?type=failed"),
 			})(req, res, next),
 		async function (req: any, res: any) {
 			// console.log("googleLoginCallback > req", req);
 			// console.log("googleLoginCallback > req.query", req.query);
 			// console.log("googleLoginCallback > req.query.state", req.query.state);
+			// console.log("googleLoginCallback > user :>> ", user);
 
-			const authFailUrl = Config.getBasePath("/auth/google/fail");
-
-			const shouldParseRedirectUrl = typeof req.query.state != "undefined";
-			let redirectUrl = req.query.state as string;
+			let redirectUrl = (req.query.state as string) || req.get("origin");
 			// log("redirectUrl", redirectUrl);
-			if (!redirectUrl) return res.redirect(authFailUrl);
 
 			let user = req.user as User;
+			if (!user) return req.redirect(Config.getBasePath("/login?type=failed"));
+
 			const userId = user._id.toString();
 			const workspaceSlug = extractWorkspaceSlugFromUrl(redirectUrl);
 
-			if (!workspaceSlug) return res.redirect(authFailUrl);
+			// workspace is undefined -> redirect to select/create workspaces:
+			if (!workspaceSlug || workspaceSlug === "www" || workspaceSlug === "app") {
+				return res.redirect(Config.getBasePath("/workspace/select"));
+			}
 
+			// try to find this workspace in the database:
 			const workspace = await DB.findOne<Workspace>("workspace", { slug: workspaceSlug });
+			if (!workspace) return res.redirect(Config.getBasePath("/workspace/select"));
 
-			if (!workspace) return res.redirect(authFailUrl);
-
+			// if found a workspace -> generate JWT access token:
 			const workspaceId = workspace._id.toString();
-
-			// console.log("googleLoginCallback > user :>> ", user);
-
 			const access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
 			// log("access_token", access_token);
 
-			// We can extract token from cookie (check "jwtStrategy.ts")
+			// assign JWT access token to cookie and request headers:
 			res.cookie("x-auth-cookie", access_token);
 			res.header("Authorization", `Bearer ${access_token}`);
 
-			if (shouldParseRedirectUrl) {
-				const url = new URL(redirectUrl);
-				const params = new URLSearchParams(url.search);
-				params.set("access_token", access_token);
+			// logged in successfully -> redirect to workspace:
+			const url = new URL(redirectUrl);
+			const params = new URLSearchParams(url.search);
+			params.set("access_token", access_token);
 
-				const finalUrl = url.origin + url.pathname + "?" + params.toString();
-				// log("finalUrl", finalUrl);
-				res.redirect(finalUrl);
-			} else {
-				res.redirect(redirectUrl + "?access_token=" + access_token);
-			}
+			const finalUrl = url.origin + url.pathname + "?" + params.toString();
+			// log("finalUrl", finalUrl);
+			res.redirect(finalUrl);
 		}
 	);
 

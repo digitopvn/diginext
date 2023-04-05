@@ -7,7 +7,7 @@ import type { Role, User } from "@/entities";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
-import { filterRole } from "@/plugins/user-utils";
+import { filterRole, filterSensitiveInfo } from "@/plugins/user-utils";
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
 
@@ -31,11 +31,15 @@ export default class UserController extends BaseController<User> {
 	async read(@Queries() queryParams?: IGetQueryParams) {
 		const res = await super.read();
 
-		console.log("[1] res.data :>> ", res.data);
-		res.data = isArray(res.data)
-			? await filterRole(this.workspace._id.toString(), res.data)
-			: await filterRole(this.workspace._id.toString(), [res.data]);
-		console.log("[2] res.data :>> ", res.data);
+		// console.log("[1] res.data :>> ", res.data);
+		if (isArray(res.data)) {
+			res.data = await filterRole(this.workspace._id.toString(), res.data);
+			res.data = filterSensitiveInfo(res.data);
+		} else {
+			res.data = await filterRole(this.workspace._id.toString(), [res.data]);
+			res.data = filterSensitiveInfo([res.data]);
+		}
+		// console.log("[2] res.data :>> ", res.data);
 		return res;
 	}
 

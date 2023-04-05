@@ -19,6 +19,11 @@ export const registerController = <T = any>(controller: BaseController<T>) => {
 						: await DB.findOne<Workspace>("workspace", { _id: wsId });
 			}
 
+			// parse filter, body and pagination data:
+			await controller.parsePagination(req);
+			controller.parseFilter(req);
+			controller.parseBody(req);
+
 			next();
 		} catch (e) {
 			// forward the error to Express.js Error Handling Route

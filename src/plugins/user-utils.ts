@@ -5,6 +5,20 @@ import { RoleService } from "@/services";
 
 import { isObjectId } from "./mongodb";
 
+export function filterSensitiveInfo(list: User[] = []) {
+	return list.map((item) => {
+		if (item.token) delete item.token;
+		if (item.providers && item.providers.length > 0)
+			item.providers.map((provider) => {
+				delete provider.access_token;
+				delete provider.user_id;
+				return provider;
+			});
+
+		return item;
+	});
+}
+
 export async function filterRole(workspaceId: string, list: User[] = []) {
 	const wsId = workspaceId;
 	const roleSvc = new RoleService();
