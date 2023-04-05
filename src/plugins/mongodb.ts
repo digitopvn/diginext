@@ -11,3 +11,14 @@ export function isValidObjectId(id) {
 	}
 	return false;
 }
+
+export function toObjectId(id: any) {
+	if (isObjectId(id)) {
+		return id as ObjectId;
+	} else if (isValidObjectId(id)) {
+		return new ObjectId(id);
+	} else {
+		console.warn(`"${id}" is not a valid MongoDB's ObjectId`);
+		return;
+	}
+}

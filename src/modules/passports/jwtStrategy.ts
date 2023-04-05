@@ -3,13 +3,12 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import type * as express from "express";
 import jwt from "jsonwebtoken";
-import { isEmpty } from "lodash";
 import { ObjectId } from "mongodb";
 import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
-import type { AccessTokenInfo, Role, User, Workspace } from "@/entities";
+import type { AccessTokenInfo, User } from "@/entities";
 import type ServiceAccount from "@/entities/ServiceAccount";
 
 import { DB } from "../api/DB";
@@ -97,9 +96,9 @@ export const jwtStrategy = new Strategy(
 		algorithms: ["HS512"],
 	},
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
-		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`, { payload });
+		console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`, { payload });
 
-		const workspaceId = new ObjectId(payload.workspaceId);
+		// const workspaceId = payload.workspaceId ? new ObjectId(payload.workspaceId) : undefined;
 
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		// console.log("jwtStrategy > access_token :>> ", access_token);
@@ -128,21 +127,21 @@ export const jwtStrategy = new Strategy(
 
 			const updateData = {} as any;
 			updateData.token = tokenInfo.token;
-			updateData.activeWorkspace = workspaceId;
+			// updateData.activeWorkspace = workspaceId;
 
 			// set active workspace to this user:
-			if (isEmpty(user.workspaces)) {
-				updateData.workspaces = [workspaceId];
-			} else {
-				if (!user.workspaces.includes(workspaceId))
-					updateData.workspaces = [...(user.workspaces || []).map((ws) => (ws as Workspace)._id), workspaceId];
-			}
+			// if (isEmpty(user.workspaces)) {
+			// 	updateData.workspaces = [workspaceId];
+			// } else {
+			// 	if (!user.workspaces.includes(workspaceId))
+			// 		updateData.workspaces = [...(user.workspaces || []).map((ws) => (ws as Workspace)._id), workspaceId];
+			// }
 
-			// set default roles if this user doesn't have one
-			if (!user.roles || isEmpty(user.roles)) {
-				const memberRole = await DB.findOne<Role>("role", { name: "Member", workspace: workspaceId });
-				updateData.roles = [memberRole._id];
-			}
+			// // set default roles if this user doesn't have one
+			// if (!user.roles || isEmpty(user.roles)) {
+			// 	const memberRole = await DB.findOne<Role>("role", { name: "Member", workspace: workspaceId });
+			// 	updateData.roles = [memberRole._id];
+			// }
 
 			// update the access token in database:
 			[user] = await DB.update<User>("user", { _id: new ObjectId(payload.id) }, updateData, {

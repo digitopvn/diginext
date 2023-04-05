@@ -1,18 +1,25 @@
-import { isArray } from "lodash";
-import { ObjectId } from "mongodb";
+import { isArray, isEmpty } from "lodash";
+import type { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import BaseController from "@/controllers/BaseController";
 import type { Role, User } from "@/entities";
-import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
+import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
+import { toObjectId } from "@/plugins/mongodb";
 import { filterRole, filterSensitiveInfo } from "@/plugins/user-utils";
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
 
 interface JoinWorkspaceBody {
+	/**
+	 * User ID
+	 */
 	userId: string;
+	/**
+	 * Workspace's ID or slug
+	 */
 	workspace: string;
 }
 
@@ -117,58 +124,65 @@ export default class UserController extends BaseController<User> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/join-workspace")
-	async joinWorkspace(@Body() data: JoinWorkspaceBody) {
-		const { userId, workspace: workspaceSlug } = data;
-		const result: ResponseData & { data: User } = { status: 1, messages: [], data: {} };
-		// console.log("{ userId, workspace } :>> ", { userId, workspace });
+	async joinWorkspace(@Body() body: JoinWorkspaceBody) {
+		// console.log("body :>> ", body);
+		const { userId: uid, workspace: workspaceIdOrSlug } = body;
 
 		try {
-			if (!userId) throw new Error(`"userId" is required.`);
-			if (!workspaceSlug) throw new Error(`"workspaceSlug" is required.`);
-			// console.log("===========");
-			// console.log("userId, workspaceSlug :>> ", userId, workspaceSlug);
+			if (!uid) throw new Error(`Param "userId" (User ID) is required.`);
+			if (!workspaceIdOrSlug) throw new Error(`Param "workspace" (Workspace ID or slug) is required.`);
 
+			// parse input params
+			const userId = toObjectId(uid);
+			const workspaceId = toObjectId(workspaceIdOrSlug); // return undefined if can't convert to ObjectId -> it's a slug!!! (lol)
+			const workspaceSlug = !workspaceId ? workspaceIdOrSlug : undefined;
+
+			const wsFilter: any = {};
+			if (workspaceId) wsFilter._id = workspaceId;
+			if (workspaceSlug) wsFilter.slug = workspaceSlug;
+
+			// find the workspace
 			const workspaceSvc = new WorkspaceService();
-			const workspace = await workspaceSvc.findOne({ slug: workspaceSlug });
-
-			if (!workspace) throw new Error(`Workspace "${workspaceSlug}" not found.`);
+			const workspace = await workspaceSvc.findOne(wsFilter);
+			if (!workspace) throw new Error(`Workspace not found.`);
 			// console.log("workspace :>> ", workspace);
 
-			const wsId = workspace._id.toString();
-			const user = await this.service.findOne({ id: new ObjectId(userId) });
-			// console.log("user :>> ", user);
-			// console.log("wsId :>> ", wsId);
-
-			// validations
+			// find the user
+			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId });
 			if (!user) throw new Error(`User not found.`);
-			if (!workspace.public) throw new Error(`This workspace is private, you need to ask the administrator to add you in first.`);
 
-			let updatedUser = [user];
+			const wsId = workspaceId.toString();
+			const workspaceIds = (user.workspaces as ObjectId[]) || [];
+			const isUserInWorkspace = workspaceIds.map((_id) => _id.toString()).includes(wsId);
 
-			const workspaceIds = user.workspaces || [];
-			const isUserJoinedThisWorkspace = workspaceIds.map((id) => id.toString()).includes(wsId);
-			// console.log("isUserJoinedThisWorkspace :>> ", isUserJoinedThisWorkspace);
+			// add this workspace to user's workspace list
+			if (!isUserInWorkspace) workspaceIds.push(workspaceId);
 
-			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && user.activeWorkspace.toString() === wsId;
-			// console.log("isWorkspaceActive :>> ", isWorkspaceActive);
-
-			// console.log("user.workspaces :>> ", user.workspaces);
-			if (!isUserJoinedThisWorkspace) {
-				updatedUser = await this.service.update({ _id: userId }, { workspaces: [...workspaceIds, wsId] });
+			// check if this is a private workspace:
+			if (!workspace.public) {
+				// if this user hasn't joined yet:
+				if (!isUserInWorkspace) throw new Error(`This workspace is private, you need an invitation to access.`);
 			}
-			// console.log("[1] updatedUser :>> ", updatedUser[0]);
 
-			// make this workspace active
-			if (!isWorkspaceActive) updatedUser = await this.service.update({ _id: userId }, { activeWorkspace: wsId });
+			// set default roles if this user doesn't have one
+			const memberRole = await DB.findOne<Role>("role", { type: "member", workspace: workspaceId });
+			const userRoles = user.roles || [];
+			if (isEmpty(userRoles) || !userRoles.map((_id) => _id.toString()).includes(memberRole._id.toString())) {
+				userRoles.push(memberRole._id);
+			}
 
-			// console.log("[2] updatedUser :>> ", updatedUser[0]);
+			// set active workspace of this user -> this workspace
+			[user] = await this.service.update(
+				{ _id: userId },
+				{ activeWorkspace: workspaceId, workspaces: workspaceIds, roles: userRoles },
+				this.options
+			);
 
-			result.data = updatedUser[0];
+			// return the updated user:
+			return respondSuccess({ data: user });
 		} catch (e) {
-			result.messages.push(e.message);
-			result.status = 0;
+			console.log(e);
+			return respondFailure({ msg: "Failed to join a workspace." });
 		}
-
-		return result;
 	}
 }
