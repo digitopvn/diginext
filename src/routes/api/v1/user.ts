@@ -14,6 +14,7 @@ router
 	.use(authenticate, authorize)
 	.use(registerController(controller))
 	.get("/", processApiRequest(controller.read.bind(controller)))
+	.get("/profile", processApiRequest(controller.profile.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))

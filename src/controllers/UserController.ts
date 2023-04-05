@@ -43,6 +43,13 @@ export default class UserController extends BaseController<User> {
 		return res;
 	}
 
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/profile")
+	profile(@Queries() queryParams?: IGetQueryParams) {
+		return this.user;
+	}
+
 	@Security("api_key2")
 	@Security("jwt")
 	@Post("/")
