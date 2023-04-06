@@ -96,7 +96,7 @@ export const jwtStrategy = new Strategy(
 		algorithms: ["HS512"],
 	},
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
-		console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`, { payload });
+		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`, { payload });
 
 		// const workspaceId = payload.workspaceId ? new ObjectId(payload.workspaceId) : undefined;
 

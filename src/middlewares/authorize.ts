@@ -88,8 +88,8 @@ export async function authorize(req: Request, res: Response, next: NextFunction)
 	});
 	// console.log("authorize > requestPermission :>> ", requestPermission);
 	console.log(
-		`authorize > request [${requestPermission}] > roles :>> `,
-		roles.map((role) => role.routes.map((r) => `${r.route} - ${r.permissions.join(",")}`)),
+		`authorize > [${requestPermission}] ${route} > roles :>> `,
+		roles.map((role) => `[${role.workspace}] ${role.name}: ${role.routes.map((r) => `${r.route} - ${r.permissions.join(",")}`).join("\n")}`),
 		`>> ALLOW:`,
 		isAllowed
 	);
