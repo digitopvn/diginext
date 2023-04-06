@@ -17,7 +17,7 @@ router
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
-	.get("/ssh/public-key", processApiRequest(controller.getPublicKey.bind(controller)))
+	.get("/public-key", processApiRequest(controller.getPublicKey.bind(controller)))
 	.post("/ssh/create", processApiRequest(controller.createKeysSSH.bind(controller)))
 	.post("/ssh/generate", processApiRequest(controller.generateSSH.bind(controller)))
 	.post("/ssh/verify", processApiRequest(controller.verifySSH.bind(controller)))

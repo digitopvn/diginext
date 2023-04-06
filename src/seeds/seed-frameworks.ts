@@ -1,32 +1,32 @@
 import { log } from "diginext-utils/dist/console/log";
 
-import type { Framework } from "@/entities";
+import type { Framework, User, Workspace } from "@/entities";
 import { DB } from "@/modules/api/DB";
 
 const initialFrameworks: Framework[] = [
 	{
-		name: "Diginext13",
-		repoURL: "https://bitbucket.org/digitopvn/diginext13/",
-		repoSSH: "git@bitbucket.org:digitopvn/diginext13.git",
+		name: "NextJS 13 Starter",
+		repoURL: "https://github.com/digitopvn/next13-starter",
+		repoSSH: "git@github.com:digitopvn/next13-starter.git",
 		gitProvider: "bitbucket",
-		isPrivate: true,
+		isPrivate: false,
 	},
 	{
-		name: "Static Site Starter",
-		repoURL: "https://bitbucket.org/digitopvn/static-site-framework.git",
-		repoSSH: "git@bitbucket.org:digitopvn/static-site-framework.git",
-		gitProvider: "bitbucket",
-		isPrivate: true,
+		name: "Static Site Starter with NGINX",
+		repoURL: "https://github.com/digitopvn/static-nginx-site",
+		repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
+		gitProvider: "github",
+		isPrivate: false,
 	},
 ];
 
-export const seedRoutes = async () => {
+export const seedFrameworks = async (workspace: Workspace, owner: User) => {
 	const results = (
 		await Promise.all(
 			initialFrameworks.map(async (fw) => {
 				const framework = await DB.findOne<Framework>("framework", { repoURL: fw.repoURL });
 				if (!framework) {
-					const seedFw = await DB.create<Framework>("framework", fw);
+					const seedFw = await DB.create<Framework>("framework", { ...fw, owner: owner._id, workspace: workspace._id });
 					return seedFw;
 				}
 				return framework;
@@ -34,7 +34,7 @@ export const seedRoutes = async () => {
 		)
 	).filter((res) => typeof res !== "undefined");
 
-	if (results.length > 0) log(`[SEEDING] Seeded ${results.length} frameworks.`);
+	if (results.length > 0) log(`Workspace "${workspace.name}" > Seeded ${results.length} frameworks.`);
 };
 
 // export default { seedRoutes };
