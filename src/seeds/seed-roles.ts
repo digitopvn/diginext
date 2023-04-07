@@ -90,7 +90,7 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 		const defaultModRoleRoutes = moderatorRoleRoutes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
 		const dbModRoleRoutes = moderatorRole.routes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
 		if (defaultModRoleRoutes !== dbModRoleRoutes) {
-			[memberRole] = await DB.update<Role>("role", { _id: memberRole._id }, { routes: memberRoleRoutes });
+			[moderatorRole] = await DB.update<Role>("role", { _id: moderatorRole._id }, { routes: moderatorRoleRoutes });
 			console.log(`Workspace "${workspace.name}" > Updated default moderator role!`);
 		}
 	}
