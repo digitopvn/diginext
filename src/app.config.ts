@@ -97,6 +97,14 @@ export class Config {
 		return process.env.CLI_MODE || "client";
 	}
 
+	static get DX_SITE_URL() {
+		return process.env.DX_SITE_URL
+			? process.env.DX_SITE_URL
+			: Config.ENV === "production"
+			? "https://diginext-website.prod.diginext.site"
+			: "https://diginext-website.dev.diginext.site";
+	}
+
 	static get DX_API_URL() {
 		return process.env.DX_API_URL
 			? process.env.DX_API_URL

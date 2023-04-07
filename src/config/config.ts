@@ -45,6 +45,8 @@ export type CliConfig = {
 
 	defaultFramework?: Framework;
 
+	github_access_token?: string;
+
 	currentGitProvider?: GitProvider;
 	currentRegistry?: ContainerRegistry;
 	currentProvider?: CloudProvider;

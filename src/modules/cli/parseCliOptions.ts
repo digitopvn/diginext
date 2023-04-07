@@ -318,10 +318,10 @@ export async function parseCliOptions() {
 				_yargs
 					.option("provider", { desc: "Specify your git provider: on of github, gitlab, bitbucket" })
 					.command("ssh", "Manage SSH access from your machine with GIT provider")
-					.command("login", "Sign in to your GIT provider")
-					.command("logout", "Log out")
-					.command("profile", "Show your profile information in JSON")
-					.command("pullrequest", "Create new pull request")
+					.command("login", "Sign in to your GIT provider", (__yargs) => __yargs.boolean("github").boolean("bitbucket"))
+					.command("logout", "Log out", (__yargs) => __yargs.boolean("github").boolean("bitbucket"))
+					.command("profile", "Show your profile information in JSON", (__yargs) => __yargs.boolean("github").boolean("bitbucket"))
+					.command("pullrequest", "Create new pull request", (__yargs) => __yargs.boolean("github").boolean("bitbucket"))
 					.command("pr", "-")
 					.command("permissions", "Set up branch permissions")
 					.command("repos", "Get some most recent repositories")
@@ -521,6 +521,9 @@ export async function parseCliOptions() {
 		ssl: argv.ssl as boolean, // [FLAG] --no-ssl
 		imageURL: argv.image as string,
 	};
+
+	if (argv.github === true && typeof options.gitProvider === "undefined") options.gitProvider = "github";
+	if (argv.bitbucket === true && typeof options.gitProvider === "undefined") options.gitProvider = "bitbucket";
 
 	if (argv.do === true) options.provider = "digitalocean";
 	if (argv.gcloud === true) options.provider = "gcloud";
