@@ -98,19 +98,11 @@ export class Config {
 	}
 
 	static get DX_SITE_URL() {
-		return process.env.DX_SITE_URL
-			? process.env.DX_SITE_URL
-			: Config.ENV === "production"
-			? "https://diginext.vn"
-			: "https://diginext-website.dev.diginext.site";
+		return process.env.DX_SITE_URL ? process.env.DX_SITE_URL : "https://diginext.vn";
 	}
 
 	static get DX_API_URL() {
-		return process.env.DX_API_URL
-			? process.env.DX_API_URL
-			: Config.ENV === "production"
-			? "https://diginext.vn/api"
-			: "https://diginext-website.dev.diginext.site/api";
+		return process.env.DX_API_URL ? process.env.DX_API_URL : "https://diginext.vn/api";
 	}
 
 	static get DX_LICENSE_KEY() {
