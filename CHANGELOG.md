@@ -1,3 +1,23 @@
+## [2.8.13](https://github.com/digitopvn/diginext/compare/v2.8.12...v2.8.13) (2023-04-07)
+
+
+### Bug Fixes
+
+* **admin:** add create or select workspace page ([e6c8e5c](https://github.com/digitopvn/diginext/commit/e6c8e5cd2bcddae6d9fcbfd7f79dc0398af92507))
+* **admin:** show public key in workspace settings ([d6eefc5](https://github.com/digitopvn/diginext/commit/d6eefc5b3a37747b3daa35a265838e7a2f8f0187))
+* **cli and server:** move workspace creation to admin ui completly ([d13964a](https://github.com/digitopvn/diginext/commit/d13964a624046eff5de4b799e0278e7ebdb1ec68))
+* **cli:** add select resource size when deploy app ([d978173](https://github.com/digitopvn/diginext/commit/d978173e043a327a3ff0ac24f530a722547c79ac))
+* **cli:** parse options and write deploy environment to dx json ([332f928](https://github.com/digitopvn/diginext/commit/332f928db999b0721ccdc5bfa16b780dbfec922a))
+* **server:** add routes controller and api ([cff894b](https://github.com/digitopvn/diginext/commit/cff894b9943620704c67afe14d43f46021f48d9b))
+* **server:** build - add log message when cloning source code ([ec85b76](https://github.com/digitopvn/diginext/commit/ec85b7657f222df0ba6da7fe2fa29df1668963a3))
+* **server:** build - delete app cache dir when cloning new source code ([37bdd61](https://github.com/digitopvn/diginext/commit/37bdd619148476d55d6934dc3dbb5ff18c5a28ca))
+* **server:** expose user profile api ([4a451c3](https://github.com/digitopvn/diginext/commit/4a451c31416a775d1e929e0d9d0550b20df447ce))
+* **server:** fix login api logic to select and create workspace if needed ([f7bb9e3](https://github.com/digitopvn/diginext/commit/f7bb9e3d7b82ba09625ea02c89ce9aa54e4b7bfc))
+* **server:** make log of authorization looks clearer ([7d98f1e](https://github.com/digitopvn/diginext/commit/7d98f1e4be55b351ec04fc862b854d81591aa3f5))
+* **server:** missing controller registration in workspace route ([ed5c1e1](https://github.com/digitopvn/diginext/commit/ed5c1e11014b051d24af3ca57bd994398ee91209))
+* **server:** optimize parsed data from request to register controller middleware ([c230419](https://github.com/digitopvn/diginext/commit/c23041951c317d50d05e2ce13b1e6e8ff9b3db03))
+* **server:** seed initial data when creating a new workspace ([dd84ebc](https://github.com/digitopvn/diginext/commit/dd84ebc4c290d621f0c3a9f4c96d3cd8a2f8fad6))
+
 ## [2.8.12](https://github.com/digitopvn/diginext/compare/v2.8.11...v2.8.12) (2023-04-04)
 
 
