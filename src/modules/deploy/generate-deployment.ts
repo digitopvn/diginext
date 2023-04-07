@@ -250,13 +250,13 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					ingCfg.spec.tls = [];
 					ingCfg.spec.rules = [];
 
-					domains.map((domain) => {
-						// tls
-						ingCfg.spec.tls.push({
-							hosts: [domain],
-							secretName: deployEnvironmentConfig.tlsSecret,
-						});
+					// tls
+					ingCfg.spec.tls.push({
+						hosts: domains,
+						secretName: deployEnvironmentConfig.tlsSecret,
+					});
 
+					domains.map((domain) => {
 						// rules
 						ingCfg.spec.rules.push({
 							host: domain,
