@@ -3,6 +3,7 @@ import * as fs from "fs";
 import { isEmpty } from "lodash";
 import cronjob from "node-cron";
 
+import { isDevMode } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { User } from "@/entities";
@@ -45,8 +46,11 @@ export async function startupScripts() {
 	}
 
 	// set global identity
-	execCmd(`git config --global user.email "server@diginext.site"`);
-	execCmd(`git config --global user.name "Diginext Server"`);
+	if (!isDevMode) {
+		// <-- to make sure it won't override your GIT config when developing Diginext
+		execCmd(`git config --global user.email "server@diginext.site"`);
+		execCmd(`git config --global --add user.name "Diginext Server"`);
+	}
 
 	// seed system initial data: Cloud Providers
 	await seedSystemInitialData();
