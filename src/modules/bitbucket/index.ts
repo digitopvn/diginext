@@ -373,8 +373,8 @@ export const signInBitbucket = async (options: InputOptions) => {
 				// set default git global username:
 				// git config --global user.email "duynguyen@wearetopgroup.com"
 				// git config --global user.name "BOSS Duy Nguyen"
-				await execa("git", ["config", "--global", "user.email", auth.username]);
-				await execa("git", ["config", "--global", "user.name", auth.username]);
+				// await execa("git", ["config", "--global", "user.email", auth.username]);
+				// await execa("git", ["config", "--global", "user.name", auth.username]);
 
 				// profile
 				workspaceId = data.uuid;

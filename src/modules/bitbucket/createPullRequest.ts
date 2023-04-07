@@ -96,7 +96,7 @@ export const createPullRequest = async (options: InputOptions) => {
 	}
 
 	let fromBranch = decodeURIComponent(gitStatus.current);
-	let destBranch = options.thirdAction || "master";
+	let destBranch = options.thirdAction || "main";
 	if (options.fourAction) {
 		fromBranch = decodeURIComponent(options.thirdAction);
 		destBranch = decodeURIComponent(options.fourAction);
