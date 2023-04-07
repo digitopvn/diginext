@@ -1,3 +1,11 @@
+## [2.9.1](https://github.com/digitopvn/diginext/compare/v2.9.0...v2.9.1) (2023-04-07)
+
+
+### Bug Fixes
+
+* **cli:** issue of duplicated tls ingress when generate ingress yaml ([563709f](https://github.com/digitopvn/diginext/commit/563709fc248078cdaa7d758d2451984407114bb6))
+* **server and cli:** leave empty to generate tls secret automatically if using letsencrypt issuer ([ba5d235](https://github.com/digitopvn/diginext/commit/ba5d23509352b18f8e49a81fffa622877d176adc))
+
 # [2.9.0](https://github.com/digitopvn/diginext/compare/v2.8.13...v2.9.0) (2023-04-07)
 
 

@@ -101,7 +101,7 @@ export class Config {
 		return process.env.DX_SITE_URL
 			? process.env.DX_SITE_URL
 			: Config.ENV === "production"
-			? "https://diginext-website.prod.diginext.site"
+			? "https://diginext.vn"
 			: "https://diginext-website.dev.diginext.site";
 	}
 
@@ -109,7 +109,7 @@ export class Config {
 		return process.env.DX_API_URL
 			? process.env.DX_API_URL
 			: Config.ENV === "production"
-			? "https://diginext-website.prod.diginext.site/api"
+			? "https://diginext.vn/api"
 			: "https://diginext-website.dev.diginext.site/api";
 	}
 

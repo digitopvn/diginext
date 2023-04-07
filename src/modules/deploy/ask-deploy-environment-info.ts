@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 import { isEmpty, isNaN } from "lodash";
 
@@ -255,6 +254,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	localAppConfig.environment[env].size = localDeployEnvironment.size;
 
 	// request SSL config
+	// TODO: Each domain should has its own tls secret
 	if (localDeployEnvironment.domains.length > 0) {
 		const primaryDomain = localDeployEnvironment.domains[0];
 		if (typeof localDeployEnvironment.ssl === "undefined" || localDeployEnvironment.ssl === "none") {
@@ -262,10 +262,11 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 		}
 
 		options.ssl = true;
-		localDeployEnvironment.tlsSecret = `tls-secret-${localDeployEnvironment.ssl}-${makeSlug(primaryDomain)}`;
-
-		// if they select "custom" SSL certificate -> ask for secret name:
-		if (localDeployEnvironment.ssl === "custom") {
+		if (localDeployEnvironment.ssl === "letsencrypt" || localDeployEnvironment.ssl === "none") {
+			// leave empty so the build server will generate it automatically
+			localDeployEnvironment.tlsSecret = "";
+		} else {
+			// if they select "custom" SSL certificate -> ask for secret name:
 			const { customSecretName } = await inquirer.prompt({
 				type: "input",
 				name: "customSecretName",

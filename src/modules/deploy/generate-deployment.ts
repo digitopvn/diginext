@@ -254,7 +254,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 						// tls
 						ingCfg.spec.tls.push({
 							hosts: [domain],
-							secretName: deployEnvironmentConfig.tlsSecret,
+							secretName: deployEnvironmentConfig.tlsSecret || `tls-secret-letsencrypt-${makeSlug(domain)}`,
 						});
 
 						// rules
