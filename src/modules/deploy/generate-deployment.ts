@@ -250,14 +250,13 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					ingCfg.spec.tls = [];
 					ingCfg.spec.rules = [];
 
-					// tls
-					// TODO: Each domain has its own tls secret
-					ingCfg.spec.tls.push({
-						hosts: domains,
-						secretName: deployEnvironmentConfig.tlsSecret,
-					});
-
 					domains.map((domain) => {
+						// tls
+						ingCfg.spec.tls.push({
+							hosts: [domain],
+							secretName: deployEnvironmentConfig.tlsSecret || `tls-secret-letsencrypt-${makeSlug(domain)}`,
+						});
+
 						// rules
 						ingCfg.spec.rules.push({
 							host: domain,
