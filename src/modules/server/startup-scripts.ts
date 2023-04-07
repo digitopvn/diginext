@@ -3,20 +3,22 @@ import * as fs from "fs";
 import { isEmpty } from "lodash";
 import cronjob from "node-cron";
 
+import { isDevMode } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
+import type { User } from "@/entities";
 import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
-import { migrateAllRoles } from "@/migration/migrate-all-roles";
-import { migrateAllRoutes } from "@/migration/migrate-all-routes";
+import { migrateServiceAccountAndApiKey } from "@/migration/migrate-all-sa-and-api-key";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
 import { generateSSH, sshKeysExisted, verifySSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { execCmd } from "@/plugins";
+import { seedDefaultRoles } from "@/seeds";
 import { seedSystemInitialData } from "@/seeds/seed-system";
-import { ClusterService, ContainerRegistryService, GitProviderService } from "@/services";
+import { ClusterService, ContainerRegistryService, GitProviderService, WorkspaceService } from "@/services";
 
 /**
  * BUILD SERVER INITIAL START-UP SCRIPTS:
@@ -44,20 +46,21 @@ export async function startupScripts() {
 	}
 
 	// set global identity
-	execCmd(`git config --global user.email "server@diginext.site"`);
-	execCmd(`git config --global user.name "Diginext Server"`);
+	if (!isDevMode) {
+		// <-- to make sure it won't override your GIT config when developing Diginext
+		execCmd(`git config --global user.email "server@diginext.site"`);
+		execCmd(`git config --global --add user.name "Diginext Server"`);
+	}
 
 	// seed system initial data: Cloud Providers
 	await seedSystemInitialData();
 
-	// connect cloud providers
-	// const providerSvc = new CloudProviderService();
-	// const providers = await providerSvc.find({});
-	// if (providers.length > 0) {
-	// 	for (const provider of providers) {
-	// 		providerAuthenticate(provider);
-	// 	}
-	// }
+	// seed default roles to workspace if missing:
+	const wsSvc = new WorkspaceService();
+	const workspaces = await wsSvc.find({}, { populate: ["owner"] });
+	if (workspaces.length > 0) {
+		await Promise.all(workspaces.map((ws) => seedDefaultRoles(ws, ws.owner as User)));
+	}
 
 	// connect container registries
 	const registrySvc = new ContainerRegistryService();
@@ -87,12 +90,12 @@ export async function startupScripts() {
 	});
 
 	// migration
-	await migrateAllRoutes();
+
 	await migrateAllAppEnvironment();
 	// await migrateAllReleases();
 	await migrateAllFrameworks();
 	await migrateAllGitProviders();
-	await migrateAllRoles();
+	await migrateServiceAccountAndApiKey();
 	await migrateDefaultServiceAccountAndApiKeyUser();
 	// await migrateAllUsers();
 	// await migrateUserWorkspaces();

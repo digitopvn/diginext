@@ -1,6 +1,7 @@
 import { log } from "diginext-utils/dist/console/log";
 
 import type { CloudProvider } from "@/entities";
+import { seedSystemRoutes } from "@/migration/seed-all-routes";
 import { DB } from "@/modules/api/DB";
 
 const initialCloudProviders: CloudProvider[] = [
@@ -18,8 +19,7 @@ const initialCloudProviders: CloudProvider[] = [
 	},
 ];
 
-export const seedSystemInitialData = async () => {
-	// cloud providers
+export const seedDefaultProviders = async () => {
 	const results = (
 		await Promise.all(
 			initialCloudProviders.map(async (providerData) => {
@@ -35,4 +35,10 @@ export const seedSystemInitialData = async () => {
 	if (results.length > 0) log(`[SEEDING] Seeded ${results.length} cloud providers.`);
 };
 
-// export default { seedRoutes };
+export const seedSystemInitialData = async () => {
+	// cloud providers
+	await seedDefaultProviders();
+
+	// system routes
+	await seedSystemRoutes();
+};

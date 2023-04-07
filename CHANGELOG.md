@@ -1,3 +1,17 @@
+# [2.9.0](https://github.com/digitopvn/diginext/compare/v2.8.13...v2.9.0) (2023-04-07)
+
+
+### Bug Fixes
+
+* **server:** issue of missing permissions in default moderator role ([2237208](https://github.com/digitopvn/diginext/commit/2237208313a52eab1c63e1dce432cd0a8747b02a))
+* **server:** prevent overriding git global config when developing diginext ([f64b108](https://github.com/digitopvn/diginext/commit/f64b108d79c2e0f78d10821a7654046d6fbecffc))
+* **server:** update default member role should not access server key and api token ([8615c89](https://github.com/digitopvn/diginext/commit/8615c892dc03e3b32aeb353b683ca054c1b64c02))
+
+
+### Features
+
+* **cli:** git - github auth, profile, support github helper commands ([f4bd969](https://github.com/digitopvn/diginext/commit/f4bd969da53c1c1b13ea719ecd0059860a99e802))
+
 ## [2.8.13](https://github.com/digitopvn/diginext/compare/v2.8.12...v2.8.13) (2023-04-07)
 
 
