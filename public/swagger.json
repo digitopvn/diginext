@@ -4261,7 +4261,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.8.12",
+		"version": "2.8.13",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -9595,6 +9595,144 @@
 				]
 			}
 		},
+		"/route": {
+			"get": {
+				"operationId": "Read",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get all routes",
+				"tags": ["Route"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "size",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "skip",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Find one item by `{ObjectID}`",
+						"in": "query",
+						"name": "id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "_id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Mark this request as search (return the similar results based on the filter query params)",
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"default": "true",
+							"type": "boolean"
+						}
+					},
+					{
+						"description": "If `true`, return the excel binary file to download.",
+						"in": "query",
+						"name": "download",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
 		"/service_account": {
 			"get": {
 				"operationId": "Read",
@@ -11918,34 +12056,6 @@
 						}
 					}
 				}
-			}
-		},
-		"/route": {
-			"get": {
-				"operationId": "Read",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ResponseData"
-								}
-							}
-						}
-					}
-				},
-				"description": "Get all routes",
-				"tags": ["Route"],
-				"security": [
-					{
-						"api_key": []
-					},
-					{
-						"jwt": []
-					}
-				],
-				"parameters": []
 			}
 		}
 	},
