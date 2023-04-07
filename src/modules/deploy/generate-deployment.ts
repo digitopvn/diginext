@@ -251,6 +251,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					ingCfg.spec.rules = [];
 
 					// tls
+					// TODO: Each domain has its own tls secret
 					ingCfg.spec.tls.push({
 						hosts: domains,
 						secretName: deployEnvironmentConfig.tlsSecret,

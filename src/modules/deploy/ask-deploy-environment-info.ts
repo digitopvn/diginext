@@ -255,6 +255,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	localAppConfig.environment[env].size = localDeployEnvironment.size;
 
 	// request SSL config
+	// TODO: Each domain should has its own tls secret
 	if (localDeployEnvironment.domains.length > 0) {
 		const primaryDomain = localDeployEnvironment.domains[0];
 		if (typeof localDeployEnvironment.ssl === "undefined" || localDeployEnvironment.ssl === "none") {
