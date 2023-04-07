@@ -6,11 +6,12 @@ import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { App, AppGitInfo, Cluster, ContainerRegistry, Framework, Project } from "@/entities";
-import type { HiddenBodyKeys, ResourceQuotaSize, SslType } from "@/interfaces";
+import type { HiddenBodyKeys, SslType } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
+import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environment";
 import { DB } from "@/modules/api/DB";

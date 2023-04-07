@@ -429,14 +429,16 @@ export const parseRepoSlugFromUrl = (url) => {
 	return n;
 };
 
-export const deleteFolderRecursive = async (filePath) => {
-	if (fs.existsSync(filePath)) {
-		for (let entry of await afs.readdir(filePath)) {
-			const curPath = filePath + "/" + entry;
-			if ((await afs.lstat(curPath)).isDirectory()) await deleteFolderRecursive(curPath);
-			else await afs.unlink(curPath);
-		}
-		await afs.rm(filePath, { recursive: true, force: true });
+export const deleteFolderRecursive = async (dir: string) => {
+	if (fs.existsSync(dir)) {
+		// for (let entry of await afs.readdir(dir)) {
+		// 	const filePath = path.resolve(dir, entry);
+		// 	// use "unlink" to delete every single file
+		// 	if ((await afs.lstat(filePath)).isDirectory()) await deleteFolderRecursive(filePath);
+		// 	else await afs.unlink(filePath);
+		// }
+		// remove the directory itself
+		await afs.rm(dir, { recursive: true, force: true });
 	}
 };
 
@@ -653,19 +655,36 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
 			const originRemote = remotes[0];
 			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
-			console.log("originRemote :>> ", originRemote);
+			console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
 			if (originRemote.refs.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
 
 			const curBranch = await getCurrentGitBranch(dir);
 			await git.pull("origin", curBranch, ["--no-ff"]);
 		} catch (e) {
+			if (onUpdate) onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
+
+			// just for sure...
+			await deleteFolderRecursive(dir);
+
 			// for CLI create new app from a framework
 			git = simpleGit({ progress: onProgress });
-			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+
+			try {
+				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+			} catch (e2) {
+				if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+			}
 		}
 	} else {
+		if (onUpdate) onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
+
 		git = simpleGit({ progress: onProgress });
-		await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+
+		try {
+			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+		} catch (e) {
+			if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+		}
 	}
 };
 
@@ -695,7 +714,7 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 
 		return { remoteSSH, remoteURL, provider, slug, fullSlug, namespace, gitDomain, branch };
 	} catch (e) {
-		logWarn(`getCurrentGitRepoData() :>>`, e.toString());
+		// logWarn(`getCurrentGitRepoData() :>>`, e.toString());
 		return;
 	}
 };

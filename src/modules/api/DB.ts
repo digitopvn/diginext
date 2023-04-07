@@ -25,6 +25,7 @@ import {
 	UserService,
 	WorkspaceService,
 } from "@/services";
+import RouteService from "@/services/RouteService";
 
 import fetchApi from "./fetchApi";
 
@@ -40,6 +41,7 @@ type DBCollection =
 	| "project"
 	| "release"
 	| "role"
+	| "route"
 	| "team"
 	| "user"
 	| "api_key_user"
@@ -100,6 +102,7 @@ const git = new GitProviderService();
 const project = new ProjectService();
 const release = new ReleaseService();
 const role = new RoleService();
+const route = new RouteService();
 const team = new TeamService();
 const user = new UserService();
 const api_key_user = new ApiKeyUserService();
@@ -119,6 +122,7 @@ export class DB {
 		project,
 		release,
 		role,
+		route,
 		team,
 		user,
 		api_key_user,

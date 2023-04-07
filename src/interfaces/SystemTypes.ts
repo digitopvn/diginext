@@ -1,4 +1,8 @@
 // cloud providers
+export const requestMethodList = ["GET", "POST", "PATCH", "DELETE"] as const;
+export type RequestMethodType = (typeof requestMethodList)[number];
+
+// cloud providers
 export const cloudProviderList = ["gcloud", "digitalocean", "custom"] as const;
 export type CloudProviderType = (typeof cloudProviderList)[number];
 
@@ -9,6 +13,9 @@ export type RegistryProviderType = (typeof registryProviderList)[number];
 // git providers
 export const availableGitProviders = ["bitbucket", "github", "gitlab"] as const;
 export type GitProviderType = (typeof availableGitProviders)[number];
+
+export const availableResourceSizes = ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"] as const;
+export type ResourceQuotaSize = (typeof availableResourceSizes)[number];
 
 export const gitProviderDomain = {
 	bitbucket: "bitbucket.org",

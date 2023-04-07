@@ -15,6 +15,7 @@ import GitProvider from "@/entities/GitProvider";
 import Project from "@/entities/Project";
 import Release from "@/entities/Release";
 import Role from "@/entities/Role";
+import Route from "@/entities/Route";
 import ServiceAccount from "@/entities/ServiceAccount";
 import Team from "@/entities/Team";
 import User from "@/entities/User";
@@ -35,6 +36,7 @@ export const appDataSource = new DataSource({
 		ServiceAccount,
 		ApiKeyAccount,
 		Role,
+		Route,
 		Team,
 		Workspace,
 		Project,
@@ -47,7 +49,7 @@ export const appDataSource = new DataSource({
 		ContainerRegistry,
 		Framework,
 	],
-	// database: "digirelease",
+	// database: "diginext",
 	// subscribers: [],
 	// migrations: [],
 });

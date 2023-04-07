@@ -19,6 +19,8 @@ import { respondFailure } from "../interfaces/ResponseData";
 const DEFAULT_PAGE_SIZE = 100;
 
 export default class BaseController<T extends Base = any> {
+	service: BaseService<T>;
+
 	user: User;
 
 	workspace: Workspace;
@@ -31,8 +33,8 @@ export default class BaseController<T extends Base = any> {
 
 	where: FindOptionsWhere<any>;
 
-	constructor(protected service?: BaseService<T>) {
-		// if (service) this.service = service;
+	constructor(service?: BaseService<T>) {
+		if (service) this.service = service;
 	}
 
 	async read() {
@@ -110,16 +112,15 @@ export default class BaseController<T extends Base = any> {
 		return result;
 	}
 
-	parseDateRange(req: Request, res: Response, next: NextFunction) {
+	parseDateRange(req: Request, res?: Response, next?: NextFunction) {
 		// TODO: process date range filter: from_date, to_date, from_time, to_time, date
-		this.service.req = req;
 
-		next();
+		if (next) next();
 	}
 
-	parseBody(req: Request, res: Response, next: NextFunction) {
+	parseBody(req: Request, res?: Response, next?: NextFunction) {
 		// log("req.body [1] >>", req.body);
-		this.service.req = req;
+		// this.service.req = req;
 
 		req.body = iterate(req.body, (obj, key, val) => {
 			// log(`key, val =>`, key, val);
@@ -134,7 +135,7 @@ export default class BaseController<T extends Base = any> {
 			}
 		});
 
-		next();
+		if (next) next();
 	}
 
 	/**
@@ -142,10 +143,10 @@ export default class BaseController<T extends Base = any> {
 	 * - List (first page, 10 item per page, sort "desc" by "updatedAt" first, then "desc" by "createdAt"): `https://example.com/api/v1/user?page=1&size=10&sort=-updatedAt,-createdAt`
 	 * - Search (by username that contains "john"): `https://example.com/api/v1/user?page=1&size=10&username=john&search=true`
 	 */
-	parseFilter(req: Request, res: Response, next: NextFunction) {
+	parseFilter(req: Request, res?: Response, next?: NextFunction) {
 		// log("req.query >>", req.query);
 		// return req.query;
-		this.service.req = req;
+		// this.service.req = req;
 
 		const {
 			id,
@@ -190,7 +191,7 @@ export default class BaseController<T extends Base = any> {
 		if (raw === "true" || raw === true) options.raw = true;
 
 		// pagination
-		if (this.pagination.page_size) {
+		if (this.pagination && this.pagination.page_size) {
 			options.skip = ((this.pagination.current_page ?? 1) - 1) * this.pagination.page_size;
 			options.limit = this.pagination.page_size;
 		}
@@ -250,11 +251,11 @@ export default class BaseController<T extends Base = any> {
 		this.filter = _filter as IQueryOptions & FindManyOptions<any>;
 		// log({ filter: this.filter });
 
-		next();
+		if (next) next();
 	}
 
-	async parsePagination(req: Request, res: Response, next: NextFunction) {
-		this.service.req = req;
+	async parsePagination(req: Request, res?: Response, next?: NextFunction) {
+		if (!this.service) return;
 
 		let total_items = 0,
 			total_pages = 0,
@@ -300,6 +301,6 @@ export default class BaseController<T extends Base = any> {
 		};
 		// log(`this.pagination >>`, this.pagination);
 
-		next();
+		if (next) next();
 	}
 }
