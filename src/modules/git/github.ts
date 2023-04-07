@@ -10,7 +10,6 @@ import type { RequestMethodType } from "@/interfaces/SystemTypes";
 import { paramsToObject } from "@/plugins/params";
 
 export const DIGINEXT_GITHUB_CLIENT_ID = "Iv1.04ab669eff50438b";
-export const DIGINEXT_GITHUB_CLIENT_SECRET = "97cc3937637843033cc2877405f12a9281331a9d";
 
 export type GithubApiRequestOptions = {
 	url: string;
