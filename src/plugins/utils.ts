@@ -429,14 +429,16 @@ export const parseRepoSlugFromUrl = (url) => {
 	return n;
 };
 
-export const deleteFolderRecursive = async (filePath) => {
-	if (fs.existsSync(filePath)) {
-		for (let entry of await afs.readdir(filePath)) {
-			const curPath = filePath + "/" + entry;
-			if ((await afs.lstat(curPath)).isDirectory()) await deleteFolderRecursive(curPath);
-			else await afs.unlink(curPath);
-		}
-		await afs.rm(filePath, { recursive: true, force: true });
+export const deleteFolderRecursive = async (dir: string) => {
+	if (fs.existsSync(dir)) {
+		// for (let entry of await afs.readdir(dir)) {
+		// 	const filePath = path.resolve(dir, entry);
+		// 	// use "unlink" to delete every single file
+		// 	if ((await afs.lstat(filePath)).isDirectory()) await deleteFolderRecursive(filePath);
+		// 	else await afs.unlink(filePath);
+		// }
+		// remove the directory itself
+		await afs.rm(dir, { recursive: true, force: true });
 	}
 };
 
@@ -659,6 +661,9 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 			const curBranch = await getCurrentGitBranch(dir);
 			await git.pull("origin", curBranch, ["--no-ff"]);
 		} catch (e) {
+			// just for sure...
+			await deleteFolderRecursive(dir);
+
 			// for CLI create new app from a framework
 			git = simpleGit({ progress: onProgress });
 			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
