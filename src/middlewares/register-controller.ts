@@ -7,6 +7,9 @@ import { DB } from "@/modules/api/DB";
 export const registerController = <T = any>(controller: BaseController<T>) => {
 	return async (req: Request, res: Response, next: NextFunction) => {
 		try {
+			// assign express.Request to service
+			if (controller.service) controller.service.req = req;
+
 			// assign current user to the controller
 			controller.user = req.user as User;
 
@@ -18,6 +21,11 @@ export const registerController = <T = any>(controller: BaseController<T>) => {
 						? (controller.user?.activeWorkspace as Workspace)
 						: await DB.findOne<Workspace>("workspace", { _id: wsId });
 			}
+
+			// parse filter, body and pagination data:
+			await controller.parsePagination(req);
+			controller.parseFilter(req);
+			controller.parseBody(req);
 
 			next();
 		} catch (e) {

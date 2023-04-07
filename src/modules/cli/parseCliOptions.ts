@@ -4,8 +4,8 @@ import yargs from "yargs";
 
 import pkg from "@/../package.json";
 import type { Project } from "@/entities";
-import type { InputOptions, ResourceQuotaSize } from "@/interfaces/InputOptions";
-import type { GitProviderType } from "@/interfaces/SystemTypes";
+import type { InputOptions } from "@/interfaces/InputOptions";
+import type { GitProviderType, ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { checkForUpdate, currentVersion, getLatestCliVersion } from "@/plugins";
 
 const cliHeader =

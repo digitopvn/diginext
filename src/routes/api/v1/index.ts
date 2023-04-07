@@ -14,6 +14,7 @@ import providerRouter from "./provider";
 import registryRouter from "./registry";
 import releaseRouter from "./release";
 import roleRouter from "./role";
+import routeRouter from "./route";
 import serviceAccountRouter from "./service_account";
 import teamRouter from "./team";
 import userRouter from "./user";
@@ -43,5 +44,6 @@ router.use("/database", databaseRouter);
 router.use("/registry", registryRouter);
 router.use("/deploy", deployRouter);
 router.use("/domain", domainRouter);
+router.use("/route", routeRouter);
 
 export default router;

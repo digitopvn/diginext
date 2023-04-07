@@ -123,6 +123,8 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		}
 	}
 
+	appConfig.environment[env] = deployEnvironment;
+
 	appConfig = saveAppConfig(appConfig);
 
 	return appConfig;

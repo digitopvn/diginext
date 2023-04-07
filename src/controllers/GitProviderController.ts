@@ -4,6 +4,7 @@ import type { GitProvider } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
+import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
 import GitProviderService from "@/services/GitProviderService";
@@ -48,11 +49,12 @@ export default class GitProviderController extends BaseController<GitProvider> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/ssh/public-key")
-	async getPublicKey(@Queries() queryParams?: IGetQueryParams) {
+	async getPublicKey() {
 		const isSshKeysExisted = await sshKeysExisted();
-		if (!isSshKeysExisted) return { status: 0, messages: [`PUBLIC_KEY is not existed on this server.`] } as ResponseData;
+		if (!isSshKeysExisted) return respondFailure({ msg: `PUBLIC_KEY is not existed on this server.` });
+
 		const publicKey = await getPublicKey();
-		return { status: 1, data: publicKey } as ResponseData;
+		return respondSuccess({ data: publicKey });
 	}
 
 	@Security("api_key")
