@@ -85,7 +85,7 @@
 		"release:nobuild": "npm run prerelease && npm run husky-hide && npm run npm-publish && npm run husky-show && npm run pull-request",
 		"release:all": "npm run release && npm run docker-build && skaffold run --tail",
 		"prerelease": "npx semantic-release --no-ci && npm run pkg-version && npm run commit-build && exit 0",
-		"pull-request": "open-cli https://github.com/digitopvn/diginext/compare/main...$(echo $(git rev-parse --abbrev-ref HEAD))",
+		"pull-request": "open-cli https://github.com/digitopvn/diginext/compare/prerelease...$(echo $(git rev-parse --abbrev-ref HEAD))",
 		"pr": "pnpm pull-request",
 		"husky-hide": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall",
 		"husky-show": "npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",

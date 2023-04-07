@@ -8,7 +8,7 @@ import databaseRouter from "./database";
 import deployRouter from "./deploy";
 import domainRouter from "./domain";
 import frameworkRouter from "./framework";
-import gitRouter from "./git-provider";
+import gitRouter from "./git";
 import projectRouter from "./project";
 import providerRouter from "./provider";
 import registryRouter from "./registry";

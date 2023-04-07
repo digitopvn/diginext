@@ -12,6 +12,8 @@ import BaseController from "./BaseController";
 export default class RouteController extends BaseController<RouteEntity> {
 	user: User;
 
+	service: RouteService;
+
 	constructor() {
 		super(new RouteService());
 	}
@@ -23,6 +25,8 @@ export default class RouteController extends BaseController<RouteEntity> {
 	@Security("jwt")
 	@Get("/")
 	async read(@Queries() queryParams?: IGetQueryParams) {
-		return super.read();
+		const res = await super.read();
+		// console.log("res :>> ", res);
+		return res;
 	}
 }

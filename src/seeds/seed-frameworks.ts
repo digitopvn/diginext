@@ -36,5 +36,3 @@ export const seedFrameworks = async (workspace: Workspace, owner: User) => {
 
 	if (results.length > 0) log(`Workspace "${workspace.name}" > Seeded ${results.length} frameworks.`);
 };
-
-// export default { seedRoutes };

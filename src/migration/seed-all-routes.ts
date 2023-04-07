@@ -9,7 +9,7 @@ import { app } from "@/server";
 
 import { DB } from "../modules/api/DB";
 
-export const migrateAllRoutes = async () => {
+export const seedSystemRoutes = async () => {
 	// get routes from the database
 	let routes = await DB.find<Route>("route");
 
