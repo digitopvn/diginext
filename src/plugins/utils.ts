@@ -655,22 +655,36 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
 			const originRemote = remotes[0];
 			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
-			console.log("originRemote :>> ", originRemote);
+			console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
 			if (originRemote.refs.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
 
 			const curBranch = await getCurrentGitBranch(dir);
 			await git.pull("origin", curBranch, ["--no-ff"]);
 		} catch (e) {
+			if (onUpdate) onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
+
 			// just for sure...
 			await deleteFolderRecursive(dir);
 
 			// for CLI create new app from a framework
 			git = simpleGit({ progress: onProgress });
-			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+
+			try {
+				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+			} catch (e2) {
+				if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+			}
 		}
 	} else {
+		if (onUpdate) onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
+
 		git = simpleGit({ progress: onProgress });
-		await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+
+		try {
+			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+		} catch (e) {
+			if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+		}
 	}
 };
 
