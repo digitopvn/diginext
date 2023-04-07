@@ -1,4 +1,8 @@
 // cloud providers
+export const requestMethodList = ["GET", "POST", "PATCH", "DELETE"] as const;
+export type RequestMethodType = (typeof requestMethodList)[number];
+
+// cloud providers
 export const cloudProviderList = ["gcloud", "digitalocean", "custom"] as const;
 export type CloudProviderType = (typeof cloudProviderList)[number];
 

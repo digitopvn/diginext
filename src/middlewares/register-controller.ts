@@ -7,6 +7,9 @@ import { DB } from "@/modules/api/DB";
 export const registerController = <T = any>(controller: BaseController<T>) => {
 	return async (req: Request, res: Response, next: NextFunction) => {
 		try {
+			// assign express.Request to service
+			if (controller.service) controller.service.req = req;
+
 			// assign current user to the controller
 			controller.user = req.user as User;
 
