@@ -1,3 +1,10 @@
+## [2.9.2](https://github.com/digitopvn/diginext/compare/v2.9.1...v2.9.2) (2023-04-07)
+
+
+### Bug Fixes
+
+* **cli:** update diginext site url to diginext.vn ([f5fe0d7](https://github.com/digitopvn/diginext/commit/f5fe0d787ee1e0c28a674decf88bc06f02c3620a))
+
 ## [2.9.1](https://github.com/digitopvn/diginext/compare/v2.9.0...v2.9.1) (2023-04-07)
 
 
