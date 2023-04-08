@@ -14,11 +14,15 @@ export const addContainerRegistry = async (
 		/**
 		 * Owner's user ID
 		 */
-		owner: string;
+		ownerId: string;
 		/**
 		 * Workspace ID
 		 */
-		workspace: string;
+		workspaceId: string;
+		/**
+		 * Workspace's slug
+		 */
+		workspace?: string;
 	}
 ) => {
 	if (!data.provider) {
@@ -43,10 +47,27 @@ export const addContainerRegistry = async (
 		data.name = value;
 	}
 
+	// Input organization or confirm to use default:
+	const { organization } = await inquirer.prompt<{ organization: string }>({
+		name: "organization",
+		type: "input",
+		message: "Organization:",
+		default: data.organization,
+	});
+	data.organization = organization;
+
 	switch (data.provider) {
 		case "gcloud":
-			// default
-			if (!data.host) data.host = "gcr.io";
+			if (!data.host) {
+				const { value } = await inquirer.prompt<{ value: string }>({
+					name: "value",
+					type: "editor",
+					message: "Registry host:",
+					default: "gcr.io",
+				});
+				data.host = value;
+			}
+			if (!data.imageBaseURL) data.imageBaseURL = `${data.host}/${data.organization}`;
 
 			// ask serviceAccount
 			if (!data.serviceAccount) {
@@ -57,10 +78,12 @@ export const addContainerRegistry = async (
 				});
 				data.serviceAccount = value;
 			}
+
 			break;
 
 		case "digitalocean":
 			if (!data.host) data.host = "registry.digitalocean.com";
+			if (!data.imageBaseURL) data.imageBaseURL = `${data.host}/${data.organization}`;
 			// ask api access token
 			if (!data.apiAccessToken) {
 				const { value } = await inquirer.prompt<{ value: string }>({
@@ -75,6 +98,7 @@ export const addContainerRegistry = async (
 		case "dockerhub":
 			data.dockerServer = "https://index.docker.io/v2/";
 			if (!data.host) data.host = "docker.io";
+			if (!data.imageBaseURL) data.imageBaseURL = `${data.host}/${data.organization}`;
 
 			// ask login credentials
 			if (!data.dockerUsername) {
@@ -102,9 +126,9 @@ export const addContainerRegistry = async (
 	const registry = await DB.create<ContainerRegistry>("registry", data);
 
 	if (registry) {
-		await connectRegistry(registry, { userId: options.owner, workspaceId: options.workspace });
+		await connectRegistry(registry, { userId: options.ownerId, workspaceId: options.workspaceId });
 	} else {
-		logWarn(`Added container registry "${registry.name}" but failed to connect.`);
+		logWarn(`Added container registry "${data.name}" but failed to connect.`);
 	}
 
 	return registry;

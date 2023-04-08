@@ -1,3 +1,4 @@
+import { isJSON } from "class-validator";
 import { logError } from "diginext-utils/dist/console/log";
 import { existsSync, readFileSync } from "fs";
 
@@ -33,7 +34,10 @@ export const execRegistry = async (options: InputOptions) => {
 			registryData.dockerEmail = options.email;
 			registryData.dockerServer = options.server;
 
-			return addContainerRegistry(registryData, { owner: options.userId, workspace: options.workspaceId });
+			const sa = isJSON(registryData.serviceAccount) ? JSON.parse(registryData.serviceAccount) : {};
+			registryData.organization = options.org || options.providerProject || registryData.dockerUsername || sa.project_id;
+
+			return addContainerRegistry(registryData, { ownerId: options.userId, workspaceId: options.workspaceId });
 
 		case "connect":
 			return askToConnectRegistry(options);

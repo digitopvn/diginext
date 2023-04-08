@@ -49,6 +49,12 @@ export type InputOptions = {
 	workspaceId?: string;
 
 	/**
+	 * User input organization
+	 * - Use when container registry authentication
+	 */
+	org?: string;
+
+	/**
 	 * User input username
 	 */
 	user?: string;

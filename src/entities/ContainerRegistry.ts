@@ -31,6 +31,12 @@ export default class ContainerRegistry extends Base {
 	host?: string;
 
 	/**
+	 * Organization name in Docker Registry, or Project ID in Google/DigitalOcean Container Registry.
+	 */
+	@Column()
+	organization?: string;
+
+	/**
 	 * Base URL of the image, usually is the registry host URI combines with something else.
 	 * - This will be used to combine with your project/app image path.
 	 * @example
