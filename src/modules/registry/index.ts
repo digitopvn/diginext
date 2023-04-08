@@ -28,8 +28,8 @@ export const execRegistry = async (options: InputOptions) => {
 				registryData.serviceAccount = serviceAccount;
 			}
 			registryData.apiAccessToken = options.token || options.key;
-			registryData.dockerUsername = options.username;
-			registryData.dockerPassword = options.password;
+			registryData.dockerUsername = options.user;
+			registryData.dockerPassword = options.pass;
 			registryData.dockerEmail = options.email;
 			registryData.dockerServer = options.server;
 

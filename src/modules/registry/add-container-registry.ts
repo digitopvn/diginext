@@ -25,7 +25,7 @@ export const addContainerRegistry = async (
 		const { provider } = await inquirer.prompt<{ provider: RegistryProviderType }>({
 			name: "provider",
 			type: "list",
-			message: "Container registry provider:",
+			message: "Select provider:",
 			default: registryProviderList[0],
 			choices: registryProviderList.map((name, i) => {
 				return { name: `[${i + 1}] ${name}`, value: name };
@@ -45,6 +45,9 @@ export const addContainerRegistry = async (
 
 	switch (data.provider) {
 		case "gcloud":
+			// default
+			if (!data.host) data.host = "gcr.io";
+
 			// ask serviceAccount
 			if (!data.serviceAccount) {
 				const { value } = await inquirer.prompt<{ value: string }>({
@@ -57,6 +60,7 @@ export const addContainerRegistry = async (
 			break;
 
 		case "digitalocean":
+			if (!data.host) data.host = "registry.digitalocean.com";
 			// ask api access token
 			if (!data.apiAccessToken) {
 				const { value } = await inquirer.prompt<{ value: string }>({
@@ -69,6 +73,9 @@ export const addContainerRegistry = async (
 			break;
 
 		case "dockerhub":
+			data.dockerServer = "https://index.docker.io/v2/";
+			if (!data.host) data.host = "docker.io";
+
 			// ask login credentials
 			if (!data.dockerUsername) {
 				const { value } = await inquirer.prompt<{ value: string }>({

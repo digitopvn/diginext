@@ -49,9 +49,14 @@ export type InputOptions = {
 	workspaceId?: string;
 
 	/**
+	 * User input username
+	 */
+	user?: string;
+
+	/**
 	 * User input password
 	 */
-	password?: string;
+	pass?: string;
 
 	/**
 	 * User input email
