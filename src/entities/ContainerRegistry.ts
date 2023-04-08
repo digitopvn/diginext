@@ -1,3 +1,4 @@
+import type { HiddenBodyKeys } from "@/interfaces";
 import { RegistryProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
@@ -5,6 +6,8 @@ import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 import Base from "./Base";
 import type User from "./User";
 import type Workspace from "./Workspace";
+
+export type ContainerRegistryDto = Omit<ContainerRegistry, keyof HiddenBodyKeys>;
 
 @Entity({ name: "container_registries" })
 export default class ContainerRegistry extends Base {
@@ -26,6 +29,12 @@ export default class ContainerRegistry extends Base {
 	 */
 	@Column()
 	host?: string;
+
+	/**
+	 * Organization name in Docker Registry, or Project ID in Google/DigitalOcean Container Registry.
+	 */
+	@Column()
+	organization?: string;
 
 	/**
 	 * Base URL of the image, usually is the registry host URI combines with something else.
@@ -56,6 +65,27 @@ export default class ContainerRegistry extends Base {
 	 */
 	@Column()
 	apiAccessToken?: string;
+
+	/**
+	 * `[For Docker Registry]` Docker registry server
+	 * @default https://index.docker.io/v1/
+	 */
+	dockerServer?: string;
+
+	/**
+	 * `[For Docker Registry]` Docker email
+	 */
+	dockerEmail?: string;
+
+	/**
+	 * `[For Docker Registry]` Docker username
+	 */
+	dockerUsername?: string;
+
+	/**
+	 * `[For Docker Registry]` Docker password
+	 */
+	dockerPassword?: string;
 
 	@Column()
 	imagePullSecret?: {

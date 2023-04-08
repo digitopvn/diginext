@@ -17,3 +17,24 @@ export interface ContainerRegistrySecretOptions {
 	 */
 	shouldCreateSecretInNamespace?: boolean;
 }
+
+export interface DockerRegistryCredentials {
+	/**
+	 * Your private docker registry server
+	 * @default https://index.docker.io/v1/
+	 */
+	server?: string;
+	/**
+	 * Docker username
+	 */
+	username?: string;
+	/**
+	 * Docker account's password
+	 */
+	password?: string;
+	/**
+	 * `[OPTIONAL]`
+	 * Docker account's email
+	 */
+	email?: string;
+}

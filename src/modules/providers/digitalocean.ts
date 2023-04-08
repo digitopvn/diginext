@@ -1,6 +1,5 @@
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
-import chalk from "chalk";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import execa from "execa";
 import inquirer from "inquirer";
@@ -157,7 +156,7 @@ export const createRecordInDomain = async (input: DomainRecord) => {
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
 	// Implement create "imagePullSecret" of Digital Ocean
-	const { registrySlug, clusterShortName, namespace = "default", shouldCreateSecretInNamespace = false } = options;
+	const { registrySlug, clusterShortName, namespace = "default" } = options;
 
 	if (!registrySlug) {
 		logError(`[DIGITAL_OCEAN] Container Registry's slug is required.`);
@@ -191,29 +190,17 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 	const secretName = `${providerShortName}-docker-registry-key`;
 
-	if (shouldCreateSecretInNamespace && namespace == "default") {
-		logWarn(
-			`[DIGITAL_OCEAN] You are creating "imagePullSecrets" in "default" namespace, if you want to create in other namespaces:`,
-			chalk.cyan("\n  dx registry allow --create --provider=digitalocean --namespace=") + "<CLUSTER_NAMESPACE_NAME>",
-			chalk.gray(`\n  # Examples / alias:`),
-			"\n  dx registry allow --create --provider=digitalocean --namespace=my-website-namespace",
-			"\n  dx registry allow --create --do create -n my-website-namespace"
-		);
-	}
-
-	// check if namespace is existed
-	if (shouldCreateSecretInNamespace) {
-		const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
-		if (!isNsExisted) {
-			logError(`[DIGITAL_OCEAN] Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
-			return;
-		}
-	}
-
 	const { apiAccessToken: API_ACCESS_TOKEN } = registry;
 
+	// check namespace is existed
+	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+	if (!isNsExisted) {
+		logError(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+		return;
+	}
+
 	// create secret in the namespace (if needed)
-	const applyCommand = shouldCreateSecretInNamespace ? `| kubectl apply -f -` : "";
+	const applyCommand = `| kubectl apply -f -`;
 
 	// command: "doctl registry kubernetes-manifest"
 	const registryYaml = await execCmd(
