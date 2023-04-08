@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "2.9.2",
+	"version": "2.10.0",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {

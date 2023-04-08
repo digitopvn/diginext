@@ -1,3 +1,16 @@
+# [2.10.0](https://github.com/digitopvn/diginext/compare/v2.9.2...v2.10.0) (2023-04-08)
+
+
+### Bug Fixes
+
+* **cli:** set default host when adding new container registry ([9837c16](https://github.com/digitopvn/diginext/commit/9837c1674768db05140da058d754706c2103abd3))
+* **cli:** set or confirm default host when adding new container registry ([40da946](https://github.com/digitopvn/diginext/commit/40da94636daa1b8976e2dac595defb2ab3e03108))
+
+
+### Features
+
+* **cli:** support docker container registry: add, connect, create image pull secrets ([bb3792e](https://github.com/digitopvn/diginext/commit/bb3792e87c10b599e5004b68a92cfc4939a6f1ad))
+
 ## [2.9.2](https://github.com/digitopvn/diginext/compare/v2.9.1...v2.9.2) (2023-04-07)
 
 
