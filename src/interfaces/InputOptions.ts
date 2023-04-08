@@ -49,9 +49,25 @@ export type InputOptions = {
 	workspaceId?: string;
 
 	/**
-	 * Target's name
+	 * User input password
+	 */
+	password?: string;
+
+	/**
+	 * User input email
+	 */
+	email?: string;
+
+	/**
+	 * User input server
+	 */
+	server?: string;
+
+	/**
+	 * User input name
 	 */
 	name?: string;
+
 	/**
 	 * {App} slug
 	 */

@@ -1782,6 +1782,22 @@
 						"type": "string",
 						"description": "Content of the API access token to use services on this cloud provider\n- Apply for: Digital Ocean"
 					},
+					"dockerServer": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker registry server"
+					},
+					"dockerEmail": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker email"
+					},
+					"dockerUsername": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker username"
+					},
+					"dockerPassword": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker password"
+					},
 					"imagePullSecret": {
 						"properties": {
 							"value": {
@@ -2862,7 +2878,19 @@
 					},
 					"name": {
 						"type": "string",
-						"description": "Target's name"
+						"description": "User input name"
+					},
+					"server": {
+						"type": "string",
+						"description": "User input server"
+					},
+					"email": {
+						"type": "string",
+						"description": "User input email"
+					},
+					"password": {
+						"type": "string",
+						"description": "User input password"
 					},
 					"workspaceId": {
 						"type": "string"
@@ -3739,6 +3767,22 @@
 						"type": "string",
 						"description": "Content of the API access token to use services on this cloud provider\n- Apply for: Digital Ocean"
 					},
+					"dockerServer": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker registry server"
+					},
+					"dockerEmail": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker email"
+					},
+					"dockerUsername": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker username"
+					},
+					"dockerPassword": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker password"
+					},
 					"imagePullSecret": {
 						"properties": {
 							"value": {
@@ -4261,7 +4305,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.9.1",
+		"version": "2.9.2",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"

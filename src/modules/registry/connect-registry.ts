@@ -6,6 +6,7 @@ import { createTmpFile } from "@/plugins";
 
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
+import DockerRegistry from "./docker-registry";
 
 export const connectRegistry = async (registry: ContainerRegistry, options?: { userId?: any; workspaceId?: any }) => {
 	const { slug, provider, host } = registry;
@@ -45,6 +46,22 @@ export const connectRegistry = async (registry: ContainerRegistry, options?: { u
 			if (!doAuthResult) return;
 
 			connectedRegistry = await digitalocean.connectDockerRegistry({ ...options, key: apiAccessToken });
+
+			if (connectedRegistry) {
+				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}" (${registry.host} / ${registry.provider}).`);
+			} else {
+				logError(`[CONTAINER REGISTRY] ❌ Failed to connect to this container registry (${registry.name}).`);
+			}
+
+			return connectedRegistry;
+
+		case "dockerhub":
+			const { dockerUsername, dockerPassword } = registry;
+
+			connectedRegistry = await DockerRegistry.connect(
+				{ username: dockerUsername, password: dockerPassword },
+				{ workspaceId: options.workspaceId }
+			);
 
 			if (connectedRegistry) {
 				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}" (${registry.host} / ${registry.provider}).`);
