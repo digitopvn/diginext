@@ -3821,6 +3821,9 @@
 			"MaskedContainerRegistry": {
 				"$ref": "#/components/schemas/Omit_ContainerRegistry.keyofHiddenBodyKeys_"
 			},
+			"ContainerRegistryDto": {
+				"$ref": "#/components/schemas/Omit_ContainerRegistry.keyofHiddenBodyKeys_"
+			},
 			"Pick_Release.Exclude_keyofRelease.keyofHiddenBodyKeys__": {
 				"properties": {
 					"app": {
@@ -8752,7 +8755,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/Omit_ContainerRegistry.keyofHiddenBodyKeys_"
+								"$ref": "#/components/schemas/ContainerRegistryDto"
 							}
 						}
 					}
