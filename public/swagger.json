@@ -3821,6 +3821,9 @@
 			"MaskedContainerRegistry": {
 				"$ref": "#/components/schemas/Omit_ContainerRegistry.keyofHiddenBodyKeys_"
 			},
+			"ContainerRegistryDto": {
+				"$ref": "#/components/schemas/Omit_ContainerRegistry.keyofHiddenBodyKeys_"
+			},
 			"Pick_Release.Exclude_keyofRelease.keyofHiddenBodyKeys__": {
 				"properties": {
 					"app": {
@@ -4321,7 +4324,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.10.0",
+		"version": "2.10.1",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -8752,7 +8755,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/Omit_ContainerRegistry.keyofHiddenBodyKeys_"
+								"$ref": "#/components/schemas/ContainerRegistryDto"
 							}
 						}
 					}

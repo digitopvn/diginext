@@ -1,3 +1,10 @@
+## [2.10.1](https://github.com/digitopvn/diginext/compare/v2.10.0...v2.10.1) (2023-04-09)
+
+
+### Bug Fixes
+
+* **server:** container registry controller - fix create and update data validation ([5d103a3](https://github.com/digitopvn/diginext/commit/5d103a3f073d10f0ab76c3541e014d9f4d572851))
+
 # [2.10.0](https://github.com/digitopvn/diginext/compare/v2.9.2...v2.10.0) (2023-04-08)
 
 
