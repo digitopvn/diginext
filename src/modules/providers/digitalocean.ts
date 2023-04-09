@@ -11,7 +11,7 @@ import { Config } from "@/app.config";
 import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
-import { execCmd, wait } from "@/plugins";
+import { wait } from "@/plugins";
 
 import type { DomainRecord } from "../../interfaces/DomainRecord";
 import { DB } from "../api/DB";
@@ -203,7 +203,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const applyCommand = `| kubectl apply -f -`;
 
 	// command: "doctl registry kubernetes-manifest"
-	const registryYaml = await execCmd(
+	const registryYaml = await execa.command(
 		`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} --access-token ${API_ACCESS_TOKEN} ${applyCommand}`
 	);
 	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
@@ -230,21 +230,21 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
  * Connect Docker to Digital Ocean Container Registry
  * @param {InputOptions} options
  */
-export const connectDockerRegistry = async (options?: InputOptions) => {
+export const connectDockerToRegistry = async (options?: InputOptions) => {
 	const { host, key: API_ACCESS_TOKEN, userId, workspaceId } = options;
 
 	try {
 		let connectRes;
 		// connect DOCKER to CONTAINER REGISTRY
 		if (API_ACCESS_TOKEN) {
-			connectRes = await execCmd(`doctl registry login --access-token ${API_ACCESS_TOKEN}`);
+			connectRes = await execa.command(`doctl registry login --access-token ${API_ACCESS_TOKEN}`);
 		} else {
-			connectRes = await execCmd(`doctl registry login`);
+			connectRes = await execa.command(`doctl registry login`);
 		}
 
 		if (Config.BUILDER === "podman") {
 			// connect PODMAN to CONTAINER REGISTRY
-			connectRes = await execCmd(`podman login`);
+			connectRes = await execa.command(`podman login`);
 		}
 
 		if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { authRes: connectRes });
@@ -297,7 +297,7 @@ export const execDigitalOcean = async (options?: InputOptions) => {
 
 		case "connect-registry":
 			try {
-				await connectDockerRegistry(options);
+				await connectDockerToRegistry(options);
 			} catch (e) {
 				logError(e);
 			}
@@ -336,4 +336,4 @@ export const execDigitalOcean = async (options?: InputOptions) => {
 	}
 };
 
-export default { authenticate, connectDockerRegistry, createImagePullingSecret };
+export default { authenticate, connectDockerRegistry: connectDockerToRegistry, createImagePullingSecret };

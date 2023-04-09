@@ -67,7 +67,7 @@ export const authenticate = async (options?: InputOptions) => {
 /**
  * Connect Docker to Google Cloud Registry
  */
-export const connectDockerRegistry = async (options?: InputOptions) => {
+export const connectDockerToRegistry = async (options?: InputOptions) => {
 	const { host, filePath, userId, workspaceId } = options;
 
 	// Validation
@@ -99,13 +99,13 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 		if (Config.BUILDER === "docker") {
 			// connect DOCKER to CONTAINER REGISTRY
 			if (host) {
-				connectRes = await execCmd(`gcloud auth configure-docker ${host} --quiet`);
+				connectRes = await execa.command(`gcloud auth configure-docker ${host} --quiet`);
 			} else {
-				connectRes = await execCmd(`gcloud auth configure-docker --quiet`);
+				connectRes = await execa.command(`gcloud auth configure-docker --quiet`);
 			}
 		} else {
 			// connect PODMAN to CONTAINER REGISTRY
-			connectRes = await execCmd(`gcloud auth print-access-token | podman login -u oauth2accesstoken --password-stdin ${host || ""}`);
+			connectRes = await execa.command(`gcloud auth print-access-token | podman login -u oauth2accesstoken --password-stdin ${host || ""}`);
 		}
 		if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { authRes: connectRes });
 	} catch (e) {
@@ -268,7 +268,7 @@ export const execGoogleCloud = async (options?: InputOptions) => {
 
 		case "connect-registry":
 			try {
-				await connectDockerRegistry(options);
+				await connectDockerToRegistry(options);
 			} catch (e) {
 				logError(e);
 			}
@@ -307,4 +307,4 @@ export const execGoogleCloud = async (options?: InputOptions) => {
 	}
 };
 
-export default { authenticate, connectDockerRegistry, createImagePullingSecret, showHelp };
+export default { authenticate, connectDockerRegistry: connectDockerToRegistry, createImagePullingSecret, showHelp };

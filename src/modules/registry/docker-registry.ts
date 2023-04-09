@@ -19,7 +19,7 @@ interface DockerRegistryConnectOptions {
 }
 
 const DockerRegistry = {
-	connect: async (creds: DockerRegistryCredentials, options: DockerRegistryConnectOptions) => {
+	connectDockerToRegistry: async (creds: DockerRegistryCredentials, options: DockerRegistryConnectOptions) => {
 		const { workspaceId } = options;
 
 		const { server = "https://index.docker.io/v2/", username, password, email } = creds;
