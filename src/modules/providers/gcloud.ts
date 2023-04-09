@@ -67,7 +67,7 @@ export const authenticate = async (options?: InputOptions) => {
 /**
  * Connect Docker to Google Cloud Registry
  */
-export const connectDockerRegistry = async (options?: InputOptions) => {
+export const connectDockerToRegistry = async (options?: InputOptions) => {
 	const { host, filePath, userId, workspaceId } = options;
 
 	// Validation
@@ -99,13 +99,13 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 		if (Config.BUILDER === "docker") {
 			// connect DOCKER to CONTAINER REGISTRY
 			if (host) {
-				connectRes = await execCmd(`gcloud auth configure-docker ${host} --quiet`);
+				connectRes = await execa.command(`gcloud auth configure-docker ${host} --quiet`);
 			} else {
-				connectRes = await execCmd(`gcloud auth configure-docker --quiet`);
+				connectRes = await execa.command(`gcloud auth configure-docker --quiet`);
 			}
 		} else {
 			// connect PODMAN to CONTAINER REGISTRY
-			connectRes = await execCmd(`gcloud auth print-access-token | podman login -u oauth2accesstoken --password-stdin ${host || ""}`);
+			connectRes = await execa.command(`gcloud auth print-access-token | podman login -u oauth2accesstoken --password-stdin ${host || ""}`);
 		}
 		if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { authRes: connectRes });
 	} catch (e) {
@@ -138,7 +138,7 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
  * Create Google Container Registry image pulling secret
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
-	const { registrySlug, namespace = "default", shouldCreateSecretInNamespace = false, clusterShortName } = options;
+	const { registrySlug, namespace = "default", clusterShortName } = options;
 	// log(`providerShortName :>>`, providerShortName);
 
 	if (!clusterShortName) {
@@ -166,37 +166,17 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 	const { name: context } = await getKubeContextByCluster(cluster);
 
-	// console.log("context :>> ", context);
-	// console.log("serviceAccount :>> ", serviceAccount);
-
 	// write down the service account file:
 	const serviceAccountPath = createTmpFile(`gcloud-service-account.json`, serviceAccount);
-	// const serviceAccountPath = path.resolve(CLI_CONFIG_DIR, `${registrySlug}-service-account.json`);
-	// console.log("serviceAccountPath :>> ", serviceAccountPath);
-	// if (fs.existsSync(serviceAccountPath)) fs.unlinkSync(serviceAccountPath);
-	// fs.writeFileSync(serviceAccountPath, serviceAccount, "utf8");
-
-	if (shouldCreateSecretInNamespace && namespace == "default") {
-		logWarn(
-			`You are creating "imagePullSecrets" in "default" namespace, if you want to create in other namespaces:`,
-			chalk.cyan("\n  dx registry allow --create --provider=<REGISTRY_PROVIDER> --namespace=") + "<CLUSTER_NAMESPACE_NAME>",
-			chalk.gray(`\n  # Examples / alias:`),
-			"\n  dx registry allow --create --provider=gcloud --namespace=my-website-namespace",
-			"\n  dx registry allow --create --gcloud create -n my-website-namespace"
-		);
-	}
 
 	let secretValue: string;
 	const secretName = `${registrySlug}-docker-registry-key`;
-	// console.log("secretName :>> ", secretName);
 
 	// check if namespace is existed
-	if (shouldCreateSecretInNamespace) {
-		const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
-		if (!isNsExisted) {
-			logError(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
-			return;
-		}
+	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+	if (!isNsExisted) {
+		logError(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+		return;
 	}
 
 	// check if the secret is existed within the namespace, try to delete it!
@@ -288,7 +268,7 @@ export const execGoogleCloud = async (options?: InputOptions) => {
 
 		case "connect-registry":
 			try {
-				await connectDockerRegistry(options);
+				await connectDockerToRegistry(options);
 			} catch (e) {
 				logError(e);
 			}
@@ -327,4 +307,4 @@ export const execGoogleCloud = async (options?: InputOptions) => {
 	}
 };
 
-export default { authenticate, connectDockerRegistry, createImagePullingSecret, showHelp };
+export default { authenticate, connectDockerRegistry: connectDockerToRegistry, createImagePullingSecret, showHelp };

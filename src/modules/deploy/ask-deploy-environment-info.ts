@@ -19,6 +19,7 @@ import { createOrSelectApp } from "../apps/create-or-select-app";
 import { createOrSelectProject } from "../apps/create-or-select-project";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { askForDomain } from "../build";
+import { askForRegistry } from "../registry/ask-for-registry";
 import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
 import { uploadDotenvFileByApp } from "./dotenv-upload";
 
@@ -176,19 +177,8 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 		if (registry) localDeployEnvironment.registry = registry.slug;
 	}
 	if (!localDeployEnvironment.registry) {
-		const registries = await DB.find<ContainerRegistry>("registry", {}, {}, { limit: 20 });
-
-		const { selectedRegistry } = await inquirer.prompt<{ selectedRegistry: ContainerRegistry }>({
-			type: "list",
-			name: "selectedRegistry",
-			message: "Please select your default container registry:",
-			choices: registries.map((r) => {
-				return { name: r.slug, value: r };
-			}),
-		});
-
-		registry = selectedRegistry;
-		localDeployEnvironment.registry = selectedRegistry.slug;
+		registry = await askForRegistry();
+		localDeployEnvironment.registry = registry.slug;
 	}
 	localAppConfig.environment[env].registry = localDeployEnvironment.registry;
 

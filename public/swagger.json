@@ -1766,6 +1766,10 @@
 						"type": "string",
 						"description": "The host (domain) of your container registry which you are using."
 					},
+					"organization": {
+						"type": "string",
+						"description": "Organization name in Docker Registry, or Project ID in Google/DigitalOcean Container Registry."
+					},
 					"imageBaseURL": {
 						"type": "string",
 						"description": "Base URL of the image, usually is the registry host URI combines with something else.\n- This will be used to combine with your project/app image path."
@@ -1781,6 +1785,22 @@
 					"apiAccessToken": {
 						"type": "string",
 						"description": "Content of the API access token to use services on this cloud provider\n- Apply for: Digital Ocean"
+					},
+					"dockerServer": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker registry server"
+					},
+					"dockerEmail": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker email"
+					},
+					"dockerUsername": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker username"
+					},
+					"dockerPassword": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker password"
 					},
 					"imagePullSecret": {
 						"properties": {
@@ -2862,7 +2882,27 @@
 					},
 					"name": {
 						"type": "string",
-						"description": "Target's name"
+						"description": "User input name"
+					},
+					"server": {
+						"type": "string",
+						"description": "User input server"
+					},
+					"email": {
+						"type": "string",
+						"description": "User input email"
+					},
+					"pass": {
+						"type": "string",
+						"description": "User input password"
+					},
+					"user": {
+						"type": "string",
+						"description": "User input username"
+					},
+					"org": {
+						"type": "string",
+						"description": "User input organization\n- Use when container registry authentication"
 					},
 					"workspaceId": {
 						"type": "string"
@@ -3727,6 +3767,10 @@
 						"type": "string",
 						"description": "The host (domain) of your container registry which you are using."
 					},
+					"organization": {
+						"type": "string",
+						"description": "Organization name in Docker Registry, or Project ID in Google/DigitalOcean Container Registry."
+					},
 					"imageBaseURL": {
 						"type": "string",
 						"description": "Base URL of the image, usually is the registry host URI combines with something else.\n- This will be used to combine with your project/app image path."
@@ -3738,6 +3782,22 @@
 					"apiAccessToken": {
 						"type": "string",
 						"description": "Content of the API access token to use services on this cloud provider\n- Apply for: Digital Ocean"
+					},
+					"dockerServer": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker registry server"
+					},
+					"dockerEmail": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker email"
+					},
+					"dockerUsername": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker username"
+					},
+					"dockerPassword": {
+						"type": "string",
+						"description": "`[For Docker Registry]` Docker password"
 					},
 					"imagePullSecret": {
 						"properties": {
@@ -4261,7 +4321,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.9.1",
+		"version": "2.10.0",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
