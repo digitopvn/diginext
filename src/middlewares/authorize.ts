@@ -1,12 +1,12 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Response } from "express";
 
 import type { Role, Workspace } from "@/entities";
-import type User from "@/entities/User";
+import type { AppRequest } from "@/interfaces/SystemTypes";
 import { filterRole } from "@/plugins/user-utils";
 
-export async function authorize(req: Request, res: Response, next: NextFunction) {
-	let user = (req as any).user as User;
+export async function authorize(req: AppRequest, res: Response, next: NextFunction) {
+	let { user } = req;
 
 	const { baseUrl: route, method } = req;
 	// console.log("authorize > route :>> ", route);
@@ -43,59 +43,56 @@ export async function authorize(req: Request, res: Response, next: NextFunction)
 	 */
 	// const { roles } = user;
 	const roles = user.roles as Role[];
+	const activeRole = roles.filter((role) => role.workspace.toString() === wsId)[0];
 
 	// get "routes" -> find "key" as route & "value" as IRole
-	roles.map((role) => {
-		// If wildcard "*" route is specified:
-		role.routes
-			.filter((routeInfo) => routeInfo.route === "*")
-			.map((routeInfo) => {
-				if (routeInfo.permissions.includes(requestPermission)) {
+	// If wildcard "*" route is specified:
+	activeRole.routes
+		.filter((routeInfo) => routeInfo.route === "*")
+		.map((routeInfo) => {
+			if (routeInfo.permissions.includes(requestPermission)) {
+				isAllowed = true;
+			} else {
+				// if permisions have "own" -> only have access to items which "owner" is "userID":
+				if (routeInfo.permissions.includes("full")) {
+					isAllowed = true;
+				} else if (routeInfo.permissions.includes("own")) {
+					req.query.owner = user._id.toString();
 					isAllowed = true;
 				} else {
-					// if permisions have "own" -> only have access to items which "owner" is "userID":
-					if (routeInfo.permissions.includes("full")) {
-						isAllowed = true;
-					} else if (routeInfo.permissions.includes("own")) {
-						req.query.owner = user._id.toString();
-						isAllowed = true;
-					} else {
-						isAllowed = false;
-					}
+					isAllowed = false;
 				}
-			});
+			}
+		});
 
-		// Check again if a specific route is specified:
-		role.routes
-			.filter((routeInfo) => routeInfo.route === route)
-			.map((routeInfo) => {
-				if (routeInfo.permissions.includes(requestPermission)) {
+	// Check again if a specific route is specified:
+	activeRole.routes
+		.filter((routeInfo) => routeInfo.route === route)
+		.map((routeInfo) => {
+			if (routeInfo.permissions.includes(requestPermission)) {
+				delete req.query.owner;
+				isAllowed = true;
+			} else {
+				// if permisions have "own" -> only have access to items which "owner" is "userID":
+				if (routeInfo.permissions.includes("full")) {
 					delete req.query.owner;
 					isAllowed = true;
+				} else if (routeInfo.permissions.includes("own")) {
+					req.query.owner = user._id.toString();
+					isAllowed = true;
 				} else {
-					// if permisions have "own" -> only have access to items which "owner" is "userID":
-					if (routeInfo.permissions.includes("full")) {
-						delete req.query.owner;
-						isAllowed = true;
-					} else if (routeInfo.permissions.includes("own")) {
-						req.query.owner = user._id.toString();
-						isAllowed = true;
-					} else {
-						isAllowed = false;
-					}
+					isAllowed = false;
 				}
-			});
-	});
-	// console.log("authorize > requestPermission :>> ", requestPermission);
+			}
+		});
+
+	// print the debug info
 	console.log(
-		`authorize > [${requestPermission}] ${route} > roles :>> `,
-		roles.map((role) => `[${role.workspace}] ${role.name}: ${role.routes.map((r) => `${r.route} - ${r.permissions.join(",")}`).join("\n")}`),
+		`authorize > [${requestPermission}] ${route} > role :>> `,
+		`[${activeRole.workspace}] ${activeRole.name}: ${activeRole.routes.map((r) => `${r.route} - ${r.permissions.join(",")}`).join("\n")}`,
 		`>> ALLOW:`,
 		isAllowed
 	);
-	// console.log("authorize > user :>> ", user.name, "-", user._id);
-	// console.log("authorize > req.query :>> ", req.query);
-	// console.log("authorize > isAllowed :>> ", isAllowed);
 	if (!isAllowed) return ApiResponse.rejected(res);
 
 	// always lock query filter to workspace scope
@@ -108,6 +105,7 @@ export async function authorize(req: Request, res: Response, next: NextFunction)
 
 	// re-assign user to express.Request
 	req.user = user;
+	req.role = activeRole;
 
 	next();
 }

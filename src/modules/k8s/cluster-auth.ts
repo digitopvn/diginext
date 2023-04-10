@@ -86,7 +86,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 	// Check if Kubernetes context of the cluster is existed -> skip cluster authentication
 	context = await getKubeContextByCluster(cluster);
 	if (context && cluster.isVerified) {
-		logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
+		logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 		return cluster;
 	}
 
@@ -126,7 +126,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			// mark this cluster verified
 			[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
 
-			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
+			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 
 			return cluster;
 
@@ -157,7 +157,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			// mark this cluster verified
 			[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
 
-			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
+			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 
 			return cluster;
 
@@ -185,7 +185,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			// mark this cluster verified
 			[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
 
-			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${contextName}").`);
+			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 
 			return cluster;
 

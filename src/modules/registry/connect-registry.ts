@@ -26,7 +26,7 @@ export const connectRegistry = async (registry: ContainerRegistry, options?: { u
 			connectedRegistry = await gcloud.connectDockerRegistry({ ...options, registry: slug, host });
 
 			if (connectedRegistry) {
-				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}" (${registry.host} / ${registry.provider}).`);
+				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}".`);
 			} else {
 				throw new Error(`[CONTAINER REGISTRY] ❌ Failed to connect to this container registry (${registry.name}).`);
 			}
@@ -45,7 +45,7 @@ export const connectRegistry = async (registry: ContainerRegistry, options?: { u
 			connectedRegistry = await digitalocean.connectDockerRegistry({ ...options, key: apiAccessToken });
 
 			if (connectedRegistry) {
-				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}" (${registry.host} / ${registry.provider}).`);
+				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}".`);
 			} else {
 				throw new Error(`[CONTAINER REGISTRY] ❌ Failed to connect to this container registry (${registry.name}).`);
 			}
@@ -61,7 +61,7 @@ export const connectRegistry = async (registry: ContainerRegistry, options?: { u
 			);
 
 			if (connectedRegistry) {
-				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}" (${registry.host} / ${registry.provider}).`);
+				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}".`);
 			} else {
 				throw new Error(`[CONTAINER REGISTRY] ❌ Failed to connect to this container registry (${registry.name}).`);
 			}

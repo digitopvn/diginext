@@ -2,10 +2,10 @@ import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
-import type { Request } from "express";
 
 import type { User } from "@/entities";
 import type Base from "@/entities/Base";
+import type { AppRequest } from "@/interfaces/SystemTypes";
 import type { EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeorm";
 import type { MongoFindManyOptions } from "@/libs/typeorm/find-options/mongodb/MongoFindManyOptions";
 import { manager, query } from "@/modules/AppDatabase";
@@ -24,7 +24,7 @@ const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 export default class BaseService<E extends Base & { owner?: any; workspace?: any } & ObjectLiteral> {
 	protected query: MongoRepository<ObjectLiteral>;
 
-	req?: Request;
+	req?: AppRequest;
 
 	constructor(entity: EntityTarget<E>) {
 		this.query = query(entity);
