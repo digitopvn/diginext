@@ -5,6 +5,7 @@ import passport from "passport";
 import { Config } from "@/app.config";
 import type { Workspace } from "@/entities";
 import type User from "@/entities/User";
+import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { generateJWT } from "@/modules/passports/jwtStrategy";
 import { extractWorkspaceSlugFromUrl } from "@/plugins";
@@ -50,7 +51,7 @@ router
 				successReturnToOrRedirect: req.query.redirect_url as string,
 				failureRedirect: Config.getBasePath("/login?type=failed"),
 			})(req, res, next),
-		async function (req: any, res: any) {
+		async function (req: AppRequest, res: any) {
 			// console.log("googleLoginCallback > req", req);
 			// console.log("googleLoginCallback > req.query", req.query);
 			// console.log("googleLoginCallback > req.query.state", req.query.state);
@@ -59,11 +60,11 @@ router
 			let redirectUrl = (req.query.state as string) || Config.BASE_URL;
 			const shouldRedirect = typeof req.query.state !== "undefined";
 			const originUrl = new URL(redirectUrl).origin;
-			console.log("[1] originUrl", originUrl);
+			// console.log("[1] originUrl", originUrl);
 
 			let user = req.user as User;
-			console.log("[1] googleLoginCallback > req.user :>> ", user.name, user._id);
-			if (!user) return req.redirect(req.get("origin") + Config.getBasePath("/login?type=failed"));
+			// console.log("[1] googleLoginCallback > req.user :>> ", user.name, user._id);
+			if (!user) return res.redirect(req.get("origin") + Config.getBasePath("/login?type=failed"));
 
 			const userId = user._id.toString();
 			const workspaceSlug = extractWorkspaceSlugFromUrl(redirectUrl);

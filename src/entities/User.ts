@@ -92,6 +92,11 @@ export default class User extends Base {
 	roles?: (ObjectID | ObjectId | Role | string)[];
 
 	/**
+	 * Role of this user in current active Workspace
+	 */
+	activeRole?: Role;
+
+	/**
 	 * User's team IDs which this user is a member
 	 */
 	@ObjectIdColumn({ name: "teams", array: true, default: [] })

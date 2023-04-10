@@ -1,17 +1,18 @@
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Response } from "express";
 
 import type BaseController from "@/controllers/BaseController";
-import type { User, Workspace } from "@/entities";
+import type { Workspace } from "@/entities";
+import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 
 export const registerController = <T = any>(controller: BaseController<T>) => {
-	return async (req: Request, res: Response, next: NextFunction) => {
+	return async (req: AppRequest, res: Response, next: NextFunction) => {
 		try {
 			// assign express.Request to service
 			if (controller.service) controller.service.req = req;
 
 			// assign current user to the controller
-			controller.user = req.user as User;
+			controller.user = req.user;
 
 			// get current workspace
 			if (controller.user?.activeWorkspace) {

@@ -44,6 +44,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	// const { roles } = user;
 	const roles = user.roles as Role[];
 	const activeRole = roles.filter((role) => role.workspace.toString() === wsId)[0];
+	user.activeRole = activeRole;
 
 	// get "routes" -> find "key" as route & "value" as IRole
 	// If wildcard "*" route is specified:
