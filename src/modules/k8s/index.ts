@@ -38,12 +38,16 @@ import {
 	setEnvVar,
 	setEnvVarByFilter,
 } from "./kubectl";
+import { checkCertManagerInstalled, checkNginxIngressInstalled } from "./stack-check";
+import { installCertManagerStack, installNginxIngressStack } from "./stack-install";
 
 const ClusterManager = {
+	// cluster-helpers
 	authCluster,
 	createImagePullSecretsInNamespace,
 	currentContext,
 	currentCluster,
+	// kube-helpers
 	createNamespace,
 	deleteNamespace,
 	deleteNamespaceByCluster,
@@ -79,10 +83,16 @@ const ClusterManager = {
 	setDeployImage,
 	setDeployImageByFilter,
 	setDeployImagePullSecretByFilter,
+	// deploy
 	previewPrerelease,
 	rollout,
 	kubectlApply,
 	kubectlApplyContent,
+	// stacks
+	checkCertManagerInstalled,
+	checkNginxIngressInstalled,
+	installCertManagerStack,
+	installNginxIngressStack,
 };
 
 export default ClusterManager;

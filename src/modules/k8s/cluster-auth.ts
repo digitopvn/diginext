@@ -85,7 +85,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 
 	// Check if Kubernetes context of the cluster is existed -> skip cluster authentication
 	context = await getKubeContextByCluster(cluster);
-	if (context) {
+	if (context && cluster.isVerified) {
 		logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
 		return cluster;
 	}
@@ -94,23 +94,21 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 		case "gcloud":
 			// Only support Google Service Account authentication
 			const { serviceAccount } = cluster;
-			if (!serviceAccount) {
+			if (!serviceAccount)
 				throw new Error(`This cluster doesn't have any Google Service Account to authenticate, please contact your administrator.`);
-			}
 
 			// start authenticating...
 			filePath = createTmpFile(`gsa.json`, serviceAccount);
 			const gcloudAuth = await gcloud.authenticate({ filePath });
-			if (!gcloudAuth) {
-				throw new Error(`[UNKNOWN] Cannot authenticate the Google Cloud provider.`);
-			}
+			if (!gcloudAuth) throw new Error(`[UNKNOWN] Cannot authenticate the Google Cloud provider.`);
+
 			// delete temporary service account
 			unlink(filePath, (err) => err && logError(`[CLUSTER AUTH] Remove tmp file:`, err));
 
 			// save this cluster to KUBE_CONFIG
 			const { zone, projectID } = cluster;
 			if (!zone) throw new Error(`ZONE is required for Google Cloud Cluster authentication.`);
-			if (!projectID) throw new Error(`PROJECT_ID is required for Google Cloud Cluster authentication.`);
+			if (!projectID) throw new Error(`Google Cloud "PROJECT_ID" is required for GKE cluster authentication.`);
 
 			// save cluster access info to "kubeconfig"
 			await execCmd(`gcloud container clusters get-credentials ${clusterShortName} --zone=${zone} --project=${projectID}`);
@@ -125,6 +123,9 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 
 			if (shouldSwitchContextToThisCluster) switchContext(context.name);
 
+			// mark this cluster verified
+			[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
+
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
 
 			return cluster;
@@ -137,9 +138,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			}
 
 			const doAuth = await digitalocean.authenticate({ key: apiAccessToken });
-			if (!doAuth) {
-				throw new Error(`[UNKNOWN] Cannot authenticate the Digital Ocean provider.`);
-			}
+			if (!doAuth) throw new Error(`[UNKNOWN] Cannot authenticate the Digital Ocean provider.`);
 
 			// save cluster access info to "kubeconfig"
 			await execCmd(`doctl kubernetes cluster kubeconfig save ${clusterShortName}`);
@@ -155,6 +154,9 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 
 			if (shouldSwitchContextToThisCluster) switchContext(context.name);
 
+			// mark this cluster verified
+			[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
+
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${context.name}").`);
 
 			return cluster;
@@ -162,9 +164,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 		case "custom":
 			// Only support "kube-config" authentication
 			const { kubeConfig } = cluster;
-			if (!kubeConfig) {
-				throw new Error(`This cluster doesn't have any "kube-config" data to authenticate, please contact your administrator.`);
-			}
+			if (!kubeConfig) throw new Error(`This cluster doesn't have any "kube-config" data to authenticate, please contact your administrator.`);
 
 			filePath = createTmpFile(`${clusterShortName}-kube-config.yaml`, kubeConfig);
 
@@ -181,6 +181,9 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			unlink(filePath, (err) => err && logError(`[CLUSTER AUTH] Remove tmp file:`, err));
 
 			if (shouldSwitchContextToThisCluster) switchContext(contextName);
+
+			// mark this cluster verified
+			[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
 
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster (Context: "${contextName}").`);
 

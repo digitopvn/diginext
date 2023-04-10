@@ -80,7 +80,7 @@ export default class BaseController<T extends Base = any> {
 		const tobeDeletedItems = await this.service.find(this.filter);
 
 		if (tobeDeletedItems && tobeDeletedItems.length === 0)
-			return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+			return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Items not found.` });
 
 		const data = await this.service.delete(this.filter);
 

@@ -126,15 +126,24 @@ export default class ClusterController extends BaseController<Cluster> {
 		if (cloudProvider.shortName === "custom") {
 			if (!cluster.kubeConfig && !body.kubeConfig) errors.push(`Kube config data (YAML) is required.`);
 		}
-		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+		if (errors.length > 0) return respondFailure(errors);
 
 		// verify...
 		try {
 			await ClusterManager.authCluster(cluster.shortName);
 			[cluster] = await this.service.update({ _id: cluster._id }, { isVerified: true });
+
+			/**
+			 * Check for required stack installations, if not install them:
+			 */
+
+			// [1] NGINX Ingress
+			await ClusterManager.installNginxIngressStack(cluster);
+			// [2] Cert Manager
+			await ClusterManager.installCertManagerStack(cluster);
 		} catch (e) {
 			console.log("Failed to connect cluster :>> ", e);
-			return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
+			return respondFailure(`Failed to connect to the cluster, please double check your information.`);
 		}
 
 		return super.update(body);
@@ -144,7 +153,6 @@ export default class ClusterController extends BaseController<Cluster> {
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
-		// TODO: find deleted items before deleting
 		return super.delete();
 	}
 

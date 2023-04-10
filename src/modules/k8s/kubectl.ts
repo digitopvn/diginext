@@ -9,6 +9,7 @@ import { CLI_DIR } from "@/config/const";
 import type { Cluster } from "@/entities";
 import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
+import type { KubePod } from "@/interfaces/KubePod";
 import { execCmd } from "@/plugins";
 
 import { DB } from "../api/DB";
@@ -40,11 +41,11 @@ interface KubeCommandOptions extends KubeGenericOptions {
  * @param options - kubectl command options
  * @returns
  */
-export async function kubectlApply(filePath: string, namespace: string = "default", options: KubeGenericOptions = {}) {
+export async function kubectlApply(filePath: string, options: KubeGenericOptions = {}) {
 	const { context } = options;
 	const stdout = await execCmd(
-		`kubectl ${context ? `--context=${context} ` : ""}apply -f ${filePath} -n ${namespace}`,
-		`[KUBE_CTL] kubectlApply > Failed to apply "${filePath}" in "${namespace}" namespace of "${context}" cluster context.`
+		`kubectl ${context ? `--context=${context} ` : ""}apply -f ${filePath}`,
+		`[KUBE_CTL] kubectlApply > Failed to apply "${filePath}" of "${context}" cluster.`
 	);
 	if (stdout) logSuccess(stdout);
 	return stdout;
@@ -555,7 +556,7 @@ export async function getPod(name, namespace = "default", options: KubeGenericOp
 		args.push("-o", "json");
 
 		const { stdout } = await execa("kubectl", args);
-		return JSON.parse(stdout);
+		return JSON.parse(stdout) as KubePod;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getPod >`, e);
 		return;
@@ -580,7 +581,7 @@ export async function getAllPods(namespace = "default", options: KubeCommandOpti
 
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
-		return items;
+		return items as KubePod[];
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
 		return [];

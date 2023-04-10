@@ -1,4 +1,5 @@
 import type { Cluster } from "@/entities";
+import { contains } from "@/plugins/string";
 
 import ClusterManager from ".";
 
@@ -10,11 +11,18 @@ import ClusterManager from ".";
 export const checkNginxIngressInstalled = async (cluster: Cluster) => {
 	const { shortName, contextName: context, isVerified } = cluster;
 
-	if (!isVerified) return `This cluster (${shortName}) hasn't been verified yet.`;
+	if (!isVerified) return `Cluster (${shortName}) hasn't been verified yet.`;
 
-	const nginxIngressNamespaces = await ClusterManager.getAllNamespaces({ context, filterLabel: "kubernetes.io/metadata.name=ingress-nginx" });
+	const allNamespaces = await ClusterManager.getAllNamespaces({ context });
+	let nginxIngressInstalled = false;
 
-	return nginxIngressNamespaces.length > 0;
+	if (allNamespaces.length > 0) {
+		allNamespaces.map((ns) => {
+			if (contains(ns.metadata.name, ["nginx", "ingress"])) nginxIngressInstalled = true;
+		});
+	}
+
+	return nginxIngressInstalled;
 };
 
 /**
@@ -25,7 +33,7 @@ export const checkNginxIngressInstalled = async (cluster: Cluster) => {
 export const checkCertManagerInstalled = async (cluster: Cluster) => {
 	const { shortName, contextName: context, isVerified } = cluster;
 
-	if (!isVerified) return `This cluster (${shortName}) hasn't been verified yet.`;
+	if (!isVerified) return `Cluster (${shortName}) hasn't been verified yet.`;
 
 	const certManagerNamespaces = await ClusterManager.getAllNamespaces({ context, filterLabel: "kubernetes.io/metadata.name=cert-manager" });
 
