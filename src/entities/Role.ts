@@ -36,6 +36,9 @@ export default class Role extends Base {
 	@Column({ array: true })
 	routes: RoleRoute[];
 
+	@Column({ array: true })
+	maskedFields?: string[];
+
 	/**
 	 * One of:
 	 * - undefined | "custom": custom role

@@ -1,7 +1,7 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
 
-import type { Role, Workspace } from "@/entities";
+import type { Workspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { filterRole } from "@/plugins/user-utils";
 
@@ -41,51 +41,48 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	/**
 	 * authorization logic here!
 	 */
-	// const { roles } = user;
-	const roles = user.roles as Role[];
-	const activeRole = roles.filter((role) => role.workspace.toString() === wsId)[0];
-	user.activeRole = activeRole;
+	const { activeRole } = user;
+	console.log("activeRole :>> ", activeRole);
 
-	// get "routes" -> find "key" as route & "value" as IRole
 	// If wildcard "*" route is specified:
-	activeRole.routes
-		.filter((routeInfo) => routeInfo.route === "*")
-		.map((routeInfo) => {
-			if (routeInfo.permissions.includes(requestPermission)) {
+	let routeRole = activeRole.routes.find((routeInfo) => routeInfo.route === "*");
+
+	if (routeRole) {
+		if (routeRole.permissions.includes(requestPermission)) {
+			isAllowed = true;
+		} else {
+			// if permisions have "own" -> only have access to items which "owner" is "userID":
+			if (routeRole.permissions.includes("full")) {
+				isAllowed = true;
+			} else if (routeRole.permissions.includes("own")) {
+				req.query.owner = user._id.toString();
 				isAllowed = true;
 			} else {
-				// if permisions have "own" -> only have access to items which "owner" is "userID":
-				if (routeInfo.permissions.includes("full")) {
-					isAllowed = true;
-				} else if (routeInfo.permissions.includes("own")) {
-					req.query.owner = user._id.toString();
-					isAllowed = true;
-				} else {
-					isAllowed = false;
-				}
+				isAllowed = false;
 			}
-		});
+		}
+	}
 
 	// Check again if a specific route is specified:
-	activeRole.routes
-		.filter((routeInfo) => routeInfo.route === route)
-		.map((routeInfo) => {
-			if (routeInfo.permissions.includes(requestPermission)) {
+	routeRole = activeRole.routes.find((routeInfo) => routeInfo.route === route);
+
+	if (routeRole) {
+		if (routeRole.permissions.includes(requestPermission)) {
+			delete req.query.owner;
+			isAllowed = true;
+		} else {
+			// if permisions have "own" -> only have access to items which "owner" is "userID":
+			if (routeRole.permissions.includes("full")) {
 				delete req.query.owner;
 				isAllowed = true;
+			} else if (routeRole.permissions.includes("own")) {
+				req.query.owner = user._id.toString();
+				isAllowed = true;
 			} else {
-				// if permisions have "own" -> only have access to items which "owner" is "userID":
-				if (routeInfo.permissions.includes("full")) {
-					delete req.query.owner;
-					isAllowed = true;
-				} else if (routeInfo.permissions.includes("own")) {
-					req.query.owner = user._id.toString();
-					isAllowed = true;
-				} else {
-					isAllowed = false;
-				}
+				isAllowed = false;
 			}
-		});
+		}
+	}
 
 	// print the debug info
 	console.log(

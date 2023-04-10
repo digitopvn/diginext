@@ -2,8 +2,9 @@ import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { Workspace, WorkspaceApiAccessToken } from "@/entities";
+import type { Role, Workspace, WorkspaceApiAccessToken } from "@/entities";
 import { User } from "@/entities";
+import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { getUnexpiredAccessToken } from "@/plugins";
 
@@ -26,7 +27,7 @@ export const mockUserOfApiAccessToken = (apiAccessToken: WorkspaceApiAccessToken
 	return mockedApiAccessTokenUser;
 };
 
-export const apiAccessTokenHandler = async (req: any, res: Response, next: NextFunction) => {
+export const apiAccessTokenHandler = async (req: AppRequest, res: Response, next: NextFunction) => {
 	// console.log(`Handling API_ACCESS_TOKEN`, req.headers);
 
 	// API_ACCESS_TOKEN will be transformed to lowercase in Express:
@@ -40,12 +41,17 @@ export const apiAccessTokenHandler = async (req: any, res: Response, next: NextF
 	);
 
 	if (user) {
-		// filter roles
-		// [user] = await filterRole(user.activeWorkspace.toString(), [user]);
+		// role
+		const { roles } = user;
+		const activeRole = roles.find(
+			(role) => (role as Role).workspace.toString() === (user.activeWorkspace as Workspace)._id.toString() && !(role as Role).deletedAt
+		) as Role;
+
+		user.activeRole = activeRole;
+		req.role = activeRole;
 
 		// Set the flag to indicate that the user has been authenticated -> skip JWT
 		req.user = user;
-		req.isAuthenticated = true;
 
 		next();
 	} else {

@@ -113,7 +113,7 @@ export default class BaseController<T extends Base = any> {
 	parseBody(req: AppRequest, res?: Response, next?: NextFunction) {
 		// log("req.body [1] >>", req.body);
 
-		req.body = traverseObjectAndTransformValue(req.body, ([key, val]) => {
+		traverseObjectAndTransformValue(req.body, ([key, val]) => {
 			if (isValidObjectId(val)) {
 				return new ObjectId(val);
 			} else if (isNumberString(val)) {

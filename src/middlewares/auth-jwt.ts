@@ -2,6 +2,8 @@
 import { Response } from "diginext-utils/dist/response";
 import passport from "passport";
 
+import type { Role, Workspace } from "@/entities";
+
 /**
  * Why you don't need to care about this file?
  * ---
@@ -24,6 +26,15 @@ const jwt_auth = (req, res, next) =>
 				? Response.ignore(res, "Access token was expired.")
 				: Response.ignore(res, info?.toString());
 		} else {
+			// role
+			const { roles } = user;
+			const activeRole = roles.find(
+				(role) => (role as Role).workspace.toString() === (user.activeWorkspace as Workspace)._id.toString() && !(role as Role).deletedAt
+			) as Role;
+			user.activeRole = activeRole;
+			req.role = activeRole;
+
+			// user
 			req.user = user;
 			res.locals.user = user;
 

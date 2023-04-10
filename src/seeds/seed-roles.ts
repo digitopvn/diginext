@@ -59,6 +59,19 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 		memberRoleDto.routes = memberRoleRoutes;
 		memberRoleDto.workspace = workspace._id;
 		memberRoleDto.type = "member";
+		memberRoleDto.maskedFields = [
+			"email",
+			"apiAccessToken",
+			"serviceAccount",
+			"dockerPassword",
+			"kubeConfig",
+			"token.access_token",
+			"metadata.email",
+			"metadata.apiAccessToken",
+			"metadata.serviceAccount",
+			"metadata.dockerPassword",
+			"metadata.kubeConfig",
+		];
 
 		memberRole = await DB.create<Role>("role", memberRoleDto);
 		if (memberRole) console.log(`Workspace "${workspace.name}" > Created default member role :>> `, memberRoleDto.name);

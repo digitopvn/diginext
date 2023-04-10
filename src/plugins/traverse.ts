@@ -1,8 +1,9 @@
-interface MyObject {
-	[key: string]: any;
-}
+export function traverseObjectAndTransformValue(obj: any, transform: (keyPair: [key: string, val: any]) => any) {
+	if (typeof obj === "string") return obj;
+	if (typeof obj === "number") return obj;
+	if (typeof obj === "boolean") return obj;
+	if (typeof obj === "function") return obj;
 
-export function traverseObjectAndTransformValue(obj: MyObject, transform: (keyPair: [key: string, val: any]) => any) {
 	for (const key in obj) {
 		if (typeof obj[key] === "object" && obj[key] !== null) {
 			traverseObjectAndTransformValue(obj[key], transform);
@@ -10,4 +11,6 @@ export function traverseObjectAndTransformValue(obj: MyObject, transform: (keyPa
 			obj[key] = transform([key, obj[key]]);
 		}
 	}
+
+	return obj;
 }
