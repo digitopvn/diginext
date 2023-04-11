@@ -66,6 +66,7 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 			"dockerPassword",
 			"kubeConfig",
 			"token.access_token",
+			"imagePullSecret.value",
 			"metadata.email",
 			"metadata.apiAccessToken",
 			"metadata.serviceAccount",

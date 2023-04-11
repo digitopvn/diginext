@@ -33,13 +33,13 @@ export const maskSensitiveInfo = (data: any, role: Role) => {
 	if (isArray(data)) {
 		data = data.map((item) => {
 			maskedFields.map((maskedField) => {
-				if (_.has(item, maskedField)) item = _.set(item, maskedField, "***");
+				if (_.has(item, maskedField)) item = _.set(item, maskedField, "");
 			});
 			return item;
 		});
 	} else {
 		maskedFields.map((maskedField) => {
-			if (_.has(data, maskedField)) data = _.set(data, maskedField, "***");
+			if (_.has(data, maskedField)) data = _.set(data, maskedField, "");
 		});
 	}
 

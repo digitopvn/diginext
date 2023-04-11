@@ -42,7 +42,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	 * authorization logic here!
 	 */
 	const { activeRole } = user;
-	console.log("activeRole :>> ", activeRole);
+	// console.log("activeRole :>> ", activeRole);
 
 	// If wildcard "*" route is specified:
 	let routeRole = activeRole.routes.find((routeInfo) => routeInfo.route === "*");
@@ -85,12 +85,15 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	}
 
 	// print the debug info
-	console.log(
-		`authorize > [${requestPermission}] ${route} > role :>> `,
-		`[${activeRole.workspace}] ${activeRole.name}: ${activeRole.routes.map((r) => `${r.route} - ${r.permissions.join(",")}`).join("\n")}`,
-		`>> ALLOW:`,
-		isAllowed
-	);
+	// console.log(
+	// 	`authorize > [${requestPermission}] ${route} > role :>>`,
+	// 	`[${activeRole.workspace}] ${activeRole.name}: \n${activeRole.routes
+	// 		.map((r) => `· ${r.route} - ${r.permissions.join(",") || "none"}`)
+	// 		.join("\n")}`,
+	// 	`\n>> ALLOW:`,
+	// 	isAllowed
+	// );
+
 	if (!isAllowed) return ApiResponse.rejected(res);
 
 	// always lock query filter to workspace scope
