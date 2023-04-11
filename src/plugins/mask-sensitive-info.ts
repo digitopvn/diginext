@@ -28,7 +28,7 @@ export const mask = (str: string, leftUnmaskLength = 0, rightUnmaskLength?: numb
 export const maskSensitiveInfo = (data: any, role: Role) => {
 	if (typeof data === "boolean" || typeof data === "number" || typeof data === "string") return data;
 
-	const maskedFields = role.maskedFields || [];
+	const maskedFields = role?.maskedFields || [];
 
 	if (isArray(data)) {
 		data = data.map((item) => {

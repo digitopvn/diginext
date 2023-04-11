@@ -114,17 +114,11 @@ export default class BaseController<T extends Base = any> {
 		// log("req.body [1] >>", req.body);
 
 		traverseObjectAndTransformValue(req.body, ([key, val]) => {
-			if (isValidObjectId(val)) {
-				return new ObjectId(val);
-			} else if (isNumberString(val)) {
-				return toNumber(val);
-			} else if (isBooleanString(val)) {
-				return toBool(val);
-			} else if (isJSON(val)) {
-				return JSON.parse(val);
-			} else {
-				return val;
-			}
+			if (isValidObjectId(val)) return new ObjectId(val);
+			if (isNumberString(val)) return toNumber(val);
+			if (isBooleanString(val)) return toBool(val);
+			if (isJSON(val)) return JSON.parse(val);
+			return val;
 		});
 
 		if (next) next();

@@ -12,7 +12,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	// console.log("authorize > route :>> ", route);
 
 	// filter roles
-	const wsId = (user.activeWorkspace as Workspace)._id ? (user.activeWorkspace as Workspace)._id.toString() : user.activeWorkspace.toString();
+	const wsId = (user.activeWorkspace as Workspace)?._id ? (user.activeWorkspace as Workspace)._id.toString() : user.activeWorkspace.toString();
 	[user] = await filterRole(wsId, [user]);
 	// console.log("authorize > user :>> ", user);
 

@@ -15,6 +15,7 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 		adminRoleDto.routes = [{ route: "*", permissions: ["full"] }];
 		adminRoleDto.workspace = workspace._id;
 		adminRoleDto.type = "admin";
+		adminRoleDto.maskedFields = [];
 
 		adminRole = await DB.create<Role>("role", adminRoleDto);
 		if (adminRole) console.log(`Workspace "${workspace.name}" > Created default admin role :>> `, adminRoleDto.name);
@@ -96,6 +97,7 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 		moderatorRoleDto.routes = moderatorRoleRoutes;
 		moderatorRoleDto.workspace = workspace._id;
 		moderatorRoleDto.type = "moderator";
+		moderatorRoleDto.maskedFields = [];
 
 		moderatorRole = await DB.create<Role>("role", moderatorRoleDto);
 		if (moderatorRole) console.log(`Workspace "${workspace.name}" > Created default moderator role :>> `, moderatorRole.name);

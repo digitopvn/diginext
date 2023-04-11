@@ -901,6 +901,12 @@
 						},
 						"type": "array"
 					},
+					"maskedFields": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
 					"type": {
 						"type": "string",
 						"description": "One of:\n- undefined | \"custom\": custom role\n- \"admin\": default super admin role\n- \"member\": default member role\n- \"moderator\": default moderator role"
@@ -4008,6 +4014,12 @@
 					"routes": {
 						"items": {
 							"$ref": "#/components/schemas/RoleRoute"
+						},
+						"type": "array"
+					},
+					"maskedFields": {
+						"items": {
+							"type": "string"
 						},
 						"type": "array"
 					}
@@ -9716,6 +9728,9 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"itemId": {
+										"$ref": "#/components/schemas/ObjectId"
+									},
 									"route": {
 										"type": "string"
 									},
@@ -11252,6 +11267,52 @@
 						}
 					}
 				]
+			}
+		},
+		"/workspace/invite": {
+			"post": {
+				"operationId": "InviteMember",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["Workspace"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"emails": {
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
+									}
+								},
+								"required": ["emails"],
+								"type": "object"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/workspace/add-user": {

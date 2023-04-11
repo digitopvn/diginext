@@ -13,21 +13,17 @@ export interface ResponseData {
 }
 
 export const respondFailure = (params: { data?: any; msg?: string } | string | string[]) => {
-	if (isString(params)) {
-		return { status: 0, messages: [params] } as ResponseData;
-	} else if (isArray(params)) {
-		return { status: 0, messages: params } as ResponseData;
-	} else {
-		const { msg = "Unexpected error.", data } = params;
-		return { status: 0, data, messages: [msg] } as ResponseData;
-	}
+	if (isString(params)) return { status: 0, messages: [params] } as ResponseData;
+	if (isArray(params)) return { status: 0, messages: params } as ResponseData;
+
+	const { msg = "Unexpected error.", data } = params;
+	return { status: 0, data, messages: [msg] } as ResponseData;
 };
 
 export const respondSuccess = (params: { data?: any; msg?: string | string[] }) => {
 	const { msg = "Ok.", data } = params;
-	if (isArray(msg)) {
-		return { status: 1, data, messages: msg } as ResponseData;
-	} else {
-		return { status: 1, data, messages: [msg] } as ResponseData;
-	}
+
+	if (isArray(msg)) return { status: 1, data, messages: msg } as ResponseData;
+
+	return { status: 1, data, messages: [msg] } as ResponseData;
 };

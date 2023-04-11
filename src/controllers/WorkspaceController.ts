@@ -2,6 +2,7 @@ import { isUndefined } from "lodash";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
+import { Config } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { Role, User, Workspace } from "@/entities";
 import type Base from "@/entities/Base";
@@ -9,6 +10,7 @@ import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { ObjectID } from "@/libs/typeorm";
 import { DB } from "@/modules/api/DB";
+import { sendDiginextEmail } from "@/modules/diginext/dx-email";
 import { isValidObjectId, toObjectId } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
@@ -62,10 +64,14 @@ export default class WorkspaceController extends BaseController<Workspace> {
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: WorkspaceInputData) {
-		const { owner, name } = body;
+		const { owner = this.user._id.toString(), name } = body;
 
 		if (!name) return respondFailure({ msg: `Workspace "name" is required.` });
 		if (!owner) return respondFailure({ msg: `Workspace "owner" (UserID) is required.` });
+
+		// find owner
+		let ownerUser = await DB.findOne<User>("user", { _id: owner });
+		if (!ownerUser) return respondFailure("Workspace's owner not found.");
 
 		// Assign some default values if it's missing
 		if (isUndefined(body.public)) body.public = true;
@@ -78,21 +84,21 @@ export default class WorkspaceController extends BaseController<Workspace> {
 
 		const newWorkspace = result.data as Workspace;
 
-		// [2] Ownership: add this workspace to the creator {User} if it's not existed:
-		let user = await addUserToWorkspace(toObjectId(owner), newWorkspace);
-
-		// set this workspace as "activeWorkspace" for this creator:
-		user = await makeWorkspaceActive(toObjectId(owner), toObjectId(newWorkspace._id));
-
 		/**
-		 * SEED INITIAL DATA TO THIS WORKSPACE
+		 * [2] SEED INITIAL DATA TO THIS WORKSPACE
 		 * - Default roles
 		 * - Default permissions of routes
 		 * - Default API_KEY
 		 * - Default Service Account
 		 * - Default Frameworks
 		 */
-		await seedWorkspaceInitialData(newWorkspace, user);
+		await seedWorkspaceInitialData(newWorkspace, ownerUser);
+
+		// [3] Ownership: add this workspace to the creator {User} if it's not existed:
+		ownerUser = await addUserToWorkspace(toObjectId(owner), newWorkspace, "admin");
+
+		// [4] Set this workspace as "activeWorkspace" for this creator:
+		ownerUser = await makeWorkspaceActive(toObjectId(owner), toObjectId(newWorkspace._id));
 
 		return { status: 1, data: newWorkspace, messages: [] } as ResponseData & { data: Workspace };
 	}
@@ -101,6 +107,8 @@ export default class WorkspaceController extends BaseController<Workspace> {
 	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: WorkspaceInputData, @Queries() queryParams?: IPostQueryParams) {
+		const { slug } = body;
+
 		return super.update(body);
 	}
 
@@ -109,6 +117,46 @@ export default class WorkspaceController extends BaseController<Workspace> {
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/invite")
+	async inviteMember(@Body() data: { emails: string[] }) {
+		if (!data.emails || data.emails.length === 0) return respondFailure({ msg: `List of email is required.` });
+		if (!this.user) return respondFailure({ msg: `Unauthenticated.` });
+
+		const { emails } = data;
+
+		const workspace = this.user.activeWorkspace as Workspace;
+		const wsId = toObjectId(workspace._id);
+		const userId = toObjectId(this.user._id);
+
+		// check if this user is admin of the workspace:
+		if (this.user.activeRole.type !== "admin" && this.user.activeRole.type !== "moderator") return respondFailure(`Unauthorized.`);
+
+		const memberRole = await DB.findOne<Role>("role", { type: "member", workspace: wsId });
+
+		// create temporary users of invited members:
+		const invitedMembers = await Promise.all(
+			emails.map(async (email) => {
+				const invitedMember = await DB.create<User>("user", { email: email, workspaces: [wsId], roles: [memberRole._id] });
+				return invitedMember;
+			})
+		);
+
+		const mailContent = `Dear,<br/><br/>You've been invited to <strong>"${workspace.name}"</strong> workspace, please <a href="${Config.BASE_URL}" target="_blank">click here</a> to login.<br/><br/>Cheers,<br/>Diginext System`;
+
+		// send invitation email to those users:
+		const result = await sendDiginextEmail({
+			recipients: invitedMembers.map((member) => {
+				return { email: member.email };
+			}),
+			subject: `[DIGINEXT] "${this.user.name}" has invited you to join "${workspace.name}" workspace.`,
+			content: mailContent,
+		});
+
+		return result;
 	}
 
 	@Security("api_key")
