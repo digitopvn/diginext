@@ -48,6 +48,9 @@ const jwt_auth = (req, res, next) =>
 			const activeRole = roles.find(
 				(role) => (role as Role).workspace.toString() === (user.activeWorkspace as Workspace)?._id.toString() && !(role as Role).deletedAt
 			) as Role;
+
+			if (!activeRole) return respondFailure(`Unauthorized: no active role.`);
+
 			user.activeRole = activeRole;
 			req.role = activeRole;
 

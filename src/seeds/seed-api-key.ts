@@ -22,7 +22,7 @@ export const seedApiKeys = async (workspace: Workspace, owner: User) => {
 	apiKeyDto.activeWorkspace = workspace._id;
 	apiKeyDto.token = getUnexpiredAccessToken(apiKeyToken.value);
 
-	const apiKey = await DB.create("user", apiKeyDto);
+	const apiKey = await DB.create<ApiKeyAccount>("api_key_user", apiKeyDto);
 	if (apiKey) log(`[WORKSPACE_CONTROLLER] Created "${apiKey.name}" successfully.`);
 
 	return apiKey;
