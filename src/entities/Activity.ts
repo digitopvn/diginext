@@ -20,6 +20,9 @@ export default class Activity extends Base {
 	route?: string;
 
 	@Column()
+	routeName?: string;
+
+	@Column()
 	method?: string;
 
 	@Column()

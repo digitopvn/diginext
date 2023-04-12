@@ -131,7 +131,6 @@ export default class BaseController<T extends Base = any> {
 	 */
 	parseFilter(req: AppRequest, res?: Response, next?: NextFunction) {
 		const {
-			id,
 			download = false,
 			skip,
 			limit = 0,

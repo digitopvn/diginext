@@ -1,8 +1,10 @@
 import { logRes } from "diginext-utils/dist/console/log";
-import { Response as AppResponse } from "diginext-utils/dist/response";
-import type { NextFunction, Request, Response } from "express";
+import { Response as ApiResponse } from "diginext-utils/dist/response";
+import type { NextFunction } from "express";
 
-export const route404_handler = (req: Request, res: Response, next: NextFunction) => {
-	logRes(res, `Forgot to register this route in "api/v1/index"?`);
-	return AppResponse.ignore(res);
+import type { AppRequest, AppResponse } from "@/interfaces/SystemTypes";
+
+export const route404_handler = (req: AppRequest, res: AppResponse, next: NextFunction) => {
+	logRes(res, `Forgot to register "${req.originalUrl}" route in "api/v1/index"?`);
+	return ApiResponse.ignore(res);
 };

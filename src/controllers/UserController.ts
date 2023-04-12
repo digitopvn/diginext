@@ -8,7 +8,7 @@ import { UserDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import { MongoDB, toObjectId } from "@/plugins/mongodb";
-import { filterRole, filterSensitiveInfo } from "@/plugins/user-utils";
+import { addRoleToUser, filterRole, filterSensitiveInfo } from "@/plugins/user-utils";
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
 
@@ -85,6 +85,8 @@ export default class UserController extends BaseController<User> {
 			body.roles = newRoleIds;
 		}
 
+		// console.log("this.filter :>> ", this.filter);
+
 		// [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
 		if (this.filter.owner && MongoDB.toString(this.filter.owner) === MongoDB.toString(this.user._id)) delete this.filter.owner;
 
@@ -101,25 +103,17 @@ export default class UserController extends BaseController<User> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/assign-role")
-	async assignRole(@Body() data: { roleId: string }) {
+	async assignRole(@Body() data: { roleId: ObjectId }) {
 		if (!data.roleId) return respondFailure({ msg: `Role ID is required.` });
 		if (!this.user) return respondFailure({ msg: `User not found.` });
 
 		const { roleId } = data;
-		const currentRoles = this.user.roles.filter((role) => MongoDB.toString((role as Role).workspace) === MongoDB.toString(this.workspace._id));
-		const prevRole = currentRoles[0] as Role;
 
 		const newRole = await DB.findOne<Role>("role", { _id: roleId });
-		const newRoles = [...this.user.roles.filter((role) => MongoDB.toString((role as Role)._id) !== MongoDB.toString(prevRole._id)), newRole];
-		const newRoleIds = newRoles.map((role) => (role as Role)._id);
+		const roleType = newRole.type as "admin" | "moderator" | "member";
 
-		let [updatedUser] = await DB.update<User>(
-			"user",
-			{ _id: this.user._id },
-			{ roles: newRoleIds },
-			{ populate: ["roles", "workspaces", "activeWorkspace"] }
-		);
-		if (!updatedUser) return respondFailure({ msg: `Failed to assign "${newRole.name}" role to "${this.user.slug}" user.` });
+		// add role to user
+		let updatedUser = await addRoleToUser(roleType, MongoDB.toObjectId(this.user._id), this.workspace);
 
 		// filter roles & workspaces before returning
 		[updatedUser] = await filterRole(MongoDB.toString(this.workspace._id), [updatedUser]);

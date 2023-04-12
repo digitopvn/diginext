@@ -31,16 +31,23 @@ export const addUserToWorkspace = async (userId: ObjectId, workspace: Workspace,
 };
 
 export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", userId: ObjectId, workspace: Workspace) => {
-	let user = await DB.findOne<User>("user", { id: userId });
+	// find user
+	let user = await DB.findOne<User>("user", { id: userId }, { populate: ["roles"] });
 	if (!user) throw new Error(`User not found.`);
 
+	// find role
 	const role = await DB.findOne<Role>("role", { type: roleType, workspace: workspace._id });
 	if (!role) throw new Error(`Role "${roleType}" not found.`);
 
-	const roles = user.roles || [];
-	const hasRole = roles.map((_id) => MongoDB.toString(_id)).includes(MongoDB.toString(role._id));
-	if (!hasRole) roles.push(role._id);
+	// remove old roles
+	const roles = (user.roles || [])
+		.filter((_role) => MongoDB.toString((_role as Role).workspace) !== MongoDB.toString(workspace._id))
+		.map((_role) => (_role as Role)._id);
 
+	// push new role
+	roles.push(role._id);
+
+	// update database
 	[user] = await DB.update<User>("user", { _id: user._id }, { roles });
 	return user;
 };

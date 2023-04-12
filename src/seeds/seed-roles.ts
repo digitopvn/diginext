@@ -24,8 +24,9 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 
 	// assign admin role to the "owner" user
 	const userRoles = owner.roles || [];
-	if (!userRoles.map((r) => r.toString()).includes(MongoDB.toString(adminRole._id))) {
-		userRoles.push(adminRole);
+	const userHasAdminRole = userRoles.map((rid) => MongoDB.toString(rid)).includes(MongoDB.toString(adminRole._id));
+	if (!userHasAdminRole) {
+		userRoles.push(adminRole._id);
 		const [user] = await DB.update<User>("user", { _id: owner._id }, { roles: userRoles });
 		console.log(`Workspace "${workspace.name}" > User "${user.name}" is now an administrator.`);
 	}

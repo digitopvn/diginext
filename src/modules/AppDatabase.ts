@@ -2,6 +2,7 @@ import "reflect-metadata";
 
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
 
+import Activity from "@/entities/Activity";
 import ApiKeyAccount from "@/entities/ApiKeyAccount";
 import App from "@/entities/App";
 // entities
@@ -32,6 +33,7 @@ export const appDataSource = new DataSource({
 	logging: true,
 	entities: [
 		App,
+		Activity,
 		User,
 		ServiceAccount,
 		ApiKeyAccount,

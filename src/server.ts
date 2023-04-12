@@ -23,7 +23,6 @@ import { Config, IsDev, IsProd } from "./app.config";
 import type { AppRequest } from "./interfaces/SystemTypes";
 import { saveActivityLog } from "./middlewares/activity-log";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
-import { route404_handler } from "./middlewares/route404";
 import AppDatabase from "./modules/AppDatabase";
 import { startupScripts } from "./modules/server/startup-scripts";
 import routes from "./routes/routes";
@@ -107,6 +106,7 @@ function initialize() {
 		 */
 		app.use(bodyParser.urlencoded({ limit: "200mb", extended: true }));
 		app.use(bodyParser.json({ limit: "200mb" }));
+		// app.use(logResponseBody);
 
 		/**
 		 * QUERY PARSER
@@ -156,14 +156,14 @@ function initialize() {
 		app.use(`/${BASE_PATH}`, routes);
 
 		/**
-		 * ROUTE 404 & FAIL SAFE HANDLING MIDDLEWARE
-		 */
-		app.use("*", route404_handler);
-
-		/**
 		 * Save activity log to database
 		 */
 		app.use(saveActivityLog);
+
+		/**
+		 * ROUTE 404 & FAIL SAFE HANDLING MIDDLEWARE
+		 */
+		// app.use("*", route404_handler);
 
 		// make sure the Express app won't be crashed if there are any errors
 		if (IsProd()) app.use(failSafeHandler);
