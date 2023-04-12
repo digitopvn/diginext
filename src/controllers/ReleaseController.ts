@@ -7,6 +7,7 @@ import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfa
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { createReleaseFromBuild } from "@/modules/build/create-release-from-build";
 import ClusterManager from "@/modules/k8s";
+import { MongoDB } from "@/plugins/mongodb";
 import BuildService from "@/services/BuildService";
 import ReleaseService from "@/services/ReleaseService";
 
@@ -82,7 +83,7 @@ export default class ReleaseController extends BaseController<Release> {
 		if (!releaseId) return respondFailure({ msg: `Release ID is required.` });
 
 		try {
-			const rolloutResult = await ClusterManager.rollout(id.toString());
+			const rolloutResult = await ClusterManager.rollout(MongoDB.toString(id));
 			if (rolloutResult.error) {
 				return respondFailure({ msg: rolloutResult.error });
 			}
@@ -104,7 +105,7 @@ export default class ReleaseController extends BaseController<Release> {
 		if (!releaseId) return respondFailure({ msg: `Release ID is required.` });
 
 		try {
-			const previewRes = await ClusterManager.previewPrerelease(id.toString());
+			const previewRes = await ClusterManager.previewPrerelease(MongoDB.toString(id));
 
 			if (previewRes.error) {
 				return respondFailure({ msg: previewRes.error });

@@ -7,6 +7,7 @@ import { User } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { getUnexpiredAccessToken } from "@/plugins";
+import { MongoDB } from "@/plugins/mongodb";
 
 export const mockUserOfApiAccessToken = (apiAccessToken: WorkspaceApiAccessToken, workspace: Workspace) => {
 	const access_token = apiAccessToken.token;
@@ -41,17 +42,33 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: Response, next
 	);
 
 	if (user) {
+		// check active workspace
+		if (!user.activeWorkspace) {
+			const workspaces = user.workspaces as Workspace[];
+			if (workspaces.length === 1) {
+				[user] = await DB.update<User>(
+					"user",
+					{ _id: user._id },
+					{ activeWorkspace: workspaces[0]._id },
+					{ populate: ["roles", "workspaces", "activeWorkspace"] }
+				);
+			}
+			req.workspace = user.activeWorkspace as Workspace;
+		}
+
 		// role
-		const { roles } = user;
+		const { roles = [] } = user;
 		const activeRole = roles.find(
-			(role) => (role as Role).workspace.toString() === (user.activeWorkspace as Workspace)._id.toString() && !(role as Role).deletedAt
+			(role) =>
+				MongoDB.toString((role as Role).workspace) === MongoDB.toString((user.activeWorkspace as Workspace)?._id) && !(role as Role).deletedAt
 		) as Role;
 
 		user.activeRole = activeRole;
 		req.role = activeRole;
 
-		// Set the flag to indicate that the user has been authenticated -> skip JWT
+		// user
 		req.user = user;
+		res.locals.user = user;
 
 		next();
 	} else {

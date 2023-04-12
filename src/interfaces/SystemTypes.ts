@@ -1,11 +1,16 @@
 import type express from "express";
 
-import type { Role, User } from "@/entities";
+import type { Role, User, Workspace } from "@/entities";
 
 // express.js
 export interface AppRequest extends express.Request {
 	user?: User;
 	role?: Role;
+	workspace?: Workspace;
+}
+
+export interface AppResponse extends express.Response {
+	body?: string;
 }
 
 // cloud providers

@@ -3,6 +3,7 @@
 import type { RoleRoute, User, Workspace } from "@/entities";
 import { Role } from "@/entities";
 import { DB } from "@/modules/api/DB";
+import { MongoDB } from "@/plugins/mongodb";
 
 // seed default roles of a workspace
 export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
@@ -18,15 +19,26 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 		adminRoleDto.maskedFields = [];
 
 		adminRole = await DB.create<Role>("role", adminRoleDto);
-		if (adminRole) console.log(`Workspace "${workspace.name}" > Created default admin role :>> `, adminRoleDto.name);
+		console.log(`Workspace "${workspace.name}" > Created default admin role :>> `, adminRoleDto.name);
 	}
 
 	// assign admin role to the "owner" user
-	const userRoles = owner.roles || [];
-	if (!userRoles.map((r) => r.toString()).includes(adminRole._id.toString())) {
+	const fullOwner = await DB.findOne<User>("user", { _id: owner._id }, { populate: ["roles"] });
+	let userRoles = (fullOwner.roles || []) as Role[];
+	// console.log("userRoles :>> ", userRoles);
+	// console.log("adminRole._id :>> ", adminRole._id);
+	const userHasAdminRole = userRoles.map((role) => MongoDB.toString(role._id)).includes(MongoDB.toString(adminRole._id));
+	// console.log(userRoles.map((role) => MongoDB.toString(role._id)));
+	// console.log(MongoDB.toString(adminRole._id));
+	// console.log(`Workspace "${workspace.name}" > userHasAdminRole :>> `, userHasAdminRole);
+
+	if (!userHasAdminRole) {
+		userRoles = userRoles.filter((role) => MongoDB.toString(role.workspace) !== MongoDB.toString(workspace._id));
 		userRoles.push(adminRole);
-		const [user] = await DB.update<User>("user", { _id: owner._id }, { roles: userRoles });
-		console.log(`Workspace "${workspace.name}" > User "${user.name}" is now an administrator.`);
+		// update role ids
+		const roleIds = userRoles.map((role) => role._id);
+		const [user] = await DB.update<User>("user", { _id: owner._id }, { roles: roleIds });
+		// console.log(`Workspace "${workspace.name}" > User "${user.name}" is now an administrator.`);
 	}
 
 	// MEMBER
@@ -76,7 +88,7 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 		];
 
 		memberRole = await DB.create<Role>("role", memberRoleDto);
-		if (memberRole) console.log(`Workspace "${workspace.name}" > Created default member role :>> `, memberRoleDto.name);
+		console.log(`Workspace "${workspace.name}" > Created default member role :>> `, memberRoleDto.name);
 	} else {
 		// compare routes & permissions, if it doesn't match -> update!
 		const defaultMemberRoleRoutes = memberRoleRoutes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
@@ -100,7 +112,7 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 		moderatorRoleDto.maskedFields = [];
 
 		moderatorRole = await DB.create<Role>("role", moderatorRoleDto);
-		if (moderatorRole) console.log(`Workspace "${workspace.name}" > Created default moderator role :>> `, moderatorRole.name);
+		console.log(`Workspace "${workspace.name}" > Created default moderator role :>> `, moderatorRole.name);
 	} else {
 		// compare routes & permissions, if it doesn't match -> update!
 		const defaultModRoleRoutes = moderatorRoleRoutes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");

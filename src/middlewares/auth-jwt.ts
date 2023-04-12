@@ -3,14 +3,16 @@ import { Response } from "diginext-utils/dist/response";
 import passport from "passport";
 
 import type { Role, User, Workspace } from "@/entities";
+import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
+import { MongoDB } from "@/plugins/mongodb";
 
 /**
  * Why you don't need to care about this file?
  * ---
  * Because the {User} was already verified at "jwtStrategy" step before passing the token here!
  */
-const jwt_auth = (req, res, next) =>
+const jwt_auth = (req: AppRequest, res, next) =>
 	passport.authenticate("jwt", { session: false }, async function (err, user: User, info) {
 		// console.log(err, user, info);
 		// console.log(`AUTHENTICATE: jwt_auth > assign token:`, user);
@@ -37,17 +39,16 @@ const jwt_auth = (req, res, next) =>
 						{ activeWorkspace: workspaces[0]._id },
 						{ populate: ["roles", "workspaces", "activeWorkspace"] }
 					);
-				} else {
-					// console.log("Unauthenticate :>> [1]");
-					// return respondFailure(`Unauthenticated: no active workspace.`);
-					// return next();
 				}
+				req.workspace = user.activeWorkspace as Workspace;
 			}
 
 			// role
 			const { roles = [] } = user;
 			const activeRole = roles.find(
-				(role) => (role as Role).workspace.toString() === (user.activeWorkspace as Workspace)?._id.toString() && !(role as Role).deletedAt
+				(role) =>
+					MongoDB.toString((role as Role).workspace) === MongoDB.toString((user.activeWorkspace as Workspace)?._id) &&
+					!(role as Role).deletedAt
 			) as Role;
 
 			// console.log("Unauthenticate :>> [2]");

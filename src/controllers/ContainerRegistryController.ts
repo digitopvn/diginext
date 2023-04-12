@@ -13,6 +13,7 @@ import digitalocean from "@/modules/providers/digitalocean";
 import gcloud from "@/modules/providers/gcloud";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { createTmpFile } from "@/plugins";
+import { MongoDB } from "@/plugins/mongodb";
 import ContainerRegistryService from "@/services/ContainerRegistryService";
 
 import BaseController from "./BaseController";
@@ -176,7 +177,7 @@ export default class ContainerRegistryController extends BaseController<Containe
 	async connect(@Queries() queryParams?: { slug: string }) {
 		const result: { status: number; messages: string[]; data: any } = { status: 1, messages: [], data: {} };
 
-		const options = { userId: this.user?._id.toString(), workspaceId: this.user?.activeWorkspace.toString() };
+		const options = { userId: MongoDB.toString(this.user?._id), workspaceId: MongoDB.toString(this.user?.activeWorkspace) };
 		// console.log("options :>> ", options);
 
 		const { slug } = this.filter.query;

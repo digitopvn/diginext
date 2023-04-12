@@ -7,6 +7,7 @@ import type { IRoutePermission } from "@/interfaces";
 import { IGetQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import type { DBCollection } from "@/modules/api/DB";
 import { DB } from "@/modules/api/DB";
+import { MongoDB } from "@/plugins/mongodb";
 import RouteService from "@/services/RouteService";
 
 import BaseController from "./BaseController";
@@ -74,7 +75,7 @@ export default class RouteController extends BaseController<RouteEntity> {
 				} else if (routeRole.permissions.includes("own")) {
 					allowScope = "own";
 					if (item) {
-						isAllowed = item.owner.toString() === this.user._id.toString();
+						isAllowed = MongoDB.toString(item.owner) === MongoDB.toString(this.user._id);
 					} else {
 						isAllowed = true;
 					}
@@ -96,7 +97,7 @@ export default class RouteController extends BaseController<RouteEntity> {
 				} else if (routeRole.permissions.includes("own")) {
 					allowScope = "own";
 					if (item) {
-						isAllowed = item.owner.toString() === this.user._id.toString();
+						isAllowed = MongoDB.toString(item.owner) === MongoDB.toString(this.user._id);
 					} else {
 						isAllowed = true;
 					}

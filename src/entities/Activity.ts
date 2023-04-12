@@ -4,11 +4,11 @@ import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
 import Base from "./Base";
 import type User from "./User";
-import type Workspace from "./Workspace";
+import Workspace from "./Workspace";
 
 export type ActivityDto = Omit<Activity, keyof HiddenBodyKeys>;
 
-@Entity({ name: "apps" })
+@Entity({ name: "activities" })
 export default class Activity extends Base {
 	@Column()
 	name?: string;
@@ -17,7 +17,13 @@ export default class Activity extends Base {
 	message?: string;
 
 	@Column()
+	url?: string;
+
+	@Column()
 	route?: string;
+
+	@Column()
+	routeName?: string;
 
 	@Column()
 	method?: string;
@@ -31,6 +37,9 @@ export default class Activity extends Base {
 	@Column()
 	response?: string;
 
+	@Column()
+	responseStatus?: number;
+
 	/**
 	 * Owner ID of the app
 	 *
@@ -40,12 +49,10 @@ export default class Activity extends Base {
 	owner?: ObjectID | User | string;
 
 	/**
-	 * Workspace ID of the app
-	 *
-	 * @remarks This can be populated to {Workspace} data
+	 * Workspace data object
 	 */
-	@ObjectIdColumn({ name: "workspaces" })
-	workspace?: ObjectID | Workspace | string;
+	@Column()
+	workspace?: Workspace;
 
 	constructor(data?: ActivityDto) {
 		super();

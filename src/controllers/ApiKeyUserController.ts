@@ -5,6 +5,7 @@ import BaseController from "@/controllers/BaseController";
 import type { User } from "@/entities";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import { MongoDB } from "@/plugins/mongodb";
 import { ApiKeyUserService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
 
@@ -68,7 +69,7 @@ export default class ApiKeyUserController extends BaseController<User> {
 			if (!workspace) throw new Error(`Workspace "${workspaceSlug}" not found.`);
 			// console.log("workspace :>> ", workspace);
 
-			const wsId = workspace._id.toString();
+			const wsId = MongoDB.toString(workspace._id);
 			const user = await this.service.findOne({ id: new ObjectId(userId) });
 			// console.log("user :>> ", user);
 			// console.log("wsId :>> ", wsId);
@@ -79,10 +80,10 @@ export default class ApiKeyUserController extends BaseController<User> {
 
 			let updatedUser = [user];
 
-			const isUserJoinedThisWorkspace = (user.workspaces || []).map((id) => id.toString()).includes(wsId);
+			const isUserJoinedThisWorkspace = (user.workspaces || []).map((id) => MongoDB.toString(id)).includes(wsId);
 			// console.log("isUserJoinedThisWorkspace :>> ", isUserJoinedThisWorkspace);
 
-			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && user.activeWorkspace.toString() === wsId;
+			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && MongoDB.toString(user.activeWorkspace) === wsId;
 			// console.log("isWorkspaceActive :>> ", isWorkspaceActive);
 
 			// console.log("user.workspaces :>> ", user.workspaces);

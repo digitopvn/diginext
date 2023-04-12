@@ -3,6 +3,7 @@ import type { NextFunction, Response } from "express";
 
 import type { Workspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
+import { MongoDB } from "@/plugins/mongodb";
 import { filterRole } from "@/plugins/user-utils";
 
 export async function authorize(req: AppRequest, res: Response, next: NextFunction) {
@@ -12,7 +13,9 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	// console.log("authorize > route :>> ", route);
 
 	// filter roles
-	const wsId = (user.activeWorkspace as Workspace)?._id ? (user.activeWorkspace as Workspace)._id.toString() : user.activeWorkspace.toString();
+	const wsId = (user.activeWorkspace as Workspace)?._id
+		? MongoDB.toString((user.activeWorkspace as Workspace)._id)
+		: MongoDB.toString(user.activeWorkspace);
 	[user] = await filterRole(wsId, [user]);
 	// console.log("authorize > user :>> ", user);
 
@@ -55,7 +58,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 			if (routeRole.permissions.includes("full")) {
 				isAllowed = true;
 			} else if (routeRole.permissions.includes("own")) {
-				req.query.owner = user._id.toString();
+				req.query.owner = MongoDB.toString(user._id);
 				isAllowed = true;
 			} else {
 				isAllowed = false;
@@ -76,7 +79,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 				delete req.query.owner;
 				isAllowed = true;
 			} else if (routeRole.permissions.includes("own")) {
-				req.query.owner = user._id.toString();
+				req.query.owner = MongoDB.toString(user._id);
 				isAllowed = true;
 			} else {
 				isAllowed = false;
@@ -86,11 +89,11 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 
 	// print the debug info
 	console.log(
-		`authorize > [${requestPermission}] ${route} > role :>>`,
-		`[${activeRole.workspace}] ${activeRole.name}: \n${activeRole.routes
-			.map((r) => `· ${r.route} - ${r.permissions.join(",") || "none"}`)
-			.join("\n")}`,
-		`\n>> ALLOW:`,
+		`authorize > [${requestPermission}] ${route} > role :>> [${activeRole.workspace}] ${activeRole.name}:`,
+		// `${activeRole.routes
+		// 	.map((r) => `· ${r.route} - ${r.permissions.join(",") || "none"}`)
+		// 	.join("\n")}`,
+		`>> ALLOW:`,
 		isAllowed
 	);
 
