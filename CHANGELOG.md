@@ -1,3 +1,12 @@
+## [2.11.2](https://github.com/digitopvn/diginext/compare/v2.11.1...v2.11.2) (2023-04-12)
+
+
+### Bug Fixes
+
+* **all:** use tohexstring to convert object id to string ([976b501](https://github.com/digitopvn/diginext/commit/976b50131d849b9777ab299946a46d15473844cf))
+* **server:** add activity log and fix missing id when parse request filter ([b20c916](https://github.com/digitopvn/diginext/commit/b20c916ea62011dedb6d07ffcb5df6bdb5d6d60f))
+* **server:** issue of duplicated roles when seeding default workspace roles ([2a46a78](https://github.com/digitopvn/diginext/commit/2a46a785d6d28b1b3082742afc8115d782da0482))
+
 ## [2.11.1](https://github.com/digitopvn/diginext/compare/v2.11.0...v2.11.1) (2023-04-12)
 
 
