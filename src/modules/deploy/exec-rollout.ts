@@ -5,6 +5,7 @@ import { isEmpty } from "lodash";
 import type { Release } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 import { getAppConfig } from "@/plugins";
+import { MongoDB } from "@/plugins/mongodb";
 
 import fetchApi from "../api/fetchApi";
 import ClusterManager from "../k8s";
@@ -42,7 +43,7 @@ export const execRollOut = async (options?: InputOptions) => {
 			type: "list",
 			message: "Select your release to roll out:",
 			choices: latestReleases.map((p) => {
-				return { name: `${p.slug} (created by "${p.createdBy}")`, value: p._id.toString() };
+				return { name: `${p.slug} (created by "${p.createdBy}")`, value: MongoDB.toString(p._id) };
 			}),
 		});
 

@@ -4,6 +4,7 @@ import passport from "passport";
 
 import type { Role, User, Workspace } from "@/entities";
 import { DB } from "@/modules/api/DB";
+import { MongoDB } from "@/plugins/mongodb";
 
 /**
  * Why you don't need to care about this file?
@@ -47,7 +48,9 @@ const jwt_auth = (req, res, next) =>
 			// role
 			const { roles = [] } = user;
 			const activeRole = roles.find(
-				(role) => (role as Role).workspace.toString() === (user.activeWorkspace as Workspace)?._id.toString() && !(role as Role).deletedAt
+				(role) =>
+					MongoDB.toString((role as Role).workspace) === MongoDB.toString((user.activeWorkspace as Workspace)?._id) &&
+					!(role as Role).deletedAt
 			) as Role;
 
 			// console.log("Unauthenticate :>> [2]");

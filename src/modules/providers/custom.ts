@@ -10,6 +10,7 @@ import { CLI_DIR, HOME_DIR } from "@/config/const";
 import type { CloudProvider, Cluster } from "@/entities";
 import type { KubeConfig } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
+import { MongoDB } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
@@ -96,7 +97,7 @@ export const authenticate = async (options?: InputOptions) => {
 	const cloudProviderData = {
 		name: "Custom Provider",
 		shortName: "custom",
-		clusters: [newCluster._id.toString()],
+		clusters: [MongoDB.toString(newCluster._id)],
 		owner: options.userId,
 		workspace: options.workspaceId,
 	};

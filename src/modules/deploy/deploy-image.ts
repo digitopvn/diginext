@@ -3,6 +3,7 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import type { App, Build, Project, User, Workspace } from "@/entities";
 import type { AppConfig, DeployEnvironment } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
+import { MongoDB } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
@@ -123,7 +124,7 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	let releaseId: string;
 	try {
 		const newRelease = await createReleaseFromBuild(newBuild, env, { author });
-		releaseId = newRelease._id.toString();
+		releaseId = MongoDB.toString(newRelease._id);
 		// log("Created new Release successfully:", newRelease);
 	} catch (e) {
 		throw new Error(`Failed to create new release: ${e}`);

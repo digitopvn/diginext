@@ -11,7 +11,7 @@ import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, 
 import { ObjectID } from "@/libs/typeorm";
 import { DB } from "@/modules/api/DB";
 import { sendDiginextEmail } from "@/modules/diginext/dx-email";
-import { isValidObjectId, toObjectId } from "@/plugins/mongodb";
+import { isValidObjectId, MongoDB, toObjectId } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
 import { RoleService, UserService } from "@/services";
@@ -64,7 +64,7 @@ export default class WorkspaceController extends BaseController<Workspace> {
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: WorkspaceInputData) {
-		const { owner = this.user._id.toString(), name } = body;
+		const { owner = MongoDB.toString(this.user._id), name } = body;
 
 		if (!name) return respondFailure({ msg: `Workspace "name" is required.` });
 		if (!owner) return respondFailure({ msg: `Workspace "owner" (UserID) is required.` });

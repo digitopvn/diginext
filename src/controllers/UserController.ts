@@ -7,7 +7,7 @@ import type { Role, User } from "@/entities";
 import { UserDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
-import { toObjectId } from "@/plugins/mongodb";
+import { MongoDB, toObjectId } from "@/plugins/mongodb";
 import { filterRole, filterSensitiveInfo } from "@/plugins/user-utils";
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
@@ -40,10 +40,10 @@ export default class UserController extends BaseController<User> {
 
 		// console.log("[1] res.data :>> ", res.data);
 		if (isArray(res.data)) {
-			res.data = await filterRole(this.workspace._id.toString(), res.data);
+			res.data = await filterRole(MongoDB.toString(this.workspace._id), res.data);
 			res.data = filterSensitiveInfo(res.data);
 		} else {
-			res.data = await filterRole(this.workspace._id.toString(), [res.data]);
+			res.data = await filterRole(MongoDB.toString(this.workspace._id), [res.data]);
 			res.data = filterSensitiveInfo([res.data]);
 		}
 		// console.log("[2] res.data :>> ", res.data);
@@ -70,11 +70,13 @@ export default class UserController extends BaseController<User> {
 	async update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		if (body.roles) {
 			const roleId = body.roles;
-			const oldRoles = this.user.roles.filter((role) => (role as Role).workspace.toString() === this.workspace._id.toString());
+			const oldRoles = this.user.roles.filter((role) => MongoDB.toString((role as Role).workspace) === MongoDB.toString(this.workspace._id));
 
 			const newRole = await DB.findOne<Role>("role", { _id: roleId });
 			const newRoles = [
-				...this.user.roles.filter((role) => !oldRoles.map((r) => (r as Role)._id.toString()).includes((role as Role)._id.toString())),
+				...this.user.roles.filter(
+					(role) => !oldRoles.map((r) => MongoDB.toString((r as Role)._id)).includes(MongoDB.toString((role as Role)._id))
+				),
 				newRole,
 			];
 
@@ -84,7 +86,7 @@ export default class UserController extends BaseController<User> {
 		}
 
 		// [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
-		if (this.filter.owner && this.filter.owner.toString() === this.user._id.toString()) delete this.filter.owner;
+		if (this.filter.owner && MongoDB.toString(this.filter.owner) === MongoDB.toString(this.user._id)) delete this.filter.owner;
 
 		return super.update(body);
 	}
@@ -104,11 +106,11 @@ export default class UserController extends BaseController<User> {
 		if (!this.user) return respondFailure({ msg: `User not found.` });
 
 		const { roleId } = data;
-		const currentRoles = this.user.roles.filter((role) => (role as Role).workspace.toString() === this.workspace._id.toString());
+		const currentRoles = this.user.roles.filter((role) => MongoDB.toString((role as Role).workspace) === MongoDB.toString(this.workspace._id));
 		const prevRole = currentRoles[0] as Role;
 
 		const newRole = await DB.findOne<Role>("role", { _id: roleId });
-		const newRoles = [...this.user.roles.filter((role) => (role as Role)._id.toString() !== prevRole._id.toString()), newRole];
+		const newRoles = [...this.user.roles.filter((role) => MongoDB.toString((role as Role)._id) !== MongoDB.toString(prevRole._id)), newRole];
 		const newRoleIds = newRoles.map((role) => (role as Role)._id);
 
 		let [updatedUser] = await DB.update<User>(
@@ -120,7 +122,7 @@ export default class UserController extends BaseController<User> {
 		if (!updatedUser) return respondFailure({ msg: `Failed to assign "${newRole.name}" role to "${this.user.slug}" user.` });
 
 		// filter roles & workspaces before returning
-		[updatedUser] = await filterRole(this.workspace._id.toString(), [updatedUser]);
+		[updatedUser] = await filterRole(MongoDB.toString(this.workspace._id), [updatedUser]);
 
 		return respondSuccess({ data: updatedUser });
 	}
@@ -160,9 +162,9 @@ export default class UserController extends BaseController<User> {
 			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId });
 			if (!user) throw new Error(`User not found.`);
 
-			const wsId = workspaceId.toString();
+			const wsId = MongoDB.toString(workspaceId);
 			const workspaceIds = (user.workspaces as ObjectId[]) || [];
-			const isUserInWorkspace = workspaceIds.map((_id) => _id.toString()).includes(wsId);
+			const isUserInWorkspace = workspaceIds.map((_id) => MongoDB.toString(_id)).includes(wsId);
 
 			// add this workspace to user's workspace list
 			if (!isUserInWorkspace) workspaceIds.push(workspaceId);
@@ -176,7 +178,7 @@ export default class UserController extends BaseController<User> {
 			// set default roles if this user doesn't have one
 			const memberRole = await DB.findOne<Role>("role", { type: "member", workspace: workspaceId });
 			const roles = user.roles || [];
-			if (isEmpty(roles) || !roles.map((_id) => _id.toString()).includes(memberRole._id.toString())) roles.push(memberRole._id);
+			if (isEmpty(roles) || !roles.map((_id) => MongoDB.toString(_id)).includes(MongoDB.toString(memberRole._id))) roles.push(memberRole._id);
 
 			// set active workspace of this user -> this workspace
 			[user] = await this.service.update({ _id: userId }, { activeWorkspace: workspaceId, workspaces: workspaceIds, roles }, this.options);

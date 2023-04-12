@@ -8,7 +8,7 @@ import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { generateJWT } from "@/modules/passports/jwtStrategy";
 import { extractWorkspaceSlugFromUrl } from "@/plugins";
-import { isObjectId } from "@/plugins/mongodb";
+import { isObjectId, MongoDB } from "@/plugins/mongodb";
 
 const router = express.Router();
 
@@ -66,7 +66,7 @@ router
 			// console.log("[1] googleLoginCallback > req.user :>> ", user.name, user._id);
 			if (!user) return res.redirect(req.get("origin") + Config.getBasePath("/login?type=failed"));
 
-			const userId = user._id.toString();
+			const userId = MongoDB.toString(user._id);
 			const workspaceSlug = extractWorkspaceSlugFromUrl(redirectUrl);
 			console.log("workspaceSlug :>> ", workspaceSlug);
 
@@ -77,7 +77,7 @@ router
 				if (user.workspaces.length === 1) {
 					// if this user only have 1 workspace -> make it active!
 					workspace = user.workspaces[0] as Workspace;
-					return signAndRedirect(res, { userId, workspaceId: workspace._id.toString() }, redirectUrl);
+					return signAndRedirect(res, { userId, workspaceId: MongoDB.toString(workspace._id) }, redirectUrl);
 				} else {
 					// if this user has no workspaces or multiple workspaces -> select/create one!
 					redirectUrl = originUrl + Config.getBasePath("/workspace/select") + (shouldRedirect ? `?redirect_url=${redirectUrl}` : "");
@@ -94,7 +94,7 @@ router
 						? await DB.findOne<Workspace>("workspace", { _id: user.workspaces[0] })
 						: (user.workspaces[0] as Workspace);
 
-					return signAndRedirect(res, { userId, workspaceId: workspace._id.toString() }, redirectUrl);
+					return signAndRedirect(res, { userId, workspaceId: MongoDB.toString(workspace._id) }, redirectUrl);
 				} else {
 					// if this user has no workspaces or multiple workspaces -> select/create one!
 					redirectUrl = originUrl + Config.getBasePath("/workspace/select") + (shouldRedirect ? `?redirect_url=${redirectUrl}` : "");
@@ -103,7 +103,7 @@ router
 			}
 
 			// if found a workspace -> generate JWT access token:
-			return signAndRedirect(res, { userId, workspaceId: workspace._id.toString() }, redirectUrl);
+			return signAndRedirect(res, { userId, workspaceId: MongoDB.toString(workspace._id) }, redirectUrl);
 		}
 	);
 

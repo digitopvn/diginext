@@ -96,7 +96,7 @@ export default class ClusterController extends BaseController<Cluster> {
 
 		// validation - round 1: valid input params
 		if (body.provider) {
-			cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
+			cloudProvider = await cloudProviderSvc.findOne({ _id: body.provider });
 			if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
 		}
 
@@ -104,12 +104,12 @@ export default class ClusterController extends BaseController<Cluster> {
 		if (!cluster) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Cluster not found.` });
 
 		// validate cloud provider...
-		if (!cloudProvider) cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(cluster.provider as string) });
+		if (!cloudProvider) cloudProvider = await cloudProviderSvc.findOne({ _id: body.provider });
 		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider is not valid.`] } as ResponseData;
 
-		const updateData = { ...body, provider: new ObjectId(body.provider.toString()), providerShortName: cloudProvider.shortName } as ClusterDto;
+		const updateData = { ...body, provider: body.provider, providerShortName: cloudProvider.shortName } as ClusterDto;
 		[cluster] = await this.service.update({ _id: cluster._id }, updateData);
-		console.log("cluster :>> ", cluster);
+		// console.log("cluster :>> ", cluster);
 
 		// validation - round 2: check cluster accessibility
 		let errors: string[] = [];

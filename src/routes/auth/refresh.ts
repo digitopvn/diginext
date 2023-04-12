@@ -12,6 +12,7 @@ import type { AppRequest } from "@/interfaces/SystemTypes";
 import jwt_auth from "@/middlewares/auth-jwt";
 import { generateJWT } from "@/modules/passports/jwtStrategy";
 import { extractWorkspaceIdFromUser } from "@/plugins";
+import { MongoDB } from "@/plugins/mongodb";
 
 // Auth with session
 // import { authenticate } from "@/middlewares/authenticate";
@@ -30,7 +31,7 @@ router.get("/", jwt_auth, (req: AppRequest, res: Response, next: NextFunction) =
 	const { user } = req;
 	if (isEmpty(user)) return respondFailure({ msg: `User is not existed. (probably deleted?)` });
 
-	const userId = user._id.toString();
+	const userId = MongoDB.toString(user._id);
 	const workspaceId = extractWorkspaceIdFromUser(user);
 
 	log("Refreshing access token for the user :>> ", user);

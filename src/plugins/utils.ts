@@ -28,6 +28,7 @@ import { generateRepoURL } from "@/modules/git";
 import { getCurrentGitBranch } from "@/modules/git/git-utils";
 
 import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
+import { MongoDB } from "./mongodb";
 import { checkMonorepo } from "./monorepo";
 import { isNumeric } from "./number";
 import { isWin } from "./os";
@@ -1143,8 +1144,8 @@ export const extractWorkspaceSlugFromUrl = (url: string) => {
 
 export const extractWorkspaceIdFromUser = (user: User) => {
 	const workspaceId = (user.activeWorkspace as Workspace)._id
-		? (user.activeWorkspace as Workspace)._id.toString()
-		: user.activeWorkspace.toString();
+		? MongoDB.toString((user.activeWorkspace as Workspace)._id)
+		: MongoDB.toString(user.activeWorkspace);
 
 	return workspaceId;
 };

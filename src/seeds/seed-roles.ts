@@ -3,6 +3,7 @@
 import type { RoleRoute, User, Workspace } from "@/entities";
 import { Role } from "@/entities";
 import { DB } from "@/modules/api/DB";
+import { MongoDB } from "@/plugins/mongodb";
 
 // seed default roles of a workspace
 export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
@@ -23,7 +24,7 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 
 	// assign admin role to the "owner" user
 	const userRoles = owner.roles || [];
-	if (!userRoles.map((r) => r.toString()).includes(adminRole._id.toString())) {
+	if (!userRoles.map((r) => r.toString()).includes(MongoDB.toString(adminRole._id))) {
 		userRoles.push(adminRole);
 		const [user] = await DB.update<User>("user", { _id: owner._id }, { roles: userRoles });
 		console.log(`Workspace "${workspace.name}" > User "${user.name}" is now an administrator.`);

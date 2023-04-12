@@ -13,6 +13,7 @@ import type { App, Build, Cluster, Project, Release, User, Workspace } from "@/e
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath, wait } from "@/plugins";
+import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 
 import { DB } from "../api/DB";
@@ -322,7 +323,7 @@ export async function startBuildV1(
 	let releaseId: string, newRelease: Release;
 	try {
 		newRelease = await createReleaseFromBuild(newBuild, env, { author });
-		releaseId = newRelease._id.toString();
+		releaseId = MongoDB.toString(newRelease._id);
 		// log("Created new Release successfully:", newRelease);
 
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });

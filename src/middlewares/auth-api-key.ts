@@ -7,6 +7,7 @@ import { User } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { getUnexpiredAccessToken } from "@/plugins";
+import { MongoDB } from "@/plugins/mongodb";
 
 export const mockUserOfApiAccessToken = (apiAccessToken: WorkspaceApiAccessToken, workspace: Workspace) => {
 	const access_token = apiAccessToken.token;
@@ -44,7 +45,8 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: Response, next
 		// role
 		const { roles } = user;
 		const activeRole = roles.find(
-			(role) => (role as Role).workspace.toString() === (user.activeWorkspace as Workspace)._id.toString() && !(role as Role).deletedAt
+			(role) =>
+				MongoDB.toString((role as Role).workspace) === MongoDB.toString((user.activeWorkspace as Workspace)._id) && !(role as Role).deletedAt
 		) as Role;
 
 		user.activeRole = activeRole;

@@ -1,6 +1,7 @@
 import { isEmpty } from "lodash";
 
 import type { App, Build, Cluster, Release, User, Workspace } from "@/entities";
+import { MongoDB } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
@@ -123,7 +124,7 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 	let releaseId: string, newRelease: Release;
 	try {
 		newRelease = await createReleaseFromBuild(build, env, { author });
-		releaseId = newRelease._id.toString();
+		releaseId = MongoDB.toString(newRelease._id);
 		console.log("Created new Release successfully:", newRelease);
 
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });

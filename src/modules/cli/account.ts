@@ -9,6 +9,7 @@ import type { AccessTokenInfo } from "@/entities/User";
 import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
+import { MongoDB } from "@/plugins/mongodb";
 
 interface CliLoginOptions {
 	/**
@@ -156,10 +157,10 @@ export async function cliAuthenticate(options: InputOptions) {
 	if (user.token?.access_token) saveCliConfig({ access_token: user.token.access_token });
 
 	// Assign user & workspace to use across all CLI commands
-	options.userId = user._id.toString();
+	options.userId = MongoDB.toString(user._id);
 	options.username = user.username ?? user.slug;
 	options.workspace = user.activeWorkspace as Workspace;
-	options.workspaceId = options.workspace._id.toString();
+	options.workspaceId = MongoDB.toString(options.workspace._id);
 
 	// Save "currentUser" & "access_token" for next API requests
 	saveCliConfig({ currentUser: user, currentWorkspace: options.workspace });
