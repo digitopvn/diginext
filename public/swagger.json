@@ -3912,6 +3912,13 @@
 					"appSlug": {
 						"type": "string"
 					},
+					"envVars": {
+						"items": {
+							"$ref": "#/components/schemas/KubeEnvironmentVariable"
+						},
+						"type": "array",
+						"description": "Environment variables"
+					},
 					"namespace": {
 						"type": "string"
 					},
@@ -3920,13 +3927,6 @@
 					},
 					"cliVersion": {
 						"type": "string"
-					},
-					"envVars": {
-						"items": {
-							"$ref": "#/components/schemas/KubeEnvironmentVariable"
-						},
-						"type": "array",
-						"description": "Environment variables"
 					},
 					"prereleaseEnvironment": {
 						"anyOf": [

@@ -8,7 +8,7 @@ export const processApiRequest = (executor: (...params) => Promise<ResponseData>
 	try {
 		let result = await executor(req.body);
 
-		// mask sensitive information here
+		// mask sensitive information before responding:
 		result.data = maskSensitiveInfo(result.data, req.role);
 
 		res.status(200).json(result);
