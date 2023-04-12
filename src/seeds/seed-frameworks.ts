@@ -8,7 +8,7 @@ const initialFrameworks: Framework[] = [
 		name: "NextJS 13 Starter",
 		repoURL: "https://github.com/digitopvn/next13-starter",
 		repoSSH: "git@github.com:digitopvn/next13-starter.git",
-		gitProvider: "bitbucket",
+		gitProvider: "github",
 		isPrivate: false,
 	},
 	{
@@ -24,7 +24,7 @@ export const seedFrameworks = async (workspace: Workspace, owner: User) => {
 	const results = (
 		await Promise.all(
 			initialFrameworks.map(async (fw) => {
-				const framework = await DB.findOne<Framework>("framework", { repoURL: fw.repoURL });
+				const framework = await DB.findOne<Framework>("framework", { repoURL: fw.repoURL, workspace: workspace._id });
 				if (!framework) {
 					const seedFw = await DB.create<Framework>("framework", { ...fw, owner: owner._id, workspace: workspace._id });
 					return seedFw;

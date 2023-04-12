@@ -85,14 +85,14 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	}
 
 	// print the debug info
-	// console.log(
-	// 	`authorize > [${requestPermission}] ${route} > role :>>`,
-	// 	`[${activeRole.workspace}] ${activeRole.name}: \n${activeRole.routes
-	// 		.map((r) => `· ${r.route} - ${r.permissions.join(",") || "none"}`)
-	// 		.join("\n")}`,
-	// 	`\n>> ALLOW:`,
-	// 	isAllowed
-	// );
+	console.log(
+		`authorize > [${requestPermission}] ${route} > role :>>`,
+		`[${activeRole.workspace}] ${activeRole.name}: \n${activeRole.routes
+			.map((r) => `· ${r.route} - ${r.permissions.join(",") || "none"}`)
+			.join("\n")}`,
+		`\n>> ALLOW:`,
+		isAllowed
+	);
 
 	if (!isAllowed) return ApiResponse.rejected(res);
 
