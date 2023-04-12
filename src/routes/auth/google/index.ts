@@ -4,10 +4,11 @@ import passport from "passport";
 
 import { Config } from "@/app.config";
 import type { Workspace } from "@/entities";
-import type User from "@/entities/User";
+import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { generateJWT } from "@/modules/passports/jwtStrategy";
 import { extractWorkspaceSlugFromUrl } from "@/plugins";
+import { isObjectId } from "@/plugins/mongodb";
 
 const router = express.Router();
 
@@ -50,23 +51,24 @@ router
 				successReturnToOrRedirect: req.query.redirect_url as string,
 				failureRedirect: Config.getBasePath("/login?type=failed"),
 			})(req, res, next),
-		async function (req: any, res: any) {
+		async function (req: AppRequest, res: any) {
 			// console.log("googleLoginCallback > req", req);
 			// console.log("googleLoginCallback > req.query", req.query);
 			// console.log("googleLoginCallback > req.query.state", req.query.state);
-			// console.log("googleLoginCallback > user :>> ", user);
+			// console.log("googleLoginCallback > user :>> ", req.user);
 
 			let redirectUrl = (req.query.state as string) || Config.BASE_URL;
 			const shouldRedirect = typeof req.query.state !== "undefined";
 			const originUrl = new URL(redirectUrl).origin;
-			console.log("[1] originUrl", originUrl);
+			// console.log("[1] originUrl", originUrl);
 
-			let user = req.user as User;
-			console.log("[1] googleLoginCallback > req.user :>> ", user.name, user._id);
-			if (!user) return req.redirect(req.get("origin") + Config.getBasePath("/login?type=failed"));
+			let { user } = req;
+			// console.log("[1] googleLoginCallback > req.user :>> ", user.name, user._id);
+			if (!user) return res.redirect(req.get("origin") + Config.getBasePath("/login?type=failed"));
 
 			const userId = user._id.toString();
 			const workspaceSlug = extractWorkspaceSlugFromUrl(redirectUrl);
+			console.log("workspaceSlug :>> ", workspaceSlug);
 
 			let workspace: Workspace;
 
@@ -86,9 +88,12 @@ router
 			// try to find this workspace in the database:
 			workspace = await DB.findOne<Workspace>("workspace", { slug: workspaceSlug });
 			if (!workspace) {
-				if (user.workspaces.length === 1) {
+				if (user.workspaces && user.workspaces.length === 1) {
 					// if this user only have 1 workspace -> make it active!
-					workspace = user.workspaces[0] as Workspace;
+					workspace = isObjectId(user.workspaces[0])
+						? await DB.findOne<Workspace>("workspace", { _id: user.workspaces[0] })
+						: (user.workspaces[0] as Workspace);
+
 					return signAndRedirect(res, { userId, workspaceId: workspace._id.toString() }, redirectUrl);
 				} else {
 					// if this user has no workspaces or multiple workspaces -> select/create one!

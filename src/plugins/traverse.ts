@@ -1,15 +1,16 @@
-import { isArray } from "lodash";
+export function traverseObjectAndTransformValue(obj: any, transform: (keyPair: [key: string, val: any]) => any) {
+	if (typeof obj === "string") return obj;
+	if (typeof obj === "number") return obj;
+	if (typeof obj === "boolean") return obj;
+	if (typeof obj === "function") return obj;
 
-export const traverse = (obj: any, callback: (res: { key: string; val: any }) => void) => {
-	for (let k in obj) {
-		if (obj[k]) {
-			if (isArray(obj[k])) {
-				obj[k] = obj[k].map((item) => traverse(item, callback));
-			} else if (typeof obj[k] === "object") {
-				traverse(obj[k], callback);
-			}
+	for (const key in obj) {
+		if (typeof obj[key] === "object" && obj[key] !== null) {
+			traverseObjectAndTransformValue(obj[key], transform);
+		} else {
+			obj[key] = transform([key, obj[key]]);
 		}
-		if (callback) callback({ key: k, val: obj[k] });
 	}
+
 	return obj;
-};
+}

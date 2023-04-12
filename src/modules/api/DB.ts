@@ -29,7 +29,7 @@ import RouteService from "@/services/RouteService";
 
 import fetchApi from "./fetchApi";
 
-type DBCollection =
+export type DBCollection =
 	| "app"
 	| "build"
 	| "database"

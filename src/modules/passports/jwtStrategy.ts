@@ -121,35 +121,13 @@ export const jwtStrategy = new Strategy(
 		// console.log(`[1] jwtStrategy > User :>> `, user);
 
 		if (user) {
-			// console.log("user.workspaces :>> ", user.workspaces);
-			// console.log("workspaceId :>> ", workspaceId);
-			// console.log("user.workspaces.includes(workspaceId) :>> ", user.workspaces.includes(workspaceId));
-
 			const updateData = {} as any;
 			updateData.token = tokenInfo.token;
-			// updateData.activeWorkspace = workspaceId;
-
-			// set active workspace to this user:
-			// if (isEmpty(user.workspaces)) {
-			// 	updateData.workspaces = [workspaceId];
-			// } else {
-			// 	if (!user.workspaces.includes(workspaceId))
-			// 		updateData.workspaces = [...(user.workspaces || []).map((ws) => (ws as Workspace)._id), workspaceId];
-			// }
-
-			// // set default roles if this user doesn't have one
-			// if (!user.roles || isEmpty(user.roles)) {
-			// 	const memberRole = await DB.findOne<Role>("role", { name: "Member", workspace: workspaceId });
-			// 	updateData.roles = [memberRole._id];
-			// }
 
 			// update the access token in database:
 			[user] = await DB.update<User>("user", { _id: new ObjectId(payload.id) }, updateData, {
 				populate: ["roles", "workspaces", "activeWorkspace"],
 			});
-
-			// filter roles
-			// [user] = await filterRole(user.activeWorkspace.toString(), [user]);
 
 			return done(null, user);
 		}
@@ -160,11 +138,6 @@ export const jwtStrategy = new Strategy(
 			{ _id: new ObjectId(payload.id) },
 			{ populate: ["roles", "workspaces", "activeWorkspace"] }
 		);
-
-		// filter roles
-		// if (user) [user] = await filterRole(user.activeWorkspace.toString(), [user]);
-
-		// console.log(`[3] jwtStrategy > ServiceAccount :>> `, user.name, user._id);
 
 		if (!user) return done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
 

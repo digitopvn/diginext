@@ -15,6 +15,7 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 		adminRoleDto.routes = [{ route: "*", permissions: ["full"] }];
 		adminRoleDto.workspace = workspace._id;
 		adminRoleDto.type = "admin";
+		adminRoleDto.maskedFields = [];
 
 		adminRole = await DB.create<Role>("role", adminRoleDto);
 		if (adminRole) console.log(`Workspace "${workspace.name}" > Created default admin role :>> `, adminRoleDto.name);
@@ -59,6 +60,20 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 		memberRoleDto.routes = memberRoleRoutes;
 		memberRoleDto.workspace = workspace._id;
 		memberRoleDto.type = "member";
+		memberRoleDto.maskedFields = [
+			"email",
+			"apiAccessToken",
+			"serviceAccount",
+			"dockerPassword",
+			"kubeConfig",
+			"token.access_token",
+			"imagePullSecret.value",
+			"metadata.email",
+			"metadata.apiAccessToken",
+			"metadata.serviceAccount",
+			"metadata.dockerPassword",
+			"metadata.kubeConfig",
+		];
 
 		memberRole = await DB.create<Role>("role", memberRoleDto);
 		if (memberRole) console.log(`Workspace "${workspace.name}" > Created default member role :>> `, memberRoleDto.name);
@@ -82,6 +97,7 @@ export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
 		moderatorRoleDto.routes = moderatorRoleRoutes;
 		moderatorRoleDto.workspace = workspace._id;
 		moderatorRoleDto.type = "moderator";
+		moderatorRoleDto.maskedFields = [];
 
 		moderatorRole = await DB.create<Role>("role", moderatorRoleDto);
 		if (moderatorRole) console.log(`Workspace "${workspace.name}" > Created default moderator role :>> `, moderatorRole.name);

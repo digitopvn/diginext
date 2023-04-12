@@ -20,6 +20,7 @@ import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
 import { Config, IsDev, IsProd } from "./app.config";
+import type { AppRequest } from "./interfaces/SystemTypes";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
 import { route404_handler } from "./middlewares/route404";
 import AppDatabase from "./modules/AppDatabase";
@@ -138,7 +139,7 @@ function initialize() {
 		 * LOGGING SYSTEM MIDDLEWARE - ENABLED
 		 * Enable when running on server
 		 */
-		morgan.token("user", (req: Request) => (req.user ? `[${(req.user as any)?.slug}]` : "[unauthenticated]"));
+		morgan.token("user", (req: AppRequest) => (req.user ? `[${req.user.slug}]` : "[unauthenticated]"));
 		const morganMessage = IsDev()
 			? "[REQUEST :date[clf]] :method - :user - :url :status :response-time ms - :res[content-length]"
 			: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;

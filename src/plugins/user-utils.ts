@@ -6,16 +6,42 @@ import { RoleService } from "@/services";
 
 import { isObjectId } from "./mongodb";
 
-export const addUserToWorkspace = async (userId: ObjectId, workspace: Workspace) => {
+export const addUserToWorkspace = async (userId: ObjectId, workspace: Workspace, roleType: "admin" | "moderator" | "member" = "member") => {
 	let user = await DB.findOne<User>("user", { id: userId });
 	if (!user) throw new Error(`User not found.`);
 
-	const userWorkspaces = user.workspaces || [];
-	const isUserInThisWorkspace = userWorkspaces.map((_id) => _id.toString()).includes(workspace._id.toString());
-	if (!isUserInThisWorkspace) {
-		const workspaces = userWorkspaces.push(workspace._id);
-		[user] = await DB.update<User>("user", { _id: user._id }, { workspaces });
-	}
+	// find role (default: "member")
+	let role: Role = await DB.findOne<Role>("role", { type: roleType, workspace: workspace._id });
+	if (!role) throw new Error(`Role "${roleType}" not found.`);
+
+	// assign role
+	const roles = user.roles || [];
+	const hasRole = roles.map((_id) => _id.toString()).includes(role._id.toString());
+	if (!hasRole) roles.push(role._id);
+
+	// assign workspace
+	const workspaces = user.workspaces || [];
+	const isUserInThisWorkspace = workspaces.map((_id) => _id.toString()).includes(workspace._id.toString());
+	if (!isUserInThisWorkspace) workspaces.push(workspace._id);
+
+	// update user data
+	[user] = await DB.update<User>("user", { _id: user._id }, { workspaces, roles });
+
+	return user;
+};
+
+export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", userId: ObjectId, workspace: Workspace) => {
+	let user = await DB.findOne<User>("user", { id: userId });
+	if (!user) throw new Error(`User not found.`);
+
+	const role = await DB.findOne<Role>("role", { type: roleType, workspace: workspace._id });
+	if (!role) throw new Error(`Role "${roleType}" not found.`);
+
+	const roles = user.roles || [];
+	const hasRole = roles.map((_id) => _id.toString()).includes(role._id.toString());
+	if (!hasRole) roles.push(role._id);
+
+	[user] = await DB.update<User>("user", { _id: user._id }, { roles });
 	return user;
 };
 

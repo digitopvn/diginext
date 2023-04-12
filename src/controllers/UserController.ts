@@ -4,7 +4,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import BaseController from "@/controllers/BaseController";
 import type { Role, User } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import { UserDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import { toObjectId } from "@/plugins/mongodb";
@@ -60,14 +60,14 @@ export default class UserController extends BaseController<User> {
 	@Security("api_key2")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		if (body.roles) {
 			const roleId = body.roles;
 			const oldRoles = this.user.roles.filter((role) => (role as Role).workspace.toString() === this.workspace._id.toString());
@@ -82,6 +82,10 @@ export default class UserController extends BaseController<User> {
 
 			body.roles = newRoleIds;
 		}
+
+		// [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
+		if (this.filter.owner && this.filter.owner.toString() === this.user._id.toString()) delete this.filter.owner;
+
 		return super.update(body);
 	}
 
@@ -134,8 +138,12 @@ export default class UserController extends BaseController<User> {
 
 			// parse input params
 			const userId = toObjectId(uid);
-			const workspaceId = toObjectId(workspaceIdOrSlug); // return undefined if can't convert to ObjectId -> it's a slug!!! (lol)
-			const workspaceSlug = !workspaceId ? workspaceIdOrSlug : undefined;
+
+			// workspace in query could be "_id" and also "slug":
+			let workspaceId = toObjectId(workspaceIdOrSlug); // return undefined if can't convert to "ObjectId" -> it's a "slug" !!! (lol)
+			let workspaceSlug = !workspaceId ? workspaceIdOrSlug : undefined;
+
+			if (!workspaceId && !workspaceSlug) return respondFailure(`Param "workspace" (ID or SLUG) is invalid`);
 
 			const wsFilter: any = {};
 			if (workspaceId) wsFilter._id = workspaceId;
@@ -145,7 +153,8 @@ export default class UserController extends BaseController<User> {
 			const workspaceSvc = new WorkspaceService();
 			const workspace = await workspaceSvc.findOne(wsFilter);
 			if (!workspace) throw new Error(`Workspace not found.`);
-			// console.log("workspace :>> ", workspace);
+
+			workspaceId = toObjectId(workspace._id);
 
 			// find the user
 			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId });
@@ -166,17 +175,11 @@ export default class UserController extends BaseController<User> {
 
 			// set default roles if this user doesn't have one
 			const memberRole = await DB.findOne<Role>("role", { type: "member", workspace: workspaceId });
-			const userRoles = user.roles || [];
-			if (isEmpty(userRoles) || !userRoles.map((_id) => _id.toString()).includes(memberRole._id.toString())) {
-				userRoles.push(memberRole._id);
-			}
+			const roles = user.roles || [];
+			if (isEmpty(roles) || !roles.map((_id) => _id.toString()).includes(memberRole._id.toString())) roles.push(memberRole._id);
 
 			// set active workspace of this user -> this workspace
-			[user] = await this.service.update(
-				{ _id: userId },
-				{ activeWorkspace: workspaceId, workspaces: workspaceIds, roles: userRoles },
-				this.options
-			);
+			[user] = await this.service.update({ _id: userId }, { activeWorkspace: workspaceId, workspaces: workspaceIds, roles }, this.options);
 
 			// return the updated user:
 			return respondSuccess({ data: user });

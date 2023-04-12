@@ -3,7 +3,7 @@
 import { log } from "diginext-utils/dist/console/log";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { User, Workspace } from "@/entities";
+import type { Role, User, Workspace } from "@/entities";
 import type ServiceAccount from "@/entities/ServiceAccount";
 import { DB } from "@/modules/api/DB";
 import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
@@ -11,12 +11,14 @@ import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plug
 export const seedServiceAccounts = async (workspace: Workspace, owner: User) => {
 	// seed default service account:
 	const serviceAccountToken = generateWorkspaceApiAccessToken();
+	const moderatorRole = await DB.findOne<Role>("role", { type: "moderator", workspace: workspace._id });
+
 	const serviceAccountDto: ServiceAccount = {
 		type: "service_account",
 		name: "Default Service Account",
 		email: `default.${serviceAccountToken.name}@${workspace.slug}.${DIGINEXT_DOMAIN}`,
 		active: true,
-		roles: [],
+		roles: [moderatorRole._id],
 		workspaces: [workspace._id],
 		activeWorkspace: workspace._id,
 		token: getUnexpiredAccessToken(serviceAccountToken.value),

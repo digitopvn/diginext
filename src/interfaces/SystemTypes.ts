@@ -1,3 +1,13 @@
+import type express from "express";
+
+import type { Role, User } from "@/entities";
+
+// express.js
+export interface AppRequest extends express.Request {
+	user?: User;
+	role?: Role;
+}
+
 // cloud providers
 export const requestMethodList = ["GET", "POST", "PATCH", "DELETE"] as const;
 export type RequestMethodType = (typeof requestMethodList)[number];
@@ -14,9 +24,11 @@ export type RegistryProviderType = (typeof registryProviderList)[number];
 export const availableGitProviders = ["bitbucket", "github", "gitlab"] as const;
 export type GitProviderType = (typeof availableGitProviders)[number];
 
+// resource types
 export const availableResourceSizes = ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"] as const;
 export type ResourceQuotaSize = (typeof availableResourceSizes)[number];
 
+// git provider domains
 export const gitProviderDomain = {
 	bitbucket: "bitbucket.org",
 	github: "github.com",
