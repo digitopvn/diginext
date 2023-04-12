@@ -1,3 +1,12 @@
+## [2.11.1](https://github.com/digitopvn/diginext/compare/v2.11.0...v2.11.1) (2023-04-12)
+
+
+### Bug Fixes
+
+* **server:** [hotfix] auto parse json in controllers ([5ba3017](https://github.com/digitopvn/diginext/commit/5ba30177a1a7912ccce50a30bb03ddb6877bc5c6))
+* **server:** default framework typo issue ([ae40b49](https://github.com/digitopvn/diginext/commit/ae40b49e26c05723a33cd9bf399abc35a156c4f5))
+* **server:** issue of seeding default frameworks when create workspace ([0534ac2](https://github.com/digitopvn/diginext/commit/0534ac28b5b05e05c3d1f2ec3497bc88863ec54d))
+
 # [2.11.0](https://github.com/digitopvn/diginext/compare/v2.10.1...v2.11.0) (2023-04-12)
 
 
