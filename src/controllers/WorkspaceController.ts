@@ -77,12 +77,9 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		if (isUndefined(body.public)) body.public = true;
 
 		// [1] Create new workspace:
-		const workspaceDto = { ...body } as any;
-		const result = await super.create(workspaceDto);
-		const { status = 0, messages } = result;
-		if (!status) return respondFailure({ msg: messages.join(". ") });
-
-		const newWorkspace = result.data as Workspace;
+		console.log("createWorkspace > body :>> ", body);
+		const newWorkspace = await this.service.create(body);
+		if (!newWorkspace) return respondFailure(`Failed to create new workspace.`);
 
 		/**
 		 * [2] SEED INITIAL DATA TO THIS WORKSPACE

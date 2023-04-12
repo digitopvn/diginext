@@ -72,9 +72,12 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 			if (this.req?.user) {
 				const user = this.req?.user as User;
 				const userId = user?._id;
-				const workspaceId = (user.activeWorkspace as any)._id ? (user.activeWorkspace as any)._id : (user.activeWorkspace as any);
 				data.owner = userId;
-				data.workspace = workspaceId;
+
+				if (user.activeWorkspace) {
+					const workspaceId = (user.activeWorkspace as any)._id ? (user.activeWorkspace as any)._id : (user.activeWorkspace as any);
+					data.workspace = workspaceId;
+				}
 			}
 
 			// const author = `${user.name} (ID: ${user._id})`;

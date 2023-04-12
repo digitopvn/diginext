@@ -4,7 +4,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import BaseController from "@/controllers/BaseController";
 import type { Role, User } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import { UserDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import { toObjectId } from "@/plugins/mongodb";
@@ -60,14 +60,14 @@ export default class UserController extends BaseController<User> {
 	@Security("api_key2")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		if (body.roles) {
 			const roleId = body.roles;
 			const oldRoles = this.user.roles.filter((role) => (role as Role).workspace.toString() === this.workspace._id.toString());
@@ -82,6 +82,10 @@ export default class UserController extends BaseController<User> {
 
 			body.roles = newRoleIds;
 		}
+
+		// [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
+		if (this.filter.owner && this.filter.owner.toString() === this.user._id.toString()) delete this.filter.owner;
+
 		return super.update(body);
 	}
 

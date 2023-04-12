@@ -3,7 +3,6 @@ import { Response } from "diginext-utils/dist/response";
 import passport from "passport";
 
 import type { Role, User, Workspace } from "@/entities";
-import { respondFailure } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 
 /**
@@ -14,7 +13,7 @@ import { DB } from "@/modules/api/DB";
 const jwt_auth = (req, res, next) =>
 	passport.authenticate("jwt", { session: false }, async function (err, user: User, info) {
 		// console.log(err, user, info);
-		// console.log(`[2] AUTHORIZE: jwt_auth > assign token:`, user);
+		// console.log(`AUTHENTICATE: jwt_auth > assign token:`, user);
 
 		if (!user) {
 			/**
@@ -39,17 +38,20 @@ const jwt_auth = (req, res, next) =>
 						{ populate: ["roles", "workspaces", "activeWorkspace"] }
 					);
 				} else {
-					return respondFailure(`Unauthenticated: no active workspace.`);
+					// console.log("Unauthenticate :>> [1]");
+					// return respondFailure(`Unauthenticated: no active workspace.`);
+					// return next();
 				}
 			}
 
 			// role
-			const { roles } = user;
+			const { roles = [] } = user;
 			const activeRole = roles.find(
 				(role) => (role as Role).workspace.toString() === (user.activeWorkspace as Workspace)?._id.toString() && !(role as Role).deletedAt
 			) as Role;
 
-			if (!activeRole) return respondFailure(`Unauthorized: no active role.`);
+			// console.log("Unauthenticate :>> [2]");
+			// if (!activeRole) return respondFailure(`Unauthorized: no active role.`);
 
 			user.activeRole = activeRole;
 			req.role = activeRole;
