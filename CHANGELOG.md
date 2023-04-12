@@ -1,3 +1,20 @@
+# [2.11.0](https://github.com/digitopvn/diginext/compare/v2.10.1...v2.11.0) (2023-04-12)
+
+
+### Bug Fixes
+
+* **server:** check active workspace when authentication ([890ff67](https://github.com/digitopvn/diginext/commit/890ff67b54cad87ba86a4fa00e78c21654b65e17))
+* **server:** check required stack installation when adding new clusters ([190377b](https://github.com/digitopvn/diginext/commit/190377b1fe6a48b4e2f7fbe4950fb7bbfcab2573))
+* **server:** issue of seeding incorrect default api key ([593a490](https://github.com/digitopvn/diginext/commit/593a490fd3b476f4a33886e9bceba5ceb66c5681))
+* **server:** mask some sensitive info to member role ([c4f93f7](https://github.com/digitopvn/diginext/commit/c4f93f7aa91825c993ed893f82a8bf4b5af58127))
+* **server:** respond empty for sensitive info ([a0e846e](https://github.com/digitopvn/diginext/commit/a0e846ee6d430481247ac1f32c38fe5b04cda96c))
+* **server:** set default moderator role to service account and api key when   create ws ([f838783](https://github.com/digitopvn/diginext/commit/f838783d857a7cfafb5b274500b325f3c5eafd83))
+
+
+### Features
+
+* **server and admin:** workspace privacy switching ([2a2fed8](https://github.com/digitopvn/diginext/commit/2a2fed898595e95b0a84fb5311b0dedcd76f5346))
+
 ## [2.10.1](https://github.com/digitopvn/diginext/compare/v2.10.0...v2.10.1) (2023-04-09)
 
 
