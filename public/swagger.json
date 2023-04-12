@@ -4224,6 +4224,9 @@
 				"$ref": "#/components/schemas/Pick_Team.Exclude_keyofTeam.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
+			"UserDto": {
+				"$ref": "#/components/schemas/Omit_User.keyofHiddenBodyKeys_"
+			},
 			"WorkspaceInputData": {
 				"properties": {
 					"slug": {
@@ -4344,7 +4347,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.10.1",
+		"version": "2.11.0",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -10648,7 +10651,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/Omit_User.keyofHiddenBodyKeys_"
+								"$ref": "#/components/schemas/UserDto"
 							}
 						}
 					}
@@ -10720,7 +10723,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/Omit_User.keyofHiddenBodyKeys_"
+								"$ref": "#/components/schemas/UserDto"
 							}
 						}
 					}
