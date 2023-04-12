@@ -8,7 +8,7 @@ const initialFrameworks: Framework[] = [
 		name: "NextJS 13 Starter",
 		repoURL: "https://github.com/digitopvn/next13-starter",
 		repoSSH: "git@github.com:digitopvn/next13-starter.git",
-		gitProvider: "bitbucket",
+		gitProvider: "github",
 		isPrivate: false,
 	},
 	{
