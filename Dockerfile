@@ -1,7 +1,18 @@
 FROM debian:latest
 
 # Switch to "root" user
+# <--- Usually you won't be needed it - Depends on base image --->
 USER root
+# Enable password for "root" user
+# RUN echo "root:pass" | chpasswd
+
+# <-- Run privileged commands -->
+# RUN apt install <packages>
+# RUN apt <privileged command>
+
+# Install all APT-GET packages from scratch...
+# RUN apt-get clean
+# RUN apt-get update -yq
 
 # Git, kubectl & Open SSH
 RUN apt-get update -yq \

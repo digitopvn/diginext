@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 import humanizeDuration from "humanize-duration";
 import { isEmpty } from "lodash";
+import { ObjectId } from "mongodb";
 import PQueue from "p-queue";
 import path from "path";
 
@@ -10,7 +11,6 @@ import { isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { App, Build, ContainerRegistry, Project, User, Workspace } from "@/entities";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
-import { toObjectID } from "@/plugins/mongodb";
 import { getIO, socketIO } from "@/server";
 
 import { DB } from "../api/DB";
@@ -137,7 +137,7 @@ export async function startBuild(params: StartBuildParams) {
 		cliVersion,
 	} = params;
 
-	const author = user || (await DB.findOne<User>("user", { _id: toObjectID(userId) }, { populate: ["workspaces", "activeWorkspaces"] }));
+	const author = user || (await DB.findOne<User>("user", { _id: new ObjectId(userId) }, { populate: ["workspaces", "activeWorkspaces"] }));
 	console.log("author :>> ", author);
 
 	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });

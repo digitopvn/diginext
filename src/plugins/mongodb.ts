@@ -1,27 +1,27 @@
-import { ObjectID } from "@/libs/typeorm";
+import { ObjectId } from "mongodb";
 
-export function isObjectID(id) {
-	return id instanceof ObjectID;
+export function isObjectId(id) {
+	return id instanceof ObjectId;
 }
 
-export function isValidObjectID(id) {
-	if (ObjectID.isValid(id)) {
-		if (String(new ObjectID(id)) === id) return true;
+export function isValidObjectId(id) {
+	if (ObjectId.isValid(id)) {
+		if (String(new ObjectId(id)) === id) return true;
 		return false;
 	}
 	return false;
 }
 
-export function toObjectID(id: any) {
-	if (isObjectID(id)) return id as ObjectID;
-	if (isValidObjectID(id)) return new ObjectID(id);
+export function toObjectId(id: any) {
+	if (isObjectId(id)) return id as ObjectId;
+	if (isValidObjectId(id)) return new ObjectId(id);
 	return;
 }
 
 function toString(id) {
-	const _id = toObjectID(id);
+	const _id = toObjectId(id);
 	if (!_id) return;
 	return _id.toHexString();
 }
 
-export const MongoDB = { toString, isObjectID, isValidObjectID, toObjectID };
+export const MongoDB = { toString, isObjectId, isValidObjectId, toObjectId };

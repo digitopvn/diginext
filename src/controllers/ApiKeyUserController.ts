@@ -1,10 +1,10 @@
+import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import BaseController from "@/controllers/BaseController";
 import type { User } from "@/entities";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
-import { ObjectID } from "@/libs/typeorm";
 import { MongoDB } from "@/plugins/mongodb";
 import { ApiKeyUserService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
@@ -70,7 +70,7 @@ export default class ApiKeyUserController extends BaseController<User> {
 			// console.log("workspace :>> ", workspace);
 
 			const wsId = MongoDB.toString(workspace._id);
-			const user = await this.service.findOne({ id: new ObjectID(userId) });
+			const user = await this.service.findOne({ id: new ObjectId(userId) });
 			// console.log("user :>> ", user);
 			// console.log("wsId :>> ", wsId);
 

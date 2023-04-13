@@ -1,3 +1,5 @@
+import type { ObjectId } from "mongodb";
+
 import type { HiddenBodyKeys } from "@/interfaces";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
@@ -46,7 +48,7 @@ export default class Activity extends Base {
 	 * @remarks This can be populated to {User} data
 	 */
 	@ObjectIdColumn({ name: "users" })
-	owner?: ObjectID | User | string;
+	owner?: ObjectID | ObjectId | User | string;
 
 	/**
 	 * Workspace data object

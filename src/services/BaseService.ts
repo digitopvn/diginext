@@ -9,7 +9,7 @@ import type { AppRequest } from "@/interfaces/SystemTypes";
 import type { EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeorm";
 import type { MongoFindManyOptions } from "@/libs/typeorm/find-options/mongodb/MongoFindManyOptions";
 import { manager, query } from "@/modules/AppDatabase";
-import { isValidObjectID } from "@/plugins/mongodb";
+import { isValidObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
@@ -64,7 +64,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 			// generate metadata (for searching)
 			data.metadata = {};
 			for (const [key, value] of Object.entries(data)) {
-				if (key != "_id" && key != "metadata" && key != "slug" && !isValidObjectID(value) && value)
+				if (key != "_id" && key != "metadata" && key != "slug" && !isValidObjectId(value) && value)
 					data.metadata[key] = clearUnicodeCharacters(value.toString());
 			}
 

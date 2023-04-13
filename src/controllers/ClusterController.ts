@@ -1,4 +1,5 @@
 import { logError } from "diginext-utils/dist/console/log";
+import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { CloudProvider, Cluster } from "@/entities";
@@ -7,7 +8,6 @@ import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfa
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
-import { MongoDB } from "@/plugins/mongodb";
 import { CloudProviderService } from "@/services";
 import ClusterService from "@/services/ClusterService";
 
@@ -44,7 +44,7 @@ export default class ClusterController extends BaseController<Cluster> {
 		// validate cloud provider...
 		const cloudProviderSvc = new CloudProviderService();
 
-		const cloudProvider = await cloudProviderSvc.findOne({ _id: MongoDB.toObjectID(body.provider) });
+		const cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
 		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
 
 		body.providerShortName = cloudProvider.shortName;

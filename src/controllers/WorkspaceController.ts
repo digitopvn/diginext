@@ -1,4 +1,5 @@
 import { isUndefined } from "lodash";
+import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import { Config } from "@/app.config";
@@ -10,7 +11,7 @@ import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, 
 import { ObjectID } from "@/libs/typeorm";
 import { DB } from "@/modules/api/DB";
 import { sendDiginextEmail } from "@/modules/diginext/dx-email";
-import { isValidObjectID, MongoDB, toObjectID } from "@/plugins/mongodb";
+import { isValidObjectId, MongoDB, toObjectId } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
 import { RoleService, UserService } from "@/services";
@@ -91,11 +92,11 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		await seedWorkspaceInitialData(newWorkspace, ownerUser);
 
 		// [3] Ownership: add this workspace to the creator {User} if it's not existed:
-		ownerUser = await addUserToWorkspace(toObjectID(owner), newWorkspace, "admin");
+		ownerUser = await addUserToWorkspace(toObjectId(owner), newWorkspace, "admin");
 		console.log(`Added "${ownerUser.name}" user to workspace "${newWorkspace.name}".`);
 
 		// [4] Set this workspace as "activeWorkspace" for this creator:
-		ownerUser = await makeWorkspaceActive(toObjectID(owner), toObjectID(newWorkspace._id));
+		ownerUser = await makeWorkspaceActive(toObjectId(owner), toObjectId(newWorkspace._id));
 		console.log(`Made workspace "${newWorkspace.name}" active for "${ownerUser.name}" user.`);
 
 		return respondSuccess({ data: newWorkspace });
@@ -127,8 +128,8 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		const { emails } = data;
 
 		const workspace = this.user.activeWorkspace as Workspace;
-		const wsId = toObjectID(workspace._id);
-		const userId = toObjectID(this.user._id);
+		const wsId = toObjectId(workspace._id);
+		const userId = toObjectId(this.user._id);
 
 		// check if this user is admin of the workspace:
 		if (this.user.activeRole.type !== "admin" && this.user.activeRole.type !== "moderator") return respondFailure(`Unauthorized.`);
@@ -213,8 +214,8 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		if (!workspace) return respondFailure({ msg: `Workspace ID or slug is required.` });
 
 		let serviceAccounts: User[] = [];
-		if (isValidObjectID(workspace)) {
-			serviceAccounts = await DB.find<User>("service_account", { workspaces: { $in: [toObjectID(workspace)] } });
+		if (isValidObjectId(workspace)) {
+			serviceAccounts = await DB.find<User>("service_account", { workspaces: { $in: [new ObjectId(workspace)] } });
 		} else {
 			const ws = await DB.findOne<Workspace>("workspace", { slug: workspace });
 			if (!ws) return respondFailure({ msg: `Workspace not found.` });
@@ -242,8 +243,8 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		if (!workspace) return respondFailure({ msg: `Workspace ID or slug is required.` });
 
 		let list: User[] = [];
-		if (isValidObjectID(workspace)) {
-			list = await DB.find<User>("api_key_user", { workspaces: { $in: [toObjectID(workspace)] } });
+		if (isValidObjectId(workspace)) {
+			list = await DB.find<User>("api_key_user", { workspaces: { $in: [new ObjectId(workspace)] } });
 		} else {
 			const ws = await DB.findOne<Workspace>("workspace", { slug: workspace });
 			if (!ws) return respondFailure({ msg: `Workspace not found.` });

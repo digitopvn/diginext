@@ -8,7 +8,7 @@ import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { generateJWT } from "@/modules/passports/jwtStrategy";
 import { extractWorkspaceSlugFromUrl } from "@/plugins";
-import { isObjectID, MongoDB } from "@/plugins/mongodb";
+import { isObjectId, MongoDB } from "@/plugins/mongodb";
 
 const router = express.Router();
 
@@ -90,7 +90,7 @@ router
 			if (!workspace) {
 				if (user.workspaces && user.workspaces.length === 1) {
 					// if this user only have 1 workspace -> make it active!
-					workspace = isObjectID(user.workspaces[0])
+					workspace = isObjectId(user.workspaces[0])
 						? await DB.findOne<Workspace>("workspace", { _id: user.workspaces[0] })
 						: (user.workspaces[0] as Workspace);
 

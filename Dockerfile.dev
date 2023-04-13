@@ -1,7 +1,18 @@
 FROM debian:latest
 
 # Switch to "root" user
+# <--- Usually you won't be needed it - Depends on base image --->
 USER root
+# Enable password for "root" user
+# RUN echo "root:pass" | chpasswd
+
+# <-- Run privileged commands -->
+# RUN apt install <packages>
+# RUN apt <privileged command>
+
+# Install all APT-GET packages from scratch...
+# RUN apt-get clean
+# RUN apt-get update -yq
 
 # Git, kubectl & Open SSH
 RUN apt-get update -yq \
@@ -83,15 +94,6 @@ RUN apt-get autoremove -y \
 # Set working directory
 WORKDIR /usr/app
 
-# Set user and group
-ARG user=app
-ARG group=app
-ARG uid=1000
-ARG gid=1000
-RUN groupadd -g ${gid} ${group}
-RUN useradd -u ${uid} -g ${group} -s /bin/sh -m ${user} 
-# <--- the '-m' create a user home directory
-
 # Copy package.json and package-lock.json before other files
 # Utilise Docker cache to save re-installing dependencies if unchanged
 COPY ./package*.json ./
@@ -127,6 +129,15 @@ COPY ./.babelrc.js \
   ./tsconfig.json \
   ./tsoa.json \
   ./
+
+# Set user and group
+ARG user=app
+ARG group=app
+ARG uid=1000
+ARG gid=1000
+RUN groupadd -g ${gid} ${group}
+RUN useradd -u ${uid} -g ${group} -s /bin/sh -m ${user} 
+# <--- the '-m' create a user home directory
 
 # ----- HANDLING PERMISIONS ------
 

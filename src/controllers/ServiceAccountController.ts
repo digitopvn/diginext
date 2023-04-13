@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import BaseController from "@/controllers/BaseController";
@@ -69,7 +70,7 @@ export default class ServiceAccountController extends BaseController<User> {
 			// console.log("workspace :>> ", workspace);
 
 			const wsId = MongoDB.toString(workspace._id);
-			const user = await this.service.findOne({ id: MongoDB.toObjectID(userId) });
+			const user = await this.service.findOne({ id: new ObjectId(userId) });
 			// console.log("user :>> ", user);
 			// console.log("wsId :>> ", wsId);
 

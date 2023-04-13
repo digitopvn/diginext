@@ -1,7 +1,7 @@
 import { log } from "diginext-utils/dist/console/log";
 
 import type { User } from "@/entities";
-import { isObjectID } from "@/plugins/mongodb";
+import { isObjectId } from "@/plugins/mongodb";
 
 import { DB } from "../modules/api/DB";
 
@@ -10,7 +10,7 @@ export const migrateUserWorkspaces = async () => {
 
 	users = users
 		.map((user) => {
-			const workspaces = (user.workspaces || []).filter((ws) => isObjectID(ws));
+			const workspaces = (user.workspaces || []).filter((ws) => isObjectId(ws));
 
 			if ((user.workspaces || []).length !== workspaces.length) {
 				DB.update("user", { _id: user._id }, { workspaces });

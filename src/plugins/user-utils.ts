@@ -1,11 +1,12 @@
+import { ObjectId } from "mongodb";
+
 import type { Role, User, Workspace } from "@/entities";
-import type { ObjectID } from "@/libs/typeorm";
 import { DB } from "@/modules/api/DB";
 import { RoleService } from "@/services";
 
-import { isObjectID, MongoDB, toObjectID } from "./mongodb";
+import { isObjectId, MongoDB } from "./mongodb";
 
-export const addUserToWorkspace = async (userId: ObjectID, workspace: Workspace, roleType: "admin" | "moderator" | "member" = "member") => {
+export const addUserToWorkspace = async (userId: ObjectId, workspace: Workspace, roleType: "admin" | "moderator" | "member" = "member") => {
 	let user = await DB.findOne<User>("user", { id: userId });
 	if (!user) throw new Error(`User not found.`);
 
@@ -29,7 +30,7 @@ export const addUserToWorkspace = async (userId: ObjectID, workspace: Workspace,
 	return user;
 };
 
-export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", userId: ObjectID, workspace: Workspace) => {
+export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", userId: ObjectId, workspace: Workspace) => {
 	// find user
 	let user = await DB.findOne<User>("user", { id: userId }, { populate: ["roles"] });
 	if (!user) throw new Error(`User not found.`);
@@ -51,7 +52,7 @@ export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", 
 	return user;
 };
 
-export const makeWorkspaceActive = async (userId: ObjectID, workspaceId: ObjectID) => {
+export const makeWorkspaceActive = async (userId: ObjectId, workspaceId: ObjectId) => {
 	const [user] = await DB.update<User>("user", { _id: userId }, { activeWorkspace: workspaceId });
 	return user;
 };
@@ -73,13 +74,13 @@ export function filterSensitiveInfo(list: User[] = []) {
 export async function filterRole(workspaceId: string, list: User[] = []) {
 	const wsId = workspaceId;
 	const roleSvc = new RoleService();
-	const wsRoles = await roleSvc.find({ workspace: toObjectID(workspaceId) });
+	const wsRoles = await roleSvc.find({ workspace: new ObjectId(workspaceId) });
 	// console.log("wsId :>> ", wsId);
 
 	return list.map((item) => {
 		if (item.roles && item.roles.length > 0) {
 			item.roles = item.roles.filter((role) => {
-				if (isObjectID(role)) {
+				if (isObjectId(role)) {
 					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString(role));
 				} else if ((role as Role)._id) {
 					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString((role as Role)._id));
@@ -91,7 +92,7 @@ export async function filterRole(workspaceId: string, list: User[] = []) {
 
 		if (item.workspaces && item.workspaces.length > 0) {
 			const workspaces = item.workspaces.filter((ws) => {
-				if (isObjectID(ws)) {
+				if (isObjectId(ws)) {
 					return wsId === MongoDB.toString(ws);
 				} else if ((ws as Workspace)._id) {
 					return wsId === MongoDB.toString((ws as Workspace)._id);

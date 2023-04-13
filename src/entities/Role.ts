@@ -1,4 +1,5 @@
 import { IsNotEmpty } from "class-validator";
+import type { ObjectId } from "mongodb";
 
 import type { IRoutePermission, IRouteScope } from "@/interfaces/IPermission";
 import type { ObjectID } from "@/libs/typeorm";
@@ -71,7 +72,7 @@ export default class Role extends Base {
 	 * @remarks This can be populated to {Workspace} data
 	 */
 	@ObjectIdColumn({ name: "workspaces" })
-	workspace?: ObjectID | Workspace | string;
+	workspace?: ObjectID | ObjectId | Workspace | string;
 
 	constructor(data?: Role | any) {
 		super();

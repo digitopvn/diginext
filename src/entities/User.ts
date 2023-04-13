@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty } from "class-validator";
+import type { ObjectId } from "mongodb";
 
 import type { HiddenBodyKeys } from "@/interfaces";
 import type { ObjectID } from "@/libs/typeorm";
@@ -88,7 +89,7 @@ export default class User extends Base {
 	 * User's roles (should be filtered by "workspace")
 	 */
 	@ObjectIdColumn({ name: "roles", array: true, default: [] })
-	roles?: (ObjectID | Role | string)[];
+	roles?: (ObjectID | ObjectId | Role | string)[];
 
 	/**
 	 * Role of this user in current active Workspace
@@ -99,19 +100,19 @@ export default class User extends Base {
 	 * User's team IDs which this user is a member
 	 */
 	@ObjectIdColumn({ name: "teams", array: true, default: [] })
-	teams?: (ObjectID | Team | string)[];
+	teams?: (ObjectID | ObjectId | Team | string)[];
 
 	/**
 	 * List of workspace IDs which this user is a member
 	 */
 	@ObjectIdColumn({ name: "workspaces", array: true, default: [] })
-	workspaces?: (ObjectID | Workspace | string)[];
+	workspaces?: (ObjectID | ObjectId | Workspace | string)[];
 
 	/**
 	 * Active workspace of a user
 	 */
 	@ObjectIdColumn({ name: "workspaces" })
-	activeWorkspace?: ObjectID | Workspace | string;
+	activeWorkspace?: ObjectID | ObjectId | Workspace | string;
 
 	/**
 	 * User ID of the user who invited this user
@@ -119,7 +120,7 @@ export default class User extends Base {
 	 * @remarks This can be populated to {User} data
 	 */
 	@ObjectIdColumn({ name: "users" })
-	owner?: ObjectID | User | string;
+	owner?: ObjectId | ObjectID | User | string;
 
 	constructor(data?: User) {
 		super();
