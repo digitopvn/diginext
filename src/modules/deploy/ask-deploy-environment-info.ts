@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 import { isEmpty, isNaN } from "lodash";
 
@@ -8,6 +7,8 @@ import { getCliConfig } from "@/config/config";
 import type { App, CloudProvider, Cluster, ContainerRegistry, Project } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
+import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
+import { availableResourceSizes } from "@/interfaces/SystemTypes";
 import { getAppConfig, resolveEnvFilePath, saveAppConfig } from "@/plugins";
 import { isNumeric } from "@/plugins/number";
 
@@ -18,6 +19,7 @@ import { createOrSelectApp } from "../apps/create-or-select-app";
 import { createOrSelectProject } from "../apps/create-or-select-project";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { askForDomain } from "../build";
+import { askForRegistry } from "../registry/ask-for-registry";
 import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
 import { uploadDotenvFileByApp } from "./dotenv-upload";
 
@@ -88,6 +90,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	if (typeof serverAppConfig.environment === "undefined") serverAppConfig.environment = {};
 	const serverDeployEnvironment = serverAppConfig.environment[env] || {};
 
+	// TODO: move this part to server side?
 	if (
 		serverAppConfig.project !== localAppConfig.project ||
 		serverAppConfig.slug !== localAppConfig.slug ||
@@ -174,19 +177,8 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 		if (registry) localDeployEnvironment.registry = registry.slug;
 	}
 	if (!localDeployEnvironment.registry) {
-		const registries = await DB.find<ContainerRegistry>("registry", {}, {}, { limit: 20 });
-
-		const { selectedRegistry } = await inquirer.prompt<{ selectedRegistry: ContainerRegistry }>({
-			type: "list",
-			name: "selectedRegistry",
-			message: "Please select your default container registry:",
-			choices: registries.map((r) => {
-				return { name: r.slug, value: r };
-			}),
-		});
-
-		registry = selectedRegistry;
-		localDeployEnvironment.registry = selectedRegistry.slug;
+		registry = await askForRegistry();
+		localDeployEnvironment.registry = registry.slug;
 	}
 	localAppConfig.environment[env].registry = localDeployEnvironment.registry;
 
@@ -236,7 +228,23 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	options.replicas = localDeployEnvironment.replicas;
 	localAppConfig.environment[env].replicas = localDeployEnvironment.replicas;
 
+	// request container size
+	if (typeof localDeployEnvironment.size === "undefined") {
+		const { selectedSize } = await inquirer.prompt<{ selectedSize: ResourceQuotaSize }>({
+			type: "list",
+			name: "selectedSize",
+			message: "Please select your default container registry:",
+			choices: availableResourceSizes.map((r) => {
+				return { name: r, value: r };
+			}),
+		});
+		localDeployEnvironment.size = selectedSize;
+	}
+	options.size = localDeployEnvironment.size;
+	localAppConfig.environment[env].size = localDeployEnvironment.size;
+
 	// request SSL config
+	// TODO: Each domain should has its own tls secret
 	if (localDeployEnvironment.domains.length > 0) {
 		const primaryDomain = localDeployEnvironment.domains[0];
 		if (typeof localDeployEnvironment.ssl === "undefined" || localDeployEnvironment.ssl === "none") {
@@ -244,10 +252,11 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 		}
 
 		options.ssl = true;
-		localDeployEnvironment.tlsSecret = `tls-secret-${localDeployEnvironment.ssl}-${makeSlug(primaryDomain)}`;
-
-		// if they select "custom" SSL certificate -> ask for secret name:
-		if (localDeployEnvironment.ssl === "custom") {
+		if (localDeployEnvironment.ssl === "letsencrypt" || localDeployEnvironment.ssl === "none") {
+			// leave empty so the build server will generate it automatically
+			localDeployEnvironment.tlsSecret = "";
+		} else {
+			// if they select "custom" SSL certificate -> ask for secret name:
 			const { customSecretName } = await inquirer.prompt({
 				type: "input",
 				name: "customSecretName",
@@ -286,6 +295,11 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	if (options.isDebugging) log(`[ASK DEPLOY INFO] updateAppData :>>`, updateAppData);
 
 	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updateAppData);
+
+	if (!updatedApp) {
+		logError(`App not found (probably deleted?)`);
+		return;
+	}
 
 	if (options.isDebugging) log(`[ASK DEPLOY INFO] updatedApp :>>`, updatedApp);
 

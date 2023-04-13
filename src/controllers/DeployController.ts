@@ -1,4 +1,3 @@
-import { isJSON } from "class-validator";
 import { log } from "diginext-utils/dist/console/log";
 import path from "path";
 import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
@@ -15,6 +14,8 @@ import { buildAndDeploy } from "@/modules/build/build-and-deploy";
 import { startBuildV1 } from "@/modules/build/start-build";
 import type { DeployBuildOptions } from "@/modules/deploy/deploy-build";
 import { deployWithBuildSlug } from "@/modules/deploy/deploy-build";
+
+import BaseController from "./BaseController";
 
 type DeployBuildInput = {
 	/**
@@ -37,8 +38,8 @@ type DeployBuildInput = {
 
 @Tags("Deploy")
 @Route("deploy")
-export default class DeployController {
-	user?: User;
+export default class DeployController extends BaseController {
+	user: User;
 
 	/**
 	 * ### [DEPRECATED SOON]
@@ -51,17 +52,19 @@ export default class DeployController {
 	deployFromSource(@Body() body: { options: InputOptions }, @Queries() queryParams?: IPostQueryParams) {
 		let { options: inputOptions } = body;
 
+		// console.log("deployFromSource :>> ", body);
+
 		// validation & conversion...
 		if (!inputOptions) return { status: 0, messages: [`Deploy "options" is required.`] } as ResponseData;
-		if (!isJSON(inputOptions)) return { status: 0, messages: [`Deploy "options" is invalid (should be in JSON format).`] } as ResponseData;
+		// if (!isJSON(inputOptions)) return { status: 0, messages: [`Deploy "options" is invalid (should be in JSON format).`] } as ResponseData;
 
-		const options = JSON.parse(inputOptions as string) as InputOptions;
+		// const options = JSON.parse(inputOptions as string) as InputOptions;
 		// log("[DEPLOY] options", options);
 
 		// TODO: Save client CLI version to server database for tracking purpose!
 
 		// check for version compatibility between CLI & SERVER:
-		const cliVersion = options.version || "0.0.0";
+		const cliVersion = inputOptions.version || "0.0.0";
 		const breakingChangeVersionCli = cliVersion.split(".")[0];
 		const serverVersion = pkg.version;
 		const breakingChangeVersionServer = serverVersion.split(".")[0];
@@ -75,8 +78,8 @@ export default class DeployController {
 			};
 		}
 
-		log(`deployFromSource > options.buildNumber :>>`, options.buildNumber);
-		startBuildV1(options);
+		log(`deployFromSource > options.buildNumber :>>`, inputOptions.buildNumber);
+		startBuildV1(inputOptions);
 
 		// start build in background:
 		return { messages: [`Building...`], status: 1 };
@@ -90,19 +93,19 @@ export default class DeployController {
 	@Security("jwt")
 	@Post("/build-first")
 	async buildAndDeploy(@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildInput }, @Queries() queryParams?: IPostQueryParams) {
-		let { buildParams: buildParamsJSON, deployParams: deployParamsJSON } = body;
+		let { buildParams, deployParams } = body;
 
 		// validation & conversion...
-		if (!buildParamsJSON) return { status: 0, messages: [`Build "params" is required.`] } as ResponseData;
-		if (!isJSON(buildParamsJSON)) return { status: 0, messages: [`Invalid JSON format of build "params".`] } as ResponseData;
-		const buildParams = JSON.parse(buildParamsJSON as unknown as string) as StartBuildParams;
+		if (!buildParams) return { status: 0, messages: [`Build "params" is required.`] } as ResponseData;
+		// if (!isJSON(buildParamsJSON)) return { status: 0, messages: [`Invalid JSON format of build "params".`] } as ResponseData;
+		// const buildParams = JSON.parse(buildParamsJSON as unknown as string) as StartBuildParams;
 
-		if (!deployParamsJSON) return { status: 0, messages: [`Deploy "params" is required.`] } as ResponseData;
-		if (!isJSON(deployParamsJSON)) return { status: 0, messages: [`Invalid JSON format of deploy "params".`] } as ResponseData;
-		const deployInputs = JSON.parse(deployParamsJSON as unknown as string) as DeployBuildInput;
+		if (!deployParams) return { status: 0, messages: [`Deploy "params" is required.`] } as ResponseData;
+		// if (!isJSON(deployParamsJSON)) return { status: 0, messages: [`Invalid JSON format of deploy "params".`] } as ResponseData;
+		// const deployParams = JSON.parse(deployParamsJSON as unknown as string) as DeployBuildInput;
 
 		const app = await DB.findOne<App>("app", { slug: buildParams.appSlug });
-		const author = await DB.findOne<User>("user", { _id: deployInputs.author }, { populate: ["activeWorkspace"] });
+		const author = await DB.findOne<User>("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] });
 		const workspace = author.activeWorkspace as Workspace;
 		const SOURCE_CODE_DIR = `cache/${app.projectSlug}/${app.slug}/${buildParams.gitBranch}`;
 		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
@@ -110,7 +113,7 @@ export default class DeployController {
 		const deployBuildOptions: DeployBuildOptions = {
 			author,
 			env: buildParams.env,
-			shouldUseFreshDeploy: deployInputs.shouldUseFreshDeploy,
+			shouldUseFreshDeploy: deployParams.shouldUseFreshDeploy,
 			workspace,
 			buildDirectory,
 		};

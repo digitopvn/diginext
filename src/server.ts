@@ -20,11 +20,13 @@ import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
 import { Config, IsDev, IsProd } from "./app.config";
+import type { AppRequest } from "./interfaces/SystemTypes";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
-import { route404_handler } from "./middlewares/route404";
 import AppDatabase from "./modules/AppDatabase";
 import { startupScripts } from "./modules/server/startup-scripts";
 import routes from "./routes/routes";
+
+// const logger = new LogStream();
 
 /**
  * ENVIRONMENT CONFIG
@@ -123,8 +125,8 @@ function initialize() {
 	app.use(cookieParser());
 	app.use(
 		session({
-			name: Config.grab(`SESSION_NAME`, `diginext-cli`),
-			secret: Config.grab(`JWT_SECRET`, "123"),
+			name: Config.grab(`SESSION_NAME`, `diginext`),
+			secret: Config.grab(`JWT_SECRET`),
 			maxAge: 1000 * 60 * 100,
 		})
 	);
@@ -139,13 +141,14 @@ function initialize() {
 	 * LOGGING SYSTEM MIDDLEWARE - ENABLED
 	 * Enable when running on server
 	 */
-	morgan.token("user", (req: Request) => (req.user ? `[${(req.user as any)?.slug}]` : "[unauthenticated]"));
+	morgan.token("user", (req: AppRequest) => (req.user ? `[${req.user.slug}]` : "[unauthenticated]"));
 	const morganMessage = IsDev()
 		? "[REQUEST :date[clf]] :method - :user - :url :status :response-time ms - :res[content-length]"
 		: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;
 	const morganOptions = {
-		skip: (req, res) => req.method.toUpperCase() === "OPTIONS",
-	} as morgan.Options<Request, Response>;
+		skip: (req) => req.method.toUpperCase() === "OPTIONS",
+		// stream: logger,
+	} as unknown as morgan.Options<Request, Response>;
 	app.use(morgan(morganMessage, morganOptions));
 
 	// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
@@ -154,8 +157,9 @@ function initialize() {
 	/**
 	 * ROUTE 404 & FAIL SAFE HANDLING MIDDLEWARE
 	 */
-	app.use("*", route404_handler);
+	// app.use("*", route404_handler);
 
+	// make sure the Express app won't be crashed if there are any errors
 	if (IsProd()) app.use(failSafeHandler);
 
 	/**

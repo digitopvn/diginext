@@ -9,8 +9,7 @@ import type { AccessTokenInfo } from "@/entities/User";
 import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
-
-import { DB } from "../api/DB";
+import { MongoDB } from "@/plugins/mongodb";
 
 interface CliLoginOptions {
 	/**
@@ -34,8 +33,6 @@ export const cliLogin = async (options: CliLoginOptions) => {
 
 	const { buildServerUrl: currentServerUrl } = getCliConfig();
 
-	// console.log("cliLogin > accessToken :>> ", accessToken);
-
 	let access_token = accessToken;
 
 	let buildServerUrl = url ?? secondAction ?? currentServerUrl;
@@ -51,7 +48,6 @@ export const cliLogin = async (options: CliLoginOptions) => {
 
 	// open login page of build server:
 	if (!access_token) open(tokenDisplayUrl);
-	// open(`${cliConfig.buildServerUrl}/auth/google?redirect_url=${cliConfig.buildServerUrl}/auth/profile`);
 
 	if (!access_token) {
 		const { inputAccessToken } = await inquirer.prompt<{ inputAccessToken: string }>([
@@ -80,66 +76,28 @@ export const cliLogin = async (options: CliLoginOptions) => {
 		return;
 	}
 	currentUser = data as User;
-	// const userId = currentUser._id;
 
 	// "access_token" is VALID -> save it to local machine!
 	saveCliConfig({ access_token, currentWorkspace: currentUser.activeWorkspace as Workspace });
 
-	// console.log(`[AUTH]`, { currentUser });
 	const { workspaces = [], activeWorkspace } = currentUser;
 	let currentWorkspace;
-	// console.log(`[AUTH]`, { activeWorkspace });
 
-	// If no workspace existed, create new here!
+	// If no workspace existed, throw error! (because workspace creation flow is on the admin UI)
 	if (workspaces.length < 1) {
-		const { workspaceName } = await inquirer.prompt([
-			{
-				type: "input",
-				name: "workspaceName",
-				message: "Enter workspace's name to create:",
-				validate: function (value) {
-					if (value.length > 3) {
-						return true;
-					} else {
-						return logError(`Workspace's name must contain more than 3 characters.`);
-					}
-				},
-			},
-		]);
-
-		// create new workspace:
-		const newWorkspace = await DB.create<Workspace>("workspace", { name: workspaceName, owner: currentUser._id });
-		if (!newWorkspace) return;
-
-		currentWorkspace = newWorkspace as Workspace;
-
-		// update workspaceId to this user and set it as an active workspace:
-		const [updatedUser] = await DB.update<User>(
-			"user",
-			{ _id: currentUser._id },
-			{
-				$set: { activeWorkspace: currentWorkspace._id },
-				$addToSet: { workspaces: currentWorkspace._id },
-			},
-			{ populate: ["workspaces", "activeWorkspace"], raw: true }
+		logError(
+			`This account isn't integrated with any workspaces. Select or create one here: ${buildServerUrl}/workspace/select?redirect_url=${buildServerUrl}/cli`
 		);
-
-		if (!updatedUser) return;
-
-		// TODO: seed default data: frameworks, git ?
-		currentUser = updatedUser[0];
-	} else {
-		currentWorkspace = activeWorkspace;
+		return;
 	}
+
+	currentWorkspace = activeWorkspace;
 
 	if (!currentUser.token) currentUser.token = {} as AccessTokenInfo;
 	currentUser.token.access_token = access_token;
 
 	// save this user & workspace to CLI config
 	saveCliConfig({ currentUser, currentWorkspace });
-
-	// console.log("updatedUser :>> ", updatedUser[0]);
-	// if (updatedUser) currentUser = updatedUser[0] as User;
 
 	logSuccess(`Hello, ${currentUser.name}! You're logged into "${currentWorkspace.name}" workspace.`);
 
@@ -157,32 +115,29 @@ export const cliLogout = async () => {
 };
 
 export async function cliAuthenticate(options: InputOptions) {
-	let accessToken, workspace: Workspace;
+	let accessToken, workspace: Workspace, user: User;
 	const { access_token: currentAccessToken, buildServerUrl } = getCliConfig();
 	accessToken = currentAccessToken;
 	// workspace = currentWorkspace;
 
 	const continueToLoginStep = async (url) => {
 		options.url = url;
-		const user = await cliLogin(options);
+		const _user = await cliLogin(options);
 
-		if (!user) {
+		if (!_user) {
 			logError(`Failed to login: User not found.`);
 			return;
 		}
 
-		if (user.token?.access_token) accessToken = user.token.access_token;
+		if (_user.token?.access_token) accessToken = _user.token.access_token;
 
-		return user;
+		return _user;
 	};
 
 	if (!accessToken && buildServerUrl) {
-		const user = await continueToLoginStep(buildServerUrl);
+		user = await continueToLoginStep(buildServerUrl);
 		if (!user) return;
-		// workspace = getCliConfig().currentWorkspace;
 	}
-	// if (isEmpty(currentWorkspace) && buildServerUrl) await continueToLoginStep(buildServerUrl);
-	// if (isEmpty(currentUser) && buildServerUrl) await continueToLoginStep(buildServerUrl);
 
 	const {
 		status,
@@ -192,24 +147,20 @@ export async function cliAuthenticate(options: InputOptions) {
 		url: `/auth/profile`,
 		access_token: accessToken,
 	});
-	let user = userData as User;
-	// log(`user :>>`, user);
+	user = userData as User;
 
 	if (!status || isEmpty(user)) {
-		// logError(`Authentication failed.`, messages);
+		// don't give up, keep trying...
 		if (buildServerUrl) user = await continueToLoginStep(buildServerUrl);
 	}
 
-	// log({ user });
-	// log(`user.token :>>`, user.token);
 	if (user.token?.access_token) saveCliConfig({ access_token: user.token.access_token });
 
 	// Assign user & workspace to use across all CLI commands
-	options.userId = user._id.toString();
+	options.userId = MongoDB.toString(user._id);
 	options.username = user.username ?? user.slug;
 	options.workspace = user.activeWorkspace as Workspace;
-	options.workspaceId = options.workspace._id.toString();
-	// console.log("userProfile :>> ", userProfile);
+	options.workspaceId = MongoDB.toString(options.workspace._id);
 
 	// Save "currentUser" & "access_token" for next API requests
 	saveCliConfig({ currentUser: user, currentWorkspace: options.workspace });

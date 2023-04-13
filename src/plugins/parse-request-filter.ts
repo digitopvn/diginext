@@ -4,7 +4,8 @@ import { ObjectId } from "mongodb";
 
 import type { FindManyOptions } from "@/libs/typeorm";
 
-import { isValidObjectId } from "./mongodb";
+import { isObjectId, isValidObjectId } from "./mongodb";
+import { traverseObjectAndTransformValue } from "./traverse";
 
 export const parseRequestFilter = (requestQuery: any) => {
 	const {
@@ -28,25 +29,25 @@ export const parseRequestFilter = (requestQuery: any) => {
 	// filter
 	const _filter: { [key: string]: any } = id ? { id, ...filter } : filter;
 
-	// convert search to boolean
-	Object.entries(_filter).forEach(([key, val]) => {
-		if (key == "id" || key == "_id") {
-			_filter._id = isValidObjectId(val) ? new ObjectId(val) : val;
-			delete _filter.id;
-		}
-
+	// traverse filter object and transform the values:
+	traverseObjectAndTransformValue(_filter, ([key, val]) => {
 		if (val == null || val == undefined) {
-			_filter[key] = null;
+			return null;
+		} else if (isObjectId(val)) {
+			return val;
 		} else if (isValidObjectId(val)) {
-			_filter[key] = new ObjectId(val);
+			return new ObjectId(val);
 		} else if (isJSON(val)) {
-			_filter[key] = JSON.parse(val);
+			return JSON.parse(val);
 		} else {
-			_filter[key] = val;
+			return val;
 		}
 	});
 
-	if (!_filter.id) delete _filter.id;
+	if (_filter.id) {
+		_filter._id = _filter.id;
+		delete _filter.id;
+	}
 
 	// manipulate "$or" & "$and" filter:
 	if (_filter.or) {

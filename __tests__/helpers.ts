@@ -1,3 +1,4 @@
+import { DataSource } from "../src/libs/typeorm";
 import { User, UserDto, Workspace, WorkspaceDto } from "../src/entities";
 import fetchApi from "../src/modules/api/fetchApi";
 import { wait, waitUntil } from "../src/plugins/utils";
@@ -110,7 +111,7 @@ export const createUser = async (data: UserDto) => {
 
 export const createWorkspace = async (name: string) => {
 	if (!currentUser) throw new Error(`Unauthenticated.`);
-	
+
 	const workspace = await workspaceCtl.create({
 		name,
 		owner: currentUser._id,
@@ -156,3 +157,17 @@ export const loginUser = async (userId: ObjectId, workspaceId: ObjectId) => {
 
 	return { user, workspace };
 };
+
+/**
+ * Closes testing connections if they are connected.
+ */
+export function closeTestingConnections(connections: DataSource[]) {
+	return Promise.all(connections.map((connection) => (connection && connection.isInitialized ? connection.close() : undefined)));
+}
+
+/**
+ * Reloads all databases for all given connections.
+ */
+export function reloadTestingDatabases(connections: DataSource[]) {
+	return Promise.all(connections.map((connection) => connection.synchronize(true)));
+}

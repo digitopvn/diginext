@@ -1,8 +1,6 @@
 import type { App, Framework, Project, Workspace } from "@/entities";
 
-import type { GitProviderType } from "./SystemTypes";
-
-export type ResourceQuotaSize = "none" | "1x" | "2x" | "3x" | "4x" | "5x" | "6x" | "7x" | "8x" | "9x" | "10x";
+import type { GitProviderType, ResourceQuotaSize } from "./SystemTypes";
 
 /**
  * Các giá trị đầu vào của CLI
@@ -51,9 +49,36 @@ export type InputOptions = {
 	workspaceId?: string;
 
 	/**
-	 * Target's name
+	 * User input organization
+	 * - Use when container registry authentication
+	 */
+	org?: string;
+
+	/**
+	 * User input username
+	 */
+	user?: string;
+
+	/**
+	 * User input password
+	 */
+	pass?: string;
+
+	/**
+	 * User input email
+	 */
+	email?: string;
+
+	/**
+	 * User input server
+	 */
+	server?: string;
+
+	/**
+	 * User input name
 	 */
 	name?: string;
+
 	/**
 	 * {App} slug
 	 */

@@ -13,7 +13,7 @@ import type GitProvider from "@/entities/GitProvider";
 import type User from "@/entities/User";
 import type Workspace from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
-import type { ResourceQuotaSize } from "@/interfaces/InputOptions";
+import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 
 import { readJson, saveJson, showDocs } from "../plugins";
 import { CLI_CONFIG_DIR, CLI_CONFIG_FILE, CLI_DIR } from "./const";
@@ -44,6 +44,8 @@ export type CliConfig = {
 	currentWorkspace?: Workspace;
 
 	defaultFramework?: Framework;
+
+	github_access_token?: string;
 
 	currentGitProvider?: GitProvider;
 	currentRegistry?: ContainerRegistry;

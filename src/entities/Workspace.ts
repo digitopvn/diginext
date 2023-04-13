@@ -17,14 +17,20 @@ export interface IWorkspace extends IBase {
 
 export class WorkspaceApiAccessToken {
 	/**
-	 *
+	 * Workspace name
 	 */
 	name: string;
 
 	/**
-	 *
+	 * Is also a subdomain of *.diginext.site
+	 * @example <slug>.diginext.site
 	 */
 	slug?: string;
+
+	/**
+	 * Custom domain of a workspace
+	 */
+	domain?: string;
 
 	/**
 	 *

@@ -7,6 +7,7 @@ import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
+import { MongoDB } from "@/plugins/mongodb";
 import AppService from "@/services/AppService";
 import ProjectService from "@/services/ProjectService";
 
@@ -101,7 +102,7 @@ export default class ProjectController extends BaseController<Project> {
 
 		result.data = projects.map((p) => {
 			const projectWithApps: Project = { ...p };
-			projectWithApps.apps = apps.filter((a) => a.project.toString() === p._id.toString());
+			projectWithApps.apps = apps.filter((a) => MongoDB.toString(a.project) === MongoDB.toString(p._id));
 			return projectWithApps;
 		});
 

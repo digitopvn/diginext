@@ -56,15 +56,15 @@ spec:
             - name: BASE_URL
               value: https://api.diginext.site
             - name: MONGODB_CONNECTION_STRING
-              value: # insert here
+              value: # mongodb://...
             - name: JWT_SECRET
-              value: # insert here
+              value: # JWT_SECRET
             - name: JWT_EXPIRE_TIME
               value: 48h
             - name: GOOGLE_CLIENT_ID
-              value: # insert here
+              value: # GOOGLE_CLIENT_ID
             - name: GOOGLE_CLIENT_SECRET
-              value: # insert here
+              value: # GOOGLE_CLIENT_SECRET
             - name: BUILDER
               value: podman
             - name: DX_LICENSE_KEY

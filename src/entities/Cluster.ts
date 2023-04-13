@@ -24,7 +24,7 @@ export default class Cluster extends Base {
 	/**
 	 * Is cluster verified
 	 */
-	@Column()
+	@Column({ default: false })
 	isVerified?: boolean;
 
 	/**
@@ -44,7 +44,7 @@ export default class Cluster extends Base {
 	 * Cloud provider of this cluster
 	 */
 	@ObjectIdColumn({ name: "cloud_providers" })
-	provider?: ObjectID | CloudProvider;
+	provider?: string | ObjectID | CloudProvider;
 
 	/**
 	 * Short name of the cloud provider

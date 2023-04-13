@@ -17,6 +17,7 @@ import {
 	deleteService,
 	deleteServiceByFilter,
 	getAllDeploys,
+	getAllIngresses,
 	getAllNamespaces,
 	getAllPods,
 	getAllSecrets,
@@ -37,12 +38,16 @@ import {
 	setEnvVar,
 	setEnvVarByFilter,
 } from "./kubectl";
+import { checkCertManagerInstalled, checkNginxIngressInstalled } from "./stack-check";
+import { installCertManagerStack, installNginxIngressStack } from "./stack-install";
 
 const ClusterManager = {
+	// cluster-helpers
 	authCluster,
 	createImagePullSecretsInNamespace,
 	currentContext,
 	currentCluster,
+	// kube-helpers
 	createNamespace,
 	deleteNamespace,
 	deleteNamespaceByCluster,
@@ -60,15 +65,16 @@ const ClusterManager = {
 	getKubeContextByClusterShortName,
 	getKubeContextByCluster,
 	getAllDeploys,
-	getService,
 	getAllServices,
-	getPod,
+	getAllIngresses,
 	getAllPods,
+	getAllSecrets,
+	getAllNamespaces,
+	getService,
+	getPod,
 	getPodsByFilter,
 	getDeployByFilter,
 	getIngress,
-	getAllSecrets,
-	getAllNamespaces,
 	getDeploy,
 	isNamespaceExisted,
 	isSecretExisted,
@@ -77,10 +83,16 @@ const ClusterManager = {
 	setDeployImage,
 	setDeployImageByFilter,
 	setDeployImagePullSecretByFilter,
+	// deploy
 	previewPrerelease,
 	rollout,
 	kubectlApply,
 	kubectlApplyContent,
+	// stacks
+	checkCertManagerInstalled,
+	checkNginxIngressInstalled,
+	installCertManagerStack,
+	installNginxIngressStack,
 };
 
 export default ClusterManager;

@@ -25,10 +25,11 @@ import {
 	UserService,
 	WorkspaceService,
 } from "@/services";
+import RouteService from "@/services/RouteService";
 
 import fetchApi from "./fetchApi";
 
-type DBCollection =
+export type DBCollection =
 	| "app"
 	| "build"
 	| "database"
@@ -40,6 +41,7 @@ type DBCollection =
 	| "project"
 	| "release"
 	| "role"
+	| "route"
 	| "team"
 	| "user"
 	| "api_key_user"
@@ -100,6 +102,7 @@ const git = new GitProviderService();
 const project = new ProjectService();
 const release = new ReleaseService();
 const role = new RoleService();
+const route = new RouteService();
 const team = new TeamService();
 const user = new UserService();
 const api_key_user = new ApiKeyUserService();
@@ -119,6 +122,7 @@ export class DB {
 		project,
 		release,
 		role,
+		route,
 		team,
 		user,
 		api_key_user,
@@ -164,10 +168,8 @@ export class DB {
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
 			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr}`;
 
-			// TODO: Not working, since I hasn't create count API yet
-
-			const { data = [], status, messages } = await fetchApi({ url });
-			if (!status) logError(`[DB] COUNT - ${url} :>>`, messages);
+			const { data = [], status, messages = [""] } = await fetchApi({ url });
+			if (!status && messages[0]) logError(`[DB] COUNT - ${url} :>>`, messages);
 
 			amount = data;
 		}
@@ -193,8 +195,8 @@ export class DB {
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
 			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr}`;
 
-			const { data = [], status, messages } = await fetchApi<T>({ url });
-			if (!status) logError(`[DB] FIND MANY - ${url} :>>`, messages);
+			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
+			if (!status && messages[0]) logError(`[DB] FIND MANY - ${url} :>>`, messages);
 
 			items = data;
 		}
@@ -218,8 +220,9 @@ export class DB {
 			const optionStr = queryOptionsToUrlOptions(options);
 			const filterStr = queryFilterToUrlFilter(filter);
 			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr}`;
-			const { data, status, messages } = await fetchApi<T>({ url });
-			if (!status) logError(`[DB] FIND ONE - ${url} :>>`, messages);
+
+			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
+			if (!status && messages[0]) logError(`[DB] FIND ONE - ${url} :>>`, messages);
 			item = data[0];
 		}
 		return item as T;
@@ -249,13 +252,13 @@ export class DB {
 			const {
 				data: result,
 				status,
-				messages,
+				messages = [""],
 			} = await fetchApi<T>({
 				url,
 				method: "POST",
 				data: newData,
 			});
-			if (!status && messages && messages.length > 0) logError(`[DB] CREATE - ${url} :>>`, messages);
+			if (!status && messages[0]) logError(`[DB] CREATE - ${url} :>>`, messages);
 			item = result;
 		}
 		return item as T;
@@ -289,7 +292,7 @@ export class DB {
 			const {
 				status,
 				data: result = [],
-				messages,
+				messages = [""],
 			} = await fetchApi<T>({
 				url,
 				method: "PATCH",
@@ -297,7 +300,7 @@ export class DB {
 			});
 
 			// console.log("[DB] UPDATE > result :>> ", status, "-", result, "-", messages);
-			if (!status || isEmpty(result)) logError(`[DB] UPDATE - ${url} :>>`, messages);
+			if (!status && messages[0]) logError(`[DB] UPDATE - ${url} :>>`, messages);
 			items = result;
 		}
 		return items as T[];
@@ -322,12 +325,12 @@ export class DB {
 			const {
 				data: result,
 				status,
-				messages,
+				messages = [""],
 			} = await fetchApi<T>({
 				url,
 				method: "DELETE",
 			});
-			if (!status) logError(`[DB] DELETE - ${url} :>>`, messages);
+			if (!status && messages[0]) logError(`[DB] DELETE - ${url} :>>`, messages);
 			item = result;
 		}
 		return item;

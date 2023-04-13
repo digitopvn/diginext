@@ -25,7 +25,7 @@ export const createReleaseFromBuild = async (build: Build, env?: string, ownersh
 	const { branch, image, tag, cliVersion } = build;
 	const { slug: projectSlug } = project;
 	const { owner, workspace, slug: appSlug } = app;
-	const { slug: workspaceSlug } = workspace as Workspace;
+	const { slug: workspaceSlug, _id: workspaceId } = workspace as Workspace;
 
 	const buildNumber = tag ?? image.split(":")[1];
 
@@ -90,7 +90,7 @@ export const createReleaseFromBuild = async (build: Build, env?: string, ownersh
 		appSlug,
 		createdBy: isEmpty(ownership) ? defaultAuthor.slug : ownership.author.slug,
 		owner: isEmpty(ownership) ? defaultAuthor._id : ownership.author._id,
-		workspace: workspaceSlug,
+		workspace: workspaceId,
 	} as Release;
 
 	if (env === "prod") {

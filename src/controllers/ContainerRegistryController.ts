@@ -4,14 +4,16 @@ import { unlink } from "fs";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { ContainerRegistry } from "@/entities";
+import { ContainerRegistryDto } from "@/entities";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { registryProviderList } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import digitalocean from "@/modules/providers/digitalocean";
 import gcloud from "@/modules/providers/gcloud";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { createTmpFile } from "@/plugins";
+import { MongoDB } from "@/plugins/mongodb";
 import ContainerRegistryService from "@/services/ContainerRegistryService";
 
 import BaseController from "./BaseController";
@@ -36,69 +38,125 @@ export default class ContainerRegistryController extends BaseController<Containe
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: MaskedContainerRegistry, @Queries() queryParams?: IPostQueryParams) {
-		const { name, serviceAccount, provider: providerShortName, host, imageBaseURL, apiAccessToken } = body;
+		let {
+			name,
+			organization,
+			serviceAccount,
+			provider: providerShortName,
+			host,
+			imageBaseURL,
+			apiAccessToken,
+			dockerUsername,
+			dockerPassword,
+			dockerServer,
+			dockerEmail,
+		} = body;
+
+		// TODO: add dockerUsername, dockerPassword, dockerServer, dockerEmail
+		// TODO: encrypt "dockerPassword"
 
 		const errors: string[] = [];
 		if (!name) errors.push(`Name is required.`);
-		if (!host) errors.push(`Host is required (eg. us.gcr.io, hub.docker.com,...)`);
-		if (!imageBaseURL) errors.push(`Base image URL is required (eg. asia.gcr.io/my-workspace)`);
 		if (!providerShortName) errors.push(`Container registry provider is required (eg. gcloud, digitalocean, dockerhub,...)`);
 		if (isNotIn(providerShortName, registryProviderList))
 			errors.push(`Container registry provider should be one of [${registryProviderList.join(", ")}]`);
 
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 
-		if (providerShortName === "gcloud" && !serviceAccount)
-			return { status: 0, messages: [`Service Account (JSON) is required to authenticate Google Container Registry.`] } as ResponseData;
+		if (providerShortName === "gcloud") {
+			if (!host) host = "gcr.io";
+			if (!serviceAccount) return respondFailure({ msg: `Service Account (JSON) is required to authenticate Google Container Registry.` });
+		}
 
-		if (providerShortName === "digitalocean" && !apiAccessToken)
-			return { status: 0, messages: [`API access token is required to authenticate DigitalOcean Container Registry.`] } as ResponseData;
+		if (providerShortName === "digitalocean") {
+			if (!host) host = "registry.digitalocean.com";
+			if (!apiAccessToken) return respondFailure({ msg: `API access token is required to authenticate DigitalOcean Container Registry.` });
+		}
+
+		if (providerShortName === "dockerhub") {
+			if (!dockerUsername) return respondFailure({ msg: `Docker username is required.` });
+			if (!dockerPassword) return respondFailure({ msg: `Docker password is required.` });
+			if (!dockerServer) dockerServer = "https://index.docker.io/v2/";
+			if (!host) host = "docker.io";
+
+			// const saltRounds = 10;
+			// dockerPassword = await bcrypt.hash(dockerPassword, saltRounds);
+		}
+
+		if (!imageBaseURL) imageBaseURL = `${host}/${organization}`;
 
 		const newRegistryData = {
 			name,
-			provider: providerShortName,
+			organization,
 			host,
+			provider: providerShortName,
 			serviceAccount,
 			imageBaseURL,
 			apiAccessToken,
+			dockerUsername,
+			dockerPassword,
+			dockerServer,
+			dockerEmail,
 			isVerified: false,
 		} as MaskedContainerRegistry;
 
-		const newRegistry = await this.service.create(newRegistryData);
+		let newRegistry = await this.service.create(newRegistryData);
 
-		// verify...
-		let verifiedRegistry: ContainerRegistry;
+		// verify container registry connection...
 		const authRes = await connectRegistry(newRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
-		if (authRes) [verifiedRegistry] = await DB.update<ContainerRegistry>("registry", { _id: newRegistry._id }, { isVerified: true });
+		if (authRes) [newRegistry] = await DB.update<ContainerRegistry>("registry", { _id: newRegistry._id }, { isVerified: true });
 
-		return { status: 1, data: !verifiedRegistry ? newRegistry : verifiedRegistry, messages: authRes ? [authRes] : [] } as ResponseData;
+		// const newRegistry = await connectRegistry(newRegistryData, { userId: this.user?._id, workspaceId: this.workspace?._id });
+
+		return respondSuccess({ data: newRegistry });
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: Omit<ContainerRegistry, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
-		const [updatedRegistry] = await DB.update<ContainerRegistry>("registry", this.filter, body);
+	async update(@Body() body: ContainerRegistryDto, @Queries() queryParams?: IPostQueryParams) {
+		let {
+			organization,
+			serviceAccount,
+			provider: providerShortName,
+			host,
+			imageBaseURL,
+			apiAccessToken,
+			dockerUsername,
+			dockerPassword,
+			dockerServer,
+		} = body;
 
-		const { name, serviceAccount, provider: providerShortName, host, imageBaseURL, apiAccessToken } = updatedRegistry;
+		const updateData: ContainerRegistryDto = body;
 
-		const errors: string[] = [];
-		if (!name) errors.push(`Name is required.`);
-		if (!host) errors.push(`Host is required (eg. us.gcr.io, hub.docker.com,...)`);
-		if (!imageBaseURL) errors.push(`Base image URL is required (eg. asia.gcr.io/my-workspace)`);
-		if (!providerShortName) errors.push(`Container registry provider is required (eg. gcloud, digitalocean, dockerhub,...)`);
-		if (isNotIn(providerShortName, registryProviderList))
-			errors.push(`Container registry provider should be one of [${registryProviderList.join(", ")}]`);
+		if (providerShortName && isNotIn(providerShortName, registryProviderList))
+			return respondFailure({ msg: `Container registry provider should be one of [${registryProviderList.join(", ")}]` });
 
-		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+		if (providerShortName === "gcloud") {
+			if (!host) host = "gcr.io";
+			if (!serviceAccount) return respondFailure({ msg: `Service Account (JSON) is required to authenticate Google Container Registry.` });
+			if (!imageBaseURL) imageBaseURL = `${host}/${organization}`;
+		}
 
-		if (providerShortName === "gcloud" && !serviceAccount)
-			return { status: 0, messages: [`Service Account (JSON) is required to authenticate Google Container Registry.`] } as ResponseData;
+		if (providerShortName === "digitalocean") {
+			if (!host) host = "registry.digitalocean.com";
+			if (!apiAccessToken) return respondFailure({ msg: `API access token is required to authenticate DigitalOcean Container Registry.` });
+			if (!imageBaseURL) imageBaseURL = `${host}/${organization}`;
+		}
 
-		if (providerShortName === "digitalocean" && !apiAccessToken)
-			return { status: 0, messages: [`API access token is required to authenticate DigitalOcean Container Registry.`] } as ResponseData;
+		if (providerShortName === "dockerhub") {
+			if (!dockerUsername) return respondFailure({ msg: `Docker username is required.` });
+			if (!dockerPassword) return respondFailure({ msg: `Docker password is required.` });
+			if (!dockerServer) dockerServer = "https://index.docker.io/v2/";
+			if (!host) host = "docker.io";
+			if (!imageBaseURL) imageBaseURL = `${host}/${organization}`;
+		}
 
-		// verify...
+		// update db
+		let [updatedRegistry] = await DB.update<ContainerRegistry>("registry", this.filter, updateData);
+		if (!updatedRegistry) return respondFailure({ msg: `Failed to update.` });
+
+		// verify container registry connection...
 		let verifiedRegistry: ContainerRegistry;
 		const authRes = await connectRegistry(updatedRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
 		[verifiedRegistry] = await DB.update<ContainerRegistry>("registry", { _id: updatedRegistry._id }, { isVerified: authRes ? true : false });
@@ -119,7 +177,7 @@ export default class ContainerRegistryController extends BaseController<Containe
 	async connect(@Queries() queryParams?: { slug: string }) {
 		const result: { status: number; messages: string[]; data: any } = { status: 1, messages: [], data: {} };
 
-		const options = { userId: this.user?._id.toString(), workspaceId: this.user?.activeWorkspace.toString() };
+		const options = { userId: MongoDB.toString(this.user?._id), workspaceId: MongoDB.toString(this.user?.activeWorkspace) };
 		// console.log("options :>> ", options);
 
 		const { slug } = this.filter.query;

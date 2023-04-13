@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
@@ -6,6 +7,7 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import globby from "globby";
 import { isEmpty } from "lodash";
 import capitalize from "lodash/capitalize";
+import open from "open";
 import path from "path";
 import { simpleGit } from "simple-git";
 import yargs from "yargs";
@@ -15,7 +17,7 @@ import { HOME_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { gitProviderDomain } from "@/interfaces/SystemTypes";
-import { execCmd, isMac, wait } from "@/plugins";
+import { execCmd, getCurrentGitRepoData, isMac, wait } from "@/plugins";
 
 import { conf } from "../..";
 import { bitbucketProfile, repoList, signInBitbucket } from "../bitbucket";
@@ -23,6 +25,7 @@ import { createPullRequest } from "../bitbucket/createPullRequest";
 import { createBitbucketRepo } from "../bitbucket/initialize";
 import { applyBranchPermissions } from "../bitbucket/permissions";
 import { bitbucketAuthentication } from "../bitbucket/promptForAuthOptions";
+import Github from "./github";
 
 // git@github.com:digitopvn/fluffy-dollop.git
 
@@ -59,29 +62,46 @@ export function generateRepoURL(provider: GitProviderType | string, repoSlug: st
 export const getRepoURLFromRepoSSH = generateRepoURL;
 
 export const login = async (options?: InputOptions) => {
-	if (options.thirdAction && options.fourAction) {
-		options.username = options.thirdAction;
-		options.token = options.fourAction;
-	} else {
-		options = await bitbucketAuthentication(options);
-	}
+	const { gitProvider } = options;
 
-	const loginRes = await signInBitbucket(options);
+	switch (gitProvider) {
+		case "bitbucket":
+			if (options.thirdAction && options.fourAction) {
+				options.username = options.thirdAction;
+				options.token = options.fourAction;
+			} else {
+				options = await bitbucketAuthentication(options);
+			}
 
-	if (loginRes) {
-		logSuccess(`Đăng nhập Bitbucket thành công.`);
-		return true;
-	} else {
-		logError(`Đăng nhập Bitbucket that bai.`);
-		return false;
+			const loginRes = await signInBitbucket(options);
+
+			if (loginRes) {
+				logSuccess(`Đăng nhập Bitbucket thành công.`);
+				return true;
+			} else {
+				logError(`Đăng nhập Bitbucket that bai.`);
+				return false;
+			}
+
+		case "github":
+			await Github.login();
+			break;
+
+		default:
+			log(`Git provider must be specified. Example: ${chalk.cyan(`dx git login `)}${chalk.yellow("--github")}`);
+			break;
 	}
 };
 
-export const logout = () => {
+export const logout = async () => {
+	// logout bitbucket account
 	conf.delete("username");
 	conf.delete("token");
 
-	logSuccess(`Đăng xuất Bitbucket thành công.`);
+	// logout github account
+	await Github.logout();
+
+	logSuccess(`Logged out from all git providers.`);
 };
 
 /**
@@ -120,10 +140,23 @@ export async function initializeGitRemote(options: InputOptions) {
  * Get user profile object
  */
 export const getUserProfile = async (options?: InputOptions) => {
-	options = await bitbucketAuthentication(options);
-	await signInBitbucket(options);
+	const { gitProvider } = options;
 
-	return bitbucketProfile();
+	switch (gitProvider) {
+		case "bitbucket":
+			options = await bitbucketAuthentication(options);
+			await signInBitbucket(options);
+			return bitbucketProfile();
+
+		case "github":
+			const githubProfile = await Github.profile();
+			log(githubProfile);
+			return githubProfile;
+
+		default:
+			log(`Git provider must be specified. Example: ${chalk.cyan(`dx git profile `)}${chalk.yellow("--github")}`);
+			break;
+	}
 };
 
 export const setupRepositoryPermissions = async (options?: InputOptions) => {
@@ -146,10 +179,34 @@ export const getListRepositories = async (options?: InputOptions) => {
 };
 
 export const createNewPullRequest = async (options?: InputOptions) => {
-	await bitbucketAuthentication(options);
-	await signInBitbucket(options);
+	// const { gitProvider } = options;
+	const repoInfo = await getCurrentGitRepoData(options.targetDirectory);
+	if (!repoInfo) return logError(`This current directory doesn't have any integrated git remote.`);
 
-	return createPullRequest(options);
+	const { provider: gitProvider } = repoInfo;
+
+	switch (gitProvider) {
+		case "bitbucket":
+			await bitbucketAuthentication(options);
+			await signInBitbucket(options);
+			return createPullRequest(options);
+
+		case "github":
+			if (repoInfo.remoteURL) {
+				let destBranch = options.thirdAction || "main";
+				let fromBranch = options.fourAction || repoInfo.branch;
+				open(`${repoInfo.remoteURL}/compare/${destBranch}...${fromBranch}`);
+			}
+			break;
+
+		default:
+			log(
+				`Git provider must be specified. Example: \n	${chalk.cyan(`dx git pr`)} ${chalk.yellow("--github")} <to_branch> \n	${chalk.cyan(
+					`dx git pr`
+				)} ${chalk.yellow("--github")} <from_branch> <to_branch>`
+			);
+			break;
+	}
 };
 
 export const writeCustomSSHKeys = async (params: { privateKey: string; publicKey: string }) => {
@@ -209,8 +266,6 @@ export const generateSSH = async (options?: InputOptions) => {
 			await execCmd(`chmod -R 400 ${privateIdRsaFile}`, `Can't assign permission [400] to "id_rsa" private key.`);
 		}
 	} else {
-		// create "$HOME/.ssh" directory
-		// mkdirSync(idRsaDir, { recursive: true });
 		await execCmd(`mkdir -p ${idRsaDir}`, `Can't create '${idRsaDir}' directory`);
 	}
 
@@ -218,7 +273,7 @@ export const generateSSH = async (options?: InputOptions) => {
 	if (!publicIdRsaFile) {
 		privateIdRsaFile = path.resolve(idRsaDir, "id_rsa");
 		publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
-		// await execCmd(`ssh-keygen -b 2048 -t rsa -f ${privateIdRsaFile} -q -N \"\"`, );
+
 		try {
 			await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", "''"], cliOpts);
 		} catch (e) {
@@ -311,6 +366,8 @@ export const verifySSH = async (options?: InputOptions) => {
 	const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
 	const idRsaDir = SSH_DIR;
 
+	if (!existsSync(SSH_DIR)) await execCmd(`mkdir -p ${HOME_DIR}/.ssh`);
+
 	let publicIdRsaFile: string, privateIdRsaFile: string;
 	let privateIdRsaFiles: string[];
 
@@ -338,19 +395,21 @@ export const verifySSH = async (options?: InputOptions) => {
 
 	const gitDomain = gitProviderDomain[gitProvider];
 
-	await execCmd(`mkdir -p ${HOME_DIR}/.ssh`);
-	await execCmd(`touch ${HOME_DIR}/.ssh/known_hosts`);
+	const KNOWN_HOSTS_PATH = path.resolve(SSH_DIR, "known_hosts");
+	if (!existsSync(KNOWN_HOSTS_PATH)) await execCmd(`touch ${HOME_DIR}/.ssh/known_hosts`);
+
+	const KNOWN_HOSTS_CONTENT = readFileSync(KNOWN_HOSTS_PATH, "utf8");
 	await execCmd(`ssh-keyscan ${gitDomain} >> ${HOME_DIR}/.ssh/known_hosts`);
-	await execCmd(`touch ${HOME_DIR}/.ssh/config`);
 
 	if (!isEmpty(privateIdRsaFiles)) {
+		await execCmd(`touch ${HOME_DIR}/.ssh/config`);
 		const sshConfigContent = (await execCmd(`cat ${HOME_DIR}/.ssh/config`)) || "";
 		for (const idRsaFile of privateIdRsaFiles) {
 			if (sshConfigContent.indexOf(idRsaFile) === -1 || sshConfigContent.indexOf(gitDomain) === -1) {
 				await execCmd(`echo "Host ${gitDomain}" >> ${HOME_DIR}/.ssh/config`);
-				if (isMac()) await execCmd(`echo "  UseKeychain yes" >> ${HOME_DIR}/.ssh/config`);
-				await execCmd(`echo "  AddKeysToAgent yes" >> ${HOME_DIR}/.ssh/config`);
-				await execCmd(`echo "  IdentityFile ${idRsaFile}" >> ${HOME_DIR}/.ssh/config`);
+				if (isMac()) await execCmd(`echo "	UseKeychain yes" >> ${HOME_DIR}/.ssh/config`);
+				await execCmd(`echo "	AddKeysToAgent yes" >> ${HOME_DIR}/.ssh/config`);
+				await execCmd(`echo "	IdentityFile ${idRsaFile}" >> ${HOME_DIR}/.ssh/config`);
 			}
 		}
 	}
@@ -369,9 +428,6 @@ export const verifySSH = async (options?: InputOptions) => {
 			} catch (e) {
 				authResult = e.toString().indexOf("successfully authenticated") > -1;
 			}
-
-			// authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "[GIT] Github authentication failed");
-			// authResult = typeof authResult !== "undefined";
 			break;
 
 		case "gitlab":

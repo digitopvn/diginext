@@ -2,10 +2,10 @@ import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
-import type { Request } from "express";
 
 import type { User } from "@/entities";
 import type Base from "@/entities/Base";
+import type { AppRequest } from "@/interfaces/SystemTypes";
 import type { EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeorm";
 import type { MongoFindManyOptions } from "@/libs/typeorm/find-options/mongodb/MongoFindManyOptions";
 import { manager, query } from "@/modules/AppDatabase";
@@ -24,7 +24,7 @@ const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 export default class BaseService<E extends Base & { owner?: any; workspace?: any } & ObjectLiteral = any> {
 	protected query: MongoRepository<ObjectLiteral>;
 
-	req?: Request;
+	req?: AppRequest;
 
 	constructor(entity: EntityTarget<E>) {
 		this.query = query(entity);
@@ -72,9 +72,12 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 			if (this.req?.user) {
 				const user = this.req?.user as User;
 				const userId = user?._id;
-				const workspaceId = (user.activeWorkspace as any)._id ? (user.activeWorkspace as any)._id : (user.activeWorkspace as any);
 				data.owner = userId;
-				data.workspace = workspaceId;
+
+				if (user.activeWorkspace) {
+					const workspaceId = (user.activeWorkspace as any)._id ? (user.activeWorkspace as any)._id : (user.activeWorkspace as any);
+					data.workspace = workspaceId;
+				}
 			}
 
 			// const author = `${user.name} (ID: ${user._id})`;
@@ -90,7 +93,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	}
 
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<E[]> {
-		// log(`Service > find :>> filter:`, filter);
+		// console.log(`BaseService > find :>> filter:`, filter);
 		// const query = this.query;
 		// let results;
 		// log("options.populate >>", options.populate);
@@ -145,9 +148,9 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 	}
 
 	async findOne(filter?: IQueryFilter, options?: IQueryOptions) {
-		// log(`findOne > filter :>>`, filter);
-		// log(`findOne > options :>>`, options);
-		const results = await this.find(filter, options, { limit: 1 });
+		// console.log(`findOne > filter :>>`, filter);
+		// console.log(`findOne > options :>>`, options);
+		const results = await this.find(filter, options);
 
 		return results.length > 0 ? results[0] : null;
 	}
@@ -175,7 +178,7 @@ export default class BaseService<E extends Base & { owner?: any; workspace?: any
 		return { ok: deleteRes.matchedCount };
 
 		/**
-		 * MongoDB driver doesn't support "softDelete" yet
+		 * [TypeORM] MongoDB driver doesn't support "softDelete" yet (or maybe it doesn't work because of bugs)
 		 */
 		// const deleteRes = await this.query.softDelete(filter);
 		// console.log("deleteRes", deleteRes);

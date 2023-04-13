@@ -6,11 +6,12 @@ import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { App, AppGitInfo, Cluster, ContainerRegistry, Framework, Project } from "@/entities";
-import type { HiddenBodyKeys, ResourceQuotaSize, SslType } from "@/interfaces";
+import type { HiddenBodyKeys, SslType } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
+import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environment";
 import { DB } from "@/modules/api/DB";
@@ -326,6 +327,7 @@ export default class AppController extends BaseController<App> {
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPatchQueryParams) {
+		// console.log("AppController > this.filter :>> ", this.filter);
 		let project: Project,
 			projectSvc = new ProjectService();
 
@@ -678,18 +680,23 @@ export default class AppController extends BaseController<App> {
 		body: CreateEnvVarsDto,
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		// console.log("body :>> ", body);
+		console.log("createEnvVarsOnDeployEnvironment > body :>> ", body);
 		// return { status: 0 };
 		let { slug, env, envVars } = body;
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
-		if (!envVars) return { status: 0, messages: [`Array of variables in JSON format (envVars) is required.`] };
-		if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
+		if (!envVars) return { status: 0, messages: [`Array of environment variables (envVars) is required.`] };
+		// if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
 
 		const app = await this.service.findOne({ ...this.filter, slug });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const newEnvVars = JSON.parse(envVars) as KubeEnvironmentVariable[];
+		const newEnvVars = isJSON(envVars)
+			? (JSON.parse(envVars) as KubeEnvironmentVariable[])
+			: isArray(envVars)
+			? (envVars as unknown as KubeEnvironmentVariable[])
+			: [];
+
 		// console.log("updateEnvVars :>> ", updateEnvVars);
 		const [updatedApp] = await this.service.update(
 			{ slug },
@@ -743,13 +750,14 @@ export default class AppController extends BaseController<App> {
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
 		if (!envVar) return { status: 0, messages: [`A variable (envVar { name, value }) is required.`] };
-		if (!isJSON(envVar)) return { status: 0, messages: [`A variable (envVar { name, value }) should be a valid JSON format.`] };
+		// if (!isJSON(envVar)) return { status: 0, messages: [`A variable (envVar { name, value }) should be a valid JSON format.`] };
 
 		const app = await this.service.findOne({ ...this.filter, slug });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 
-		envVar = JSON.parse(envVar as unknown as string) as KubeEnvironmentVariable;
+		envVar = isJSON(envVar) ? (JSON.parse(envVar as unknown as string) as KubeEnvironmentVariable) : isArray(envVar) ? envVar : undefined;
+		if (!envVar) return respondFailure(`ENV VAR is invalid.`);
 
 		const envVars = app.deployEnvironment[env].envVars || [];
 		const varToBeUpdated = envVars.find((v) => v.name === envVar.name);

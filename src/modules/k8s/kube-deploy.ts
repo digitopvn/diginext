@@ -11,7 +11,7 @@ import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
 import type { Cluster, Release } from "@/entities";
-import type { IResourceQuota, KubeService } from "@/interfaces";
+import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { objectToDeploymentYaml, waitUntil } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
@@ -121,9 +121,6 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	const { contextName: context } = cluster;
 	if (!context) throw new Error(`[KUBE_DEPLOY] previewPrerelease > Cluster context not found.`);
 
-	const tmpDir = path.resolve(CLI_DIR, `storage/releases/${releaseSlug}`);
-	if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
-
 	/**
 	 * Check if there is any prod namespace, if not -> create one
 	 */
@@ -140,27 +137,26 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	}
 
 	/**
-	 * Check if there is "imagePullSecrets" within prod namespace, if not -> create one
+	 * Create "imagePullSecrets" in a namespace
 	 */
-	// const allSecrets = await ClusterManager.getAllSecrets(namespace, { context });
-	// let isImagePullSecretExisted = false;
-	// if (allSecrets && allSecrets.length > 0) {
-	// 	const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
-	// 	if (imagePullSecret) isImagePullSecretExisted = true;
-	// }
-
-	// log(`isImagePullSecretExisted :>>`, isImagePullSecretExisted);
-	// if (!isImagePullSecretExisted) {
-	// 	try {
-	// 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
-	// 	} catch (e) {
-	// 		throw new Error(e.message);
-	// 	}
-	// }
 	try {
 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
 	} catch (e) {
 		throw new Error(`[PREVIEW] Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
+	}
+
+	/**
+	 * Delete current PRE-RELEASE deployments
+	 */
+	const curPrereleaseDeployments = await ClusterManager.getDeployByFilter(namespace, {
+		context,
+		filterLabel: `phase=prerelease,main-app=${appSlug}`,
+	});
+	if (!isEmpty(curPrereleaseDeployments)) {
+		await ClusterManager.deleteDeploymentsByFilter(namespace, {
+			context,
+			filterLabel: `phase=prerelease,main-app=${appSlug}`,
+		});
 	}
 
 	/**
@@ -196,6 +192,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		endpoint: endpointUrl,
 		namespace,
 		env,
+		appConfig,
 	} = releaseData as Release;
 
 	log(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
@@ -238,31 +235,12 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		}
 	}
 
-	// log(`1`, { isNsExisted });
-
-	/**
-	 * Check if there is "imagePullSecrets" within the namespace, if not -> create one
-	 */
-	// const allSecrets = await ClusterManager.getAllSecrets(namespace, { context });
-	// let isImagePullSecretExisted = false;
-	// if (allSecrets && allSecrets.length > 0) {
-	// 	const imagePullSecret = allSecrets.find((s) => s.metadata.name.indexOf("docker-registry") > -1);
-	// 	if (imagePullSecret) isImagePullSecretExisted = true;
-	// }
-	// if (!isImagePullSecretExisted) {
-	// 	try {
-	// 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
-	// 	} catch (e) {
-	// 		throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
-	// 	}
-	// }
+	// create "imagePullSecret" in namespace:
 	try {
 		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
 	} catch (e) {
 		throw new Error(`[ROLL OUT] Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
 	}
-
-	// log(`2`, { isImagePullSecretExisted });
 
 	/**
 	 * 1. Create SERVICE & INGRESS
@@ -274,7 +252,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		resourceQuota: IResourceQuota = {},
 		service: KubeService,
 		svcName,
-		ingress,
+		ingress: KubeIngress,
 		ingressName,
 		deployment,
 		deploymentName;
@@ -320,18 +298,36 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		);
 
 	if (onUpdate) onUpdate(`Created new service named "${appSlug}".`);
-	// }
 
-	// Apply "BASE_PATH" when neccessary
-	// const BASE_PATH = getValueOfKubeEnvVarsByName("BASE_PATH", envVars);
-	// if (BASE_PATH) {
-	// 	const basePathResult = await execCmd(
-	// 		`kubectl --context=${context} -n ${namespace} patch ingress ${ingressName} --type='json' -p='[{"op": "replace", "path": "/spec/rules/0/http/paths/0/path", "value":"${BASE_PATH}"}]'`
-	// 	);
-	// 	console.log("[INGRESS] basePathResult :>> ", basePathResult);
-	// }
+	// check ingress domain has been used yet or not:
+	let isDomainUsed = false,
+		usedDomain: string,
+		deleteIng: KubeIngress;
 
-	// log(`4`, { currentServices });
+	const domains = ingress.spec.rules.map((rule) => rule.host) || [];
+	console.log("domains :>> ", domains);
+
+	if (domains.length > 0) {
+		const allIngresses = await ClusterManager.getAllIngresses({ context });
+
+		allIngresses.filter((ing) => {
+			domains.map((domain) => {
+				if (ing.spec.rules.map((rule) => rule.host).includes(domain)) {
+					isDomainUsed = true;
+					usedDomain = domain;
+					deleteIng = ing;
+				}
+			});
+		});
+		if (isDomainUsed) {
+			await ClusterManager.deleteIngress(deleteIng.metadata.name, deleteIng.metadata.namespace, { context });
+
+			if (onUpdate)
+				onUpdate(
+					`Domain "${usedDomain}" has been used before at "${deleteIng.metadata.namespace}" namespace -> Deleted "${deleteIng.metadata.name}" ingress to create a new one.`
+				);
+		}
+	}
 
 	// ! ALWAYS Create new ingress
 	const ING_CONTENT = objectToDeploymentYaml(ingress);
@@ -531,9 +527,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const latestRelease = latestReleases[0];
 	// log({ latestRelease });
 
-	if (!latestRelease) {
-		throw new Error(`Cannot set the latest release (${id}) status as "active".`);
-	}
+	if (!latestRelease) throw new Error(`Cannot set the latest release (${id}) status as "active".`);
 
 	/**
 	 * 5. Clean up > Delete old deployments

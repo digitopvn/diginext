@@ -1,3 +1,157 @@
+## [2.11.2](https://github.com/digitopvn/diginext/compare/v2.11.1...v2.11.2) (2023-04-12)
+
+
+### Bug Fixes
+
+* **all:** use tohexstring to convert object id to string ([976b501](https://github.com/digitopvn/diginext/commit/976b50131d849b9777ab299946a46d15473844cf))
+* **server:** add activity log and fix missing id when parse request filter ([b20c916](https://github.com/digitopvn/diginext/commit/b20c916ea62011dedb6d07ffcb5df6bdb5d6d60f))
+* **server:** issue of duplicated roles when seeding default workspace roles ([2a46a78](https://github.com/digitopvn/diginext/commit/2a46a785d6d28b1b3082742afc8115d782da0482))
+
+## [2.11.1](https://github.com/digitopvn/diginext/compare/v2.11.0...v2.11.1) (2023-04-12)
+
+
+### Bug Fixes
+
+* **server:** [hotfix] auto parse json in controllers ([5ba3017](https://github.com/digitopvn/diginext/commit/5ba30177a1a7912ccce50a30bb03ddb6877bc5c6))
+* **server:** default framework typo issue ([ae40b49](https://github.com/digitopvn/diginext/commit/ae40b49e26c05723a33cd9bf399abc35a156c4f5))
+* **server:** issue of seeding default frameworks when create workspace ([0534ac2](https://github.com/digitopvn/diginext/commit/0534ac28b5b05e05c3d1f2ec3497bc88863ec54d))
+
+# [2.11.0](https://github.com/digitopvn/diginext/compare/v2.10.1...v2.11.0) (2023-04-12)
+
+
+### Bug Fixes
+
+* **server:** check active workspace when authentication ([890ff67](https://github.com/digitopvn/diginext/commit/890ff67b54cad87ba86a4fa00e78c21654b65e17))
+* **server:** check required stack installation when adding new clusters ([190377b](https://github.com/digitopvn/diginext/commit/190377b1fe6a48b4e2f7fbe4950fb7bbfcab2573))
+* **server:** issue of seeding incorrect default api key ([593a490](https://github.com/digitopvn/diginext/commit/593a490fd3b476f4a33886e9bceba5ceb66c5681))
+* **server:** mask some sensitive info to member role ([c4f93f7](https://github.com/digitopvn/diginext/commit/c4f93f7aa91825c993ed893f82a8bf4b5af58127))
+* **server:** respond empty for sensitive info ([a0e846e](https://github.com/digitopvn/diginext/commit/a0e846ee6d430481247ac1f32c38fe5b04cda96c))
+* **server:** set default moderator role to service account and api key when   create ws ([f838783](https://github.com/digitopvn/diginext/commit/f838783d857a7cfafb5b274500b325f3c5eafd83))
+
+
+### Features
+
+* **server and admin:** workspace privacy switching ([2a2fed8](https://github.com/digitopvn/diginext/commit/2a2fed898595e95b0a84fb5311b0dedcd76f5346))
+
+## [2.10.1](https://github.com/digitopvn/diginext/compare/v2.10.0...v2.10.1) (2023-04-09)
+
+
+### Bug Fixes
+
+* **server:** container registry controller - fix create and update data validation ([5d103a3](https://github.com/digitopvn/diginext/commit/5d103a3f073d10f0ab76c3541e014d9f4d572851))
+
+# [2.10.0](https://github.com/digitopvn/diginext/compare/v2.9.2...v2.10.0) (2023-04-08)
+
+
+### Bug Fixes
+
+* **cli:** set default host when adding new container registry ([9837c16](https://github.com/digitopvn/diginext/commit/9837c1674768db05140da058d754706c2103abd3))
+* **cli:** set or confirm default host when adding new container registry ([40da946](https://github.com/digitopvn/diginext/commit/40da94636daa1b8976e2dac595defb2ab3e03108))
+
+
+### Features
+
+* **cli:** support docker container registry: add, connect, create image pull secrets ([bb3792e](https://github.com/digitopvn/diginext/commit/bb3792e87c10b599e5004b68a92cfc4939a6f1ad))
+
+## [2.9.2](https://github.com/digitopvn/diginext/compare/v2.9.1...v2.9.2) (2023-04-07)
+
+
+### Bug Fixes
+
+* **cli:** update diginext site url to diginext.vn ([f5fe0d7](https://github.com/digitopvn/diginext/commit/f5fe0d787ee1e0c28a674decf88bc06f02c3620a))
+
+## [2.9.1](https://github.com/digitopvn/diginext/compare/v2.9.0...v2.9.1) (2023-04-07)
+
+
+### Bug Fixes
+
+* **cli:** issue of duplicated tls ingress when generate ingress yaml ([563709f](https://github.com/digitopvn/diginext/commit/563709fc248078cdaa7d758d2451984407114bb6))
+* **server and cli:** leave empty to generate tls secret automatically if using letsencrypt issuer ([ba5d235](https://github.com/digitopvn/diginext/commit/ba5d23509352b18f8e49a81fffa622877d176adc))
+
+# [2.9.0](https://github.com/digitopvn/diginext/compare/v2.8.13...v2.9.0) (2023-04-07)
+
+
+### Bug Fixes
+
+* **server:** issue of missing permissions in default moderator role ([2237208](https://github.com/digitopvn/diginext/commit/2237208313a52eab1c63e1dce432cd0a8747b02a))
+* **server:** prevent overriding git global config when developing diginext ([f64b108](https://github.com/digitopvn/diginext/commit/f64b108d79c2e0f78d10821a7654046d6fbecffc))
+* **server:** update default member role should not access server key and api token ([8615c89](https://github.com/digitopvn/diginext/commit/8615c892dc03e3b32aeb353b683ca054c1b64c02))
+
+
+### Features
+
+* **cli:** git - github auth, profile, support github helper commands ([f4bd969](https://github.com/digitopvn/diginext/commit/f4bd969da53c1c1b13ea719ecd0059860a99e802))
+
+## [2.8.13](https://github.com/digitopvn/diginext/compare/v2.8.12...v2.8.13) (2023-04-07)
+
+
+### Bug Fixes
+
+* **admin:** add create or select workspace page ([e6c8e5c](https://github.com/digitopvn/diginext/commit/e6c8e5cd2bcddae6d9fcbfd7f79dc0398af92507))
+* **admin:** show public key in workspace settings ([d6eefc5](https://github.com/digitopvn/diginext/commit/d6eefc5b3a37747b3daa35a265838e7a2f8f0187))
+* **cli and server:** move workspace creation to admin ui completly ([d13964a](https://github.com/digitopvn/diginext/commit/d13964a624046eff5de4b799e0278e7ebdb1ec68))
+* **cli:** add select resource size when deploy app ([d978173](https://github.com/digitopvn/diginext/commit/d978173e043a327a3ff0ac24f530a722547c79ac))
+* **cli:** parse options and write deploy environment to dx json ([332f928](https://github.com/digitopvn/diginext/commit/332f928db999b0721ccdc5bfa16b780dbfec922a))
+* **server:** add routes controller and api ([cff894b](https://github.com/digitopvn/diginext/commit/cff894b9943620704c67afe14d43f46021f48d9b))
+* **server:** build - add log message when cloning source code ([ec85b76](https://github.com/digitopvn/diginext/commit/ec85b7657f222df0ba6da7fe2fa29df1668963a3))
+* **server:** build - delete app cache dir when cloning new source code ([37bdd61](https://github.com/digitopvn/diginext/commit/37bdd619148476d55d6934dc3dbb5ff18c5a28ca))
+* **server:** expose user profile api ([4a451c3](https://github.com/digitopvn/diginext/commit/4a451c31416a775d1e929e0d9d0550b20df447ce))
+* **server:** fix login api logic to select and create workspace if needed ([f7bb9e3](https://github.com/digitopvn/diginext/commit/f7bb9e3d7b82ba09625ea02c89ce9aa54e4b7bfc))
+* **server:** make log of authorization looks clearer ([7d98f1e](https://github.com/digitopvn/diginext/commit/7d98f1e4be55b351ec04fc862b854d81591aa3f5))
+* **server:** missing controller registration in workspace route ([ed5c1e1](https://github.com/digitopvn/diginext/commit/ed5c1e11014b051d24af3ca57bd994398ee91209))
+* **server:** optimize parsed data from request to register controller middleware ([c230419](https://github.com/digitopvn/diginext/commit/c23041951c317d50d05e2ce13b1e6e8ff9b3db03))
+* **server:** seed initial data when creating a new workspace ([dd84ebc](https://github.com/digitopvn/diginext/commit/dd84ebc4c290d621f0c3a9f4c96d3cd8a2f8fad6))
+
+## [2.8.12](https://github.com/digitopvn/diginext/compare/v2.8.11...v2.8.12) (2023-04-04)
+
+
+### Bug Fixes
+
+* **cli:** issue: cannot pull framework when create new app ([175b930](https://github.com/digitopvn/diginext/commit/175b9309ea92dd83d90fa5bb5cf65935ddf0d4b5))
+* **server and cli:** correct home directory when generate ssh keys ([4a2c203](https://github.com/digitopvn/diginext/commit/4a2c203207e191a7e231521458197b536d30c27b))
+* **server:** delete current prerelease deployments when preview a release ([aec5f43](https://github.com/digitopvn/diginext/commit/aec5f43b66ea69147f89294aa776e630354e8531))
+* **server:** error checking in release controller ([e6e18a4](https://github.com/digitopvn/diginext/commit/e6e18a48118bd55f5d9e13e2dec2d52589745368))
+* **template:** remove secrets ([b7878c7](https://github.com/digitopvn/diginext/commit/b7878c73fe1879e1dcd48bb5d1331a88dab2c4ed))
+
+## [2.8.11](https://github.com/digitopvn/diginext/compare/v2.8.10...v2.8.11) (2023-04-04)
+
+
+### Bug Fixes
+
+* **admin:** build list: add env to roll out build api call ([db4af38](https://github.com/digitopvn/diginext/commit/db4af38ab80da37ab7f8c1ad2e67dc88654438e3))
+* **server:** correct owner of release when create from a build ([ad207b9](https://github.com/digitopvn/diginext/commit/ad207b9271d346306c09c478f7183b6cf17f217b))
+* **server:** use workspace id to create release from build ([505f8c5](https://github.com/digitopvn/diginext/commit/505f8c59c13082297d2abf8917c20d188ca801c9))
+
+## [2.8.10](https://github.com/digitopvn/diginext/compare/v2.8.9...v2.8.10) (2023-04-04)
+
+
+### Bug Fixes
+
+* **admin:** add profile page ([6fa1056](https://github.com/digitopvn/diginext/commit/6fa10564451992794ecd7c25e254d673869dde5f))
+* **server and admin:** improve ux when create or update cluster ([d523acb](https://github.com/digitopvn/diginext/commit/d523acbac420cf9abe0c5eab5b44ad50bdf98024))
+* **server:** add member permissions to release and build api ([acf421e](https://github.com/digitopvn/diginext/commit/acf421e5e713d6257ffcfa0620b02e0a19c6b71f))
+* **server:** generate domain on server will not use api but direct function ([e47ec5c](https://github.com/digitopvn/diginext/commit/e47ec5ce154aa37ae27e4b42975f6902c0cd60d7))
+* **server:** workspace id is string issue when create new build ([aef411e](https://github.com/digitopvn/diginext/commit/aef411e45c9dbc0091483228c3c429fd2b62102d))
+
+## [2.8.9](https://github.com/digitopvn/diginext/compare/v2.8.8...v2.8.9) (2023-04-03)
+
+
+### Bug Fixes
+
+* **cli and server:** deploy issue of unauthorized, missing route permisions ([9af10b5](https://github.com/digitopvn/diginext/commit/9af10b5563597948a4738321869d9d3b3ca82aef))
+* **cli:** login is missing workspaces ([7de65a2](https://github.com/digitopvn/diginext/commit/7de65a2527d95562a7dcb73544b94123764d4bf4))
+* **server:** delete existing ingress rule if any when deploy ([892bc46](https://github.com/digitopvn/diginext/commit/892bc4630c935b4d042903750514903fea6e99d5))
+
+## [2.8.8](https://github.com/digitopvn/diginext/compare/v2.8.7...v2.8.8) (2023-04-03)
+
+
+### Bug Fixes
+
+* **admin:** assign role to users ([0e2272d](https://github.com/digitopvn/diginext/commit/0e2272db3ecb198f34f63c4629a6f707c450820c))
+* **server:** filter user roles by workspace and assign new role to user ([e10298b](https://github.com/digitopvn/diginext/commit/e10298ba9faf5a607336d07511f86c13dcb561f3))
+* **server:** migrate and assign role to user ([913c743](https://github.com/digitopvn/diginext/commit/913c743d9dc59b36629eb6afc0c3a0beb8133e2e))
+* **server:** register controller for all api routes ([678826f](https://github.com/digitopvn/diginext/commit/678826f04b91b9d33b3b0a8a8e49d0f3498f9411))
+
 ## [2.8.7](https://github.com/digitopvn/diginext/compare/v2.8.6...v2.8.7) (2023-03-31)
 
 

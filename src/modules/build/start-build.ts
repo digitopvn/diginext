@@ -9,10 +9,11 @@ import path from "path";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { App, Build, Cluster, Project, Release, User } from "@/entities";
+import type { App, Build, Cluster, Project, Release, User, Workspace } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath, wait } from "@/plugins";
+import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 
 import { DB } from "../api/DB";
@@ -68,12 +69,13 @@ export async function startBuildV1(
 	const { shouldRollout = true } = addition;
 	const startTime = dayjs();
 
-	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, workspace, namespace } = options;
+	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, namespace } = options;
 
 	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
 	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	const project = await DB.findOne<Project>("project", { slug: projectSlug });
 	const author = await DB.findOne<User>("user", { _id: new ObjectId(options.userId) });
+	const workspace = app.workspace as Workspace;
 
 	// socket & logs
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
@@ -321,7 +323,7 @@ export async function startBuildV1(
 	let releaseId: string, newRelease: Release;
 	try {
 		newRelease = await createReleaseFromBuild(newBuild, env, { author });
-		releaseId = newRelease._id.toString();
+		releaseId = MongoDB.toString(newRelease._id);
 		// log("Created new Release successfully:", newRelease);
 
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });
