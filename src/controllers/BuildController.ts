@@ -87,6 +87,38 @@ export default class BuildController extends BaseController<Build> {
 	}
 
 	/**
+	 * Check status then build container image finish.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/status")
+	async getStatus(@Queries() queryParams?: { slug: string }) {
+		let result: ResponseData & { data: string } = { status: 1, data: "", messages: [] };
+		const { slug } = this.filter;
+
+		// validation
+		if (!slug) {
+			result.status = 0;
+			result.messages.push("slug is required.");
+			return result;
+		}
+
+		// Attempt [1]: get logs from the database
+		const build = await this.service.findOne({ slug });
+		if (build) {
+			const { status } = build;
+			if (status) {
+				result.data = status;
+				return result;
+			}
+		}
+		const logs = Logger.getLogs(slug) || "No data.";
+
+		result.data = logs;
+		return result;
+	}
+
+	/**
 	 * Create a new {Build} instance, then start building container image.
 	 */
 	@Security("api_key")
