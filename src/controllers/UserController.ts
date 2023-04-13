@@ -1,13 +1,13 @@
 import { isArray, isEmpty } from "lodash";
-import type { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import BaseController from "@/controllers/BaseController";
 import type { Role, User } from "@/entities";
 import { UserDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import type { ObjectID } from "@/libs/typeorm";
 import { DB } from "@/modules/api/DB";
-import { MongoDB, toObjectId } from "@/plugins/mongodb";
+import { MongoDB, toObjectID } from "@/plugins/mongodb";
 import { addRoleToUser, filterRole, filterSensitiveInfo } from "@/plugins/user-utils";
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
@@ -103,7 +103,7 @@ export default class UserController extends BaseController<User> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/assign-role")
-	async assignRole(@Body() data: { roleId: ObjectId }) {
+	async assignRole(@Body() data: { roleId: ObjectID }) {
 		if (!data.roleId) return respondFailure({ msg: `Role ID is required.` });
 		if (!this.user) return respondFailure({ msg: `User not found.` });
 
@@ -113,7 +113,7 @@ export default class UserController extends BaseController<User> {
 		const roleType = newRole.type as "admin" | "moderator" | "member";
 
 		// add role to user
-		let updatedUser = await addRoleToUser(roleType, MongoDB.toObjectId(this.user._id), this.workspace);
+		let updatedUser = await addRoleToUser(roleType, MongoDB.toObjectID(this.user._id), this.workspace);
 
 		// filter roles & workspaces before returning
 		[updatedUser] = await filterRole(MongoDB.toString(this.workspace._id), [updatedUser]);
@@ -133,10 +133,10 @@ export default class UserController extends BaseController<User> {
 			if (!workspaceIdOrSlug) throw new Error(`Param "workspace" (Workspace ID or slug) is required.`);
 
 			// parse input params
-			const userId = toObjectId(uid);
+			const userId = toObjectID(uid);
 
 			// workspace in query could be "_id" and also "slug":
-			let workspaceId = toObjectId(workspaceIdOrSlug); // return undefined if can't convert to "ObjectId" -> it's a "slug" !!! (lol)
+			let workspaceId = toObjectID(workspaceIdOrSlug); // return undefined if can't convert to "ObjectID" -> it's a "slug" !!! (lol)
 			let workspaceSlug = !workspaceId ? workspaceIdOrSlug : undefined;
 
 			if (!workspaceId && !workspaceSlug) return respondFailure(`Param "workspace" (ID or SLUG) is invalid`);
@@ -150,14 +150,14 @@ export default class UserController extends BaseController<User> {
 			const workspace = await workspaceSvc.findOne(wsFilter);
 			if (!workspace) throw new Error(`Workspace not found.`);
 
-			workspaceId = toObjectId(workspace._id);
+			workspaceId = toObjectID(workspace._id);
 
 			// find the user
 			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId });
 			if (!user) throw new Error(`User not found.`);
 
 			const wsId = MongoDB.toString(workspaceId);
-			const workspaceIds = (user.workspaces as ObjectId[]) || [];
+			const workspaceIds = (user.workspaces as ObjectID[]) || [];
 			const isUserInWorkspace = workspaceIds.map((_id) => MongoDB.toString(_id)).includes(wsId);
 
 			// add this workspace to user's workspace list

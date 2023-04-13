@@ -1,6 +1,5 @@
-import type { ObjectId } from "mongodb";
-
 import type { User } from "@/entities";
+import type { ObjectID } from "@/libs/typeorm";
 
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
 import type { ResourceQuotaSize } from "./SystemTypes";
@@ -176,7 +175,7 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	/**
 	 * ID of the creator
 	 */
-	creator?: ObjectId | User;
+	creator?: ObjectID | User;
 
 	/**
 	 * Update time

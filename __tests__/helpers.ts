@@ -1,4 +1,4 @@
-import { DataSource } from "../src/libs/typeorm";
+import { DataSource, ObjectID } from "../src/libs/typeorm";
 import { User, UserDto, Workspace, WorkspaceDto } from "../src/entities";
 import fetchApi from "../src/modules/api/fetchApi";
 import { wait, waitUntil } from "../src/plugins/utils";
@@ -44,7 +44,6 @@ import ServiceAccountController from "../src/controllers/ServiceAccountControlle
 import WorkspaceController from "../src/controllers/WorkspaceController";
 
 import { isEmpty } from "lodash";
-import { ObjectId } from "mongodb";
 
 const user1 = new User({ name: "Test User 1", email: "user1@test.local" });
 const user2 = new User({ name: "Test User 2", email: "user2@test.local" });
@@ -122,7 +121,7 @@ export const createWorkspace = async (name: string) => {
 	return workspace as Workspace;
 };
 
-export const loginUser = async (userId: ObjectId, workspaceId: ObjectId) => {
+export const loginUser = async (userId: ObjectID, workspaceId: ObjectID) => {
 	const access_token = generateJWT(userId.toString(), {
 		expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
 		workspaceId: workspaceId.toString(),
@@ -135,7 +134,7 @@ export const loginUser = async (userId: ObjectId, workspaceId: ObjectId) => {
 
 	const updateData = {} as any;
 	updateData.token = tokenInfo.token;
-	updateData.activeWorkspace = new ObjectId(workspaceId);
+	updateData.activeWorkspace = workspaceId;
 
 	// set active workspace to this user:
 	const userWorkspaces = user.workspaces ? user.workspaces : [];

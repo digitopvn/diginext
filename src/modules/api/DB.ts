@@ -1,12 +1,11 @@
 import { isJSON } from "class-validator";
 import { logError } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
-import { ObjectId } from "mongodb";
 
 import { isServerMode } from "@/app.config";
 import type { IQueryOptions, IQueryPagination } from "@/interfaces";
 import { flattenObjectPaths } from "@/plugins";
-import { isValidObjectId } from "@/plugins/mongodb";
+import { isValidObjectID, toObjectID } from "@/plugins/mongodb";
 import {
 	ApiKeyUserService,
 	AppService,
@@ -134,13 +133,13 @@ export class DB {
 		const _filter = { ...filter };
 		Object.entries(filter).forEach(([key, val]) => {
 			if (key == "id" || key == "_id") {
-				_filter._id = isValidObjectId(val) ? new ObjectId(val as string) : val;
+				_filter._id = isValidObjectID(val) ? toObjectID(val) : val;
 				delete _filter.id;
 			}
 			if (val == null || val == undefined) {
 				_filter[key] = null;
-			} else if (isValidObjectId(val)) {
-				_filter[key] = new ObjectId(val as string);
+			} else if (isValidObjectID(val)) {
+				_filter[key] = toObjectID(val as string);
 			} else if (isJSON(val)) {
 				_filter[key] = JSON.parse(val as string);
 			} else {

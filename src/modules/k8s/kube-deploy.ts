@@ -4,7 +4,6 @@ import execa from "execa";
 import { existsSync, mkdirSync } from "fs";
 import yaml from "js-yaml";
 import { isArray, isEmpty } from "lodash";
-import { ObjectId } from "mongodb";
 import path from "path";
 
 import { isServerMode } from "@/app.config";
@@ -14,7 +13,7 @@ import type { Cluster, Release } from "@/entities";
 import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { objectToDeploymentYaml, waitUntil } from "@/plugins";
-import { isValidObjectId } from "@/plugins/mongodb";
+import { isValidObjectID, toObjectID } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
 import ClusterManager from ".";
@@ -31,7 +30,7 @@ export async function cleanUp(idOrRelease: string | Release) {
 	let releaseData: Release;
 
 	// validation
-	if (isValidObjectId(idOrRelease)) {
+	if (isValidObjectID(idOrRelease)) {
 		let data = await DB.findOne<Release>("release", { id: idOrRelease });
 
 		if (!data) {
@@ -522,7 +521,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	await DB.update<Release>("release", { $or: filter }, { active: false });
 
 	// Mark this latest release as "active":
-	const latestReleases = await DB.update<Release>("release", { _id: new ObjectId(id) }, { active: true });
+	const latestReleases = await DB.update<Release>("release", { _id: toObjectID(id) }, { active: true });
 
 	const latestRelease = latestReleases[0];
 	// log({ latestRelease });

@@ -1,10 +1,9 @@
 import { isJSON } from "class-validator";
 import { isString, trim } from "lodash";
-import { ObjectId } from "mongodb";
 
 import type { FindManyOptions } from "@/libs/typeorm";
 
-import { isObjectId, isValidObjectId } from "./mongodb";
+import { isObjectID, isValidObjectID, toObjectID } from "./mongodb";
 import { traverseObjectAndTransformValue } from "./traverse";
 
 export const parseRequestFilter = (requestQuery: any) => {
@@ -33,10 +32,10 @@ export const parseRequestFilter = (requestQuery: any) => {
 	traverseObjectAndTransformValue(_filter, ([key, val]) => {
 		if (val == null || val == undefined) {
 			return null;
-		} else if (isObjectId(val)) {
+		} else if (isObjectID(val)) {
 			return val;
-		} else if (isValidObjectId(val)) {
-			return new ObjectId(val);
+		} else if (isValidObjectID(val)) {
+			return toObjectID(val);
 		} else if (isJSON(val)) {
 			return JSON.parse(val);
 		} else {

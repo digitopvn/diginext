@@ -3,13 +3,13 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import type * as express from "express";
 import jwt from "jsonwebtoken";
-import { ObjectId } from "mongodb";
 import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
 import type { AccessTokenInfo, User } from "@/entities";
 import type ServiceAccount from "@/entities/ServiceAccount";
+import { toObjectID } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
 
@@ -98,7 +98,7 @@ export const jwtStrategy = new Strategy(
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
 		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`, { payload });
 
-		// const workspaceId = payload.workspaceId ? new ObjectId(payload.workspaceId) : undefined;
+		// const workspaceId = payload.workspaceId ? toObjectID(payload.workspaceId) : undefined;
 
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		// console.log("jwtStrategy > access_token :>> ", access_token);
@@ -115,7 +115,7 @@ export const jwtStrategy = new Strategy(
 
 		let user = await DB.findOne<User | ServiceAccount>(
 			"user",
-			{ _id: new ObjectId(payload.id) },
+			{ _id: toObjectID(payload.id) },
 			{ populate: ["roles", "workspaces", "activeWorkspace"] }
 		);
 		// console.log(`[1] jwtStrategy > User :>> `, user);
@@ -125,7 +125,7 @@ export const jwtStrategy = new Strategy(
 			updateData.token = tokenInfo.token;
 
 			// update the access token in database:
-			[user] = await DB.update<User>("user", { _id: new ObjectId(payload.id) }, updateData, {
+			[user] = await DB.update<User>("user", { _id: toObjectID(payload.id) }, updateData, {
 				populate: ["roles", "workspaces", "activeWorkspace"],
 			});
 
@@ -135,7 +135,7 @@ export const jwtStrategy = new Strategy(
 		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
 		user = await DB.findOne<ServiceAccount>(
 			"service_account",
-			{ _id: new ObjectId(payload.id) },
+			{ _id: toObjectID(payload.id) },
 			{ populate: ["roles", "workspaces", "activeWorkspace"] }
 		);
 

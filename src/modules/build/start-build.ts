@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 import humanizeDuration from "humanize-duration";
 import { isEmpty } from "lodash";
-import { ObjectId } from "mongodb";
 import PQueue from "p-queue";
 import path from "path";
 
@@ -13,7 +12,7 @@ import type { App, Build, Cluster, Project, Release, User, Workspace } from "@/e
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath, wait } from "@/plugins";
-import { MongoDB } from "@/plugins/mongodb";
+import { MongoDB, toObjectID } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 
 import { DB } from "../api/DB";
@@ -74,7 +73,7 @@ export async function startBuildV1(
 	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
 	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	const project = await DB.findOne<Project>("project", { slug: projectSlug });
-	const author = await DB.findOne<User>("user", { _id: new ObjectId(options.userId) });
+	const author = await DB.findOne<User>("user", { _id: toObjectID(options.userId) });
 	const workspace = app.workspace as Workspace;
 
 	// socket & logs

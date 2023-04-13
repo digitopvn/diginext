@@ -2,7 +2,6 @@ import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { isArray, isBoolean, isEmpty, isString, isUndefined } from "lodash";
-import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { App, AppGitInfo, Cluster, ContainerRegistry, Framework, Project } from "@/entities";
@@ -21,7 +20,7 @@ import { createDiginextDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { parseGitRepoDataFromRepoSSH } from "@/plugins";
-import { isObjectId } from "@/plugins/mongodb";
+import { isObjectID, MongoDB } from "@/plugins/mongodb";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
@@ -262,10 +261,10 @@ export default class AppController extends BaseController<App> {
 		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
 		if (!body.name) return respondFailure({ msg: `App's name is required.` });
 
-		console.log(`isObjectId(${body.project}) :>> `, isObjectId(body.project));
+		console.log(`isObjectID(${body.project}) :>> `, isObjectID(body.project));
 
 		// find parent project of this app
-		if (isObjectId(body.project)) {
+		if (isObjectID(body.project)) {
 			project = await DB.findOne<Project>("project", { _id: body.project });
 		} else if (isString(body.project)) {
 			project = await DB.findOne<Project>("project", { slug: body.project });
@@ -332,7 +331,7 @@ export default class AppController extends BaseController<App> {
 			projectSvc = new ProjectService();
 
 		if (body.project) {
-			project = await projectSvc.findOne({ _id: new ObjectId(body.project as string) });
+			project = await projectSvc.findOne({ _id: MongoDB.toObjectID(body.project) });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
 		}
@@ -593,30 +592,19 @@ export default class AppController extends BaseController<App> {
 		// input validation
 		let { _id, id, slug, env } = body;
 		if (!id && _id) id = _id;
-		if (!id && !slug) {
-			result.status = 0;
-			result.messages.push(`App "id" or "slug" is required.`);
-			return result;
-		}
-		if (!env) {
-			result.status = 0;
-			result.messages.push(`App "env" is required.`);
-			return result;
-		}
+		if (!id && !slug) return respondFailure(`App "id" or "slug" is required.`);
+
+		if (!env) return respondFailure(`App "env" is required.`);
 
 		// find the app
-		const appFilter = typeof id != "undefined" ? { _id: new ObjectId(id) } : { slug };
+		const appFilter = typeof id != "undefined" ? { _id: MongoDB.toObjectID(id) } : { slug };
 		const app = await this.service.findOne(appFilter);
 
 		// check if the environment is existed
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
 		const deployEnvironment = (app.deployEnvironment || {})[env.toString()];
-		if (!deployEnvironment) {
-			result.status = 0;
-			result.messages.push(`App environment "${env}" not found.`);
-			return result;
-		}
+		if (!deployEnvironment) return respondFailure(`App environment "${env}" not found.`);
 
 		// take down the deploy environment
 		const envConfig = await getDeployEvironmentByApp(app, env.toString());

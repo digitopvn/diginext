@@ -1,10 +1,10 @@
-import type { ObjectId } from "mongodb";
 import { Body, Get, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { User } from "@/entities";
 import type RouteEntity from "@/entities/Route";
 import type { IRoutePermission } from "@/interfaces";
 import { IGetQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import type { ObjectID } from "@/libs/typeorm";
 import type { DBCollection } from "@/modules/api/DB";
 import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
@@ -41,7 +41,7 @@ export default class RouteController extends BaseController<RouteEntity> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/permission")
-	async checkPermissions(@Body() body: { action: IRoutePermission; route: string; itemId?: ObjectId }) {
+	async checkPermissions(@Body() body: { action: IRoutePermission; route: string; itemId?: ObjectID }) {
 		if (!body.route) return respondFailure(`Param "route" is required.`);
 		if (!body.action) return respondFailure(`Param "action" is required.`);
 

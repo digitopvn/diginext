@@ -3,14 +3,13 @@ import { toBool, toInt } from "diginext-utils/dist/object";
 // import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
 import { isEmpty, toNumber, trim } from "lodash";
-import { ObjectId } from "mongodb";
 
 import { Config } from "@/app.config";
 import type { User, Workspace } from "@/entities";
 import type Base from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import type { FindOptionsWhere } from "@/libs/typeorm";
-import { isValidObjectId } from "@/plugins/mongodb";
+import { isValidObjectID, MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import { traverseObjectAndTransformValue } from "@/plugins/traverse";
 import type { BaseService } from "@/services/BaseService";
@@ -114,7 +113,7 @@ export default class BaseController<T extends Base = any> {
 		// log("req.body [1] >>", req.body);
 
 		traverseObjectAndTransformValue(req.body, ([key, val]) => {
-			if (isValidObjectId(val)) return new ObjectId(val);
+			if (isValidObjectID(val)) return MongoDB.toObjectID(val);
 			if (isNumberString(val)) return toNumber(val);
 			if (isBooleanString(val)) return toBool(val);
 			if (isJSON(val)) return JSON.parse(val);
