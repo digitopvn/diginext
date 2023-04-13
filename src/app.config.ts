@@ -54,6 +54,7 @@ if (process.env.CLI_MODE === "server") {
 
 export enum EnvName {
 	DEVELOPMENT = "development",
+	TEST = "test",
 	STAGING = "staging",
 	CANARY = "canary",
 	PRODUCTION = "production",
@@ -137,6 +138,9 @@ export class Config {
 // Extensions
 export const IsDev = function () {
 	return Config.ENV === EnvName.DEVELOPMENT;
+};
+export const IsTest = function () {
+	return Config.ENV === EnvName.TEST;
 };
 export const IsStag = function () {
 	return Config.ENV === EnvName.STAGING;

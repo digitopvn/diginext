@@ -1,3 +1,4 @@
+import type { HiddenBodyKeys } from "@/interfaces";
 import { GitProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
@@ -7,6 +8,8 @@ import type GitProvider from "./GitProvider";
 import type Project from "./Project";
 import type User from "./User";
 import type Workspace from "./Workspace";
+
+export type FrameworkDto = Omit<Framework, keyof HiddenBodyKeys>;
 
 @Entity({ name: "frameworks" })
 export default class Framework extends Base {

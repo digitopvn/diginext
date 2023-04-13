@@ -2,6 +2,7 @@ import "reflect-metadata";
 
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
 
+import { IsTest } from "@/app.config";
 import Activity from "@/entities/Activity";
 import ApiKeyAccount from "@/entities/ApiKeyAccount";
 import App from "@/entities/App";
@@ -29,7 +30,7 @@ export const appDataSource = new DataSource({
 	url: process.env.MONGODB_CONNECTION_STRING,
 	useNewUrlParser: true,
 	useUnifiedTopology: true,
-	synchronize: false,
+	synchronize: IsTest(), // only enable "synchronize" on "test" environment
 	logging: true,
 	entities: [
 		App,

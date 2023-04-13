@@ -21,7 +21,6 @@ import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
 import { Config, IsDev, IsProd } from "./app.config";
 import type { AppRequest } from "./interfaces/SystemTypes";
-import { saveActivityLog } from "./middlewares/activity-log";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
 import AppDatabase from "./modules/AppDatabase";
 import { startupScripts } from "./modules/server/startup-scripts";
@@ -158,7 +157,7 @@ function initialize() {
 		/**
 		 * Save activity log to database
 		 */
-		app.use(saveActivityLog);
+		// app.use(saveActivityLog);
 
 		/**
 		 * ROUTE 404 & FAIL SAFE HANDLING MIDDLEWARE

@@ -108,7 +108,27 @@ RUN pnpm i
 # COPY ./templates ./templates
 
 # Copy all files
-COPY . .
+# COPY . .
+COPY ./.git ./.git
+COPY ./src ./src
+COPY ./dist ./dist
+COPY ./test ./test
+COPY ./scripts ./scripts
+COPY ./public ./public
+COPY ./templates ./templates
+COPY ./.husky ./.husky
+COPY ./.babelrc.js \
+  ./.eslintignore \
+  ./.eslintrc \
+  ./.gitignore \
+  ./.npmignore \
+  ./.prettierignore \
+  ./.prettierrc.json \
+  ./commitlint.config.js \
+  ./lint-staged.config.js \
+  ./tsconfig.json \
+  ./tsoa.json \
+  ./
 
 # Set user and group
 ARG user=app

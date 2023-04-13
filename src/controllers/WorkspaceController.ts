@@ -77,7 +77,7 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		if (isUndefined(body.public)) body.public = true;
 
 		// [1] Create new workspace:
-		console.log("createWorkspace > body :>> ", body);
+		// console.log("createWorkspace > body :>> ", body);
 		const newWorkspace = await this.service.create(body);
 		if (!newWorkspace) return respondFailure(`Failed to create new workspace.`);
 
@@ -93,11 +93,13 @@ export default class WorkspaceController extends BaseController<Workspace> {
 
 		// [3] Ownership: add this workspace to the creator {User} if it's not existed:
 		ownerUser = await addUserToWorkspace(toObjectId(owner), newWorkspace, "admin");
+		console.log(`Added "${ownerUser.name}" user to workspace "${newWorkspace.name}".`);
 
 		// [4] Set this workspace as "activeWorkspace" for this creator:
 		ownerUser = await makeWorkspaceActive(toObjectId(owner), toObjectId(newWorkspace._id));
+		console.log(`Made workspace "${newWorkspace.name}" active for "${ownerUser.name}" user.`);
 
-		return { status: 1, data: newWorkspace, messages: [] } as ResponseData & { data: Workspace };
+		return respondSuccess({ data: newWorkspace });
 	}
 
 	@Security("api_key")

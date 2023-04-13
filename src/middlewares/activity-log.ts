@@ -29,11 +29,11 @@ export default logResponseBody;
 
 export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: NextFunction) => {
 	// Only save log for POST, PATCH & DELETE
-	if (req.method === "GET") return next();
+	// if (req.method === "GET") return next();
 
 	const { user, role, workspace } = req;
 	// console.log("saveActivityLog > body :>> ", res.body);
-	console.log("user :>> ", user);
+	// console.log("user :>> ", user);
 	// console.log('role :>> ', role);
 
 	if (user) {
@@ -59,5 +59,5 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 		console.log("Saved activity info :>> ", activity._id);
 	}
 
-	next();
+	// next();
 };

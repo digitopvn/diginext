@@ -1,15 +1,16 @@
 import { log } from "diginext-utils/dist/console/log";
 
-import type { Framework, User, Workspace } from "@/entities";
+import type { Framework, FrameworkDto, User, Workspace } from "@/entities";
 import { DB } from "@/modules/api/DB";
 
-const initialFrameworks: Framework[] = [
+const initialFrameworks: FrameworkDto[] = [
 	{
 		name: "NextJS 13 Starter",
 		repoURL: "https://github.com/digitopvn/next13-starter",
 		repoSSH: "git@github.com:digitopvn/next13-starter.git",
 		gitProvider: "github",
 		isPrivate: false,
+		mainBranch: "main",
 	},
 	{
 		name: "Static Site Starter with NGINX",
@@ -17,6 +18,7 @@ const initialFrameworks: Framework[] = [
 		repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
 		gitProvider: "github",
 		isPrivate: false,
+		mainBranch: "main",
 	},
 ];
 
@@ -35,4 +37,6 @@ export const seedFrameworks = async (workspace: Workspace, owner: User) => {
 	).filter((res) => typeof res !== "undefined");
 
 	if (results.length > 0) log(`Workspace "${workspace.name}" > Seeded ${results.length} frameworks.`);
+
+	return results;
 };
