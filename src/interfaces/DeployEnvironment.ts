@@ -9,7 +9,7 @@ export const availableSslTypes = ["letsencrypt", "custom", "none"] as const;
 /**
  * @default "letsencrypt"
  */
-export type SslType = (typeof availableSslTypes)[number];
+export type SslType = typeof availableSslTypes[number];
 
 export interface ClientDeployEnvironmentConfig {
 	/**

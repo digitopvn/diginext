@@ -1,12 +1,12 @@
 import dayjs from "dayjs";
 import { log, logError } from "diginext-utils/dist/console/log";
 
-import type { App, Build, Project } from "@/entities";
+import type { App, Build, IBuild, Project } from "@/entities";
 import type { BuildStatus } from "@/interfaces/SystemTypes";
 
 import { DB } from "../api/DB";
 
-export async function updateBuildStatus(build: Build, status: BuildStatus) {
+export async function updateBuildStatus(build: IBuild, status: BuildStatus) {
 	if (!build) {
 		logError(`[START BUILD] updateBuildStatus > "build" is required.`);
 		return;

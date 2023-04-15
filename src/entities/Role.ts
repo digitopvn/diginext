@@ -1,14 +1,19 @@
 import { IsNotEmpty } from "class-validator";
 import type { ObjectId } from "mongodb";
+import type { Types } from "mongoose";
+import { model, Schema } from "mongoose";
 
 import type { IRoutePermission, IRouteScope } from "@/interfaces/IPermission";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import Base from "./Base";
-import type { Project } from "./Project";
+import type { IBase } from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
+import type { IProject, Project } from "./Project";
 import type User from "./User";
+import type { IUser } from "./User";
 import type Workspace from "./Workspace";
+import type { IWorkspace } from "./Workspace";
 
 export interface RoleRoute {
 	/**
@@ -27,6 +32,37 @@ export interface RoleRoute {
 	 */
 	scope?: IRouteScope;
 }
+
+export interface IRole extends IBase {
+	name: string;
+	routes: RoleRoute[];
+	maskedFields?: string[];
+	type?: string;
+	owner?: Types.ObjectId | IUser | string;
+	project?: Types.ObjectId | IProject | string;
+	workspace?: Types.ObjectId | IWorkspace | string;
+}
+
+const RoleRouteSchema = new Schema({
+	path: { type: String },
+	methods: { type: [String] },
+	route: { type: String },
+	scope: { type: String, enum: ["all", "workspace", "team", "project", "app"], required: true },
+	permission: { type: String, enum: ["full", "own", "create", "read", "update", "delete"], required: true },
+});
+
+export const roleSchema = new Schema({
+	...baseSchemaOptions,
+	name: { type: String, required: true },
+	routes: { type: [RoleRouteSchema], required: true },
+	maskedFields: { type: [String] },
+	type: { type: String },
+	owner: { type: Schema.Types.ObjectId, ref: "users" },
+	project: { type: Schema.Types.ObjectId, ref: "projects" },
+	workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
+});
+
+export const RoleModel = model<IRole>("Role", roleSchema, "roles");
 
 @Entity({ name: "roles" })
 export default class Role extends Base {

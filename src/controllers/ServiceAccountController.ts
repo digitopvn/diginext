@@ -3,6 +3,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import BaseController from "@/controllers/BaseController";
 import type { User } from "@/entities";
+import type { IServiceAccount } from "@/entities/ServiceAccount";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
@@ -16,7 +17,7 @@ interface JoinWorkspaceBody {
 
 @Tags("Service Account")
 @Route("service_account")
-export default class ServiceAccountController extends BaseController<User> {
+export default class ServiceAccountController extends BaseController<IServiceAccount> {
 	constructor() {
 		super(new ServiceAccountService());
 	}

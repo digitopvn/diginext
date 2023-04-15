@@ -1,10 +1,10 @@
-import type { RoleRoute, User, Workspace } from "@/entities";
+import type { IUser, IWorkspace, RoleRoute, User } from "@/entities";
 import { Role } from "@/entities";
 import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
 
 // seed default roles of a workspace
-export const seedDefaultRoles = async (workspace: Workspace, owner: User) => {
+export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	// ADMIN
 	let adminRole: Role = await DB.findOne<Role>("role", { type: "admin", workspace: workspace._id });
 

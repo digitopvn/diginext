@@ -66,7 +66,7 @@ export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPaginati
 	if (!isEmpty(order)) {
 		const orderStr = Object.entries(options.order)
 			.map(([key, val]) => {
-				return val === "ASC" ? key : `-${key}`;
+				return val === 1 ? key : `-${key}`;
 			})
 			.join(",");
 		optionsStr += "sort=" + orderStr;

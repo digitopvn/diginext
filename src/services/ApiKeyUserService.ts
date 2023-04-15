@@ -1,14 +1,16 @@
-import ApiKeyAccount from "@/entities/ApiKeyAccount";
+import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
+import type ApiKeyAccount from "@/entities/ApiKeyAccount";
+import { apiKeyAccountSchema } from "@/entities/ApiKeyAccount";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 
 import BaseService from "./BaseService";
 
-export default class ApiKeyUserService extends BaseService<ApiKeyAccount> {
+export default class ApiKeyUserService extends BaseService<IApiKeyAccount> {
 	constructor() {
-		super(ApiKeyAccount);
+		super(apiKeyAccountSchema);
 	}
 
-	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<ApiKeyAccount[]> {
+	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination) {
 		if (filter) filter.type = "api_key";
 		return super.find(filter, options, pagination);
 	}

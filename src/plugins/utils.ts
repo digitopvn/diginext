@@ -19,7 +19,7 @@ import { simpleGit } from "simple-git";
 
 import pkg from "@/../package.json";
 import { cliOpts } from "@/config/config";
-import type { AccessTokenInfo, User, Workspace } from "@/entities";
+import type { AccessTokenInfo, IUser, IWorkspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
@@ -1142,9 +1142,9 @@ export const extractWorkspaceSlugFromUrl = (url: string) => {
 	}
 };
 
-export const extractWorkspaceIdFromUser = (user: User) => {
-	const workspaceId = (user.activeWorkspace as Workspace)._id
-		? MongoDB.toString((user.activeWorkspace as Workspace)._id)
+export const extractWorkspaceIdFromUser = (user: IUser) => {
+	const workspaceId = (user.activeWorkspace as IWorkspace)._id
+		? MongoDB.toString((user.activeWorkspace as IWorkspace)._id)
 		: MongoDB.toString(user.activeWorkspace);
 
 	return workspaceId;

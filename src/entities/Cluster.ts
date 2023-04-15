@@ -1,11 +1,55 @@
+import mongoose, { Schema, Types } from "mongoose";
+
 import { CloudProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import Base from "./Base";
-import type { CloudProvider } from "./CloudProvider";
+import type { IBase } from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
+import type { CloudProvider, ICloudProvider } from "./CloudProvider";
 import type User from "./User";
 import type Workspace from "./Workspace";
+
+export interface ICluster extends IBase {
+	name?: string;
+	slug?: string;
+	isVerified?: boolean;
+	shortName?: string;
+	contextName?: string;
+	provider?: string | Types.ObjectId | ICloudProvider;
+	providerShortName?: CloudProviderType;
+	zone?: string;
+	region?: string;
+	projectID?: string;
+	primaryDomain?: string;
+	primaryIP?: string;
+	domains?: string[];
+	kubeConfig?: string;
+	serviceAccount?: string;
+	apiAccessToken?: string;
+}
+
+export const clusterSchema = new Schema({
+	...baseSchemaOptions,
+	name: { type: String },
+	slug: { type: String },
+	isVerified: { type: Boolean },
+	shortName: { type: String },
+	contextName: { type: String },
+	provider: { type: Types.ObjectId, ref: "cloud_providers" },
+	providerShortName: { type: String },
+	zone: { type: String },
+	region: { type: String },
+	projectID: { type: String },
+	primaryDomain: { type: String },
+	primaryIP: { type: String },
+	domains: [{ type: String }],
+	kubeConfig: { type: String },
+	serviceAccount: { type: String },
+	apiAccessToken: { type: String },
+});
+
+export const ClusterModel = mongoose.model("Cluster", clusterSchema, "clusters");
 
 @Entity({ name: "clusters" })
 export default class Cluster extends Base {

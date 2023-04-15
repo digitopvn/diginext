@@ -8,7 +8,7 @@ import { isEmpty } from "lodash";
 import yargs from "yargs";
 
 import { Config } from "@/app.config";
-import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
+import type { CloudProvider, Cluster, ContainerRegistry, IContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
 import { wait } from "@/plugins";
@@ -253,7 +253,7 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 		return;
 	}
 
-	const existingRegistry = await DB.findOne<ContainerRegistry>("registry", { provider: "digitalocean", host });
+	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { provider: "digitalocean", host });
 	if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { existingRegistry });
 
 	if (existingRegistry) return existingRegistry;
@@ -261,7 +261,7 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 	// Save this container registry to database
 	const registryHost = host || "registry.digitalocean.com";
 	const imageBaseURL = `${registryHost}/${options.workspace?.slug || "diginext"}`;
-	let newRegistry = await DB.create<ContainerRegistry>("registry", {
+	let newRegistry = await DB.create<IContainerRegistry>("registry", {
 		name: "Digital Ocean Container Registry",
 		provider: "digitalocean",
 		host: registryHost,

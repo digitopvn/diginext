@@ -1,6 +1,6 @@
 import { isEmpty } from "lodash";
 
-import type { App, Build, Project, Release, User, Workspace } from "@/entities";
+import type { IApp, IBuild, IProject, IUser, IWorkspace, Release, User } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 
 import { DB } from "../api/DB";
@@ -8,16 +8,16 @@ import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { fetchDeploymentFromContent } from "../deploy/fetch-deployment";
 
 type OwnershipParams = {
-	author: User;
-	workspace?: Workspace;
+	author: IUser;
+	workspace?: IWorkspace;
 };
 
-export const createReleaseFromBuild = async (build: Build, env?: string, ownership?: OwnershipParams) => {
+export const createReleaseFromBuild = async (build: IBuild, env?: string, ownership?: OwnershipParams) => {
 	// get app data
-	const app = await DB.findOne<App>("app", { id: build.app }, { populate: ["owner", "workspace"] });
+	const app = await DB.findOne<IApp>("app", { id: build.app }, { populate: ["owner", "workspace"] });
 	if (!app) throw new Error(`App "${build.appSlug}" not found.`);
 
-	const project = await DB.findOne<Project>("project", { id: build.project });
+	const project = await DB.findOne<IProject>("project", { id: build.project });
 	if (!project) throw new Error(`Project "${build.projectSlug}" not found.`);
 	// console.log("project :>> ", project);
 
@@ -25,7 +25,7 @@ export const createReleaseFromBuild = async (build: Build, env?: string, ownersh
 	const { branch, image, tag, cliVersion } = build;
 	const { slug: projectSlug } = project;
 	const { owner, workspace, slug: appSlug } = app;
-	const { slug: workspaceSlug, _id: workspaceId } = workspace as Workspace;
+	const { slug: workspaceSlug, _id: workspaceId } = workspace as IWorkspace;
 
 	const buildNumber = tag ?? image.split(":")[1];
 

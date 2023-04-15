@@ -6,8 +6,8 @@ import { isEmpty, toNumber, trim } from "lodash";
 import { ObjectId } from "mongodb";
 
 import { Config } from "@/app.config";
-import type { User, Workspace } from "@/entities";
-import type Base from "@/entities/Base";
+import type { IUser, IWorkspace } from "@/entities";
+import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import type { FindOptionsWhere } from "@/libs/typeorm";
 import { isValidObjectId } from "@/plugins/mongodb";
@@ -21,12 +21,12 @@ import { respondFailure, respondSuccess } from "../interfaces/ResponseData";
 
 const DEFAULT_PAGE_SIZE = 100;
 
-export default class BaseController<T extends Base = any> {
+export default class BaseController<T extends IBase = any> {
 	service: BaseService<T>;
 
-	user: User;
+	user: IUser;
 
-	workspace: Workspace;
+	workspace: IWorkspace;
 
 	filter: IQueryFilter;
 
@@ -160,12 +160,12 @@ export default class BaseController<T extends Base = any> {
 		let _sortOptions: string[];
 		if (sort) _sortOptions = sort.indexOf(",") > -1 ? sort.split(",") : [sort];
 		if (order) _sortOptions = order.indexOf(",") > -1 ? order.split(",") : [order];
-		const sortOptions: { [key: string]: "DESC" | "ASC" } = {};
+		const sortOptions: { [key: string]: 1 | -1 } = {};
 		if (_sortOptions)
 			_sortOptions.forEach((s) => {
 				const isDesc = s.charAt(0) === "-";
 				const key = isDesc ? s.substring(1) : s;
-				const sortValue: "DESC" | "ASC" = isDesc ? "DESC" : "ASC";
+				const sortValue: 1 | -1 = isDesc ? -1 : 1;
 				sortOptions[key] = sortValue;
 			});
 		if (!isEmpty(sortOptions)) options.order = sortOptions;

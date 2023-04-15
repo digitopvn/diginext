@@ -1,10 +1,11 @@
-import Framework from "@/entities/Framework";
+import type { IFramework } from "@/entities/Framework";
+import { frameworkSchema } from "@/entities/Framework";
 
 import BaseService from "./BaseService";
 
-export default class FrameworkService extends BaseService<Framework> {
+export default class FrameworkService extends BaseService<IFramework> {
 	constructor() {
-		super(Framework);
+		super(frameworkSchema);
 	}
 }
 export { FrameworkService };

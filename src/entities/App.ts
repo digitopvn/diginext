@@ -1,11 +1,13 @@
 import { IsNotEmpty } from "class-validator";
+import { Schema } from "mongoose";
 
 import type { DeployEnvironment } from "@/interfaces/DeployEnvironment";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import Base from "./Base";
+import type { IBase } from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
 import type Project from "./Project";
 import type User from "./User";
 import type Workspace from "./Workspace";
@@ -32,6 +34,55 @@ export interface AppGitInfo {
 	 */
 	provider?: GitProviderType;
 }
+
+export interface IApp extends IBase {
+	name?: string;
+	image?: string;
+	slug?: string;
+	createdBy?: string;
+	lastUpdatedBy?: string;
+	git?: AppGitInfo;
+	framework?: {
+		name?: string;
+		slug?: string;
+		repoURL?: string;
+		repoSSH?: string;
+	};
+	environment?: {
+		[key: string]: DeployEnvironment | string;
+	};
+	deployEnvironment?: {
+		[key: string]: DeployEnvironment;
+	};
+	latestBuild?: string;
+	projectSlug?: string;
+}
+
+export const appSchema = new Schema(
+	{
+		...baseSchemaOptions,
+		name: { type: String },
+		image: { type: String },
+		slug: { type: String },
+		createdBy: { type: String },
+		lastUpdatedBy: { type: String },
+		git: {
+			repoURL: { type: String },
+			repoSSH: { type: String },
+		},
+		framework: {
+			name: { type: String },
+			slug: { type: String },
+			repoURL: { type: String },
+			repoSSH: { type: String },
+		},
+		environment: { type: Map, of: String },
+		deployEnvironment: { type: Map },
+		latestBuild: { type: String },
+		projectSlug: { type: String },
+	},
+	{ collection: "apps" }
+);
 
 @Entity({ name: "apps" })
 export default class App extends Base {

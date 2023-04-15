@@ -1,13 +1,59 @@
+import mongoose, { Schema } from "mongoose";
+
 import type { HiddenBodyKeys } from "@/interfaces";
-import { RegistryProviderType } from "@/interfaces/SystemTypes";
+import { registryProviderList, RegistryProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import Base from "./Base";
+import type { IBase } from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
 import type User from "./User";
 import type Workspace from "./Workspace";
 
 export type ContainerRegistryDto = Omit<ContainerRegistry, keyof HiddenBodyKeys>;
+
+export interface IContainerRegistry extends IBase {
+	name?: string;
+	slug?: string;
+	isVerified?: boolean;
+	host?: string;
+	organization?: string;
+	imageBaseURL?: string;
+	provider?: RegistryProviderType;
+	serviceAccount?: string;
+	apiAccessToken?: string;
+	dockerServer?: string;
+	dockerEmail?: string;
+	dockerUsername?: string;
+	dockerPassword?: string;
+	imagePullSecret?: {
+		name?: string;
+		value?: string;
+	};
+}
+
+export const containerRegistrySchema = new Schema({
+	...baseSchemaOptions,
+	name: { type: String },
+	slug: { type: String },
+	isVerified: { type: Boolean },
+	host: { type: String },
+	organization: { type: String },
+	imageBaseURL: { type: String },
+	provider: { type: String, enum: registryProviderList },
+	serviceAccount: { type: String },
+	apiAccessToken: { type: String },
+	dockerServer: { type: String },
+	dockerEmail: { type: String },
+	dockerUsername: { type: String },
+	dockerPassword: { type: String },
+	imagePullSecret: {
+		name: { type: String },
+		value: { type: String },
+	},
+});
+
+export const ContainerRegistryModel = mongoose.model("ContainerRegistry", containerRegistrySchema, "container_registries");
 
 @Entity({ name: "container_registries" })
 export default class ContainerRegistry extends Base {

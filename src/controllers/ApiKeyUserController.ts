@@ -3,6 +3,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import BaseController from "@/controllers/BaseController";
 import type { User } from "@/entities";
+import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
@@ -16,7 +17,7 @@ interface JoinWorkspaceBody {
 
 @Tags("API Key")
 @Route("api_key")
-export default class ApiKeyUserController extends BaseController<User> {
+export default class ApiKeyUserController extends BaseController<IApiKeyAccount> {
 	constructor() {
 		super(new ApiKeyUserService());
 	}

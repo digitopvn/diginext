@@ -1,11 +1,11 @@
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { isArray, isBoolean, isEmpty, isString, isUndefined } from "lodash";
 import { ObjectId } from "mongodb";
-import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { App, AppGitInfo, Cluster, ContainerRegistry, Framework, Project } from "@/entities";
+import type { App, AppGitInfo, Cluster, ContainerRegistry, Framework, IApp, IProject, Project } from "@/entities";
 import type { HiddenBodyKeys, SslType } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
@@ -21,7 +21,7 @@ import { createDiginextDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { parseGitRepoDataFromRepoSSH } from "@/plugins";
-import { isObjectId } from "@/plugins/mongodb";
+import { isObjectId, toObjectId } from "@/plugins/mongodb";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
@@ -208,7 +208,7 @@ export interface DeployEnvironmentData {
 
 @Tags("App")
 @Route("app")
-export default class AppController extends BaseController<App> {
+export default class AppController extends BaseController<IApp> {
 	constructor() {
 		super(new AppService());
 	}
@@ -297,7 +297,7 @@ export default class AppController extends BaseController<App> {
 		}
 		appDto.git = body.git;
 
-		let newApp: App;
+		let newApp: IApp;
 
 		try {
 			newApp = await this.service.create(appDto);
@@ -328,16 +328,16 @@ export default class AppController extends BaseController<App> {
 	@Patch("/")
 	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPatchQueryParams) {
 		// console.log("AppController > this.filter :>> ", this.filter);
-		let project: Project,
+		let project: IProject,
 			projectSvc = new ProjectService();
 
 		if (body.project) {
-			project = await projectSvc.findOne({ _id: new ObjectId(body.project as string) });
+			project = await projectSvc.findOne({ _id: toObjectId(body.project) });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
 		}
 
-		let apps: App[];
+		let apps: IApp[];
 		try {
 			apps = await this.service.update(this.filter, body, this.options);
 			if (isEmpty(apps)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
@@ -762,7 +762,7 @@ export default class AppController extends BaseController<App> {
 		const envVars = app.deployEnvironment[env].envVars || [];
 		const varToBeUpdated = envVars.find((v) => v.name === envVar.name);
 
-		let updatedApp: App;
+		let updatedApp: IApp;
 
 		if (varToBeUpdated) {
 			// update old variable

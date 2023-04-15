@@ -1,6 +1,6 @@
 import { isEmpty } from "lodash";
 
-import type { App, Build, Cluster, Release, User, Workspace } from "@/entities";
+import type { App, Cluster, IApp, IBuild, IUser, IWorkspace, Release } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
@@ -14,19 +14,19 @@ import { generateDeployment } from "./generate-deployment";
 
 export type DeployBuildOptions = {
 	env: string;
-	author: User;
-	workspace: Workspace;
+	author: IUser;
+	workspace: IWorkspace;
 	buildDirectory: string;
 	shouldUseFreshDeploy?: boolean;
 };
 
-export const deployBuild = async (build: Build, options: DeployBuildOptions) => {
+export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
 	const { env, author, workspace, buildDirectory, shouldUseFreshDeploy = false } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
 	const { slug: username } = author;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 
-	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
 	if (!app) {
 		sendLog({
 			SOCKET_ROOM,
@@ -216,7 +216,7 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 };
 
 export const deployWithBuildSlug = async (buildSlug: string, options: DeployBuildOptions) => {
-	const build = await DB.findOne<Build>("build", { slug: buildSlug });
+	const build = await DB.findOne<IBuild>("build", { slug: buildSlug });
 	if (!build) throw new Error(`[DEPLOY BUILD] Build slug "${buildSlug}" not found.`);
 
 	return deployBuild(build, options);

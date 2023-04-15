@@ -1,10 +1,11 @@
-import Role from "@/entities/Role";
+import type { IRole } from "@/entities/Role";
+import { roleSchema } from "@/entities/Role";
 
 import BaseService from "./BaseService";
 
-export default class RoleService extends BaseService<Role> {
+export default class RoleService extends BaseService<IRole> {
 	constructor() {
-		super(Role);
+		super(roleSchema);
 	}
 }
 

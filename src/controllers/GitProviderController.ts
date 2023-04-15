@@ -1,6 +1,6 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { GitProvider } from "@/entities";
+import type { GitProvider, IGitProvider } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
@@ -13,7 +13,7 @@ import BaseController from "./BaseController";
 
 @Tags("Git Provider")
 @Route("git")
-export default class GitProviderController extends BaseController<GitProvider> {
+export default class GitProviderController extends BaseController<IGitProvider> {
 	constructor() {
 		super(new GitProviderService());
 	}

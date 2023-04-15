@@ -7,7 +7,7 @@ import _, { isEmpty, isObject, toNumber } from "lodash";
 
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
-import type { App, Cluster, ContainerRegistry, Workspace } from "@/entities";
+import type { App, Cluster, ContainerRegistry, IWorkspace } from "@/entities";
 import type { AppConfig, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { getAppConfig, objectToDeploymentYaml } from "@/plugins";
@@ -19,7 +19,7 @@ import { generateDomains } from "./generate-domain";
 export type GenerateDeploymentParams = {
 	env: string;
 	username: string;
-	workspace: Workspace;
+	workspace: IWorkspace;
 	/**
 	 * Requires if generate deployment files from image URL.
 	 */

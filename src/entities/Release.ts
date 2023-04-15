@@ -1,4 +1,6 @@
 import { IsNotEmpty } from "class-validator";
+import type { Types } from "mongoose";
+import { model, Schema } from "mongoose";
 
 import { AppConfig } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
@@ -6,8 +8,76 @@ import { BuildStatus } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import Base from "./Base";
-import type { App, Build, Project, User, Workspace } from "./index";
+import type { IBase } from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
+import type { App, Build, IApp, IBuild, IProject, IUser, IWorkspace, Project, User, Workspace } from "./index";
+
+export interface IRelease extends IBase {
+	name?: string;
+	image?: string;
+	cliVersion?: string;
+	env?: string;
+	envVars?: KubeEnvironmentVariable[];
+	prereleaseEnvironment?: any[] | string;
+	diginext?: any;
+	appConfig?: AppConfig;
+	namespace?: string;
+	prodYaml?: string;
+	preYaml?: string;
+	prereleaseUrl?: string;
+	productionUrl?: string;
+	deploymentYaml?: string;
+	endpoint?: string;
+	createdBy?: string;
+	branch?: string;
+	provider?: string;
+	cluster?: string;
+	projectSlug?: string;
+	appSlug?: string;
+	providerProjectId?: string;
+	buildStatus?: BuildStatus;
+	active?: boolean;
+	build?: Types.ObjectId | IBuild | string;
+	app?: Types.ObjectId | IApp | string;
+	owner?: Types.ObjectId | IUser | string;
+	project?: Types.ObjectId | IProject | string;
+	workspace?: Types.ObjectId | IWorkspace | string;
+}
+
+export const releaseSchema = new Schema({
+	...baseSchemaOptions,
+	name: { type: String },
+	image: { type: String },
+	cliVersion: { type: String },
+	env: { type: String },
+	envVars: [{ name: { type: String }, value: { type: String } }],
+	prereleaseEnvironment: [{ type: String }],
+	diginext: { type: Schema.Types.Mixed },
+	appConfig: { type: Map, of: String },
+	namespace: { type: String },
+	prodYaml: { type: String },
+	preYaml: { type: String },
+	prereleaseUrl: { type: String },
+	productionUrl: { type: String },
+	deploymentYaml: { type: String },
+	endpoint: { type: String },
+	createdBy: { type: String },
+	branch: { type: String },
+	provider: { type: String },
+	cluster: { type: String },
+	projectSlug: { type: String },
+	appSlug: { type: String },
+	providerProjectId: { type: String },
+	buildStatus: { type: String },
+	active: { type: Boolean },
+	build: { type: Schema.Types.ObjectId, ref: "builds" },
+	app: { type: Schema.Types.ObjectId, ref: "apps" },
+	owner: { type: Schema.Types.ObjectId, ref: "users" },
+	project: { type: Schema.Types.ObjectId, ref: "projects" },
+	workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
+});
+
+export const ReleaseModel = model<IRelease>("Release", releaseSchema, "releases");
 
 @Entity({ name: "releases" })
 export default class Release extends Base {

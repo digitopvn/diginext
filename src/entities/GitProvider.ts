@@ -1,11 +1,42 @@
-import { GitProviderType } from "@/interfaces/SystemTypes";
+import { model, Schema } from "mongoose";
+
+import { availableGitProviders, GitProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import Base from "./Base";
+import type { IBase } from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
 import type Project from "./Project";
 import type User from "./User";
 import type Workspace from "./Workspace";
+
+export interface IGitProvider extends IBase {
+	name?: string;
+	host?: string;
+	gitWorkspace?: string;
+	repo?: {
+		url?: string;
+		sshPrefix?: string;
+	};
+	type?: GitProviderType;
+}
+
+export const gitProviderSchema = new Schema<IGitProvider>(
+	{
+		...baseSchemaOptions,
+		name: { type: String },
+		host: { type: String },
+		gitWorkspace: { type: String },
+		repo: {
+			url: { type: String },
+			sshPrefix: { type: String },
+		},
+		type: { type: String, enum: availableGitProviders },
+	},
+	{ timestamps: true }
+);
+
+export const GitProviderModel = model<IGitProvider>("GitProvider", gitProviderSchema, "git_providers");
 
 @Entity({ name: "git_providers" })
 export default class GitProvider extends Base {

@@ -1,14 +1,16 @@
-import ServiceAccount from "@/entities/ServiceAccount";
+import type { IServiceAccount } from "@/entities/ServiceAccount";
+import type ServiceAccount from "@/entities/ServiceAccount";
+import { serviceAccountSchema } from "@/entities/ServiceAccount";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 
 import BaseService from "./BaseService";
 
-export default class ServiceAccountService extends BaseService<ServiceAccount> {
+export default class ServiceAccountService extends BaseService<IServiceAccount> {
 	constructor() {
-		super(ServiceAccount);
+		super(serviceAccountSchema);
 	}
 
-	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<ServiceAccount[]> {
+	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination) {
 		if (filter) filter.type = "service_account";
 		return super.find(filter, options, pagination);
 	}

@@ -1,6 +1,5 @@
 import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { User } from "@/entities";
 import { IPostQueryParams, respondFailure } from "@/interfaces";
 import { createDiginextDomain, CreateDiginextDomainParams } from "@/modules/diginext/dx-domain";
 
@@ -9,8 +8,6 @@ import BaseController from "./BaseController";
 @Tags("Domain")
 @Route("domain")
 export default class DomainController extends BaseController {
-	user: User;
-
 	/**
 	 * Create new Diginext domain
 	 */

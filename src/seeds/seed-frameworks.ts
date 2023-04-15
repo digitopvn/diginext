@@ -1,6 +1,6 @@
 import { log } from "diginext-utils/dist/console/log";
 
-import type { Framework, FrameworkDto, User, Workspace } from "@/entities";
+import type { Framework, FrameworkDto, IUser, IWorkspace } from "@/entities";
 import { DB } from "@/modules/api/DB";
 
 const initialFrameworks: FrameworkDto[] = [
@@ -22,7 +22,7 @@ const initialFrameworks: FrameworkDto[] = [
 	},
 ];
 
-export const seedFrameworks = async (workspace: Workspace, owner: User) => {
+export const seedFrameworks = async (workspace: IWorkspace, owner: IUser) => {
 	const results = (
 		await Promise.all(
 			initialFrameworks.map(async (fw) => {

@@ -1,10 +1,11 @@
-import CloudDatabase from "@/entities/CloudDatabase";
+import type { ICloudDatabase } from "@/entities/CloudDatabase";
+import CloudDatabase, { cloudDatabaseSchema } from "@/entities/CloudDatabase";
 
 import BaseService from "./BaseService";
 
-export default class CloudDatabaseService extends BaseService<CloudDatabase> {
+export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 	constructor() {
-		super(CloudDatabase);
+		super(cloudDatabaseSchema);
 	}
 }
 

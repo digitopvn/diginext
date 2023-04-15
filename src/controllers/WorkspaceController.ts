@@ -1,10 +1,11 @@
 import { isUndefined } from "lodash";
 import { ObjectId } from "mongodb";
+import type { Types } from "mongoose";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import { Config } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
-import type { Role, User, Workspace } from "@/entities";
+import type { IRole, IUser, IWorkspace, Role, User, Workspace } from "@/entities";
 import type Base from "@/entities/Base";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
@@ -18,16 +19,16 @@ import { RoleService, UserService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
 
 interface AddUserBody {
-	userId: string;
-	workspaceId: string;
-	roleId?: string;
+	userId: Types.ObjectId;
+	workspaceId: Types.ObjectId;
+	roleId?: Types.ObjectId;
 }
 
 interface ApiUserAndServiceAccountQueries extends IGetQueryParams {
 	/**
 	 * Workspace ID or slug
 	 */
-	workspace: string;
+	workspace: Types.ObjectId | string;
 }
 
 interface WorkspaceInputData extends Omit<Base, keyof HiddenBodyKeys> {
@@ -48,7 +49,7 @@ interface WorkspaceInputData extends Omit<Base, keyof HiddenBodyKeys> {
 
 @Tags("Workspace")
 @Route("workspace")
-export default class WorkspaceController extends BaseController<Workspace> {
+export default class WorkspaceController extends BaseController<IWorkspace> {
 	// service: WorkspaceService;
 
 	constructor() {
@@ -70,7 +71,7 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		if (!owner) return respondFailure({ msg: `Workspace "owner" (UserID) is required.` });
 
 		// find owner
-		let ownerUser = await DB.findOne<User>("user", { _id: owner });
+		let ownerUser = await DB.findOne<IUser>("user", { _id: owner });
 		if (!ownerUser) return respondFailure("Workspace's owner not found.");
 
 		// Assign some default values if it's missing
@@ -132,7 +133,8 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		const userId = toObjectId(this.user._id);
 
 		// check if this user is admin of the workspace:
-		if (this.user.activeRole.type !== "admin" && this.user.activeRole.type !== "moderator") return respondFailure(`Unauthorized.`);
+		const activeRole = this.user.activeRole as IRole;
+		if (activeRole.type !== "admin" && activeRole.type !== "moderator") return respondFailure(`Unauthorized.`);
 
 		const memberRole = await DB.findOne<Role>("role", { type: "member", workspace: wsId });
 
@@ -166,20 +168,20 @@ export default class WorkspaceController extends BaseController<Workspace> {
 		const result: ResponseData & { data: User[] } = { status: 1, messages: [], data: [] };
 
 		try {
-			const uid = new ObjectID(userId);
-			const wsId = new ObjectID(workspaceId);
+			const uid = toObjectId(userId);
+			const wsId = toObjectId(workspaceId);
 			const userSvc = new UserService();
 			const roleSvc = new RoleService();
 
 			const user = await userSvc.findOne({ id: uid });
 			const workspace = await this.service.findOne({ id: wsId });
 
-			let role: Role;
+			let role: IRole;
 			if (roleId) role = await roleSvc.findOne({ id: roleId });
 
 			if (!user) throw new Error(`This user is not existed.`);
 			if (!workspace) throw new Error(`This workspace is not existed.`);
-			if ((user.workspaces as ObjectID[]).includes(wsId)) throw new Error(`This user is existed in this workspace.`);
+			if ((user.workspaces as ObjectId[]).includes(wsId)) throw new Error(`This user is existed in this workspace.`);
 
 			const workspaces = [...user.workspaces, wsId]
 				.filter((_wsId) => typeof _wsId !== "undefined")

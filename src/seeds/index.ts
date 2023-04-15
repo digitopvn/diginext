@@ -1,4 +1,4 @@
-import type { User, Workspace } from "@/entities";
+import type { IUser, IWorkspace } from "@/entities";
 
 import { seedApiKeys } from "./seed-api-key";
 import { seedFrameworks } from "./seed-frameworks";
@@ -8,7 +8,7 @@ import { seedServiceAccounts } from "./seed-service-account";
 export * from "./seed-roles";
 
 // seed workspace initial data here...
-const seedWorkspaceInitialData = async (workspace: Workspace, owner: User) => {
+const seedWorkspaceInitialData = async (workspace: IWorkspace, owner: IUser) => {
 	// [1] Default roles & permisions first, because Service Account & API_KEY need role
 	const roles = await seedDefaultRoles(workspace, owner);
 

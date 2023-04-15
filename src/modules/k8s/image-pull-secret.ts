@@ -1,7 +1,7 @@
 import { log, logError } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
 
-import type { App, ContainerRegistry } from "@/entities";
+import type { ContainerRegistry, IApp } from "@/entities";
 
 import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
@@ -19,7 +19,7 @@ import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegist
 export async function createImagePullSecretsInNamespace(appSlug: string, env: string, clusterShortName: string, namespace: string = "default") {
 	let message = "";
 
-	let app = await DB.findOne<App>("app", { slug: appSlug });
+	let app = await DB.findOne<IApp>("app", { slug: appSlug });
 
 	if (!app) throw new Error(`App "${appSlug}" not found.`);
 

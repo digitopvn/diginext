@@ -2,7 +2,7 @@
 import { Response } from "diginext-utils/dist/response";
 import passport from "passport";
 
-import type { Role, User, Workspace } from "@/entities";
+import type { IRole, IUser, IWorkspace, Role } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
@@ -13,7 +13,7 @@ import { MongoDB } from "@/plugins/mongodb";
  * Because the {User} was already verified at "jwtStrategy" step before passing the token here!
  */
 const jwt_auth = (req: AppRequest, res, next) =>
-	passport.authenticate("jwt", { session: false }, async function (err, user: User, info) {
+	passport.authenticate("jwt", { session: false }, async function (err, user: IUser, info) {
 		// console.log(err, user, info);
 		// console.log(`AUTHENTICATE: jwt_auth > assign token:`, user);
 
@@ -31,25 +31,25 @@ const jwt_auth = (req: AppRequest, res, next) =>
 		} else {
 			// check active workspace
 			if (!user.activeWorkspace) {
-				const workspaces = user.workspaces as Workspace[];
+				const workspaces = user.workspaces as IWorkspace[];
 				if (workspaces.length === 1) {
-					[user] = await DB.update<User>(
+					[user] = await DB.update<IUser>(
 						"user",
 						{ _id: user._id },
 						{ activeWorkspace: workspaces[0]._id },
 						{ populate: ["roles", "workspaces", "activeWorkspace"] }
 					);
 				}
-				req.workspace = user.activeWorkspace as Workspace;
+				req.workspace = user.activeWorkspace as IWorkspace;
 			}
 
 			// role
 			const { roles = [] } = user;
 			const activeRole = roles.find(
 				(role) =>
-					MongoDB.toString((role as Role).workspace) === MongoDB.toString((user.activeWorkspace as Workspace)?._id) &&
+					MongoDB.toString((role as Role).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id) &&
 					!(role as Role).deletedAt
-			) as Role;
+			) as IRole;
 
 			// console.log("Unauthenticate :>> [2]");
 			// if (!activeRole) return respondFailure(`Unauthorized: no active role.`);

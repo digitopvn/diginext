@@ -1,7 +1,7 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
 
-import type { Workspace } from "@/entities";
+import type { IRole, Workspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { MongoDB } from "@/plugins/mongodb";
 import { filterRole } from "@/plugins/user-utils";
@@ -44,7 +44,8 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	/**
 	 * authorization logic here!
 	 */
-	const { activeRole } = user;
+	// const { activeRole } = user;
+	const activeRole = user.activeRole as IRole;
 	// console.log("activeRole :>> ", activeRole);
 
 	// If wildcard "*" route is specified:

@@ -1,15 +1,47 @@
+import type { Types } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+
 import type { HiddenBodyKeys } from "@/interfaces";
-import { GitProviderType } from "@/interfaces/SystemTypes";
+import { availableGitProviders, GitProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import Base from "./Base";
+import type { IBase } from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
 import type GitProvider from "./GitProvider";
+import type { IGitProvider } from "./GitProvider";
 import type Project from "./Project";
 import type User from "./User";
 import type Workspace from "./Workspace";
 
 export type FrameworkDto = Omit<Framework, keyof HiddenBodyKeys>;
+
+export interface IFramework extends IBase {
+	name?: string;
+	host?: string;
+	gitProvider?: GitProviderType;
+	isPrivate?: boolean;
+	git?: Types.ObjectId | IGitProvider;
+	repoURL?: string;
+	repoSSH?: string;
+	mainBranch?: string;
+	downloads?: number;
+}
+
+export const frameworkSchema = new Schema({
+	...baseSchemaOptions,
+	name: { type: String },
+	host: { type: String },
+	gitProvider: { type: String, enum: availableGitProviders },
+	isPrivate: { type: Boolean },
+	git: { type: Schema.Types.ObjectId, ref: "git_providers" },
+	repoURL: { type: String },
+	repoSSH: { type: String },
+	mainBranch: { type: String },
+	downloads: { type: Number },
+});
+
+export const FrameworkModel = mongoose.model("frameworks", frameworkSchema, "frameworks");
 
 @Entity({ name: "frameworks" })
 export default class Framework extends Base {

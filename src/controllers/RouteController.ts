@@ -1,8 +1,8 @@
 import type { ObjectId } from "mongodb";
 import { Body, Get, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { User } from "@/entities";
-import type RouteEntity from "@/entities/Route";
+import type { IRole } from "@/entities";
+import type { IRoute } from "@/entities/Route";
 import type { IRoutePermission } from "@/interfaces";
 import { IGetQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import type { DBCollection } from "@/modules/api/DB";
@@ -14,9 +14,7 @@ import BaseController from "./BaseController";
 
 @Tags("Route")
 @Route("route")
-export default class RouteController extends BaseController<RouteEntity> {
-	user: User;
-
+export default class RouteController extends BaseController<IRoute> {
 	service: RouteService;
 
 	constructor() {
@@ -59,7 +57,7 @@ export default class RouteController extends BaseController<RouteEntity> {
 		let allowScope: "none" | "full" | "own" = "none";
 		let isAllowed = false;
 
-		const { activeRole } = this.user;
+		const activeRole = this.user.activeRole as IRole;
 
 		// check wildcard route first...
 		let routeRole = activeRole.routes.find((_route) => _route.route === "*");

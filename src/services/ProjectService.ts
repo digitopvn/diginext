@@ -1,6 +1,7 @@
 import { logError, logWarn } from "diginext-utils/dist/console/log";
 
-import Project from "@/entities/Project";
+import type { IProject } from "@/entities/Project";
+import { projectSchema } from "@/entities/Project";
 import type { IQueryFilter } from "@/interfaces";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import ClusterManager from "@/modules/k8s";
@@ -8,9 +9,9 @@ import ClusterManager from "@/modules/k8s";
 import AppService from "./AppService";
 import BaseService from "./BaseService";
 
-export default class ProjectService extends BaseService<Project> {
+export default class ProjectService extends BaseService<IProject> {
 	constructor() {
-		super(Project);
+		super(projectSchema);
 	}
 
 	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {

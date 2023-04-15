@@ -3,12 +3,12 @@
 import { log } from "diginext-utils/dist/console/log";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { Role, User, Workspace } from "@/entities";
+import type { IUser, IWorkspace, Role } from "@/entities";
 import ApiKeyAccount from "@/entities/ApiKeyAccount";
 import { DB } from "@/modules/api/DB";
 import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
 
-export const seedApiKeys = async (workspace: Workspace, owner: User) => {
+export const seedApiKeys = async (workspace: IWorkspace, owner: IUser) => {
 	// seed default API ACCESS TOKEN:
 	const apiKeyToken = generateWorkspaceApiAccessToken();
 

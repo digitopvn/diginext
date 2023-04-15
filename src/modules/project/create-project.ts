@@ -2,6 +2,7 @@ import { logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 
 import type Project from "@/entities/Project";
+import type { IProject } from "@/entities/Project";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
 import { DB } from "../api/DB";
@@ -43,7 +44,7 @@ export default async function createProjectByForm(options: InputOptions) {
 	const newProjectData = await askCreateProjectQuestions(options);
 
 	// Save this project to database
-	const newProject = await DB.create<Project>("project", newProjectData);
+	const newProject = await DB.create<IProject>("project", newProjectData);
 	if (!newProject) {
 		logError(`Failed to create new project named "${newProjectData.name}"`);
 		return;

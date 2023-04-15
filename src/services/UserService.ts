@@ -1,14 +1,16 @@
-import User from "@/entities/User";
+import type { IUser } from "@/entities/User";
+import type User from "@/entities/User";
+import { userSchema } from "@/entities/User";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 
 import BaseService from "./BaseService";
 
-export default class UserService extends BaseService<User> {
+export default class UserService extends BaseService<IUser> {
 	constructor() {
-		super(User);
+		super(userSchema);
 	}
 
-	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<User[]> {
+	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<IUser[]> {
 		// if (filter) filter.type = { $nin: ["service_account", "api_key"] };
 		return super.find(filter, options, pagination);
 	}

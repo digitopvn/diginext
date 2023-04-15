@@ -2,7 +2,7 @@ import { logError } from "diginext-utils/dist/console/log";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { CloudProvider, Cluster } from "@/entities";
+import type { Cluster, ICloudProvider, ICluster } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
@@ -17,7 +17,7 @@ export type ClusterDto = Omit<Cluster, keyof HiddenBodyKeys>;
 
 @Tags("Cluster")
 @Route("cluster")
-export default class ClusterController extends BaseController<Cluster> {
+export default class ClusterController extends BaseController<ICluster> {
 	constructor() {
 		super(new ClusterService());
 	}
@@ -67,7 +67,7 @@ export default class ClusterController extends BaseController<Cluster> {
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 
 		// create new cluster
-		let newCluster = (await this.service.create(body)) as Cluster;
+		let newCluster = (await this.service.create(body)) as ICluster;
 
 		if (newCluster) {
 			try {
@@ -92,7 +92,7 @@ export default class ClusterController extends BaseController<Cluster> {
 	@Patch("/")
 	async update(@Body() body: ClusterDto, @Queries() queryParams?: IPostQueryParams) {
 		const cloudProviderSvc = new CloudProviderService();
-		let cloudProvider: CloudProvider;
+		let cloudProvider: ICloudProvider;
 
 		// validation - round 1: valid input params
 		if (body.provider) {

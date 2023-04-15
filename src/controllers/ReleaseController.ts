@@ -1,7 +1,7 @@
 import { logError } from "diginext-utils/dist/console/log";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { Release } from "@/entities";
+import type { IRelease, Release } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -15,7 +15,7 @@ import BaseController from "./BaseController";
 
 @Tags("Release")
 @Route("release")
-export default class ReleaseController extends BaseController<Release> {
+export default class ReleaseController extends BaseController<IRelease> {
 	constructor() {
 		super(new ReleaseService());
 	}

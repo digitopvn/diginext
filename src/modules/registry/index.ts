@@ -2,7 +2,7 @@ import { isJSON } from "class-validator";
 import { logError } from "diginext-utils/dist/console/log";
 import { existsSync, readFileSync } from "fs";
 
-import type { Cluster, ContainerRegistry, ContainerRegistryDto } from "@/entities";
+import type { Cluster, ContainerRegistryDto, IContainerRegistry } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 
 import { DB } from "../api/DB";
@@ -44,9 +44,9 @@ export const execRegistry = async (options: InputOptions) => {
 
 		case "allow":
 		case "create-secret":
-			let registry: ContainerRegistry;
+			let registry: IContainerRegistry;
 			if (registrySlug) {
-				registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
+				registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 			} else {
 				registry = await askForRegistry();
 				registrySlug = registry.slug;

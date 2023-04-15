@@ -1,7 +1,7 @@
 import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { Role } from "@/entities";
+import type { IRole, Role } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure } from "@/interfaces";
 import RoleService from "@/services/RoleService";
@@ -12,7 +12,7 @@ export type RoleDto = Omit<Role, keyof HiddenBodyKeys>;
 
 @Tags("Role")
 @Route("role")
-export default class RoleController extends BaseController<Role> {
+export default class RoleController extends BaseController<IRole> {
 	constructor() {
 		super(new RoleService());
 	}

@@ -24,4 +24,19 @@ function toString(id) {
 	return _id.toHexString();
 }
 
+export interface MongooseFindOptions {
+	/**
+	 * Simple condition that should be applied to match entities.
+	 */
+	where?: { [key: string]: any };
+	/**
+	 * Offset (paginated) where from entities should be taken.
+	 */
+	skip?: number;
+	/**
+	 * Limit (paginated) - max number of entities should be taken.
+	 */
+	take?: number;
+}
+
 export const MongoDB = { toString, isObjectId, isValidObjectId, toObjectId };

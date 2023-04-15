@@ -2,7 +2,7 @@ import { log, logWarn } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { Project } from "@/entities";
+import type { IProject, Project } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
@@ -13,11 +13,11 @@ import ProjectService from "@/services/ProjectService";
 
 import BaseController from "./BaseController";
 
-export type ProjectInputSchema = Omit<Project, keyof HiddenBodyKeys>;
+export type ProjectInputSchema = Omit<IProject, keyof HiddenBodyKeys>;
 
 @Tags("Project")
 @Route("project")
-export default class ProjectController extends BaseController<Project> {
+export default class ProjectController extends BaseController<IProject> {
 	constructor() {
 		super(new ProjectService());
 	}
@@ -101,16 +101,11 @@ export default class ProjectController extends BaseController<Project> {
 		// console.log("apps :>> ", apps);
 
 		result.data = projects.map((p) => {
-			const projectWithApps: Project = { ...p };
+			const projectWithApps = { ...p };
 			projectWithApps.apps = apps.filter((a) => MongoDB.toString(a.project) === MongoDB.toString(p._id));
 			return projectWithApps;
 		});
 
 		return result;
-
-		// result.data = projectsWithApps;
-		// return res.status(200).json(result);
-		// return projectsWithApps;
-		// return projectsWithApps;
 	}
 }

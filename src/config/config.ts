@@ -4,14 +4,14 @@ import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { toNumber } from "lodash";
 import path from "path";
 
-import type CloudDatabase from "@/entities/CloudDatabase";
-import type CloudProvider from "@/entities/CloudProvider";
-import type Cluster from "@/entities/Cluster";
-import type ContainerRegistry from "@/entities/ContainerRegistry";
-import type Framework from "@/entities/Framework";
-import type GitProvider from "@/entities/GitProvider";
-import type User from "@/entities/User";
-import type Workspace from "@/entities/Workspace";
+import type { ICloudDatabase } from "@/entities/CloudDatabase";
+import type { ICloudProvider } from "@/entities/CloudProvider";
+import type { ICluster } from "@/entities/Cluster";
+import type { IContainerRegistry } from "@/entities/ContainerRegistry";
+import type { IFramework } from "@/entities/Framework";
+import type { IGitProvider } from "@/entities/GitProvider";
+import type { IUser } from "@/entities/User";
+import type { IWorkspace } from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 
@@ -40,25 +40,25 @@ export type CliConfig = {
 	buildServerUrl?: string;
 
 	access_token?: string;
-	currentUser?: User;
-	currentWorkspace?: Workspace;
+	currentUser?: IUser;
+	currentWorkspace?: IWorkspace;
 
-	defaultFramework?: Framework;
+	defaultFramework?: IFramework;
 
 	github_access_token?: string;
 
-	currentGitProvider?: GitProvider;
-	currentRegistry?: ContainerRegistry;
-	currentProvider?: CloudProvider;
-	currentCluster?: Cluster;
-	currentDatabase?: CloudDatabase;
+	currentGitProvider?: IGitProvider;
+	currentRegistry?: IContainerRegistry;
+	currentProvider?: ICloudProvider;
+	currentCluster?: ICluster;
+	currentDatabase?: ICloudDatabase;
 
-	gitProviders?: GitProvider[];
-	k8sClusters?: Cluster[];
-	containerRegistries?: ContainerRegistry[];
-	providers?: CloudProvider[];
-	databases?: CloudDatabase[];
-	frameworks?: Framework[];
+	gitProviders?: IGitProvider[];
+	k8sClusters?: ICluster[];
+	containerRegistries?: IContainerRegistry[];
+	providers?: ICloudProvider[];
+	databases?: ICloudDatabase[];
+	frameworks?: IFramework[];
 };
 
 /**

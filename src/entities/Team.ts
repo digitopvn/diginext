@@ -1,19 +1,32 @@
 import { IsNotEmpty } from "class-validator";
+import type { Types } from "mongoose";
+import { Schema } from "mongoose";
 
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
 import type { IBase } from "./Base";
-import Base from "./Base";
-import type { Project, User, Workspace } from "./index";
+import Base, { baseSchemaOptions } from "./Base";
+import type { IProject, IUser, IWorkspace, Project, User, Workspace } from "./index";
 // import type { User } from "./User";
 // import type { Workspace } from "./Workspace";
 
 export interface ITeam extends IBase {
 	name: string;
 	image?: string;
-	workspace?: ObjectID | Workspace;
+	owner?: Types.ObjectId | IUser | string;
+	project?: Types.ObjectId | IProject | string;
+	workspace?: Types.ObjectId | IWorkspace;
 }
+
+export const teamSchema = new Schema({
+	...baseSchemaOptions,
+	name: { type: String, required: true },
+	image: { type: String },
+	owner: { type: Schema.Types.ObjectId, ref: "users" },
+	project: { type: Schema.Types.ObjectId, ref: "projects" },
+	workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
+});
 
 @Entity({ name: "teams" })
 export default class Team extends Base {

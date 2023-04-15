@@ -1,6 +1,6 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { Team } from "@/entities";
+import type { ITeam, Team } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import TeamService from "@/services/TeamService";
@@ -9,7 +9,7 @@ import BaseController from "./BaseController";
 
 @Tags("Team")
 @Route("team")
-export default class TeamController extends BaseController<Team> {
+export default class TeamController extends BaseController<ITeam> {
 	constructor() {
 		super(new TeamService());
 	}

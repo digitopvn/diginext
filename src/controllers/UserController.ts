@@ -1,9 +1,9 @@
 import { isArray, isEmpty } from "lodash";
 import type { ObjectId } from "mongodb";
-import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa";
 
 import BaseController from "@/controllers/BaseController";
-import type { Role, User } from "@/entities";
+import type { IUser, Role } from "@/entities";
 import { UserDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
@@ -25,7 +25,7 @@ interface JoinWorkspaceBody {
 
 @Tags("User")
 @Route("user")
-export default class UserController extends BaseController<User> {
+export default class UserController extends BaseController<IUser> {
 	service: UserService;
 
 	constructor() {

@@ -86,9 +86,9 @@ export interface IQueryOptions extends IQueryGeneral {
 	 */
 	select?: string[];
 	/**
-	 * @example { order: { createdAt: "DESC" }
+	 * @example { order: { createdAt: -1 } }
 	 */
-	order?: { [key: string]: "ASC" | "DESC" };
+	order?: { [key: string]: 1 | -1 };
 	/**
 	 * @default false
 	 */

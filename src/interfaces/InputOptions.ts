@@ -1,4 +1,4 @@
-import type { App, Framework, Project, Workspace } from "@/entities";
+import type { IApp, IFramework, IProject, IWorkspace } from "@/entities";
 
 import type { GitProviderType, ResourceQuotaSize } from "./SystemTypes";
 
@@ -45,7 +45,7 @@ export type InputOptions = {
 	 */
 	username?: string;
 	userId?: string;
-	workspace?: Workspace;
+	workspace?: IWorkspace;
 	workspaceId?: string;
 
 	/**
@@ -167,7 +167,7 @@ export type InputOptions = {
 	/**
 	 * Framework
 	 */
-	framework?: Framework;
+	framework?: IFramework;
 
 	/**
 	 * Version of the framework
@@ -400,7 +400,7 @@ export type InputOptions = {
 	/**
 	 * Project
 	 */
-	project?: Project;
+	project?: IProject;
 
 	/**
 	 * ID of the {Project}
@@ -479,7 +479,7 @@ export type InputOptions = {
 	/**
 	 * Specify an {App} instance
 	 */
-	app?: App;
+	app?: IApp;
 
 	/**
 	 * ID of an {App} instance

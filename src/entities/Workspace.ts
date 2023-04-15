@@ -1,18 +1,21 @@
 import { IsNotEmpty } from "class-validator";
 import { makeSlug } from "diginext-utils/dist/Slug";
+import { Schema } from "mongoose";
 
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
 import type { IBase } from "./Base";
-import Base from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
 import type Role from "./Role";
 import type { User } from "./User";
 
 export interface IWorkspace extends IBase {
-	name: string;
+	name?: string;
+	slug?: string;
+	public?: boolean;
 	image?: string;
-	owner?: ObjectID | User;
+	domain?: string;
 }
 
 export class WorkspaceApiAccessToken {
@@ -49,6 +52,16 @@ export class WorkspaceApiAccessToken {
 }
 
 export type WorkspaceDto = Omit<User, keyof Workspace>;
+
+export const workspaceSchema = new Schema({
+	...baseSchemaOptions,
+	name: { type: String },
+	slug: { type: String },
+	public: { type: Boolean },
+	image: { type: String },
+	domain: { type: String },
+	owner: { type: Schema.Types.ObjectId, ref: "users" },
+});
 
 @Entity({ name: "workspaces" })
 export default class Workspace extends Base {

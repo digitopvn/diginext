@@ -1,12 +1,53 @@
 import { IsNotEmpty } from "class-validator";
+import type { Types } from "mongoose";
+import { Schema } from "mongoose";
 
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import type { App } from "./App";
-import Base from "./Base";
+import type { App, IApp } from "./App";
+import type { IBase } from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
 import type User from "./User";
+import type { IUser } from "./User";
 import type Workspace from "./Workspace";
+import type { IWorkspace } from "./Workspace";
+
+export interface IProject extends IBase {
+	name?: string;
+	image?: string;
+	slug?: string;
+	apiKey?: string;
+	clientId?: string;
+	clientSecret?: string;
+	createdBy?: string;
+	lastUpdatedBy?: string;
+	latestBuild?: string;
+	appSlugs?: string;
+	apps?: (Types.ObjectId | IApp | string)[];
+	owner?: Types.ObjectId | IUser | string;
+	workspace?: Types.ObjectId | IWorkspace | string;
+}
+
+export const projectSchema = new Schema(
+	{
+		...baseSchemaOptions,
+		name: { type: String },
+		image: { type: String },
+		slug: { type: String },
+		apiKey: { type: String },
+		clientId: { type: String },
+		clientSecret: { type: String },
+		createdBy: { type: String },
+		lastUpdatedBy: { type: String },
+		latestBuild: { type: String },
+		appSlugs: { type: [String] },
+		apps: [{ type: Schema.Types.ObjectId, ref: "apps" }],
+		owner: { type: Schema.Types.ObjectId, ref: "users" },
+		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
+	},
+	{ collection: "projects" }
+);
 
 /**
  * Projects

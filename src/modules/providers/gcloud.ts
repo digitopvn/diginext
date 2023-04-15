@@ -8,7 +8,7 @@ import yargs from "yargs";
 
 import { Config, isServerMode } from "@/app.config";
 import { saveCliConfig } from "@/config/config";
-import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
+import type { CloudProvider, Cluster, ContainerRegistry, IContainerRegistry } from "@/entities";
 import type { GoogleServiceAccount } from "@/interfaces/GoogleServiceAccount";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { createTmpFile, execCmd, isWin } from "@/plugins";
@@ -113,7 +113,7 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 		return;
 	}
 
-	const existingRegistry = await DB.findOne<ContainerRegistry>("registry", { provider: "gcloud", host: options.host });
+	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { provider: "gcloud", host: options.host });
 	if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { existingRegistry });
 
 	if (existingRegistry) return existingRegistry;
@@ -121,7 +121,7 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 	// save this container registry to database
 	const registryHost = host || "asia.gcr.io";
 	const imageBaseURL = `${registryHost}/${serviceAccountObject.project_id}`;
-	const newRegistry = await DB.create<ContainerRegistry>("registry", {
+	const newRegistry = await DB.create<IContainerRegistry>("registry", {
 		name: "Google Container Registry",
 		host: registryHost,
 		provider: "gcloud",
@@ -210,7 +210,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			},
 		};
 
-		const updatedRegistries = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, updateData as ContainerRegistry);
+		const updatedRegistries = await DB.update<IContainerRegistry>("registry", { slug: registrySlug }, updateData as ContainerRegistry);
 		const updatedRegistry = updatedRegistries[0];
 
 		if (!isServerMode) {

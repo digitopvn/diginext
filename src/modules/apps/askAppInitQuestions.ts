@@ -2,7 +2,7 @@ import { logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 
 import { saveCliConfig } from "@/config/config";
-import Framework from "@/entities/Framework";
+import type { IFramework } from "@/entities/Framework";
 import type GitProvider from "@/entities/GitProvider";
 import type Project from "@/entities/Project";
 import type InputOptions from "@/interfaces/InputOptions";
@@ -73,7 +73,7 @@ export async function askAppInitQuestions(options?: InputOptions) {
 		options.name = name;
 	}
 
-	options.framework = new Framework({ name: "unknown", slug: "unknown" });
+	options.framework = { name: "unknown", slug: "unknown" } as IFramework;
 	options.frameworkVersion = "unknown";
 
 	if (options.shouldUseGit) {

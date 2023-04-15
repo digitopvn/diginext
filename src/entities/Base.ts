@@ -1,16 +1,61 @@
 import type { ObjectId } from "mongodb";
+import type { Document, Types } from "mongoose";
+import { Schema } from "mongoose";
 
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, CreateDateColumn, DeleteDateColumn, ObjectIdColumn, UpdateDateColumn } from "@/libs/typeorm";
 
-export interface IBase {
-	_id: string;
+import type { IProject, IWorkspace } from ".";
+import type { IUser } from "./User";
+
+export interface IBase extends Document {
+	_id?: Types.ObjectId | string;
+	slug?: string;
+	active?: boolean;
+	metadata?: any;
+	owner?: Types.ObjectId | IUser | string;
+	project?: Types.ObjectId | IProject | string;
+	workspace?: Types.ObjectId | IWorkspace | string;
 	createdAt?: Date;
 	deletedAt?: Date;
 	updatedAt?: Date;
 }
 
-// export interface SchemaMetadata<T extends Base> {}
+export interface EntityConstructor {
+	new (...args: any[]): {};
+}
+
+export const baseSchemaOptions = {
+	slug: { type: String },
+	active: { type: Boolean, default: true },
+	metadata: { type: Object },
+	owner: {
+		type: Schema.Types.ObjectId,
+		ref: "users",
+	},
+	project: {
+		type: Schema.Types.ObjectId,
+		ref: "projects",
+	},
+	workspace: {
+		type: Schema.Types.ObjectId,
+		ref: "workspaces",
+	},
+	createdAt: { type: Date, default: Date.now },
+	deletedAt: { type: Date, default: Date.now },
+	updatedAt: { type: Date, default: null },
+};
+
+export const BaseSchema = new Schema<IBase>(baseSchemaOptions);
+
+function setDateWhenUpdateDocument(next: (error?: NativeError) => void) {
+	// "this" refers to the query object
+	this.updateOne({}, { $set: { updatedAt: new Date() } });
+	next();
+}
+
+BaseSchema.pre("updateOne", setDateWhenUpdateDocument);
+BaseSchema.pre("updateMany", setDateWhenUpdateDocument);
 
 export default abstract class Base {
 	@ObjectIdColumn({ name: "_id" })

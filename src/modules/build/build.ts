@@ -9,7 +9,7 @@ import path from "path";
 
 import { isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { App, Build, ContainerRegistry, Project, User, Workspace } from "@/entities";
+import type { App, Build, ContainerRegistry, IApp, IBuild, IUser, IWorkspace, Project } from "@/entities";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
 import { getIO, socketIO } from "@/server";
 
@@ -45,7 +45,7 @@ export type StartBuildParams = {
 	 * {User} instance of the author
 	 * - `If passing "user", no need to pass "userId" and vice versa.`
 	 */
-	user?: User;
+	user?: IUser;
 
 	/**
 	 * Slug of the Container Registry
@@ -137,13 +137,13 @@ export async function startBuild(params: StartBuildParams) {
 		cliVersion,
 	} = params;
 
-	const author = user || (await DB.findOne<User>("user", { _id: new ObjectId(userId) }, { populate: ["workspaces", "activeWorkspaces"] }));
+	const author = user || (await DB.findOne<IUser>("user", { _id: new ObjectId(userId) }, { populate: ["workspaces", "activeWorkspaces"] }));
 	console.log("author :>> ", author);
 
-	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	// get workspace
 	const { activeWorkspace, slug: username } = author;
-	const workspace = activeWorkspace as Workspace;
+	const workspace = activeWorkspace as IWorkspace;
 
 	// socket & logs
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
@@ -184,7 +184,7 @@ export async function startBuild(params: StartBuildParams) {
 	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}/${app.slug}` } = app;
 
 	// get latest build of this app to utilize the cache for this build process
-	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
+	const latestBuild = await DB.findOne<IBuild>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
 
 	// get app's repository data:
 	const {
@@ -225,9 +225,9 @@ export async function startBuild(params: StartBuildParams) {
 		project: project._id,
 		owner: author._id,
 		workspace: workspace._id,
-	} as Build;
+	} as IBuild;
 
-	const newBuild = await DB.create<Build>("build", buildData);
+	const newBuild = await DB.create<IBuild>("build", buildData);
 	if (!newBuild) {
 		console.log("buildData :>> ", buildData);
 		sendLog({ SOCKET_ROOM, message: "[START BUILD] Failed to create new build on server." });

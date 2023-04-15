@@ -1,7 +1,7 @@
-import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa";
 
 import { Config } from "@/app.config";
-import type { Build } from "@/entities";
+import type { Build, IBuild } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
@@ -16,7 +16,7 @@ type BuildData = Omit<Build, keyof HiddenBodyKeys>;
 
 @Tags("Build")
 @Route("build")
-export default class BuildController extends BaseController<Build> {
+export default class BuildController extends BaseController<IBuild> {
 	constructor() {
 		super(new BuildService());
 	}

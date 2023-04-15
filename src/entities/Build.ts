@@ -1,15 +1,63 @@
 import { IsNotEmpty } from "class-validator";
+import type { Types } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 import { BuildStatus } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import type { App } from "./App";
-import Base from "./Base";
+import type { App, IApp } from "./App";
+import type { IBase } from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
 import type ContainerRegistry from "./ContainerRegistry";
+import type { IContainerRegistry } from "./ContainerRegistry";
 import type Project from "./Project";
 import type User from "./User";
 import type Workspace from "./Workspace";
+
+export interface IBuild extends IBase {
+	name?: string;
+	image?: string;
+	tag?: string;
+	startTime?: Date;
+	endTime?: Date;
+	duration?: number;
+	env?: string;
+	branch?: string;
+	cliVersion?: string;
+	createdBy?: string;
+	status?: BuildStatus;
+	projectSlug?: string;
+	appSlug?: string;
+	logs?: string;
+	registry?: Types.ObjectId | IContainerRegistry | string;
+	app?: Types.ObjectId | IApp | string;
+}
+
+export const buildSchema = new Schema(
+	{
+		...baseSchemaOptions,
+		name: { type: String },
+		image: { type: String },
+		tag: { type: String },
+		startTime: { type: Date },
+		endTime: { type: Date },
+		duration: { type: Number },
+		env: { type: String },
+		branch: { type: String },
+		cliVersion: { type: String },
+		createdBy: { type: String },
+		status: { type: String, enum: ["pending", "building", "succeeded", "failed", "cancelled"] },
+		projectSlug: { type: String },
+		appSlug: { type: String },
+		logs: { type: String },
+		registry: { type: Schema.Types.ObjectId, ref: "container_registries" },
+		app: { type: Schema.Types.ObjectId, ref: "apps" },
+	},
+	{ collection: "builds" }
+);
+
+export const BuildModel = mongoose.model("Build", buildSchema, "builds");
 
 @Entity({ name: "builds" })
 export default class Build extends Base {

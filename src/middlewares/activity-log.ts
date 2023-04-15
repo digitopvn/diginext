@@ -1,8 +1,8 @@
 import { isJSON } from "class-validator";
 import type { NextFunction, Response } from "express";
 
-import type { Workspace } from "@/entities";
-import type Activity from "@/entities/Activity";
+import type { IWorkspace } from "@/entities";
+import type { IActivity } from "@/entities/Activity";
 import type Route from "@/entities/Route";
 import type { AppRequest, AppResponse } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
@@ -38,9 +38,9 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 
 	if (user) {
 		// parse & create activity dto:
-		const activityDto: Activity = {};
+		const activityDto = {} as IActivity;
 		activityDto.owner = user._id;
-		activityDto.workspace = workspace || (user.activeWorkspace as Workspace);
+		activityDto.workspace = workspace || (user.activeWorkspace as IWorkspace);
 		activityDto.name = user.name;
 		activityDto.response = res.body;
 		activityDto.responseStatus = isJSON(res.body) ? JSON.parse(res.body).status : undefined;

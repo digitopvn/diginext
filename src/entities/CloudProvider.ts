@@ -1,11 +1,34 @@
-import { CloudProviderType } from "@/interfaces/SystemTypes";
+import mongoose, { Schema } from "mongoose";
+
+import { cloudProviderList, CloudProviderType } from "@/interfaces/SystemTypes";
 import type { ObjectID } from "@/libs/typeorm";
 import { Column, Entity } from "@/libs/typeorm";
 
-import Base from "./Base";
+import type { IBase } from "./Base";
+import Base, { baseSchemaOptions } from "./Base";
 import type Cluster from "./Cluster";
+import type { ICluster } from "./Cluster";
 import type User from "./User";
 import type Workspace from "./Workspace";
+
+export interface ICloudProvider extends IBase {
+	name?: string;
+	shortName?: CloudProviderType;
+	apiAccessToken?: string;
+	serviceAccount?: string;
+	clusters?: string[] | ICluster[];
+}
+
+export const cloudProviderSchema = new Schema({
+	...baseSchemaOptions,
+	name: { type: String },
+	shortName: { type: String, enum: cloudProviderList },
+	apiAccessToken: { type: String },
+	serviceAccount: { type: String },
+	clusters: [{ type: Schema.Types.ObjectId, ref: "clusters" }],
+});
+
+export const CloudProviderModel = mongoose.model("CloudProvider", cloudProviderSchema, "cloud_providers");
 
 @Entity({ name: "cloud_providers" })
 export default class CloudProvider extends Base {

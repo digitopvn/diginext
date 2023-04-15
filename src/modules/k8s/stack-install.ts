@@ -3,7 +3,7 @@ import { existsSync } from "fs";
 import path from "path";
 
 import { CLI_DIR } from "@/config/const";
-import type { Cluster } from "@/entities";
+import type { ICluster } from "@/entities";
 import { waitUntil } from "@/plugins";
 
 import ClusterManager from ".";
@@ -17,7 +17,7 @@ export interface InstallStackOptions {
  * Install `NGINX Ingress` stack to your cluster
  * @copyright https://kubernetes.github.io/ingress-nginx/
  */
-export const installNginxIngressStack = async (cluster: Cluster, options: InstallStackOptions = {}) => {
+export const installNginxIngressStack = async (cluster: ICluster, options: InstallStackOptions = {}) => {
 	const { shortName, contextName: context, isVerified } = cluster;
 	const { onUpdate } = options;
 
@@ -59,7 +59,7 @@ export const installNginxIngressStack = async (cluster: Cluster, options: Instal
  * Install `CertManager` stack to your cluster
  * @copyright https://cert-manager.io/
  */
-export const installCertManagerStack = async (cluster: Cluster, options: InstallStackOptions = {}) => {
+export const installCertManagerStack = async (cluster: ICluster, options: InstallStackOptions = {}) => {
 	const { shortName, contextName: context, isVerified } = cluster;
 	const { onUpdate } = options;
 

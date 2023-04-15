@@ -2,12 +2,13 @@ import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
-import type { DeleteResult } from "mongodb";
-import type { Document, Model, PipelineStage, Schema } from "mongoose";
-import { model } from "mongoose";
 
+import type { User } from "@/entities";
+import type Base from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import type { ObjectLiteral } from "@/libs/typeorm";
+import type { EntityTarget, MongoRepository, ObjectLiteral } from "@/libs/typeorm";
+import type { MongoFindManyOptions } from "@/libs/typeorm/find-options/mongodb/MongoFindManyOptions";
+import { manager, query } from "@/modules/AppDatabase";
 import { isValidObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 
@@ -20,24 +21,22 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interface
  */
 const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 
-export default class BaseService<T extends Document> {
-	private readonly model: Model<T>;
+export default class BaseService<E extends Base & { owner?: any; workspace?: any } & ObjectLiteral = any> {
+	protected query: MongoRepository<ObjectLiteral>;
 
 	req?: AppRequest;
 
-	constructor(schema: Schema) {
-		const collection = schema.get("collection");
-		console.log("BaseService > collection :>> ", collection);
-		this.model = model<T>(schema.get("collection"), schema, schema.get("collection"));
+	constructor(entity: EntityTarget<E>) {
+		this.query = query(entity);
 	}
 
 	async count(filter?: IQueryFilter, options?: IQueryOptions) {
 		const parsedFilter = parseRequestFilter(filter);
-		return this.model.countDocuments({ ...parsedFilter, ...options }).exec();
+		// log(`- BaseService.count :>>`, { filter: parsedFilter, options });
+		return this.query.count({ ...parsedFilter, ...options });
 	}
 
-	async create(data: any): Promise<T> {
-		const now = new Date();
+	async create(data: any) {
 		try {
 			// generate slug (if needed)
 			const scope = this;
@@ -71,7 +70,7 @@ export default class BaseService<T extends Document> {
 
 			// assign item authority:
 			if (this.req?.user) {
-				const { user } = this.req;
+				const user = this.req?.user as User;
 				const userId = user?._id;
 				data.owner = userId;
 
@@ -81,60 +80,43 @@ export default class BaseService<T extends Document> {
 				}
 			}
 
-			const createdDoc = new this.model({ ...data, createdAt: now, updatedAt: now });
-			const newItem = await createdDoc.save();
-			return newItem as T;
+			// const author = `${user.name} (ID: ${user._id})`;
+			// console.log(`BaseService.create :>>`, { data });
+
+			const entity = await this.query.create(data);
+			const newItem = await manager.save(entity);
+			return newItem as unknown as E;
 		} catch (e) {
 			logError(e);
 			return;
 		}
 	}
 
-	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<T[]> {
+	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<E[]> {
 		// console.log(`BaseService > find :>> filter:`, filter);
+		// const query = this.query;
+		// let results;
+		// log("options.populate >>", options.populate);
+		// log("pagination >>", pagination);
+		const findOptions: MongoFindManyOptions<ObjectLiteral> = {};
 
-		// where
-		const pipelines: PipelineStage[] = [{ $match: parseRequestFilter(filter) }];
+		if (filter) findOptions.where = parseRequestFilter(filter);
+		if (options?.order) findOptions.order = options.order;
+		if (options?.select && options.select.length > 0) findOptions.select = options.select;
+		// if (pagination?.page_size) findOptions.take = pagination.page_size;
+		// if (pagination?.current_page > 0 && pagination.page_size > 0) findOptions.skip = (pagination.current_page - 1) * pagination.page_size;
+		if (options?.skip) findOptions.skip = options.skip;
+		if (options?.limit) findOptions.take = options.limit;
 
-		// populate
 		if (options?.populate && options?.populate.length > 0) {
-			options?.populate.forEach((collection) => {
-				pipelines.push({
-					$lookup: {
-						from: this.model.schema.paths[collection].options.ref,
-						localField: collection,
-						foreignField: "_id",
-						as: collection,
-					},
-				});
+			findOptions.relations = {};
+			options?.populate.map((popColumn) => {
+				findOptions.relations[popColumn] = true;
 			});
 		}
+		// log(`findOptions >>`, findOptions);
 
-		// sort
-		if (options?.order) {
-			pipelines.push({ $sort: options?.order });
-		}
-
-		// select
-		if (options?.select && options.select.length > 0) {
-			const project: any = {};
-			options.select.forEach((field) => {
-				project[field] = 1;
-			});
-			pipelines.push({ $project: project });
-		}
-
-		// skip & limit (take)
-		if (options?.skip) pipelines.push({ $skip: options.skip });
-		if (options?.limit) pipelines.push({ $limit: options.limit });
-
-		// const findCommand = this.model.aggregate(pipelines);
-		// if (options?.order) findCommand.sort(options.order);
-		// if (options?.select && options.select.length > 0) findCommand.select(options.select.join(" "));
-		// if (options?.skip) findCommand.skip(options.skip);
-		// if (options?.limit) findCommand.limit(options.limit);
-
-		const [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(filter).exec()]);
+		const [results, totalItems] = await Promise.all([this.query.find(findOptions), this.query.count(filter)]);
 		// log(`results >>`, results);
 
 		if (pagination) {
@@ -162,14 +144,15 @@ export default class BaseService<T extends Document> {
 					: null;
 		}
 
-		return results as T[];
+		return results as E[];
 	}
 
 	async findOne(filter?: IQueryFilter, options?: IQueryOptions) {
 		// console.log(`findOne > filter :>>`, filter);
 		// console.log(`findOne > options :>>`, options);
-		const result = await this.model.findOne(filter, options).exec();
-		return result as T;
+		const results = await this.find(filter, options);
+
+		return results.length > 0 ? results[0] : null;
 	}
 
 	async update(filter: IQueryFilter, data: ObjectLiteral, options?: IQueryOptions) {
@@ -178,7 +161,7 @@ export default class BaseService<T extends Document> {
 
 		const updateFilter = parseRequestFilter(filter);
 		const updateData = options?.raw ? data : { $set: data };
-		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
+		const updateRes = await this.query.updateMany(updateFilter, updateData);
 
 		if (updateRes.matchedCount > 0) {
 			const results = await this.find(updateFilter, options);
@@ -191,20 +174,28 @@ export default class BaseService<T extends Document> {
 	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {
 		// Manually update "deleteAt" to database since TypeORM MongoDB doesn't support "softDelete" yet
 		const deleteFilter = parseRequestFilter(filter);
-		const deleteRes = await this.model.updateMany(deleteFilter, { $set: { deletedAt: new Date() } }).exec();
+		const deleteRes = await this.query.updateMany(deleteFilter, { $set: { deletedAt: new Date() } });
 		return { ok: deleteRes.matchedCount };
+
+		/**
+		 * [TypeORM] MongoDB driver doesn't support "softDelete" yet (or maybe it doesn't work because of bugs)
+		 */
+		// const deleteRes = await this.query.softDelete(filter);
+		// console.log("deleteRes", deleteRes);
+		// return deleteRes;
+		// return null;
 	}
 
-	async delete(filter?: IQueryFilter): Promise<DeleteResult> {
+	async delete(filter?: IQueryFilter) {
 		const deleteFilter = parseRequestFilter(filter);
-		const deleteRes = await this.model.deleteMany(deleteFilter).exec();
-		return deleteRes;
+		const deleteRes = await this.query.deleteMany(deleteFilter);
+		return deleteRes.result;
 	}
 
 	async empty(filter?: IQueryFilter) {
 		if (filter?.pass != EMPTY_PASS_PHRASE) return { ok: 0, n: 0, error: "[DANGER] You need a password to process this, buddy!" };
-		const deleteRes = await this.model.deleteMany({}).exec();
-		return { ...deleteRes, error: null };
+		const deleteRes = await this.query.deleteMany({});
+		return { ...deleteRes.result, error: null };
 	}
 }
 

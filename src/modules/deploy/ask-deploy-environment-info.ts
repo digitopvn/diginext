@@ -4,7 +4,7 @@ import inquirer from "inquirer";
 import { isEmpty, isNaN } from "lodash";
 
 import { getCliConfig } from "@/config/config";
-import type { App, CloudProvider, Cluster, ContainerRegistry, Project } from "@/entities";
+import type { App, CloudProvider, Cluster, IApp, IContainerRegistry, IProject } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
@@ -60,14 +60,14 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	const localDeployEnvironment = localAppConfig.environment[env] || {};
 	const localDeployDomains = localDeployEnvironment.domains || [];
 
-	let project = localAppConfig.project ? await DB.findOne<Project>("project", { slug: localAppConfig.project }) : undefined;
+	let project = localAppConfig.project ? await DB.findOne<IProject>("project", { slug: localAppConfig.project }) : undefined;
 	if (!project) project = await createOrSelectProject(options);
 	localAppConfig.project = project.slug;
 
 	// console.log("askForDeployEnvironmentInfo > project :>> ", project);
 
 	let app = localAppConfig.slug
-		? await DB.findOne<App>("app", { slug: localAppConfig.slug }, { populate: ["project", "owner", "workspace"] })
+		? await DB.findOne<IApp>("app", { slug: localAppConfig.slug }, { populate: ["project", "owner", "workspace"] })
 		: undefined;
 	if (!app) app = await createOrSelectApp(project.slug, options);
 	// console.log("askForDeployEnvironmentInfo > app :>> ", app);
@@ -171,7 +171,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	}
 
 	// request container registry
-	let registry: ContainerRegistry;
+	let registry: IContainerRegistry;
 	if (localDeployEnvironment.registry) {
 		registry = await DB.findOne("registry", { slug: localDeployEnvironment.registry });
 		if (registry) localDeployEnvironment.registry = registry.slug;
