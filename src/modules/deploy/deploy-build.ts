@@ -1,6 +1,6 @@
 import { isEmpty } from "lodash";
 
-import type { App, Cluster, IApp, IBuild, IUser, IWorkspace, Release } from "@/entities";
+import type { IApp, IBuild, ICluster, IRelease, IUser, IWorkspace } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
@@ -71,7 +71,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 
 	const { namespace, cluster: clusterShortName } = serverDeployEnvironment;
 
-	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 	const { contextName: context } = cluster;
 
 	// get app config to generate deployment data
@@ -110,18 +110,18 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	serverDeployEnvironment.lastUpdatedBy = username;
 
 	// Update {user}, {project}, {environment} to database before rolling out
-	const updatedAppData = { deployEnvironment: app.deployEnvironment || {} } as App;
+	const updatedAppData = { deployEnvironment: app.deployEnvironment || {} } as IApp;
 	updatedAppData.lastUpdatedBy = username;
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, updatedAppData);
+	const [updatedApp] = await DB.update<IApp>("app", { slug: appSlug }, updatedAppData);
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// Create new Release:
 	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
-	let releaseId: string, newRelease: Release;
+	let releaseId: string, newRelease: IRelease;
 	try {
 		newRelease = await createReleaseFromBuild(build, env, { author });
 		releaseId = MongoDB.toString(newRelease._id);

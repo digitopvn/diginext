@@ -1,24 +1,35 @@
-import { IsNotEmpty } from "class-validator";
 import type { Types } from "mongoose";
 import { model, Schema } from "mongoose";
 
-import { AppConfig } from "@/interfaces";
+import type { AppConfig, HiddenBodyKeys } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
-import { BuildStatus } from "@/interfaces/SystemTypes";
-import type { ObjectID } from "@/libs/typeorm";
-import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
+import type { BuildStatus } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
-import Base, { baseSchemaOptions } from "./Base";
-import type { App, Build, IApp, IBuild, IProject, IUser, IWorkspace, Project, User, Workspace } from "./index";
+import { baseSchemaOptions } from "./Base";
+import type { IApp, IBuild } from "./index";
 
 export interface IRelease extends IBase {
 	name?: string;
 	image?: string;
 	cliVersion?: string;
+	/**
+	 * Targeted environment.
+	 * @example dev, prod, staging, canary,...
+	 */
 	env?: string;
+	/**
+	 * Environment variables
+	 */
 	envVars?: KubeEnvironmentVariable[];
+	/**
+	 * ONLY PRE-RELEASE - Environment variables
+	 */
 	prereleaseEnvironment?: any[] | string;
+	/**
+	 * @deprecated
+	 * Old "diginext.json"
+	 */
 	diginext?: any;
 	appConfig?: AppConfig;
 	namespace?: string;
@@ -37,12 +48,20 @@ export interface IRelease extends IBase {
 	providerProjectId?: string;
 	buildStatus?: BuildStatus;
 	active?: boolean;
+	/**
+	 * ID of the build
+	 *
+	 * @remarks This can be populated to {IBuild} data
+	 */
 	build?: Types.ObjectId | IBuild | string;
+	/**
+	 * ID of the app
+	 *
+	 * @remarks This can be populated to {IApp} data
+	 */
 	app?: Types.ObjectId | IApp | string;
-	owner?: Types.ObjectId | IUser | string;
-	project?: Types.ObjectId | IProject | string;
-	workspace?: Types.ObjectId | IWorkspace | string;
 }
+export type ReleaseDto = Omit<IRelease, keyof HiddenBodyKeys>;
 
 export const releaseSchema = new Schema({
 	...baseSchemaOptions,
@@ -59,11 +78,24 @@ export const releaseSchema = new Schema({
 	preYaml: { type: String },
 	prereleaseUrl: { type: String },
 	productionUrl: { type: String },
+	/**
+	 * Deployment YAML
+	 */
 	deploymentYaml: { type: String },
+	/**
+	 * Release endpoint URL (development/.../production URL)
+	 */
 	endpoint: { type: String },
 	createdBy: { type: String },
 	branch: { type: String },
+	/**
+	 * @deprecated
+	 * Short name of the cloud provider of the cluster to deploy to.
+	 */
 	provider: { type: String },
+	/**
+	 * Short name of the targeted cluster to deploy to.
+	 */
 	cluster: { type: String },
 	projectSlug: { type: String },
 	appSlug: { type: String },
@@ -78,148 +110,3 @@ export const releaseSchema = new Schema({
 });
 
 export const ReleaseModel = model<IRelease>("Release", releaseSchema, "releases");
-
-@Entity({ name: "releases" })
-export default class Release extends Base {
-	@Column({ length: 250 })
-	@IsNotEmpty({ message: `User name is required.` })
-	name?: string;
-
-	@Column()
-	image?: string;
-
-	@Column()
-	cliVersion?: string;
-
-	/**
-	 * Targeted environment.
-	 * @example dev, prod, staging, canary,...
-	 */
-	@Column()
-	env?: string;
-
-	/**
-	 * Environment variables
-	 */
-	@Column()
-	envVars?: KubeEnvironmentVariable[];
-
-	/**
-	 * ONLY PRE-RELEASE - Environment variables
-	 */
-	@Column()
-	prereleaseEnvironment?: any[] | string;
-
-	/**
-	 * Old "diginext.json"
-	 */
-	@Column()
-	diginext?: any;
-
-	@Column()
-	appConfig?: AppConfig;
-
-	@Column()
-	namespace?: string;
-
-	@Column()
-	prodYaml?: string;
-
-	@Column()
-	preYaml?: string;
-
-	@Column()
-	prereleaseUrl?: string;
-
-	@Column()
-	productionUrl?: string;
-
-	/**
-	 * Deployment YAML
-	 */
-	@Column()
-	deploymentYaml?: string;
-
-	/**
-	 * Release endpoint (development/.../production URL)
-	 */
-	@Column()
-	endpoint?: string;
-
-	@Column()
-	createdBy?: string;
-
-	@Column()
-	branch?: string;
-
-	@Column()
-	provider?: string;
-
-	/**
-	 * Short name of the targeted cluster to deploy to.
-	 */
-	@Column()
-	cluster?: string;
-
-	@Column()
-	projectSlug?: string;
-
-	@Column()
-	appSlug?: string;
-
-	@Column()
-	providerProjectId?: string;
-
-	@Column()
-	buildStatus?: BuildStatus;
-
-	@Column({ type: "boolean" })
-	active?: boolean;
-
-	/**
-	 * ID of the build
-	 *
-	 * @remarks This can be populated to {Build} data
-	 */
-	@ObjectIdColumn({ name: "builds" })
-	build?: ObjectID | Build | string;
-
-	/**
-	 * ID of the app
-	 *
-	 * @remarks This can be populated to {App} data
-	 */
-	@ObjectIdColumn({ name: "apps" })
-	app?: ObjectID | App | string;
-
-	/**
-	 * User ID of the owner
-	 *
-	 * @remarks This can be populated to {User} data
-	 */
-	@ObjectIdColumn({ name: "users" })
-	owner?: ObjectID | User | string;
-
-	/**
-	 * ID of the project
-	 *
-	 * @remarks This can be populated to {Project} data
-	 */
-	@ObjectIdColumn({ name: "projects" })
-	project?: ObjectID | Project | string;
-
-	/**
-	 * ID of the workspace
-	 *
-	 * @remarks This can be populated to {Workspace} data
-	 */
-	@ObjectIdColumn({ name: "workspaces" })
-	workspace?: ObjectID | Workspace | string;
-
-	constructor(data?: Release) {
-		super();
-		Object.assign(this, data);
-	}
-}
-
-export { Release };

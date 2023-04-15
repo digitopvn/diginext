@@ -1,7 +1,7 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
 
-import type { IRole, Workspace } from "@/entities";
+import type { IRole, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { MongoDB } from "@/plugins/mongodb";
 import { filterRole } from "@/plugins/user-utils";
@@ -13,8 +13,8 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	// console.log("authorize > route :>> ", route);
 
 	// filter roles
-	const wsId = (user.activeWorkspace as Workspace)?._id
-		? MongoDB.toString((user.activeWorkspace as Workspace)._id)
+	const wsId = (user.activeWorkspace as IWorkspace)?._id
+		? MongoDB.toString((user.activeWorkspace as IWorkspace)._id)
 		: MongoDB.toString(user.activeWorkspace);
 	[user] = await filterRole(wsId, [user]);
 	// console.log("authorize > user :>> ", user);

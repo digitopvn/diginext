@@ -1,16 +1,12 @@
-import { IsNotEmpty } from "class-validator";
 import type { Types } from "mongoose";
 import { Schema } from "mongoose";
 
-import type { ObjectID } from "@/libs/typeorm";
-import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
+import type { HiddenBodyKeys } from "@/interfaces";
 
-import type { App, IApp } from "./App";
+import type { IApp } from "./App";
 import type { IBase } from "./Base";
-import Base, { baseSchemaOptions } from "./Base";
-import type User from "./User";
+import { baseSchemaOptions } from "./Base";
 import type { IUser } from "./User";
-import type Workspace from "./Workspace";
 import type { IWorkspace } from "./Workspace";
 
 export interface IProject extends IBase {
@@ -22,12 +18,26 @@ export interface IProject extends IBase {
 	clientSecret?: string;
 	createdBy?: string;
 	lastUpdatedBy?: string;
+	/**
+	 * Latest build of an application in this project
+	 */
 	latestBuild?: string;
+	/**
+	 * List of App slugs
+	 *
+	 * @remarks This can be populated to {App} data
+	 */
 	appSlugs?: string;
+	/**
+	 * List of App IDs
+	 *
+	 * @remarks This can be populated to {App} data
+	 */
 	apps?: (Types.ObjectId | IApp | string)[];
 	owner?: Types.ObjectId | IUser | string;
 	workspace?: Types.ObjectId | IWorkspace | string;
 }
+export type ProjectDto = Omit<IProject, keyof HiddenBodyKeys>;
 
 export const projectSchema = new Schema(
 	{
@@ -48,71 +58,3 @@ export const projectSchema = new Schema(
 	},
 	{ collection: "projects" }
 );
-
-/**
- * Projects
- */
-@Entity({ name: "projects" })
-export default class Project extends Base {
-	@Column({ length: 250 })
-	@IsNotEmpty({ message: `Project name is required.` })
-	name?: string;
-
-	@Column()
-	image?: string;
-
-	@Column()
-	slug?: string;
-
-	@Column()
-	apiKey?: string;
-
-	@Column()
-	clientId?: string;
-
-	@Column()
-	clientSecret?: string;
-
-	@Column()
-	createdBy?: string;
-
-	@Column()
-	lastUpdatedBy?: string;
-
-	@Column()
-	latestBuild?: string;
-
-	@Column()
-	appSlugs?: string;
-
-	/**
-	 * List of App IDs
-	 *
-	 * @remarks This can be populated to {App} data
-	 */
-	@ObjectIdColumn({ name: "apps" })
-	apps?: (ObjectID | App | string)[];
-
-	/**
-	 * User ID of the owner
-	 *
-	 * @remarks This can be populated to {User} data
-	 */
-	@ObjectIdColumn({ name: "users" })
-	owner?: ObjectID | User | string;
-
-	/**
-	 * ID of the workspace
-	 *
-	 * @remarks This can be populated to {Workspace} data
-	 */
-	@ObjectIdColumn({ name: "workspaces" })
-	workspace?: ObjectID | Workspace | string;
-
-	constructor(data?: Project) {
-		super();
-		Object.assign(this, data);
-	}
-}
-
-export { Project };

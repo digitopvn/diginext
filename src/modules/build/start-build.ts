@@ -9,7 +9,7 @@ import path from "path";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { App, Build, IApp, IBuild, ICluster, IProject, IUser, IWorkspace, Release } from "@/entities";
+import type { IApp, IBuild, ICluster, IProject, IRelease, IUser, IWorkspace } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath, wait } from "@/plugins";
@@ -125,7 +125,7 @@ export async function startBuildV1(
 		project: project._id,
 		owner: author._id,
 		workspace: workspace._id,
-	} as Build;
+	} as IBuild;
 
 	const newBuild = await DB.create<IBuild>("build", buildData);
 	if (!newBuild) {
@@ -270,7 +270,7 @@ export async function startBuildV1(
 	serverDeployEnvironment.lastUpdatedBy = username;
 
 	// Update {user}, {project}, {environment} to database before rolling out
-	const updatedAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as App;
+	const updatedAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as IApp;
 	updatedAppData.lastUpdatedBy = username;
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
@@ -320,7 +320,7 @@ export async function startBuildV1(
 
 	// Insert this build record to server:
 	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
-	let releaseId: string, newRelease: Release;
+	let releaseId: string, newRelease: IRelease;
 	try {
 		newRelease = await createReleaseFromBuild(newBuild, env, { author });
 		releaseId = MongoDB.toString(newRelease._id);

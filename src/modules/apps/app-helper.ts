@@ -1,4 +1,4 @@
-import type { IApp, Project, User, Workspace } from "@/entities";
+import type { IApp, IProject, IUser, IWorkspace } from "@/entities";
 import type { AppConfig, ClientDeployEnvironmentConfig } from "@/interfaces";
 
 /**
@@ -18,9 +18,9 @@ export const getAppConfigFromApp = (app: IApp) => {
 	const appConfig: AppConfig = {
 		name: app.name,
 		slug: app.slug,
-		owner: (app.owner as User).slug,
-		workspace: (app.workspace as Workspace).slug,
-		project: app.projectSlug || (app.project as Project).slug,
+		owner: (app.owner as IUser).slug,
+		workspace: (app.workspace as IWorkspace).slug,
+		project: app.projectSlug || (app.project as IProject).slug,
 		framework: app.framework,
 		git: app.git,
 		environment: clientDeployEnvironment,

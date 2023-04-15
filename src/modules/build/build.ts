@@ -9,7 +9,7 @@ import path from "path";
 
 import { isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { App, Build, ContainerRegistry, IApp, IBuild, IUser, IWorkspace, Project } from "@/entities";
+import type { IApp, IBuild, IContainerRegistry, IProject, IUser, IWorkspace } from "@/entities";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
 import { getIO, socketIO } from "@/server";
 
@@ -91,7 +91,7 @@ export async function testBuild() {
  */
 export async function saveLogs(buildSlug: string, logs: string) {
 	if (!buildSlug) throw new Error(`Build's slug is required, it's empty now.`);
-	const [build] = await DB.update<Build>("build", { slug: buildSlug }, { logs });
+	const [build] = await DB.update<IBuild>("build", { slug: buildSlug }, { logs });
 	return build;
 }
 
@@ -159,7 +159,7 @@ export async function startBuild(params: StartBuildParams) {
 	}
 
 	// the container registry to store this build image
-	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
+	const registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 
 	if (isEmpty(registry)) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
@@ -177,7 +177,7 @@ export async function startBuild(params: StartBuildParams) {
 	}
 
 	// project info
-	const project = app.project as Project;
+	const project = app.project as IProject;
 	const { slug: projectSlug } = project;
 
 	// build image
@@ -267,8 +267,8 @@ export async function startBuild(params: StartBuildParams) {
 	}
 
 	// Update app so it can be sorted on top!
-	const updatedAppData = { lastUpdatedBy: username } as App;
-	const [updatedApp] = await DB.update<App>("app", { slug: appSlug, image: imageURL }, updatedAppData);
+	const updatedAppData = { lastUpdatedBy: username } as IApp;
+	const [updatedApp] = await DB.update<IApp>("app", { slug: appSlug, image: imageURL }, updatedAppData);
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
 

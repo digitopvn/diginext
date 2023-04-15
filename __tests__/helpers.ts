@@ -1,4 +1,3 @@
-import { DataSource } from "../src/libs/typeorm";
 import { User, UserDto, Workspace, WorkspaceDto } from "../src/entities";
 import fetchApi from "../src/modules/api/fetchApi";
 import { wait, waitUntil } from "../src/plugins/utils";
@@ -161,13 +160,13 @@ export const loginUser = async (userId: ObjectId, workspaceId: ObjectId) => {
 /**
  * Closes testing connections if they are connected.
  */
-export function closeTestingConnections(connections: DataSource[]) {
-	return Promise.all(connections.map((connection) => (connection && connection.isInitialized ? connection.close() : undefined)));
-}
+// export function closeTestingConnections(connections: DataSource[]) {
+// 	return Promise.all(connections.map((connection) => (connection && connection.isInitialized ? connection.close() : undefined)));
+// }
 
 /**
  * Reloads all databases for all given connections.
  */
-export function reloadTestingDatabases(connections: DataSource[]) {
-	return Promise.all(connections.map((connection) => connection.synchronize(true)));
-}
+// export function reloadTestingDatabases(connections: DataSource[]) {
+// 	return Promise.all(connections.map((connection) => connection.synchronize(true)));
+// }

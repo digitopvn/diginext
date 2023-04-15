@@ -2,7 +2,7 @@ import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type { Release } from "@/entities";
+import type { IRelease } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 import { getAppConfig } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
@@ -29,8 +29,8 @@ export const execRollOut = async (options?: InputOptions) => {
 
 		log(`Looking for some latest releases of this app (${project}/${slug})...`);
 		const releaseURL = `/api/v1/release?sort=-createdAt&limit=5&active=false&projectSlug=${project}&appSlug=${slug}`;
-		const { data } = await fetchApi<Release>({ url: releaseURL });
-		const latestReleases = data as Release[];
+		const { data } = await fetchApi<IRelease>({ url: releaseURL });
+		const latestReleases = data as IRelease[];
 		// log({ data });
 
 		if (isEmpty(latestReleases)) {

@@ -1,14 +1,13 @@
 import { logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 
-import type Project from "@/entities/Project";
 import type { IProject } from "@/entities/Project";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
 import { DB } from "../api/DB";
 
 export async function askCreateProjectQuestions(options?: InputOptions) {
-	const project = {} as Project;
+	const project = {} as IProject;
 
 	if (!options.projectName) {
 		const { projectName } = await inquirer.prompt({

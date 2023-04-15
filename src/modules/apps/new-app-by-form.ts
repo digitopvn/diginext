@@ -3,7 +3,7 @@ import inquirer from "inquirer";
 import { isEmpty, upperFirst } from "lodash";
 
 import { saveCliConfig } from "@/config/config";
-import type { App, IApp, IGitProvider } from "@/entities";
+import type { IApp, IGitProvider } from "@/entities";
 import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
@@ -173,7 +173,7 @@ export async function createAppByForm(options?: InputOptions) {
 		git: currentGitData ? { repoSSH: currentGitData.remoteSSH, provider: currentGitData.provider, repoURL: currentGitData.remoteURL } : {},
 		environment: {},
 		deployEnvironment: {},
-	} as App;
+	} as IApp;
 
 	// console.log("createAppByForm > appData :>> ", appData);
 

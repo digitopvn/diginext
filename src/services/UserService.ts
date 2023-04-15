@@ -1,5 +1,4 @@
 import type { IUser } from "@/entities/User";
-import type User from "@/entities/User";
 import { userSchema } from "@/entities/User";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 
@@ -25,7 +24,7 @@ export default class UserService extends BaseService<IUser> {
 		return super.create(data);
 	}
 
-	async update(filter: IQueryFilter, data: User | any, options?: IQueryOptions) {
+	async update(filter: IQueryFilter, data: IUser | any, options?: IQueryOptions) {
 		if (data.username) data.slug = data.username;
 		if (data.slug) data.username = data.slug;
 		return super.update(filter, data, options);

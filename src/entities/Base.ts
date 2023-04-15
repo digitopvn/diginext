@@ -10,11 +10,29 @@ import type { IUser } from "./User";
 
 export interface IBase extends Document {
 	_id?: Types.ObjectId | string;
+	/**
+	 * Slug of an item, generated automatically by its "name"
+	 */
 	slug?: string;
 	active?: boolean;
 	metadata?: any;
+	/**
+	 * Owner ID of the app
+	 *
+	 * @remarks This can be populated to {IUser} data
+	 */
 	owner?: Types.ObjectId | IUser | string;
+	/**
+	 * ID of the project
+	 *
+	 * @remarks This can be populated to {IProject} data
+	 */
 	project?: Types.ObjectId | IProject | string;
+	/**
+	 * ID of the workspace
+	 *
+	 * @remarks This can be populated to {IWorkspace} data
+	 */
 	workspace?: Types.ObjectId | IWorkspace | string;
 	createdAt?: Date;
 	deletedAt?: Date;

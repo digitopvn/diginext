@@ -4,7 +4,6 @@ import { isEmpty, trimEnd } from "lodash";
 import open from "open";
 
 import { getCliConfig, saveCliConfig } from "@/config/config";
-import type User from "@/entities/User";
 import type { AccessTokenInfo, IUser } from "@/entities/User";
 import type { IWorkspace } from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
@@ -70,7 +69,7 @@ export const cliLogin = async (options: CliLoginOptions) => {
 	let currentUser: IUser;
 
 	// validate the "access_token" -> get "userId":
-	const { status, data } = await fetchApi<User>({ url: `/auth/profile`, access_token });
+	const { status, data } = await fetchApi<IUser>({ url: `/auth/profile`, access_token });
 	if (status === 0) {
 		logError(`Authentication failed, "access_token" is not valid.`);
 		return;
@@ -143,7 +142,7 @@ export async function cliAuthenticate(options: InputOptions) {
 		status,
 		data: userData,
 		messages,
-	} = await fetchApi<User>({
+	} = await fetchApi<IUser>({
 		url: `/auth/profile`,
 		access_token: accessToken,
 	});

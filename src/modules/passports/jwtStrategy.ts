@@ -8,8 +8,8 @@ import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
-import type { AccessTokenInfo, User } from "@/entities";
-import type ServiceAccount from "@/entities/ServiceAccount";
+import type { AccessTokenInfo, IUser } from "@/entities";
+import type { IServiceAccount } from "@/entities/ServiceAccount";
 
 import { DB } from "../api/DB";
 
@@ -113,7 +113,7 @@ export const jwtStrategy = new Strategy(
 
 		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
-		let user = await DB.findOne<User | ServiceAccount>(
+		let user = await DB.findOne<IUser | IServiceAccount>(
 			"user",
 			{ _id: new ObjectId(payload.id) },
 			{ populate: ["roles", "workspaces", "activeWorkspace"] }
@@ -125,7 +125,7 @@ export const jwtStrategy = new Strategy(
 			updateData.token = tokenInfo.token;
 
 			// update the access token in database:
-			[user] = await DB.update<User>("user", { _id: new ObjectId(payload.id) }, updateData, {
+			[user] = await DB.update<IUser>("user", { _id: new ObjectId(payload.id) }, updateData, {
 				populate: ["roles", "workspaces", "activeWorkspace"],
 			});
 
@@ -133,7 +133,7 @@ export const jwtStrategy = new Strategy(
 		}
 
 		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
-		user = await DB.findOne<ServiceAccount>(
+		user = await DB.findOne<IServiceAccount>(
 			"service_account",
 			{ _id: new ObjectId(payload.id) },
 			{ populate: ["roles", "workspaces", "activeWorkspace"] }

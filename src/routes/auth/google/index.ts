@@ -3,7 +3,7 @@ import express from "express";
 import passport from "passport";
 
 import { Config } from "@/app.config";
-import type { Workspace } from "@/entities";
+import type { IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { generateJWT } from "@/modules/passports/jwtStrategy";
@@ -70,13 +70,13 @@ router
 			const workspaceSlug = extractWorkspaceSlugFromUrl(redirectUrl);
 			console.log("workspaceSlug :>> ", workspaceSlug);
 
-			let workspace: Workspace;
+			let workspace: IWorkspace;
 
 			// workspace is undefined -> redirect to select/create workspaces:
 			if (!workspaceSlug || workspaceSlug === "app") {
 				if (user.workspaces.length === 1) {
 					// if this user only have 1 workspace -> make it active!
-					workspace = user.workspaces[0] as Workspace;
+					workspace = user.workspaces[0] as IWorkspace;
 					return signAndRedirect(res, { userId, workspaceId: MongoDB.toString(workspace._id) }, redirectUrl);
 				} else {
 					// if this user has no workspaces or multiple workspaces -> select/create one!
@@ -86,13 +86,13 @@ router
 			}
 
 			// try to find this workspace in the database:
-			workspace = await DB.findOne<Workspace>("workspace", { slug: workspaceSlug });
+			workspace = await DB.findOne<IWorkspace>("workspace", { slug: workspaceSlug });
 			if (!workspace) {
 				if (user.workspaces && user.workspaces.length === 1) {
 					// if this user only have 1 workspace -> make it active!
 					workspace = isObjectId(user.workspaces[0])
-						? await DB.findOne<Workspace>("workspace", { _id: user.workspaces[0] })
-						: (user.workspaces[0] as Workspace);
+						? await DB.findOne<IWorkspace>("workspace", { _id: user.workspaces[0] })
+						: (user.workspaces[0] as IWorkspace);
 
 					return signAndRedirect(res, { userId, workspaceId: MongoDB.toString(workspace._id) }, redirectUrl);
 				} else {

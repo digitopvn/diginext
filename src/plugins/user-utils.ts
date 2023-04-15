@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 
-import type { IRole, IUser, IWorkspace, Role, Workspace } from "@/entities";
+import type { IRole, IUser, IWorkspace } from "@/entities";
 import { DB } from "@/modules/api/DB";
 import { RoleService } from "@/services";
 
@@ -11,7 +11,7 @@ export const addUserToWorkspace = async (userId: ObjectId, workspace: IWorkspace
 	if (!user) throw new Error(`User not found.`);
 
 	// find role (default: "member")
-	let role: Role = await DB.findOne<Role>("role", { type: roleType, workspace: workspace._id });
+	let role: IRole = await DB.findOne<IRole>("role", { type: roleType, workspace: workspace._id });
 	if (!role) throw new Error(`Role "${roleType}" not found.`);
 
 	// assign role
@@ -42,7 +42,7 @@ export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", 
 	// remove old roles
 	const roles = (user.roles || [])
 		.filter((_role) => MongoDB.toString((_role as IRole).workspace) !== MongoDB.toString(workspace._id))
-		.map((_role) => (_role as Role)._id);
+		.map((_role) => (_role as IRole)._id);
 
 	// push new role
 	roles.push(role._id);
@@ -82,8 +82,8 @@ export async function filterRole(workspaceId: string, list: IUser[] = []) {
 			item.roles = item.roles.filter((role) => {
 				if (isObjectId(role)) {
 					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString(role));
-				} else if ((role as Role)._id) {
-					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString((role as Role)._id));
+				} else if ((role as IRole)._id) {
+					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString((role as IRole)._id));
 				} else {
 					return false;
 				}
@@ -94,8 +94,8 @@ export async function filterRole(workspaceId: string, list: IUser[] = []) {
 			const workspaces = item.workspaces.filter((ws) => {
 				if (isObjectId(ws)) {
 					return wsId === MongoDB.toString(ws);
-				} else if ((ws as Workspace)._id) {
-					return wsId === MongoDB.toString((ws as Workspace)._id);
+				} else if ((ws as IWorkspace)._id) {
+					return wsId === MongoDB.toString((ws as IWorkspace)._id);
 				} else {
 					return false;
 				}

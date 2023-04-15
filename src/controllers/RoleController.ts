@@ -1,14 +1,12 @@
 import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IRole, Role } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { IRole } from "@/entities";
+import { RoleDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure } from "@/interfaces";
 import RoleService from "@/services/RoleService";
 
 import BaseController from "./BaseController";
-
-export type RoleDto = Omit<Role, keyof HiddenBodyKeys>;
 
 @Tags("Role")
 @Route("role")

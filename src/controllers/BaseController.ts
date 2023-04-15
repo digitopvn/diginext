@@ -9,7 +9,6 @@ import { Config } from "@/app.config";
 import type { IUser, IWorkspace } from "@/entities";
 import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import type { FindOptionsWhere } from "@/libs/typeorm";
 import { isValidObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import { traverseObjectAndTransformValue } from "@/plugins/traverse";
@@ -33,8 +32,6 @@ export default class BaseController<T extends IBase = any> {
 	options: IQueryOptions;
 
 	pagination: IResponsePagination;
-
-	where: FindOptionsWhere<any>;
 
 	constructor(service?: BaseService<T>) {
 		if (service) this.service = service;

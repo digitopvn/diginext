@@ -1,14 +1,14 @@
 import { Schema } from "mongoose";
 
-import { Column, Entity } from "@/libs/typeorm";
+import type { HiddenBodyKeys } from "@/interfaces";
 
 import { baseSchemaOptions } from "./Base";
 import type { IUser } from "./User";
-import User from "./User";
 
 export interface IServiceAccount extends IUser {
 	type?: string;
 }
+export type ServiceAccountDto = Omit<IServiceAccount, keyof HiddenBodyKeys>;
 
 export const serviceAccountSchema = new Schema<IServiceAccount>(
 	{
@@ -78,19 +78,3 @@ export const serviceAccountSchema = new Schema<IServiceAccount>(
 		collection: "service_account",
 	}
 );
-
-@Entity({ name: "service_account" })
-export default class ServiceAccount extends User {
-	/**
-	 * Service Account is also a User with unexpired access token.
-	 */
-	@Column({ default: "service_account" })
-	type?: string;
-
-	constructor(data?: ServiceAccount | any) {
-		super();
-		Object.assign(this, data);
-	}
-}
-
-export { ServiceAccount };

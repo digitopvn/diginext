@@ -3,7 +3,6 @@ import GoogleStrategy from "passport-google-oauth2";
 
 import { Config } from "@/app.config";
 import type { ProviderInfo, UserDto } from "@/entities/User";
-import User from "@/entities/User";
 import UserService from "@/services/UserService";
 
 export const googleStrategy = new GoogleStrategy(
@@ -16,7 +15,7 @@ export const googleStrategy = new GoogleStrategy(
 	},
 	function (request, accessToken, refreshToken, profile, done) {
 		process.nextTick(async function () {
-			console.log(`googleStrategy :>>`, { profile });
+			// console.log(`googleStrategy :>>`, { profile });
 			// console.log(accessToken);
 
 			const userSvc = new UserService();
@@ -25,7 +24,7 @@ export const googleStrategy = new GoogleStrategy(
 			// console.log(`googleStrategy :>>`, { user });
 
 			if (user) {
-				const updateData: UserDto = {};
+				const updateData = {} as UserDto;
 				if (user.image != profile.picture) updateData.image = profile.picture;
 				if (user.name != profile.displayName) updateData.name = profile.displayName;
 
@@ -48,7 +47,7 @@ export const googleStrategy = new GoogleStrategy(
 				verified: profile.verified,
 			});
 
-			if (newUser instanceof User) {
+			if (newUser) {
 				user = newUser;
 				return done(null, { ...user, accessToken, refreshToken });
 			} else {

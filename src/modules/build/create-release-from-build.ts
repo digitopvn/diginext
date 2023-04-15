@@ -1,6 +1,6 @@
 import { isEmpty } from "lodash";
 
-import type { IApp, IBuild, IProject, IUser, IWorkspace, Release, User } from "@/entities";
+import type { IApp, IBuild, IProject, IRelease, IUser, IWorkspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 
 import { DB } from "../api/DB";
@@ -42,7 +42,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 
 	const { IMAGE_NAME } = deploymentData;
 
-	const defaultAuthor = owner as User;
+	const defaultAuthor = owner as IUser;
 
 	// declare AppConfig
 	const appConfig = {
@@ -91,7 +91,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 		createdBy: isEmpty(ownership) ? defaultAuthor.slug : ownership.author.slug,
 		owner: isEmpty(ownership) ? defaultAuthor._id : ownership.author._id,
 		workspace: workspaceId,
-	} as Release;
+	} as IRelease;
 
 	if (env === "prod") {
 		// prerelease
@@ -100,7 +100,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 	}
 
 	// create new release in the database
-	const newRelease = DB.create<Release>("release", data);
+	const newRelease = DB.create<IRelease>("release", data);
 
 	// log("Created new Release successfully:", newRelease);
 

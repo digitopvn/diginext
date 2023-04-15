@@ -1,6 +1,6 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 
-import type { App, Build, IApp, IBuild, IProject, IUser, IWorkspace, Project } from "@/entities";
+import type { IApp, IBuild, IProject, IUser, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { MongoDB } from "@/plugins/mongodb";
@@ -88,16 +88,16 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	targetEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 
 	// update env vars to database:
-	const updateAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as App;
+	const updateAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as IApp;
 	updateAppData.deployEnvironment[env] = { ...targetEnvironment, envVars: serverEnvironmentVariables } as DeployEnvironment;
 	// TODO: Remove this when everyone is using "deployEnvironment" (not JSON of "environment")
 	updateAppData.environment[env] = JSON.stringify({ ...targetEnvironment, envVars: serverEnvironmentVariables });
 	// log({ updateAppData });
 
-	const updatedApps = await DB.update<App>("app", { slug }, updateAppData);
+	const updatedApps = await DB.update<IApp>("app", { slug }, updateAppData);
 
 	// update the project so it can be sorted on top
-	await DB.update<Project>("project", { slug: projectSlug }, { lastUpdatedBy: username });
+	await DB.update<IProject>("project", { slug: projectSlug }, { lastUpdatedBy: username });
 
 	// Create new build:
 	const SOCKET_ROOM = `${slug}-${makeDaySlug()}`;
@@ -116,7 +116,7 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 		owner: author._id,
 		workspace: workspace._id,
 		cliVersion,
-	} as Build;
+	} as IBuild;
 
 	const newBuild = await DB.create<IBuild>("build", buildData);
 

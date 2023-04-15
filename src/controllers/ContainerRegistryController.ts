@@ -3,9 +3,9 @@ import { logError } from "diginext-utils/dist/console/log";
 import { unlink } from "fs";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { ContainerRegistry, IContainerRegistry } from "@/entities";
+import type { IContainerRegistry } from "@/entities";
 import { ContainerRegistryDto } from "@/entities";
-import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
+import type { ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { registryProviderList } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
@@ -17,8 +17,6 @@ import { MongoDB } from "@/plugins/mongodb";
 import ContainerRegistryService from "@/services/ContainerRegistryService";
 
 import BaseController from "./BaseController";
-
-type MaskedContainerRegistry = Omit<ContainerRegistry, keyof HiddenBodyKeys>;
 
 @Tags("Container Registry")
 @Route("registry")
@@ -37,7 +35,7 @@ export default class ContainerRegistryController extends BaseController<IContain
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: MaskedContainerRegistry, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: ContainerRegistryDto, @Queries() queryParams?: IPostQueryParams) {
 		let {
 			name,
 			organization,
@@ -98,7 +96,7 @@ export default class ContainerRegistryController extends BaseController<IContain
 			dockerServer,
 			dockerEmail,
 			isVerified: false,
-		} as MaskedContainerRegistry;
+		} as ContainerRegistryDto;
 
 		let newRegistry = await this.service.create(newRegistryData);
 
@@ -157,9 +155,9 @@ export default class ContainerRegistryController extends BaseController<IContain
 		if (!updatedRegistry) return respondFailure({ msg: `Failed to update.` });
 
 		// verify container registry connection...
-		let verifiedRegistry: ContainerRegistry;
+		let verifiedRegistry: IContainerRegistry;
 		const authRes = await connectRegistry(updatedRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
-		[verifiedRegistry] = await DB.update<ContainerRegistry>("registry", { _id: updatedRegistry._id }, { isVerified: authRes ? true : false });
+		[verifiedRegistry] = await DB.update<IContainerRegistry>("registry", { _id: updatedRegistry._id }, { isVerified: authRes ? true : false });
 
 		return respondSuccess({ data: updatedRegistry });
 	}

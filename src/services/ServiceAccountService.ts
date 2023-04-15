@@ -1,5 +1,4 @@
 import type { IServiceAccount } from "@/entities/ServiceAccount";
-import type ServiceAccount from "@/entities/ServiceAccount";
 import { serviceAccountSchema } from "@/entities/ServiceAccount";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 
@@ -15,13 +14,13 @@ export default class ServiceAccountService extends BaseService<IServiceAccount> 
 		return super.find(filter, options, pagination);
 	}
 
-	async create(data: ServiceAccount) {
+	async create(data: IServiceAccount) {
 		if (!data.username) data.username = data.slug;
 		data.type = "service_account";
 		return super.create(data);
 	}
 
-	async update(filter: IQueryFilter, data: ServiceAccount, options?: IQueryOptions) {
+	async update(filter: IQueryFilter, data: IServiceAccount, options?: IQueryOptions) {
 		if (data.username) data.slug = data.username;
 		if (data.slug) data.username = data.slug;
 		if (data.type !== "service_account") data.type = "service_account";

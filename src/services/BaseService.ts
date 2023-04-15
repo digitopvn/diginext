@@ -27,12 +27,12 @@ export default class BaseService<T extends Document> {
 
 	constructor(schema: Schema) {
 		const collection = schema.get("collection");
-		console.log("BaseService > collection :>> ", collection);
-		this.model = model<T>(schema.get("collection"), schema, schema.get("collection"));
+		this.model = model<T>(collection, schema, collection);
 	}
 
 	async count(filter?: IQueryFilter, options?: IQueryOptions) {
 		const parsedFilter = parseRequestFilter(filter);
+		parsedFilter.$or = [{ deletedAt: { $eq: null } }, { deletedAt: { $eq: undefined } }];
 		return this.model.countDocuments({ ...parsedFilter, ...options }).exec();
 	}
 
@@ -90,21 +90,41 @@ export default class BaseService<T extends Document> {
 		}
 	}
 
-	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<T[]> {
+	async find(filter?: IQueryFilter, options: IQueryOptions & IQueryPagination = {}, pagination?: IQueryPagination) {
 		// console.log(`BaseService > find :>> filter:`, filter);
 
 		// where
-		const pipelines: PipelineStage[] = [{ $match: parseRequestFilter(filter) }];
+		const pipelines: PipelineStage[] = [
+			{
+				$match: {
+					...parseRequestFilter(filter),
+					$or: [{ deletedAt: { $eq: null } }, { deletedAt: { $eq: undefined } }],
+				},
+			},
+		];
 
 		// populate
 		if (options?.populate && options?.populate.length > 0) {
 			options?.populate.forEach((collection) => {
+				// use $lookup to find relation field
 				pipelines.push({
 					$lookup: {
 						from: this.model.schema.paths[collection].options.ref,
 						localField: collection,
 						foreignField: "_id",
 						as: collection,
+					},
+				});
+				// if there are many results, return an array, if there are only 1 result, return an object
+				pipelines.push({
+					$addFields: {
+						[collection]: {
+							$cond: {
+								if: { $eq: [{ $size: `$${collection}` }, 1] },
+								then: { $arrayElemAt: [`$${collection}`, 0] },
+								else: `$${collection}`,
+							},
+						},
 					},
 				});
 			});
@@ -165,18 +185,20 @@ export default class BaseService<T extends Document> {
 		return results as T[];
 	}
 
-	async findOne(filter?: IQueryFilter, options?: IQueryOptions) {
+	async findOne(filter?: IQueryFilter, options: IQueryOptions = {}) {
 		// console.log(`findOne > filter :>>`, filter);
 		// console.log(`findOne > options :>>`, options);
-		const result = await this.model.findOne(filter, options).exec();
-		return result as T;
+		const result = await this.find(filter, { ...options, limit: 1 });
+		return result[0] as T;
 	}
 
-	async update(filter: IQueryFilter, data: ObjectLiteral, options?: IQueryOptions) {
+	async update(filter: IQueryFilter, data: ObjectLiteral, options: IQueryOptions = {}) {
 		// Manually update date to "updatedAt" column
 		data.updatedAt = new Date();
 
 		const updateFilter = parseRequestFilter(filter);
+		updateFilter.deletedAt = null;
+
 		const updateData = options?.raw ? data : { $set: data };
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
 
@@ -186,6 +208,10 @@ export default class BaseService<T extends Document> {
 		} else {
 			return [];
 		}
+	}
+
+	async updateOne(filter: IQueryFilter, data: ObjectLiteral, options: IQueryOptions = {}) {
+		return this.update(filter, data, { ...options, limit: 1 });
 	}
 
 	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {

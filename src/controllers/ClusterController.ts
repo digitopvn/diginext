@@ -2,8 +2,8 @@ import { logError } from "diginext-utils/dist/console/log";
 import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { Cluster, ICloudProvider, ICluster } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { ICloudProvider, ICluster } from "@/entities";
+import { ClusterDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure } from "@/interfaces/ResponseData";
@@ -12,8 +12,6 @@ import { CloudProviderService } from "@/services";
 import ClusterService from "@/services/ClusterService";
 
 import BaseController from "./BaseController";
-
-export type ClusterDto = Omit<Cluster, keyof HiddenBodyKeys>;
 
 @Tags("Cluster")
 @Route("cluster")

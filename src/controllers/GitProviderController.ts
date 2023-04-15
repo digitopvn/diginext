@@ -1,7 +1,7 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { GitProvider, IGitProvider } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { IGitProvider } from "@/entities";
+import { GitProviderDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -28,14 +28,14 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<GitProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<GitProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 

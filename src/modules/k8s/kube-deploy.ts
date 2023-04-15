@@ -10,7 +10,7 @@ import path from "path";
 import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { Cluster, Release } from "@/entities";
+import type { ICluster, IRelease } from "@/entities";
 import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { objectToDeploymentYaml, waitUntil } from "@/plugins";
@@ -27,27 +27,27 @@ export interface RolloutOptions {
  * Clean up PRERELEASE resources by ID or release data
  * @param idOrRelease - Release ID or {Release} data
  */
-export async function cleanUp(idOrRelease: string | Release) {
-	let releaseData: Release;
+export async function cleanUp(idOrRelease: string | IRelease) {
+	let releaseData: IRelease;
 
 	// validation
 	if (isValidObjectId(idOrRelease)) {
-		let data = await DB.findOne<Release>("release", { id: idOrRelease });
+		let data = await DB.findOne<IRelease>("release", { id: idOrRelease });
 
 		if (!data) {
 			throw new Error(`Release "${idOrRelease}" not found.`);
 		}
-		releaseData = data as Release;
+		releaseData = data as IRelease;
 	} else {
-		if (!(idOrRelease as Release).appSlug) {
+		if (!(idOrRelease as IRelease).appSlug) {
 			throw new Error(`Release "${idOrRelease}" is invalid.`);
 		}
-		releaseData = idOrRelease as Release;
+		releaseData = idOrRelease as IRelease;
 	}
 
 	const { slug: releaseSlug, cluster: clusterShortName, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
 
-	let cluster: Cluster;
+	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
 		cluster = await ClusterManager.authCluster(clusterShortName);
@@ -101,7 +101,7 @@ export async function cleanUp(idOrRelease: string | Release) {
 export async function previewPrerelease(id: string, options: RolloutOptions = {}) {
 	const { onUpdate } = options;
 
-	let releaseData = await DB.findOne<Release>("release", { id });
+	let releaseData = await DB.findOne<IRelease>("release", { id });
 
 	if (isEmpty(releaseData)) return { error: `Release not found.` };
 
@@ -110,7 +110,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	log(`Preview the release: "${releaseSlug}" (${id})...`);
 	if (onUpdate) onUpdate(`Preview the release: "${releaseSlug}" (${id})...`);
 
-	let cluster: Cluster;
+	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
 		cluster = await ClusterManager.authCluster(clusterShortName);
@@ -179,7 +179,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 export async function rollout(id: string, options: RolloutOptions = {}) {
 	const { onUpdate } = options;
 
-	const releaseData = await DB.findOne<Release>("release", { id });
+	const releaseData = await DB.findOne<IRelease>("release", { id });
 	if (isEmpty(releaseData)) return { error: `Release" ${id}" not found.` };
 
 	const {
@@ -193,7 +193,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		namespace,
 		env,
 		appConfig,
-	} = releaseData as Release;
+	} = releaseData as IRelease;
 
 	log(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
 	if (onUpdate) onUpdate(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
@@ -206,7 +206,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		return { error: e.message };
 	}
 
-	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 	if (!cluster) {
 		logError(`Cluster "${clusterShortName}" not found.`);
 		return { error: `Cluster "${clusterShortName}" not found.` };
@@ -519,10 +519,10 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const filter = [{ projectSlug, appSlug, active: true }];
 
 	// Mark previous releases as "inactive":
-	await DB.update<Release>("release", { $or: filter }, { active: false });
+	await DB.update<IRelease>("release", { $or: filter }, { active: false });
 
 	// Mark this latest release as "active":
-	const latestReleases = await DB.update<Release>("release", { _id: new ObjectId(id) }, { active: true });
+	const latestReleases = await DB.update<IRelease>("release", { _id: new ObjectId(id) }, { active: true });
 
 	const latestRelease = latestReleases[0];
 	// log({ latestRelease });

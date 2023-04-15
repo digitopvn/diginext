@@ -1,28 +1,28 @@
-import type { IUser, IWorkspace, RoleRoute, User } from "@/entities";
-import { Role } from "@/entities";
+import type { IRole, IUser, IWorkspace, RoleRoute } from "@/entities";
 import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
 
 // seed default roles of a workspace
 export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	// ADMIN
-	let adminRole: Role = await DB.findOne<Role>("role", { type: "admin", workspace: workspace._id });
+	let adminRole = await DB.findOne<IRole>("role", { type: "admin", workspace: workspace._id });
 
 	if (!adminRole) {
-		const adminRoleDto = new Role();
+		const adminRoleDto = {} as IRole;
 		adminRoleDto.name = "Administrator";
 		adminRoleDto.routes = [{ route: "*", permissions: ["full"] }];
 		adminRoleDto.workspace = workspace._id;
 		adminRoleDto.type = "admin";
 		adminRoleDto.maskedFields = [];
 
-		adminRole = await DB.create<Role>("role", adminRoleDto);
+		adminRole = await DB.create<IRole>("role", adminRoleDto);
 		console.log(`Workspace "${workspace.name}" > Created default admin role :>> `, adminRoleDto.name);
 	}
 
 	// assign admin role to the "owner" user
-	const fullOwner = await DB.findOne<User>("user", { _id: owner._id }, { populate: ["roles"] });
-	let userRoles = (fullOwner.roles || []) as Role[];
+	const fullOwner = await DB.findOne<IUser>("user", { _id: owner._id }, { populate: ["roles"] });
+	// console.log("fullOwner :>> ", fullOwner);
+	let userRoles = (fullOwner?.roles || []) as IRole[];
 	// console.log("userRoles :>> ", userRoles);
 	// console.log("adminRole._id :>> ", adminRole._id);
 	const userHasAdminRole = userRoles.map((role) => MongoDB.toString(role._id)).includes(MongoDB.toString(adminRole._id));
@@ -35,12 +35,12 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		userRoles.push(adminRole);
 		// update role ids
 		const roleIds = userRoles.map((role) => role._id);
-		const [user] = await DB.update<User>("user", { _id: owner._id }, { roles: roleIds });
+		const [user] = await DB.update<IUser>("user", { _id: owner._id }, { roles: roleIds });
 		// console.log(`Workspace "${workspace.name}" > User "${user.name}" is now an administrator.`);
 	}
 
 	// MEMBER
-	let memberRole: Role = await DB.findOne<Role>("role", { type: "member", workspace: workspace._id });
+	let memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: workspace._id });
 	const memberRoleRoutes: RoleRoute[] = [
 		{ route: "*", permissions: ["own", "read"] },
 		{ route: "/api/v1/deploy", permissions: ["read", "create", "update"] },
@@ -65,7 +65,7 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	];
 
 	if (!memberRole) {
-		const memberRoleDto = new Role();
+		const memberRoleDto = {} as IRole;
 		memberRoleDto.name = "Member";
 		memberRoleDto.routes = memberRoleRoutes;
 		memberRoleDto.workspace = workspace._id;
@@ -85,38 +85,38 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 			"metadata.kubeConfig",
 		];
 
-		memberRole = await DB.create<Role>("role", memberRoleDto);
+		memberRole = await DB.create<IRole>("role", memberRoleDto);
 		console.log(`Workspace "${workspace.name}" > Created default member role :>> `, memberRoleDto.name);
 	} else {
 		// compare routes & permissions, if it doesn't match -> update!
 		const defaultMemberRoleRoutes = memberRoleRoutes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
 		const dbMemberRoleRoutes = memberRole.routes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
 		if (defaultMemberRoleRoutes !== dbMemberRoleRoutes) {
-			[memberRole] = await DB.update<Role>("role", { _id: memberRole._id }, { routes: memberRoleRoutes });
+			[memberRole] = await DB.update<IRole>("role", { _id: memberRole._id }, { routes: memberRoleRoutes });
 			console.log(`Workspace "${workspace.name}" > Updated default member role!`);
 		}
 	}
 
 	// MODERATOR
-	let moderatorRole: Role = await DB.findOne<Role>("role", { type: "moderator", workspace: workspace._id });
+	let moderatorRole = await DB.findOne<IRole>("role", { type: "moderator", workspace: workspace._id });
 	const moderatorRoleRoutes: RoleRoute[] = [{ route: "*", permissions: ["own", "read", "create", "update"] }];
 
 	if (!moderatorRole) {
-		const moderatorRoleDto = new Role();
+		const moderatorRoleDto = {} as IRole;
 		moderatorRoleDto.name = "Moderator";
 		moderatorRoleDto.routes = moderatorRoleRoutes;
 		moderatorRoleDto.workspace = workspace._id;
 		moderatorRoleDto.type = "moderator";
 		moderatorRoleDto.maskedFields = [];
 
-		moderatorRole = await DB.create<Role>("role", moderatorRoleDto);
+		moderatorRole = await DB.create<IRole>("role", moderatorRoleDto);
 		console.log(`Workspace "${workspace.name}" > Created default moderator role :>> `, moderatorRole.name);
 	} else {
 		// compare routes & permissions, if it doesn't match -> update!
 		const defaultModRoleRoutes = moderatorRoleRoutes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
 		const dbModRoleRoutes = moderatorRole.routes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
 		if (defaultModRoleRoutes !== dbModRoleRoutes) {
-			[moderatorRole] = await DB.update<Role>("role", { _id: moderatorRole._id }, { routes: moderatorRoleRoutes });
+			[moderatorRole] = await DB.update<IRole>("role", { _id: moderatorRole._id }, { routes: moderatorRoleRoutes });
 			console.log(`Workspace "${workspace.name}" > Updated default moderator role!`);
 		}
 	}

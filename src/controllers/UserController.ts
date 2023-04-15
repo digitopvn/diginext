@@ -1,9 +1,9 @@
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isArray, isEmpty } from "lodash";
 import type { ObjectId } from "mongodb";
-import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa";
 
 import BaseController from "@/controllers/BaseController";
-import type { IUser, Role } from "@/entities";
+import type { IRole, IUser } from "@/entities";
 import { UserDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
@@ -70,17 +70,17 @@ export default class UserController extends BaseController<IUser> {
 	async update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		if (body.roles) {
 			const roleId = body.roles;
-			const oldRoles = this.user.roles.filter((role) => MongoDB.toString((role as Role).workspace) === MongoDB.toString(this.workspace._id));
+			const oldRoles = this.user.roles.filter((role) => MongoDB.toString((role as IRole).workspace) === MongoDB.toString(this.workspace._id));
 
-			const newRole = await DB.findOne<Role>("role", { _id: roleId });
+			const newRole = await DB.findOne<IRole>("role", { _id: roleId });
 			const newRoles = [
 				...this.user.roles.filter(
-					(role) => !oldRoles.map((r) => MongoDB.toString((r as Role)._id)).includes(MongoDB.toString((role as Role)._id))
+					(role) => !oldRoles.map((r) => MongoDB.toString((r as IRole)._id)).includes(MongoDB.toString((role as IRole)._id))
 				),
 				newRole,
 			];
 
-			const newRoleIds = newRoles.map((role) => (role as Role)._id);
+			const newRoleIds = newRoles.map((role) => (role as IRole)._id);
 
 			body.roles = newRoleIds;
 		}
@@ -109,7 +109,7 @@ export default class UserController extends BaseController<IUser> {
 
 		const { roleId } = data;
 
-		const newRole = await DB.findOne<Role>("role", { _id: roleId });
+		const newRole = await DB.findOne<IRole>("role", { _id: roleId });
 		const roleType = newRole.type as "admin" | "moderator" | "member";
 
 		// add role to user
@@ -170,7 +170,7 @@ export default class UserController extends BaseController<IUser> {
 			}
 
 			// set default roles if this user doesn't have one
-			const memberRole = await DB.findOne<Role>("role", { type: "member", workspace: workspaceId });
+			const memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: workspaceId });
 			const roles = user.roles || [];
 			if (isEmpty(roles) || !roles.map((_id) => MongoDB.toString(_id)).includes(MongoDB.toString(memberRole._id))) roles.push(memberRole._id);
 

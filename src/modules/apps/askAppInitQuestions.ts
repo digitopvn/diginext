@@ -3,8 +3,8 @@ import inquirer from "inquirer";
 
 import { saveCliConfig } from "@/config/config";
 import type { IFramework } from "@/entities/Framework";
-import type GitProvider from "@/entities/GitProvider";
-import type Project from "@/entities/Project";
+import type { IGitProvider } from "@/entities/GitProvider";
+import type { IProject } from "@/entities/Project";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import createProjectByForm from "@/modules/project/create-project";
@@ -27,12 +27,12 @@ export async function askAppInitQuestions(options?: InputOptions) {
 			});
 
 			// find/search
-			const { status, data, messages } = await fetchApi<Project>({
+			const { status, data, messages } = await fetchApi<IProject>({
 				url: keyword ? `/api/v1/project?name=${keyword}&limit=10&search=true` : `/api/v1/project?limit=10`,
 			});
 			if (!status) return logError(messages);
 
-			const projects = data as Project[];
+			const projects = data as IProject[];
 			// log({ projects });
 
 			// display list to select:
@@ -79,12 +79,12 @@ export async function askAppInitQuestions(options?: InputOptions) {
 	if (options.shouldUseGit) {
 		let currentGitProvider;
 		if (!options.gitProvider) {
-			const { status, data, messages } = await fetchApi<GitProvider>({
+			const { status, data, messages } = await fetchApi<IGitProvider>({
 				url: `/api/v1/git`,
 			});
 			if (!status) return logError(messages);
 
-			const gitProviders = data as GitProvider[];
+			const gitProviders = data as IGitProvider[];
 
 			const choices = [
 				{ name: "none", value: { slug: "none" } },
@@ -111,11 +111,11 @@ export async function askAppInitQuestions(options?: InputOptions) {
 			}
 		} else {
 			// search for this git provider
-			const { status, data, messages } = await fetchApi<GitProvider>({
+			const { status, data, messages } = await fetchApi<IGitProvider>({
 				url: `/api/v1/git?slug=${options.gitProvider}`,
 			});
 			if (!status) return logError(messages);
-			currentGitProvider = data[0] as GitProvider;
+			currentGitProvider = data[0] as IGitProvider;
 
 			// set this git provider to default:
 			saveCliConfig({ currentGitProvider });

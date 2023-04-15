@@ -3,7 +3,7 @@ import { existsSync } from "fs";
 import path from "path";
 
 import type { CreateEnvVarsDto } from "@/controllers/AppController";
-import type { App, IApp } from "@/entities";
+import type { IApp } from "@/entities";
 import { flattenObjectPaths, getAppConfig, loadEnvFileAsContainerEnvVars } from "@/plugins";
 
 import { fetchApi } from "../api";
@@ -39,14 +39,14 @@ export const uploadDotenvFileByApp = async (envFile: string, app: IApp, env: str
 	const url = `/api/v1/app/environment/variables`;
 	const updateData = flattenObjectPaths(updateAppData);
 
-	const { status, data, messages } = await fetchApi<App>({
+	const { status, data, messages } = await fetchApi<IApp>({
 		url,
 		method: "POST",
 		data: updateData,
 	});
 
-	let updatedApp: App;
-	if (data && (data as App[]).length > 0) updatedApp = (data as App[])[0];
+	let updatedApp: IApp;
+	if (data && (data as IApp[]).length > 0) updatedApp = (data as IApp[])[0];
 	// console.log("[DB] UPDATE > result :>> ", result);
 	if (!status) logError(`Upload DOTENV file by app :>>`, messages);
 

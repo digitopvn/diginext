@@ -7,7 +7,7 @@ import path from "path";
 import yargs from "yargs";
 
 import { CLI_DIR, HOME_DIR } from "@/config/const";
-import type { CloudProvider, Cluster } from "@/entities";
+import type { ICloudProvider, ICluster } from "@/entities";
 import type { KubeConfig } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { MongoDB } from "@/plugins/mongodb";
@@ -87,11 +87,11 @@ export const authenticate = async (options?: InputOptions) => {
 		workspace: options.workspaceId,
 	};
 
-	const existed = await await DB.findOne<Cluster>("cluster", { shortName: currentContext });
-	const createdCluster = existed || (await DB.create<Cluster>("cluster", createdData));
+	const existed = await await DB.findOne<ICluster>("cluster", { shortName: currentContext });
+	const createdCluster = existed || (await DB.create<ICluster>("cluster", createdData));
 
 	if (!createdCluster) return;
-	const newCluster = createdCluster as Cluster;
+	const newCluster = createdCluster as ICluster;
 
 	// Save this cloud provider to database
 	const cloudProviderData = {
@@ -102,9 +102,9 @@ export const authenticate = async (options?: InputOptions) => {
 		workspace: options.workspaceId,
 	};
 
-	const providers = await DB.find<CloudProvider>("provider", { shortName: "custom" });
+	const providers = await DB.find<ICloudProvider>("provider", { shortName: "custom" });
 	if (isEmpty(providers)) {
-		const newProvider = await DB.create<CloudProvider>("provider", cloudProviderData);
+		const newProvider = await DB.create<ICloudProvider>("provider", cloudProviderData);
 		log({ newProvider });
 		if (!newProvider) logWarn(`Can't create new "custom" cloud provider.`);
 	}

@@ -2,8 +2,8 @@ import { log, logWarn } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IProject, Project } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { IProject } from "@/entities";
+import { ProjectDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
@@ -12,8 +12,6 @@ import AppService from "@/services/AppService";
 import ProjectService from "@/services/ProjectService";
 
 import BaseController from "./BaseController";
-
-export type ProjectInputSchema = Omit<IProject, keyof HiddenBodyKeys>;
 
 @Tags("Project")
 @Route("project")
@@ -32,14 +30,14 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: ProjectInputSchema, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: ProjectInputSchema, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
@@ -84,7 +82,7 @@ export default class ProjectController extends BaseController<IProject> {
 	async getProjectsAndApps(@Queries() queryParams?: IGetQueryParams) {
 		let projects = await this.service.find(this.filter, this.options, this.pagination);
 
-		let result: ResponseData & { data: Project[] } = { status: 1, data: [], messages: [] };
+		let result: ResponseData & { data: IProject[] } = { status: 1, data: [], messages: [] };
 		if (this.pagination) result = { ...result, ...this.pagination };
 
 		// // assign refreshed token if any:

@@ -2,10 +2,9 @@ import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import BaseController from "@/controllers/BaseController";
-import type { User } from "@/entities";
 import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
-import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import { ApiKeyAccountDto } from "@/entities/ApiKeyAccount";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
 import { ApiKeyUserService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
@@ -32,14 +31,14 @@ export default class ApiKeyUserController extends BaseController<IApiKeyAccount>
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: ApiKeyAccountDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: ApiKeyAccountDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
@@ -55,7 +54,6 @@ export default class ApiKeyUserController extends BaseController<IApiKeyAccount>
 	@Patch("/join-workspace")
 	async joinWorkspace(@Body() data: JoinWorkspaceBody) {
 		const { userId, workspace: workspaceSlug } = data;
-		const result: ResponseData & { data: User } = { status: 1, messages: [], data: {} };
 		// console.log("{ userId, workspace } :>> ", { userId, workspace });
 
 		try {
@@ -79,7 +77,7 @@ export default class ApiKeyUserController extends BaseController<IApiKeyAccount>
 			if (!user) throw new Error(`User not found.`);
 			if (!workspace.public) throw new Error(`This workspace is private, you need to ask the administrator to add you in first.`);
 
-			let updatedUser = [user];
+			let updatedUser = user;
 
 			const isUserJoinedThisWorkspace = (user.workspaces || []).map((id) => MongoDB.toString(id)).includes(wsId);
 			// console.log("isUserJoinedThisWorkspace :>> ", isUserJoinedThisWorkspace);
@@ -89,21 +87,18 @@ export default class ApiKeyUserController extends BaseController<IApiKeyAccount>
 
 			// console.log("user.workspaces :>> ", user.workspaces);
 			if (!isUserJoinedThisWorkspace) {
-				updatedUser = await this.service.update({ _id: userId }, { $push: { workspaces: workspace._id } }, { raw: true });
+				[updatedUser] = await this.service.update({ _id: userId }, { $push: { workspaces: workspace._id } }, { raw: true });
 			}
 			// console.log("[1] updatedUser :>> ", updatedUser[0]);
 
 			// make this workspace active
-			if (!isWorkspaceActive) updatedUser = await this.service.update({ _id: userId }, { activeWorkspace: wsId });
+			if (!isWorkspaceActive) [updatedUser] = await this.service.update({ _id: userId }, { activeWorkspace: wsId });
 
 			// console.log("[2] updatedUser :>> ", updatedUser[0]);
 
-			result.data = updatedUser[0];
+			return respondSuccess({ data: updatedUser });
 		} catch (e) {
-			result.messages.push(e.message);
-			result.status = 0;
+			return respondFailure(e.message);
 		}
-
-		return result;
 	}
 }

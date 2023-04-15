@@ -2,9 +2,9 @@ import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import BaseController from "@/controllers/BaseController";
-import type { User } from "@/entities";
 import type { IServiceAccount } from "@/entities/ServiceAccount";
-import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
+import { ServiceAccountDto } from "@/entities/ServiceAccount";
+import type { ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
 import { ServiceAccountService } from "@/services";
@@ -32,14 +32,14 @@ export default class ServiceAccountController extends BaseController<IServiceAcc
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: ServiceAccountDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: ServiceAccountDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
@@ -55,7 +55,7 @@ export default class ServiceAccountController extends BaseController<IServiceAcc
 	@Patch("/join-workspace")
 	async joinWorkspace(@Body() data: JoinWorkspaceBody) {
 		const { userId, workspace: workspaceSlug } = data;
-		const result: ResponseData & { data: User } = { status: 1, messages: [], data: {} };
+		const result: ResponseData = { status: 1, messages: [], data: {} };
 		// console.log("{ userId, workspace } :>> ", { userId, workspace });
 
 		try {

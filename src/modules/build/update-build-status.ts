@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { log, logError } from "diginext-utils/dist/console/log";
 
-import type { App, Build, IBuild, Project } from "@/entities";
+import type { IApp, IBuild, IProject } from "@/entities";
 import type { BuildStatus } from "@/interfaces/SystemTypes";
 
 import { DB } from "../api/DB";
@@ -19,17 +19,17 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus) {
 	const endTime = status === "failed" || status === "success" ? new Date() : undefined;
 	const duration = endTime ? dayjs(endTime).diff(startTime, "millisecond") : undefined;
 
-	const [updatedBuild] = await DB.update<Build>("build", { _id: build._id }, { status, endTime, duration }, { populate: ["project"] });
+	const [updatedBuild] = await DB.update<IBuild>("build", { _id: build._id }, { status, endTime, duration }, { populate: ["project"] });
 	if (!updatedBuild) {
 		logError(`[START BUILD] updateBuildStatus >> error!`);
 		return;
 	}
 
 	// update latest build to current app
-	const [updatedApp] = await DB.update<App>("app", { _id: appId }, { latestBuild: build.slug });
+	const [updatedApp] = await DB.update<IApp>("app", { _id: appId }, { latestBuild: build.slug });
 	log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp.latestBuild);
 
-	const [updatedProject] = await DB.update<Project>("project", { _id: updatedApp.project }, { latestBuild: build.slug });
+	const [updatedProject] = await DB.update<IProject>("project", { _id: updatedApp.project }, { latestBuild: build.slug });
 	log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject.latestBuild);
 
 	return updatedBuild;
@@ -42,21 +42,21 @@ export async function updateBuildStatusByAppSlug(appSlug: string, buildSlug: str
 		return;
 	}
 
-	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
 
 	// update latest build to current project
-	let projectSlug = (app.project as Project).slug;
+	let projectSlug = (app.project as IProject).slug;
 	// log(`[START BUILD] updateBuildStatus > projectSlug :>>`, projectSlug);
 
-	const [updatedProject] = await DB.update<Project>("project", { slug: projectSlug }, { latestBuild: buildSlug });
+	const [updatedProject] = await DB.update<IProject>("project", { slug: projectSlug }, { latestBuild: buildSlug });
 	// log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject.latestBuild);
 
 	// update latest build to current app
-	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, { latestBuild: buildSlug });
+	const [updatedApp] = await DB.update<IApp>("app", { slug: appSlug }, { latestBuild: buildSlug });
 	// log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp.latestBuild);
 
 	// update build's status on server
-	const [updatedBuild] = await DB.update<Build>("build", { slug: buildSlug }, { status: buildStatus }, { populate: ["project"] });
+	const [updatedBuild] = await DB.update<IBuild>("build", { slug: buildSlug }, { status: buildStatus }, { populate: ["project"] });
 	if (updatedBuild) {
 		// log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> new status: ${buildStatus.toUpperCase()}`);
 		return updatedBuild;

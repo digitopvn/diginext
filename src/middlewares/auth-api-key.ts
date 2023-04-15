@@ -1,32 +1,10 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
 
-import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { IRole, IUser, IWorkspace, Workspace, WorkspaceApiAccessToken } from "@/entities";
-import { User } from "@/entities";
+import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
-import { getUnexpiredAccessToken } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
-
-export const mockUserOfApiAccessToken = (apiAccessToken: WorkspaceApiAccessToken, workspace: Workspace) => {
-	const access_token = apiAccessToken.token;
-
-	const mockedApiAccessTokenUser = new User();
-	mockedApiAccessTokenUser._id = access_token;
-	mockedApiAccessTokenUser.type = "api_key";
-	mockedApiAccessTokenUser.name = mockedApiAccessTokenUser.slug = mockedApiAccessTokenUser.username = apiAccessToken.name;
-	mockedApiAccessTokenUser.email = `${access_token}@${workspace.slug}.${DIGINEXT_DOMAIN}`;
-	mockedApiAccessTokenUser.roles = apiAccessToken.roles;
-	mockedApiAccessTokenUser.token = getUnexpiredAccessToken(access_token);
-	mockedApiAccessTokenUser.active = true;
-	mockedApiAccessTokenUser.workspaces = [workspace];
-	mockedApiAccessTokenUser.activeWorkspace = workspace;
-	mockedApiAccessTokenUser.createdAt = workspace.createdAt;
-	mockedApiAccessTokenUser.updatedAt = workspace.updatedAt;
-
-	return mockedApiAccessTokenUser;
-};
 
 export const apiAccessTokenHandler = async (req: AppRequest, res: Response, next: NextFunction) => {
 	// console.log(`Handling API_ACCESS_TOKEN`, req.headers);

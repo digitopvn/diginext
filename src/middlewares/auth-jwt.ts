@@ -2,7 +2,7 @@
 import { Response } from "diginext-utils/dist/response";
 import passport from "passport";
 
-import type { IRole, IUser, IWorkspace, Role } from "@/entities";
+import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
@@ -47,8 +47,8 @@ const jwt_auth = (req: AppRequest, res, next) =>
 			const { roles = [] } = user;
 			const activeRole = roles.find(
 				(role) =>
-					MongoDB.toString((role as Role).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id) &&
-					!(role as Role).deletedAt
+					MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id) &&
+					!(role as IRole).deletedAt
 			) as IRole;
 
 			// console.log("Unauthenticate :>> [2]");

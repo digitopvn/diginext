@@ -2,7 +2,7 @@ import { isJSON } from "class-validator";
 import { logError } from "diginext-utils/dist/console/log";
 import { existsSync, readFileSync } from "fs";
 
-import type { Cluster, ContainerRegistryDto, IContainerRegistry } from "@/entities";
+import type { ContainerRegistryDto, ICluster, IContainerRegistry } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 
 import { DB } from "../api/DB";
@@ -21,7 +21,7 @@ export const execRegistry = async (options: InputOptions) => {
 	switch (secondAction) {
 		case "add":
 			// parse from CLI arguments
-			const registryData: ContainerRegistryDto = {};
+			const registryData = {} as ContainerRegistryDto;
 			registryData.name = options.name;
 			if (options.filePath) {
 				if (existsSync(options.filePath)) return logError(`File "${options.filePath}" not found.`);
@@ -53,9 +53,9 @@ export const execRegistry = async (options: InputOptions) => {
 			}
 			const { provider } = registry;
 
-			let cluster: Cluster;
+			let cluster: ICluster;
 			if (options.cluster) {
-				cluster = await DB.findOne<Cluster>("cluster", { shortName: options.cluster });
+				cluster = await DB.findOne<ICluster>("cluster", { shortName: options.cluster });
 				if (!cluster) return logError(`Cluster named "${options.cluster}" not found.`);
 			} else {
 				cluster = await askForCluster();

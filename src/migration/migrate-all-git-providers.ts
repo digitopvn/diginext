@@ -1,12 +1,12 @@
 import { log } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
 
-import type { GitProvider } from "@/entities";
+import type { IGitProvider } from "@/entities";
 
 import { DB } from "../modules/api/DB";
 
 export const migrateAllGitProviders = async () => {
-	const providers = (await DB.find<GitProvider>("git")).filter((provider) => typeof provider.type === "undefined");
+	const providers = (await DB.find<IGitProvider>("git")).filter((provider) => typeof provider.type === "undefined");
 
 	if (isEmpty(providers)) return;
 
@@ -14,7 +14,7 @@ export const migrateAllGitProviders = async () => {
 
 	const results = (
 		await Promise.all(
-			providers.map(async (provider) => DB.update<GitProvider>("git", { _id: provider._id }, { type: provider.host.split(".")[0] as any }))
+			providers.map(async (provider) => DB.update<IGitProvider>("git", { _id: provider._id }, { type: provider.host.split(".")[0] as any }))
 		)
 	)
 		.filter((updatedItems) => updatedItems.length > 0)

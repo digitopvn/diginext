@@ -2,7 +2,7 @@ import { isJSON } from "class-validator";
 import { isString, trim } from "lodash";
 import { ObjectId } from "mongodb";
 
-import type { FindManyOptions } from "@/libs/typeorm";
+import type { IQueryFilter } from "@/interfaces";
 
 import { isObjectId, isValidObjectId } from "./mongodb";
 import { traverseObjectAndTransformValue } from "./traverse";
@@ -73,5 +73,5 @@ export const parseRequestFilter = (requestQuery: any) => {
 	}
 
 	// save to local storage of response
-	return _filter as FindManyOptions<any>;
+	return _filter as IQueryFilter;
 };

@@ -1,12 +1,12 @@
 import { log } from "diginext-utils/dist/console/log";
 
-import type { User } from "@/entities";
+import type { IUser } from "@/entities";
 import { isObjectId } from "@/plugins/mongodb";
 
 import { DB } from "../modules/api/DB";
 
 export const migrateUserWorkspaces = async () => {
-	let users = await DB.find<User>("user", { roles: undefined });
+	let users = await DB.find<IUser>("user", { roles: undefined });
 
 	users = users
 		.map((user) => {

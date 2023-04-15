@@ -1,38 +1,64 @@
-import { IsNotEmpty } from "class-validator";
 import type { Types } from "mongoose";
 import mongoose, { Schema } from "mongoose";
 
-import { BuildStatus } from "@/interfaces/SystemTypes";
-import type { ObjectID } from "@/libs/typeorm";
-import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
+import type { HiddenBodyKeys } from "@/interfaces";
+import type { BuildStatus } from "@/interfaces/SystemTypes";
 
-import type { App, IApp } from "./App";
+import type { IApp } from "./App";
 import type { IBase } from "./Base";
-import Base, { baseSchemaOptions } from "./Base";
-import type ContainerRegistry from "./ContainerRegistry";
+import { baseSchemaOptions } from "./Base";
 import type { IContainerRegistry } from "./ContainerRegistry";
-import type Project from "./Project";
-import type User from "./User";
-import type Workspace from "./Workspace";
 
 export interface IBuild extends IBase {
 	name?: string;
 	image?: string;
+	/**
+	 * Image tag is also "buildNumber"
+	 */
 	tag?: string;
+	/**
+	 * Build start time
+	 */
 	startTime?: Date;
+	/**
+	 * Build end time
+	 */
 	endTime?: Date;
+	/**
+	 * Build duration in miliseconds
+	 */
 	duration?: number;
+	/**
+	 * Build for which deploy environment
+	 * - **[OPTIONAL] DO NOT rely on this!**
+	 * - A build should be able to be used for any deploy environments.
+	 */
 	env?: string;
+	/**
+	 * Build from which git branch
+	 */
 	branch?: string;
 	cliVersion?: string;
 	createdBy?: string;
 	status?: BuildStatus;
 	projectSlug?: string;
+	/**
+	 * App's slug
+	 */
 	appSlug?: string;
 	logs?: string;
+	/**
+	 * ID of the container registry
+	 * @remarks This can be populated to {IContainerRegistry} data
+	 */
 	registry?: Types.ObjectId | IContainerRegistry | string;
+	/**
+	 * ID of the app
+	 * @remarks This can be populated to {IApp} data
+	 */
 	app?: Types.ObjectId | IApp | string;
 }
+export type BuildDto = Omit<IBuild, keyof HiddenBodyKeys>;
 
 export const buildSchema = new Schema(
 	{
@@ -58,116 +84,3 @@ export const buildSchema = new Schema(
 );
 
 export const BuildModel = mongoose.model("Build", buildSchema, "builds");
-
-@Entity({ name: "builds" })
-export default class Build extends Base {
-	@Column({ length: 250 })
-	@IsNotEmpty({ message: `Build name is required.` })
-	name?: string;
-
-	@Column({ type: "string" })
-	image?: string;
-
-	/**
-	 * Image tag is also "buildNumber"
-	 */
-	@Column({ type: "string" })
-	tag?: string;
-
-	/**
-	 * Build start time
-	 */
-	@Column({ type: "datetime" })
-	startTime?: Date;
-
-	/**
-	 * Build end time
-	 */
-	@Column({ type: "datetime" })
-	endTime?: Date;
-
-	/**
-	 * Build duration in miliseconds
-	 */
-	@Column({ type: "number" })
-	duration?: number;
-
-	/**
-	 * Build for which deploy environment
-	 * - **[OPTIONAL] SHOULD NOT rely on this!**
-	 * - A build should be able to used for any deploy environments.
-	 */
-	@Column({ type: "string" })
-	env?: string;
-
-	/**
-	 * Build from which git branch
-	 */
-	@Column()
-	branch?: string;
-
-	@Column()
-	cliVersion?: string;
-
-	@Column({ type: "string" })
-	createdBy?: string;
-
-	@Column({ type: "string" })
-	status?: BuildStatus;
-
-	@Column({ type: "string" })
-	projectSlug?: string;
-
-	@Column({ type: "string" })
-	appSlug?: string;
-
-	@Column({ type: "string" })
-	logs?: string;
-
-	/**
-	 * ID of the container registry
-	 *
-	 * @remarks This can be populated to {ContainerRegistry} data
-	 */
-	@Column({ type: "string" })
-	registry?: ObjectID | ContainerRegistry | string;
-
-	/**
-	 * ID of the app
-	 *
-	 * @remarks This can be populated to {Project} data
-	 */
-	@ObjectIdColumn({ name: "apps" })
-	app?: ObjectID | App | string;
-
-	/**
-	 * User ID of the owner
-	 *
-	 * @remarks This can be populated to {User} data
-	 */
-	@ObjectIdColumn({ name: "users" })
-	owner?: ObjectID | User | string;
-
-	/**
-	 * ID of the project
-	 *
-	 * @remarks This can be populated to {Project} data
-	 */
-	@ObjectIdColumn({ name: "projects" })
-	project?: ObjectID | Project | string;
-
-	/**
-	 * ID of the workspace
-	 *
-	 * @remarks This can be populated to {Workspace} data
-	 */
-	@ObjectIdColumn({ name: "workspaces" })
-	workspace?: ObjectID | Workspace | string;
-
-	constructor(data?: Build) {
-		super();
-		Object.assign(this, data);
-	}
-}
-
-export { Build };

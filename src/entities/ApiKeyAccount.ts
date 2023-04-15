@@ -1,14 +1,17 @@
 import { Schema } from "mongoose";
 
-import { Column, Entity } from "@/libs/typeorm";
+import type { HiddenBodyKeys } from "@/interfaces";
 
 import { baseSchemaOptions } from "./Base";
 import type { IUser } from "./User";
-import User from "./User";
 
 export interface IApiKeyAccount extends IUser {
+	/**
+	 * Service Account is also a User with unexpired access token.
+	 */
 	type?: string;
 }
+export type ApiKeyAccountDto = Omit<IApiKeyAccount, keyof HiddenBodyKeys>;
 
 export const apiKeyAccountSchema = new Schema<IApiKeyAccount>(
 	{
@@ -78,19 +81,3 @@ export const apiKeyAccountSchema = new Schema<IApiKeyAccount>(
 		collection: "api_key",
 	}
 );
-
-@Entity({ name: "api_key" })
-export default class ApiKeyAccount extends User {
-	/**
-	 * Service Account is also a User with unexpired access token.
-	 */
-	@Column({ default: "api_key" })
-	type?: string;
-
-	constructor(data?: ApiKeyAccount | any) {
-		super();
-		Object.assign(this, data);
-	}
-}
-
-export { ApiKeyAccount };

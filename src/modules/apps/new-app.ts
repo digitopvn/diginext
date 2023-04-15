@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 
 import { getCliConfig } from "@/config/config";
-import type App from "@/entities/App";
+import type { IApp } from "@/entities/App";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { pullingFramework } from "@/modules/framework";
 import { generateRepoSSH, generateRepoURL, initializeGitRemote } from "@/modules/git";
@@ -73,7 +73,7 @@ export default async function createApp(options: InputOptions) {
 		}
 
 		// update git info to database
-		const [updatedApp] = await DB.update<App>(
+		const [updatedApp] = await DB.update<IApp>(
 			"app",
 			{ slug: options.slug },
 			{ git: { provider: options.gitProvider, repoSSH: options.remoteSSH, repoURL: options.remoteURL } }
