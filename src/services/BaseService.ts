@@ -7,7 +7,6 @@ import type { Document, Model, PipelineStage, Schema } from "mongoose";
 import { model } from "mongoose";
 
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import type { ObjectLiteral } from "@/libs/typeorm";
 import { isValidObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 
@@ -202,7 +201,7 @@ export default class BaseService<T extends Document> {
 		return result[0] as T;
 	}
 
-	async update(filter: IQueryFilter, data: ObjectLiteral, options: IQueryOptions = {}) {
+	async update(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
 		// Manually update date to "updatedAt" column
 		data.updatedAt = new Date();
 
@@ -220,7 +219,7 @@ export default class BaseService<T extends Document> {
 		}
 	}
 
-	async updateOne(filter: IQueryFilter, data: ObjectLiteral, options: IQueryOptions = {}) {
+	async updateOne(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
 		return this.update(filter, data, { ...options, limit: 1 });
 	}
 
