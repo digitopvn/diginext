@@ -18,11 +18,14 @@ export interface ITeam extends IBase {
 }
 export type TeamDto = Omit<ITeam, keyof HiddenBodyKeys>;
 
-export const teamSchema = new Schema({
-	...baseSchemaOptions,
-	name: { type: String, required: true },
-	image: { type: String },
-	owner: { type: Schema.Types.ObjectId, ref: "users" },
-	project: { type: Schema.Types.ObjectId, ref: "projects" },
-	workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
-});
+export const teamSchema = new Schema(
+	{
+		...baseSchemaOptions,
+		name: { type: String, required: true },
+		image: { type: String },
+		owner: { type: Schema.Types.ObjectId, ref: "users" },
+		project: { type: Schema.Types.ObjectId, ref: "projects" },
+		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
+	},
+	{ collection: "teams" }
+);

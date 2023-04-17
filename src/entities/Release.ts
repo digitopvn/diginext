@@ -63,50 +63,53 @@ export interface IRelease extends IBase {
 }
 export type ReleaseDto = Omit<IRelease, keyof HiddenBodyKeys>;
 
-export const releaseSchema = new Schema({
-	...baseSchemaOptions,
-	name: { type: String },
-	image: { type: String },
-	cliVersion: { type: String },
-	env: { type: String },
-	envVars: [{ name: { type: String }, value: { type: String } }],
-	prereleaseEnvironment: [{ type: String }],
-	diginext: { type: Schema.Types.Mixed },
-	appConfig: { type: Map, of: String },
-	namespace: { type: String },
-	prodYaml: { type: String },
-	preYaml: { type: String },
-	prereleaseUrl: { type: String },
-	productionUrl: { type: String },
-	/**
-	 * Deployment YAML
-	 */
-	deploymentYaml: { type: String },
-	/**
-	 * Release endpoint URL (development/.../production URL)
-	 */
-	endpoint: { type: String },
-	createdBy: { type: String },
-	branch: { type: String },
-	/**
-	 * @deprecated
-	 * Short name of the cloud provider of the cluster to deploy to.
-	 */
-	provider: { type: String },
-	/**
-	 * Short name of the targeted cluster to deploy to.
-	 */
-	cluster: { type: String },
-	projectSlug: { type: String },
-	appSlug: { type: String },
-	providerProjectId: { type: String },
-	buildStatus: { type: String },
-	active: { type: Boolean },
-	build: { type: Schema.Types.ObjectId, ref: "builds" },
-	app: { type: Schema.Types.ObjectId, ref: "apps" },
-	owner: { type: Schema.Types.ObjectId, ref: "users" },
-	project: { type: Schema.Types.ObjectId, ref: "projects" },
-	workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
-});
+export const releaseSchema = new Schema(
+	{
+		...baseSchemaOptions,
+		name: { type: String },
+		image: { type: String },
+		cliVersion: { type: String },
+		env: { type: String },
+		envVars: [{ name: { type: String }, value: { type: String } }],
+		prereleaseEnvironment: [{ type: String }],
+		diginext: { type: Schema.Types.Mixed },
+		appConfig: { type: Map, of: String },
+		namespace: { type: String },
+		prodYaml: { type: String },
+		preYaml: { type: String },
+		prereleaseUrl: { type: String },
+		productionUrl: { type: String },
+		/**
+		 * Deployment YAML
+		 */
+		deploymentYaml: { type: String },
+		/**
+		 * Release endpoint URL (development/.../production URL)
+		 */
+		endpoint: { type: String },
+		createdBy: { type: String },
+		branch: { type: String },
+		/**
+		 * @deprecated
+		 * Short name of the cloud provider of the cluster to deploy to.
+		 */
+		provider: { type: String },
+		/**
+		 * Short name of the targeted cluster to deploy to.
+		 */
+		cluster: { type: String },
+		projectSlug: { type: String },
+		appSlug: { type: String },
+		providerProjectId: { type: String },
+		buildStatus: { type: String },
+		active: { type: Boolean },
+		build: { type: Schema.Types.ObjectId, ref: "builds" },
+		app: { type: Schema.Types.ObjectId, ref: "apps" },
+		owner: { type: Schema.Types.ObjectId, ref: "users" },
+		project: { type: Schema.Types.ObjectId, ref: "projects" },
+		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
+	},
+	{ collection: "releases" }
+);
 
 export const ReleaseModel = model<IRelease>("Release", releaseSchema, "releases");

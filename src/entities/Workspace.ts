@@ -31,12 +31,15 @@ export interface IWorkspace extends IBase {
 
 export type WorkspaceDto = Omit<IWorkspace, keyof HiddenBodyKeys>;
 
-export const workspaceSchema = new Schema({
-	...baseSchemaOptions,
-	name: { type: String },
-	slug: { type: String },
-	public: { type: Boolean },
-	image: { type: String },
-	domain: { type: String },
-	owner: { type: Schema.Types.ObjectId, ref: "users" },
-});
+export const workspaceSchema = new Schema(
+	{
+		...baseSchemaOptions,
+		name: { type: String },
+		slug: { type: String },
+		public: { type: Boolean },
+		image: { type: String },
+		domain: { type: String },
+		owner: { type: Schema.Types.ObjectId, ref: "users" },
+	},
+	{ collection: "workspaces" }
+);

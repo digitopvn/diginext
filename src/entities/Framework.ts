@@ -36,17 +36,20 @@ export interface IFramework extends IBase {
 	downloads?: number;
 }
 
-export const frameworkSchema = new Schema({
-	...baseSchemaOptions,
-	name: { type: String },
-	host: { type: String },
-	gitProvider: { type: String, enum: availableGitProviders },
-	isPrivate: { type: Boolean },
-	git: { type: Schema.Types.ObjectId, ref: "git_providers" },
-	repoURL: { type: String },
-	repoSSH: { type: String },
-	mainBranch: { type: String },
-	downloads: { type: Number },
-});
+export const frameworkSchema = new Schema(
+	{
+		...baseSchemaOptions,
+		name: { type: String },
+		host: { type: String },
+		gitProvider: { type: String, enum: availableGitProviders },
+		isPrivate: { type: Boolean },
+		git: { type: Schema.Types.ObjectId, ref: "git_providers" },
+		repoURL: { type: String },
+		repoSSH: { type: String },
+		mainBranch: { type: String },
+		downloads: { type: Number },
+	},
+	{ collection: "frameworks" }
+);
 
 export const FrameworkModel = mongoose.model("frameworks", frameworkSchema, "frameworks");

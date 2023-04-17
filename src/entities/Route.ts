@@ -21,14 +21,17 @@ export interface IRoute extends IBase {
 }
 export type RouteDto = Omit<IRoute, keyof HiddenBodyKeys>;
 
-export const routeSchema = new Schema<IRoute>({
-	...baseSchemaOptions,
-	name: { type: String },
-	path: { type: String },
-	methods: [{ type: String, enum: requestMethodList }],
-	owner: { type: Schema.Types.ObjectId, ref: "users" },
-	project: { type: Schema.Types.ObjectId, ref: "projects" },
-	workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
-});
+export const routeSchema = new Schema<IRoute>(
+	{
+		...baseSchemaOptions,
+		name: { type: String },
+		path: { type: String },
+		methods: [{ type: String, enum: requestMethodList }],
+		owner: { type: Schema.Types.ObjectId, ref: "users" },
+		project: { type: Schema.Types.ObjectId, ref: "projects" },
+		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
+	},
+	{ collection: "routes" }
+);
 
 export const RouteModel = mongoose.model<IRoute>("Route", routeSchema);

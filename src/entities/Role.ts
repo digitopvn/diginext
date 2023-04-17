@@ -54,15 +54,18 @@ const RoleRouteSchema = new Schema({
 	permission: { type: String, enum: ["full", "own", "create", "read", "update", "delete"], required: true },
 });
 
-export const roleSchema = new Schema({
-	...baseSchemaOptions,
-	name: { type: String, required: true },
-	routes: { type: [RoleRouteSchema], required: true },
-	maskedFields: { type: [String] },
-	type: { type: String },
-	owner: { type: Schema.Types.ObjectId, ref: "users" },
-	project: { type: Schema.Types.ObjectId, ref: "projects" },
-	workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
-});
+export const roleSchema = new Schema(
+	{
+		...baseSchemaOptions,
+		name: { type: String, required: true },
+		routes: { type: [RoleRouteSchema], required: true },
+		maskedFields: { type: [String] },
+		type: { type: String },
+		owner: { type: Schema.Types.ObjectId, ref: "users" },
+		project: { type: Schema.Types.ObjectId, ref: "projects" },
+		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
+	},
+	{ collection: "roles" }
+);
 
 export const RoleModel = model<IRole>("Role", roleSchema, "roles");

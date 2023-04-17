@@ -6,7 +6,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 import { Config } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { IRole, IUser, IWorkspace } from "@/entities";
-import type Base from "@/entities/Base";
+import type { IBase } from "@/entities/Base";
 import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
@@ -30,7 +30,7 @@ interface ApiUserAndServiceAccountQueries extends IGetQueryParams {
 	workspace: Types.ObjectId | string;
 }
 
-interface WorkspaceInputData extends Omit<Base, keyof HiddenBodyKeys> {
+interface WorkspaceInputData extends Omit<IBase, keyof HiddenBodyKeys> {
 	/**
 	 * Name of the workspace.
 	 */

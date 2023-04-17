@@ -35,13 +35,16 @@ export interface ICloudProvider extends IBase {
 }
 export type CloudProviderDto = Omit<ICloudProvider, keyof HiddenBodyKeys>;
 
-export const cloudProviderSchema = new Schema({
-	...baseSchemaOptions,
-	name: { type: String },
-	shortName: { type: String, enum: cloudProviderList },
-	apiAccessToken: { type: String },
-	serviceAccount: { type: String },
-	clusters: [{ type: Schema.Types.ObjectId, ref: "clusters" }],
-});
+export const cloudProviderSchema = new Schema(
+	{
+		...baseSchemaOptions,
+		name: { type: String },
+		shortName: { type: String, enum: cloudProviderList },
+		apiAccessToken: { type: String },
+		serviceAccount: { type: String },
+		clusters: [{ type: Schema.Types.ObjectId, ref: "clusters" }],
+	},
+	{ collection: "cloud_providers" }
+);
 
 export const CloudProviderModel = mongoose.model("CloudProvider", cloudProviderSchema, "cloud_providers");

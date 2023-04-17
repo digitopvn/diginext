@@ -31,7 +31,7 @@ export const gitProviderSchema = new Schema<IGitProvider>(
 		},
 		type: { type: String, enum: availableGitProviders },
 	},
-	{ timestamps: true }
+	{ collection: "git_providers" }
 );
 
 export const GitProviderModel = model<IGitProvider>("GitProvider", gitProviderSchema, "git_providers");

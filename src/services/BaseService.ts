@@ -13,6 +13,12 @@ import { parseRequestFilter } from "@/plugins/parse-request-filter";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
 
+export function setDateWhenUpdateDocument(next: (error?: NativeError) => void) {
+	// "this" refers to the query object
+	this.updateOne({}, { $set: { updatedAt: new Date() } });
+	next();
+}
+
 /**
  * ![DANGEROUS]
  * This pass phrase is ONLY being used to empty a database,
@@ -26,6 +32,10 @@ export default class BaseService<T extends Document> {
 	req?: AppRequest;
 
 	constructor(schema: Schema) {
+		// make sure "updatedAt" is set when updating documents
+		schema.pre("updateOne", setDateWhenUpdateDocument);
+		schema.pre("updateMany", setDateWhenUpdateDocument);
+
 		const collection = schema.get("collection");
 		this.model = model<T>(collection, schema, collection);
 	}
