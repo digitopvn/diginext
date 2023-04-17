@@ -17,13 +17,13 @@ const router = express.Router();
 const signAndRedirect = (res: Response, data: { userId: string; workspaceId?: string }, redirectUrl: string) => {
 	const { userId, workspaceId } = data;
 	const access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
-	// log("access_token", access_token);
+	console.log("[2] signAndRedirect > access_token :>>", access_token);
 
 	// assign JWT access token to cookie and request headers:
 	res.cookie("x-auth-cookie", access_token);
 	res.header("Authorization", `Bearer ${access_token}`);
 
-	console.log("[2] redirectUrl :>> ", redirectUrl);
+	console.log("[2] signAndRedirect > redirectUrl :>> ", redirectUrl);
 	// logged in successfully -> redirect to workspace:
 	const url = new URL(redirectUrl);
 	const params = new URLSearchParams(url.search);
@@ -55,7 +55,7 @@ router
 			// console.log("googleLoginCallback > req", req);
 			// console.log("googleLoginCallback > req.query", req.query);
 			// console.log("googleLoginCallback > req.query.state", req.query.state);
-			// console.log("googleLoginCallback > user :>> ", req.user);
+			console.log("[0] googleLoginCallback > user :>> ", req.user);
 
 			let redirectUrl = (req.query.state as string) || Config.BASE_URL;
 			const shouldRedirect = typeof req.query.state !== "undefined";
@@ -66,8 +66,10 @@ router
 			// console.log("[1] googleLoginCallback > req.user :>> ", user.name, user._id);
 			if (!user) return res.redirect(req.get("origin") + Config.getBasePath("/login?type=failed"));
 
+			console.log("user._id :>> ", user._id);
 			const userId = MongoDB.toString(user._id);
 			const workspaceSlug = extractWorkspaceSlugFromUrl(redirectUrl);
+			console.log("userId :>> ", userId);
 			console.log("workspaceSlug :>> ", workspaceSlug);
 
 			let workspace: IWorkspace;

@@ -1,4 +1,4 @@
-import { User, UserDto, Workspace, WorkspaceDto } from "../src/entities";
+import { IUser, UserDto, IWorkspace, WorkspaceDto, IRole } from "../src/entities";
 import fetchApi from "../src/modules/api/fetchApi";
 import { wait, waitUntil } from "../src/plugins/utils";
 import AppDatabase from "../src/modules/AppDatabase";
@@ -43,10 +43,10 @@ import ServiceAccountController from "../src/controllers/ServiceAccountControlle
 import WorkspaceController from "../src/controllers/WorkspaceController";
 
 import { isEmpty } from "lodash";
-import { ObjectId } from "mongodb";
+import { MongoDB } from "../src/plugins/mongodb";
 
-const user1 = new User({ name: "Test User 1", email: "user1@test.local" });
-const user2 = new User({ name: "Test User 2", email: "user2@test.local" });
+const user1 = { name: "Test User 1", email: "user1@test.local" } as IUser;
+const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
 
 // for directly interact with the database...
 export const appSvc = new AppService();
@@ -85,8 +85,8 @@ export const serviceAccountCtl = new ServiceAccountController();
 export const workspaceCtl = new WorkspaceController();
 
 // current logged in user
-export let currentUser: User;
-export let currentWorkspace: Workspace;
+export let currentUser: IUser;
+export let currentWorkspace: IWorkspace;
 
 export function setupTestEnvironment() {
 	beforeAll(async () => {
@@ -105,43 +105,43 @@ export function setupTestEnvironment() {
 
 export const createUser = async (data: UserDto) => {
 	const user = await userSvc.create(data);
-	return user as User;
+	return user as IUser;
 };
 
 export const createWorkspace = async (name: string) => {
 	if (!currentUser) throw new Error(`Unauthenticated.`);
-
+	const ownerId = MongoDB.toString(currentUser._id);
 	const workspace = await workspaceCtl.create({
 		name,
-		owner: currentUser._id,
+		owner: ownerId,
 	});
 
 	currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "workspaces", "roles"] });
 
-	return workspace as Workspace;
+	return workspace as IWorkspace;
 };
 
-export const loginUser = async (userId: ObjectId, workspaceId: ObjectId) => {
-	const access_token = generateJWT(userId.toString(), {
+export const loginUser = async (userId: string, workspaceId: string) => {
+	const access_token = generateJWT(userId, {
 		expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
-		workspaceId: workspaceId.toString(),
+		workspaceId: workspaceId,
 	});
 
 	const payload = jwt.decode(access_token, { json: true });
 	const tokenInfo = extractAccessTokenInfo(access_token, payload?.exp || 10000);
 
-	let user: User = await userSvc.findOne({ _id: userId }, { populate: ["roles"] });
+	let user: IUser = await userSvc.findOne({ _id: userId }, { populate: ["roles"] });
 
 	const updateData = {} as any;
 	updateData.token = tokenInfo.token;
-	updateData.activeWorkspace = new ObjectId(workspaceId);
+	updateData.activeWorkspace = workspaceId;
 
 	// set active workspace to this user:
 	const userWorkspaces = user.workspaces ? user.workspaces : [];
 	if (!userWorkspaces.includes(workspaceId)) updateData.workspaces = [...userWorkspaces, workspaceId];
 
 	// set default roles if this user doesn't have one
-	const userRoles = (user.roles || []).filter((role) => role.workspace === workspaceId);
+	const userRoles = (user.roles || []).filter((role) => MongoDB.toString((role as IRole).workspace) === workspaceId);
 	if (isEmpty(userRoles)) {
 		const memberRole = await roleSvc.findOne({ name: "Member", workspace: workspaceId });
 		updateData.roles = [memberRole._id];
@@ -149,7 +149,7 @@ export const loginUser = async (userId: ObjectId, workspaceId: ObjectId) => {
 
 	[user] = await userSvc.update({ _id: userId }, updateData);
 
-	const workspace: Workspace = await workspaceSvc.findOne({ _id: workspaceId });
+	const workspace: IWorkspace = await workspaceSvc.findOne({ _id: workspaceId });
 
 	currentUser = user;
 	currentWorkspace = workspace;

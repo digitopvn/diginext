@@ -1,10 +1,9 @@
 import { isJSON } from "class-validator";
 import { isString, trim } from "lodash";
-import { ObjectId } from "mongodb";
 
 import type { IQueryFilter } from "@/interfaces";
 
-import { isObjectId, isValidObjectId } from "./mongodb";
+import { isObjectId, isValidObjectId, MongoDB } from "./mongodb";
 import { traverseObjectAndTransformValue } from "./traverse";
 
 export const parseRequestFilter = (requestQuery: any) => {
@@ -29,14 +28,18 @@ export const parseRequestFilter = (requestQuery: any) => {
 	// filter
 	const _filter: { [key: string]: any } = id ? { id, ...filter } : filter;
 
-	// traverse filter object and transform the values:
+	/**
+	 * Traverse filter object and transform the values.
+	 * Need to cast valid {ObjectId} string to {ObjectId} since Mongoose "aggregate" doesn't cast them automatically.
+	 * @link https://mongoosejs.com/docs/api/aggregate.html#Aggregate()
+	 */
 	traverseObjectAndTransformValue(_filter, ([key, val]) => {
 		if (val == null || val == undefined) {
 			return null;
 		} else if (isObjectId(val)) {
 			return val;
 		} else if (isValidObjectId(val)) {
-			return new ObjectId(val);
+			return MongoDB.toObjectId(val);
 		} else if (isJSON(val)) {
 			return JSON.parse(val);
 		} else {

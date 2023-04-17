@@ -43,8 +43,8 @@ const RoleRouteSchema = new Schema({
 	path: { type: String },
 	methods: { type: [String] },
 	route: { type: String },
-	scope: { type: String, enum: ["all", "workspace", "team", "project", "app"], required: true },
-	permission: { type: String, enum: ["full", "own", "create", "read", "update", "delete"], required: true },
+	scope: [{ type: String, enum: ["all", "workspace", "team", "project", "app"] }],
+	permissions: [{ type: String, enum: ["full", "own", "create", "read", "update", "delete"] }],
 });
 
 export const roleSchema = new Schema(

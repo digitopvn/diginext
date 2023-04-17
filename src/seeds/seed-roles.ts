@@ -20,7 +20,13 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	}
 
 	// assign admin role to the "owner" user
-	const fullOwner = await DB.findOne<IUser>("user", { _id: owner._id }, { populate: ["roles"] });
+	// console.log("owner._id :>> ", owner._id);
+	// console.log(typeof owner._id);
+	// console.log("Types.ObjectId :>>", owner._id instanceof Types.ObjectId);
+	// console.log("mongoose.mongo.ObjectId :>>", owner._id instanceof mongoose.mongo.ObjectId);
+	// console.log("mongodb > ObjectId :>>", owner._id instanceof ObjectId);
+
+	const fullOwner = await DB.findOne<IUser>("user", { _id: owner._id }, { populate: ["roles", "activeWorkspace"] });
 	// console.log("fullOwner :>> ", fullOwner);
 	let userRoles = (fullOwner?.roles || []) as IRole[];
 	// console.log("userRoles :>> ", userRoles);
@@ -89,8 +95,8 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		console.log(`Workspace "${workspace.name}" > Created default member role :>> `, memberRoleDto.name);
 	} else {
 		// compare routes & permissions, if it doesn't match -> update!
-		const defaultMemberRoleRoutes = memberRoleRoutes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
-		const dbMemberRoleRoutes = memberRole.routes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
+		const defaultMemberRoleRoutes = memberRoleRoutes.map((r) => `${r.route}:${r.permissions?.join(",")}`).join("|");
+		const dbMemberRoleRoutes = memberRole.routes.map((r) => `${r.route}:${r.permissions?.join(",")}`).join("|");
 		if (defaultMemberRoleRoutes !== dbMemberRoleRoutes) {
 			[memberRole] = await DB.update<IRole>("role", { _id: memberRole._id }, { routes: memberRoleRoutes });
 			console.log(`Workspace "${workspace.name}" > Updated default member role!`);
@@ -113,8 +119,8 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		console.log(`Workspace "${workspace.name}" > Created default moderator role :>> `, moderatorRole.name);
 	} else {
 		// compare routes & permissions, if it doesn't match -> update!
-		const defaultModRoleRoutes = moderatorRoleRoutes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
-		const dbModRoleRoutes = moderatorRole.routes.map((r) => `${r.route}:${r.permissions.join(",")}`).join("|");
+		const defaultModRoleRoutes = moderatorRoleRoutes.map((r) => `${r.route}:${r.permissions?.join(",")}`).join("|");
+		const dbModRoleRoutes = moderatorRole.routes.map((r) => `${r.route}:${r.permissions?.join(",")}`).join("|");
 		if (defaultModRoleRoutes !== dbModRoleRoutes) {
 			[moderatorRole] = await DB.update<IRole>("role", { _id: moderatorRole._id }, { routes: moderatorRoleRoutes });
 			console.log(`Workspace "${workspace.name}" > Updated default moderator role!`);

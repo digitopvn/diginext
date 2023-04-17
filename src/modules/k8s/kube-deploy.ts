@@ -4,7 +4,6 @@ import execa from "execa";
 import { existsSync, mkdirSync } from "fs";
 import yaml from "js-yaml";
 import { isArray, isEmpty } from "lodash";
-import { ObjectId } from "mongodb";
 import path from "path";
 
 import { isServerMode } from "@/app.config";
@@ -522,7 +521,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	await DB.update<IRelease>("release", { $or: filter }, { active: false });
 
 	// Mark this latest release as "active":
-	const latestReleases = await DB.update<IRelease>("release", { _id: new ObjectId(id) }, { active: true });
+	const latestReleases = await DB.update<IRelease>("release", { _id: id }, { active: true });
 
 	const latestRelease = latestReleases[0];
 	// log({ latestRelease });

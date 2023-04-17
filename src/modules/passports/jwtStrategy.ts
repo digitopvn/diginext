@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import type * as express from "express";
 import jwt from "jsonwebtoken";
-import { ObjectId } from "mongodb";
 import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
@@ -98,11 +97,11 @@ export const jwtStrategy = new Strategy(
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
 		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`, { payload });
 
-		// const workspaceId = payload.workspaceId ? new ObjectId(payload.workspaceId) : undefined;
-
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		// console.log("jwtStrategy > access_token :>> ", access_token);
 		// console.log("jwtStrategy > payload :>> ", payload);
+		// console.log(`[1] jwtStrategy > payload.id :>> `, payload.id);
+
 		// 1. Extract token info
 
 		const tokenInfo = extractAccessTokenInfo(access_token, payload.exp);
@@ -113,11 +112,7 @@ export const jwtStrategy = new Strategy(
 
 		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
-		let user = await DB.findOne<IUser | IServiceAccount>(
-			"user",
-			{ _id: new ObjectId(payload.id) },
-			{ populate: ["roles", "workspaces", "activeWorkspace"] }
-		);
+		let user = await DB.findOne<IUser | IServiceAccount>("user", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
 		// console.log(`[1] jwtStrategy > User :>> `, user);
 
 		if (user) {
@@ -125,7 +120,7 @@ export const jwtStrategy = new Strategy(
 			updateData.token = tokenInfo.token;
 
 			// update the access token in database:
-			[user] = await DB.update<IUser>("user", { _id: new ObjectId(payload.id) }, updateData, {
+			[user] = await DB.update<IUser>("user", { _id: payload.id }, updateData, {
 				populate: ["roles", "workspaces", "activeWorkspace"],
 			});
 
@@ -133,11 +128,7 @@ export const jwtStrategy = new Strategy(
 		}
 
 		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
-		user = await DB.findOne<IServiceAccount>(
-			"service_account",
-			{ _id: new ObjectId(payload.id) },
-			{ populate: ["roles", "workspaces", "activeWorkspace"] }
-		);
+		user = await DB.findOne<IServiceAccount>("service_account", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
 
 		if (!user) return done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
 

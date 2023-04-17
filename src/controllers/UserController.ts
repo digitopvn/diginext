@@ -7,7 +7,7 @@ import type { IRole, IUser } from "@/entities";
 import { UserDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
-import { MongoDB, toObjectId } from "@/plugins/mongodb";
+import { MongoDB } from "@/plugins/mongodb";
 import { addRoleToUser, filterRole, filterSensitiveInfo } from "@/plugins/user-utils";
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
@@ -133,10 +133,10 @@ export default class UserController extends BaseController<IUser> {
 			if (!workspaceIdOrSlug) throw new Error(`Param "workspace" (Workspace ID or slug) is required.`);
 
 			// parse input params
-			const userId = toObjectId(uid);
+			const userId = uid;
 
 			// workspace in query could be "_id" and also "slug":
-			let workspaceId = toObjectId(workspaceIdOrSlug); // return undefined if can't convert to "ObjectId" -> it's a "slug" !!! (lol)
+			let workspaceId = workspaceIdOrSlug; // return undefined if can't convert to "ObjectId" -> it's a "slug" !!! (lol)
 			let workspaceSlug = !workspaceId ? workspaceIdOrSlug : undefined;
 
 			if (!workspaceId && !workspaceSlug) return respondFailure(`Param "workspace" (ID or SLUG) is invalid`);
@@ -150,7 +150,7 @@ export default class UserController extends BaseController<IUser> {
 			const workspace = await workspaceSvc.findOne(wsFilter);
 			if (!workspace) throw new Error(`Workspace not found.`);
 
-			workspaceId = toObjectId(workspace._id);
+			workspaceId = MongoDB.toString(workspace._id);
 
 			// find the user
 			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId });

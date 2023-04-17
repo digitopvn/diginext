@@ -17,6 +17,7 @@ export const googleStrategy = new GoogleStrategy(
 		process.nextTick(async function () {
 			// console.log(`googleStrategy :>>`, { profile });
 			// console.log(accessToken);
+			// console.log(`googleStrategy :>> profile.email =`, profile.email);
 
 			const userSvc = new UserService();
 			let user = await userSvc.findOne({ email: profile.email }, { populate: ["roles"] });
@@ -29,6 +30,8 @@ export const googleStrategy = new GoogleStrategy(
 				if (user.name != profile.displayName) updateData.name = profile.displayName;
 
 				if (!isEmpty(updateData)) [user] = await userSvc.update({ _id: user._id }, updateData);
+
+				request.user = user;
 
 				return done(null, { ...user, accessToken, refreshToken });
 			}
@@ -49,6 +52,7 @@ export const googleStrategy = new GoogleStrategy(
 
 			if (newUser) {
 				user = newUser;
+				request.user = user;
 				return done(null, { ...user, accessToken, refreshToken });
 			} else {
 				return done(null, newUser);

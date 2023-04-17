@@ -50,7 +50,8 @@ const jwt_auth = (req: AppRequest, res, next) =>
 					MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id) &&
 					!(role as IRole).deletedAt
 			) as IRole;
-
+			// console.log("jwt_auth > roles :>> ", roles);
+			// console.log("jwt_auth > activeRole :>> ", activeRole);
 			// console.log("Unauthenticate :>> [2]");
 			// if (!activeRole) return respondFailure(`Unauthorized: no active role.`);
 

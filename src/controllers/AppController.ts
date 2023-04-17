@@ -3,7 +3,6 @@ import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { isArray, isBoolean, isEmpty, isString, isUndefined } from "lodash";
-import { ObjectId } from "mongodb";
 
 import type { AppGitInfo, IApp, ICluster, IContainerRegistry, IFramework, IProject } from "@/entities";
 import type { HiddenBodyKeys, SslType } from "@/interfaces";
@@ -21,7 +20,7 @@ import { createDiginextDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { parseGitRepoDataFromRepoSSH } from "@/plugins";
-import { isObjectId, toObjectId } from "@/plugins/mongodb";
+import { isObjectId } from "@/plugins/mongodb";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
@@ -332,7 +331,7 @@ export default class AppController extends BaseController<IApp> {
 			projectSvc = new ProjectService();
 
 		if (body.project) {
-			project = await projectSvc.findOne({ _id: toObjectId(body.project) });
+			project = await projectSvc.findOne({ _id: body.project });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
 		}
@@ -605,7 +604,7 @@ export default class AppController extends BaseController<IApp> {
 		}
 
 		// find the app
-		const appFilter = typeof id != "undefined" ? { _id: new ObjectId(id) } : { slug };
+		const appFilter = typeof id != "undefined" ? { _id: id } : { slug };
 		const app = await this.service.findOne(appFilter);
 
 		// check if the environment is existed

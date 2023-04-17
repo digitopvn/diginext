@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 import humanizeDuration from "humanize-duration";
 import { isEmpty } from "lodash";
-import { ObjectId } from "mongodb";
 import PQueue from "p-queue";
 import path from "path";
 
@@ -74,7 +73,7 @@ export async function startBuildV1(
 	const latestBuild = await DB.findOne<IBuild>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
 	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	const project = await DB.findOne<IProject>("project", { slug: projectSlug });
-	const author = await DB.findOne<IUser>("user", { _id: new ObjectId(options.userId) });
+	const author = await DB.findOne<IUser>("user", { _id: options.userId });
 	const workspace = app.workspace as IWorkspace;
 
 	// socket & logs

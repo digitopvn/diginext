@@ -52,6 +52,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	let routeRole = activeRole.routes.find((routeInfo) => routeInfo.route === "*");
 
 	if (routeRole) {
+		if (!routeRole.permissions) routeRole.permissions = [];
 		if (routeRole.permissions.includes(requestPermission)) {
 			isAllowed = true;
 		} else {
@@ -71,6 +72,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	routeRole = activeRole.routes.find((routeInfo) => routeInfo.route === route);
 
 	if (routeRole) {
+		if (!routeRole.permissions) routeRole.permissions = [];
 		if (routeRole.permissions.includes(requestPermission)) {
 			delete req.query.owner;
 			isAllowed = true;

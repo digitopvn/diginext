@@ -1,27 +1,33 @@
-import { ObjectId } from "mongodb";
+import mongoose, { Types } from "mongoose";
 
 export function isObjectId(id) {
-	return id instanceof ObjectId;
+	return id instanceof Types.ObjectId;
 }
 
 export function isValidObjectId(id) {
-	if (ObjectId.isValid(id)) {
-		if (String(new ObjectId(id)) === id) return true;
+	// return mongoose.isValidObjectId(id);
+	// if (mongoose.isValidObjectId(id)) return true;
+	if (mongoose.mongo.ObjectId.isValid(id)) {
+		if (String(new mongoose.mongo.ObjectId(id)) === id) return true;
 		return false;
 	}
 	return false;
 }
 
 export function toObjectId(id: any) {
-	if (isObjectId(id)) return id as ObjectId;
-	if (isValidObjectId(id)) return new ObjectId(id);
+	// console.log(`isObjectId(${id})`, isObjectId(id));
+	// console.log(`isValidObjectId(${id})`, isValidObjectId(id));
+	if (isObjectId(id)) return id;
+	if (isValidObjectId(id)) return new mongoose.mongo.ObjectId(id);
 	return;
 }
 
 function toString(id) {
 	const _id = toObjectId(id);
 	if (!_id) return;
-	return _id.toHexString();
+	let idStr = _id.toHexString();
+	if (!idStr) idStr = _id.toString();
+	return idStr;
 }
 
 export interface MongooseFindOptions {

@@ -58,8 +58,10 @@ export async function startupScripts() {
 
 	// seed default roles to workspace if missing:
 	const wsSvc = new WorkspaceService();
-	const workspaces = await wsSvc.find({}, { populate: ["owner"] });
-	// console.log("workspaces :>> ", JSON.stringify(workspaces, null, 2));
+	let workspaces = await wsSvc.find({}, { populate: ["owner"] });
+	// console.log(`workspace :>>`);
+	// console.dir(workspaces, { depth: 10 });
+
 	if (workspaces.length > 0) {
 		await Promise.all(workspaces.map((ws) => seedDefaultRoles(ws, ws.owner as IUser)));
 	}

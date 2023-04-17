@@ -8,8 +8,9 @@ import { model } from "mongoose";
 
 import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import { isValidObjectId } from "@/plugins/mongodb";
+import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
+import { traverseObjectAndTransformValue } from "@/plugins/traverse";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
 
@@ -48,7 +49,7 @@ export default class BaseService<T extends Document> {
 	}
 
 	async count(filter?: IQueryFilter, options?: IQueryOptions) {
-		const parsedFilter = parseRequestFilter(filter);
+		const parsedFilter = filter;
 		parsedFilter.deletedAt = { $exists: false };
 		return this.model.countDocuments({ ...parsedFilter, ...options }).exec();
 	}
@@ -122,24 +123,40 @@ export default class BaseService<T extends Document> {
 		// populate
 		if (options?.populate && options?.populate.length > 0) {
 			options?.populate.forEach((collection) => {
+				const lookupCollection = this.model.schema.paths[collection].options.ref;
+				const isPopulatedFieldArray = Array.isArray(this.model.schema.paths[collection].options.type);
+
 				// use $lookup to find relation field
 				pipelines.push({
 					$lookup: {
-						from: this.model.schema.paths[collection].options.ref,
+						from: lookupCollection,
 						localField: collection,
 						foreignField: "_id",
 						as: collection,
 					},
 				});
+
 				// if there are many results, return an array, if there are only 1 result, return an object
 				pipelines.push({
 					$addFields: {
 						[collection]: {
-							$cond: {
-								if: { $eq: [{ $size: `$${collection}` }, 1] },
-								then: { $arrayElemAt: [`$${collection}`, 0] },
-								else: `$${collection}`,
-							},
+							$cond: isPopulatedFieldArray
+								? [{ $isArray: `$${collection}` }, `$${collection}`, { $ifNull: [`$${collection}`, null] }]
+								: {
+										if: {
+											$and: [{ $isArray: `$${collection}` }, { $eq: [{ $size: `$${collection}` }, 1] }],
+										},
+										then: { $arrayElemAt: [`$${collection}`, 0] },
+										else: {
+											$cond: {
+												if: {
+													$and: [{ $isArray: `$${collection}` }, { $ne: [{ $size: `$${collection}` }, 1] }],
+												},
+												then: `$${collection}`,
+												else: null,
+											},
+										},
+								  },
 						},
 					},
 				});
@@ -164,14 +181,14 @@ export default class BaseService<T extends Document> {
 		if (options?.skip) pipelines.push({ $skip: options.skip });
 		if (options?.limit) pipelines.push({ $limit: options.limit });
 
-		// const findCommand = this.model.aggregate(pipelines);
-		// if (options?.order) findCommand.sort(options.order);
-		// if (options?.select && options.select.length > 0) findCommand.select(options.select.join(" "));
-		// if (options?.skip) findCommand.skip(options.skip);
-		// if (options?.limit) findCommand.limit(options.limit);
-
-		const [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(filter).exec()]);
+		let [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(filter).exec()]);
 		// log(`results >>`, results);
+
+		// convert all {ObjectId} to {string}:
+		traverseObjectAndTransformValue(results, ([key, val]) => {
+			if (MongoDB.isObjectId(val)) return val.toString();
+			return val;
+		});
 
 		if (pagination) {
 			pagination.total_items = totalItems || results.length;
@@ -212,7 +229,7 @@ export default class BaseService<T extends Document> {
 		// Manually update date to "updatedAt" column
 		data.updatedAt = new Date();
 
-		const updateFilter = parseRequestFilter(filter);
+		const updateFilter = filter;
 		updateFilter.deletedAt = { $exists: false };
 
 		const updateData = options?.raw ? data : { $set: data };
@@ -232,13 +249,13 @@ export default class BaseService<T extends Document> {
 
 	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {
 		// Manually update "deleteAt" to database since TypeORM MongoDB doesn't support "softDelete" yet
-		const deleteFilter = parseRequestFilter(filter);
+		const deleteFilter = filter;
 		const deleteRes = await this.model.updateMany(deleteFilter, { $set: { deletedAt: new Date() } }).exec();
 		return { ok: deleteRes.matchedCount };
 	}
 
 	async delete(filter?: IQueryFilter): Promise<DeleteResult> {
-		const deleteFilter = parseRequestFilter(filter);
+		const deleteFilter = filter;
 		const deleteRes = await this.model.deleteMany(deleteFilter).exec();
 		return deleteRes;
 	}

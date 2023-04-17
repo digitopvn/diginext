@@ -1,12 +1,10 @@
-import { ObjectId } from "mongodb";
-
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import { DB } from "@/modules/api/DB";
 import { RoleService } from "@/services";
 
 import { isObjectId, MongoDB } from "./mongodb";
 
-export const addUserToWorkspace = async (userId: ObjectId, workspace: IWorkspace, roleType: "admin" | "moderator" | "member" = "member") => {
+export const addUserToWorkspace = async (userId: string, workspace: IWorkspace, roleType: "admin" | "moderator" | "member" = "member") => {
 	let user = await DB.findOne<IUser>("user", { id: userId });
 	if (!user) throw new Error(`User not found.`);
 
@@ -30,7 +28,7 @@ export const addUserToWorkspace = async (userId: ObjectId, workspace: IWorkspace
 	return user;
 };
 
-export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", userId: ObjectId, workspace: IWorkspace) => {
+export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", userId: string, workspace: IWorkspace) => {
 	// find user
 	let user = await DB.findOne<IUser>("user", { id: userId }, { populate: ["roles"] });
 	if (!user) throw new Error(`User not found.`);
@@ -52,7 +50,7 @@ export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", 
 	return user;
 };
 
-export const makeWorkspaceActive = async (userId: ObjectId, workspaceId: ObjectId) => {
+export const makeWorkspaceActive = async (userId: string, workspaceId: string) => {
 	const [user] = await DB.update<IUser>("user", { _id: userId }, { activeWorkspace: workspaceId });
 	return user;
 };
@@ -74,7 +72,7 @@ export function filterSensitiveInfo(list: IUser[] = []) {
 export async function filterRole(workspaceId: string, list: IUser[] = []) {
 	const wsId = workspaceId;
 	const roleSvc = new RoleService();
-	const wsRoles = await roleSvc.find({ workspace: new ObjectId(workspaceId) });
+	const wsRoles = await roleSvc.find({ workspace: workspaceId });
 	// console.log("wsId :>> ", wsId);
 
 	return list.map((item) => {

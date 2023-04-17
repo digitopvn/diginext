@@ -193,7 +193,7 @@
 		"passport-jwt": "^4.0.1",
 		"pkg-install": "^0.2.0",
 		"pm2": "^5.2.2",
-		"recursive-copy": "^2.0.11",
+		"recursive-copy": "^2.0.14",
 		"redis": "^4.3.1",
 		"reflect-metadata": "^0.1.13",
 		"sha.js": "^2.4.11",
