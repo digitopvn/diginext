@@ -61,6 +61,7 @@ export async function startupScripts() {
 	let workspaces = await wsSvc.find({}, { populate: ["owner"] });
 	// console.log(`workspace :>>`);
 	// console.dir(workspaces, { depth: 10 });
+	// if (workspaces) return;
 
 	if (workspaces.length > 0) {
 		await Promise.all(workspaces.map((ws) => seedDefaultRoles(ws, ws.owner as IUser)));

@@ -31,7 +31,7 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	let userRoles = (fullOwner?.roles || []) as IRole[];
 	// console.log("userRoles :>> ", userRoles);
 	// console.log("adminRole._id :>> ", adminRole._id);
-	const userHasAdminRole = userRoles.map((role) => MongoDB.toString(role._id)).includes(MongoDB.toString(adminRole._id));
+	const userHasAdminRole = userRoles.map((role) => role._id).includes(MongoDB.toString(adminRole._id));
 	// console.log(userRoles.map((role) => MongoDB.toString(role._id)));
 	// console.log(MongoDB.toString(adminRole._id));
 	// console.log(`Workspace "${workspace.name}" > userHasAdminRole :>> `, userHasAdminRole);

@@ -20,7 +20,7 @@ import { createDiginextDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { parseGitRepoDataFromRepoSSH } from "@/plugins";
-import { isObjectId } from "@/plugins/mongodb";
+import { MongoDB } from "@/plugins/mongodb";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
@@ -53,7 +53,7 @@ export interface AppInputSchema {
 	/**
 	 * `REQUIRES`
 	 * ---
-	 * App's name
+	 * Project's ID or slug
 	 */
 	project: string;
 
@@ -255,16 +255,15 @@ export default class AppController extends BaseController<IApp> {
 	@Post("/")
 	async create(@Body() body: AppInputSchema, @Queries() queryParams?: IPostQueryParams) {
 		let project: IProject,
-			projectSvc: ProjectService = new ProjectService(),
 			appDto: IApp = { ...(body as any) };
 
 		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
 		if (!body.name) return respondFailure({ msg: `App's name is required.` });
 
-		console.log(`isObjectId(${body.project}) :>> `, isObjectId(body.project));
+		console.log(`isValidObjectId(${body.project}) :>> `, MongoDB.isValidObjectId(body.project));
 
 		// find parent project of this app
-		if (isObjectId(body.project)) {
+		if (MongoDB.isValidObjectId(body.project)) {
 			project = await DB.findOne<IProject>("project", { _id: body.project });
 		} else if (isString(body.project)) {
 			project = await DB.findOne<IProject>("project", { slug: body.project });

@@ -15,8 +15,6 @@ import BaseController from "./BaseController";
 @Tags("Route")
 @Route("route")
 export default class RouteController extends BaseController<IRoute> {
-	service: RouteService;
-
 	constructor() {
 		super(new RouteService());
 	}

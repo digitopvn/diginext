@@ -70,15 +70,10 @@ export default class UserController extends BaseController<IUser> {
 	async update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		if (body.roles) {
 			const roleId = body.roles;
-			const oldRoles = this.user.roles.filter((role) => MongoDB.toString((role as IRole).workspace) === MongoDB.toString(this.workspace._id));
+			const oldRoles = this.user.roles.filter((role) => (role as IRole).workspace === this.workspace._id);
 
 			const newRole = await DB.findOne<IRole>("role", { _id: roleId });
-			const newRoles = [
-				...this.user.roles.filter(
-					(role) => !oldRoles.map((r) => MongoDB.toString((r as IRole)._id)).includes(MongoDB.toString((role as IRole)._id))
-				),
-				newRole,
-			];
+			const newRoles = [...this.user.roles.filter((role) => !oldRoles.map((r) => (r as IRole)._id).includes((role as IRole)._id)), newRole];
 
 			const newRoleIds = newRoles.map((role) => (role as IRole)._id);
 
@@ -136,7 +131,8 @@ export default class UserController extends BaseController<IUser> {
 			const userId = uid;
 
 			// workspace in query could be "_id" and also "slug":
-			let workspaceId = workspaceIdOrSlug; // return undefined if can't convert to "ObjectId" -> it's a "slug" !!! (lol)
+			let workspaceId = MongoDB.isValidObjectId(workspaceIdOrSlug) ? workspaceIdOrSlug : undefined;
+			// return undefined if can't convert to "ObjectId" -> it's a "slug" !!! (lol)
 			let workspaceSlug = !workspaceId ? workspaceIdOrSlug : undefined;
 
 			if (!workspaceId && !workspaceSlug) return respondFailure(`Param "workspace" (ID or SLUG) is invalid`);
@@ -156,9 +152,9 @@ export default class UserController extends BaseController<IUser> {
 			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId });
 			if (!user) throw new Error(`User not found.`);
 
-			const wsId = MongoDB.toString(workspaceId);
-			const workspaceIds = (user.workspaces as ObjectId[]) || [];
-			const isUserInWorkspace = workspaceIds.map((_id) => MongoDB.toString(_id)).includes(wsId);
+			const wsId = workspaceId;
+			const workspaceIds = user.workspaces || [];
+			const isUserInWorkspace = workspaceIds.includes(wsId);
 
 			// add this workspace to user's workspace list
 			if (!isUserInWorkspace) workspaceIds.push(workspaceId);
@@ -172,7 +168,7 @@ export default class UserController extends BaseController<IUser> {
 			// set default roles if this user doesn't have one
 			const memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: workspaceId });
 			const roles = user.roles || [];
-			if (isEmpty(roles) || !roles.map((_id) => MongoDB.toString(_id)).includes(MongoDB.toString(memberRole._id))) roles.push(memberRole._id);
+			if (isEmpty(roles) || !roles.includes(memberRole._id)) roles.push(memberRole._id);
 
 			// set active workspace of this user -> this workspace
 			[user] = await this.service.update({ _id: userId }, { activeWorkspace: workspaceId, workspaces: workspaceIds, roles }, this.options);

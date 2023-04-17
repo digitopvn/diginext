@@ -7,10 +7,14 @@ export function traverseObjectAndTransformValue(obj: any, transform: (keyPair: [
 	if (typeof obj === "function") return obj;
 
 	for (const key in obj) {
-		if (typeof obj[key] === "object" && obj[key] !== null && !MongoDB.isObjectId(obj[key])) {
-			traverseObjectAndTransformValue(obj[key], transform);
-		} else {
+		if (MongoDB.isObjectId(obj[key])) {
 			obj[key] = transform([key, obj[key]]);
+		} else {
+			if (typeof obj[key] === "object" && obj[key] !== null) {
+				traverseObjectAndTransformValue(obj[key], transform);
+			} else {
+				obj[key] = transform([key, obj[key]]);
+			}
 		}
 	}
 

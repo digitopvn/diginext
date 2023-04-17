@@ -56,6 +56,6 @@ export const baseSchemaDefinitions = {
 		ref: "workspaces",
 	},
 	createdAt: { type: Date, default: Date.now },
-	deletedAt: { type: Date, default: Date.now },
-	updatedAt: { type: Date, default: null },
+	updatedAt: { type: Date, default: Date.now },
+	deletedAt: { type: Date },
 };

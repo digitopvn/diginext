@@ -17,12 +17,12 @@ import {
 	ProjectService,
 	ReleaseService,
 	RoleService,
+	RouteService,
 	ServiceAccountService,
 	TeamService,
 	UserService,
 	WorkspaceService,
 } from "@/services";
-import RouteService from "@/services/RouteService";
 
 import fetchApi from "./fetchApi";
 

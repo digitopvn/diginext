@@ -8,6 +8,28 @@
 		"schemas": {
 			"ResponseData": {
 				"properties": {
+					"total_items": {
+						"type": "number",
+						"format": "double"
+					},
+					"total_pages": {
+						"type": "number",
+						"format": "double"
+					},
+					"current_page": {
+						"type": "number",
+						"format": "double"
+					},
+					"page_size": {
+						"type": "number",
+						"format": "double"
+					},
+					"prev_url": {
+						"type": "string"
+					},
+					"next_url": {
+						"type": "string"
+					},
 					"status": {
 						"type": "number",
 						"enum": [0, 1],

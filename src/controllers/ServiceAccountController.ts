@@ -80,10 +80,10 @@ export default class ServiceAccountController extends BaseController<IServiceAcc
 
 			let updatedUser = [user];
 
-			const isUserJoinedThisWorkspace = (user.workspaces || []).map((id) => MongoDB.toString(id)).includes(wsId);
+			const isUserJoinedThisWorkspace = (user.workspaces || []).includes(wsId);
 			// console.log("isUserJoinedThisWorkspace :>> ", isUserJoinedThisWorkspace);
 
-			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && MongoDB.toString(user.activeWorkspace) === wsId;
+			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && user.activeWorkspace === wsId;
 			// console.log("isWorkspaceActive :>> ", isWorkspaceActive);
 
 			// console.log("user.workspaces :>> ", user.workspaces);

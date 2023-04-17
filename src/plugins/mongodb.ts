@@ -25,7 +25,7 @@ export function toObjectId(id: any) {
 function toString(id) {
 	const _id = toObjectId(id);
 	if (!_id) return;
-	let idStr = _id.toHexString();
+	let idStr = _id.toHexString() as string;
 	if (!idStr) idStr = _id.toString();
 	return idStr;
 }

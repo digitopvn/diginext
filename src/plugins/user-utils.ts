@@ -14,12 +14,12 @@ export const addUserToWorkspace = async (userId: string, workspace: IWorkspace, 
 
 	// assign role
 	const roles = user.roles || [];
-	const hasRole = roles.map((_id) => MongoDB.toString(_id)).includes(MongoDB.toString(role._id));
+	const hasRole = roles.includes(role._id);
 	if (!hasRole) roles.push(role._id);
 
 	// assign workspace
 	const workspaces = user.workspaces || [];
-	const isUserInThisWorkspace = workspaces.map((_id) => MongoDB.toString(_id)).includes(MongoDB.toString(workspace._id));
+	const isUserInThisWorkspace = workspaces.includes(workspace._id);
 	if (!isUserInThisWorkspace) workspaces.push(workspace._id);
 
 	// update user data
@@ -77,11 +77,11 @@ export async function filterRole(workspaceId: string, list: IUser[] = []) {
 
 	return list.map((item) => {
 		if (item.roles && item.roles.length > 0) {
-			item.roles = item.roles.filter((role) => {
-				if (isObjectId(role)) {
-					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString(role));
-				} else if ((role as IRole)._id) {
-					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString((role as IRole)._id));
+			item.roles = item.roles.filter((roldId) => {
+				if (isObjectId(roldId)) {
+					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString(roldId));
+				} else if ((roldId as IRole)._id) {
+					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString((roldId as IRole)._id));
 				} else {
 					return false;
 				}

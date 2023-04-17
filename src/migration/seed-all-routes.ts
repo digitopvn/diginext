@@ -10,15 +10,18 @@ import { DB } from "../modules/api/DB";
 
 export const seedSystemRoutes = async () => {
 	// get routes from the database
-	let routes = await DB.find<IRoute>("route");
+	let dbRoutes = await DB.find<IRoute>("route", {});
+	// console.log("dbRoutes >>", dbRoutes.length);
 
 	// get all routes of Express
 	const expressRoutes = listEndpoints(app).filter((r) => r.path.indexOf("/empty") === -1 && r.path.indexOf("/auth") === -1);
-	// console.log("expressRoutes >>", expressRoutes);
+	// console.log("expressRoutes >>", expressRoutes.length);
+
+	// if (expressRoutes.length > 0) return;
 
 	// compare database's routes with all routes of Express
 	const missingRoutes = expressRoutes
-		.filter((exr) => typeof routes.find((route) => route.path === exr.path) === "undefined")
+		.filter((exr) => typeof dbRoutes.find((route) => route.path === exr.path) === "undefined")
 		.map((exr) => {
 			const generatedName = upperFirst(exr.path.replace("/api/v1/", "").split("/").join(" ").split("-").join(" ").split("_").join("-"));
 			return { name: generatedName, path: exr.path, methods: exr.methods as RequestMethodType[] } as IRoute;
@@ -35,10 +38,10 @@ export const seedSystemRoutes = async () => {
 	}
 
 	// compare methods of database routes with methods of Express routes
-	routes = await DB.find<IRoute>("route"); // <-- fetch database routes again to get latest ones
+	dbRoutes = await DB.find<IRoute>("route", {}); // <-- fetch database routes again to get latest ones
 	const updateRoutes = expressRoutes
 		.filter((exr) => {
-			const _route = routes.find((route) => route.path === exr.path);
+			const _route = dbRoutes.find((route) => route.path === exr.path);
 			if (!_route) return false;
 
 			const routeMethods = _route.methods.join(",").toUpperCase();

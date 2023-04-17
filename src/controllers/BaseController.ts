@@ -47,7 +47,6 @@ export default class BaseController<T = any> {
 			if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: "" });
 		}
 
-		console.log("this.pagination :>> ", this.pagination);
 		return respondSuccess({ data, ...this.pagination });
 	}
 

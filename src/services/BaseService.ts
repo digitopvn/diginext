@@ -42,7 +42,10 @@ export default class BaseService<T> {
 		// make sure "createdAt" and "updatedAt" are set when creating/updating documents
 		schema.pre("save", setDateWhenCreateDocument);
 		schema.pre("updateOne", setDateWhenUpdateDocument);
-		schema.pre("updateMany", setDateWhenUpdateDocument);
+		schema.pre("updateMany", (next) => {
+			this.update({}, { $set: { updatedAt: new Date() } });
+			next();
+		});
 
 		const collection = schema.get("collection");
 		this.model = model<T>(collection, schema, collection);
@@ -99,7 +102,14 @@ export default class BaseService<T> {
 			}
 
 			const createdDoc = new this.model(data);
-			const newItem = await createdDoc.save();
+			let newItem = await createdDoc.save();
+
+			// convert all {ObjectId} to {string}:
+			traverseObjectAndTransformValue(newItem, ([key, val]) => {
+				if (MongoDB.isObjectId(val)) return val.toString();
+				return val;
+			});
+
 			return newItem as T;
 		} catch (e) {
 			logError(e);
@@ -115,6 +125,7 @@ export default class BaseService<T> {
 			...parseRequestFilter(filter),
 			deletedAt: { $exists: false },
 		};
+		// console.log("where :>> ", where);
 		const pipelines: PipelineStage[] = [
 			{
 				$match: where,
@@ -183,7 +194,7 @@ export default class BaseService<T> {
 		if (options?.limit) pipelines.push({ $limit: options.limit });
 
 		let [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(where).exec()]);
-		// log(`results >>`, results);
+		// console.log(`results >>`, results);
 
 		// convert all {ObjectId} to {string}:
 		traverseObjectAndTransformValue(results, ([key, val]) => {
