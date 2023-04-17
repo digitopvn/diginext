@@ -2,7 +2,7 @@ import { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
 
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { IUser } from "./User";
 
 export interface IApiKeyAccount extends IUser {
@@ -15,7 +15,7 @@ export type ApiKeyAccountDto = Omit<IApiKeyAccount, keyof HiddenBodyKeys>;
 
 export const apiKeyAccountSchema = new Schema<IApiKeyAccount>(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: {
 			type: String,
 			maxlength: 250,
@@ -79,5 +79,6 @@ export const apiKeyAccountSchema = new Schema<IApiKeyAccount>(
 	},
 	{
 		collection: "api_key",
+		timestamps: true,
 	}
 );

@@ -5,7 +5,7 @@ import type { RegistryProviderType } from "@/interfaces/SystemTypes";
 import { registryProviderList } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 
 export interface IContainerRegistry extends IBase {
 	name?: string;
@@ -81,7 +81,7 @@ export type ContainerRegistryDto = Omit<IContainerRegistry, keyof HiddenBodyKeys
 
 export const containerRegistrySchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		slug: { type: String },
 		isVerified: { type: Boolean },
@@ -100,7 +100,7 @@ export const containerRegistrySchema = new Schema(
 			value: { type: String },
 		},
 	},
-	{ collection: "container_registries" }
+	{ collection: "container_registries", timestamps: true }
 );
 
 export const ContainerRegistryModel = mongoose.model("ContainerRegistry", containerRegistrySchema, "container_registries");

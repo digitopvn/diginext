@@ -6,7 +6,7 @@ import type { RequestMethodType } from "@/interfaces/SystemTypes";
 import { requestMethodList } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { IProject } from "./Project";
 import type { IUser } from "./User";
 import type { IWorkspace } from "./Workspace";
@@ -23,7 +23,7 @@ export type RouteDto = Omit<IRoute, keyof HiddenBodyKeys>;
 
 export const routeSchema = new Schema<IRoute>(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		path: { type: String },
 		methods: [{ type: String, enum: requestMethodList }],
@@ -31,7 +31,7 @@ export const routeSchema = new Schema<IRoute>(
 		project: { type: Schema.Types.ObjectId, ref: "projects" },
 		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
 	},
-	{ collection: "routes" }
+	{ collection: "routes", timestamps: true }
 );
 
 export const RouteModel = mongoose.model<IRoute>("Route", routeSchema);

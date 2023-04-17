@@ -5,7 +5,7 @@ import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { availableGitProviders } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 
 export interface IGitProvider extends IBase {
 	name?: string;
@@ -21,7 +21,7 @@ export type GitProviderDto = Omit<IGitProvider, keyof HiddenBodyKeys>;
 
 export const gitProviderSchema = new Schema<IGitProvider>(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		host: { type: String },
 		gitWorkspace: { type: String },
@@ -31,7 +31,7 @@ export const gitProviderSchema = new Schema<IGitProvider>(
 		},
 		type: { type: String, enum: availableGitProviders },
 	},
-	{ collection: "git_providers" }
+	{ collection: "git_providers", timestamps: true }
 );
 
 export const GitProviderModel = model<IGitProvider>("GitProvider", gitProviderSchema, "git_providers");

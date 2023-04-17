@@ -6,15 +6,22 @@ import type { DeleteResult } from "mongodb";
 import type { Document, Model, PipelineStage, Schema } from "mongoose";
 import { model } from "mongoose";
 
+import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { isValidObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
 
-export function setDateWhenUpdateDocument(next: (error?: NativeError) => void) {
-	// "this" refers to the query object
+function setDateWhenUpdateDocument(this: IBase, next: (error?: NativeError) => void) {
 	this.updateOne({}, { $set: { updatedAt: new Date() } });
+	next();
+}
+
+function setDateWhenCreateDocument(this: IBase, next: (error?: NativeError) => void) {
+	const now = new Date();
+	this.updatedAt = now;
+	if (!this.createdAt) this.createdAt = now;
 	next();
 }
 
@@ -31,7 +38,8 @@ export default class BaseService<T extends Document> {
 	req?: AppRequest;
 
 	constructor(schema: Schema) {
-		// make sure "updatedAt" is set when updating documents
+		// make sure "createdAt" and "updatedAt" are set when creating/updating documents
+		schema.pre("save", setDateWhenCreateDocument);
 		schema.pre("updateOne", setDateWhenUpdateDocument);
 		schema.pre("updateMany", setDateWhenUpdateDocument);
 
@@ -41,12 +49,11 @@ export default class BaseService<T extends Document> {
 
 	async count(filter?: IQueryFilter, options?: IQueryOptions) {
 		const parsedFilter = parseRequestFilter(filter);
-		parsedFilter.$or = [{ deletedAt: { $eq: null } }, { deletedAt: { $eq: undefined } }];
+		parsedFilter.deletedAt = { $exists: false };
 		return this.model.countDocuments({ ...parsedFilter, ...options }).exec();
 	}
 
 	async create(data: any): Promise<T> {
-		const now = new Date();
 		try {
 			// generate slug (if needed)
 			const scope = this;
@@ -90,7 +97,7 @@ export default class BaseService<T extends Document> {
 				}
 			}
 
-			const createdDoc = new this.model({ ...data, createdAt: now, updatedAt: now });
+			const createdDoc = new this.model(data);
 			const newItem = await createdDoc.save();
 			return newItem as T;
 		} catch (e) {
@@ -107,7 +114,7 @@ export default class BaseService<T extends Document> {
 			{
 				$match: {
 					...parseRequestFilter(filter),
-					$or: [{ deletedAt: { $eq: null } }, { deletedAt: { $eq: undefined } }],
+					deletedAt: { $exists: false },
 				},
 			},
 		];
@@ -206,7 +213,7 @@ export default class BaseService<T extends Document> {
 		data.updatedAt = new Date();
 
 		const updateFilter = parseRequestFilter(filter);
-		updateFilter.deletedAt = null;
+		updateFilter.deletedAt = { $exists: false };
 
 		const updateData = options?.raw ? data : { $set: data };
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();

@@ -26,7 +26,7 @@ import { ClusterService, ContainerRegistryService, GitProviderService, Workspace
  * - Connect GIT providers (if any)
  * - Connect Container Registries (if any)
  * - Connect K8S clusters (if any)
- * - Start cron jobs
+ * - Start system cronjobs
  * - Seed some initial data
  */
 export async function startupScripts() {

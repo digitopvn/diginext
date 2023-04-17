@@ -3,7 +3,7 @@ import { Schema } from "mongoose";
 import type { HiddenBodyKeys } from "@/interfaces";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 
 export interface IWorkspace extends IBase {
 	/**
@@ -33,7 +33,7 @@ export type WorkspaceDto = Omit<IWorkspace, keyof HiddenBodyKeys>;
 
 export const workspaceSchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		slug: { type: String },
 		public: { type: Boolean },
@@ -41,5 +41,5 @@ export const workspaceSchema = new Schema(
 		domain: { type: String },
 		owner: { type: Schema.Types.ObjectId, ref: "users" },
 	},
-	{ collection: "workspaces" }
+	{ collection: "workspaces", timestamps: true }
 );

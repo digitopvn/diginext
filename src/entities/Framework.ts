@@ -6,7 +6,7 @@ import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { availableGitProviders } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { IGitProvider } from "./GitProvider";
 
 export type FrameworkDto = Omit<IFramework, keyof HiddenBodyKeys>;
@@ -38,7 +38,7 @@ export interface IFramework extends IBase {
 
 export const frameworkSchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		host: { type: String },
 		gitProvider: { type: String, enum: availableGitProviders },
@@ -49,7 +49,7 @@ export const frameworkSchema = new Schema(
 		mainBranch: { type: String },
 		downloads: { type: Number },
 	},
-	{ collection: "frameworks" }
+	{ collection: "frameworks", timestamps: true }
 );
 
 export const FrameworkModel = mongoose.model("frameworks", frameworkSchema, "frameworks");

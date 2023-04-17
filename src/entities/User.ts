@@ -4,7 +4,7 @@ import { Schema } from "mongoose";
 import type { HiddenBodyKeys } from "@/interfaces";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { IRole } from "./Role";
 import type { ITeam } from "./Team";
 import type { IWorkspace } from "./Workspace";
@@ -67,7 +67,7 @@ export interface IUser extends IBase {
 
 export const userSchema = new Schema<IUser>(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: {
 			type: String,
 			maxlength: 250,
@@ -131,5 +131,6 @@ export const userSchema = new Schema<IUser>(
 	},
 	{
 		collection: "users",
+		timestamps: true,
 	}
 );

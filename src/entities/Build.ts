@@ -6,7 +6,7 @@ import type { BuildStatus } from "@/interfaces/SystemTypes";
 
 import type { IApp } from "./App";
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { IContainerRegistry } from "./ContainerRegistry";
 
 export interface IBuild extends IBase {
@@ -62,7 +62,7 @@ export type BuildDto = Omit<IBuild, keyof HiddenBodyKeys>;
 
 export const buildSchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		image: { type: String },
 		tag: { type: String },
@@ -80,7 +80,7 @@ export const buildSchema = new Schema(
 		registry: { type: Schema.Types.ObjectId, ref: "container_registries" },
 		app: { type: Schema.Types.ObjectId, ref: "apps" },
 	},
-	{ collection: "builds" }
+	{ collection: "builds", timestamps: true }
 );
 
 export const BuildModel = mongoose.model("Build", buildSchema, "builds");

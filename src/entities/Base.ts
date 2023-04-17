@@ -39,7 +39,7 @@ export interface EntityConstructor {
 	new (...args: any[]): {};
 }
 
-export const baseSchemaOptions = {
+export const baseSchemaDefinitions = {
 	slug: { type: String },
 	active: { type: Boolean, default: true },
 	metadata: { type: Object },

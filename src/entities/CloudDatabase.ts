@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 import type { HiddenBodyKeys } from "@/interfaces";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 
 export interface ICloudDatabase extends IBase {
 	name?: string;
@@ -19,7 +19,7 @@ export type CloudDatabaseDto = Omit<ICloudDatabase, keyof HiddenBodyKeys>;
 
 export const cloudDatabaseSchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		type: { type: String, enum: ["mongodb", "mysql", "mariadb", "postgresql", "sqlserver", "sqlite", "redis", "dynamodb"] },
 		provider: { type: String },
@@ -29,7 +29,7 @@ export const cloudDatabaseSchema = new Schema(
 		port: { type: Number },
 		connectionStr: { type: String },
 	},
-	{ collection: "cloud_databases" }
+	{ collection: "cloud_databases", timestamps: true }
 );
 
 export const CloudDatabaseModel = mongoose.model("CloudDatabase", cloudDatabaseSchema, "cloud_databases");

@@ -3,7 +3,7 @@ import { model, Schema } from "mongoose";
 import type { HiddenBodyKeys } from "@/interfaces";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 
 export interface IActivity extends IBase {
 	name?: string;
@@ -22,7 +22,7 @@ export type ActivityDto = Omit<IActivity, keyof HiddenBodyKeys>;
 
 export const activitySchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: String,
 		message: String,
 		url: String,
@@ -34,7 +34,7 @@ export const activitySchema = new Schema(
 		response: String,
 		responseStatus: Number,
 	},
-	{ collection: "activities" }
+	{ collection: "activities", timestamps: true }
 );
 
 export const ActivityModel = model<IActivity>("Activity", activitySchema, "activities");

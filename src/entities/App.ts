@@ -5,7 +5,7 @@ import type { DeployEnvironment } from "@/interfaces/DeployEnvironment";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 
 export interface AppGitInfo {
 	/**
@@ -65,7 +65,7 @@ export type AppDto = Omit<IApp, keyof HiddenBodyKeys>;
 
 export const appSchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		image: { type: String },
 		slug: { type: String },
@@ -86,5 +86,5 @@ export const appSchema = new Schema(
 		latestBuild: { type: String },
 		projectSlug: { type: String },
 	},
-	{ collection: "apps" }
+	{ collection: "apps", timestamps: true }
 );

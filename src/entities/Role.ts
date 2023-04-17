@@ -5,7 +5,7 @@ import type { HiddenBodyKeys } from "@/interfaces";
 import type { IRoutePermission, IRouteScope } from "@/interfaces/IPermission";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { IProject } from "./Project";
 import type { IUser } from "./User";
 import type { IWorkspace } from "./Workspace";
@@ -56,7 +56,7 @@ const RoleRouteSchema = new Schema({
 
 export const roleSchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String, required: true },
 		routes: { type: [RoleRouteSchema], required: true },
 		maskedFields: { type: [String] },
@@ -65,7 +65,7 @@ export const roleSchema = new Schema(
 		project: { type: Schema.Types.ObjectId, ref: "projects" },
 		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
 	},
-	{ collection: "roles" }
+	{ collection: "roles", timestamps: true }
 );
 
 export const RoleModel = model<IRole>("Role", roleSchema, "roles");

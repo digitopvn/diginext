@@ -2,7 +2,7 @@ import { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
 
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { IUser } from "./User";
 
 export interface IServiceAccount extends IUser {
@@ -12,7 +12,7 @@ export type ServiceAccountDto = Omit<IServiceAccount, keyof HiddenBodyKeys>;
 
 export const serviceAccountSchema = new Schema<IServiceAccount>(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: {
 			type: String,
 			maxlength: 250,
@@ -76,5 +76,6 @@ export const serviceAccountSchema = new Schema<IServiceAccount>(
 	},
 	{
 		collection: "service_account",
+		timestamps: true,
 	}
 );

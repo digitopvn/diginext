@@ -5,7 +5,7 @@ import type { CloudProviderType } from "@/interfaces/SystemTypes";
 import { cloudProviderList } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { ICluster } from "./Cluster";
 
 export interface ICloudProvider extends IBase {
@@ -37,14 +37,14 @@ export type CloudProviderDto = Omit<ICloudProvider, keyof HiddenBodyKeys>;
 
 export const cloudProviderSchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		shortName: { type: String, enum: cloudProviderList },
 		apiAccessToken: { type: String },
 		serviceAccount: { type: String },
 		clusters: [{ type: Schema.Types.ObjectId, ref: "clusters" }],
 	},
-	{ collection: "cloud_providers" }
+	{ collection: "cloud_providers", timestamps: true }
 );
 
 export const CloudProviderModel = mongoose.model("CloudProvider", cloudProviderSchema, "cloud_providers");

@@ -5,7 +5,7 @@ import type { HiddenBodyKeys } from "@/interfaces";
 
 import type { IApp } from "./App";
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { IUser } from "./User";
 import type { IWorkspace } from "./Workspace";
 
@@ -41,7 +41,7 @@ export type ProjectDto = Omit<IProject, keyof HiddenBodyKeys>;
 
 export const projectSchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		image: { type: String },
 		slug: { type: String },
@@ -56,5 +56,5 @@ export const projectSchema = new Schema(
 		owner: { type: Schema.Types.ObjectId, ref: "users" },
 		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
 	},
-	{ collection: "projects" }
+	{ collection: "projects", timestamps: true }
 );

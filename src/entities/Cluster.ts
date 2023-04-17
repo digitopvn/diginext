@@ -4,7 +4,7 @@ import type { HiddenBodyKeys } from "@/interfaces";
 import type { CloudProviderType } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { ICloudProvider } from "./CloudProvider";
 
 export interface ICluster extends IBase {
@@ -82,7 +82,7 @@ export type ClusterDto = Omit<ICluster, keyof HiddenBodyKeys>;
 
 export const clusterSchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		slug: { type: String },
 		isVerified: { type: Boolean },
@@ -100,7 +100,7 @@ export const clusterSchema = new Schema(
 		serviceAccount: { type: String },
 		apiAccessToken: { type: String },
 	},
-	{ collection: "clusters" }
+	{ collection: "clusters", timestamps: true }
 );
 
 export const ClusterModel = mongoose.model("Cluster", clusterSchema, "clusters");

@@ -6,7 +6,7 @@ import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { BuildStatus } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
-import { baseSchemaOptions } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 import type { IApp, IBuild } from "./index";
 
 export interface IRelease extends IBase {
@@ -65,7 +65,7 @@ export type ReleaseDto = Omit<IRelease, keyof HiddenBodyKeys>;
 
 export const releaseSchema = new Schema(
 	{
-		...baseSchemaOptions,
+		...baseSchemaDefinitions,
 		name: { type: String },
 		image: { type: String },
 		cliVersion: { type: String },
@@ -109,7 +109,7 @@ export const releaseSchema = new Schema(
 		project: { type: Schema.Types.ObjectId, ref: "projects" },
 		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
 	},
-	{ collection: "releases" }
+	{ collection: "releases", timestamps: true }
 );
 
 export const ReleaseModel = model<IRelease>("Release", releaseSchema, "releases");
