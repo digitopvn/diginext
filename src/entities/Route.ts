@@ -1,4 +1,3 @@
-import type { Types } from "mongoose";
 import mongoose, { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
@@ -7,17 +6,11 @@ import { requestMethodList } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
-import type { IProject } from "./Project";
-import type { IUser } from "./User";
-import type { IWorkspace } from "./Workspace";
 
 export interface IRoute extends IBase {
 	name?: string;
 	path?: string;
 	methods?: RequestMethodType[];
-	owner?: Types.ObjectId | IUser | string;
-	project?: Types.ObjectId | IProject | string;
-	workspace?: Types.ObjectId | IWorkspace | string;
 }
 export type RouteDto = Omit<IRoute, keyof HiddenBodyKeys>;
 

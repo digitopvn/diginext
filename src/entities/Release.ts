@@ -33,6 +33,10 @@ export interface IRelease extends IBase {
 	diginext?: any;
 	appConfig?: AppConfig;
 	namespace?: string;
+	/**
+	 * @deprecated
+	 * Use `deploymentYaml` instead.
+	 */
 	prodYaml?: string;
 	preYaml?: string;
 	prereleaseUrl?: string;

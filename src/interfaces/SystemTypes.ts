@@ -13,13 +13,17 @@ export interface AppResponse extends express.Response {
 	body?: string;
 }
 
-// cloud providers
+// http methods
 export const requestMethodList = ["GET", "POST", "PATCH", "DELETE"] as const;
 export type RequestMethodType = typeof requestMethodList[number];
 
 // cloud providers
 export const cloudProviderList = ["gcloud", "digitalocean", "custom"] as const;
 export type CloudProviderType = typeof cloudProviderList[number];
+
+// database providers
+export const cloudDatabaseList = ["mongodb", "mysql", "mariadb", "postgresql", "sqlserver", "sqlite", "redis", "dynamodb"] as const;
+export type CloudDatabaseType = typeof cloudDatabaseList[number];
 
 // container registry providers
 export const registryProviderList = ["gcloud", "digitalocean", "dockerhub"] as const;

@@ -1,13 +1,14 @@
 import mongoose, { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
+import type { CloudDatabaseType } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
 
 export interface ICloudDatabase extends IBase {
 	name?: string;
-	type?: "mongodb" | "mysql" | "mariadb" | "postgresql" | "sqlserver" | "sqlite" | "redis" | "dynamodb";
+	type?: CloudDatabaseType;
 	provider?: string;
 	user?: string;
 	pass?: string;

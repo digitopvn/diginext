@@ -1,20 +1,15 @@
-import type { Types } from "mongoose";
 import { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
-import type { IProject, IUser, IWorkspace } from "./index";
 // import type { User } from "./User";
 // import type { Workspace } from "./Workspace";
 
 export interface ITeam extends IBase {
 	name: string;
 	image?: string;
-	owner?: Types.ObjectId | IUser | string;
-	project?: Types.ObjectId | IProject | string;
-	workspace?: Types.ObjectId | IWorkspace;
 }
 export type TeamDto = Omit<ITeam, keyof HiddenBodyKeys>;
 

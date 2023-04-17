@@ -11,6 +11,12 @@ import type { IGitProvider } from "./GitProvider";
 
 export type FrameworkDto = Omit<IFramework, keyof HiddenBodyKeys>;
 
+/**
+ * An interface that extends IBase and describes the properties of a framework.
+ *
+ * @interface IFramework
+ * @extends {IBase}
+ */
 export interface IFramework extends IBase {
 	name?: string;
 	host?: string;
@@ -27,11 +33,36 @@ export interface IFramework extends IBase {
 	 * @remarks This can be populated to {GitProvider} data
 	 */
 	git?: Types.ObjectId | IGitProvider;
-	repoURL?: string;
-	repoSSH?: string;
-	mainBranch?: string;
+
 	/**
-	 * Number of downloads
+	 * The repository URL of the framework.
+	 *
+	 * @type {string}
+	 * @memberof IFramework
+	 */
+	repoURL?: string;
+
+	/**
+	 * The SSH URL of the framework.
+	 *
+	 * @type {string}
+	 * @memberof IFramework
+	 */
+	repoSSH?: string;
+
+	/**
+	 * The main branch of the framework.
+	 *
+	 * @type {string}
+	 * @memberof IFramework
+	 */
+	mainBranch?: string;
+
+	/**
+	 * The number of downloads for the framework.
+	 *
+	 * @type {number}
+	 * @memberof IFramework
 	 */
 	downloads?: number;
 }

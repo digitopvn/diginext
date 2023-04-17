@@ -30,37 +30,118 @@ export interface AppGitInfo {
 	provider?: GitProviderType;
 }
 
+/**
+ * An interface that extends IBase and describes the properties of an app.
+ *
+ * @interface IApp
+ * @extends {IBase}
+ */
 export interface IApp extends IBase {
-	name?: string;
 	/**
-	 * OPTIONAL
-	 * ---
-	 * Image URI of this app on the Container Registry (without `TAG`).
-	 * - Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`
-	 * - **Don't** specify `tag` at the end! (eg. `latest`, `beta`,...)
+	 * The name of the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
+	name?: string;
+
+	/**
+	 * OPTIONAL: The image URI of this app on the Container Registry (without `TAG`).
+	 *
+	 * Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`
+	 *
+	 * **Don't** specify `tag` at the end! (e.g., `latest`, `beta`,...)
+	 *
+	 * @type {string}
+	 * @memberof IApp
 	 * @default <registry-image-base-url>/<project-slug>/<app-name-slug>
 	 * @example "asia.gcr.io/my-workspace/my-project/my-app"
 	 */
 	image?: string;
+
+	/**
+	 * The slug of the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	slug?: string;
+
+	/**
+	 * The user who created the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	createdBy?: string;
+
+	/**
+	 * The user who last updated the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	lastUpdatedBy?: string;
+
+	/**
+	 * The Git information of the app.
+	 *
+	 * @type {AppGitInfo}
+	 * @memberof IApp
+	 */
 	git?: AppGitInfo;
+
+	/**
+	 * The framework information of the app.
+	 *
+	 * @type {{
+	 *     name?: string;
+	 *     slug?: string;
+	 *     repoURL?: string;
+	 *     repoSSH?: string;
+	 *   }}
+	 * @memberof IApp
+	 */
 	framework?: {
 		name?: string;
 		slug?: string;
 		repoURL?: string;
 		repoSSH?: string;
 	};
-	environment?: {
-		[key: string]: DeployEnvironment | string;
-	};
-	deployEnvironment?: {
-		[key: string]: DeployEnvironment;
-	};
+
+	/**
+	 * The environment information of the app.
+	 *
+	 * @type {{ [key: string]: DeployEnvironment | string }}
+	 * @memberof IApp
+	 */
+	environment?: { [key: string]: DeployEnvironment | string };
+
+	/**
+	 * The deploy environment information of the app.
+	 *
+	 * @type {{ [key: string]: DeployEnvironment }}
+	 * @memberof IApp
+	 */
+	deployEnvironment?: { [key: string]: DeployEnvironment };
+
+	/**
+	 * The latest build of the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	latestBuild?: string;
+
+	/**
+	 * The project slug of the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	projectSlug?: string;
 }
+
 export type AppDto = Omit<IApp, keyof HiddenBodyKeys>;
 
 export const appSchema = new Schema(

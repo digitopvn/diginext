@@ -1,4 +1,3 @@
-import type { Types } from "mongoose";
 import { model, Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
@@ -6,9 +5,6 @@ import type { IRoutePermission, IRouteScope } from "@/interfaces/IPermission";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
-import type { IProject } from "./Project";
-import type { IUser } from "./User";
-import type { IWorkspace } from "./Workspace";
 
 export interface RoleRoute {
 	/**
@@ -40,9 +36,6 @@ export interface IRole extends IBase {
 	 * - "moderator": default moderator role
 	 */
 	type?: string;
-	owner?: Types.ObjectId | IUser | string;
-	project?: Types.ObjectId | IProject | string;
-	workspace?: Types.ObjectId | IWorkspace | string;
 }
 export type RoleDto = Omit<IRole, keyof HiddenBodyKeys>;
 
