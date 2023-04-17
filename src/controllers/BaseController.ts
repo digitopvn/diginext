@@ -6,7 +6,6 @@ import { isEmpty, toNumber, trim } from "lodash";
 
 import { Config } from "@/app.config";
 import type { IUser, IWorkspace } from "@/entities";
-import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { isObjectId, isValidObjectId, MongoDB, toObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
@@ -19,7 +18,7 @@ import { respondFailure, respondSuccess } from "../interfaces/ResponseData";
 
 const DEFAULT_PAGE_SIZE = 100;
 
-export default class BaseController<T extends IBase = any> {
+export default class BaseController<T = any> {
 	service: BaseService<T>;
 
 	user: IUser;
@@ -48,7 +47,8 @@ export default class BaseController<T extends IBase = any> {
 			if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: "" });
 		}
 
-		return respondSuccess({ data });
+		console.log("this.pagination :>> ", this.pagination);
+		return respondSuccess({ data, ...this.pagination });
 	}
 
 	async create(inputData) {

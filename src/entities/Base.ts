@@ -1,10 +1,10 @@
-import type { Document, Types } from "mongoose";
+import type { Types } from "mongoose";
 import { Schema } from "mongoose";
 
 import type { IProject, IWorkspace } from ".";
 import type { IUser } from "./User";
 
-export interface IBase extends Document {
+export interface IBase {
 	_id?: Types.ObjectId | string;
 	/**
 	 * Slug of an item, generated automatically by its "name"

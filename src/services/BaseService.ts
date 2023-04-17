@@ -14,12 +14,12 @@ import { traverseObjectAndTransformValue } from "@/plugins/traverse";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
 
-function setDateWhenUpdateDocument(this: IBase, next: (error?: NativeError) => void) {
+function setDateWhenUpdateDocument(this: IBase & Document, next: (error?: NativeError) => void) {
 	this.updateOne({}, { $set: { updatedAt: new Date() } });
 	next();
 }
 
-function setDateWhenCreateDocument(this: IBase, next: (error?: NativeError) => void) {
+function setDateWhenCreateDocument(this: IBase & Document, next: (error?: NativeError) => void) {
 	const now = new Date();
 	this.updatedAt = now;
 	if (!this.createdAt) this.createdAt = now;
@@ -33,7 +33,7 @@ function setDateWhenCreateDocument(this: IBase, next: (error?: NativeError) => v
  */
 const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 
-export default class BaseService<T extends Document> {
+export default class BaseService<T> {
 	private readonly model: Model<T>;
 
 	req?: AppRequest;
@@ -111,12 +111,13 @@ export default class BaseService<T extends Document> {
 		// console.log(`BaseService > find :>> filter:`, filter);
 
 		// where
+		const where = {
+			...parseRequestFilter(filter),
+			deletedAt: { $exists: false },
+		};
 		const pipelines: PipelineStage[] = [
 			{
-				$match: {
-					...parseRequestFilter(filter),
-					deletedAt: { $exists: false },
-				},
+				$match: where,
 			},
 		];
 
@@ -181,7 +182,7 @@ export default class BaseService<T extends Document> {
 		if (options?.skip) pipelines.push({ $skip: options.skip });
 		if (options?.limit) pipelines.push({ $limit: options.limit });
 
-		let [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(filter).exec()]);
+		let [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(where).exec()]);
 		// log(`results >>`, results);
 
 		// convert all {ObjectId} to {string}:

@@ -54,6 +54,8 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		super(new WorkspaceService());
 	}
 
+	@Security("api_key")
+	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
