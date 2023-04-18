@@ -245,7 +245,6 @@ export default class AppController extends BaseController<IApp> {
 				});
 			return app;
 		});
-		// console.log("[2] apps :>> ", apps);
 
 		return { status: 1, data: apps } as ResponseData;
 	}
@@ -259,8 +258,6 @@ export default class AppController extends BaseController<IApp> {
 
 		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
 		if (!body.name) return respondFailure({ msg: `App's name is required.` });
-
-		console.log(`isValidObjectId(${body.project}) :>> `, MongoDB.isValidObjectId(body.project));
 
 		// find parent project of this app
 		if (MongoDB.isValidObjectId(body.project)) {
@@ -280,7 +277,6 @@ export default class AppController extends BaseController<IApp> {
 		appDto.framework = body.framework as IFramework;
 
 		// git
-		// if (isEmpty(body.git)) return respondFailure({ msg: `Git SSH URI or git repository information is required.` });
 		if (isString(body.git)) {
 			const gitData = parseGitRepoDataFromRepoSSH(body.git);
 			if (!gitData) return respondFailure({ msg: `Git repository information is not valid.` });
@@ -290,8 +286,6 @@ export default class AppController extends BaseController<IApp> {
 				repoURL: getRepoURLFromRepoSSH(gitData.gitProvider, gitData.fullSlug),
 				provider: gitData.gitProvider,
 			};
-		} else {
-			// if (!body.git.repoSSH) return respondFailure({ msg: `Git repository information is not valid.` });
 		}
 		appDto.git = body.git;
 
@@ -303,7 +297,6 @@ export default class AppController extends BaseController<IApp> {
 		} catch (e) {
 			return { status: 0, messages: [e.message] } as ResponseData;
 		}
-		// console.log("app create > newApp :>> ", newApp);
 
 		const newAppId = newApp._id;
 
@@ -314,7 +307,6 @@ export default class AppController extends BaseController<IApp> {
 		// add this new app to the project info
 		if (project) {
 			const projectApps = [...(project.apps || []), newAppId];
-			// console.log("projectApps :>> ", projectApps);
 			[project] = await DB.update<IProject>("project", { _id: project._id }, { apps: projectApps });
 		}
 
