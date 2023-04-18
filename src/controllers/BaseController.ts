@@ -36,7 +36,6 @@ export default class BaseController<T = any> {
 
 	async read() {
 		if (!this.filter) this.filter = {};
-		console.log("this.filter :>> ", this.filter);
 
 		let data: T | T[];
 		if (this.filter._id) {
@@ -59,7 +58,6 @@ export default class BaseController<T = any> {
 	}
 
 	async update(updateData) {
-		// console.log("BaseController > this.filter :>> ", this.filter);
 		const data = await this.service.update(this.filter, updateData, this.options);
 		if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 

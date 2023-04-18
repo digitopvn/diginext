@@ -325,7 +325,6 @@ export default class AppController extends BaseController<IApp> {
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: Omit<IApp, keyof HiddenBodyKeys>, @Queries() queryParams?: IPatchQueryParams) {
-		// console.log("AppController > this.filter :>> ", this.filter);
 		let project: IProject,
 			projectSvc = new ProjectService();
 
@@ -710,13 +709,20 @@ export default class AppController extends BaseController<IApp> {
 		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure({ msg: `Cluster "${clusterShortName}" not found.` });
 
-		const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
+		// if the workload has been deployed before -> update the environment variables
+		const workload = await ClusterManager.getDeployByFilter(namespace, {
 			context: cluster.contextName,
 			filterLabel: `main-app=${slug}`,
 		});
 
-		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [setEnvVarsRes] };
-		return result;
+		if (workload) {
+			const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${slug}`,
+			});
+		}
+
+		return respondSuccess({ data: updatedApp.deployEnvironment[env].envVars });
 	}
 
 	/**

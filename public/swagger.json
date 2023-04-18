@@ -5152,26 +5152,6 @@
 										{
 											"properties": {
 												"messages": {
-													"items": {},
-													"type": "array"
-												},
-												"data": {
-													"items": {
-														"$ref": "#/components/schemas/KubeEnvironmentVariable"
-													},
-													"type": "array"
-												},
-												"status": {
-													"type": "number",
-													"format": "double"
-												}
-											},
-											"required": ["messages", "data", "status"],
-											"type": "object"
-										},
-										{
-											"properties": {
-												"messages": {
 													"items": {
 														"type": "string"
 													},

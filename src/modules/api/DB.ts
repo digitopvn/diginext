@@ -304,7 +304,7 @@ export class DB {
 	}
 
 	static async delete<T = any>(collection: DBCollection, filter: any) {
-		let item;
+		let item: { ok: boolean; affected: number };
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
@@ -328,7 +328,7 @@ export class DB {
 				method: "DELETE",
 			});
 			if (!status && messages[0]) logError(`[DB] DELETE - ${url} :>>`, messages);
-			item = result;
+			item = result as { ok: boolean; affected: number };
 		}
 		return item;
 	}

@@ -80,8 +80,6 @@ export default class UserController extends BaseController<IUser> {
 			body.roles = newRoleIds;
 		}
 
-		// console.log("this.filter :>> ", this.filter);
-
 		// [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
 		if (this.filter.owner && MongoDB.toString(this.filter.owner) === MongoDB.toString(this.user._id)) delete this.filter.owner;
 

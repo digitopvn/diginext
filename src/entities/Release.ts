@@ -67,7 +67,7 @@ export interface IRelease extends IBase {
 }
 export type ReleaseDto = Omit<IRelease, keyof HiddenBodyKeys>;
 
-export const releaseSchema = new Schema(
+export const releaseSchema = new Schema<IRelease>(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
@@ -76,8 +76,8 @@ export const releaseSchema = new Schema(
 		env: { type: String },
 		envVars: [{ name: { type: String }, value: { type: String } }],
 		prereleaseEnvironment: [{ type: String }],
-		diginext: { type: Schema.Types.Mixed },
-		appConfig: { type: Map, of: String },
+		diginext: { type: String },
+		appConfig: { type: Object },
 		namespace: { type: String },
 		prodYaml: { type: String },
 		preYaml: { type: String },

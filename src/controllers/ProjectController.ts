@@ -1,12 +1,10 @@
-import { log, logWarn } from "diginext-utils/dist/console/log";
-import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IProject } from "@/entities";
 import { ProjectDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
-import ClusterManager from "@/modules/k8s";
+import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { MongoDB } from "@/plugins/mongodb";
 import AppService from "@/services/AppService";
 import ProjectService from "@/services/ProjectService";
@@ -16,6 +14,8 @@ import BaseController from "./BaseController";
 @Tags("Project")
 @Route("project")
 export default class ProjectController extends BaseController<IProject> {
+	service: ProjectService;
+
 	constructor() {
 		super(new ProjectService());
 	}
@@ -44,36 +44,9 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	async delete(@Queries() queryParams?: IDeleteQueryParams) {
-		const project = await this.service.findOne(this.filter);
-		if (!project) return { status: 0, messages: [`Project not found.`] } as ResponseData;
-
-		const appSvc = new AppService();
-		const apps = await appSvc.find({ project: project._id });
-
-		// delete all apps relatively:
-		if (!isEmpty(apps)) {
-			apps.map(async (app) => {
-				// also delete app's namespace on the cluster:
-				Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
-					if (!isEmpty(deployEnvironment)) {
-						const { cluster, namespace } = deployEnvironment;
-						try {
-							await ClusterManager.authCluster(cluster);
-							await ClusterManager.deleteNamespaceByCluster(namespace, cluster);
-							log(`[PROJECT DELETE] ${app.slug} > Deleted "${namespace}" namespace on "${cluster}" cluster.`);
-						} catch (e) {
-							logWarn(`[PROJECT DELETE] ${app.slug} > Can't delete "${namespace}" namespace on "${cluster}" cluster:`, e);
-						}
-					}
-				});
-
-				// delete app in database:
-				appSvc.softDelete({ _id: app._id });
-			});
-		}
-
-		return super.delete();
+	async softDelete(@Queries() queryParams?: IDeleteQueryParams) {
+		const result = await this.service.softDelete(this.filter);
+		return result.ok ? respondSuccess({ data: result }) : respondFailure(`Can't delete a project.`);
 	}
 
 	@Security("api_key")

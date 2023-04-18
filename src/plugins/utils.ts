@@ -979,14 +979,12 @@ interface ResolveApplicationFilePathOptions {
  * Resolve a location path of the file within the application.
  */
 export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicationFilePathOptions) => {
-	const { targetDirectory = process.cwd(), env, ignoreIfNotExisted = false } = options;
+	const { targetDirectory = process.cwd(), env = "dev", ignoreIfNotExisted = false } = options;
 
-	let filePath = env ? path.resolve(targetDirectory, `${fileNamePrefix}.${env}`) : path.resolve(targetDirectory, fileNamePrefix);
+	let filePath = path.resolve(targetDirectory, `${fileNamePrefix}.${env}`);
 	if (fs.existsSync(filePath)) return filePath;
 
-	filePath = env
-		? path.resolve(targetDirectory, `deployment/${fileNamePrefix}.${env}`)
-		: path.resolve(targetDirectory, `deployment/${fileNamePrefix}`);
+	filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}.${env}`);
 	if (fs.existsSync(filePath)) return filePath;
 
 	filePath = path.resolve(targetDirectory, fileNamePrefix);
@@ -995,14 +993,11 @@ export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicat
 	filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}`);
 	if (fs.existsSync(filePath)) return filePath;
 
-	if (!fs.existsSync(filePath)) {
-		if (!ignoreIfNotExisted) {
-			const message = `Missing "${targetDirectory}/${fileNamePrefix}" file, please create one.`;
-			logError(message);
-			return;
-		}
+	if (!ignoreIfNotExisted) {
+		const message = `Missing "${targetDirectory}/${fileNamePrefix}" file, please create one.`;
+		logError(message);
 	}
-	return filePath;
+	return;
 };
 
 /**

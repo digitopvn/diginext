@@ -2,7 +2,6 @@ import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
-import type { DeleteResult } from "mongodb";
 import type { Document, Model, PipelineStage, Schema } from "mongoose";
 import { model } from "mongoose";
 
@@ -107,7 +106,7 @@ export default class BaseService<T> {
 		}
 	}
 
-	async find(filter?: IQueryFilter, options: IQueryOptions & IQueryPagination = {}, pagination?: IQueryPagination) {
+	async find(filter: IQueryFilter = {}, options: IQueryOptions & IQueryPagination = {}, pagination?: IQueryPagination) {
 		// console.log(`BaseService > find :>> filter:`, filter);
 
 		// where
@@ -238,7 +237,7 @@ export default class BaseService<T> {
 		const updateData = options?.raw ? data : { $set: data };
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
 
-		if (updateRes.matchedCount > 0) {
+		if (updateRes.acknowledged) {
 			const results = await this.find(updateFilter, options);
 			return results;
 		} else {
@@ -250,17 +249,17 @@ export default class BaseService<T> {
 		return this.update(filter, data, { ...options, limit: 1 });
 	}
 
-	async softDelete(filter?: IQueryFilter): Promise<{ ok?: number; error?: string }> {
-		// Manually update "deleteAt" to database since TypeORM MongoDB doesn't support "softDelete" yet
+	async softDelete(filter?: IQueryFilter) {
 		const deleteFilter = filter;
-		const deleteRes = await this.model.updateMany(deleteFilter, { $set: { deletedAt: new Date() } }).exec();
-		return { ok: deleteRes.matchedCount };
+		const deletedItems = await this.update(deleteFilter, { deletedAt: new Date() });
+		console.log("deletedItems :>> ", deletedItems);
+		return { ok: deletedItems.length > 0, affected: deletedItems.length };
 	}
 
-	async delete(filter?: IQueryFilter): Promise<DeleteResult> {
+	async delete(filter?: IQueryFilter) {
 		const deleteFilter = filter;
 		const deleteRes = await this.model.deleteMany(deleteFilter).exec();
-		return deleteRes;
+		return { ok: deleteRes.deletedCount > 0, affected: deleteRes.deletedCount };
 	}
 
 	async empty(filter?: IQueryFilter) {

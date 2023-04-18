@@ -55,6 +55,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 		git: app.git,
 		environment: app.deployEnvironment || {},
 	} as AppConfig;
+	console.log("createReleaseFromBuild > appConfig :>> ", appConfig);
 
 	// prepare release data
 	const data = {
