@@ -36,7 +36,8 @@ export default class BaseController<T = any> {
 	}
 
 	async read() {
-		// console.log("this.filter :>> ", this.filter);
+		if (!this.filter) this.filter = {};
+		console.log("this.filter :>> ", this.filter);
 
 		let data: T | T[];
 		if (this.filter._id) {

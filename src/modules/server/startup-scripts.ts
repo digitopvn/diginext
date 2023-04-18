@@ -41,6 +41,7 @@ export async function startupScripts() {
 
 	const gitSvc = new GitProviderService();
 	const gitProviders = await gitSvc.find({});
+	console.dir(gitProviders, { depth: 10 });
 	if (!isEmpty(gitProviders)) {
 		for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
 	}
@@ -60,7 +61,7 @@ export async function startupScripts() {
 	const wsSvc = new WorkspaceService();
 	let workspaces = await wsSvc.find({}, { populate: ["owner"] });
 	// console.log(`workspace :>>`);
-	// console.dir(workspaces, { depth: 10 });
+	console.dir(workspaces, { depth: 10 });
 	// if (workspaces) return;
 
 	if (workspaces.length > 0) {

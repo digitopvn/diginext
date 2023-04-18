@@ -131,7 +131,7 @@ export default class UserController extends BaseController<IUser> {
 			const userId = uid;
 
 			// workspace in query could be "_id" and also "slug":
-			let workspaceId = MongoDB.isValidObjectId(workspaceIdOrSlug) ? workspaceIdOrSlug : undefined;
+			let workspaceId = MongoDB.isValidObjectId(workspaceIdOrSlug) || MongoDB.isObjectId(workspaceIdOrSlug) ? workspaceIdOrSlug : undefined;
 			// return undefined if can't convert to "ObjectId" -> it's a "slug" !!! (lol)
 			let workspaceSlug = !workspaceId ? workspaceIdOrSlug : undefined;
 
@@ -146,16 +146,20 @@ export default class UserController extends BaseController<IUser> {
 			const workspace = await workspaceSvc.findOne(wsFilter);
 			if (!workspace) throw new Error(`Workspace not found.`);
 
+			// console.dir(workspace, { depth: 10 });
+
 			workspaceId = MongoDB.toString(workspace._id);
 
 			// find the user
 			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId });
 			if (!user) throw new Error(`User not found.`);
+			// console.dir(user, { depth: 10 });
 
 			const wsId = workspaceId;
 			const workspaceIds = user.workspaces || [];
 			const isUserInWorkspace = workspaceIds.includes(wsId);
-
+			// console.log("workspaceIds :>> ", workspaceIds);
+			// console.log("isUserInWorkspace :>> ", isUserInWorkspace);
 			// add this workspace to user's workspace list
 			if (!isUserInWorkspace) workspaceIds.push(workspaceId);
 
@@ -167,11 +171,15 @@ export default class UserController extends BaseController<IUser> {
 
 			// set default roles if this user doesn't have one
 			const memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: workspaceId });
+			// console.dir(memberRole, { depth: 10 });
+
 			const roles = user.roles || [];
 			if (isEmpty(roles) || !roles.includes(memberRole._id)) roles.push(memberRole._id);
 
 			// set active workspace of this user -> this workspace
 			[user] = await this.service.update({ _id: userId }, { activeWorkspace: workspaceId, workspaces: workspaceIds, roles }, this.options);
+			// console.log("user :>> ");
+			// console.dir(user, { depth: 10 });
 
 			// return the updated user:
 			return respondSuccess({ data: user });

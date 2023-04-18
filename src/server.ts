@@ -23,6 +23,7 @@ import { Config, IsDev } from "./app.config";
 import type { AppRequest } from "./interfaces/SystemTypes";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
 import AppDatabase from "./modules/AppDatabase";
+import { startupScripts } from "./modules/server/startup-scripts";
 import routes from "./routes/routes";
 
 // const logger = new LogStream();
@@ -178,7 +179,7 @@ function initialize() {
 	 * - Connect container registries (if any)
 	 * - Connect K8S clusters (if any)
 	 */
-	// startupScripts();
+	startupScripts();
 }
 
 if (CLI_MODE === "server") {
