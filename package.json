@@ -73,7 +73,7 @@
 		"check-types": "tsc --noEmit --pretty -p tsconfig.json",
 		"lint": "eslint \"src/**/*.ts\" --fix && pnpm check-types",
 		"clean": "rimraf .yarn/cache node_modules yarn.lock pnpm-lock.yaml dist",
-		"test": "CLI_MODE=server jest --detectOpenHandles",
+		"test": "CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false",
 		"coverage": "pnpm lint && pnpm build && jest --coverage",
 		"format": "prettier 'src/**/*.{js,ts,tsx,json,yaml}' --write && pnpm lint",
 		"commit": "git add . && cz && git push origin && exit 0",

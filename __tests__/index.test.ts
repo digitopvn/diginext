@@ -1,16 +1,19 @@
-import { setupTestEnvironment } from "./helpers";
+import { setupEndTestEnvironment, setupStartTestEnvironment } from "./helpers";
 import { checkInitialData } from "./core/initial-data";
 import { checkSystemStatus } from "./core/system-status";
 
-describe("Test suite", () => {
-	setupTestEnvironment();
+describe("Diginext server", () => {
+	// Start
+	beforeAll(async () => await setupStartTestEnvironment());
+	// End
+	afterAll(async () => await setupEndTestEnvironment());
 
-	// System
+	// 1. System
 	checkSystemStatus();
 
-	// Check initial data
+	// 2. Check initial data
 	checkInitialData();
 });
 
-// nothing
+// nothing, just because Jest will not work without exporting something
 export {};

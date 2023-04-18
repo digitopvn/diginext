@@ -86,7 +86,7 @@ export default class BaseService<T> {
 				const userId = user?._id;
 				data.owner = userId;
 
-				if (user.activeWorkspace) {
+				if (this.model.collection.name !== "workspaces" && user.activeWorkspace) {
 					const workspaceId = (user.activeWorkspace as any)._id ? (user.activeWorkspace as any)._id : (user.activeWorkspace as any);
 					data.workspace = workspaceId;
 				}

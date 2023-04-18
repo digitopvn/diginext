@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { isEmpty } from "lodash";
 import cronjob from "node-cron";
 
-import { isDevMode } from "@/app.config";
+import { isDevMode, IsTest } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
@@ -18,6 +18,7 @@ import { connectRegistry } from "@/modules/registry/connect-registry";
 import { execCmd } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
 import { seedSystemInitialData } from "@/seeds/seed-system";
+import { setServerStatus } from "@/server";
 import { ClusterService, ContainerRegistryService, GitProviderService, WorkspaceService } from "@/services";
 
 /**
@@ -43,8 +44,14 @@ export async function startupScripts() {
 	const gitProviders = await gitSvc.find({});
 	// console.log("gitProviders :>> ");
 	// console.dir(gitProviders, { depth: 10 });
-	if (!isEmpty(gitProviders)) {
-		for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
+
+	/**
+	 * No need to verify SSH for "test" environment?
+	 */
+	if (!IsTest()) {
+		if (!isEmpty(gitProviders)) {
+			for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
+		}
 	}
 
 	// set global identity
@@ -103,4 +110,9 @@ export async function startupScripts() {
 	await migrateDefaultServiceAccountAndApiKeyUser();
 	// await migrateAllUsers();
 	// await migrateUserWorkspaces();
+
+	/**
+	 * Mark "healthz" return true & server is ready to receive connections:
+	 */
+	setServerStatus(true);
 }

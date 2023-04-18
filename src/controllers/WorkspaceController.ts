@@ -5,8 +5,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 import { Config } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { IRole, IUser, IWorkspace } from "@/entities";
-import type { IBase } from "@/entities/Base";
-import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
+import type { ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import { sendDiginextEmail } from "@/modules/diginext/dx-email";
@@ -29,7 +28,7 @@ interface ApiUserAndServiceAccountQueries extends IGetQueryParams {
 	workspace: Types.ObjectId | string;
 }
 
-interface WorkspaceInputData extends Omit<IBase, keyof HiddenBodyKeys> {
+interface WorkspaceInputData {
 	/**
 	 * Name of the workspace.
 	 */
@@ -80,6 +79,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		// [1] Create new workspace:
 		// console.log("createWorkspace > body :>> ", body);
 		const newWorkspace = await this.service.create(body);
+		// console.log("createWorkspace > newWorkspace :>> ", newWorkspace);
 		if (!newWorkspace) return respondFailure(`Failed to create new workspace.`);
 
 		/**
@@ -107,8 +107,6 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: WorkspaceInputData, @Queries() queryParams?: IPostQueryParams) {
-		const { slug } = body;
-
 		return super.update(body);
 	}
 

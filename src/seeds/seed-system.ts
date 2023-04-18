@@ -19,7 +19,7 @@ const initialCloudProviders = [
 	},
 ] as ICloudProvider[];
 
-export const seedDefaultProviders = async () => {
+export const seedDefaultCloudProviders = async () => {
 	const results = (
 		await Promise.all(
 			initialCloudProviders.map(async (providerData) => {
@@ -37,7 +37,7 @@ export const seedDefaultProviders = async () => {
 
 export const seedSystemInitialData = async () => {
 	// cloud providers
-	await seedDefaultProviders();
+	await seedDefaultCloudProviders();
 
 	// system routes
 	await seedSystemRoutes();

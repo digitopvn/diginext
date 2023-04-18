@@ -18,6 +18,8 @@ export default class CloudProviderController extends BaseController<ICloudProvid
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
+		if (this.filter && this.filter.owner) delete this.filter.owner;
+		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.read();
 	}
 
@@ -25,6 +27,8 @@ export default class CloudProviderController extends BaseController<ICloudProvid
 	@Security("jwt")
 	@Post("/")
 	create(@Body() body: CloudProviderDto, @Queries() queryParams?: IPostQueryParams) {
+		if (this.filter && this.filter.owner) delete this.filter.owner;
+		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.create(body);
 	}
 
@@ -32,6 +36,8 @@ export default class CloudProviderController extends BaseController<ICloudProvid
 	@Security("jwt")
 	@Patch("/")
 	update(@Body() body: CloudProviderDto, @Queries() queryParams?: IPostQueryParams) {
+		if (this.filter && this.filter.owner) delete this.filter.owner;
+		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.update(body);
 	}
 
@@ -39,6 +45,8 @@ export default class CloudProviderController extends BaseController<ICloudProvid
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
+		if (this.filter && this.filter.owner) delete this.filter.owner;
+		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.delete();
 	}
 }

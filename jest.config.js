@@ -12,5 +12,5 @@ module.exports = {
 	collectCoverage: false,
 	testEnvironment: "node",
 	coverageReporters: ["json", "lcov", "text", "clover"] // "text-summary"
-
+	
 };

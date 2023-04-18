@@ -44,6 +44,7 @@ import WorkspaceController from "../src/controllers/WorkspaceController";
 
 import { isEmpty } from "lodash";
 import { MongoDB } from "../src/plugins/mongodb";
+import mongoose from "mongoose";
 
 const user1 = { name: "Test User 1", email: "user1@test.local" } as IUser;
 const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
@@ -88,19 +89,21 @@ export const workspaceCtl = new WorkspaceController();
 export let currentUser: IUser;
 export let currentWorkspace: IWorkspace;
 
-export function setupTestEnvironment() {
-	beforeAll(async () => {
-		// wait until the server is completely READY...
-		await waitUntil(() => isServerReady === true, 1, 2 * 60);
-	});
+export async function setupStartTestEnvironment() {
+	// wait until the server is completely READY...
+	await waitUntil(() => isServerReady === true, 1, 2 * 60);
+}
 
-	afterAll(async () => {
-		// wait 1m before tearing down Jest...
-		await wait(10000);
-		await AppDatabase.disconnect();
-		await socketIO.close();
-		await server.close();
-	}, 15 * 1000);
+export async function setupEndTestEnvironment() {
+	// wait 10s before tearing down Jest...
+	// await wait(10000);
+	// mongoose.connection.db.
+	const dropDbResult = await mongoose.connection.db.dropDatabase({ dbName: `diginext-test` });
+	console.log("dropDbResult :>> ", dropDbResult);
+
+	await AppDatabase.disconnect();
+	await socketIO.close();
+	await server.close();
 }
 
 export const createUser = async (data: UserDto) => {
@@ -111,6 +114,9 @@ export const createUser = async (data: UserDto) => {
 export const createWorkspace = async (name: string) => {
 	if (!currentUser) throw new Error(`Unauthenticated.`);
 	const ownerId = MongoDB.toString(currentUser._id);
+
+	if (!ownerId) throw new Error(`createWorkspace > "ownerId" is not defined.`);
+
 	const workspace = await workspaceCtl.create({
 		name,
 		owner: ownerId,
