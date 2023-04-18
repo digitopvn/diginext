@@ -6,6 +6,8 @@ import { MongoDB } from "@/plugins/mongodb";
 export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	// ADMIN
 	let adminRole = await DB.findOne<IRole>("role", { type: "admin", workspace: workspace._id });
+	// console.log("workspace._id :>> ", workspace._id);
+	// console.log("adminRole :>> ", adminRole);
 
 	if (!adminRole) {
 		const adminRoleDto = {} as IRole;
@@ -20,12 +22,6 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	}
 
 	// assign admin role to the "owner" user
-	// console.log("owner._id :>> ", owner._id);
-	// console.log(typeof owner._id);
-	// console.log("Types.ObjectId :>>", owner._id instanceof Types.ObjectId);
-	// console.log("mongoose.mongo.ObjectId :>>", owner._id instanceof mongoose.mongo.ObjectId);
-	// console.log("mongodb > ObjectId :>>", owner._id instanceof ObjectId);
-
 	const fullOwner = await DB.findOne<IUser>("user", { _id: owner._id }, { populate: ["roles", "activeWorkspace"] });
 	// console.log("fullOwner :>> ", fullOwner);
 	let userRoles = (fullOwner?.roles || []) as IRole[];

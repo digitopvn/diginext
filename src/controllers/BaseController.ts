@@ -2,14 +2,13 @@ import { isBooleanString, isJSON, isNumberString } from "class-validator";
 import { toBool, toInt } from "diginext-utils/dist/object";
 // import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
-import { isEmpty, toNumber, trim } from "lodash";
+import { cloneDeepWith, isEmpty, toNumber, trim } from "lodash";
 
 import { Config } from "@/app.config";
 import type { IUser, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { isObjectId, isValidObjectId, MongoDB, toObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
-import { traverseObjectAndTransformValue } from "@/plugins/traverse";
 import type { BaseService } from "@/services/BaseService";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
@@ -109,13 +108,12 @@ export default class BaseController<T = any> {
 	parseBody(req: AppRequest, res?: Response, next?: NextFunction) {
 		// log("req.body [1] >>", req.body);
 
-		traverseObjectAndTransformValue(req.body, ([key, val]) => {
+		req.body = cloneDeepWith(req.body, function (val) {
 			if (isValidObjectId(val)) return MongoDB.toString(toObjectId(val));
 			if (isObjectId(val)) return MongoDB.toString(val);
 			if (isNumberString(val)) return toNumber(val);
 			if (isBooleanString(val)) return toBool(val);
 			if (isJSON(val)) return JSON.parse(val);
-			return val;
 		});
 
 		if (next) next();

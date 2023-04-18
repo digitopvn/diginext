@@ -111,11 +111,14 @@ export default class BaseService<T> {
 		// console.log(`BaseService > find :>> filter:`, filter);
 
 		// where
+		let _filter = parseRequestFilter(filter);
+
 		const where = {
-			...parseRequestFilter(filter),
+			..._filter,
 			$or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
 		};
-		// console.log("where :>> ", where);
+		// console.log(`"${this.model.collection.name}" > find > where :>>`, where);
+
 		const pipelines: PipelineStage[] = [
 			{
 				$match: where,
@@ -184,7 +187,7 @@ export default class BaseService<T> {
 		if (options?.limit) pipelines.push({ $limit: options.limit });
 
 		let [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(where).exec()]);
-		// console.log(`results >>`, results);
+		// console.log(`"${this.model.collection.name}" > results >>`, results);
 
 		if (pagination) {
 			pagination.total_items = totalItems || results.length;
@@ -212,7 +215,10 @@ export default class BaseService<T> {
 		}
 
 		// convert all {ObjectId} to {string}:
-		return replaceObjectIdsToStrings(results) as T[];
+		results = replaceObjectIdsToStrings(results);
+		// console.log(`"${this.model.collection.name}" > json results >>`, results);
+
+		return results as T[];
 	}
 
 	async findOne(filter?: IQueryFilter, options: IQueryOptions = {}) {

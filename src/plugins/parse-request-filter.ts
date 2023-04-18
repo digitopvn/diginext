@@ -1,8 +1,8 @@
-import { isString, trim } from "lodash";
+import { cloneDeepWith, isString, trim } from "lodash";
 
 import type { IQueryFilter } from "@/interfaces";
 
-import { replaceStringsToObjectIds } from "./traverse";
+import { MongoDB } from "./mongodb";
 
 export const parseRequestFilter = (requestQuery: any) => {
 	const {
@@ -58,5 +58,7 @@ export const parseRequestFilter = (requestQuery: any) => {
 	 * Need to cast valid {ObjectId} string to {ObjectId} since Mongoose "aggregate" doesn't cast them automatically.
 	 * @link https://mongoosejs.com/docs/api/aggregate.html#Aggregate()
 	 */
-	return replaceStringsToObjectIds(_filter) as IQueryFilter;
+	return cloneDeepWith(_filter, function (value) {
+		if (MongoDB.isValidObjectId(value)) return MongoDB.toObjectId(value);
+	}) as IQueryFilter;
 };
