@@ -95,7 +95,7 @@ export const jwtStrategy = new Strategy(
 		algorithms: ["HS512"],
 	},
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
-		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`, { payload });
+		// console.log(`[1] AUTHENTICATE: jwtStrategy > payload...`, payload);
 
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		// console.log("jwtStrategy > access_token :>> ", access_token);
@@ -113,26 +113,30 @@ export const jwtStrategy = new Strategy(
 		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
 		let user = await DB.findOne<IUser | IServiceAccount>("user", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
-		// console.log(`[1] jwtStrategy > User :>> `, user);
+		// if (user) return done(null, user);
 
 		if (user) {
 			const updateData = {} as any;
 			updateData.token = tokenInfo.token;
-
+			// console.log(`[1] jwtStrategy > updateData :>> `, updateData);
 			// update the access token in database:
 			[user] = await DB.update<IUser>("user", { _id: payload.id }, updateData, {
 				populate: ["roles", "workspaces", "activeWorkspace"],
 			});
-
+			// console.log(`[1] jwtStrategy > updated user :>> `, user);
 			return done(null, user);
 		}
 
 		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
-		user = await DB.findOne<IServiceAccount>("service_account", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
+		let serviceAccount = await DB.findOne<IServiceAccount>(
+			"service_account",
+			{ _id: payload.id },
+			{ populate: ["roles", "workspaces", "activeWorkspace"] }
+		);
 
-		if (!user) return done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
+		if (!serviceAccount) return done(JSON.stringify({ status: 0, messages: ["Invalid service account (probably deleted?)."] }), null);
 
-		return done(null, user);
+		return done(null, serviceAccount);
 	}
 );
 

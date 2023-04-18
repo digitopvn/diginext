@@ -9,6 +9,9 @@ export const authenticate = async (req: AppRequest, res: express.Response, next:
 	// API_ACCESS_TOKEN will be transformed to lowercase in Express:
 	const API_ACCESS_TOKEN = req.headers.api_access_token?.toString();
 
+	// console.log("req.headers.api_access_token :>> ", API_ACCESS_TOKEN);
+	// console.log("req.headers.authorization :>> ", req.headers.authorization);
+
 	if (API_ACCESS_TOKEN) {
 		return apiAccessTokenHandler(req, res, next);
 	} else {

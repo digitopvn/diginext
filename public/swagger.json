@@ -956,7 +956,7 @@
 					},
 					"project": {
 						"type": "string",
-						"description": "`REQUIRES`\n---\nApp's name"
+						"description": "`REQUIRES`\n---\nProject's ID or slug"
 					},
 					"git": {
 						"anyOf": [

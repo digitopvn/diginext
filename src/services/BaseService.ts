@@ -8,9 +8,9 @@ import { model } from "mongoose";
 
 import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
+import { isValidObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
-import { traverseObjectAndTransformValue } from "@/plugins/traverse";
+import { replaceObjectIdsToStrings } from "@/plugins/traverse";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
 
@@ -34,26 +34,18 @@ function setDateWhenCreateDocument(this: IBase & Document, next: (error?: Native
 const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 
 export default class BaseService<T> {
-	private readonly model: Model<T>;
+	readonly model: Model<T>;
 
 	req?: AppRequest;
 
 	constructor(schema: Schema) {
-		// make sure "createdAt" and "updatedAt" are set when creating/updating documents
-		schema.pre("save", setDateWhenCreateDocument);
-		schema.pre("updateOne", setDateWhenUpdateDocument);
-		schema.pre("updateMany", (next) => {
-			this.update({}, { $set: { updatedAt: new Date() } });
-			next();
-		});
-
 		const collection = schema.get("collection");
 		this.model = model<T>(collection, schema, collection);
 	}
 
 	async count(filter?: IQueryFilter, options?: IQueryOptions) {
 		const parsedFilter = filter;
-		parsedFilter.deletedAt = { $exists: false };
+		parsedFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
 		return this.model.countDocuments({ ...parsedFilter, ...options }).exec();
 	}
 
@@ -101,16 +93,14 @@ export default class BaseService<T> {
 				}
 			}
 
+			// set created/updated date:
+			data.createdAt = data.updatedAt = new Date();
+
 			const createdDoc = new this.model(data);
 			let newItem = await createdDoc.save();
 
 			// convert all {ObjectId} to {string}:
-			traverseObjectAndTransformValue(newItem, ([key, val]) => {
-				if (MongoDB.isObjectId(val)) return val.toString();
-				return val;
-			});
-
-			return newItem as T;
+			return replaceObjectIdsToStrings(newItem) as T;
 		} catch (e) {
 			logError(e);
 			return;
@@ -123,7 +113,7 @@ export default class BaseService<T> {
 		// where
 		const where = {
 			...parseRequestFilter(filter),
-			deletedAt: { $exists: false },
+			$or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
 		};
 		// console.log("where :>> ", where);
 		const pipelines: PipelineStage[] = [
@@ -196,12 +186,6 @@ export default class BaseService<T> {
 		let [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(where).exec()]);
 		// console.log(`results >>`, results);
 
-		// convert all {ObjectId} to {string}:
-		traverseObjectAndTransformValue(results, ([key, val]) => {
-			if (MongoDB.isObjectId(val)) return val.toString();
-			return val;
-		});
-
 		if (pagination) {
 			pagination.total_items = totalItems || results.length;
 			pagination.total_pages = pagination.page_size ? Math.ceil(totalItems / pagination.page_size) : 1;
@@ -227,7 +211,8 @@ export default class BaseService<T> {
 					: null;
 		}
 
-		return results as T[];
+		// convert all {ObjectId} to {string}:
+		return replaceObjectIdsToStrings(results) as T[];
 	}
 
 	async findOne(filter?: IQueryFilter, options: IQueryOptions = {}) {
@@ -238,11 +223,11 @@ export default class BaseService<T> {
 	}
 
 	async update(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
-		// Manually update date to "updatedAt" column
-		data.updatedAt = new Date();
+		const updateFilter = { ...filter };
+		updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
 
-		const updateFilter = filter;
-		updateFilter.deletedAt = { $exists: false };
+		// set updated date
+		data.updatedAt = new Date();
 
 		const updateData = options?.raw ? data : { $set: data };
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();

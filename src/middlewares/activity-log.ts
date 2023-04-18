@@ -56,7 +56,7 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 		// write activity log to database:
 		const activitySvc = new ActivityService();
 		const activity = await activitySvc.create(activityDto);
-		console.log("Saved activity info :>> ", activity._id);
+		// console.log("Saved activity info :>> ", activity._id);
 	}
 
 	// next();

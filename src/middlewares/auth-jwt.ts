@@ -15,7 +15,7 @@ import { MongoDB } from "@/plugins/mongodb";
 const jwt_auth = (req: AppRequest, res, next) =>
 	passport.authenticate("jwt", { session: false }, async function (err, user: IUser, info) {
 		// console.log(err, user, info);
-		// console.log(`AUTHENTICATE: jwt_auth > assign token:`, user);
+		// console.log(`AUTHENTICATE: jwt_auth > user:`, user);
 
 		if (!user) {
 			/**
@@ -30,6 +30,7 @@ const jwt_auth = (req: AppRequest, res, next) =>
 				: Response.ignore(res, info?.toString());
 		} else {
 			// check active workspace
+			// console.log("user :>> ", user);
 			if (!user.activeWorkspace) {
 				const workspaces = user.workspaces as IWorkspace[];
 				if (workspaces.length === 1) {
@@ -42,13 +43,12 @@ const jwt_auth = (req: AppRequest, res, next) =>
 				}
 				req.workspace = user.activeWorkspace as IWorkspace;
 			}
+			// console.log("user.activeWorkspace :>> ", user.activeWorkspace);
 
 			// role
 			const { roles = [] } = user;
 			const activeRole = roles.find(
-				(role) =>
-					MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id) &&
-					!(role as IRole).deletedAt
+				(role) => MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id)
 			) as IRole;
 			// console.log("jwt_auth > roles :>> ", roles);
 			// console.log("jwt_auth > activeRole :>> ", activeRole);

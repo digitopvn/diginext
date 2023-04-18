@@ -19,11 +19,10 @@ import swaggerUi from "swagger-ui-express";
 import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
-import { Config, IsDev, IsProd } from "./app.config";
+import { Config, IsDev } from "./app.config";
 import type { AppRequest } from "./interfaces/SystemTypes";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
 import AppDatabase from "./modules/AppDatabase";
-import { startupScripts } from "./modules/server/startup-scripts";
 import routes from "./routes/routes";
 
 // const logger = new LogStream();
@@ -160,7 +159,8 @@ function initialize() {
 	// app.use("*", route404_handler);
 
 	// make sure the Express app won't be crashed if there are any errors
-	if (IsProd()) app.use(failSafeHandler);
+	// if (IsProd())
+	app.use(failSafeHandler);
 
 	/**
 	 * SERVER HANDLING
@@ -178,7 +178,7 @@ function initialize() {
 	 * - Connect container registries (if any)
 	 * - Connect K8S clusters (if any)
 	 */
-	startupScripts();
+	// startupScripts();
 }
 
 if (CLI_MODE === "server") {

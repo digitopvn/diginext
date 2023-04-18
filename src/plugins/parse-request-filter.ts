@@ -1,10 +1,8 @@
-import { isJSON } from "class-validator";
 import { isString, trim } from "lodash";
 
 import type { IQueryFilter } from "@/interfaces";
 
-import { isObjectId, isValidObjectId, MongoDB } from "./mongodb";
-import { traverseObjectAndTransformValue } from "./traverse";
+import { replaceStringsToObjectIds } from "./traverse";
 
 export const parseRequestFilter = (requestQuery: any) => {
 	const {
@@ -26,26 +24,7 @@ export const parseRequestFilter = (requestQuery: any) => {
 	} = requestQuery;
 
 	// filter
-	const _filter: { [key: string]: any } = id ? { id, ...filter } : filter;
-
-	/**
-	 * Traverse filter object and transform the values.
-	 * Need to cast valid {ObjectId} string to {ObjectId} since Mongoose "aggregate" doesn't cast them automatically.
-	 * @link https://mongoosejs.com/docs/api/aggregate.html#Aggregate()
-	 */
-	traverseObjectAndTransformValue(_filter, ([key, val]) => {
-		if (val == null || val == undefined) {
-			return null;
-		} else if (isObjectId(val)) {
-			return val;
-		} else if (isValidObjectId(val)) {
-			return MongoDB.toObjectId(val);
-		} else if (isJSON(val)) {
-			return JSON.parse(val);
-		} else {
-			return val;
-		}
-	});
+	let _filter: { [key: string]: any } = id ? { id, ...filter } : filter;
 
 	if (_filter.id) {
 		_filter._id = _filter.id;
@@ -57,7 +36,6 @@ export const parseRequestFilter = (requestQuery: any) => {
 		_filter.$or = _filter.or;
 		delete _filter.or;
 	}
-
 	if (_filter.and) {
 		_filter.$and = _filter.and;
 		delete _filter.and;
@@ -75,6 +53,10 @@ export const parseRequestFilter = (requestQuery: any) => {
 		});
 	}
 
-	// save to local storage of response
-	return _filter as IQueryFilter;
+	/**
+	 * Traverse filter object and transform the values.
+	 * Need to cast valid {ObjectId} string to {ObjectId} since Mongoose "aggregate" doesn't cast them automatically.
+	 * @link https://mongoosejs.com/docs/api/aggregate.html#Aggregate()
+	 */
+	return replaceStringsToObjectIds(_filter) as IQueryFilter;
 };
