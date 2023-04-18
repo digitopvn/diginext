@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type { App } from "@/entities";
+import type { IApp } from "@/entities";
 
 import { DB } from "../api/DB";
 
@@ -28,7 +28,7 @@ export async function searchApps(options: SearchAppOptions) {
 	filter.name = keyword;
 	if (projectSlug) filter.projectSlug = projectSlug;
 
-	let apps = await DB.find<App>("app", filter, { search: true }, { limit: 10 });
+	let apps = await DB.find<IApp>("app", filter, { search: true }, { limit: 10 });
 
 	if (isEmpty(apps)) {
 		if (canSkip) {

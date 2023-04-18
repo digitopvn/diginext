@@ -4,9 +4,8 @@ import { isEmpty, trimEnd } from "lodash";
 import open from "open";
 
 import { getCliConfig, saveCliConfig } from "@/config/config";
-import type User from "@/entities/User";
-import type { AccessTokenInfo } from "@/entities/User";
-import type Workspace from "@/entities/Workspace";
+import type { AccessTokenInfo, IUser } from "@/entities/User";
+import type { IWorkspace } from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { MongoDB } from "@/plugins/mongodb";
@@ -67,18 +66,18 @@ export const cliLogin = async (options: CliLoginOptions) => {
 		access_token = inputAccessToken;
 	}
 
-	let currentUser: User;
+	let currentUser: IUser;
 
 	// validate the "access_token" -> get "userId":
-	const { status, data } = await fetchApi<User>({ url: `/auth/profile`, access_token });
+	const { status, data } = await fetchApi<IUser>({ url: `/auth/profile`, access_token });
 	if (status === 0) {
 		logError(`Authentication failed, "access_token" is not valid.`);
 		return;
 	}
-	currentUser = data as User;
+	currentUser = data as IUser;
 
 	// "access_token" is VALID -> save it to local machine!
-	saveCliConfig({ access_token, currentWorkspace: currentUser.activeWorkspace as Workspace });
+	saveCliConfig({ access_token, currentWorkspace: currentUser.activeWorkspace as IWorkspace });
 
 	const { workspaces = [], activeWorkspace } = currentUser;
 	let currentWorkspace;
@@ -115,7 +114,7 @@ export const cliLogout = async () => {
 };
 
 export async function cliAuthenticate(options: InputOptions) {
-	let accessToken, workspace: Workspace, user: User;
+	let accessToken, workspace: IWorkspace, user: IUser;
 	const { access_token: currentAccessToken, buildServerUrl } = getCliConfig();
 	accessToken = currentAccessToken;
 	// workspace = currentWorkspace;
@@ -143,11 +142,11 @@ export async function cliAuthenticate(options: InputOptions) {
 		status,
 		data: userData,
 		messages,
-	} = await fetchApi<User>({
+	} = await fetchApi<IUser>({
 		url: `/auth/profile`,
 		access_token: accessToken,
 	});
-	user = userData as User;
+	user = userData as IUser;
 
 	if (!status || isEmpty(user)) {
 		// don't give up, keep trying...
@@ -159,7 +158,7 @@ export async function cliAuthenticate(options: InputOptions) {
 	// Assign user & workspace to use across all CLI commands
 	options.userId = MongoDB.toString(user._id);
 	options.username = user.username ?? user.slug;
-	options.workspace = user.activeWorkspace as Workspace;
+	options.workspace = user.activeWorkspace as IWorkspace;
 	options.workspaceId = MongoDB.toString(options.workspace._id);
 
 	// Save "currentUser" & "access_token" for next API requests

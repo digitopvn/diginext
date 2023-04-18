@@ -1,8 +1,8 @@
 import { logError } from "diginext-utils/dist/console/log";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { Release } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { IRelease } from "@/entities";
+import { ReleaseDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { createReleaseFromBuild } from "@/modules/build/create-release-from-build";
@@ -15,7 +15,7 @@ import BaseController from "./BaseController";
 
 @Tags("Release")
 @Route("release")
-export default class ReleaseController extends BaseController<Release> {
+export default class ReleaseController extends BaseController<IRelease> {
 	constructor() {
 		super(new ReleaseService());
 	}
@@ -30,7 +30,7 @@ export default class ReleaseController extends BaseController<Release> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<Release, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: ReleaseDto, @Queries() queryParams?: IPostQueryParams) {
 		// const { envVars } = body;
 		// if (isJSON(envVars)) body.env = JSON.parse(envVars as string);
 		return super.create(body);
@@ -39,7 +39,7 @@ export default class ReleaseController extends BaseController<Release> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<Release, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: ReleaseDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 

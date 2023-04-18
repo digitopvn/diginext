@@ -1,9 +1,9 @@
 import { isJSON } from "class-validator";
 import type { NextFunction, Response } from "express";
 
-import type { Workspace } from "@/entities";
-import type Activity from "@/entities/Activity";
-import type Route from "@/entities/Route";
+import type { IWorkspace } from "@/entities";
+import type { IActivity } from "@/entities/Activity";
+import type { IRoute } from "@/entities/Route";
 import type { AppRequest, AppResponse } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import ActivityService from "@/services/ActivityService";
@@ -38,9 +38,9 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 
 	if (user) {
 		// parse & create activity dto:
-		const activityDto: Activity = {};
+		const activityDto = {} as IActivity;
 		activityDto.owner = user._id;
-		activityDto.workspace = workspace || (user.activeWorkspace as Workspace);
+		activityDto.workspace = workspace || (user.activeWorkspace as IWorkspace);
 		activityDto.name = user.name;
 		activityDto.response = res.body;
 		activityDto.responseStatus = isJSON(res.body) ? JSON.parse(res.body).status : undefined;
@@ -48,7 +48,7 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 		activityDto.query = req.query;
 		activityDto.httpStatus = req.statusCode;
 
-		const route = await DB.findOne<Route>("route", { path: req.originalUrl });
+		const route = await DB.findOne<IRoute>("route", { path: req.originalUrl });
 		activityDto.url = req.originalUrl;
 		activityDto.route = req.path;
 		activityDto.routeName = route?.name;
@@ -56,7 +56,7 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 		// write activity log to database:
 		const activitySvc = new ActivityService();
 		const activity = await activitySvc.create(activityDto);
-		console.log("Saved activity info :>> ", activity._id);
+		// console.log("Saved activity info :>> ", activity._id);
 	}
 
 	// next();

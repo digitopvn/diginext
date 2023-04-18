@@ -8,7 +8,7 @@ import yargs from "yargs";
 
 import { Config, isServerMode } from "@/app.config";
 import { saveCliConfig } from "@/config/config";
-import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
+import type { ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
 import type { GoogleServiceAccount } from "@/interfaces/GoogleServiceAccount";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { createTmpFile, execCmd, isWin } from "@/plugins";
@@ -47,11 +47,11 @@ export const authenticate = async (options?: InputOptions) => {
 
 	// Save this cloud provider to database
 	const serviceAccount = fs.readFileSync(serviceAccountPath, "utf8");
-	const gcloud = await DB.findOne<CloudProvider>("provider", { shortName: "gcloud" });
+	const gcloud = await DB.findOne<ICloudProvider>("provider", { shortName: "gcloud" });
 
 	// not support multiple cloud providers yet!
 	if (!gcloud) {
-		const newProvider = DB.create<CloudProvider>("provider", {
+		const newProvider = DB.create<ICloudProvider>("provider", {
 			name: "Google Cloud",
 			shortName: "gcloud",
 			serviceAccount: serviceAccount,
@@ -113,7 +113,7 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 		return;
 	}
 
-	const existingRegistry = await DB.findOne<ContainerRegistry>("registry", { provider: "gcloud", host: options.host });
+	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { provider: "gcloud", host: options.host });
 	if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { existingRegistry });
 
 	if (existingRegistry) return existingRegistry;
@@ -121,7 +121,7 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 	// save this container registry to database
 	const registryHost = host || "asia.gcr.io";
 	const imageBaseURL = `${registryHost}/${serviceAccountObject.project_id}`;
-	const newRegistry = await DB.create<ContainerRegistry>("registry", {
+	const newRegistry = await DB.create<IContainerRegistry>("registry", {
 		name: "Google Container Registry",
 		host: registryHost,
 		provider: "gcloud",
@@ -147,7 +147,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	}
 
 	// get Container Registry data:
-	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
+	const registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 
 	if (!registry) {
 		logError(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
@@ -158,7 +158,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const { host, serviceAccount } = registry;
 
 	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
-	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 	if (!cluster) {
 		logError(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterShortName}" cluster.`);
 		return;
@@ -210,7 +210,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			},
 		};
 
-		const updatedRegistries = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, updateData as ContainerRegistry);
+		const updatedRegistries = await DB.update<IContainerRegistry>("registry", { slug: registrySlug }, updateData as IContainerRegistry);
 		const updatedRegistry = updatedRegistries[0];
 
 		if (!isServerMode) {
@@ -275,13 +275,13 @@ export const execGoogleCloud = async (options?: InputOptions) => {
 			break;
 
 		case "create-image-pull-secret":
-			const registries = await DB.find<ContainerRegistry>("registry", {});
+			const registries = await DB.find<IContainerRegistry>("registry", {});
 			if (isEmpty(registries)) {
 				logError(`This workspace doesn't have any registered Container Registries.`);
 				return;
 			}
 
-			const { selectedRegistry } = await inquirer.prompt<{ selectedRegistry: ContainerRegistry }>({
+			const { selectedRegistry } = await inquirer.prompt<{ selectedRegistry: IContainerRegistry }>({
 				message: `Select the container registry:`,
 				type: "list",
 				choices: registries.map((reg, i) => {

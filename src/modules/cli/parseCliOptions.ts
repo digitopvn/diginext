@@ -3,7 +3,7 @@ import { log, logWarn } from "diginext-utils/dist/console/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
-import type { Project } from "@/entities";
+import type { IApp, IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType, ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { checkForUpdate, currentVersion, getLatestCliVersion } from "@/plugins";
@@ -515,7 +515,7 @@ export async function parseCliOptions() {
 		shouldUseFreshDeploy: argv.fresh as boolean,
 
 		// deployment
-		app: argv.app,
+		app: argv.app as IApp,
 		domain: argv.domain as string,
 		port: argv.port as number,
 		replicas: argv.replicas as number,
@@ -524,7 +524,7 @@ export async function parseCliOptions() {
 		registry: argv.registry as string,
 		cluster: argv.cluster as string,
 		zone: argv.zone as string,
-		project: argv.project as Project,
+		project: argv.project as IProject,
 		namespace: argv.namespace as string,
 		redirect: argv.redirect as boolean,
 		ssl: argv.ssl as boolean, // [FLAG] --no-ssl

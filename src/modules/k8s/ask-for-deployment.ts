@@ -2,11 +2,11 @@ import { logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type { Cluster } from "@/entities";
+import type { ICluster } from "@/entities";
 
 import ClusterManager from ".";
 
-export const askForDeployment = async (cluster: Cluster, namespace: string = "default") => {
+export const askForDeployment = async (cluster: ICluster, namespace: string = "default") => {
 	const { contextName: context } = cluster;
 	if (!context) {
 		logError(`This cluster hasn't been authenticated.`);

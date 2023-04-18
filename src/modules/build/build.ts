@@ -3,13 +3,12 @@ import dayjs from "dayjs";
 import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
 import humanizeDuration from "humanize-duration";
 import { isEmpty } from "lodash";
-import { ObjectId } from "mongodb";
 import PQueue from "p-queue";
 import path from "path";
 
 import { isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { App, Build, ContainerRegistry, Project, User, Workspace } from "@/entities";
+import type { IApp, IBuild, IContainerRegistry, IProject, IUser, IWorkspace } from "@/entities";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
 import { getIO, socketIO } from "@/server";
 
@@ -45,7 +44,7 @@ export type StartBuildParams = {
 	 * {User} instance of the author
 	 * - `If passing "user", no need to pass "userId" and vice versa.`
 	 */
-	user?: User;
+	user?: IUser;
 
 	/**
 	 * Slug of the Container Registry
@@ -91,7 +90,7 @@ export async function testBuild() {
  */
 export async function saveLogs(buildSlug: string, logs: string) {
 	if (!buildSlug) throw new Error(`Build's slug is required, it's empty now.`);
-	const [build] = await DB.update<Build>("build", { slug: buildSlug }, { logs });
+	const [build] = await DB.update<IBuild>("build", { slug: buildSlug }, { logs });
 	return build;
 }
 
@@ -137,13 +136,13 @@ export async function startBuild(params: StartBuildParams) {
 		cliVersion,
 	} = params;
 
-	const author = user || (await DB.findOne<User>("user", { _id: new ObjectId(userId) }, { populate: ["workspaces", "activeWorkspaces"] }));
+	const author = user || (await DB.findOne<IUser>("user", { _id: userId }, { populate: ["workspaces", "activeWorkspaces"] }));
 	console.log("author :>> ", author);
 
-	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	// get workspace
 	const { activeWorkspace, slug: username } = author;
-	const workspace = activeWorkspace as Workspace;
+	const workspace = activeWorkspace as IWorkspace;
 
 	// socket & logs
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
@@ -159,7 +158,7 @@ export async function startBuild(params: StartBuildParams) {
 	}
 
 	// the container registry to store this build image
-	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
+	const registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 
 	if (isEmpty(registry)) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
@@ -177,14 +176,14 @@ export async function startBuild(params: StartBuildParams) {
 	}
 
 	// project info
-	const project = app.project as Project;
+	const project = app.project as IProject;
 	const { slug: projectSlug } = project;
 
 	// build image
 	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}/${app.slug}` } = app;
 
 	// get latest build of this app to utilize the cache for this build process
-	const latestBuild = await DB.findOne<Build>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: "DESC" } });
+	const latestBuild = await DB.findOne<IBuild>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
 
 	// get app's repository data:
 	const {
@@ -225,9 +224,9 @@ export async function startBuild(params: StartBuildParams) {
 		project: project._id,
 		owner: author._id,
 		workspace: workspace._id,
-	} as Build;
+	} as IBuild;
 
-	const newBuild = await DB.create<Build>("build", buildData);
+	const newBuild = await DB.create<IBuild>("build", buildData);
 	if (!newBuild) {
 		console.log("buildData :>> ", buildData);
 		sendLog({ SOCKET_ROOM, message: "[START BUILD] Failed to create new build on server." });
@@ -267,8 +266,8 @@ export async function startBuild(params: StartBuildParams) {
 	}
 
 	// Update app so it can be sorted on top!
-	const updatedAppData = { lastUpdatedBy: username } as App;
-	const [updatedApp] = await DB.update<App>("app", { slug: appSlug, image: imageURL }, updatedAppData);
+	const updatedAppData = { lastUpdatedBy: username } as IApp;
+	const [updatedApp] = await DB.update<IApp>("app", { slug: appSlug, image: imageURL }, updatedAppData);
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
 

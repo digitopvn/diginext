@@ -1,87 +1,86 @@
+import type { Types } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+
 import type { HiddenBodyKeys } from "@/interfaces";
-import { GitProviderType } from "@/interfaces/SystemTypes";
-import type { ObjectID } from "@/libs/typeorm";
-import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
+import type { GitProviderType } from "@/interfaces/SystemTypes";
+import { availableGitProviders } from "@/interfaces/SystemTypes";
 
-import Base from "./Base";
-import type GitProvider from "./GitProvider";
-import type Project from "./Project";
-import type User from "./User";
-import type Workspace from "./Workspace";
+import type { IBase } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
+import type { IGitProvider } from "./GitProvider";
 
-export type FrameworkDto = Omit<Framework, keyof HiddenBodyKeys>;
+export type FrameworkDto = Omit<IFramework, keyof HiddenBodyKeys>;
 
-@Entity({ name: "frameworks" })
-export default class Framework extends Base {
-	@Column()
+/**
+ * An interface that extends IBase and describes the properties of a framework.
+ *
+ * @interface IFramework
+ * @extends {IBase}
+ */
+export interface IFramework extends IBase {
 	name?: string;
-
-	@Column()
 	host?: string;
-
 	/**
-	 * Git provider name
+	 * Type of the Git Provider
 	 */
-	@Column()
 	gitProvider?: GitProviderType;
-
 	/**
 	 * Git repository access privacy
 	 */
-	@Column()
 	isPrivate?: boolean;
-
 	/**
 	 * ID of the Git Provider
-	 *
 	 * @remarks This can be populated to {GitProvider} data
 	 */
-	@ObjectIdColumn({ name: "git_providers" })
-	git?: ObjectID | GitProvider;
+	git?: Types.ObjectId | IGitProvider;
 
-	@Column()
+	/**
+	 * The repository URL of the framework.
+	 *
+	 * @type {string}
+	 * @memberof IFramework
+	 */
 	repoURL?: string;
 
-	@Column()
+	/**
+	 * The SSH URL of the framework.
+	 *
+	 * @type {string}
+	 * @memberof IFramework
+	 */
 	repoSSH?: string;
 
-	@Column({ type: "string" })
+	/**
+	 * The main branch of the framework.
+	 *
+	 * @type {string}
+	 * @memberof IFramework
+	 */
 	mainBranch?: string;
 
 	/**
-	 * Number of downloads
+	 * The number of downloads for the framework.
+	 *
+	 * @type {number}
+	 * @memberof IFramework
 	 */
-	@Column({ default: 0 })
 	downloads?: number;
-
-	/**
-	 * User ID of the owner
-	 *
-	 * @remarks This can be populated to {User} data
-	 */
-	@ObjectIdColumn({ name: "users" })
-	owner?: ObjectID | User | string;
-
-	/**
-	 * ID of the project
-	 *
-	 * @remarks This can be populated to {Project} data
-	 */
-	@ObjectIdColumn({ name: "projects" })
-	project?: ObjectID | Project | string;
-
-	/**
-	 * ID of the workspace
-	 *
-	 * @remarks This can be populated to {Workspace} data
-	 */
-	@ObjectIdColumn({ name: "workspaces" })
-	workspace?: ObjectID | Workspace | string;
-
-	constructor(data?: Framework) {
-		super();
-		Object.assign(this, data);
-	}
 }
 
-export { Framework };
+export const frameworkSchema = new Schema(
+	{
+		...baseSchemaDefinitions,
+		name: { type: String },
+		host: { type: String },
+		gitProvider: { type: String, enum: availableGitProviders },
+		isPrivate: { type: Boolean },
+		git: { type: Schema.Types.ObjectId, ref: "git_providers" },
+		repoURL: { type: String },
+		repoSSH: { type: String },
+		mainBranch: { type: String },
+		downloads: { type: Number },
+	},
+	{ collection: "frameworks", timestamps: true }
+);
+
+export const FrameworkModel = mongoose.model("frameworks", frameworkSchema, "frameworks");

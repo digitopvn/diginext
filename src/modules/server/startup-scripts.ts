@@ -6,7 +6,7 @@ import cronjob from "node-cron";
 import { isDevMode } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { User } from "@/entities";
+import type { IUser } from "@/entities";
 import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
 import { migrateServiceAccountAndApiKey } from "@/migration/migrate-all-sa-and-api-key";
@@ -26,7 +26,7 @@ import { ClusterService, ContainerRegistryService, GitProviderService, Workspace
  * - Connect GIT providers (if any)
  * - Connect Container Registries (if any)
  * - Connect K8S clusters (if any)
- * - Start cron jobs
+ * - Start system cronjobs
  * - Seed some initial data
  */
 export async function startupScripts() {
@@ -41,6 +41,8 @@ export async function startupScripts() {
 
 	const gitSvc = new GitProviderService();
 	const gitProviders = await gitSvc.find({});
+	// console.log("gitProviders :>> ");
+	// console.dir(gitProviders, { depth: 10 });
 	if (!isEmpty(gitProviders)) {
 		for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
 	}
@@ -58,9 +60,10 @@ export async function startupScripts() {
 
 	// seed default roles to workspace if missing:
 	const wsSvc = new WorkspaceService();
-	const workspaces = await wsSvc.find({}, { populate: ["owner"] });
+	let workspaces = await wsSvc.find({}, { populate: ["owner"] });
+
 	if (workspaces.length > 0) {
-		await Promise.all(workspaces.map((ws) => seedDefaultRoles(ws, ws.owner as User)));
+		await Promise.all(workspaces.map((ws) => seedDefaultRoles(ws, ws.owner as IUser)));
 	}
 
 	// connect container registries

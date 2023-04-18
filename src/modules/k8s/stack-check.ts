@@ -1,4 +1,4 @@
-import type { Cluster } from "@/entities";
+import type { ICluster } from "@/entities";
 import { contains } from "@/plugins/string";
 
 import ClusterManager from ".";
@@ -8,7 +8,7 @@ import ClusterManager from ".";
  * @copyright https://kubernetes.github.io/ingress-nginx/
  * @returns Error message in string or TRUE
  */
-export const checkNginxIngressInstalled = async (cluster: Cluster) => {
+export const checkNginxIngressInstalled = async (cluster: ICluster) => {
 	const { shortName, contextName: context, isVerified } = cluster;
 
 	if (!isVerified) return `Cluster (${shortName}) hasn't been verified yet.`;
@@ -30,7 +30,7 @@ export const checkNginxIngressInstalled = async (cluster: Cluster) => {
  * @copyright https://cert-manager.io/
  * @returns Error message in string or TRUE
  */
-export const checkCertManagerInstalled = async (cluster: Cluster) => {
+export const checkCertManagerInstalled = async (cluster: ICluster) => {
 	const { shortName, contextName: context, isVerified } = cluster;
 
 	if (!isVerified) return `Cluster (${shortName}) hasn't been verified yet.`;

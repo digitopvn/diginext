@@ -1,7 +1,7 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
 
-import type { Workspace } from "@/entities";
+import type { IRole, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { MongoDB } from "@/plugins/mongodb";
 import { filterRole } from "@/plugins/user-utils";
@@ -13,8 +13,8 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	// console.log("authorize > route :>> ", route);
 
 	// filter roles
-	const wsId = (user.activeWorkspace as Workspace)?._id
-		? MongoDB.toString((user.activeWorkspace as Workspace)._id)
+	const wsId = (user.activeWorkspace as IWorkspace)?._id
+		? MongoDB.toString((user.activeWorkspace as IWorkspace)._id)
 		: MongoDB.toString(user.activeWorkspace);
 	[user] = await filterRole(wsId, [user]);
 	// console.log("authorize > user :>> ", user);
@@ -44,13 +44,15 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	/**
 	 * authorization logic here!
 	 */
-	const { activeRole } = user;
+	// const { activeRole } = user;
+	const activeRole = user.activeRole as IRole;
 	// console.log("activeRole :>> ", activeRole);
 
 	// If wildcard "*" route is specified:
 	let routeRole = activeRole.routes.find((routeInfo) => routeInfo.route === "*");
 
 	if (routeRole) {
+		if (!routeRole.permissions) routeRole.permissions = [];
 		if (routeRole.permissions.includes(requestPermission)) {
 			isAllowed = true;
 		} else {
@@ -70,6 +72,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	routeRole = activeRole.routes.find((routeInfo) => routeInfo.route === route);
 
 	if (routeRole) {
+		if (!routeRole.permissions) routeRole.permissions = [];
 		if (routeRole.permissions.includes(requestPermission)) {
 			delete req.query.owner;
 			isAllowed = true;

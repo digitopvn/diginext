@@ -1,11 +1,9 @@
-import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import BaseController from "@/controllers/BaseController";
-import type { User } from "@/entities";
-import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
-import { MongoDB } from "@/plugins/mongodb";
+import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
+import { ApiKeyAccountDto } from "@/entities/ApiKeyAccount";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { ApiKeyUserService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
 
@@ -16,7 +14,7 @@ interface JoinWorkspaceBody {
 
 @Tags("API Key")
 @Route("api_key")
-export default class ApiKeyUserController extends BaseController<User> {
+export default class ApiKeyUserController extends BaseController<IApiKeyAccount> {
 	constructor() {
 		super(new ApiKeyUserService());
 	}
@@ -31,14 +29,14 @@ export default class ApiKeyUserController extends BaseController<User> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: ApiKeyAccountDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: ApiKeyAccountDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
@@ -54,7 +52,6 @@ export default class ApiKeyUserController extends BaseController<User> {
 	@Patch("/join-workspace")
 	async joinWorkspace(@Body() data: JoinWorkspaceBody) {
 		const { userId, workspace: workspaceSlug } = data;
-		const result: ResponseData & { data: User } = { status: 1, messages: [], data: {} };
 		// console.log("{ userId, workspace } :>> ", { userId, workspace });
 
 		try {
@@ -69,8 +66,8 @@ export default class ApiKeyUserController extends BaseController<User> {
 			if (!workspace) throw new Error(`Workspace "${workspaceSlug}" not found.`);
 			// console.log("workspace :>> ", workspace);
 
-			const wsId = MongoDB.toString(workspace._id);
-			const user = await this.service.findOne({ id: new ObjectId(userId) });
+			const wsId = workspace._id;
+			const user = await this.service.findOne({ id: userId });
 			// console.log("user :>> ", user);
 			// console.log("wsId :>> ", wsId);
 
@@ -78,31 +75,28 @@ export default class ApiKeyUserController extends BaseController<User> {
 			if (!user) throw new Error(`User not found.`);
 			if (!workspace.public) throw new Error(`This workspace is private, you need to ask the administrator to add you in first.`);
 
-			let updatedUser = [user];
+			let updatedUser = user;
 
-			const isUserJoinedThisWorkspace = (user.workspaces || []).map((id) => MongoDB.toString(id)).includes(wsId);
+			const isUserJoinedThisWorkspace = (user.workspaces || []).includes(wsId);
 			// console.log("isUserJoinedThisWorkspace :>> ", isUserJoinedThisWorkspace);
 
-			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && MongoDB.toString(user.activeWorkspace) === wsId;
+			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && user.activeWorkspace === wsId;
 			// console.log("isWorkspaceActive :>> ", isWorkspaceActive);
 
 			// console.log("user.workspaces :>> ", user.workspaces);
 			if (!isUserJoinedThisWorkspace) {
-				updatedUser = await this.service.update({ _id: userId }, { $push: { workspaces: workspace._id } }, { raw: true });
+				[updatedUser] = await this.service.update({ _id: userId }, { $push: { workspaces: workspace._id } }, { raw: true });
 			}
 			// console.log("[1] updatedUser :>> ", updatedUser[0]);
 
 			// make this workspace active
-			if (!isWorkspaceActive) updatedUser = await this.service.update({ _id: userId }, { activeWorkspace: wsId });
+			if (!isWorkspaceActive) [updatedUser] = await this.service.update({ _id: userId }, { activeWorkspace: wsId });
 
 			// console.log("[2] updatedUser :>> ", updatedUser[0]);
 
-			result.data = updatedUser[0];
+			return respondSuccess({ data: updatedUser });
 		} catch (e) {
-			result.messages.push(e.message);
-			result.status = 0;
+			return respondFailure(e.message);
 		}
-
-		return result;
 	}
 }

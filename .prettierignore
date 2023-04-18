@@ -1,7 +1,6 @@
 # Ignore artifacts:
 dist
 coverage
-src/libs/typeorm
 thunder-tests
 redis_data
 storage

@@ -1,13 +1,13 @@
 import { log } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
 
-import type { Framework } from "@/entities";
+import type { IFramework } from "@/entities";
 import { parseGitRepoDataFromRepoSSH } from "@/plugins";
 
 import { DB } from "../modules/api/DB";
 
 export const migrateAllFrameworks = async () => {
-	const frameworks = (await DB.find<Framework>("framework")).filter(
+	const frameworks = (await DB.find<IFramework>("framework")).filter(
 		(fw) => typeof fw.isPrivate === "undefined" || typeof fw.gitProvider === "undefined"
 	);
 
@@ -20,7 +20,7 @@ export const migrateAllFrameworks = async () => {
 			frameworks.map(async (framework) => {
 				// update the migration:
 				const { gitProvider } = parseGitRepoDataFromRepoSSH(framework.repoSSH);
-				return DB.update<Framework>("framework", { _id: framework._id }, { isPrivate: true, gitProvider });
+				return DB.update<IFramework>("framework", { _id: framework._id }, { isPrivate: true, gitProvider });
 			})
 		)
 	)

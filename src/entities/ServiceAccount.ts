@@ -1,19 +1,81 @@
-import { Column, Entity } from "@/libs/typeorm";
+import { Schema } from "mongoose";
 
-import User from "./User";
+import type { HiddenBodyKeys } from "@/interfaces";
 
-@Entity({ name: "service_account" })
-export default class ServiceAccount extends User {
-	/**
-	 * Service Account is also a User with unexpired access token.
-	 */
-	@Column({ default: "service_account" })
+import { baseSchemaDefinitions } from "./Base";
+import type { IUser } from "./User";
+
+export interface IServiceAccount extends IUser {
 	type?: string;
-
-	constructor(data?: ServiceAccount | any) {
-		super();
-		Object.assign(this, data);
-	}
 }
+export type ServiceAccountDto = Omit<IServiceAccount, keyof HiddenBodyKeys>;
 
-export { ServiceAccount };
+export const serviceAccountSchema = new Schema<IServiceAccount>(
+	{
+		...baseSchemaDefinitions,
+		name: {
+			type: String,
+			maxlength: 250,
+		},
+		username: {
+			type: String,
+			unique: true,
+		},
+		type: {
+			type: String,
+			default: "user",
+		},
+		email: {
+			type: String,
+			maxlength: 500,
+		},
+		verified: {
+			type: Boolean,
+			default: false,
+		},
+		image: {
+			type: String,
+		},
+		providers: {
+			type: [Object],
+			default: [],
+		},
+		password: {
+			type: String,
+		},
+		token: {
+			type: Object,
+		},
+		roles: {
+			type: [Schema.Types.ObjectId],
+			ref: "roles",
+			default: [],
+		},
+		activeRole: {
+			type: Schema.Types.ObjectId,
+			ref: "roles",
+		},
+		teams: {
+			type: [Schema.Types.ObjectId],
+			ref: "teams",
+			default: [],
+		},
+		workspaces: {
+			type: [Schema.Types.ObjectId],
+			ref: "workspaces",
+			default: [],
+		},
+		activeWorkspace: {
+			type: Schema.Types.ObjectId,
+			ref: "workspaces",
+		},
+		owner: {
+			type: Schema.Types.ObjectId,
+			ref: "users",
+		},
+	},
+	{
+		collection: "service_account",
+		timestamps: true,
+	}
+);

@@ -3,7 +3,7 @@ import execa from "execa";
 
 import { Config, isServerMode } from "@/app.config";
 import { saveCliConfig } from "@/config/config";
-import type { Cluster, ContainerRegistry, Workspace } from "@/entities";
+import type { ICluster, IContainerRegistry, IWorkspace } from "@/entities";
 
 import { DB } from "../api/DB";
 import ClusterManager from "../k8s";
@@ -38,17 +38,17 @@ const DockerRegistry = {
 			throw new Error(`[DOCKER] ${e}`);
 		}
 
-		const workspace = await DB.findOne<Workspace>("workspace", { _id: workspaceId });
+		const workspace = await DB.findOne<IWorkspace>("workspace", { _id: workspaceId });
 		if (!workspace) throw new Error(`[DOCKER] Workspace not found.`);
 
-		const existingRegistry = await DB.findOne<ContainerRegistry>("registry", { provider: "dockerhub", host: server });
+		const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { provider: "dockerhub", host: server });
 		if (options.isDebugging) log(`[DOCKER] connectDockerRegistry >`, { existingRegistry });
 
 		if (existingRegistry) return existingRegistry;
 
 		// save this container registry to database
 		const imageBaseURL = `${server}/${workspace.slug}`;
-		const newRegistry = await DB.create<ContainerRegistry>("registry", {
+		const newRegistry = await DB.create<IContainerRegistry>("registry", {
 			name: "Docker Registry",
 			provider: "dockerhub",
 			imageBaseURL,
@@ -69,13 +69,13 @@ const DockerRegistry = {
 		if (!clusterShortName) throw new Error(`Cluster's short name is required.`);
 
 		// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
-		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		if (!cluster) throw new Error(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterShortName}" cluster.`);
 
 		const { name: context } = await getKubeContextByCluster(cluster);
 
 		// get Container Registry data:
-		const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
+		const registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 
 		if (!registry) {
 			throw new Error(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
@@ -128,9 +128,9 @@ const DockerRegistry = {
 					name: secretName,
 					value: secretValue,
 				},
-			} as ContainerRegistry;
+			} as IContainerRegistry;
 
-			const updatedRegistries = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, updateData);
+			const updatedRegistries = await DB.update<IContainerRegistry>("registry", { slug: registrySlug }, updateData);
 			const updatedRegistry = updatedRegistries[0];
 
 			// save registry to local config:

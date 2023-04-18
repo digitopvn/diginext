@@ -1,11 +1,11 @@
 import { logError } from "diginext-utils/dist/console/log";
 
-import type { CloudProvider } from "@/entities";
+import type { ICloudProvider } from "@/entities";
 
 /**
  * @deprecated
  */
-export const providerAuthenticate = async (provider: CloudProvider, options?: { userId?: any; workspaceId?: any }) => {
+export const providerAuthenticate = async (provider: ICloudProvider, options?: { userId?: any; workspaceId?: any }) => {
 	return logError(`[CLOUD_PROVIDER] "providerAuthenticate()" was deprecated.`);
 	// const { shortName } = provider;
 

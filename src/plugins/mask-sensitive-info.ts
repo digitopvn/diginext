@@ -1,6 +1,6 @@
 import _, { isArray } from "lodash";
 
-import type { Role } from "@/entities";
+import type { IRole } from "@/entities";
 
 export interface MaskOptions {
 	/**
@@ -25,7 +25,7 @@ export const mask = (str: string, leftUnmaskLength = 0, rightUnmaskLength?: numb
 	return `${unmaskedFirst}${maskedStr}${unmaskedLast}`;
 };
 
-export const maskSensitiveInfo = (data: any, role: Role) => {
+export const maskSensitiveInfo = (data: any, role: IRole) => {
 	if (typeof data === "boolean" || typeof data === "number" || typeof data === "string") return data;
 
 	const maskedFields = role?.maskedFields || [];

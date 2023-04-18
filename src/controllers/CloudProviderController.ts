@@ -1,7 +1,7 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { CloudProvider } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { ICloudProvider } from "@/entities";
+import { CloudProviderDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import CloudProviderService from "@/services/CloudProviderService";
 
@@ -9,7 +9,7 @@ import BaseController from "./BaseController";
 
 @Tags("Cloud Provider")
 @Route("provider")
-export default class CloudProviderController extends BaseController<CloudProvider> {
+export default class CloudProviderController extends BaseController<ICloudProvider> {
 	constructor() {
 		super(new CloudProviderService());
 	}
@@ -24,14 +24,14 @@ export default class CloudProviderController extends BaseController<CloudProvide
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<CloudProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: CloudProviderDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<CloudProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: CloudProviderDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 

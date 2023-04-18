@@ -1,12 +1,9 @@
-import { isJSON } from "class-validator";
 import { logError } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
-import { ObjectId } from "mongodb";
 
 import { isServerMode } from "@/app.config";
 import type { IQueryOptions, IQueryPagination } from "@/interfaces";
 import { flattenObjectPaths } from "@/plugins";
-import { isValidObjectId } from "@/plugins/mongodb";
 import {
 	ApiKeyUserService,
 	AppService,
@@ -20,12 +17,12 @@ import {
 	ProjectService,
 	ReleaseService,
 	RoleService,
+	RouteService,
 	ServiceAccountService,
 	TeamService,
 	UserService,
 	WorkspaceService,
 } from "@/services";
-import RouteService from "@/services/RouteService";
 
 import fetchApi from "./fetchApi";
 
@@ -66,7 +63,7 @@ export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPaginati
 	if (!isEmpty(order)) {
 		const orderStr = Object.entries(options.order)
 			.map(([key, val]) => {
-				return val === "ASC" ? key : `-${key}`;
+				return val === 1 ? key : `-${key}`;
 			})
 			.join(",");
 		optionsStr += "sort=" + orderStr;
@@ -130,25 +127,25 @@ export class DB {
 		workspace,
 	};
 
-	static transformFilter(filter: any) {
-		const _filter = { ...filter };
-		Object.entries(filter).forEach(([key, val]) => {
-			if (key == "id" || key == "_id") {
-				_filter._id = isValidObjectId(val) ? new ObjectId(val as string) : val;
-				delete _filter.id;
-			}
-			if (val == null || val == undefined) {
-				_filter[key] = null;
-			} else if (isValidObjectId(val)) {
-				_filter[key] = new ObjectId(val as string);
-			} else if (isJSON(val)) {
-				_filter[key] = JSON.parse(val as string);
-			} else {
-				_filter[key] = val;
-			}
-		});
-		return _filter;
-	}
+	// static transformFilter(filter: any) {
+	// 	const _filter = { ...filter };
+	// 	Object.entries(filter).forEach(([key, val]) => {
+	// 		if (key == "id" || key == "_id") {
+	// 			_filter._id = isValidObjectId(val) ? MongoDB.toString(val) : val;
+	// 			delete _filter.id;
+	// 		}
+	// 		if (val == null || val == undefined) {
+	// 			_filter[key] = null;
+	// 		} else if (isValidObjectId(val)) {
+	// 			_filter[key] = MongoDB.toString(toObjectId(val as string));
+	// 		} else if (isJSON(val)) {
+	// 			_filter[key] = JSON.parse(val as string);
+	// 		} else {
+	// 			_filter[key] = val;
+	// 		}
+	// 	});
+	// 	return _filter;
+	// }
 
 	static async count(collection: DBCollection, filter: any = {}, options?: IQueryOptions, pagination?: IQueryPagination) {
 		let amount: number;
@@ -159,7 +156,7 @@ export class DB {
 				return;
 			}
 			try {
-				amount = (await svc.count(DB.transformFilter(filter), options)) || 0;
+				amount = (await svc.count(filter, options)) || 0;
 			} catch (e) {
 				logError(`[DB] COUNT > Service "${collection}" :>>`, e);
 			}
@@ -185,7 +182,7 @@ export class DB {
 				return;
 			}
 			try {
-				items = (await svc.find(DB.transformFilter(filter), options, pagination)) || [];
+				items = (await svc.find(filter, options, pagination)) || [];
 			} catch (e) {
 				logError(`[DB] FIND > Service "${collection}" :>>`, e);
 				items = [];
@@ -212,7 +209,7 @@ export class DB {
 				return;
 			}
 			try {
-				item = await svc.findOne(DB.transformFilter(filter), options);
+				item = await svc.findOne(filter, options);
 			} catch (e) {
 				logError(`[DB] FIND ONE > Service "${collection}" :>>`, e);
 			}
@@ -274,7 +271,7 @@ export class DB {
 			}
 
 			try {
-				items = (await svc.update(DB.transformFilter(filter), data, options)) || [];
+				items = (await svc.update(filter, data, options)) || [];
 			} catch (e) {
 				logError(`[DB] UPDATE > Service "${collection}" :>>`, e);
 				items = [];
@@ -307,7 +304,7 @@ export class DB {
 	}
 
 	static async delete<T = any>(collection: DBCollection, filter: any) {
-		let item;
+		let item: { ok: boolean; affected: number };
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
@@ -315,7 +312,7 @@ export class DB {
 				return;
 			}
 			try {
-				item = await svc.softDelete(DB.transformFilter(filter));
+				item = await svc.softDelete(filter);
 			} catch (e) {
 				logError(`[DB] DELETE > Service "${collection}" :>>`, e);
 			}
@@ -331,7 +328,7 @@ export class DB {
 				method: "DELETE",
 			});
 			if (!status && messages[0]) logError(`[DB] DELETE - ${url} :>>`, messages);
-			item = result;
+			item = result as { ok: boolean; affected: number };
 		}
 		return item;
 	}

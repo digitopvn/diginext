@@ -2,17 +2,13 @@ import { isBooleanString, isJSON, isNumberString } from "class-validator";
 import { toBool, toInt } from "diginext-utils/dist/object";
 // import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
-import { isEmpty, toNumber, trim } from "lodash";
-import { ObjectId } from "mongodb";
+import { cloneDeepWith, isEmpty, toNumber, trim } from "lodash";
 
 import { Config } from "@/app.config";
-import type { User, Workspace } from "@/entities";
-import type Base from "@/entities/Base";
+import type { IUser, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import type { FindOptionsWhere } from "@/libs/typeorm";
-import { isValidObjectId } from "@/plugins/mongodb";
+import { isObjectId, isValidObjectId, MongoDB, toObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
-import { traverseObjectAndTransformValue } from "@/plugins/traverse";
 import type { BaseService } from "@/services/BaseService";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
@@ -21,12 +17,12 @@ import { respondFailure, respondSuccess } from "../interfaces/ResponseData";
 
 const DEFAULT_PAGE_SIZE = 100;
 
-export default class BaseController<T extends Base = any> {
+export default class BaseController<T = any> {
 	service: BaseService<T>;
 
-	user: User;
+	user: IUser;
 
-	workspace: Workspace;
+	workspace: IWorkspace;
 
 	filter: IQueryFilter;
 
@@ -34,14 +30,12 @@ export default class BaseController<T extends Base = any> {
 
 	pagination: IResponsePagination;
 
-	where: FindOptionsWhere<any>;
-
 	constructor(service?: BaseService<T>) {
 		if (service) this.service = service;
 	}
 
 	async read() {
-		// console.log("this.filter :>> ", this.filter);
+		if (!this.filter) this.filter = {};
 
 		let data: T | T[];
 		if (this.filter._id) {
@@ -52,7 +46,7 @@ export default class BaseController<T extends Base = any> {
 			if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: "" });
 		}
 
-		return respondSuccess({ data });
+		return respondSuccess({ data, ...this.pagination });
 	}
 
 	async create(inputData) {
@@ -64,7 +58,6 @@ export default class BaseController<T extends Base = any> {
 	}
 
 	async update(updateData) {
-		// console.log("BaseController > this.filter :>> ", this.filter);
 		const data = await this.service.update(this.filter, updateData, this.options);
 		if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 
@@ -113,12 +106,12 @@ export default class BaseController<T extends Base = any> {
 	parseBody(req: AppRequest, res?: Response, next?: NextFunction) {
 		// log("req.body [1] >>", req.body);
 
-		traverseObjectAndTransformValue(req.body, ([key, val]) => {
-			if (isValidObjectId(val)) return new ObjectId(val);
+		req.body = cloneDeepWith(req.body, function (val) {
+			if (isValidObjectId(val)) return MongoDB.toString(toObjectId(val));
+			if (isObjectId(val)) return MongoDB.toString(val);
 			if (isNumberString(val)) return toNumber(val);
 			if (isBooleanString(val)) return toBool(val);
 			if (isJSON(val)) return JSON.parse(val);
-			return val;
 		});
 
 		if (next) next();
@@ -160,12 +153,12 @@ export default class BaseController<T extends Base = any> {
 		let _sortOptions: string[];
 		if (sort) _sortOptions = sort.indexOf(",") > -1 ? sort.split(",") : [sort];
 		if (order) _sortOptions = order.indexOf(",") > -1 ? order.split(",") : [order];
-		const sortOptions: { [key: string]: "DESC" | "ASC" } = {};
+		const sortOptions: { [key: string]: 1 | -1 } = {};
 		if (_sortOptions)
 			_sortOptions.forEach((s) => {
 				const isDesc = s.charAt(0) === "-";
 				const key = isDesc ? s.substring(1) : s;
-				const sortValue: "DESC" | "ASC" = isDesc ? "DESC" : "ASC";
+				const sortValue: 1 | -1 = isDesc ? -1 : 1;
 				sortOptions[key] = sortValue;
 			});
 		if (!isEmpty(sortOptions)) options.order = sortOptions;

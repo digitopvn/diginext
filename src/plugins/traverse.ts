@@ -1,16 +1,30 @@
+import { MongoDB } from "./mongodb";
+
 export function traverseObjectAndTransformValue(obj: any, transform: (keyPair: [key: string, val: any]) => any) {
-	if (typeof obj === "string") return obj;
-	if (typeof obj === "number") return obj;
-	if (typeof obj === "boolean") return obj;
-	if (typeof obj === "function") return obj;
-
-	for (const key in obj) {
-		if (typeof obj[key] === "object" && obj[key] !== null) {
-			traverseObjectAndTransformValue(obj[key], transform);
-		} else {
-			obj[key] = transform([key, obj[key]]);
+	if (
+		typeof obj === "string" ||
+		typeof obj === "number" ||
+		typeof obj === "boolean" ||
+		typeof obj === "function" ||
+		obj instanceof Date ||
+		MongoDB.isObjectId(obj)
+	) {
+		return obj;
+	} else if (typeof obj === "object" && obj !== null) {
+		for (const key in obj) {
+			const value = obj[key];
+			if (typeof value === "object" && value !== null) {
+				obj[key] = traverseObjectAndTransformValue(value, transform);
+			} else {
+				obj[key] = transform([key, value]);
+			}
 		}
+		// return obj;
+	} else {
+		return obj;
 	}
+}
 
-	return obj;
+export function replaceObjectIdsToStrings(obj: any): any {
+	return JSON.parse(JSON.stringify(obj));
 }

@@ -1,9 +1,9 @@
 import { log } from "diginext-utils/dist/console/log";
 
-import type { Framework, FrameworkDto, User, Workspace } from "@/entities";
+import type { FrameworkDto, IFramework, IUser, IWorkspace } from "@/entities";
 import { DB } from "@/modules/api/DB";
 
-const initialFrameworks: FrameworkDto[] = [
+const initialFrameworks = [
 	{
 		name: "NextJS 13 Starter",
 		repoURL: "https://github.com/digitopvn/next13-starter",
@@ -20,15 +20,15 @@ const initialFrameworks: FrameworkDto[] = [
 		isPrivate: false,
 		mainBranch: "main",
 	},
-];
+] as FrameworkDto[];
 
-export const seedFrameworks = async (workspace: Workspace, owner: User) => {
+export const seedFrameworks = async (workspace: IWorkspace, owner: IUser) => {
 	const results = (
 		await Promise.all(
 			initialFrameworks.map(async (fw) => {
-				const framework = await DB.findOne<Framework>("framework", { repoURL: fw.repoURL, workspace: workspace._id });
+				const framework = await DB.findOne<IFramework>("framework", { repoURL: fw.repoURL, workspace: workspace._id });
 				if (!framework) {
-					const seedFw = await DB.create<Framework>("framework", { ...fw, owner: owner._id, workspace: workspace._id });
+					const seedFw = await DB.create<IFramework>("framework", { ...fw, owner: owner._id, workspace: workspace._id });
 					return seedFw;
 				}
 				return framework;

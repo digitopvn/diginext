@@ -4,7 +4,7 @@ import inquirer from "inquirer";
 import { isEmpty, isNaN } from "lodash";
 
 import { getCliConfig } from "@/config/config";
-import type { App, CloudProvider, Cluster, ContainerRegistry, Project } from "@/entities";
+import type { IApp, ICloudProvider, ICluster, IContainerRegistry, IProject } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
@@ -60,14 +60,14 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	const localDeployEnvironment = localAppConfig.environment[env] || {};
 	const localDeployDomains = localDeployEnvironment.domains || [];
 
-	let project = localAppConfig.project ? await DB.findOne<Project>("project", { slug: localAppConfig.project }) : undefined;
+	let project = localAppConfig.project ? await DB.findOne<IProject>("project", { slug: localAppConfig.project }) : undefined;
 	if (!project) project = await createOrSelectProject(options);
 	localAppConfig.project = project.slug;
 
 	// console.log("askForDeployEnvironmentInfo > project :>> ", project);
 
 	let app = localAppConfig.slug
-		? await DB.findOne<App>("app", { slug: localAppConfig.slug }, { populate: ["project", "owner", "workspace"] })
+		? await DB.findOne<IApp>("app", { slug: localAppConfig.slug }, { populate: ["project", "owner", "workspace"] })
 		: undefined;
 	if (!app) app = await createOrSelectApp(project.slug, options);
 	// console.log("askForDeployEnvironmentInfo > app :>> ", app);
@@ -119,13 +119,13 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 
 	// request cluster
 	if (!localDeployEnvironment.cluster) {
-		const clusters = await DB.find<Cluster>("cluster", {}, { populate: ["provider"] }, { limit: 20 });
+		const clusters = await DB.find<ICluster>("cluster", {}, { populate: ["provider"] }, { limit: 20 });
 		if (isEmpty(clusters)) {
 			logError(`No clusters found in this workspace. Please add one to deploy on.`);
 			return;
 		}
 
-		const { cluster } = await inquirer.prompt<{ cluster: Cluster }>({
+		const { cluster } = await inquirer.prompt<{ cluster: ICluster }>({
 			type: "list",
 			name: "cluster",
 			message: `Which cluster do you want to use for "${env}" environment?`,
@@ -134,9 +134,9 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 			}),
 		});
 		localDeployEnvironment.cluster = cluster.shortName;
-		localDeployEnvironment.provider = (cluster.provider as CloudProvider).shortName;
+		localDeployEnvironment.provider = (cluster.provider as ICloudProvider).shortName;
 	} else {
-		const cluster = await DB.findOne<Cluster>("cluster", { shortName: localDeployEnvironment.cluster });
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: localDeployEnvironment.cluster });
 		if (!cluster) {
 			logError(`Cluster "${localDeployEnvironment.cluster}" not found.`);
 			return;
@@ -171,7 +171,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	}
 
 	// request container registry
-	let registry: ContainerRegistry;
+	let registry: IContainerRegistry;
 	if (localDeployEnvironment.registry) {
 		registry = await DB.findOne("registry", { slug: localDeployEnvironment.registry });
 		if (registry) localDeployEnvironment.registry = registry.slug;
@@ -294,7 +294,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	};
 	if (options.isDebugging) log(`[ASK DEPLOY INFO] updateAppData :>>`, updateAppData);
 
-	const [updatedApp] = await DB.update<App>("app", { slug: appConfig.slug }, updateAppData);
+	const [updatedApp] = await DB.update<IApp>("app", { slug: appConfig.slug }, updateAppData);
 
 	if (!updatedApp) {
 		logError(`App not found (probably deleted?)`);
@@ -311,6 +311,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	const { envVars: serverEnvironmentVariables = [] } = await getDeployEvironmentByApp(app, env);
 
 	let envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
+	// console.log("envFile :>> ", envFile);
 
 	// if "--upload-env" flag is specified:
 	if (options.shouldUploadDotenv) {

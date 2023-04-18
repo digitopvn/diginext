@@ -2,7 +2,6 @@
 **/node_modules/**
 *.js
 .yarn
-src/libs/typeorm
 **/templates/**
 **/storage/**
 storage/**

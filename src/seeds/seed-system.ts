@@ -1,10 +1,10 @@
 import { log } from "diginext-utils/dist/console/log";
 
-import type { CloudProvider } from "@/entities";
+import type { ICloudProvider } from "@/entities";
 import { seedSystemRoutes } from "@/migration/seed-all-routes";
 import { DB } from "@/modules/api/DB";
 
-const initialCloudProviders: CloudProvider[] = [
+const initialCloudProviders = [
 	{
 		name: "Google Cloud",
 		shortName: "gcloud",
@@ -17,15 +17,15 @@ const initialCloudProviders: CloudProvider[] = [
 		name: "Others",
 		shortName: "custom",
 	},
-];
+] as ICloudProvider[];
 
 export const seedDefaultProviders = async () => {
 	const results = (
 		await Promise.all(
 			initialCloudProviders.map(async (providerData) => {
-				const provider = await DB.findOne<CloudProvider>("provider", { shortName: providerData.shortName });
+				const provider = await DB.findOne<ICloudProvider>("provider", { shortName: providerData.shortName });
 				if (!provider) {
-					const newProvider = await DB.create<CloudProvider>("provider", providerData);
+					const newProvider = await DB.create<ICloudProvider>("provider", providerData);
 					return newProvider;
 				}
 			})
