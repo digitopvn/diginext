@@ -609,21 +609,35 @@ export default class AppController extends BaseController<IApp> {
 
 		// take down the deploy environment
 		const envConfig = await getDeployEvironmentByApp(app, env.toString());
-		const { cluster, namespace } = envConfig;
-		if (!cluster) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Cluster "${cluster}" not found.`);
+		const { cluster: clusterShortName, namespace } = envConfig;
+		if (!clusterShortName) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Cluster "${clusterShortName}" not found.`);
 		if (!namespace) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Namespace "${namespace}" not found.`);
 
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		let errorMsg;
-		try {
-			// switch to the cluster of this environment
-			await ClusterManager.authCluster(cluster);
 
-			// TODO: Should NOT delete namespace because it will affect other apps in a project!
-			// delete the whole namespace of this environment
-			await ClusterManager.deleteNamespaceByCluster(namespace, cluster);
-		} catch (e) {
-			logError(`[BaseController] deleteEnvironment (${cluster} - ${namespace}) :>>`, e);
-			errorMsg = e.message;
+		if (cluster) {
+			const { contextName: context } = cluster;
+			try {
+				// switch to the cluster of this environment
+				await ClusterManager.authCluster(clusterShortName);
+
+				/**
+				 * IMPORTANT
+				 * ---
+				 * Should NOT delete namespace because it will affect other apps in a project!
+				 */
+
+				// Delete INGRESS
+				await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+				// Delete SERVICE
+				await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+				// Delete DEPLOYMENT
+				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+			} catch (e) {
+				logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
+				errorMsg = e.message;
+			}
 		}
 
 		// update the app (delete the deploy environment)
