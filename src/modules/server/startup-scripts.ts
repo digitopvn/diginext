@@ -102,16 +102,14 @@ export async function startupScripts() {
 		cronjob.schedule("0 0 */3 * *", () => cleanUp());
 	}
 
-	// migration
-
+	/**
+	 * Database migration
+	 */
 	await migrateAllAppEnvironment();
-	// await migrateAllReleases();
 	await migrateAllFrameworks();
 	await migrateAllGitProviders();
 	await migrateServiceAccountAndApiKey();
 	await migrateDefaultServiceAccountAndApiKeyUser();
-	// await migrateAllUsers();
-	// await migrateUserWorkspaces();
 
 	/**
 	 * Mark "healthz" return true & server is ready to receive connections:
