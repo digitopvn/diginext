@@ -87,6 +87,8 @@
 		"release:docker": "npm run release && npm run docker-build",
 		"release:all": "npm run release && npm run docker-build && skaffold run --tail",
 		"prerelease": "npx semantic-release --no-ci",
+		"ci:release": "open-cli https://github.com/digitopvn/diginext/compare/main...$(echo $(git rev-parse --abbrev-ref HEAD))",
+		"ci:prerelease": "open-cli https://github.com/digitopvn/diginext/compare/prerelease...$(echo $(git rev-parse --abbrev-ref HEAD))",
 		"pull-request": "open-cli https://github.com/digitopvn/diginext/compare/main...$(echo $(git rev-parse --abbrev-ref HEAD))",
 		"pr": "pnpm pull-request",
 		"husky-hide": "npm pkg delete scripts.prepare && npm pkg delete scripts.postinstall",
