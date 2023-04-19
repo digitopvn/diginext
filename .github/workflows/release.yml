@@ -85,4 +85,4 @@ jobs:
         id: buildx
 
       - name: Build & push to Docker Hub
-        run: pnpm 
+        run: pnpm docker-build
