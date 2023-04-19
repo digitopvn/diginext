@@ -105,7 +105,9 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 			}
 		} else {
 			// connect PODMAN to CONTAINER REGISTRY
-			connectRes = await execa.command(`gcloud auth print-access-token | podman login -u oauth2accesstoken --password-stdin ${host || ""}`);
+			connectRes = await execa.command(`gcloud auth print-access-token | podman login -u oauth2accesstoken --password-stdin ${host || ""}`, {
+				shell: "bash",
+			});
 		}
 		if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { authRes: connectRes });
 	} catch (e) {

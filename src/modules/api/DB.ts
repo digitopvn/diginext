@@ -49,7 +49,7 @@ export function queryFilterToUrlFilter(filter: any = {}) {
 	return Object.entries(filter)
 		.map(([key, val]) => {
 			if (typeof val === "undefined") return `${key}=undefined`;
-			return val !== null ? `${key}=${val}` : null;
+			return val !== null && val !== "" ? `${key}=${val}` : null;
 		})
 		.filter((item) => item !== null)
 		.join("&");
