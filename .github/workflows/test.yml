@@ -9,6 +9,7 @@ env:
   BUILDER: podman
   PORT: 6969
   BASE_URL: http://localhost:6969
+  JWT_SECRET: J9xjKudq5p6dNopGHExnRv5zIB4vo6aX3z3mdrPJPJSYqB4jIA8z5ftLmKz03boo
 
 jobs:
   test:
