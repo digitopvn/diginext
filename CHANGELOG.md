@@ -1,3 +1,11 @@
+## [3.0.1](https://github.com/digitopvn/diginext/compare/v3.0.0...v3.0.1) (2023-04-19)
+
+
+### Bug Fixes
+
+* **package.json:** reorder semantic release plugins ([5263c77](https://github.com/digitopvn/diginext/commit/5263c7792837e97b0661d69e9006bc7093ed209c))
+* **write dx config:** ignore package.json if not existed ([7b338fa](https://github.com/digitopvn/diginext/commit/7b338fa5800d5b90c812abd750095ed56d202e5a))
+
 # [3.0.0](https://github.com/digitopvn/diginext/compare/v2.11.2...v3.0.0) (2023-04-19)
 
 
