@@ -81,9 +81,9 @@
 		"pkg-version": "npm pkg set version=$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-)",
 		"npm-publish": "npm publish --access=public",
 		"release": "npm run format && npm run build && npm run release:nobuild",
+		"release:nobuild": "npm run prerelease && npm run husky-hide && npm run npm-publish && npm run husky-show",
 		"release:deploy": "npm run release && skaffold run --platform=linux/amd64,linux/arm64",
 		"release:docker": "npm run release && npm run docker-build",
-		"release:nobuild": "npm run prerelease && npm run husky-hide && npm run npm-publish && npm run husky-show && npm run pull-request",
 		"release:all": "npm run release && npm run docker-build && skaffold run --tail",
 		"prerelease": "npx semantic-release --no-ci && npm run pkg-version && npm run commit-build && exit 0",
 		"pull-request": "open-cli https://github.com/digitopvn/diginext/compare/main...$(echo $(git rev-parse --abbrev-ref HEAD))",
@@ -109,13 +109,22 @@
 	},
 	"release": {
 		"branches": [
-			"prerelease",
-			"dev/goon"
+			"main",
+			{
+				"name": "prerelease",
+				"prerelease": true
+			},
+			{
+				"name": "beta",
+				"prerelease": true
+			}
 		],
 		"plugins": [
 			"@semantic-release/commit-analyzer",
 			"@semantic-release/release-notes-generator",
-			"@semantic-release/changelog"
+			"@semantic-release/changelog",
+			"@semantic-release/github",
+			"@semantic-release/git"
 		]
 	},
 	"dependencies": {

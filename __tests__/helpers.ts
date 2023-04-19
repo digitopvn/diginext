@@ -46,6 +46,7 @@ import { isEmpty } from "lodash";
 import { MongoDB } from "../src/plugins/mongodb";
 import mongoose from "mongoose";
 import chalk from "chalk";
+import { Config } from "../src/app.config";
 
 const user1 = { name: "Test User 1", email: "user1@test.local" } as IUser;
 const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
@@ -90,7 +91,7 @@ export const workspaceCtl = new WorkspaceController();
 export let currentUser: IUser;
 export let currentWorkspace: IWorkspace;
 
-const dbName = `diginext-test`;
+const dbName = Config.DB_NAME;
 
 export async function setupStartTestEnvironment() {
 	// wait until the server is completely READY...
