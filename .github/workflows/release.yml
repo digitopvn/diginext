@@ -1,4 +1,4 @@
-name: Release
+name: Release Workflow
 on:
   push:
     branches:
@@ -11,7 +11,7 @@ on:
       - completed
 jobs:
   release:
-    name: Release
+    name: Release Job
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
