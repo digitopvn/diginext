@@ -1,17 +1,19 @@
-name: Release Workflow
+name: Test Workflow
 on:
-  push:
-    branches:
-      - main
-      - prerelease
-      - beta
-  workflow_run:
-    workflows: ["Test"]
-    types:
-      - completed
+  - push
+
+env:
+  DB_URI: mongodb://localhost:27017
+  DX_KEY: randomkey
+  CLI_MODE: server
+  BUILDER: podman
+  PORT: 6969
+  BASE_URL: http://localhost:6969
+  JWT_SECRET: J9xjKudq5p6dNopGHExnRv5zIB4vo6aX3z3mdrPJPJSYqB4jIA8z5ftLmKz03boo
+
 jobs:
-  release:
-    name: Release Job
+  test:
+    name: Test Job
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,9 +25,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "lts/*"
+      
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.8.0
 
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
         id: pnpm-install
         with:
           version: 8
@@ -37,8 +42,8 @@ jobs:
         run: |
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v3
-        name: Setup pnpm cache
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -49,13 +54,10 @@ jobs:
       #   run: npm ci
         run: pnpm install
 
-      # - name: Build
-      #   run: npm run build
-
-      - name: Release
+      - name: Test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         # run: npx semantic-release
-        # run: npm run release
-        run: pnpm release
+        # run: npm run test
+        run: pnpm test

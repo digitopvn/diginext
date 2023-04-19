@@ -7,7 +7,9 @@ import { Config } from "@/app.config";
 
 const dbName = Config.DB_NAME;
 
-export async function connect(onConnected?: (db: typeof mongoose) => void) {
+export async function connect(onConnected?: (db?: typeof mongoose) => void) {
+	console.log("Config.DB_URI :>> ", Config.DB_URI);
+	console.log("Config.DB_NAME :>> ", Config.DB_NAME);
 	try {
 		const db = await mongoose.connect(Config.DB_URI, {
 			dbName,
@@ -17,9 +19,10 @@ export async function connect(onConnected?: (db: typeof mongoose) => void) {
 
 		// const dataSource = await appDataSource.initialize();
 		if (process.env.CLI_MODE == "server") logSuccess("[DATABASE] MongoDB is connected!");
-		if (typeof onConnected != "undefined") onConnected(db);
+		if (typeof onConnected != "undefined") onConnected();
 	} catch (e) {
-		logError(e);
+		console.error(e);
+		process.exit(1); // passing 1 - will exit the proccess with error
 	}
 }
 
