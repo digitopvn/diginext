@@ -30,7 +30,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 
 	const buildNumber = tag ?? image.split(":")[1];
 
-	const deployedEnvironment = await getDeployEvironmentByApp(app, env);
+	const deployedEnvironment = await getDeployEvironmentByApp(app, env || "dev");
 	// console.log(`deployedEnvironment > ${env} :>>`, deployedEnvironment);
 
 	const { deploymentYaml, prereleaseDeploymentYaml, namespace, provider, project: providerProject, cluster } = deployedEnvironment;
