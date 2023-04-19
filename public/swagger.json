@@ -5836,6 +5836,56 @@
 				]
 			}
 		},
+		"/build/status": {
+			"get": {
+				"operationId": "GetStatus",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/ResponseData"
+										},
+										{
+											"properties": {
+												"data": {
+													"type": "string"
+												}
+											},
+											"required": ["data"],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"description": "Check status then build container image finish.",
+				"tags": ["Build"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "slug",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/build/start": {
 			"post": {
 				"operationId": "StartBuild",
