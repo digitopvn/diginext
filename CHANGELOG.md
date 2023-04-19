@@ -1,3 +1,10 @@
+# [3.0.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.0.0-prerelease.1...v3.0.0-prerelease.2) (2023-04-19)
+
+
+### Bug Fixes
+
+* **release:** try release a prerelease version and publish ([a68772a](https://github.com/digitopvn/diginext/commit/a68772af463ecac53b7c5807f6e23617d9a0a276))
+
 # [3.0.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v2.11.2...v3.0.0-prerelease.1) (2023-04-19)
 
 
