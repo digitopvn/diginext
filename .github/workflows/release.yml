@@ -7,14 +7,6 @@ on:
       - main
       - prerelease
       - beta
-  # workflow_run:
-  #   workflows: ["Test"]
-  #   branches: 
-  #     - main
-  #     - prerelease
-  #     - beta
-  #   types:
-  #     - completed
 
 # ENVIRONMENT VARIABLES
 env:
