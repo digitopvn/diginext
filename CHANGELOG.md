@@ -1,3 +1,16 @@
+# [3.0.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.0.0-prerelease.2...v3.0.0-prerelease.3) (2023-04-19)
+
+
+### Bug Fixes
+
+* **create release:** resolve conflicts ([bce9294](https://github.com/digitopvn/diginext/commit/bce9294daa24391d1e0b53e1c0299f22efbb703c))
+* **server:** default owner when create build env ([a62e420](https://github.com/digitopvn/diginext/commit/a62e420d2a5010e37408722e46b9fc3857c09dea))
+
+
+### Features
+
+* **server:** add api check status build ([563ab11](https://github.com/digitopvn/diginext/commit/563ab11f2bfb629000d66ba63611e2e30c90e821))
+
 # [3.0.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.0.0-prerelease.1...v3.0.0-prerelease.2) (2023-04-19)
 
 
