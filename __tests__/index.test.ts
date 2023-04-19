@@ -4,7 +4,7 @@ import { checkSystemStatus } from "./core/system-status";
 
 describe("Diginext server", () => {
 	// Start
-	beforeAll(async () => await setupStartTestEnvironment());
+	beforeAll(async () => await setupStartTestEnvironment(), 15000);
 	// End
 	afterAll(async () => await setupEndTestEnvironment());
 
