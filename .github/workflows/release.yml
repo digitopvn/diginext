@@ -1,4 +1,6 @@
 name: Release Workflow
+
+# TRIGGERS
 on:
   push:
     branches:
@@ -14,13 +16,15 @@ on:
   #   types:
   #     - completed
 
+# ENVIRONMENT VARIABLES
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+# CI/CD STEPS
 jobs:
   release:
-    name: Release Job
+    name: Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
