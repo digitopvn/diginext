@@ -405,8 +405,6 @@ export const verifySSH = async (options?: InputOptions) => {
 		await execCmd(`touch ${HOME_DIR}/.ssh/config`);
 		const sshConfigContent = (await execCmd(`cat ${HOME_DIR}/.ssh/config`)) || "";
 		for (const idRsaFile of privateIdRsaFiles) {
-			// log(`[GIT] sshConfigContent.indexOf("${idRsaFile}"):`, sshConfigContent.indexOf(idRsaFile));
-			// log(`[GIT] sshConfigContent.indexOf("${gitDomain}"):`, sshConfigContent.indexOf(gitDomain));
 			if (sshConfigContent.indexOf(idRsaFile) === -1 || sshConfigContent.indexOf(gitDomain) === -1) {
 				await execCmd(`echo "Host ${gitDomain}" >> ${HOME_DIR}/.ssh/config`);
 				if (isMac()) await execCmd(`echo "	UseKeychain yes" >> ${HOME_DIR}/.ssh/config`);

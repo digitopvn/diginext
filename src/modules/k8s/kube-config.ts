@@ -2,7 +2,7 @@ import { logWarn } from "diginext-utils/dist/console/log";
 import { existsSync } from "fs";
 import yaml from "js-yaml";
 
-import type { Cluster } from "@/entities";
+import type { ICluster } from "@/entities";
 import type { KubeConfig, KubeConfigContext } from "@/interfaces";
 import { execCmd } from "@/plugins";
 
@@ -89,7 +89,7 @@ export async function getKubeContextByClusterShortName(shortName: string, provid
  * @param filePath - [optional] - A ".kubeconfig" YAML file path
  * @returns
  */
-export async function getKubeContextByCluster(cluster: Cluster, filePath?: string) {
+export async function getKubeContextByCluster(cluster: ICluster, filePath?: string) {
 	const { shortName, providerShortName: provider } = cluster;
 
 	const context = await getKubeContextByClusterShortName(shortName, provider, filePath);

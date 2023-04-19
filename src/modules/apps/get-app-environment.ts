@@ -1,13 +1,13 @@
 import { isJSON } from "class-validator";
 
-import type { App } from "@/entities";
+import type { IApp } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces";
 // import { migrateDeployEnvironmentOfSpecificApps } from "@/migration/migrate-app-environment";
 
 /**
  * Some old deploy environment was saved into JSON
  */
-export const getDeployEnvironmentFromJSON = async (app: App, env: string) => {
+export const getDeployEnvironmentFromJSON = async (app: IApp, env: string) => {
 	let deployEnvironment = {} as DeployEnvironment;
 	if (app.environment && app.environment[env]) {
 		if (isJSON(app.environment[env])) {
@@ -19,7 +19,7 @@ export const getDeployEnvironmentFromJSON = async (app: App, env: string) => {
 	return deployEnvironment || {};
 };
 
-export const getDeployEvironmentByApp = async (app: App, env: string) => {
+export const getDeployEvironmentByApp = async (app: IApp, env: string) => {
 	// let deployEnvironment = app.deployEnvironment || {};
 	// if (isEmpty(deployEnvironment) || isEmpty(deployEnvironment[env])) {
 	// 	// try to fetch from old CLI version if any...

@@ -2,7 +2,7 @@ import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 
 import { getCliConfig } from "@/config/config";
-import type { App, AppGitInfo } from "@/entities";
+import type { AppGitInfo, IApp } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { getAppConfig, getCurrentGitRepoData } from "@/plugins";
@@ -56,7 +56,7 @@ export async function execInitApp(options: InputOptions) {
 
 	// update GIT info in the database
 	const { framework } = options;
-	const updateData = {} as App;
+	const updateData = {} as IApp;
 	if (framework) updateData.framework = framework;
 
 	if (options.shouldUseGit) {
@@ -67,7 +67,7 @@ export async function execInitApp(options: InputOptions) {
 	}
 	if (options.isDebugging) console.log("[INIT APP] updateData :>> ", updateData);
 
-	const [updatedApp] = await DB.update<App>("app", { slug: initApp.slug }, updateData);
+	const [updatedApp] = await DB.update<IApp>("app", { slug: initApp.slug }, updateData);
 	if (options.isDebugging) console.log("[INIT APP] updatedApp :>> ", updatedApp);
 
 	if (!updatedApp) logError(`[INIT APP] Can't initialize app due to network issue.`);

@@ -3,10 +3,10 @@ import * as fs from "fs";
 import { isEmpty } from "lodash";
 import cronjob from "node-cron";
 
-import { isDevMode } from "@/app.config";
+import { isDevMode, IsTest } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { User } from "@/entities";
+import type { IUser } from "@/entities";
 import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
 import { migrateServiceAccountAndApiKey } from "@/migration/migrate-all-sa-and-api-key";
@@ -18,6 +18,7 @@ import { connectRegistry } from "@/modules/registry/connect-registry";
 import { execCmd } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
 import { seedSystemInitialData } from "@/seeds/seed-system";
+import { setServerStatus } from "@/server";
 import { ClusterService, ContainerRegistryService, GitProviderService, WorkspaceService } from "@/services";
 
 /**
@@ -26,7 +27,7 @@ import { ClusterService, ContainerRegistryService, GitProviderService, Workspace
  * - Connect GIT providers (if any)
  * - Connect Container Registries (if any)
  * - Connect K8S clusters (if any)
- * - Start cron jobs
+ * - Start system cronjobs
  * - Seed some initial data
  */
 export async function startupScripts() {
@@ -39,17 +40,26 @@ export async function startupScripts() {
 	const isSSHKeysExisted = await sshKeysExisted();
 	if (!isSSHKeysExisted) await generateSSH();
 
-	const gitSvc = new GitProviderService();
-	const gitProviders = await gitSvc.find({});
-	if (!isEmpty(gitProviders)) {
-		for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
+	// console.log("gitProviders :>> ");
+	// console.dir(gitProviders, { depth: 10 });
+
+	/**
+	 * No need to verify SSH for "test" environment?
+	 */
+	if (!IsTest()) {
+		const gitSvc = new GitProviderService();
+		const gitProviders = await gitSvc.find({});
+		if (!isEmpty(gitProviders)) {
+			for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
+		}
 	}
 
 	// set global identity
 	if (!isDevMode) {
 		// <-- to make sure it won't override your GIT config when developing Diginext
-		execCmd(`git config --global user.email "server@diginext.site"`);
-		execCmd(`git config --global --add user.name "Diginext Server"`);
+		execCmd(`git init`);
+		execCmd(`git config --global user.email server@diginext.site`);
+		execCmd(`git config --global --add user.name Diginext`);
 	}
 
 	// seed system initial data: Cloud Providers
@@ -57,9 +67,10 @@ export async function startupScripts() {
 
 	// seed default roles to workspace if missing:
 	const wsSvc = new WorkspaceService();
-	const workspaces = await wsSvc.find({}, { populate: ["owner"] });
+	let workspaces = await wsSvc.find({}, { populate: ["owner"] });
+
 	if (workspaces.length > 0) {
-		await Promise.all(workspaces.map((ws) => seedDefaultRoles(ws, ws.owner as User)));
+		await Promise.all(workspaces.map((ws) => seedDefaultRoles(ws, ws.owner as IUser)));
 	}
 
 	// connect container registries
@@ -80,14 +91,16 @@ export async function startupScripts() {
 		}
 	}
 
-	// cronjobs
-	logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every 3 days at 00:00 AM`);
 	/**
+	 * CRONJOBS
+	 * ---
 	 * Schedule a clean up task every 3 days at 00:00 AM
+	 * (Skip for test environment)
 	 */
-	cronjob.schedule("0 0 */3 * *", () => {
-		cleanUp();
-	});
+	if (!IsTest()) {
+		logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every 3 days at 00:00 AM`);
+		cronjob.schedule("0 0 */3 * *", () => cleanUp());
+	}
 
 	// migration
 
@@ -99,4 +112,9 @@ export async function startupScripts() {
 	await migrateDefaultServiceAccountAndApiKeyUser();
 	// await migrateAllUsers();
 	// await migrateUserWorkspaces();
+
+	/**
+	 * Mark "healthz" return true & server is ready to receive connections:
+	 */
+	setServerStatus(true);
 }

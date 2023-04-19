@@ -56,8 +56,8 @@ spec:
               value: "false"
             - name: BASE_URL
               value: https://api.diginext.site
-            - name: MONGODB_CONNECTION_STRING
-              value: # insert here
+            - name: DB_URI
+              value: # mongodb://... insert here
             - name: JWT_SECRET
               value: # insert here
             - name: JWT_EXPIRE_TIME
@@ -68,7 +68,7 @@ spec:
               value: # insert here
             - name: BUILDER
               value: docker
-            - name: DX_LICENSE_KEY
+            - name: DX_KEY
               value: randomkey
           volumeMounts:
             # this is required for Docker but very dangerous !

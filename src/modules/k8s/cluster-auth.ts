@@ -1,7 +1,7 @@
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
 import { unlink } from "fs";
 
-import type { Cluster } from "@/entities";
+import type { ICluster } from "@/entities";
 import type { KubeConfigContext } from "@/interfaces";
 import { createTmpFile, execCmd } from "@/plugins";
 
@@ -30,7 +30,7 @@ export const switchContextToCluster = async (clusterShortName: string, providerS
 		const ctx = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
 		context = ctx.name;
 	} else {
-		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		if (!cluster) {
 			logError(`Can't switch to cluster "${clusterShortName}".`);
 			return;
@@ -67,7 +67,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 	}
 
 	// find the cluster in the database:
-	let cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+	let cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 
 	if (!cluster) {
 		throw new Error(
@@ -116,7 +116,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			context = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
 
 			if (context) {
-				[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { contextName: context.name });
+				[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { contextName: context.name });
 			} else {
 				throw new Error(`Context of "${clusterShortName}" cluster not found.`);
 			}
@@ -124,7 +124,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			if (shouldSwitchContextToThisCluster) switchContext(context.name);
 
 			// mark this cluster verified
-			[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
+			[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
 
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 
@@ -147,7 +147,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			context = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
 
 			if (context) {
-				[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { contextName: context.name });
+				[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { contextName: context.name });
 			} else {
 				throw new Error(`Context of "${clusterShortName}" cluster not found.`);
 			}
@@ -155,7 +155,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			if (shouldSwitchContextToThisCluster) switchContext(context.name);
 
 			// mark this cluster verified
-			[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
+			[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
 
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 
@@ -172,7 +172,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			const contextName = await custom.authenticate({ filePath });
 
 			if (contextName) {
-				[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { contextName: contextName });
+				[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { contextName: contextName });
 			} else {
 				throw new Error(`Context of "${clusterShortName}" cluster not found.`);
 			}
@@ -183,7 +183,7 @@ export const authCluster = async (clusterShortName: string, options: ClusterAuth
 			if (shouldSwitchContextToThisCluster) switchContext(contextName);
 
 			// mark this cluster verified
-			[cluster] = await DB.update<Cluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
+			[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
 
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 

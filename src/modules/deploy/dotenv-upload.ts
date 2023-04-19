@@ -3,7 +3,7 @@ import { existsSync } from "fs";
 import path from "path";
 
 import type { CreateEnvVarsDto } from "@/controllers/AppController";
-import type { App } from "@/entities";
+import type { IApp } from "@/entities";
 import { flattenObjectPaths, getAppConfig, loadEnvFileAsContainerEnvVars } from "@/plugins";
 
 import { fetchApi } from "../api";
@@ -24,7 +24,7 @@ type UploadDotenvOptions = {
 	fileName?: string;
 };
 
-export const uploadDotenvFileByApp = async (envFile: string, app: App, env: string = "dev") => {
+export const uploadDotenvFileByApp = async (envFile: string, app: IApp, env: string = "dev") => {
 	const { slug: appSlug } = app;
 
 	const containerEnvVars = loadEnvFileAsContainerEnvVars(envFile);
@@ -39,14 +39,14 @@ export const uploadDotenvFileByApp = async (envFile: string, app: App, env: stri
 	const url = `/api/v1/app/environment/variables`;
 	const updateData = flattenObjectPaths(updateAppData);
 
-	const { status, data, messages } = await fetchApi<App>({
+	const { status, data, messages } = await fetchApi<IApp>({
 		url,
 		method: "POST",
 		data: updateData,
 	});
 
-	let updatedApp: App;
-	if (data && (data as App[]).length > 0) updatedApp = (data as App[])[0];
+	let updatedApp: IApp;
+	if (data && (data as IApp[]).length > 0) updatedApp = (data as IApp[])[0];
 	// console.log("[DB] UPDATE > result :>> ", result);
 	if (!status) logError(`Upload DOTENV file by app :>>`, messages);
 
@@ -58,7 +58,7 @@ export const uploadDotenvFileByApp = async (envFile: string, app: App, env: stri
 };
 
 export const uploadDotenvFileByAppSlug = async (envFile: string, appSlug: string, env: string = "dev") => {
-	const app = await DB.findOne<App>("app", { slug: appSlug });
+	const app = await DB.findOne<IApp>("app", { slug: appSlug });
 	if (!app) throw new Error(`Can't upload dotenv variables to "${env}" deploy environment due to "${appSlug}" app not found.`);
 
 	return uploadDotenvFileByApp(envFile, app, env);
@@ -74,7 +74,7 @@ export const uploadDotenvFile = async (env: string = "dev", options: UploadDoten
 		throw new Error(`Invalid working directory, the current "dx.json" might be corrupted, please re-initialize.`);
 	}
 
-	const app = await DB.findOne<App>("app", { slug: appSlug });
+	const app = await DB.findOne<IApp>("app", { slug: appSlug });
 	if (!app) throw new Error(`Can't upload dotenv variables to "${env}" deploy environment due to "${appSlug}" app not found.`);
 
 	const envFile = path.resolve(targetDir, fileName);

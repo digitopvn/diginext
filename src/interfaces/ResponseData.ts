@@ -1,6 +1,8 @@
 import { isArray, isString } from "lodash";
 
-export interface ResponseData {
+import type { IResponsePagination } from "./IQuery";
+
+export interface ResponseData extends IResponsePagination {
 	/**
 	 * 1 = succeed | 0 = failed
 	 */
@@ -20,10 +22,8 @@ export const respondFailure = (params: { data?: any; msg?: string } | string | s
 	return { status: 0, data, messages: [msg] } as ResponseData;
 };
 
-export const respondSuccess = (params: { data?: any; msg?: string | string[] }) => {
-	const { msg = "Ok.", data } = params;
+export const respondSuccess = (params: { data?: any; msg?: string | string[] } & IResponsePagination) => {
+	const { msg = "Ok.", data, ...pagination } = params;
 
-	if (isArray(msg)) return { status: 1, data, messages: msg } as ResponseData;
-
-	return { status: 1, data, messages: [msg] } as ResponseData;
+	return { status: 1, data, messages: isArray(msg) ? msg : [msg], ...pagination } as ResponseData & IResponsePagination;
 };

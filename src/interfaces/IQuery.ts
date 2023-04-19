@@ -1,10 +1,4 @@
-import type { EntityTarget, FindManyOptions, FindOptionsSelect, ObjectLiteral } from "@/libs/typeorm";
-
-export interface IQueryPopulate {
-	entity: EntityTarget<ObjectLiteral>;
-	path: string;
-	select: FindOptionsSelect<any>;
-}
+import type { FilterQuery } from "mongoose";
 
 export interface IQueryGeneral {
 	[key: string]: any;
@@ -86,9 +80,9 @@ export interface IQueryOptions extends IQueryGeneral {
 	 */
 	select?: string[];
 	/**
-	 * @example { order: { createdAt: "DESC" }
+	 * @example { order: { createdAt: -1 } }
 	 */
-	order?: { [key: string]: "ASC" | "DESC" };
+	order?: { [key: string]: 1 | -1 };
 	/**
 	 * @default false
 	 */
@@ -118,7 +112,7 @@ export interface IQueryPagination extends IQueryGeneral {
 	prev_page?: string;
 }
 
-export interface IQueryFilter extends FindManyOptions {
+export interface IQueryFilter extends FilterQuery<any> {
 	[key: string]: any;
 }
 

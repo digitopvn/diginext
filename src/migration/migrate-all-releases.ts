@@ -2,12 +2,12 @@ import { isJSON } from "class-validator";
 import { log } from "diginext-utils/dist/console/log";
 import { isEmpty } from "lodash";
 
-import type { Release } from "@/entities";
+import type { IRelease } from "@/entities";
 
 import { DB } from "../modules/api/DB";
 
 export const migrateAllReleases = async () => {
-	const releases = await DB.find<Release>("release", { appConfig: undefined }, { populate: ["app"] });
+	const releases = await DB.find<IRelease>("release", { appConfig: undefined }, { populate: ["app"] });
 	if (isEmpty(releases)) return;
 
 	log(`[MIGRATION] migrateAllReleases > Found ${releases.length} releases need migration.`);
@@ -27,7 +27,7 @@ export const migrateAllReleases = async () => {
 			if (!appConfig && !envVars) return;
 
 			// update the migration:
-			const updatedReleases = await DB.update<Release>("release", { _id: release._id }, { appConfig, envVars });
+			const updatedReleases = await DB.update<IRelease>("release", { _id: release._id }, { appConfig, envVars });
 			return updatedReleases[0];
 		})
 		.filter((release) => typeof release !== "undefined");

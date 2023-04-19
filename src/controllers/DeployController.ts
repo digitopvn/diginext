@@ -5,7 +5,7 @@ import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 import pkg from "@/../package.json";
 import { Config } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { App, Build, User, Workspace } from "@/entities";
+import type { IApp, IBuild, IUser, IWorkspace } from "@/entities";
 import type { InputOptions, ResponseData } from "@/interfaces";
 import { IPostQueryParams, respondFailure } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
@@ -39,8 +39,6 @@ type DeployBuildInput = {
 @Tags("Deploy")
 @Route("deploy")
 export default class DeployController extends BaseController {
-	user: User;
-
 	/**
 	 * ### [DEPRECATED SOON]
 	 * #### Use `buildAndDeploy()` instead.
@@ -104,9 +102,9 @@ export default class DeployController extends BaseController {
 		// if (!isJSON(deployParamsJSON)) return { status: 0, messages: [`Invalid JSON format of deploy "params".`] } as ResponseData;
 		// const deployParams = JSON.parse(deployParamsJSON as unknown as string) as DeployBuildInput;
 
-		const app = await DB.findOne<App>("app", { slug: buildParams.appSlug });
-		const author = await DB.findOne<User>("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] });
-		const workspace = author.activeWorkspace as Workspace;
+		const app = await DB.findOne<IApp>("app", { slug: buildParams.appSlug });
+		const author = await DB.findOne<IUser>("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] });
+		const workspace = author.activeWorkspace as IWorkspace;
 		const SOURCE_CODE_DIR = `cache/${app.projectSlug}/${app.slug}/${buildParams.gitBranch}`;
 		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
 
@@ -177,9 +175,9 @@ export default class DeployController extends BaseController {
 		const { buildSlug } = body;
 		if (!buildSlug) return { status: 0, messages: [`Build "slug" is required`] };
 
-		const build = await DB.findOne<Build>("build", { slug: buildSlug });
-		const workspace = await DB.findOne<Workspace>("workspace", { _id: build.workspace });
-		const author = this.user || (await DB.findOne<User>("user", { _id: body.author }));
+		const build = await DB.findOne<IBuild>("build", { slug: buildSlug });
+		const workspace = await DB.findOne<IWorkspace>("workspace", { _id: build.workspace });
+		const author = this.user || (await DB.findOne<IUser>("user", { _id: body.author }));
 
 		if (!author) return respondFailure({ msg: `Author is required.` });
 

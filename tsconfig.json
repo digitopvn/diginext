@@ -24,13 +24,14 @@
 		"preserveWatchOutput": true,
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
+		"preserveSymlinks": true,
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"],
 			"libs/*": ["./libs/*"]
 		}
 	},
-	"include": ["./src/*", "./src/**/*", "./test", "node_modules/execa/index.d.ts"],
+	"include": ["./src/*", "./src/**/*", "node_modules/execa/index.d.ts"],
 	"exclude": ["dist", "build", "node_modules", "storage", "./storage"],
 	"ts-node": {
 		"require": ["tsconfig-paths/register"]

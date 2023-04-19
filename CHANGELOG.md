@@ -1,3 +1,58 @@
+# [3.0.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.0.0-prerelease.2...v3.0.0-prerelease.3) (2023-04-19)
+
+
+### Bug Fixes
+
+* **create release:** resolve conflicts ([bce9294](https://github.com/digitopvn/diginext/commit/bce9294daa24391d1e0b53e1c0299f22efbb703c))
+* **server:** default owner when create build env ([a62e420](https://github.com/digitopvn/diginext/commit/a62e420d2a5010e37408722e46b9fc3857c09dea))
+
+
+### Features
+
+* **server:** add api check status build ([563ab11](https://github.com/digitopvn/diginext/commit/563ab11f2bfb629000d66ba63611e2e30c90e821))
+
+# [3.0.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.0.0-prerelease.1...v3.0.0-prerelease.2) (2023-04-19)
+
+
+### Bug Fixes
+
+* **release:** try release a prerelease version and publish ([a68772a](https://github.com/digitopvn/diginext/commit/a68772af463ecac53b7c5807f6e23617d9a0a276))
+
+# [3.0.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v2.11.2...v3.0.0-prerelease.1) (2023-04-19)
+
+
+### Bug Fixes
+
+* **app controller:** avoid deleting namespaces while deleting apps ([deb9df6](https://github.com/digitopvn/diginext/commit/deb9df60080a02b0fdc0213958f1ff1ad450cecc))
+* **app controller:** should not delete namespace when deleting deploy environment ([eaa1dba](https://github.com/digitopvn/diginext/commit/eaa1dba27f9b2da3327db4970cbfdb0d2ad93f72))
+* **base controller:** fix incorrect pagination in api response ([d435e2f](https://github.com/digitopvn/diginext/commit/d435e2f49bcc8922769373ec1e4eff400290056d))
+* **base service:** add pre hook to set update and create time ([5d8658c](https://github.com/digitopvn/diginext/commit/5d8658c0b2d23e061a6f50cca41edd630e1c71d7))
+* **base service:** fix maximum call stack size exceed ([9b9563e](https://github.com/digitopvn/diginext/commit/9b9563ebf011122789c00c7b75c9ee37f953f07d))
+* **base service:** issue when traverse object and convert objectid to string ([597b762](https://github.com/digitopvn/diginext/commit/597b762b325599180857b7482912c4169245bcd4))
+* **commitlint:** ignore chore commit message ([93953c4](https://github.com/digitopvn/diginext/commit/93953c4cb1405d81c207e5c6a19f84d11d8fff93))
+* **docker compose test:** successfully run tests in docker compose file ([95923e0](https://github.com/digitopvn/diginext/commit/95923e064dc035144d8efcb31fe65eb4b2049a19))
+* **entities:** add collection name to entity models ([616b918](https://github.com/digitopvn/diginext/commit/616b91859d5d204e2cd9b8d606a9932efd60fb8a))
+* **helpers:** use different db name for testing and drop test db after finish ([98f1112](https://github.com/digitopvn/diginext/commit/98f11121ed57144aa696f1fd9ffa4d9ad1ef9395))
+* **project:** issue of deleting project ([c352588](https://github.com/digitopvn/diginext/commit/c3525882c9b8c8dc1ef5c045f75d08b82144f05d))
+* **release workflow:** release new version won't be published ([90b1630](https://github.com/digitopvn/diginext/commit/90b1630ff27d1022363aeffa4809f0c28ebb1019))
+* **routes:** default deleted at is null, should be undefined ([0f5a581](https://github.com/digitopvn/diginext/commit/0f5a58147dd8d2cf316b2c3d2f6523925fd2c3c0))
+* **startup script:** avoid repeated migration tasks ([c82a0a9](https://github.com/digitopvn/diginext/commit/c82a0a9155f0c1d7a2b6bdb7012020cdb1575d47))
+
+
+### Code Refactoring
+
+* **all:** migrate from typeorm to mongoose ([c17e103](https://github.com/digitopvn/diginext/commit/c17e1037458b01bcc63e69527f3aba630a31e16b))
+
+
+### Reverts
+
+* **all:** use mongo objectid instead of typeorm objectid ([8e21710](https://github.com/digitopvn/diginext/commit/8e21710a5377eac0c5bc43f727c5491e21e4c66f))
+
+
+### BREAKING CHANGES
+
+* **all:** migrate from typeorm to mongoose
+
 ## [2.11.2](https://github.com/digitopvn/diginext/compare/v2.11.1...v2.11.2) (2023-04-12)
 
 

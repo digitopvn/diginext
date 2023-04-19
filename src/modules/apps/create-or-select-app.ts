@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type { App } from "@/entities";
+import type { IApp } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 
 import { createAppByForm } from "./new-app-by-form";
@@ -18,14 +18,14 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 		],
 	});
 
-	let app: App;
+	let app: IApp;
 	if (action === "select") {
 		// find/search projects
 		const apps = await searchApps({ projectSlug });
 
 		if (!isEmpty(apps)) {
 			// display list to select:
-			const { selectedApp } = await inquirer.prompt<{ selectedApp: App }>({
+			const { selectedApp } = await inquirer.prompt<{ selectedApp: IApp }>({
 				type: "list",
 				name: "selectedApp",
 				message: `Select your app in "${projectSlug}" project:`,

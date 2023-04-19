@@ -1,32 +1,10 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
 
-import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { Role, Workspace, WorkspaceApiAccessToken } from "@/entities";
-import { User } from "@/entities";
+import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
-import { getUnexpiredAccessToken } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
-
-export const mockUserOfApiAccessToken = (apiAccessToken: WorkspaceApiAccessToken, workspace: Workspace) => {
-	const access_token = apiAccessToken.token;
-
-	const mockedApiAccessTokenUser = new User();
-	mockedApiAccessTokenUser._id = access_token;
-	mockedApiAccessTokenUser.type = "api_key";
-	mockedApiAccessTokenUser.name = mockedApiAccessTokenUser.slug = mockedApiAccessTokenUser.username = apiAccessToken.name;
-	mockedApiAccessTokenUser.email = `${access_token}@${workspace.slug}.${DIGINEXT_DOMAIN}`;
-	mockedApiAccessTokenUser.roles = apiAccessToken.roles;
-	mockedApiAccessTokenUser.token = getUnexpiredAccessToken(access_token);
-	mockedApiAccessTokenUser.active = true;
-	mockedApiAccessTokenUser.workspaces = [workspace];
-	mockedApiAccessTokenUser.activeWorkspace = workspace;
-	mockedApiAccessTokenUser.createdAt = workspace.createdAt;
-	mockedApiAccessTokenUser.updatedAt = workspace.updatedAt;
-
-	return mockedApiAccessTokenUser;
-};
 
 export const apiAccessTokenHandler = async (req: AppRequest, res: Response, next: NextFunction) => {
 	// console.log(`Handling API_ACCESS_TOKEN`, req.headers);
@@ -35,7 +13,7 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: Response, next
 	const access_token = req.headers.api_access_token.toString();
 	if (!access_token) return ApiResponse.rejected(res, "Authorization header missing");
 
-	let user = await DB.findOne<User>(
+	let user = await DB.findOne<IUser>(
 		"api_key_user",
 		{ "token.access_token": access_token },
 		{ populate: ["workspaces", "activeWorkspace", "roles"] }
@@ -44,24 +22,25 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: Response, next
 	if (user) {
 		// check active workspace
 		if (!user.activeWorkspace) {
-			const workspaces = user.workspaces as Workspace[];
+			const workspaces = user.workspaces as IWorkspace[];
 			if (workspaces.length === 1) {
-				[user] = await DB.update<User>(
+				[user] = await DB.update<IUser>(
 					"user",
 					{ _id: user._id },
 					{ activeWorkspace: workspaces[0]._id },
 					{ populate: ["roles", "workspaces", "activeWorkspace"] }
 				);
 			}
-			req.workspace = user.activeWorkspace as Workspace;
+			req.workspace = user.activeWorkspace as IWorkspace;
 		}
 
 		// role
 		const { roles = [] } = user;
 		const activeRole = roles.find(
 			(role) =>
-				MongoDB.toString((role as Role).workspace) === MongoDB.toString((user.activeWorkspace as Workspace)?._id) && !(role as Role).deletedAt
-		) as Role;
+				MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id) &&
+				!(role as IRole).deletedAt
+		) as IRole;
 
 		user.activeRole = activeRole;
 		req.role = activeRole;

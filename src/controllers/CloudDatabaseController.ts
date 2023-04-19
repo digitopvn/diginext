@@ -1,5 +1,6 @@
 import { Body, Delete, Get, Patch, Post, Queries, Security } from "tsoa/dist";
 
+import type { ICloudDatabase } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { CloudDatabase } from "@/services/CloudDatabaseService";
@@ -7,7 +8,7 @@ import CloudDatabaseService from "@/services/CloudDatabaseService";
 
 import BaseController from "./BaseController";
 
-export default class CloudDatabaseController extends BaseController<CloudDatabase> {
+export default class CloudDatabaseController extends BaseController<ICloudDatabase> {
 	constructor() {
 		super(new CloudDatabaseService());
 	}

@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import session from "cookie-session";
 import { log, logSuccess } from "diginext-utils/dist/console/log";
-import type { Request, Response } from "express";
+import type { Express, Request, Response } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";
 import type { Server } from "http";
@@ -19,9 +19,8 @@ import swaggerUi from "swagger-ui-express";
 import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
-import { Config, IsDev, IsProd } from "./app.config";
+import { Config, IsDev } from "./app.config";
 import type { AppRequest } from "./interfaces/SystemTypes";
-import { saveActivityLog } from "./middlewares/activity-log";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
 import AppDatabase from "./modules/AppDatabase";
 import { startupScripts } from "./modules/server/startup-scripts";
@@ -37,155 +36,150 @@ const { BASE_PATH, PORT, CLI_MODE } = Config;
 /**
  * EXPRESS JS INITIALIZING
  */
-let app;
+let app: Express;
 let server: Server;
 let socketIO: SocketServer;
+export let isServerReady = false;
+
+export function setServerStatus(status: boolean) {
+	isServerReady = status;
+}
 
 function initialize() {
+	// log(`Server is initializing...`);
+
+	app = express();
+	server = createServer(app);
+
 	/**
-	 * ! ONLY START THE BUILD SERVER UP IF RUNNING CLI AS "SERVER" MODE
+	 * Websocket / SOCKET.IO
 	 */
-	if (CLI_MODE === "server") {
-		// log(`Server is initializing...`);
+	socketIO = new SocketServer(server, { transports: ["websocket"] });
+	socketIO.on("connection", (socket) => {
+		console.log("a user connected");
 
-		app = express();
-		server = createServer(app);
-
-		/**
-		 * Websocket / SOCKET.IO
-		 */
-		socketIO = new SocketServer(server, { transports: ["websocket"] });
-		socketIO.on("connection", (socket) => {
-			console.log("a user connected");
-
-			socket.on("join", (data) => {
-				console.log("join room:", data);
-				socket.join(data.room);
-			});
+		socket.on("join", (data) => {
+			console.log("join room:", data);
+			socket.join(data.room);
 		});
+	});
 
-		/**
-		 * CORS MIDDLEWARE
-		 * Access-Control-Allow-Headers
-		 */
-		app.use((req, res, next) => {
-			res.header("Access-Control-Allow-Origin", "*");
-			res.header("Access-Control-Allow-Methods", "GET, PATCH, POST, DELETE");
-			res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control");
-			res.header("X-Powered-By", "TOP GROUP");
-			next();
-		});
+	/**
+	 * CORS MIDDLEWARE
+	 * Access-Control-Allow-Headers
+	 */
+	app.use((req, res, next) => {
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Methods", "GET, PATCH, POST, DELETE");
+		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control");
+		res.header("X-Powered-By", "TOP GROUP");
+		next();
+	});
 
-		/**
-		 * SERVING STATIC FILES
-		 */
-		app.use(express.static(path.resolve(process.cwd(), "public")));
+	/**
+	 * SERVING STATIC FILES
+	 */
+	app.use(express.static(path.resolve(process.cwd(), "public")));
 
-		/**
-		 * TODO: Enable SWAGGER for API Docs
-		 * SWAGGER API DOCS
-		 */
-		app.use(
-			"/api-docs",
-			swaggerUi.serve,
-			swaggerUi.setup(undefined, {
-				swaggerOptions: { url: "/swagger.json" },
-			})
-		);
+	/**
+	 * TODO: Enable SWAGGER for API Docs
+	 * SWAGGER API DOCS
+	 */
+	app.use(
+		"/api-docs",
+		swaggerUi.serve,
+		swaggerUi.setup(undefined, {
+			swaggerOptions: { url: "/swagger.json" },
+		})
+	);
 
-		/**
-		 * PASSPORT STRATEGY
-		 */
-		passport.use(googleStrategy);
-		passport.use(jwtStrategy);
-		passport.serializeUser((user, done) => done(null, user));
-		passport.deserializeUser((obj, done) => done(null, obj));
+	/**
+	 * PASSPORT STRATEGY
+	 */
+	passport.use(googleStrategy);
+	passport.use(jwtStrategy);
+	passport.serializeUser((user, done) => done(null, user));
+	passport.deserializeUser((obj, done) => done(null, obj));
 
-		/**
-		 * BODY PARSER
-		 */
-		app.use(bodyParser.urlencoded({ limit: "200mb", extended: true }));
-		app.use(bodyParser.json({ limit: "200mb" }));
-		// app.use(logResponseBody);
+	/**
+	 * BODY PARSER
+	 */
+	app.use(bodyParser.urlencoded({ limit: "200mb", extended: true }));
+	app.use(bodyParser.json({ limit: "200mb" }));
 
-		/**
-		 * QUERY PARSER
-		 */
-		app.use(
-			queryParser({
-				parseNull: true,
-				parseUndefined: true,
-				parseBoolean: true,
-				parseNumber: true,
-			})
-		);
+	/**
+	 * QUERY PARSER
+	 */
+	app.use(
+		queryParser({
+			parseNull: true,
+			parseUndefined: true,
+			parseBoolean: true,
+			parseNumber: true,
+		})
+	);
 
-		/**
-		 * COOKIES & SESSION PARSER
-		 */
-		app.use(cookieParser());
-		app.use(
-			session({
-				name: Config.grab(`SESSION_NAME`, `diginext`),
-				secret: Config.grab(`JWT_SECRET`),
-				maxAge: 1000 * 60 * 100,
-			})
-		);
+	/**
+	 * COOKIES & SESSION PARSER
+	 */
+	app.use(cookieParser());
+	app.use(
+		session({
+			name: Config.grab(`SESSION_NAME`, `diginext`),
+			secret: Config.grab(`JWT_SECRET`),
+			maxAge: 1000 * 60 * 100,
+		})
+	);
 
-		/**
-		 * AUTHENTICATION MIDDLEWARE
-		 */
-		app.use(passport.initialize());
-		app.use(passport.session());
+	/**
+	 * AUTHENTICATION MIDDLEWARE
+	 */
+	app.use(passport.initialize());
+	app.use(passport.session());
 
-		/**
-		 * LOGGING SYSTEM MIDDLEWARE - ENABLED
-		 * Enable when running on server
-		 */
-		morgan.token("user", (req: AppRequest) => (req.user ? `[${req.user.slug}]` : "[unauthenticated]"));
-		const morganMessage = IsDev()
-			? "[REQUEST :date[clf]] :method - :user - :url :status :response-time ms - :res[content-length]"
-			: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;
-		const morganOptions = {
-			skip: (req) => req.method.toUpperCase() === "OPTIONS",
-			// stream: logger,
-		} as unknown as morgan.Options<Request, Response>;
-		app.use(morgan(morganMessage, morganOptions));
+	/**
+	 * LOGGING SYSTEM MIDDLEWARE - ENABLED
+	 * Enable when running on server
+	 */
+	morgan.token("user", (req: AppRequest) => (req.user ? `[${req.user.slug}]` : "[unauthenticated]"));
+	const morganMessage = IsDev()
+		? "[REQUEST :date[clf]] :method - :user - :url :status :response-time ms - :res[content-length]"
+		: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;
+	const morganOptions = {
+		skip: (req) => req.method.toUpperCase() === "OPTIONS",
+		// stream: logger,
+	} as unknown as morgan.Options<Request, Response>;
+	app.use(morgan(morganMessage, morganOptions));
 
-		// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
-		app.use(`/${BASE_PATH}`, routes);
+	// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
+	app.use(`/${BASE_PATH}`, routes);
 
-		/**
-		 * Save activity log to database
-		 */
-		app.use(saveActivityLog);
+	/**
+	 * ROUTE 404 & FAIL SAFE HANDLING MIDDLEWARE
+	 */
+	// app.use("*", route404_handler);
 
-		/**
-		 * ROUTE 404 & FAIL SAFE HANDLING MIDDLEWARE
-		 */
-		// app.use("*", route404_handler);
+	// make sure the Express app won't be crashed if there are any errors
+	// if (IsProd())
+	app.use(failSafeHandler);
 
-		// make sure the Express app won't be crashed if there are any errors
-		if (IsProd()) app.use(failSafeHandler);
-
-		/**
-		 * SERVER HANDLING
-		 */
-		function onConnect() {
-			logSuccess(`Server is UP & listening at port ${PORT}...`);
-		}
-
-		server.on("error", (e: any) => log(`ERROR:`, e));
-		server.listen(PORT, onConnect);
-
-		/**
-		 * BUILD SERVER INITIAL START-UP SCRIPTS:
-		 * - Connect GIT providers (if any)
-		 * - Connect container registries (if any)
-		 * - Connect K8S clusters (if any)
-		 */
-		startupScripts();
+	/**
+	 * SERVER HANDLING
+	 */
+	function onConnect() {
+		logSuccess(`Server is UP & listening at port ${PORT}...`);
 	}
+
+	server.on("error", (e: any) => log(`ERROR:`, e));
+	server.listen(PORT, onConnect);
+
+	/**
+	 * BUILD SERVER INITIAL START-UP SCRIPTS:
+	 * - Connect GIT providers (if any)
+	 * - Connect container registries (if any)
+	 * - Connect K8S clusters (if any)
+	 */
+	startupScripts();
 }
 
 if (CLI_MODE === "server") {

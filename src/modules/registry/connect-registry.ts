@@ -1,17 +1,17 @@
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
 import { existsSync, unlink } from "fs";
 
-import type { ContainerRegistry } from "@/entities";
+import type { IContainerRegistry } from "@/entities";
 import { createTmpFile } from "@/plugins";
 
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
 import DockerRegistry from "./docker-registry";
 
-export const connectRegistry = async (registry: ContainerRegistry, options?: { userId?: any; workspaceId?: any }) => {
+export const connectRegistry = async (registry: IContainerRegistry, options?: { userId?: any; workspaceId?: any }) => {
 	const { slug, provider, host } = registry;
 
-	let connectedRegistry: ContainerRegistry;
+	let connectedRegistry: IContainerRegistry;
 	switch (provider) {
 		case "gcloud":
 			const { serviceAccount } = registry;

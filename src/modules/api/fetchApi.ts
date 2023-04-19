@@ -24,13 +24,20 @@ const httpsKeepAliveAgent = new HttpsAgent({
 	keepAliveMsecs: 60000,
 });
 
+interface FetchApiOptions<T = any> extends AxiosRequestConfig {
+	url: string;
+	access_token?: string;
+	method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+	data?: T | any;
+}
+
 export interface FetchApiResponse<T extends Object> {
 	status?: 0 | 1;
 	messages?: string[];
 	data?: T | T[];
 }
 
-export async function fetchApi<T = any>(options: AxiosRequestConfig & { access_token?: string; data?: T }) {
+export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 	const { access_token, method = "GET" } = options;
 
 	const { buildServerUrl = process.env.BASE_URL, currentUser, access_token: cachedAccessToken } = getCliConfig();

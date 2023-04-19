@@ -17,5 +17,6 @@ export * from "./GitProviderService";
 export * from "./ProjectService";
 export * from "./ReleaseService";
 export * from "./RoleService";
+export * from "./RouteService";
 export * from "./TeamService";
 export * from "./WorkspaceService";

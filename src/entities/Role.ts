@@ -1,13 +1,10 @@
-import { IsNotEmpty } from "class-validator";
+import { model, Schema } from "mongoose";
 
+import type { HiddenBodyKeys } from "@/interfaces";
 import type { IRoutePermission, IRouteScope } from "@/interfaces/IPermission";
-import type { ObjectID } from "@/libs/typeorm";
-import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import Base from "./Base";
-import type { Project } from "./Project";
-import type User from "./User";
-import type Workspace from "./Workspace";
+import type { IBase } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 
 export interface RoleRoute {
 	/**
@@ -27,18 +24,10 @@ export interface RoleRoute {
 	scope?: IRouteScope;
 }
 
-@Entity({ name: "roles" })
-export default class Role extends Base {
-	@Column({ length: 250 })
-	@IsNotEmpty({ message: `Role name is required.` })
+export interface IRole extends IBase {
 	name: string;
-
-	@Column({ array: true })
 	routes: RoleRoute[];
-
-	@Column({ array: true })
 	maskedFields?: string[];
-
 	/**
 	 * One of:
 	 * - undefined | "custom": custom role
@@ -46,37 +35,30 @@ export default class Role extends Base {
 	 * - "member": default member role
 	 * - "moderator": default moderator role
 	 */
-	@Column({ default: "member" })
 	type?: string;
-
-	/**
-	 * User ID of the owner
-	 *
-	 * @remarks This can be populated to {User} data
-	 */
-	@ObjectIdColumn({ name: "users" })
-	owner?: ObjectID | User | string;
-
-	/**
-	 * ID of the project
-	 *
-	 * @remarks This can be populated to {Project} data
-	 */
-	@ObjectIdColumn({ name: "projects" })
-	project?: ObjectID | Project | string;
-
-	/**
-	 * ID of the workspace
-	 *
-	 * @remarks This can be populated to {Workspace} data
-	 */
-	@ObjectIdColumn({ name: "workspaces" })
-	workspace?: ObjectID | Workspace | string;
-
-	constructor(data?: Role | any) {
-		super();
-		Object.assign(this, data);
-	}
 }
+export type RoleDto = Omit<IRole, keyof HiddenBodyKeys>;
 
-export { Role };
+const RoleRouteSchema = new Schema({
+	path: { type: String },
+	methods: { type: [String] },
+	route: { type: String },
+	scope: [{ type: String, enum: ["all", "workspace", "team", "project", "app"] }],
+	permissions: [{ type: String, enum: ["full", "own", "create", "read", "update", "delete"] }],
+});
+
+export const roleSchema = new Schema(
+	{
+		...baseSchemaDefinitions,
+		name: { type: String, required: true },
+		routes: { type: [RoleRouteSchema], required: true },
+		maskedFields: { type: [String] },
+		type: { type: String },
+		owner: { type: Schema.Types.ObjectId, ref: "users" },
+		project: { type: Schema.Types.ObjectId, ref: "projects" },
+		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
+	},
+	{ collection: "roles", timestamps: true }
+);
+
+export const RoleModel = model<IRole>("Role", roleSchema, "roles");

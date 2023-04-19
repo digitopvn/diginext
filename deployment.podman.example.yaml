@@ -55,7 +55,7 @@ spec:
               value: "false"
             - name: BASE_URL
               value: https://api.diginext.site
-            - name: MONGODB_CONNECTION_STRING
+            - name: DB_URI
               value: # mongodb://...
             - name: JWT_SECRET
               value: # JWT_SECRET
@@ -67,7 +67,7 @@ spec:
               value: # GOOGLE_CLIENT_SECRET
             - name: BUILDER
               value: podman
-            - name: DX_LICENSE_KEY
+            - name: DX_KEY
               value: randomkey
           volumeMounts:
             - name: storage
