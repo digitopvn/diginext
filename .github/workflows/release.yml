@@ -1,12 +1,11 @@
 name: Release Workflow
 on:
-  push:
-    branches:
+  workflow_run:
+    workflows: ["Test"]
+    branches: 
       - main
       - prerelease
       - beta
-  workflow_run:
-    workflows: ["Test"]
     types:
       - completed
 jobs:
@@ -45,17 +44,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Install dependencies
+      - name: Install package dependencies
       #   run: npm ci
         run: pnpm install
 
-      # - name: Build
-      #   run: npm run build
+      - name: Build
+        run: pnpm build
 
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        # run: npx semantic-release
+        run: npx semantic-release
         # run: npm run release
-        run: pnpm release
+        # run: pnpm release
