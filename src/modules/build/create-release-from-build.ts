@@ -1,6 +1,7 @@
 import { isEmpty } from "lodash";
 
 import type { IApp, IBuild, IProject, IRelease, IUser, IWorkspace } from "@/entities";
+import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import type { AppConfig } from "@/interfaces/AppConfig";
 
 import { DB } from "../api/DB";
@@ -42,7 +43,8 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 
 	const { IMAGE_NAME } = deploymentData;
 
-	const defaultAuthor = owner as IUser;
+	let defaultAuthor = owner as IUser;
+	if (!defaultAuthor) defaultAuthor = await DB.findOne<IApiKeyAccount>("api_key_user", { workspaces: workspaceId });
 
 	// declare AppConfig
 	const appConfig = {
