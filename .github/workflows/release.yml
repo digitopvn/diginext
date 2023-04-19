@@ -1,7 +1,10 @@
 name: Release Workflow
 on:
-  - pull_request
-  - push
+  push:
+    branches:
+      - main
+      - prerelease
+      - beta
   # workflow_run:
   #   workflows: ["Test"]
   #   branches: 
