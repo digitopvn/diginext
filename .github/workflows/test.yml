@@ -1,6 +1,10 @@
 name: Test Workflow
 on:
-  - push
+  push:
+    branches:
+      - "!main"
+      - "!beta"
+      - "!prerelease"
 
 env:
   DB_URI: mongodb://localhost:27017
