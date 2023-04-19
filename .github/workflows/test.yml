@@ -17,7 +17,7 @@ env:
 
 jobs:
   test:
-    name: Test Job
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
