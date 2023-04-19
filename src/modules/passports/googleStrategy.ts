@@ -1,8 +1,8 @@
+import { isEmpty } from "lodash";
 import GoogleStrategy from "passport-google-oauth2";
 
 import { Config } from "@/app.config";
-import type { ProviderInfo } from "@/entities/User";
-import User from "@/entities/User";
+import type { ProviderInfo, UserDto } from "@/entities/User";
 import UserService from "@/services/UserService";
 
 export const googleStrategy = new GoogleStrategy(
@@ -17,6 +17,7 @@ export const googleStrategy = new GoogleStrategy(
 		process.nextTick(async function () {
 			// console.log(`googleStrategy :>>`, { profile });
 			// console.log(accessToken);
+			// console.log(`googleStrategy :>> profile.email =`, profile.email);
 
 			const userSvc = new UserService();
 			let user = await userSvc.findOne({ email: profile.email }, { populate: ["roles"] });
@@ -24,10 +25,14 @@ export const googleStrategy = new GoogleStrategy(
 			// console.log(`googleStrategy :>>`, { user });
 
 			if (user) {
-				if (user.image != profile.picture) {
-					const updatedUsers = await userSvc.update({ _id: user._id }, { image: profile.picture });
-					if (updatedUsers.length > 0) user = updatedUsers[0];
-				}
+				const updateData = {} as UserDto;
+				if (user.image != profile.picture) updateData.image = profile.picture;
+				if (user.name != profile.displayName) updateData.name = profile.displayName;
+
+				if (!isEmpty(updateData)) [user] = await userSvc.update({ _id: user._id }, updateData);
+
+				request.user = user;
+
 				return done(null, { ...user, accessToken, refreshToken });
 			}
 
@@ -45,8 +50,9 @@ export const googleStrategy = new GoogleStrategy(
 				verified: profile.verified,
 			});
 
-			if (newUser instanceof User) {
+			if (newUser) {
 				user = newUser;
+				request.user = user;
 				return done(null, { ...user, accessToken, refreshToken });
 			} else {
 				return done(null, newUser);

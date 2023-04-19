@@ -3,7 +3,7 @@ import { log, logWarn } from "diginext-utils/dist/console/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
-import type { Project } from "@/entities";
+import type { IApp, IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType, ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { checkForUpdate, currentVersion, getLatestCliVersion } from "@/plugins";
@@ -187,6 +187,7 @@ const kubectlOptions = {
 export async function parseCliOptions() {
 	// check for new version
 	const shouldUpdateCLI = await checkForUpdate();
+
 	if (shouldUpdateCLI) {
 		const latestVersion = await getLatestCliVersion();
 		logWarn(`-----------------------------------------------------------`);
@@ -204,12 +205,11 @@ export async function parseCliOptions() {
 		// .usage("$0 <module> [gcloud|do] <action> - Manage cloud provider accessibility")
 		.options(globalOptions)
 		// aliases
-		// .alias("target-dir", "--targetDir")
 		.alias("h", "help")
 		.alias("v", "version")
 		.global(["D", "s", "local", "h"])
 		// command: TEST
-		.command("test", "Nothing")
+		.command("test", "")
 		// command: CLI management
 		.command("info", "Show CLI & SERVER information")
 		// command: login
@@ -233,20 +233,13 @@ export async function parseCliOptions() {
 		)
 		// command: update
 		.command("update", "Update your CLI version")
-		.usage("$0 update", "Update your CLI to latest version")
 		.usage("$0 update <version>", "Update your CLI to specific version")
 		// command: new
 		.command("new", "Create new project & application", newProjectOptions)
-		// .usage("$0 new", "Create new project")
-		// .usage("$0 new --force", "[DANGER] Force create new project & overwrite if it's existed")
-		// .usage("$0 new --fw <framework>", "Create new project with specific framework")
-		// .usage("$0 new --install", "Create new project then install all dependencies")
 		// command: init
 		.command("init", "Initialize CLI in the current project directory")
-		// .usage("$0 init")
 		// command: upgrade
 		.command("upgrade", "Update your project's framework version")
-		// .usage("$0 upgrade")
 		// command: cdn
 		.command("cdn", "Manage cloud storages (CDN)")
 		// command: domain
@@ -280,9 +273,22 @@ export async function parseCliOptions() {
 		.command("registry", "Manage Container Registry accessibility", (_yargs) =>
 			_yargs
 				.usage(chalk.green("Manage Container Registry accessibility: "))
-				.example("$0 registry connect --provider gcloud", "Connect your Docker to Google Cloud Container Registry")
-				.example("$0 registry connect --provider do", "Connect your Docker to Digital Ocean Container Registry")
+				.command("add", "Add/create new container registry", (__yargs) =>
+					__yargs
+						// input data
+						.option("provider", { describe: "Container registry provider" })
+						.option("name", { describe: "Container registry name" })
+						.option("token", { describe: "DigitalOcean API access token" })
+						.option("file", { describe: "Path to Google Service Account JSON file" })
+						.option("user", { describe: "Docker username", alias: "u" })
+						.option("pass", { describe: "Docker password", alias: "p" })
+						.option("server", { describe: "[optional] Docker registry server", alias: "s" })
+						.option("email", { describe: "[optional] Docker user's email", alias: "e" })
+				)
 				.command("connect", "Connect your Docker to the container registry")
+				.example("$0 registry connect --provider gcloud", "Connect your Docker/Podman Engine to Google Cloud Container Registry")
+				.example("$0 registry connect --provider do", "Connect your Docker/Podman Engine to Digital Ocean Container Registry")
+				.example("$0 registry connect --provider dockerhub", "Connect your Docker/Podman Engine to Docker Container Registry")
 				.command("secret", 'Get "imagePullSecrets" value')
 				.command("allow", 'Create "imagePullSecrets" in the provided namespace of your cluster', (__yargs) =>
 					__yargs
@@ -318,10 +324,10 @@ export async function parseCliOptions() {
 				_yargs
 					.option("provider", { desc: "Specify your git provider: on of github, gitlab, bitbucket" })
 					.command("ssh", "Manage SSH access from your machine with GIT provider")
-					.command("login", "Sign in to your GIT provider")
-					.command("logout", "Log out")
-					.command("profile", "Show your profile information in JSON")
-					.command("pullrequest", "Create new pull request")
+					.command("login", "Sign in to your GIT provider", (__yargs) => __yargs.boolean("github").boolean("bitbucket"))
+					.command("logout", "Log out", (__yargs) => __yargs.boolean("github").boolean("bitbucket"))
+					.command("profile", "Show your profile information in JSON", (__yargs) => __yargs.boolean("github").boolean("bitbucket"))
+					.command("pullrequest", "Create new pull request", (__yargs) => __yargs.boolean("github").boolean("bitbucket"))
 					.command("pr", "-")
 					.command("permissions", "Set up branch permissions")
 					.command("repos", "Get some most recent repositories")
@@ -435,7 +441,6 @@ export async function parseCliOptions() {
 				.command("restart", "Restart the BUILD SERVER")
 				.demandCommand(1)
 		)
-		// .usage("$0 server")
 		// command: help
 		.command("help", "Show usage documentation")
 		// .usage("$0 help")
@@ -467,6 +472,10 @@ export async function parseCliOptions() {
 		name: argv.name as string,
 		data: argv.data as string,
 		value: argv.value as string,
+		user: argv.user as string,
+		pass: argv.pass as string,
+		email: argv.email as string,
+		server: argv.server as string,
 
 		// definitions
 		isDebugging: (argv.debug as boolean) ?? false,
@@ -506,7 +515,7 @@ export async function parseCliOptions() {
 		shouldUseFreshDeploy: argv.fresh as boolean,
 
 		// deployment
-		app: argv.app,
+		app: argv.app as IApp,
 		domain: argv.domain as string,
 		port: argv.port as number,
 		replicas: argv.replicas as number,
@@ -515,12 +524,15 @@ export async function parseCliOptions() {
 		registry: argv.registry as string,
 		cluster: argv.cluster as string,
 		zone: argv.zone as string,
-		project: argv.project as Project,
+		project: argv.project as IProject,
 		namespace: argv.namespace as string,
 		redirect: argv.redirect as boolean,
 		ssl: argv.ssl as boolean, // [FLAG] --no-ssl
 		imageURL: argv.image as string,
 	};
+
+	if (argv.github === true && typeof options.gitProvider === "undefined") options.gitProvider = "github";
+	if (argv.bitbucket === true && typeof options.gitProvider === "undefined") options.gitProvider = "bitbucket";
 
 	if (argv.do === true) options.provider = "digitalocean";
 	if (argv.gcloud === true) options.provider = "gcloud";
@@ -542,9 +554,9 @@ export async function parseCliOptions() {
 	}
 
 	if (options.shouldShowInputOptions) log(options);
-
+	// console.log("options :>> ", options);
 	return options;
 }
 
-// TEST: yarn ts-node src/modules/cli/parseCliOptions.ts [...options]
+// TEST: pnpm ts-node src/modules/cli/parseCliOptions.ts [...options]
 // parseCliOptions();

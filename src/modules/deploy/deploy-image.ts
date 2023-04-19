@@ -1,8 +1,9 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 
-import type { App, Build, Project, User, Workspace } from "@/entities";
+import type { IApp, IBuild, IProject, IUser, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
+import { MongoDB } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
@@ -35,7 +36,7 @@ export type DeployImageParams = {
 	/**
 	 * {Workspace} data
 	 */
-	workspace?: Workspace;
+	workspace?: IWorkspace;
 	/**
 	 * CLI's version
 	 */
@@ -52,20 +53,20 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	if (!username) throw new Error(`Author user's name is required.`);
 	if (!imageURL) throw new Error(`Image URL in App config is required.`);
 
-	const project = await DB.findOne<Project>("project", { slug: projectSlug });
+	const project = await DB.findOne<IProject>("project", { slug: projectSlug });
 	if (!project) throw new Error(`Project "${projectSlug}" not found. Should you create a new one first?`);
 
-	const app = await DB.findOne<App>("app", { slug });
+	const app = await DB.findOne<IApp>("app", { slug });
 	if (!app) throw new Error(`App "${slug}" not found. Should you create a new one first?`);
 
-	const author = await DB.findOne<User>("user", { slug: username });
+	const author = await DB.findOne<IUser>("user", { slug: username });
 
 	// get workspace
 	let workspace = options.workspace;
-	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: app.workspace });
-	if (!workspace) workspace = await DB.findOne<Workspace>("workspace", { _id: project.workspace });
-	if (!workspace && workspaceId) workspace = await DB.findOne<Workspace>("workspace", { _id: workspaceId });
-	if (!workspace && author) workspace = await DB.findOne<Workspace>("workspace", { _id: author.activeWorkspace });
+	if (!workspace) workspace = await DB.findOne<IWorkspace>("workspace", { _id: app.workspace });
+	if (!workspace) workspace = await DB.findOne<IWorkspace>("workspace", { _id: project.workspace });
+	if (!workspace && workspaceId) workspace = await DB.findOne<IWorkspace>("workspace", { _id: workspaceId });
+	if (!workspace && author) workspace = await DB.findOne<IWorkspace>("workspace", { _id: author.activeWorkspace });
 
 	// deploy environment
 	let targetEnvironmentFromDB = await getDeployEvironmentByApp(app, env);
@@ -87,16 +88,16 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	targetEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 
 	// update env vars to database:
-	const updateAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as App;
+	const updateAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as IApp;
 	updateAppData.deployEnvironment[env] = { ...targetEnvironment, envVars: serverEnvironmentVariables } as DeployEnvironment;
 	// TODO: Remove this when everyone is using "deployEnvironment" (not JSON of "environment")
 	updateAppData.environment[env] = JSON.stringify({ ...targetEnvironment, envVars: serverEnvironmentVariables });
 	// log({ updateAppData });
 
-	const updatedApps = await DB.update<App>("app", { slug }, updateAppData);
+	const updatedApps = await DB.update<IApp>("app", { slug }, updateAppData);
 
 	// update the project so it can be sorted on top
-	await DB.update<Project>("project", { slug: projectSlug }, { lastUpdatedBy: username });
+	await DB.update<IProject>("project", { slug: projectSlug }, { lastUpdatedBy: username });
 
 	// Create new build:
 	const SOCKET_ROOM = `${slug}-${makeDaySlug()}`;
@@ -115,15 +116,15 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 		owner: author._id,
 		workspace: workspace._id,
 		cliVersion,
-	} as Build;
+	} as IBuild;
 
-	const newBuild = await DB.create<Build>("build", buildData);
+	const newBuild = await DB.create<IBuild>("build", buildData);
 
 	// create new release & roll it out if needed
 	let releaseId: string;
 	try {
 		const newRelease = await createReleaseFromBuild(newBuild, env, { author });
-		releaseId = newRelease._id.toString();
+		releaseId = MongoDB.toString(newRelease._id);
 		// log("Created new Release successfully:", newRelease);
 	} catch (e) {
 		throw new Error(`Failed to create new release: ${e}`);

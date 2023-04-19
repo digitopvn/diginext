@@ -1,26 +1,23 @@
-import type { User, Workspace } from "@/entities";
+import type { IUser, IWorkspace } from "@/entities";
 
 import { seedApiKeys } from "./seed-api-key";
 import { seedFrameworks } from "./seed-frameworks";
 import { seedDefaultRoles } from "./seed-roles";
-import { seedRoutes } from "./seed-routes";
 import { seedServiceAccounts } from "./seed-service-account";
 
 export * from "./seed-roles";
-export * from "./seed-routes";
 
 // seed workspace initial data here...
-const seedWorkspaceInitialData = async (workspace: Workspace, owner: User) => {
-	// [1] Default routes
-	await seedRoutes();
+const seedWorkspaceInitialData = async (workspace: IWorkspace, owner: IUser) => {
+	// [1] Default roles & permisions first, because Service Account & API_KEY need role
+	const roles = await seedDefaultRoles(workspace, owner);
 
-	// [2] Default roles & permisions first, because Service Account & API_KEY need role
-	await seedDefaultRoles(workspace, owner);
+	// [2] Create default API access token for this workspace
+	// [3] Create default service account for this workspace
+	// [4] Create default framework for this workspace
+	const results = await Promise.all([seedServiceAccounts(workspace, owner), seedApiKeys(workspace, owner), seedFrameworks(workspace, owner)]);
 
-	// [3] Create default API access token for this workspace
-	// [4] Create default service account for this workspace
-	// [5] Create default framework for this workspace
-	await Promise.all([seedServiceAccounts(workspace, owner), seedApiKeys(workspace, owner), seedFrameworks(workspace, owner)]);
+	return [roles, ...results];
 };
 
 export default seedWorkspaceInitialData;

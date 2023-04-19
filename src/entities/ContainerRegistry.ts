@@ -1,20 +1,15 @@
-import { RegistryProviderType } from "@/interfaces/SystemTypes";
-import type { ObjectID } from "@/libs/typeorm";
-import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
+import mongoose, { Schema } from "mongoose";
 
-import Base from "./Base";
-import type User from "./User";
-import type Workspace from "./Workspace";
+import type { HiddenBodyKeys } from "@/interfaces";
+import type { RegistryProviderType } from "@/interfaces/SystemTypes";
+import { registryProviderList } from "@/interfaces/SystemTypes";
 
-@Entity({ name: "container_registries" })
-export default class ContainerRegistry extends Base {
-	@Column()
+import type { IBase } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
+
+export interface IContainerRegistry extends IBase {
 	name?: string;
-
-	@Column()
 	slug?: string;
-
-	@Column()
 	isVerified?: boolean;
 
 	/**
@@ -24,8 +19,12 @@ export default class ContainerRegistry extends Base {
 	 * - asia.gcr.io
 	 * - azurecr.io
 	 */
-	@Column()
 	host?: string;
+
+	/**
+	 * Organization name in Docker Registry, or Project ID in Google/DigitalOcean Container Registry.
+	 */
+	organization?: string;
 
 	/**
 	 * Base URL of the image, usually is the registry host URI combines with something else.
@@ -33,13 +32,11 @@ export default class ContainerRegistry extends Base {
 	 * @example
 	 * asia.gcr.io/project-id-here
 	 */
-	@Column()
 	imageBaseURL?: string;
 
 	/**
 	 * Provider's "shortName"
 	 */
-	@Column()
 	provider?: RegistryProviderType;
 
 	/**
@@ -47,42 +44,63 @@ export default class ContainerRegistry extends Base {
 	 * - Apply for: Google Cloud, AWS,...
 	 * - For example: Kubernetes Clusters, Single Sign-On,...
 	 */
-	@Column()
 	serviceAccount?: string;
 
 	/**
 	 * Content of the API access token to use services on this cloud provider
 	 * - Apply for: Digital Ocean
 	 */
-	@Column()
 	apiAccessToken?: string;
 
-	@Column()
+	/**
+	 * `[For Docker Registry]` Docker registry server
+	 * @default https://index.docker.io/v1/
+	 */
+	dockerServer?: string;
+
+	/**
+	 * `[For Docker Registry]` Docker email
+	 */
+	dockerEmail?: string;
+
+	/**
+	 * `[For Docker Registry]` Docker username
+	 */
+	dockerUsername?: string;
+
+	/**
+	 * `[For Docker Registry]` Docker password
+	 */
+	dockerPassword?: string;
 	imagePullSecret?: {
 		name?: string;
 		value?: string;
 	};
-
-	/**
-	 * User ID of the owner
-	 *
-	 * @remarks This can be populated to {User} data
-	 */
-	@ObjectIdColumn({ name: "users" })
-	owner?: ObjectID | User | string;
-
-	/**
-	 * ID of the workspace
-	 *
-	 * @remarks This can be populated to {Workspace} data
-	 */
-	@ObjectIdColumn({ name: "workspaces" })
-	workspace?: ObjectID | Workspace | string;
-
-	constructor(data?: ContainerRegistry) {
-		super();
-		Object.assign(this, data);
-	}
 }
+export type ContainerRegistryDto = Omit<IContainerRegistry, keyof HiddenBodyKeys>;
 
-export { ContainerRegistry };
+export const containerRegistrySchema = new Schema(
+	{
+		...baseSchemaDefinitions,
+		name: { type: String },
+		slug: { type: String },
+		isVerified: { type: Boolean },
+		host: { type: String },
+		organization: { type: String },
+		imageBaseURL: { type: String },
+		provider: { type: String, enum: registryProviderList },
+		serviceAccount: { type: String },
+		apiAccessToken: { type: String },
+		dockerServer: { type: String },
+		dockerEmail: { type: String },
+		dockerUsername: { type: String },
+		dockerPassword: { type: String },
+		imagePullSecret: {
+			name: { type: String },
+			value: { type: String },
+		},
+	},
+	{ collection: "container_registries", timestamps: true }
+);
+
+export const ContainerRegistryModel = mongoose.model("ContainerRegistry", containerRegistrySchema, "container_registries");

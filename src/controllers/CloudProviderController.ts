@@ -1,7 +1,7 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { CloudProvider } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { ICloudProvider } from "@/entities";
+import { CloudProviderDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import CloudProviderService from "@/services/CloudProviderService";
 
@@ -9,7 +9,7 @@ import BaseController from "./BaseController";
 
 @Tags("Cloud Provider")
 @Route("provider")
-export default class CloudProviderController extends BaseController<CloudProvider> {
+export default class CloudProviderController extends BaseController<ICloudProvider> {
 	constructor() {
 		super(new CloudProviderService());
 	}
@@ -18,20 +18,26 @@ export default class CloudProviderController extends BaseController<CloudProvide
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
+		if (this.filter && this.filter.owner) delete this.filter.owner;
+		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.read();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<CloudProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: CloudProviderDto, @Queries() queryParams?: IPostQueryParams) {
+		if (this.filter && this.filter.owner) delete this.filter.owner;
+		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<CloudProvider, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: CloudProviderDto, @Queries() queryParams?: IPostQueryParams) {
+		if (this.filter && this.filter.owner) delete this.filter.owner;
+		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.update(body);
 	}
 
@@ -39,6 +45,8 @@ export default class CloudProviderController extends BaseController<CloudProvide
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
+		if (this.filter && this.filter.owner) delete this.filter.owner;
+		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.delete();
 	}
 }

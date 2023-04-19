@@ -8,7 +8,7 @@ import type { ResponseData } from "@/interfaces";
 export async function dxApi<T = ResponseData>(options: AxiosRequestConfig) {
 	const { method } = options;
 
-	const licenseKey = Config.DX_LICENSE_KEY;
+	const licenseKey = Config.DX_KEY;
 
 	if (isEmpty(options.headers)) options.headers = {};
 	if (!licenseKey) return { status: 0, messages: [`Diginext License Key is required.`] } as T;

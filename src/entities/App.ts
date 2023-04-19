@@ -1,14 +1,11 @@
-import { IsNotEmpty } from "class-validator";
+import { Schema } from "mongoose";
 
+import type { HiddenBodyKeys } from "@/interfaces";
 import type { DeployEnvironment } from "@/interfaces/DeployEnvironment";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
-import type { ObjectID } from "@/libs/typeorm";
-import { Column, Entity, ObjectIdColumn } from "@/libs/typeorm";
 
-import Base from "./Base";
-import type Project from "./Project";
-import type User from "./User";
-import type Workspace from "./Workspace";
+import type { IBase } from "./Base";
+import { baseSchemaDefinitions } from "./Base";
 
 export interface AppGitInfo {
 	/**
@@ -33,37 +30,78 @@ export interface AppGitInfo {
 	provider?: GitProviderType;
 }
 
-@Entity({ name: "apps" })
-export default class App extends Base {
-	@Column({ length: 250 })
-	@IsNotEmpty({ message: `App name is required.` })
+/**
+ * An interface that extends IBase and describes the properties of an app.
+ *
+ * @interface IApp
+ * @extends {IBase}
+ */
+export interface IApp extends IBase {
+	/**
+	 * The name of the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	name?: string;
 
 	/**
-	 * OPTIONAL
-	 * ---
-	 * Image URI of this app on the Container Registry (without `TAG`).
-	 * - Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`
-	 * - **Don't** specify `tag` at the end! (eg. `latest`, `beta`,...)
+	 * OPTIONAL: The image URI of this app on the Container Registry (without `TAG`).
+	 *
+	 * Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`
+	 *
+	 * **Don't** specify `tag` at the end! (e.g., `latest`, `beta`,...)
+	 *
+	 * @type {string}
+	 * @memberof IApp
 	 * @default <registry-image-base-url>/<project-slug>/<app-name-slug>
 	 * @example "asia.gcr.io/my-workspace/my-project/my-app"
 	 */
-	@Column()
 	image?: string;
 
-	@Column()
+	/**
+	 * The slug of the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	slug?: string;
 
-	@Column()
+	/**
+	 * The user who created the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	createdBy?: string;
 
-	@Column()
+	/**
+	 * The user who last updated the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	lastUpdatedBy?: string;
 
-	@Column()
+	/**
+	 * The Git information of the app.
+	 *
+	 * @type {AppGitInfo}
+	 * @memberof IApp
+	 */
 	git?: AppGitInfo;
 
-	@Column()
+	/**
+	 * The framework information of the app.
+	 *
+	 * @type {{
+	 *     name?: string;
+	 *     slug?: string;
+	 *     repoURL?: string;
+	 *     repoSSH?: string;
+	 *   }}
+	 * @memberof IApp
+	 */
 	framework?: {
 		name?: string;
 		slug?: string;
@@ -72,52 +110,62 @@ export default class App extends Base {
 	};
 
 	/**
-	 * @deprecated
+	 * The environment information of the app.
+	 *
+	 * @type {{ [key: string]: DeployEnvironment | string }}
+	 * @memberof IApp
 	 */
-	@Column()
-	environment?: {
-		[key: string]: DeployEnvironment | string;
-	};
+	environment?: { [key: string]: DeployEnvironment | string };
 
-	@Column()
-	deployEnvironment?: {
-		[key: string]: DeployEnvironment;
-	};
+	/**
+	 * The deploy environment information of the app.
+	 *
+	 * @type {{ [key: string]: DeployEnvironment }}
+	 * @memberof IApp
+	 */
+	deployEnvironment?: { [key: string]: DeployEnvironment };
 
-	@Column()
+	/**
+	 * The latest build of the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	latestBuild?: string;
 
-	@Column({ type: "string" })
+	/**
+	 * The project slug of the app.
+	 *
+	 * @type {string}
+	 * @memberof IApp
+	 */
 	projectSlug?: string;
-
-	/**
-	 * Owner ID of the app
-	 *
-	 * @remarks This can be populated to {User} data
-	 */
-	@ObjectIdColumn({ name: "users" })
-	owner?: ObjectID | User | string;
-
-	/**
-	 * Project ID of the app
-	 *
-	 * @remarks This can be populated to {Project} data
-	 */
-	@ObjectIdColumn({ name: "projects" })
-	project?: ObjectID | Project | string;
-
-	/**
-	 * Workspace ID of the app
-	 *
-	 * @remarks This can be populated to {Workspace} data
-	 */
-	@ObjectIdColumn({ name: "workspaces" })
-	workspace?: ObjectID | Workspace | string;
-
-	constructor(data?: App) {
-		super();
-		Object.assign(this, data);
-	}
 }
 
-export { App };
+export type AppDto = Omit<IApp, keyof HiddenBodyKeys>;
+
+export const appSchema = new Schema(
+	{
+		...baseSchemaDefinitions,
+		name: { type: String },
+		image: { type: String },
+		slug: { type: String },
+		createdBy: { type: String },
+		lastUpdatedBy: { type: String },
+		git: {
+			repoURL: { type: String },
+			repoSSH: { type: String },
+		},
+		framework: {
+			name: { type: String },
+			slug: { type: String },
+			repoURL: { type: String },
+			repoSSH: { type: String },
+		},
+		environment: { type: Map, of: String },
+		deployEnvironment: { type: Map },
+		latestBuild: { type: String },
+		projectSlug: { type: String },
+	},
+	{ collection: "apps", timestamps: true }
+);

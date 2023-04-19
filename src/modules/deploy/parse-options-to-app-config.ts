@@ -2,7 +2,7 @@ import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { isEmpty } from "lodash";
 
-import type { App, Project } from "@/entities";
+import type { IApp, IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 import { getAppConfig, getCurrentGitRepoData, saveAppConfig } from "@/plugins";
 
@@ -41,15 +41,15 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 
 	// validate project
 	if (typeof projectSlug !== "undefined") {
-		let project = await DB.findOne<Project>("project", { slug: projectSlug });
+		let project = await DB.findOne<IProject>("project", { slug: projectSlug });
 		if (!project) project = await createOrSelectProject(options);
 		appConfig.project = options.projectSlug = projectSlug;
 		options.project = project;
 	}
 	// validate app
 	if (typeof slug !== "undefined") {
-		let app = await DB.findOne<App>("app", { slug }, { populate: ["project", "owner", "workspace"] });
-		if (!app) app = await createOrSelectApp((app.project as Project).slug, options);
+		let app = await DB.findOne<IApp>("app", { slug }, { populate: ["project", "owner", "workspace"] });
+		if (!app) app = await createOrSelectApp((app.project as IProject).slug, options);
 		appConfig.slug = options.appSlug = slug;
 		options.app = app;
 	}

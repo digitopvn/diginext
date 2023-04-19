@@ -2,18 +2,18 @@ import { logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type { ContainerRegistry } from "@/entities";
+import type { IContainerRegistry } from "@/entities";
 
 import { DB } from "../api/DB";
 
 export const askForRegistry = async () => {
-	const registries = await DB.find<ContainerRegistry>("registry", {});
+	const registries = await DB.find<IContainerRegistry>("registry", {});
 	if (isEmpty(registries)) {
 		logError(`There are no registered container registries in this workspace.`);
 		return;
 	}
 
-	const { registry } = await inquirer.prompt<{ registry: ContainerRegistry }>({
+	const { registry } = await inquirer.prompt<{ registry: IContainerRegistry }>({
 		name: "registry",
 		type: "list",
 		message: "Select container registry:",

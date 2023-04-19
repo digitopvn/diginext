@@ -1,15 +1,30 @@
-import { isArray } from "lodash";
+import { MongoDB } from "./mongodb";
 
-export const traverse = (obj: any, callback: (res: { key: string; val: any }) => void) => {
-	for (let k in obj) {
-		if (obj[k]) {
-			if (isArray(obj[k])) {
-				obj[k] = obj[k].map((item) => traverse(item, callback));
-			} else if (typeof obj[k] === "object") {
-				traverse(obj[k], callback);
+export function traverseObjectAndTransformValue(obj: any, transform: (keyPair: [key: string, val: any]) => any) {
+	if (
+		typeof obj === "string" ||
+		typeof obj === "number" ||
+		typeof obj === "boolean" ||
+		typeof obj === "function" ||
+		obj instanceof Date ||
+		MongoDB.isObjectId(obj)
+	) {
+		return obj;
+	} else if (typeof obj === "object" && obj !== null) {
+		for (const key in obj) {
+			const value = obj[key];
+			if (typeof value === "object" && value !== null) {
+				obj[key] = traverseObjectAndTransformValue(value, transform);
+			} else {
+				obj[key] = transform([key, value]);
 			}
 		}
-		if (callback) callback({ key: k, val: obj[k] });
+		// return obj;
+	} else {
+		return obj;
 	}
-	return obj;
-};
+}
+
+export function replaceObjectIdsToStrings(obj: any): any {
+	return JSON.parse(JSON.stringify(obj));
+}

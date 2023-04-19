@@ -1,6 +1,7 @@
 import { isEmpty } from "lodash";
 
-import type { App, Build, Cluster, Release, User, Workspace } from "@/entities";
+import type { IApp, IBuild, ICluster, IRelease, IUser, IWorkspace } from "@/entities";
+import { MongoDB } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
@@ -13,19 +14,19 @@ import { generateDeployment } from "./generate-deployment";
 
 export type DeployBuildOptions = {
 	env: string;
-	author: User;
-	workspace: Workspace;
+	author: IUser;
+	workspace: IWorkspace;
 	buildDirectory: string;
 	shouldUseFreshDeploy?: boolean;
 };
 
-export const deployBuild = async (build: Build, options: DeployBuildOptions) => {
+export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
 	const { env, author, workspace, buildDirectory, shouldUseFreshDeploy = false } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
 	const { slug: username } = author;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 
-	const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
 	if (!app) {
 		sendLog({
 			SOCKET_ROOM,
@@ -70,7 +71,7 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 
 	const { namespace, cluster: clusterShortName } = serverDeployEnvironment;
 
-	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 	const { contextName: context } = cluster;
 
 	// get app config to generate deployment data
@@ -109,21 +110,21 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 	serverDeployEnvironment.lastUpdatedBy = username;
 
 	// Update {user}, {project}, {environment} to database before rolling out
-	const updatedAppData = { deployEnvironment: app.deployEnvironment || {} } as App;
+	const updatedAppData = { deployEnvironment: app.deployEnvironment || {} } as IApp;
 	updatedAppData.lastUpdatedBy = username;
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-	const [updatedApp] = await DB.update<App>("app", { slug: appSlug }, updatedAppData);
+	const [updatedApp] = await DB.update<IApp>("app", { slug: appSlug }, updatedAppData);
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// Create new Release:
 	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
-	let releaseId: string, newRelease: Release;
+	let releaseId: string, newRelease: IRelease;
 	try {
 		newRelease = await createReleaseFromBuild(build, env, { author });
-		releaseId = newRelease._id.toString();
+		releaseId = MongoDB.toString(newRelease._id);
 		console.log("Created new Release successfully:", newRelease);
 
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });
@@ -215,7 +216,7 @@ export const deployBuild = async (build: Build, options: DeployBuildOptions) => 
 };
 
 export const deployWithBuildSlug = async (buildSlug: string, options: DeployBuildOptions) => {
-	const build = await DB.findOne<Build>("build", { slug: buildSlug });
+	const build = await DB.findOne<IBuild>("build", { slug: buildSlug });
 	if (!build) throw new Error(`[DEPLOY BUILD] Build slug "${buildSlug}" not found.`);
 
 	return deployBuild(build, options);

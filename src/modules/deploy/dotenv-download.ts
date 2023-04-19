@@ -3,7 +3,7 @@ import { existsSync, unlinkSync, writeFileSync } from "fs";
 import inquirer from "inquirer";
 import path from "path";
 
-import type { App } from "@/entities";
+import type { IApp } from "@/entities";
 import { getAppConfig, kubeEnvToDotenv } from "@/plugins";
 
 import { DB } from "../api/DB";
@@ -27,7 +27,7 @@ type DownloadDotenvOptions = {
 	overwrite?: boolean;
 };
 
-export const getDotenvContentByApp = (app: App, env: string = "dev") => {
+export const getDotenvContentByApp = (app: IApp, env: string = "dev") => {
 	const { deployEnvironment, slug: appSlug } = app;
 
 	if (!deployEnvironment || !deployEnvironment[env])
@@ -37,7 +37,7 @@ export const getDotenvContentByApp = (app: App, env: string = "dev") => {
 	return kubeEnvToDotenv(envVars);
 };
 
-export const downloadDotenvByApp = async (app: App, env: string = "dev", options: DownloadDotenvOptions = {}) => {
+export const downloadDotenvByApp = async (app: IApp, env: string = "dev", options: DownloadDotenvOptions = {}) => {
 	const { targetDir = process.cwd(), fileName = `.env.${env}`, overwrite } = options;
 	const dotenvContent = getDotenvContentByApp(app, env);
 	const filePath = path.resolve(targetDir, fileName);
@@ -69,7 +69,7 @@ export const downloadDotenvByApp = async (app: App, env: string = "dev", options
 };
 
 export const downloadDotenvByAppSlug = async (appSlug: string, env: string = "dev", options: DownloadDotenvOptions = {}) => {
-	const app = await DB.findOne<App>("app", { slug: appSlug });
+	const app = await DB.findOne<IApp>("app", { slug: appSlug });
 	if (!app) throw new Error(`Can't download dotenv variables to ".env.${env}" locally due to "${appSlug}" app not existed.`);
 
 	return downloadDotenvByApp(app, env, options);

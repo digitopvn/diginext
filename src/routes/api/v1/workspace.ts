@@ -19,6 +19,7 @@ router
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
 	.delete("/empty", processApiRequest(controller.empty.bind(controller)))
+	.post("/invite", processApiRequest(controller.inviteMember.bind(controller)))
 	.patch("/add-user", processApiRequest(controller.addUser.bind(controller)))
 	.get("/service_account", processApiRequest(controller.getServiceAccounts.bind(controller)))
 	.get("/api_key", processApiRequest(controller.getApiKeyUsers.bind(controller)));

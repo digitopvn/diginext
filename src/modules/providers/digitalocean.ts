@@ -1,6 +1,5 @@
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
-import chalk from "chalk";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import execa from "execa";
 import inquirer from "inquirer";
@@ -9,10 +8,10 @@ import { isEmpty } from "lodash";
 import yargs from "yargs";
 
 import { Config } from "@/app.config";
-import type { CloudProvider, Cluster, ContainerRegistry } from "@/entities";
+import type { ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
-import { execCmd, wait } from "@/plugins";
+import { wait } from "@/plugins";
 
 import type { DomainRecord } from "../../interfaces/DomainRecord";
 import { DB } from "../api/DB";
@@ -57,7 +56,7 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
  * @param {InputOptions} options
  */
 export const authenticate = async (options?: InputOptions) => {
-	const provider = await DB.findOne<CloudProvider>("provider", { shortName: "digitalocean" });
+	const provider = await DB.findOne<ICloudProvider>("provider", { shortName: "digitalocean" });
 
 	let API_ACCESS_TOKEN;
 
@@ -157,7 +156,7 @@ export const createRecordInDomain = async (input: DomainRecord) => {
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
 	// Implement create "imagePullSecret" of Digital Ocean
-	const { registrySlug, clusterShortName, namespace = "default", shouldCreateSecretInNamespace = false } = options;
+	const { registrySlug, clusterShortName, namespace = "default" } = options;
 
 	if (!registrySlug) {
 		logError(`[DIGITAL_OCEAN] Container Registry's slug is required.`);
@@ -170,7 +169,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	}
 
 	// get Container Registry data:
-	const registry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
+	const registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 
 	if (!registry) {
 		logError(`[DIGITAL_OCEAN] Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
@@ -181,7 +180,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const { host, serviceAccount, provider: providerShortName } = registry;
 
 	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
-	const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 	if (!cluster) {
 		logError(`[DIGITAL_OCEAN] Cluster "${clusterShortName}" not found.`);
 		return;
@@ -191,32 +190,20 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 	const secretName = `${providerShortName}-docker-registry-key`;
 
-	if (shouldCreateSecretInNamespace && namespace == "default") {
-		logWarn(
-			`[DIGITAL_OCEAN] You are creating "imagePullSecrets" in "default" namespace, if you want to create in other namespaces:`,
-			chalk.cyan("\n  dx registry allow --create --provider=digitalocean --namespace=") + "<CLUSTER_NAMESPACE_NAME>",
-			chalk.gray(`\n  # Examples / alias:`),
-			"\n  dx registry allow --create --provider=digitalocean --namespace=my-website-namespace",
-			"\n  dx registry allow --create --do create -n my-website-namespace"
-		);
-	}
-
-	// check if namespace is existed
-	if (shouldCreateSecretInNamespace) {
-		const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
-		if (!isNsExisted) {
-			logError(`[DIGITAL_OCEAN] Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
-			return;
-		}
-	}
-
 	const { apiAccessToken: API_ACCESS_TOKEN } = registry;
 
+	// check namespace is existed
+	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+	if (!isNsExisted) {
+		logError(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+		return;
+	}
+
 	// create secret in the namespace (if needed)
-	const applyCommand = shouldCreateSecretInNamespace ? `| kubectl apply -f -` : "";
+	const applyCommand = `| kubectl apply -f -`;
 
 	// command: "doctl registry kubernetes-manifest"
-	const registryYaml = await execCmd(
+	const registryYaml = await execa.command(
 		`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} --access-token ${API_ACCESS_TOKEN} ${applyCommand}`
 	);
 	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
@@ -232,7 +219,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 		value: registrySecretData.data[".dockerconfigjson"],
 	};
 
-	const [updatedRegistry] = await DB.update<ContainerRegistry>("registry", { slug: registrySlug }, { imagePullSecret });
+	const [updatedRegistry] = await DB.update<IContainerRegistry>("registry", { slug: registrySlug }, { imagePullSecret });
 	if (!updatedRegistry) logError(`[DIGITAL_OCEAN] Can't update container registry of Digital Ocean.`);
 	// log(`DigitalOcean.createImagePullingSecret() :>>`, { updatedRegistry });
 
@@ -243,21 +230,21 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
  * Connect Docker to Digital Ocean Container Registry
  * @param {InputOptions} options
  */
-export const connectDockerRegistry = async (options?: InputOptions) => {
+export const connectDockerToRegistry = async (options?: InputOptions) => {
 	const { host, key: API_ACCESS_TOKEN, userId, workspaceId } = options;
 
 	try {
 		let connectRes;
 		// connect DOCKER to CONTAINER REGISTRY
 		if (API_ACCESS_TOKEN) {
-			connectRes = await execCmd(`doctl registry login --access-token ${API_ACCESS_TOKEN}`);
+			connectRes = await execa.command(`doctl registry login --access-token ${API_ACCESS_TOKEN}`);
 		} else {
-			connectRes = await execCmd(`doctl registry login`);
+			connectRes = await execa.command(`doctl registry login`);
 		}
 
 		if (Config.BUILDER === "podman") {
 			// connect PODMAN to CONTAINER REGISTRY
-			connectRes = await execCmd(`podman login`);
+			connectRes = await execa.command(`podman login`);
 		}
 
 		if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { authRes: connectRes });
@@ -266,7 +253,7 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 		return;
 	}
 
-	const existingRegistry = await DB.findOne<ContainerRegistry>("registry", { provider: "digitalocean", host });
+	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { provider: "digitalocean", host });
 	if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { existingRegistry });
 
 	if (existingRegistry) return existingRegistry;
@@ -274,7 +261,7 @@ export const connectDockerRegistry = async (options?: InputOptions) => {
 	// Save this container registry to database
 	const registryHost = host || "registry.digitalocean.com";
 	const imageBaseURL = `${registryHost}/${options.workspace?.slug || "diginext"}`;
-	let newRegistry = await DB.create<ContainerRegistry>("registry", {
+	let newRegistry = await DB.create<IContainerRegistry>("registry", {
 		name: "Digital Ocean Container Registry",
 		provider: "digitalocean",
 		host: registryHost,
@@ -310,20 +297,20 @@ export const execDigitalOcean = async (options?: InputOptions) => {
 
 		case "connect-registry":
 			try {
-				await connectDockerRegistry(options);
+				await connectDockerToRegistry(options);
 			} catch (e) {
 				logError(e);
 			}
 			break;
 
 		case "create-image-pull-secret":
-			const registries = await DB.find<ContainerRegistry>("registry", {});
+			const registries = await DB.find<IContainerRegistry>("registry", {});
 			if (isEmpty(registries)) {
 				logError(`[DIGITAL_OCEAN] This workspace doesn't have any registered Container Registries.`);
 				return;
 			}
 
-			const { selectedRegistry } = await inquirer.prompt<{ selectedRegistry: ContainerRegistry }>({
+			const { selectedRegistry } = await inquirer.prompt<{ selectedRegistry: IContainerRegistry }>({
 				message: `Select the container registry:`,
 				type: "list",
 				choices: registries.map((reg, i) => {
@@ -349,4 +336,4 @@ export const execDigitalOcean = async (options?: InputOptions) => {
 	}
 };
 
-export default { authenticate, connectDockerRegistry, createImagePullingSecret };
+export default { authenticate, connectDockerRegistry: connectDockerToRegistry, createImagePullingSecret };

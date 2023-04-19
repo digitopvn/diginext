@@ -1,22 +1,21 @@
-import { log, logWarn } from "diginext-utils/dist/console/log";
-import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { Project } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { IProject } from "@/entities";
+import { ProjectDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
-import ClusterManager from "@/modules/k8s";
+import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
+import { MongoDB } from "@/plugins/mongodb";
 import AppService from "@/services/AppService";
 import ProjectService from "@/services/ProjectService";
 
 import BaseController from "./BaseController";
 
-export type ProjectInputSchema = Omit<Project, keyof HiddenBodyKeys>;
-
 @Tags("Project")
 @Route("project")
-export default class ProjectController extends BaseController<Project> {
+export default class ProjectController extends BaseController<IProject> {
+	service: ProjectService;
+
 	constructor() {
 		super(new ProjectService());
 	}
@@ -31,50 +30,23 @@ export default class ProjectController extends BaseController<Project> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: ProjectInputSchema, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: ProjectInputSchema, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	async delete(@Queries() queryParams?: IDeleteQueryParams) {
-		const project = await this.service.findOne(this.filter);
-		if (!project) return { status: 0, messages: [`Project not found.`] } as ResponseData;
-
-		const appSvc = new AppService();
-		const apps = await appSvc.find({ project: project._id });
-
-		// delete all apps relatively:
-		if (!isEmpty(apps)) {
-			apps.map(async (app) => {
-				// also delete app's namespace on the cluster:
-				Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
-					if (!isEmpty(deployEnvironment)) {
-						const { cluster, namespace } = deployEnvironment;
-						try {
-							await ClusterManager.authCluster(cluster);
-							await ClusterManager.deleteNamespaceByCluster(namespace, cluster);
-							log(`[PROJECT DELETE] ${app.slug} > Deleted "${namespace}" namespace on "${cluster}" cluster.`);
-						} catch (e) {
-							logWarn(`[PROJECT DELETE] ${app.slug} > Can't delete "${namespace}" namespace on "${cluster}" cluster:`, e);
-						}
-					}
-				});
-
-				// delete app in database:
-				appSvc.softDelete({ _id: app._id });
-			});
-		}
-
-		return super.delete();
+	async softDelete(@Queries() queryParams?: IDeleteQueryParams) {
+		const result = await this.service.softDelete(this.filter);
+		return result.ok ? respondSuccess({ data: result }) : respondFailure(`Can't delete a project.`);
 	}
 
 	@Security("api_key")
@@ -83,7 +55,7 @@ export default class ProjectController extends BaseController<Project> {
 	async getProjectsAndApps(@Queries() queryParams?: IGetQueryParams) {
 		let projects = await this.service.find(this.filter, this.options, this.pagination);
 
-		let result: ResponseData & { data: Project[] } = { status: 1, data: [], messages: [] };
+		let result: ResponseData & { data: IProject[] } = { status: 1, data: [], messages: [] };
 		if (this.pagination) result = { ...result, ...this.pagination };
 
 		// // assign refreshed token if any:
@@ -100,16 +72,11 @@ export default class ProjectController extends BaseController<Project> {
 		// console.log("apps :>> ", apps);
 
 		result.data = projects.map((p) => {
-			const projectWithApps: Project = { ...p };
-			projectWithApps.apps = apps.filter((a) => a.project.toString() === p._id.toString());
+			const projectWithApps = { ...p };
+			projectWithApps.apps = apps.filter((a) => MongoDB.toString(a.project) === MongoDB.toString(p._id));
 			return projectWithApps;
 		});
 
 		return result;
-
-		// result.data = projectsWithApps;
-		// return res.status(200).json(result);
-		// return projectsWithApps;
-		// return projectsWithApps;
 	}
 }

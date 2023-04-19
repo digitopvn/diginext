@@ -1,11 +1,10 @@
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { isArray, isBoolean, isEmpty, isString, isUndefined } from "lodash";
-import { ObjectId } from "mongodb";
-import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { App, AppGitInfo, Cluster, ContainerRegistry, Framework, Project } from "@/entities";
+import type { AppGitInfo, IApp, ICluster, IContainerRegistry, IFramework, IProject } from "@/entities";
 import type { HiddenBodyKeys, SslType } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
@@ -21,7 +20,7 @@ import { createDiginextDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { parseGitRepoDataFromRepoSSH } from "@/plugins";
-import { isObjectId } from "@/plugins/mongodb";
+import { MongoDB } from "@/plugins/mongodb";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
@@ -54,7 +53,7 @@ export interface AppInputSchema {
 	/**
 	 * `REQUIRES`
 	 * ---
-	 * App's name
+	 * Project's ID or slug
 	 */
 	project: string;
 
@@ -71,7 +70,7 @@ export interface AppInputSchema {
 	 * ---
 	 * Framework's ID or slug or {Framework} instance
 	 */
-	framework?: string | Framework;
+	framework?: string | IFramework;
 }
 
 export interface DeployEnvironmentData {
@@ -208,7 +207,7 @@ export interface DeployEnvironmentData {
 
 @Tags("App")
 @Route("app")
-export default class AppController extends BaseController<App> {
+export default class AppController extends BaseController<IApp> {
 	constructor() {
 		super(new AppService());
 	}
@@ -217,7 +216,7 @@ export default class AppController extends BaseController<App> {
 	@Security("jwt")
 	@Get("/")
 	async read(@Queries() queryParams?: IGetQueryParams) {
-		let apps = await DB.find<App>("app", this.filter, this.options, this.pagination);
+		let apps = await DB.find<IApp>("app", this.filter, this.options, this.pagination);
 
 		if (isEmpty(apps)) return respondSuccess({ data: [] });
 
@@ -246,7 +245,6 @@ export default class AppController extends BaseController<App> {
 				});
 			return app;
 		});
-		// console.log("[2] apps :>> ", apps);
 
 		return { status: 1, data: apps } as ResponseData;
 	}
@@ -255,20 +253,17 @@ export default class AppController extends BaseController<App> {
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: AppInputSchema, @Queries() queryParams?: IPostQueryParams) {
-		let project: Project,
-			projectSvc: ProjectService = new ProjectService(),
-			appDto: App = { ...(body as any) };
+		let project: IProject,
+			appDto: IApp = { ...(body as any) };
 
 		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
 		if (!body.name) return respondFailure({ msg: `App's name is required.` });
 
-		console.log(`isObjectId(${body.project}) :>> `, isObjectId(body.project));
-
 		// find parent project of this app
-		if (isObjectId(body.project)) {
-			project = await DB.findOne<Project>("project", { _id: body.project });
+		if (MongoDB.isValidObjectId(body.project)) {
+			project = await DB.findOne<IProject>("project", { _id: body.project });
 		} else if (isString(body.project)) {
-			project = await DB.findOne<Project>("project", { slug: body.project });
+			project = await DB.findOne<IProject>("project", { slug: body.project });
 		} else {
 			return respondFailure({ msg: `"project" is not a valid ID or slug.` });
 		}
@@ -277,12 +272,11 @@ export default class AppController extends BaseController<App> {
 		appDto.projectSlug = project.slug;
 
 		// framework
-		if (!body.framework) body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" };
-		if (body.framework === "none") body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" };
-		appDto.framework = body.framework as Framework;
+		if (!body.framework) body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" } as IFramework;
+		if (body.framework === "none") body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" } as IFramework;
+		appDto.framework = body.framework as IFramework;
 
 		// git
-		// if (isEmpty(body.git)) return respondFailure({ msg: `Git SSH URI or git repository information is required.` });
 		if (isString(body.git)) {
 			const gitData = parseGitRepoDataFromRepoSSH(body.git);
 			if (!gitData) return respondFailure({ msg: `Git repository information is not valid.` });
@@ -292,12 +286,10 @@ export default class AppController extends BaseController<App> {
 				repoURL: getRepoURLFromRepoSSH(gitData.gitProvider, gitData.fullSlug),
 				provider: gitData.gitProvider,
 			};
-		} else {
-			// if (!body.git.repoSSH) return respondFailure({ msg: `Git repository information is not valid.` });
 		}
 		appDto.git = body.git;
 
-		let newApp: App;
+		let newApp: IApp;
 
 		try {
 			newApp = await this.service.create(appDto);
@@ -305,7 +297,6 @@ export default class AppController extends BaseController<App> {
 		} catch (e) {
 			return { status: 0, messages: [e.message] } as ResponseData;
 		}
-		// console.log("app create > newApp :>> ", newApp);
 
 		const newAppId = newApp._id;
 
@@ -316,8 +307,7 @@ export default class AppController extends BaseController<App> {
 		// add this new app to the project info
 		if (project) {
 			const projectApps = [...(project.apps || []), newAppId];
-			// console.log("projectApps :>> ", projectApps);
-			[project] = await DB.update<Project>("project", { _id: project._id }, { apps: projectApps });
+			[project] = await DB.update<IProject>("project", { _id: project._id }, { apps: projectApps });
 		}
 
 		return { status: 1, data: newApp, messages: [""] } as ResponseData;
@@ -326,18 +316,17 @@ export default class AppController extends BaseController<App> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: Omit<App, keyof HiddenBodyKeys>, @Queries() queryParams?: IPatchQueryParams) {
-		// console.log("AppController > this.filter :>> ", this.filter);
-		let project: Project,
+	async update(@Body() body: Omit<IApp, keyof HiddenBodyKeys>, @Queries() queryParams?: IPatchQueryParams) {
+		let project: IProject,
 			projectSvc = new ProjectService();
 
 		if (body.project) {
-			project = await projectSvc.findOne({ _id: new ObjectId(body.project as string) });
+			project = await projectSvc.findOne({ _id: body.project });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
 		}
 
-		let apps: App[];
+		let apps: IApp[];
 		try {
 			apps = await this.service.update(this.filter, body, this.options);
 			if (isEmpty(apps)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
@@ -373,7 +362,7 @@ export default class AppController extends BaseController<App> {
 		// remove this app ID from project.apps
 		const [project] = await new ProjectService().update(
 			{
-				_id: (app.project as Project)._id,
+				_id: (app.project as IProject)._id,
 			},
 			{
 				$pull: { apps: app._id },
@@ -472,12 +461,12 @@ export default class AppController extends BaseController<App> {
 		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
 
 		// get app data:
-		const app = await DB.findOne<App>("app", { slug: appSlug }, { populate: ["project"] });
+		const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
 
-		const project = app.project as Project;
+		const project = app.project as IProject;
 		const { slug: projectSlug } = project;
 
 		// Assign default values to optional params:
@@ -491,7 +480,7 @@ export default class AppController extends BaseController<App> {
 
 		// cluster
 		if (!deployEnvironmentData.cluster) return respondFailure({ msg: `Param "cluster" (Cluster's short name) is required.` });
-		const cluster = await DB.findOne<Cluster>("cluster", { shortName: deployEnvironmentData.cluster });
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: deployEnvironmentData.cluster });
 		if (!cluster) return respondFailure({ msg: `Cluster "${deployEnvironmentData.cluster}" is not valid` });
 
 		// namespace
@@ -508,7 +497,7 @@ export default class AppController extends BaseController<App> {
 
 		// container registry
 		if (!deployEnvironmentData.registry) return respondFailure({ msg: `Param "registry" (Container Registry's slug) is required.` });
-		const registry = await DB.findOne<ContainerRegistry>("registry", { slug: deployEnvironmentData.registry });
+		const registry = await DB.findOne<IContainerRegistry>("registry", { slug: deployEnvironmentData.registry });
 		if (!registry) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
 
 		// Domains & SSL certificate...
@@ -588,7 +577,7 @@ export default class AppController extends BaseController<App> {
 			env?: string;
 		}
 	) {
-		let result = { status: 1, data: {}, messages: [] } as ResponseData & { data: App };
+		let result = { status: 1, data: {}, messages: [] } as ResponseData & { data: IApp };
 
 		// input validation
 		let { _id, id, slug, env } = body;
@@ -605,7 +594,7 @@ export default class AppController extends BaseController<App> {
 		}
 
 		// find the app
-		const appFilter = typeof id != "undefined" ? { _id: new ObjectId(id) } : { slug };
+		const appFilter = typeof id != "undefined" ? { _id: id } : { slug };
 		const app = await this.service.findOne(appFilter);
 
 		// check if the environment is existed
@@ -680,18 +669,23 @@ export default class AppController extends BaseController<App> {
 		body: CreateEnvVarsDto,
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		// console.log("body :>> ", body);
+		console.log("createEnvVarsOnDeployEnvironment > body :>> ", body);
 		// return { status: 0 };
 		let { slug, env, envVars } = body;
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
-		if (!envVars) return { status: 0, messages: [`Array of variables in JSON format (envVars) is required.`] };
-		if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
+		if (!envVars) return { status: 0, messages: [`Array of environment variables (envVars) is required.`] };
+		// if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
 
 		const app = await this.service.findOne({ ...this.filter, slug });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const newEnvVars = JSON.parse(envVars) as KubeEnvironmentVariable[];
+		const newEnvVars = isJSON(envVars)
+			? (JSON.parse(envVars) as KubeEnvironmentVariable[])
+			: isArray(envVars)
+			? (envVars as unknown as KubeEnvironmentVariable[])
+			: [];
+
 		// console.log("updateEnvVars :>> ", updateEnvVars);
 		const [updatedApp] = await this.service.update(
 			{ slug },
@@ -704,16 +698,23 @@ export default class AppController extends BaseController<App> {
 		// Set environment variables to deployment in the cluster
 		const deployEnvironment = updatedApp.deployEnvironment[env];
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure({ msg: `Cluster "${clusterShortName}" not found.` });
 
-		const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
+		// if the workload has been deployed before -> update the environment variables
+		const workload = await ClusterManager.getDeployByFilter(namespace, {
 			context: cluster.contextName,
 			filterLabel: `main-app=${slug}`,
 		});
 
-		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [setEnvVarsRes] };
-		return result;
+		if (workload) {
+			const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${slug}`,
+			});
+		}
+
+		return respondSuccess({ data: updatedApp.deployEnvironment[env].envVars });
 	}
 
 	/**
@@ -745,18 +746,19 @@ export default class AppController extends BaseController<App> {
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
 		if (!envVar) return { status: 0, messages: [`A variable (envVar { name, value }) is required.`] };
-		if (!isJSON(envVar)) return { status: 0, messages: [`A variable (envVar { name, value }) should be a valid JSON format.`] };
+		// if (!isJSON(envVar)) return { status: 0, messages: [`A variable (envVar { name, value }) should be a valid JSON format.`] };
 
 		const app = await this.service.findOne({ ...this.filter, slug });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 
-		envVar = JSON.parse(envVar as unknown as string) as KubeEnvironmentVariable;
+		envVar = isJSON(envVar) ? (JSON.parse(envVar as unknown as string) as KubeEnvironmentVariable) : isArray(envVar) ? envVar : undefined;
+		if (!envVar) return respondFailure(`ENV VAR is invalid.`);
 
 		const envVars = app.deployEnvironment[env].envVars || [];
 		const varToBeUpdated = envVars.find((v) => v.name === envVar.name);
 
-		let updatedApp: App;
+		let updatedApp: IApp;
 
 		if (varToBeUpdated) {
 			// update old variable
@@ -786,7 +788,7 @@ export default class AppController extends BaseController<App> {
 		// Set environment variables to deployment in the cluster
 		const deployEnvironment = updatedApp.deployEnvironment[env];
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(envVars, namespace, {
 			context: cluster.contextName,
 			filterLabel: `main-app=${slug}`,
@@ -836,7 +838,7 @@ export default class AppController extends BaseController<App> {
 		// Set environment variables to deployment in the cluster
 		const deployEnvironment = updatedApp.deployEnvironment[env];
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		const deleteEnvVarsRes = await ClusterManager.deleteEnvVarByFilter(
 			envVars.map((_var) => _var.name),
 			namespace,

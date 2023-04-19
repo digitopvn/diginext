@@ -3,13 +3,12 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import type * as express from "express";
 import jwt from "jsonwebtoken";
-import { ObjectId } from "mongodb";
 import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
-import type { AccessTokenInfo, User } from "@/entities";
-import type ServiceAccount from "@/entities/ServiceAccount";
+import type { AccessTokenInfo, IUser } from "@/entities";
+import type { IServiceAccount } from "@/entities/ServiceAccount";
 
 import { DB } from "../api/DB";
 
@@ -50,7 +49,7 @@ export const generateJWT = (userId: string, options?: JWTOptions) => {
 
 export const refreshAccessToken = () => {};
 
-function extractAccessTokenInfo(access_token: string, exp: number) {
+export function extractAccessTokenInfo(access_token: string, exp: number) {
 	let expiredDate = dayjs(new Date(exp * 1000));
 	let expiredTimestamp = dayjs(new Date(exp * 1000)).diff(dayjs());
 	let isExpired = expiredTimestamp <= 0;
@@ -96,13 +95,13 @@ export const jwtStrategy = new Strategy(
 		algorithms: ["HS512"],
 	},
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
-		// console.log(`[1] AUTHENTICATE: jwtStrategy > extracting token...`, { payload });
-
-		// const workspaceId = payload.workspaceId ? new ObjectId(payload.workspaceId) : undefined;
+		// console.log(`[1] AUTHENTICATE: jwtStrategy > payload...`, payload);
 
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		// console.log("jwtStrategy > access_token :>> ", access_token);
 		// console.log("jwtStrategy > payload :>> ", payload);
+		// console.log(`[1] jwtStrategy > payload.id :>> `, payload.id);
+
 		// 1. Extract token info
 
 		const tokenInfo = extractAccessTokenInfo(access_token, payload.exp);
@@ -113,62 +112,31 @@ export const jwtStrategy = new Strategy(
 
 		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
-		let user = await DB.findOne<User | ServiceAccount>(
-			"user",
-			{ _id: new ObjectId(payload.id) },
-			{ populate: ["roles", "workspaces", "activeWorkspace"] }
-		);
-		// console.log(`[1] jwtStrategy > User :>> `, user);
+		let user = await DB.findOne<IUser | IServiceAccount>("user", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
+		// if (user) return done(null, user);
 
 		if (user) {
-			// console.log("user.workspaces :>> ", user.workspaces);
-			// console.log("workspaceId :>> ", workspaceId);
-			// console.log("user.workspaces.includes(workspaceId) :>> ", user.workspaces.includes(workspaceId));
-
 			const updateData = {} as any;
 			updateData.token = tokenInfo.token;
-			// updateData.activeWorkspace = workspaceId;
-
-			// set active workspace to this user:
-			// if (isEmpty(user.workspaces)) {
-			// 	updateData.workspaces = [workspaceId];
-			// } else {
-			// 	if (!user.workspaces.includes(workspaceId))
-			// 		updateData.workspaces = [...(user.workspaces || []).map((ws) => (ws as Workspace)._id), workspaceId];
-			// }
-
-			// // set default roles if this user doesn't have one
-			// if (!user.roles || isEmpty(user.roles)) {
-			// 	const memberRole = await DB.findOne<Role>("role", { name: "Member", workspace: workspaceId });
-			// 	updateData.roles = [memberRole._id];
-			// }
-
+			// console.log(`[1] jwtStrategy > updateData :>> `, updateData);
 			// update the access token in database:
-			[user] = await DB.update<User>("user", { _id: new ObjectId(payload.id) }, updateData, {
+			[user] = await DB.update<IUser>("user", { _id: payload.id }, updateData, {
 				populate: ["roles", "workspaces", "activeWorkspace"],
 			});
-
-			// filter roles
-			// [user] = await filterRole(user.activeWorkspace.toString(), [user]);
-
+			// console.log(`[1] jwtStrategy > updated user :>> `, user);
 			return done(null, user);
 		}
 
 		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
-		user = await DB.findOne<ServiceAccount>(
+		let serviceAccount = await DB.findOne<IServiceAccount>(
 			"service_account",
-			{ _id: new ObjectId(payload.id) },
+			{ _id: payload.id },
 			{ populate: ["roles", "workspaces", "activeWorkspace"] }
 		);
 
-		// filter roles
-		// if (user) [user] = await filterRole(user.activeWorkspace.toString(), [user]);
+		if (!serviceAccount) return done(JSON.stringify({ status: 0, messages: ["Invalid service account (probably deleted?)."] }), null);
 
-		// console.log(`[3] jwtStrategy > ServiceAccount :>> `, user.name, user._id);
-
-		if (!user) return done(JSON.stringify({ status: 0, messages: ["Invalid user (probably deleted?)."] }), null);
-
-		return done(null, user);
+		return done(null, serviceAccount);
 	}
 );
 

@@ -1,10 +1,11 @@
-import Team from "@/entities/Team";
+import type { ITeam } from "@/entities/Team";
+import { teamSchema } from "@/entities/Team";
 
 import BaseService from "./BaseService";
 
-export default class TeamService extends BaseService<Team> {
+export default class TeamService extends BaseService<ITeam> {
 	constructor() {
-		super(Team);
+		super(teamSchema);
 	}
 }
 export { TeamService };

@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type Project from "@/entities/Project";
+import type { IProject } from "@/entities/Project";
 
 import { DB } from "../api/DB";
 
@@ -24,7 +24,7 @@ export async function searchProjects(options: SearchAppOptions = {}) {
 
 	// find/search projects
 	const filter = keyword ? { name: keyword } : {};
-	let projects = await DB.find<Project>("project", filter, { search: true, order: { updatedAt: "DESC", createdAt: "DESC" } }, { limit: 20 });
+	let projects = await DB.find<IProject>("project", filter, { search: true, order: { updatedAt: -1, createdAt: -1 } }, { limit: 20 });
 
 	if (isEmpty(projects)) {
 		if (canSkip) {

@@ -1,5 +1,7 @@
 import express from "express";
 
+import { isServerReady } from "@/server";
+
 import apiKeyUserRouter from "./api_key";
 import appRouter from "./app";
 import buildRouter from "./build";
@@ -8,7 +10,7 @@ import databaseRouter from "./database";
 import deployRouter from "./deploy";
 import domainRouter from "./domain";
 import frameworkRouter from "./framework";
-import gitRouter from "./git-provider";
+import gitRouter from "./git";
 import projectRouter from "./project";
 import providerRouter from "./provider";
 import registryRouter from "./registry";
@@ -25,7 +27,7 @@ const router = express.Router();
 /**
  * Register API routes
  */
-router.get("/healthz", (req, res) => res.status(200).json({ status: 1 }));
+router.get("/healthz", (req, res) => res.status(200).json({ status: 1, data: { ready: isServerReady } }));
 router.use("/user", userRouter);
 router.use("/service_account", serviceAccountRouter);
 router.use("/api_key", apiKeyUserRouter);

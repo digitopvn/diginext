@@ -1,11 +1,8 @@
-import { isJSON } from "class-validator";
-import { isString, trim } from "lodash";
-import { ObjectId } from "mongodb";
+import { cloneDeepWith, isString, trim } from "lodash";
 
-import type { IQueryOptions } from "@/interfaces";
-import type { FindManyOptions } from "@/libs/typeorm";
+import type { IQueryFilter } from "@/interfaces";
 
-import { isValidObjectId } from "./mongodb";
+import { MongoDB } from "./mongodb";
 
 export const parseRequestFilter = (requestQuery: any) => {
 	const {
@@ -27,32 +24,18 @@ export const parseRequestFilter = (requestQuery: any) => {
 	} = requestQuery;
 
 	// filter
-	const _filter: { [key: string]: any } = id ? { id, ...filter } : filter;
+	let _filter: { [key: string]: any } = id ? { id, ...filter } : filter;
 
-	// convert search to boolean
-	Object.entries(_filter).forEach(([key, val]) => {
-		if (val == null || val == undefined) {
-			_filter[key] = null;
-		} else if (key == "id" || key == "_id") {
-			_filter._id = isValidObjectId(val) ? new ObjectId(val) : val;
-			delete _filter.id;
-		} else if (isValidObjectId(val)) {
-			_filter[key] = new ObjectId(val);
-		} else if (isJSON(val)) {
-			_filter[key] = JSON.parse(val);
-		} else {
-			_filter[key] = val;
-		}
-	});
-
-	if (!_filter.id) delete _filter.id;
+	if (_filter.id) {
+		_filter._id = _filter.id;
+		delete _filter.id;
+	}
 
 	// manipulate "$or" & "$and" filter:
 	if (_filter.or) {
 		_filter.$or = _filter.or;
 		delete _filter.or;
 	}
-
 	if (_filter.and) {
 		_filter.$and = _filter.and;
 		delete _filter.and;
@@ -70,6 +53,12 @@ export const parseRequestFilter = (requestQuery: any) => {
 		});
 	}
 
-	// save to local storage of response
-	return _filter as IQueryOptions & FindManyOptions<any>;
+	/**
+	 * Traverse filter object and transform the values.
+	 * Need to cast valid {ObjectId} string to {ObjectId} since Mongoose "aggregate" doesn't cast them automatically.
+	 * @link https://mongoosejs.com/docs/api/aggregate.html#Aggregate()
+	 */
+	return cloneDeepWith(_filter, function (value) {
+		if (MongoDB.isValidObjectId(value)) return MongoDB.toObjectId(value);
+	}) as IQueryFilter;
 };

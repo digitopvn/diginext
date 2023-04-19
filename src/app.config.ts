@@ -54,6 +54,7 @@ if (process.env.CLI_MODE === "server") {
 
 export enum EnvName {
 	DEVELOPMENT = "development",
+	TEST = "test",
 	STAGING = "staging",
 	CANARY = "canary",
 	PRODUCTION = "production",
@@ -93,20 +94,28 @@ export class Config {
 		return process.env.PORT || 4000;
 	}
 
+	static get DB_URI() {
+		return process.env.DB_URI || process.env.MONGODB_URI;
+	}
+
+	static get DB_NAME() {
+		return process.env.DB_NAME || (Config.ENV === EnvName.TEST ? `diginext-test` : `diginext`);
+	}
+
 	static get CLI_MODE() {
 		return process.env.CLI_MODE || "client";
 	}
 
-	static get DX_API_URL() {
-		return process.env.DX_API_URL
-			? process.env.DX_API_URL
-			: Config.ENV === "production"
-			? "https://diginext-website.prod.diginext.site/api"
-			: "https://diginext-website.dev.diginext.site/api";
+	static get DX_SITE_URL() {
+		return process.env.DX_SITE_URL ? process.env.DX_SITE_URL : "https://diginext.vn";
 	}
 
-	static get DX_LICENSE_KEY() {
-		return process.env.DX_LICENSE_KEY;
+	static get DX_API_URL() {
+		return process.env.DX_API_URL ? process.env.DX_API_URL : "https://diginext.vn/api";
+	}
+
+	static get DX_KEY() {
+		return process.env.DX_KEY;
 	}
 
 	static get BUILDER() {
@@ -137,6 +146,9 @@ export class Config {
 // Extensions
 export const IsDev = function () {
 	return Config.ENV === EnvName.DEVELOPMENT;
+};
+export const IsTest = function () {
+	return Config.ENV === EnvName.TEST;
 };
 export const IsStag = function () {
 	return Config.ENV === EnvName.STAGING;

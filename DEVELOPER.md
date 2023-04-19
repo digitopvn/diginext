@@ -59,7 +59,7 @@ services:
             - NODE_ENV=development
             - PORT=6969
             - BASE_URL=http://localhost:6969
-            - MONGODB_CONNECTION_STRING=mongodb://root:diginext@mongo:27017/diginext?authSource=admin
+            - DB_URI=mongodb://root:diginext@mongo:27017/diginext?authSource=admin
             - CLI_MODE=server
             - JWT_SECRET=
             - JWT_EXPIRE_TIME=48h

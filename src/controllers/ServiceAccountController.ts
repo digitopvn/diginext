@@ -1,10 +1,11 @@
-import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import BaseController from "@/controllers/BaseController";
-import type { User } from "@/entities";
-import type { HiddenBodyKeys, ResponseData } from "@/interfaces";
+import type { IServiceAccount } from "@/entities/ServiceAccount";
+import { ServiceAccountDto } from "@/entities/ServiceAccount";
+import type { ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import { MongoDB } from "@/plugins/mongodb";
 import { ServiceAccountService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
 
@@ -15,7 +16,7 @@ interface JoinWorkspaceBody {
 
 @Tags("Service Account")
 @Route("service_account")
-export default class ServiceAccountController extends BaseController<User> {
+export default class ServiceAccountController extends BaseController<IServiceAccount> {
 	constructor() {
 		super(new ServiceAccountService());
 	}
@@ -30,14 +31,14 @@ export default class ServiceAccountController extends BaseController<User> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: ServiceAccountDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<User, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: ServiceAccountDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
@@ -53,7 +54,7 @@ export default class ServiceAccountController extends BaseController<User> {
 	@Patch("/join-workspace")
 	async joinWorkspace(@Body() data: JoinWorkspaceBody) {
 		const { userId, workspace: workspaceSlug } = data;
-		const result: ResponseData & { data: User } = { status: 1, messages: [], data: {} };
+		const result: ResponseData = { status: 1, messages: [], data: {} };
 		// console.log("{ userId, workspace } :>> ", { userId, workspace });
 
 		try {
@@ -68,8 +69,8 @@ export default class ServiceAccountController extends BaseController<User> {
 			if (!workspace) throw new Error(`Workspace "${workspaceSlug}" not found.`);
 			// console.log("workspace :>> ", workspace);
 
-			const wsId = workspace._id.toString();
-			const user = await this.service.findOne({ id: new ObjectId(userId) });
+			const wsId = MongoDB.toString(workspace._id);
+			const user = await this.service.findOne({ id: userId });
 			// console.log("user :>> ", user);
 			// console.log("wsId :>> ", wsId);
 
@@ -79,10 +80,10 @@ export default class ServiceAccountController extends BaseController<User> {
 
 			let updatedUser = [user];
 
-			const isUserJoinedThisWorkspace = (user.workspaces || []).map((id) => id.toString()).includes(wsId);
+			const isUserJoinedThisWorkspace = (user.workspaces || []).includes(wsId);
 			// console.log("isUserJoinedThisWorkspace :>> ", isUserJoinedThisWorkspace);
 
-			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && user.activeWorkspace.toString() === wsId;
+			const isWorkspaceActive = typeof user.activeWorkspace !== "undefined" && user.activeWorkspace === wsId;
 			// console.log("isWorkspaceActive :>> ", isWorkspaceActive);
 
 			// console.log("user.workspaces :>> ", user.workspaces);

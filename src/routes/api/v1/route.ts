@@ -4,7 +4,6 @@ import express from "express";
 
 import RouteController from "@/controllers/RouteController";
 import { authenticate } from "@/middlewares/authenticate";
-import { authorize } from "@/middlewares/authorize";
 import { processApiRequest } from "@/middlewares/process-api-request";
 import { registerController } from "@/middlewares/register-controller";
 
@@ -14,9 +13,10 @@ const controller = new RouteController();
 const router = express.Router();
 
 router
-	.use(authenticate, authorize)
+	.use(authenticate)
 	.use(registerController(controller))
 	// create new domain
-	.get("/", processApiRequest(controller.read));
+	.get("/", processApiRequest(controller.read.bind(controller)))
+	.post("/permission", processApiRequest(controller.checkPermissions.bind(controller)));
 
 export default router;

@@ -1,9 +1,8 @@
 import { logError } from "diginext-utils/dist/console/log";
-import { ObjectId } from "mongodb";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { CloudProvider, Cluster } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { ICloudProvider, ICluster } from "@/entities";
+import { ClusterDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure } from "@/interfaces/ResponseData";
@@ -13,11 +12,9 @@ import ClusterService from "@/services/ClusterService";
 
 import BaseController from "./BaseController";
 
-export type ClusterDto = Omit<Cluster, keyof HiddenBodyKeys>;
-
 @Tags("Cluster")
 @Route("cluster")
-export default class ClusterController extends BaseController<Cluster> {
+export default class ClusterController extends BaseController<ICluster> {
 	constructor() {
 		super(new ClusterService());
 	}
@@ -44,8 +41,8 @@ export default class ClusterController extends BaseController<Cluster> {
 		// validate cloud provider...
 		const cloudProviderSvc = new CloudProviderService();
 
-		const cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
-		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
+		const cloudProvider = await cloudProviderSvc.findOne({ _id: body.provider });
+		if (!cloudProvider) return respondFailure(`Cloud Provider "${body.provider}" not found.`);
 
 		body.providerShortName = cloudProvider.shortName;
 
@@ -67,7 +64,7 @@ export default class ClusterController extends BaseController<Cluster> {
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 
 		// create new cluster
-		let newCluster = (await this.service.create(body)) as Cluster;
+		let newCluster = (await this.service.create(body)) as ICluster;
 
 		if (newCluster) {
 			try {
@@ -92,11 +89,11 @@ export default class ClusterController extends BaseController<Cluster> {
 	@Patch("/")
 	async update(@Body() body: ClusterDto, @Queries() queryParams?: IPostQueryParams) {
 		const cloudProviderSvc = new CloudProviderService();
-		let cloudProvider: CloudProvider;
+		let cloudProvider: ICloudProvider;
 
 		// validation - round 1: valid input params
 		if (body.provider) {
-			cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(body.provider as string) });
+			cloudProvider = await cloudProviderSvc.findOne({ _id: body.provider });
 			if (!cloudProvider) return { status: 0, messages: [`Cloud Provider "${body.provider}" not found.`] } as ResponseData;
 		}
 
@@ -104,12 +101,12 @@ export default class ClusterController extends BaseController<Cluster> {
 		if (!cluster) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Cluster not found.` });
 
 		// validate cloud provider...
-		if (!cloudProvider) cloudProvider = await cloudProviderSvc.findOne({ _id: new ObjectId(cluster.provider as string) });
+		if (!cloudProvider) cloudProvider = await cloudProviderSvc.findOne({ _id: body.provider });
 		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider is not valid.`] } as ResponseData;
 
-		const updateData = { ...body, provider: new ObjectId(body.provider.toString()), providerShortName: cloudProvider.shortName } as ClusterDto;
+		const updateData = { ...body, provider: body.provider, providerShortName: cloudProvider.shortName } as ClusterDto;
 		[cluster] = await this.service.update({ _id: cluster._id }, updateData);
-		console.log("cluster :>> ", cluster);
+		// console.log("cluster :>> ", cluster);
 
 		// validation - round 2: check cluster accessibility
 		let errors: string[] = [];
@@ -126,15 +123,24 @@ export default class ClusterController extends BaseController<Cluster> {
 		if (cloudProvider.shortName === "custom") {
 			if (!cluster.kubeConfig && !body.kubeConfig) errors.push(`Kube config data (YAML) is required.`);
 		}
-		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
+		if (errors.length > 0) return respondFailure(errors);
 
 		// verify...
 		try {
 			await ClusterManager.authCluster(cluster.shortName);
 			[cluster] = await this.service.update({ _id: cluster._id }, { isVerified: true });
+
+			/**
+			 * Check for required stack installations, if not install them:
+			 */
+
+			// [1] NGINX Ingress
+			await ClusterManager.installNginxIngressStack(cluster);
+			// [2] Cert Manager
+			await ClusterManager.installCertManagerStack(cluster);
 		} catch (e) {
 			console.log("Failed to connect cluster :>> ", e);
-			return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
+			return respondFailure(`Failed to connect to the cluster, please double check your information.`);
 		}
 
 		return super.update(body);
@@ -144,7 +150,6 @@ export default class ClusterController extends BaseController<Cluster> {
 	@Security("jwt")
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
-		// TODO: find deleted items before deleting
 		return super.delete();
 	}
 

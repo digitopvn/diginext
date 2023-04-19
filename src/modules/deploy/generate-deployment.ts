@@ -7,7 +7,7 @@ import _, { isEmpty, isObject, toNumber } from "lodash";
 
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
-import type { App, Cluster, ContainerRegistry, Workspace } from "@/entities";
+import type { IApp, ICluster, IContainerRegistry, IWorkspace } from "@/entities";
 import type { AppConfig, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { getAppConfig, objectToDeploymentYaml } from "@/plugins";
@@ -19,7 +19,7 @@ import { generateDomains } from "./generate-domain";
 export type GenerateDeploymentParams = {
 	env: string;
 	username: string;
-	workspace: Workspace;
+	workspace: IWorkspace;
 	/**
 	 * Requires if generate deployment files from image URL.
 	 */
@@ -88,18 +88,18 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const clusterShortName = deployEnvironmentConfig.cluster;
 
 	// get container registry
-	let registry: ContainerRegistry = await DB.findOne<ContainerRegistry>("registry", { slug: registrySlug });
+	let registry: IContainerRegistry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 	if (!registry) {
 		throw new Error(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
 	}
 	if (!registry.imagePullSecret) {
 		const imagePullSecret = await createImagePullSecretsInNamespace(slug, env, clusterShortName, nsName);
-		[registry] = await DB.update<ContainerRegistry>("registry", { _id: registry._id }, { imagePullSecret });
+		[registry] = await DB.update<IContainerRegistry>("registry", { _id: registry._id }, { imagePullSecret });
 	}
 	// console.log("registry :>> ", registry);
 
 	// get destination cluster
-	let cluster = await DB.findOne<Cluster>("cluster", { shortName: clusterShortName });
+	let cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 	if (!cluster) {
 		throw new Error(`Cannot find any clusters with short name as "${clusterShortName}", please contact your admin or create a new one.`);
 	}
@@ -130,7 +130,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (env === "prod") log({ prereleaseDomain });
 
 	// * [NEW TACTIC] Fetch ENV variables from database:
-	const app = await DB.findOne<App>("app", { slug });
+	const app = await DB.findOne<IApp>("app", { slug });
 	if (!app) {
 		throw new Error(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
 	}
@@ -254,7 +254,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 						// tls
 						ingCfg.spec.tls.push({
 							hosts: [domain],
-							secretName: deployEnvironmentConfig.tlsSecret,
+							secretName: deployEnvironmentConfig.tlsSecret || `tls-secret-letsencrypt-${makeSlug(domain)}`,
 						});
 
 						// rules

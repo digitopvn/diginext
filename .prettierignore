@@ -1,7 +1,6 @@
 # Ignore artifacts:
 dist
 coverage
-src/libs/typeorm
 thunder-tests
 redis_data
 storage
@@ -25,3 +24,6 @@ node_modules
 **/*.yaml
 **/*.yaml
 **/templates/**
+
+# __tests__/**
+# **/__tests__/**

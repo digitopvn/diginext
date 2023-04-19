@@ -1,10 +1,11 @@
-import Build from "@/entities/Build";
+import type { IBuild } from "@/entities/Build";
+import { buildSchema } from "@/entities/Build";
 
 import BaseService from "./BaseService";
 
-export default class BuildService extends BaseService<Build> {
+export default class BuildService extends BaseService<IBuild> {
 	constructor() {
-		super(Build);
+		super(buildSchema);
 	}
 }
 

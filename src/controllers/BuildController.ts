@@ -1,22 +1,20 @@
-import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
+import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 
 import { Config } from "@/app.config";
-import type { Build } from "@/entities";
-import type { HiddenBodyKeys } from "@/interfaces";
+import type { IBuild } from "@/entities";
+import { BuildDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
-import { respondFailure } from "@/interfaces/ResponseData";
+import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { startBuild, StartBuildParams, stopBuild } from "@/modules/build";
 import { Logger } from "@/plugins";
 import BuildService from "@/services/BuildService";
 
 import BaseController from "./BaseController";
 
-type BuildData = Omit<Build, keyof HiddenBodyKeys>;
-
 @Tags("Build")
 @Route("build")
-export default class BuildController extends BaseController<Build> {
+export default class BuildController extends BaseController<IBuild> {
 	constructor() {
 		super(new BuildService());
 	}
@@ -31,14 +29,14 @@ export default class BuildController extends BaseController<Build> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: BuildData, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: BuildDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: BuildData, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: BuildDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
@@ -117,32 +115,18 @@ export default class BuildController extends BaseController<Build> {
 	@Security("jwt")
 	@Patch("/stop")
 	async stopBuild(@Body() body: { slug: string }) {
-		let result: ResponseData & { data: Build } = { status: 1, data: [], messages: [] };
 		const { slug } = body;
 		// console.log("slug :>> ", slug);
 		// return ApiResponse.failed(res, `${slug}`);
 
-		if (!slug) {
-			result.status = 0;
-			result.messages.push(`Build "slug" is required.`);
-			return result;
-		}
+		if (!slug) return respondFailure(`Build "slug" is required.`);
 
 		const build = await this.service.findOne({ slug });
-		if (!build) {
-			result.status = 0;
-			result.messages.push(`Build "${slug}" not found.`);
-			return result;
-		}
+		if (!build) return respondFailure(`Build "${slug}" not found.`);
 
 		const stoppedBuild = await stopBuild(build.projectSlug, build.appSlug, slug.toString());
-		if ((stoppedBuild as { error: string }).error) {
-			result.status = 0;
-			result.messages.push((stoppedBuild as { error: string }).error);
-			return result;
-		}
+		if ((stoppedBuild as { error: string }).error) return respondFailure((stoppedBuild as { error: string }).error);
 
-		result.data = stoppedBuild;
-		return result;
+		return respondSuccess({ data: stoppedBuild });
 	}
 }

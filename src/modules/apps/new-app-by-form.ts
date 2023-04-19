@@ -3,9 +3,8 @@ import inquirer from "inquirer";
 import { isEmpty, upperFirst } from "lodash";
 
 import { saveCliConfig } from "@/config/config";
-import type { App } from "@/entities";
-import Framework from "@/entities/Framework";
-import type GitProvider from "@/entities/GitProvider";
+import type { IApp, IGitProvider } from "@/entities";
+import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { getAppConfig, getCurrentGitRepoData, parseGitRepoDataFromRepoSSH, updateAppConfig } from "@/plugins";
@@ -38,16 +37,16 @@ export async function createAppByForm(options?: InputOptions) {
 	// "kind of" unique slug
 	// options.slug = (makeSlug(options.name) + "-" + generatePassword(6, true)).toLowerCase();
 
-	const noneFramework = new Framework({ name: "None/unknown", slug: "none", isPrivate: false });
-	let curFramework: Framework = noneFramework;
+	const noneFramework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
+	let curFramework = noneFramework;
 	if (!options.framework) {
-		const frameworks = await DB.find<Framework>("framework", {});
+		const frameworks = await DB.find<IFramework>("framework", {});
 
 		const selectFrameworks = [noneFramework];
 		if (!isEmpty(frameworks)) selectFrameworks.push(...frameworks);
 		// log({ selectFrameworks });
 
-		const { framework } = await inquirer.prompt<{ framework: Framework }>({
+		const { framework } = await inquirer.prompt<{ framework: IFramework }>({
 			type: "list",
 			name: "framework",
 			message: "Select starting framework:",
@@ -110,9 +109,9 @@ export async function createAppByForm(options?: InputOptions) {
 		options.remoteURL = currentGitData.remoteURL;
 	} else {
 		if (options.shouldUseGit) {
-			let currentGitProvider: GitProvider;
+			let currentGitProvider: IGitProvider;
 			if (!options.gitProvider) {
-				const gitProviders = await DB.find<GitProvider>("git", {});
+				const gitProviders = await DB.find<IGitProvider>("git", {});
 
 				if (isEmpty(gitProviders)) {
 					logError(`This workspace doesn't have any git providers integrated.`);
@@ -144,7 +143,7 @@ export async function createAppByForm(options?: InputOptions) {
 				}
 			} else {
 				// search for this git provider
-				currentGitProvider = await DB.findOne<GitProvider>("git", { type: options.gitProvider });
+				currentGitProvider = await DB.findOne<IGitProvider>("git", { type: options.gitProvider });
 				if (!currentGitProvider) {
 					logError(`Git provider "${options.gitProvider}" not found.`);
 					return;
@@ -174,7 +173,7 @@ export async function createAppByForm(options?: InputOptions) {
 		git: currentGitData ? { repoSSH: currentGitData.remoteSSH, provider: currentGitData.provider, repoURL: currentGitData.remoteURL } : {},
 		environment: {},
 		deployEnvironment: {},
-	} as App;
+	} as IApp;
 
 	// console.log("createAppByForm > appData :>> ", appData);
 
@@ -184,7 +183,7 @@ export async function createAppByForm(options?: InputOptions) {
 		if (options.remoteURL) appData.git.repoURL = options.remoteURL;
 	}
 	if (options.isDebugging) log(`Create new app with data:`, appData);
-	const newApp = await DB.create<App>("app", appData);
+	const newApp = await DB.create<IApp>("app", appData);
 	if (options.isDebugging) log({ newApp });
 
 	if (isEmpty(newApp) || (newApp as any).error) {

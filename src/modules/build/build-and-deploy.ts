@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import humanizeDuration from "humanize-duration";
 
 import { Config } from "@/app.config";
+import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 
 import type { DeployBuildOptions } from "../deploy/deploy-build";
@@ -25,7 +26,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 
 	if (!release) return;
 
-	const releaseId = release._id.toString();
+	const releaseId = MongoDB.toString(release._id);
 
 	const { endpoint, prereleaseUrl } = deployment;
 
