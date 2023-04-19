@@ -559,7 +559,7 @@ export const updateAppConfig = (updatedData: AppConfig, options: SaveOpts = {}) 
  * @return {Object}
  */
 export const getPackageConfig = (options: SaveOpts) => {
-	const { directory, ignoreIfNotExisted } = options;
+	const { directory, ignoreIfNotExisted = true } = options;
 	let shouldReturn = true;
 	const filePath = path.resolve(directory || process.cwd(), "package.json");
 
