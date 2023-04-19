@@ -3,45 +3,14 @@ import "reflect-metadata";
 import { logError, logSuccess } from "diginext-utils/dist/console/log";
 import mongoose from "mongoose";
 
-// entities
+import { Config } from "@/app.config";
 
-// export const appDataSource = new DataSource({
-// 	type: "mongodb",
-// 	url: process.env.MONGODB_CONNECTION_STRING,
-// 	useNewUrlParser: true,
-// 	useUnifiedTopology: true,
-// 	synchronize: IsTest(), // only enable "synchronize" on "test" environment
-// 	logging: true,
-// 	entities: [
-// 		App,
-// 		Activity,
-// 		User,
-// 		ServiceAccount,
-// 		ApiKeyAccount,
-// 		Role,
-// 		Route,
-// 		Team,
-// 		Workspace,
-// 		Project,
-// 		Release,
-// 		Build,
-// 		CloudProvider,
-// 		GitProvider,
-// 		Cluster,
-// 		CloudDatabase,
-// 		ContainerRegistry,
-// 		Framework,
-// 	],
-// 	// database: "diginext",
-// 	// subscribers: [],
-// 	// migrations: [],
-// });
-
-// export const manager = appDataSource.manager;
+const dbName = Config.DB_NAME;
 
 export async function connect(onConnected?: (db: typeof mongoose) => void) {
 	try {
-		const db = await mongoose.connect(process.env.MONGODB_CONNECTION_STRING, {
+		const db = await mongoose.connect(Config.DB_URI, {
+			dbName,
 			useNewUrlParser: true,
 			useUnifiedTopology: true,
 		});

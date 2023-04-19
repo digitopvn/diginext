@@ -40,8 +40,6 @@ export async function startupScripts() {
 	const isSSHKeysExisted = await sshKeysExisted();
 	if (!isSSHKeysExisted) await generateSSH();
 
-	const gitSvc = new GitProviderService();
-	const gitProviders = await gitSvc.find({});
 	// console.log("gitProviders :>> ");
 	// console.dir(gitProviders, { depth: 10 });
 
@@ -49,6 +47,8 @@ export async function startupScripts() {
 	 * No need to verify SSH for "test" environment?
 	 */
 	if (!IsTest()) {
+		const gitSvc = new GitProviderService();
+		const gitProviders = await gitSvc.find({});
 		if (!isEmpty(gitProviders)) {
 			for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
 		}
@@ -91,14 +91,16 @@ export async function startupScripts() {
 		}
 	}
 
-	// cronjobs
-	logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every 3 days at 00:00 AM`);
 	/**
+	 * CRONJOBS
+	 * ---
 	 * Schedule a clean up task every 3 days at 00:00 AM
+	 * (Skip for test environment)
 	 */
-	cronjob.schedule("0 0 */3 * *", () => {
-		cleanUp();
-	});
+	if (!IsTest()) {
+		logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every 3 days at 00:00 AM`);
+		cronjob.schedule("0 0 */3 * *", () => cleanUp());
+	}
 
 	// migration
 

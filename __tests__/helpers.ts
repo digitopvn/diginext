@@ -45,6 +45,7 @@ import WorkspaceController from "../src/controllers/WorkspaceController";
 import { isEmpty } from "lodash";
 import { MongoDB } from "../src/plugins/mongodb";
 import mongoose from "mongoose";
+import chalk from "chalk";
 
 const user1 = { name: "Test User 1", email: "user1@test.local" } as IUser;
 const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
@@ -89,18 +90,20 @@ export const workspaceCtl = new WorkspaceController();
 export let currentUser: IUser;
 export let currentWorkspace: IWorkspace;
 
+const dbName = `diginext-test`;
+
 export async function setupStartTestEnvironment() {
 	// wait until the server is completely READY...
 	await waitUntil(() => isServerReady === true, 1, 2 * 60);
 }
 
 export async function setupEndTestEnvironment() {
-	// wait 10s before tearing down Jest...
-	// await wait(10000);
-	// mongoose.connection.db.
-	const dropDbResult = await mongoose.connection.db.dropDatabase({ dbName: `diginext-test` });
-	console.log("dropDbResult :>> ", dropDbResult);
+	// drop the test database
+	const dropDbResult = await mongoose.connection.db.dropDatabase({ dbName });
+	const dropMessage = dropDbResult ? `Database "${dbName}" was dropped.` : `Unable to drop database "${dbName}".`;
+	console.log(chalk.red(dropMessage));
 
+	// disconnect the database, socket & server
 	await AppDatabase.disconnect();
 	await socketIO.close();
 	await server.close();

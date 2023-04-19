@@ -94,6 +94,14 @@ export class Config {
 		return process.env.PORT || 4000;
 	}
 
+	static get DB_URI() {
+		return process.env.DB_URI || process.env.MONGODB_URI;
+	}
+
+	static get DB_NAME() {
+		return process.env.DB_NAME || (Config.ENV === EnvName.TEST ? `diginext-test` : `diginext`);
+	}
+
 	static get CLI_MODE() {
 		return process.env.CLI_MODE || "client";
 	}
@@ -106,8 +114,8 @@ export class Config {
 		return process.env.DX_API_URL ? process.env.DX_API_URL : "https://diginext.vn/api";
 	}
 
-	static get DX_LICENSE_KEY() {
-		return process.env.DX_LICENSE_KEY;
+	static get DX_KEY() {
+		return process.env.DX_KEY;
 	}
 
 	static get BUILDER() {

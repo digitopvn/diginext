@@ -102,7 +102,7 @@ npm i @topgroup/diginext --location=global
 After installing, you can use the CLI command `dx` and spin up a build server with:
 
 ```bash
-export MONGODB_CONNECTION_STRING=<YOUR_MONGODB_CONNECTION_STRING>
+export DB_URI=<YOUR_DB_URI>
 dx server up
 ```
 
