@@ -345,16 +345,34 @@ export default class AppController extends BaseController<IApp> {
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		// also delete app's namespace on the cluster:
 		Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
 			if (!isEmpty(deployEnvironment)) {
-				const { cluster, namespace } = deployEnvironment;
-				try {
-					await ClusterManager.authCluster(cluster);
-					await ClusterManager.deleteNamespaceByCluster(namespace, cluster);
-					log(`[APP DELETE] ${app.slug} > Deleted "${namespace}" namespace on "${cluster}" cluster.`);
-				} catch (e) {
-					logWarn(`[APP DELETE] ${app.slug} > Can't delete "${namespace}" namespace on "${cluster}" cluster:`, e);
+				const { cluster: clusterShortName, namespace } = deployEnvironment;
+				const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+				let errorMsg;
+
+				if (cluster) {
+					const { contextName: context } = cluster;
+					try {
+						// switch to the cluster of this environment
+						await ClusterManager.authCluster(clusterShortName);
+
+						/**
+						 * IMPORTANT
+						 * ---
+						 * Should NOT delete namespace because it will affect other apps in a project!
+						 */
+
+						// Delete INGRESS
+						await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+						// Delete SERVICE
+						await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+						// Delete DEPLOYMENT
+						await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+					} catch (e) {
+						logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
+						errorMsg = e.message;
+					}
 				}
 			}
 		});
