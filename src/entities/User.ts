@@ -74,7 +74,6 @@ export const userSchema = new Schema<IUser>(
 		},
 		username: {
 			type: String,
-			unique: true,
 		},
 		type: {
 			type: String,

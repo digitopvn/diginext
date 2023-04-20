@@ -27,7 +27,17 @@ export default async function createApp(options: InputOptions) {
 
 	// make sure it always create new directory:
 	options.skipCreatingDirectory = false;
-	if (typeof options.targetDirectory == "undefined") options.targetDirectory = path.resolve(process.cwd(), options.slug);
+
+	if (!options.project) {
+		logError(`Project is required for creating new app.`);
+		return;
+	}
+	options.projectSlug = options.project.slug;
+
+	// setup git:
+	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`.toLowerCase();
+
+	if (typeof options.targetDirectory == "undefined") options.targetDirectory = path.resolve(process.cwd(), options.repoSlug);
 
 	const { skipCreatingDirectory } = options;
 
@@ -46,14 +56,7 @@ export default async function createApp(options: InputOptions) {
 
 	if (options.shouldInstallPackage) await pullingFramework(options);
 
-	if (!options.project) {
-		logError(`Project is required for creating new app.`);
-		return;
-	}
-	options.projectSlug = options.project.slug;
-
 	// setup git:
-	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`;
 
 	const { currentGitProvider } = getCliConfig();
 	// log({ currentGitProvider });

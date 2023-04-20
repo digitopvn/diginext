@@ -7,5 +7,11 @@ export function checkInitialData() {
 
 		const gcloud = providers.find((p) => p.shortName === "gcloud");
 		expect(gcloud).toBeDefined();
+
+		const digitalocean = providers.find((p) => p.shortName === "digitalocean");
+		expect(digitalocean).toBeDefined();
+
+		const custom = providers.find((p) => p.shortName === "custom");
+		expect(custom).toBeDefined();
 	});
 }

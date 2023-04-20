@@ -19,7 +19,6 @@ export const serviceAccountSchema = new Schema<IServiceAccount>(
 		},
 		username: {
 			type: String,
-			unique: true,
 		},
 		type: {
 			type: String,
