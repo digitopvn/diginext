@@ -1,3 +1,10 @@
+## [3.0.4](https://github.com/digitopvn/diginext/compare/v3.0.3...v3.0.4) (2023-04-20)
+
+
+### Bug Fixes
+
+* **release flow:** skip ci when update pkg ver ([eb7f348](https://github.com/digitopvn/diginext/commit/eb7f34881e833169570010f74159bca5f725ece4))
+
 ## [3.0.3](https://github.com/digitopvn/diginext/compare/v3.0.2...v3.0.3) (2023-04-20)
 
 
