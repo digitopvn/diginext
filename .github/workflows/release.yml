@@ -75,7 +75,7 @@ jobs:
       - name: Commit and push latest "package.json" file
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "chore(package.json): update version in package.json"
+          commit_message: "chore(package.json): update version [skip ci]"
           commit_options: '--allow-empty --no-verify --signoff'
 
       # - name: Login to Docker Hub
