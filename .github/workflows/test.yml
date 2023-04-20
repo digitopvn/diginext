@@ -4,9 +4,12 @@ name: Test Workflow
 on:
   push:
     branches:
-      - "!main"
-      - "!beta"
-      - "!prerelease"
+      - '*'             # matches every branch that doesn't contain a '/'
+      - '*/*'           # matches every branch containing a single '/'
+      - '**'            # matches every branch
+      - "!main"         # exclude "main"
+      - "!beta"         # exclude "beta"
+      - "!prerelease"   # exclude "prerelease"
 
 # ENVIRONMENT VARIABLES
 env:
