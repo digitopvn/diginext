@@ -1,3 +1,12 @@
+## [3.0.2](https://github.com/digitopvn/diginext/compare/v3.0.1...v3.0.2) (2023-04-20)
+
+
+### Bug Fixes
+
+* **builds:** ensure workspace string to object id ([de57d3e](https://github.com/digitopvn/diginext/commit/de57d3efa79bb6d234d4426086344197557e7924))
+* **podman:** login issue with gcr.io ([77374b8](https://github.com/digitopvn/diginext/commit/77374b8fc21a6b415297dbb0e9d7d3f73d63ce19))
+* **user,service_account,api_key:** drop unique index in username field ([4e7f3c3](https://github.com/digitopvn/diginext/commit/4e7f3c3404daeda9428f535b2dccdfe3a05985f0))
+
 ## [3.0.1](https://github.com/digitopvn/diginext/compare/v3.0.0...v3.0.1) (2023-04-19)
 
 
