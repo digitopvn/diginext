@@ -115,7 +115,7 @@ export async function initializeGitRemote(options: InputOptions) {
 	// log("options.gitProvider :>> ", options.gitProvider);
 	// log("options.repoSlug :>> ", options.repoSlug);
 	// log(`options.remoteURL >>`, options.remoteURL);
-	log(`options.remoteSSH >>`, options.remoteSSH);
+	// log(`options.remoteSSH >>`, options.remoteSSH);
 	// log(`options.repoURL >>`, options.repoURL);
 
 	if (options.shouldUseGit && options.gitProvider == "bitbucket") await createBitbucketRepo(options);
@@ -129,6 +129,11 @@ export async function initializeGitRemote(options: InputOptions) {
 		const git = simpleGit(options.targetDirectory, { binary: "git" });
 		await git.addRemote("origin", options.remoteSSH);
 		await git.push("origin", "main");
+
+		// create developer branches
+		const devBranch = `dev/${options.username}`;
+		await git.checkout(["-b", devBranch]);
+		await git.push("origin", devBranch);
 
 		return true;
 	}

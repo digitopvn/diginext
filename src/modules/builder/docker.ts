@@ -119,6 +119,7 @@ export const stopBuild = async (builder: string) => {
 	try {
 		await execa.command(`docker buildx stop ${builder}`, cliOpts);
 		await execa.command(`docker buildx stop buildx_buildkit_${builder}`, cliOpts);
+		await execa.command(`docker buildx stop buildx_buildkit_${builder}0`, cliOpts);
 		await wait(500); // <-- just to be sure...
 	} catch (e) {
 		logError(`[BUILDER] Docker > stopBuild :>>`, e);
