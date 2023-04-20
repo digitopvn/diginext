@@ -104,12 +104,15 @@ export async function requestDeploy(options: InputOptions) {
 			method: "POST",
 			data: { options: deployOptions },
 		});
+
 		if (options.isDebugging) {
 			console.log("Request deploy result :>> ");
 			console.dir(requestResult, { depth: 10 });
 		}
+
+		if (!requestResult.status) logError(requestResult.messages[0] || `Unable to call Request Deploy API.`);
 	} catch (e) {
-		logError(`Unexpected network error:`, e);
+		logError(`Unable to call Request Deploy API:`, e);
 		return;
 	}
 
