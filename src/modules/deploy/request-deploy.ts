@@ -42,12 +42,22 @@ export async function requestDeploy(options: InputOptions) {
 	let appConfig = await parseOptionsToAppConfig(options);
 	if (!appConfig) return;
 
+	if (options.isDebugging) {
+		console.log("[LOCAL] dx.json :>>");
+		console.dir(appConfig, { depth: 10 });
+	}
+
 	/**
 	 * [2] Compare LOCAL & SERVER App Config,
 	 *     then upload local app config to server.
 	 */
 	const { deployEnvironment, appConfig: validatedAppConfig } = await askForDeployEnvironmentInfo(options);
 	appConfig = validatedAppConfig;
+
+	if (options.isDebugging) {
+		console.log("[SERVER] dx.json :>>");
+		console.dir(appConfig, { depth: 10 });
+	}
 
 	/**
 	 * [3] Generate build number & build image as docker image tag
@@ -82,6 +92,12 @@ export async function requestDeploy(options: InputOptions) {
 
 	// Make an API to request server to build:
 	const deployOptions = JSON.stringify(options);
+
+	if (options.isDebugging) {
+		console.log("Request deploy data :>> ");
+		console.dir(options, { depth: 10 });
+	}
+
 	try {
 		fetchApi({
 			url: DEPLOY_API_PATH,
