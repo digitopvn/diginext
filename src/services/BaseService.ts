@@ -33,7 +33,7 @@ function setDateWhenCreateDocument(this: IBase & Document, next: (error?: Native
  */
 const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 
-export default class BaseService<T> {
+export default class BaseService<T = any> {
 	readonly model: Model<T>;
 
 	req?: AppRequest;

@@ -14,6 +14,8 @@ import BaseController from "./BaseController";
 @Tags("Git Provider")
 @Route("git")
 export default class GitProviderController extends BaseController<IGitProvider> {
+	service: GitProviderService;
+
 	constructor() {
 		super(new GitProviderService());
 	}

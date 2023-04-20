@@ -207,7 +207,7 @@ export interface DeployEnvironmentData {
 
 @Tags("App")
 @Route("app")
-export default class AppController extends BaseController<IApp> {
+export default class AppController extends BaseController<IApp, AppService> {
 	constructor() {
 		super(new AppService());
 	}
