@@ -24,8 +24,8 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 	await git.add(".");
 	await git.commit("feat(initial): initial commit");
 
-	// create developer branches
-	await git.checkout(["-b", `dev/${options.username}`]);
+	// // create developer branches
+	// await git.checkout(["-b", `dev/${options.username}`]);
 
 	// log(`Finished initializing git!`);
 

@@ -822,6 +822,10 @@
 					"type": {
 						"$ref": "#/components/schemas/GitProviderType",
 						"description": "The type of the Git provider."
+					},
+					"access_token": {
+						"type": "string",
+						"description": "The API access token of the Git provider,\nto create new repo, commit, pull & push changes to the repositories."
 					}
 				},
 				"type": "object",
@@ -3366,6 +3370,10 @@
 					"type": {
 						"$ref": "#/components/schemas/GitProviderType",
 						"description": "The type of the Git provider."
+					},
+					"access_token": {
+						"type": "string",
+						"description": "The API access token of the Git provider,\nto create new repo, commit, pull & push changes to the repositories."
 					}
 				},
 				"type": "object",

@@ -2,12 +2,13 @@ import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
+import { cloneDeepWith } from "lodash";
 import type { Document, Model, PipelineStage, Schema } from "mongoose";
 import { model } from "mongoose";
 
 import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import { isValidObjectId } from "@/plugins/mongodb";
+import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import { replaceObjectIdsToStrings } from "@/plugins/traverse";
 
@@ -91,6 +92,11 @@ export default class BaseService<T> {
 					data.workspace = workspaceId;
 				}
 			}
+
+			// convert all valid "ObjectId" string to ObjectId()
+			data = cloneDeepWith(data, function (val) {
+				if (isValidObjectId(val)) return MongoDB.toObjectId(val);
+			});
 
 			// set created/updated date:
 			data.createdAt = data.updatedAt = new Date();
@@ -230,6 +236,11 @@ export default class BaseService<T> {
 	async update(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
 		const updateFilter = { ...filter };
 		updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
+
+		// convert all valid "ObjectId" string to ObjectId()
+		data = cloneDeepWith(data, function (val) {
+			if (isValidObjectId(val)) return MongoDB.toObjectId(val);
+		});
 
 		// set updated date
 		data.updatedAt = new Date();

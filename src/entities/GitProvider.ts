@@ -70,6 +70,15 @@ export interface IGitProvider extends IBase {
 	 * @memberof IGitProvider
 	 */
 	type?: GitProviderType;
+
+	/**
+	 * The API access token of the Git provider,
+	 * to create new repo, commit, pull & push changes to the repositories.
+	 *
+	 * @type {string}
+	 * @memberof IGitProvider
+	 */
+	access_token?: string;
 }
 
 export type GitProviderDto = Omit<IGitProvider, keyof HiddenBodyKeys>;
