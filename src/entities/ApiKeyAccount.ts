@@ -22,7 +22,6 @@ export const apiKeyAccountSchema = new Schema<IApiKeyAccount>(
 		},
 		username: {
 			type: String,
-			unique: true,
 		},
 		type: {
 			type: String,
