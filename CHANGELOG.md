@@ -1,3 +1,10 @@
+## [3.0.3](https://github.com/digitopvn/diginext/compare/v3.0.2...v3.0.3) (2023-04-20)
+
+
+### Bug Fixes
+
+* **request-deploy:** add more info to debug request deploy ([e7e3eb5](https://github.com/digitopvn/diginext/commit/e7e3eb569298bc1571d3e139e6b9216d32d01f52))
+
 ## [3.0.2](https://github.com/digitopvn/diginext/compare/v3.0.1...v3.0.2) (2023-04-20)
 
 
