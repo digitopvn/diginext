@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "2.11.2",
+	"version": "3.0.2",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -102,7 +102,9 @@
 		"docker-build": "docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile --push -t digitop/diginext:$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-) -t digitop/diginext:latest --cache-from type=registry,ref=digitop/diginext .",
 		"docker-build-arm": "docker buildx build -f Dockerfile --load -t digitop/diginext:latest --builder=diginext-cli-builder --cache-from type=registry,ref=digitop/diginext:latest .",
 		"docker-release": "pnpm build && pnpm docker-build",
-		"swagger": "tsoa spec"
+		"swagger": "tsoa spec",
+		"prepare": "husky install",
+		"postinstall": "husky install"
 	},
 	"config": {
 		"commitizen": {
