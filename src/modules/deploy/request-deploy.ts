@@ -99,11 +99,15 @@ export async function requestDeploy(options: InputOptions) {
 	}
 
 	try {
-		fetchApi({
+		const requestResult = await fetchApi({
 			url: DEPLOY_API_PATH,
 			method: "POST",
 			data: { options: deployOptions },
 		});
+		if (options.isDebugging) {
+			console.log("Request deploy result :>> ");
+			console.dir(requestResult, { depth: 10 });
+		}
 	} catch (e) {
 		logError(`Unexpected network error:`, e);
 		return;
