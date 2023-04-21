@@ -1,3 +1,4 @@
+import axios from "axios";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IGitProvider } from "@/entities";
@@ -7,6 +8,7 @@ import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
+import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
 import GitProviderService from "@/services/GitProviderService";
 
 import BaseController from "./BaseController";
@@ -30,7 +32,74 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
+		// validation
+		const { type, name, bitbucket_oauth, github_oauth } = body;
+
+		if (!name) return respondFailure(`Git provider name is required.`);
+		if (!type) return respondFailure(`Git provider type is required.`);
+
+		let access_token: string, refresh_token: string, method: "bearer" | "basic";
+
+		if (type === "bitbucket") {
+			if (!bitbucket_oauth) return respondFailure(`Bitbucket OAuth information is required.`);
+
+			if (!bitbucket_oauth.consumer_key && !bitbucket_oauth.consumer_secret) {
+				// check app passwords
+				if (!bitbucket_oauth.app_password || !bitbucket_oauth.username)
+					return respondFailure(`Bitbucket username & app password are required.`);
+
+				access_token = Buffer.from(`${bitbucket_oauth.username}:${bitbucket_oauth.app_password}`).toString("base64");
+				method = "basic";
+			} else if (!bitbucket_oauth.app_password) {
+				// check OAuth consumer
+				if (!bitbucket_oauth.consumer_key || !bitbucket_oauth.consumer_secret)
+					return respondFailure(`Bitbucket OAuth consumer key & secret are required.`);
+
+				// generate access_token & refresh_token
+				try {
+					const generateResponse = await axios.post(
+						`https://bitbucket.org/site/oauth2/access_token`,
+						{
+							grant_type: "client_credentials",
+						},
+						{ headers: { authorization: `${bitbucket_oauth.consumer_key}:${bitbucket_oauth.consumer_secret}` } }
+					);
+					const resData = JSON.parse(generateResponse.data);
+
+					access_token = resData.access_token;
+					refresh_token = resData.refresh_token;
+					method = "bearer";
+				} catch (e) {
+					return respondFailure(e.toString());
+				}
+			} else {
+				return respondFailure(`Bitbucket OAuth information (OAuth consumer or app password) is required.`);
+			}
+		} else if (type === "github") {
+			if (!github_oauth) return respondFailure(`Github OAuth information is required.`);
+
+			if (!github_oauth.client_id && !github_oauth.client_secret) {
+				// check personal access token
+				if (!github_oauth.personal_access_token) return respondFailure(`Github Personal access token is required.`);
+
+				access_token = github_oauth.personal_access_token;
+				method = "bearer";
+			} else if (!github_oauth.personal_access_token) {
+				// check OAuth app (client_id & client_secret)
+				if (!github_oauth.client_id || !github_oauth.client_secret)
+					return respondFailure(`Github OAuth App's CLIENT_ID & CLIENT_SECRET are required.`);
+
+				// access_token will be processed via client browser and automatically saved after that
+				method = "bearer";
+			} else {
+				return respondFailure(`Github OAuth information (OAuth App or Personal Access Token) is required.`);
+			}
+		} else {
+			return respondFailure(`Git "${type}" type is not supported yet.`);
+		}
+
+		// process
 		return super.create(body);
 	}
 
@@ -47,6 +116,122 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
+
+	// ------------ GIT APIs ------------
+
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/verify")
+	async verify(@Queries() queryParams?: IPostQueryParams) {
+		// validation
+		const { _id, slug } = this.filter;
+
+		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
+
+		let provider = await this.service.findOne(this.filter, this.options);
+		if (!provider) return respondFailure(`Git provider not found.`);
+
+		// process
+		try {
+			const profile = await GitProviderAPI.getProfile(provider);
+
+			// mark this git provider as verified
+			provider = await this.service.updateOne(this.filter, { verified: true }, this.options);
+
+			return respondSuccess({ data: { provider, profile } });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/profile")
+	async getProfile(@Body() body: any, @Queries() queryParams?: IPostQueryParams) {
+		// validation
+		const { _id, slug } = this.filter;
+		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
+
+		let provider = await this.service.findOne(this.filter, this.options);
+		if (!provider) return respondFailure(`Git provider not found.`);
+
+		// process
+		try {
+			const profile = await GitProviderAPI.getProfile(provider);
+
+			return respondSuccess({ data: profile });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/orgs")
+	async getListOrgs(@Queries() queryParams?: IPostQueryParams) {
+		// validation
+		const { _id, slug } = this.filter;
+		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
+
+		let provider = await this.service.findOne(this.filter, this.options);
+		if (!provider) return respondFailure(`Git provider not found.`);
+
+		// process
+		try {
+			const orgs = await GitProviderAPI.listOrgs(provider);
+			return respondSuccess({ data: orgs });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
+
+	/**
+	 * List organization repositories
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/orgs/repos")
+	async getListOrgRepos(@Queries() queryParams?: IPostQueryParams) {
+		// validation
+		const { _id, slug } = this.filter;
+		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
+
+		let provider = await this.service.findOne(this.filter, this.options);
+		if (!provider) return respondFailure(`Git provider not found.`);
+
+		// process
+		try {
+			const repos = await GitProviderAPI.listOrgRepositories(provider);
+			return respondSuccess({ data: repos });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
+
+	/**
+	 * Create new repository in git provider organization
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/orgs/repos")
+	async createOrgRepo(@Body() body: GitRepositoryDto, @Queries() queryParams?: IPostQueryParams) {
+		// validation
+		const { _id, slug } = this.filter;
+		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
+
+		let provider = await this.service.findOne(this.filter, this.options);
+		if (!provider) return respondFailure(`Git provider not found.`);
+
+		// process
+		try {
+			const repos = await GitProviderAPI.createOrgRepository(provider, body);
+			return respondSuccess({ data: repos });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
+
+	// ------------ SSH KEYS ------------
 
 	@Security("api_key")
 	@Security("jwt")
