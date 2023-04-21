@@ -1,10 +1,11 @@
 import axios from "axios";
-import { isJSON } from "class-validator";
 import { logWarn } from "diginext-utils/dist/console/log";
 import { upperFirst } from "lodash";
 
 import type { IGitProvider } from "@/entities";
 import type { GitProviderType, RequestMethodType } from "@/interfaces/SystemTypes";
+
+import { DB } from "../api/DB";
 
 type GitProviderApiOptions = { method?: RequestMethodType; data?: any; headers?: any };
 
@@ -13,7 +14,7 @@ const bitbucketApiBaseURL = "https://api.bitbucket.org/2.0";
 
 const userApiPath = (provider: GitProviderType, org?: string) => (provider === "bitbucket" ? "/user" : provider === "github" ? "/user" : undefined);
 const userOrgApiPath = (provider: GitProviderType, org?: string) =>
-	provider === "bitbucket" ? "/user/permissions/workspaces" : provider === "github" ? "/user/orgs" : undefined;
+	provider === "bitbucket" ? "/workspaces" : provider === "github" ? "/user/orgs" : undefined;
 const orgRepoApiPath = (provider: GitProviderType, org?: string) =>
 	provider === "bitbucket" ? `/repositories/${org}` : provider === "github" ? `/orgs/${org}/repos` : undefined;
 /**
@@ -111,50 +112,38 @@ interface GithubUser {
 }
 
 interface BitbucketOrg {
-	type: string;
-	user: {
-		display_name: string;
-		links: {
-			self: {
-				href: string;
-			};
-			avatar: {
-				href: string;
-			};
-			html: {
-				href: string;
-			};
-		};
-		type: string;
-		uuid: string;
-		account_id: string;
-		nickname: string;
-	};
-	workspace: {
-		type: string;
-		uuid: string;
-		name: string;
-		slug: string;
-		links: {
-			avatar: {
-				href: string;
-			};
-			html: {
-				href: string;
-			};
-			self: {
-				href: string;
-			};
-		};
-	};
+	uuid: string;
 	links: {
+		owners: {
+			href: string;
+		};
 		self: {
 			href: string;
 		};
+		repositories: {
+			href: string;
+		};
+		snippets: {
+			href: string;
+		};
+		html: {
+			href: string;
+		};
+		avatar: {
+			href: string;
+		};
+		members: {
+			href: string;
+		};
+		projects: {
+			href: string;
+		};
 	};
-	added_on: string;
-	permission: string;
-	last_accessed: string;
+	created_on: string;
+	type: string;
+	slug: string;
+	is_private: boolean;
+	name: string;
 }
 
 interface BitbucketProject {
@@ -371,6 +360,13 @@ interface GitHubOrg {
 	description: string;
 }
 
+interface GitOrg {
+	id: string;
+	name: string;
+	url: string;
+	description: string;
+}
+
 interface GitHubOrgRepository {
 	id: number;
 	name: string;
@@ -416,10 +412,38 @@ export interface GitRepositoryDto {
 	private: boolean;
 }
 
+const bitbucketRefeshToken = async (provider: IGitProvider) => {
+	const { refresh_token, bitbucket_oauth: options } = provider;
+	const digested = Buffer.from(`${options.consumer_key}:${options.consumer_secret}`, "utf8").toString("base64");
+	const bitbucketTokenRes = await axios({
+		url: "https://bitbucket.org/site/oauth2/access_token",
+		method: "POST",
+		headers: {
+			Authorization: `Basic ${digested}`,
+			"Cache-Control": "no-cache",
+			"Content-Type": "application/json",
+			Accept: "application/json",
+		},
+		data: JSON.stringify({
+			grant_type: "refresh_token",
+			refresh_token: refresh_token,
+		}),
+	});
+
+	const data = bitbucketTokenRes.data;
+	if ((data as BitbucketFailureResponse).error) throw new Error(`[BITBUCKET_API_ERROR] Refresh token was expired, can't refresh the access token.`);
+
+	return {
+		access_token: data.access_token as string,
+		refresh_token: data.refresh_token as string,
+	};
+};
+
 const api = async (provider: IGitProvider, path: string, options: GitProviderApiOptions = {}) => {
 	const { method = "GET", data, headers = {} } = options;
 
 	const baseURL = provider.type === "github" ? githubApiBaseURL : bitbucketApiBaseURL;
+	const func = `[${provider.type.toUpperCase()}_API_ERROR]`;
 
 	if (provider.type === "github") {
 		headers.Accept = "application/vnd.github+json";
@@ -433,12 +457,25 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 
 	const response = await axios({ url: `${baseURL}${path}`, headers, method, data });
 
-	if (provider.type === "bitbucket" && !isJSON(response.data))
-		throw new Error(`[${provider.type.toUpperCase()}_API_ERROR] "${path}" > ${response.data}`);
+	const resData = response.data;
 
-	const resData = JSON.parse(response.data);
+	// catch errors
+	if (provider.type === "bitbucket" && resData.error) throw new Error(`${func} "${path}" > ${resData.error.message}`);
+	if (provider.type === "github" && resData.message) throw new Error(`${func} "${path}" > ${resData.message}`);
 
-	if (provider.type === "github" && resData.message) throw new Error(`[${provider.type.toUpperCase()}_API_ERROR] "${path}" > ${resData.message}`);
+	// if access_token is expired -> try to refresh it:
+	if (provider.type === "bitbucket" && resData.error?.message?.indexOf("expired") > -1) {
+		const tokens = await bitbucketRefeshToken(provider);
+
+		// save new tokens to database
+		const [updatedProvider] = await DB.update<IGitProvider>("git", { _id: provider._id }, tokens);
+
+		if (!updatedProvider)
+			throw new Error(`[${provider.type.toUpperCase()}_API_ERROR] "${path}" > Can't update tokens to "${provider.name}" git provider.`);
+
+		// fetch api again
+		return api(updatedProvider, path, options);
+	}
 
 	return resData;
 };
@@ -472,12 +509,27 @@ const getProfile = async (provider: IGitProvider) => {
 const listOrgs = async (provider: IGitProvider) => {
 	if (provider.type === "bitbucket") {
 		const bitbucketOrgsRes = (await api(provider, userOrgApiPath(provider.type))) as BitbucketOrgListResponse;
-		return bitbucketOrgsRes.values;
+		console.log("bitbucketOrgsRes :>> ", bitbucketOrgsRes);
+		return bitbucketOrgsRes.values.map((org) => {
+			return {
+				id: org.uuid,
+				name: org.slug,
+				description: "",
+				url: org.links.html.href,
+			} as GitOrg;
+		});
 	}
 
 	if (provider.type === "github") {
 		const githubOrgs = (await api(provider, userOrgApiPath(provider.type))) as GitHubOrg[];
-		return githubOrgs;
+		return githubOrgs.map((org) => {
+			return {
+				id: org.id.toString(),
+				name: org.login,
+				description: org.description,
+				url: org.url,
+			} as GitOrg;
+		});
 	}
 
 	throw new Error(`Git provider "${provider.type}" is not supported yet.`);

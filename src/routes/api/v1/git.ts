@@ -19,11 +19,11 @@ router
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
 	// git provider apis
-	.get("/verify", processApiRequest(controller.verify))
-	.get("/profile", processApiRequest(controller.getProfile))
-	.get("/orgs", processApiRequest(controller.getListOrgs))
-	.get("/orgs/repos", processApiRequest(controller.getListOrgRepos))
-	.post("/orgs/repos", processApiRequest(controller.createOrgRepo))
+	.get("/verify", processApiRequest(controller.verify.bind(controller)))
+	.get("/profile", processApiRequest(controller.getProfile.bind(controller)))
+	.get("/orgs", processApiRequest(controller.getListOrgs.bind(controller)))
+	.get("/orgs/repos", processApiRequest(controller.getListOrgRepos.bind(controller)))
+	.post("/orgs/repos", processApiRequest(controller.createOrgRepo.bind(controller)))
 	// ssh keys
 	.get("/public-key", processApiRequest(controller.getPublicKey.bind(controller)))
 	.post("/ssh/create", processApiRequest(controller.createKeysSSH.bind(controller)))

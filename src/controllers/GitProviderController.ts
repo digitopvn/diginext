@@ -1,4 +1,7 @@
 import axios from "axios";
+import { makeSlug } from "diginext-utils/dist/Slug";
+import { randomStringByLength } from "diginext-utils/dist/string/random";
+import { upperCase } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IGitProvider } from "@/entities";
@@ -36,7 +39,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		// validation
 		const { type, name, bitbucket_oauth, github_oauth } = body;
 
-		if (!name) return respondFailure(`Git provider name is required.`);
+		// if (!name) return respondFailure(`Git provider name is required.`);
 		if (!type) return respondFailure(`Git provider type is required.`);
 
 		let access_token: string, refresh_token: string, method: "bearer" | "basic";
@@ -58,12 +61,13 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 				// generate access_token & refresh_token
 				try {
+					const digested = Buffer.from(`${bitbucket_oauth.consumer_key}:${bitbucket_oauth.consumer_secret}`, "utf8").toString("base64");
 					const generateResponse = await axios.post(
 						`https://bitbucket.org/site/oauth2/access_token`,
 						{
 							grant_type: "client_credentials",
 						},
-						{ headers: { authorization: `${bitbucket_oauth.consumer_key}:${bitbucket_oauth.consumer_secret}` } }
+						{ headers: { authorization: `Basic ${digested}` } }
 					);
 					const resData = JSON.parse(generateResponse.data);
 
@@ -76,10 +80,14 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 			} else {
 				return respondFailure(`Bitbucket OAuth information (OAuth consumer or app password) is required.`);
 			}
+
+			// auto generated fields
+			body.host = "bitbucket.org";
 		} else if (type === "github") {
 			if (!github_oauth) return respondFailure(`Github OAuth information is required.`);
 
 			if (!github_oauth.client_id && !github_oauth.client_secret) {
+				// if (!name) return respondFailure(`Git provider name is required.`);
 				// check personal access token
 				if (!github_oauth.personal_access_token) return respondFailure(`Github Personal access token is required.`);
 
@@ -95,9 +103,17 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 			} else {
 				return respondFailure(`Github OAuth information (OAuth App or Personal Access Token) is required.`);
 			}
+
+			// auto generated fields
+			body.host = "github.com";
 		} else {
 			return respondFailure(`Git "${type}" type is not supported yet.`);
 		}
+
+		// grab data to create:
+		body.access_token = access_token;
+		body.refresh_token = refresh_token;
+		body.method = method;
 
 		// process
 		return super.create(body);
@@ -106,7 +122,51 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
+		const provider = await this.service.findOne(this.filter, this.options);
+		if (!provider) return respondFailure(`Git provider not found.`);
+
+		if (provider.type === "github" && provider.host !== "github.com") body.host = "github.com";
+		if (provider.type === "bitbucket" && provider.host !== "bitbucket.org") body.host = "bitbucket.org";
+
+		if (body.gitWorkspace && provider.type === "github") {
+			if (!provider.name) {
+				body.name = `${upperCase(body.gitWorkspace)} Github`;
+			}
+			body.repo = {
+				url: `https://github.com/${body.gitWorkspace}`,
+				sshPrefix: `git@github.com:${body.gitWorkspace}`,
+			};
+		}
+
+		if (body.gitWorkspace && provider.type === "bitbucket") {
+			if (!provider.name) body.name = `${upperCase(body.gitWorkspace)} Bitbucket`;
+			body.repo = {
+				url: `https://bitbucket.org/${body.gitWorkspace}`,
+				sshPrefix: `git@bitbucket.org:${body.gitWorkspace}`,
+			};
+		}
+
+		// regenerate slug
+		if (body.name) {
+			const scope = this;
+			const slugRange = "zxcvbnmasdfghjklqwertyuiop1234567890";
+			async function generateUniqueSlug(input, attempt = 1) {
+				let slug = makeSlug(input);
+
+				let count = await scope.service.count({ slug });
+				if (count > 0) slug = slug + "-" + randomStringByLength(attempt, slugRange).toLowerCase();
+
+				// check unique again
+				count = await scope.service.count({ slug });
+				if (count > 0) return generateUniqueSlug(input, attempt + 1);
+
+				return slug;
+			}
+
+			body.slug = await generateUniqueSlug(body.name, 1);
+		}
+
 		return super.update(body);
 	}
 
@@ -179,6 +239,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		// process
 		try {
 			const orgs = await GitProviderAPI.listOrgs(provider);
+			console.log("orgs :>> ", orgs);
 			return respondSuccess({ data: orgs });
 		} catch (e) {
 			return respondFailure(e.toString());
