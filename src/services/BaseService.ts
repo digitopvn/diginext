@@ -257,7 +257,8 @@ export default class BaseService<T> {
 	}
 
 	async updateOne(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
-		return this.update(filter, data, { ...options, limit: 1 });
+		const results = await this.update(filter, data, { ...options, limit: 1 });
+		return results && results.length > 0 ? results[0] : undefined;
 	}
 
 	async softDelete(filter?: IQueryFilter) {
