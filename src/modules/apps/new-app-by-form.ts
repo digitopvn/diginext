@@ -2,8 +2,7 @@ import { log, logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 import { isEmpty, upperFirst } from "lodash";
 
-import { saveCliConfig } from "@/config/config";
-import type { IApp, IGitProvider } from "@/entities";
+import type { IApp } from "@/entities";
 import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
@@ -11,6 +10,7 @@ import { getAppConfig, getCurrentGitRepoData, parseGitRepoDataFromRepoSSH, updat
 
 import { DB } from "../api/DB";
 import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
+import { askForGitProvider } from "../git/ask-for-git-provider";
 import { createOrSelectProject } from "./create-or-select-project";
 
 export async function createAppByForm(options?: InputOptions) {
@@ -103,58 +103,17 @@ export async function createAppByForm(options?: InputOptions) {
 	if (options.isDebugging) log(`[CREATE APP BY FORM] current git data :>>`, currentGitData);
 
 	if (currentGitData) {
-		options.shouldUseGit = true;
 		options.gitProvider = currentGitData.provider;
 		options.remoteSSH = currentGitData.remoteSSH;
 		options.remoteURL = currentGitData.remoteURL;
 	} else {
-		if (options.shouldUseGit) {
-			let currentGitProvider: IGitProvider;
-			if (!options.gitProvider) {
-				const gitProviders = await DB.find<IGitProvider>("git", {});
+		let currentGitProvider = await askForGitProvider();
+		options.gitProvider = currentGitProvider.type;
 
-				if (isEmpty(gitProviders)) {
-					logError(`This workspace doesn't have any git providers integrated.`);
-					return;
-				}
+		// TODO: create new repo:
 
-				const gitProviderChoices = [
-					{ name: "None", value: { name: "None", type: "none" } },
-					...gitProviders.map((g) => {
-						return { name: g.name, value: g };
-					}),
-				];
-
-				const { gitProvider } = await inquirer.prompt({
-					type: "list",
-					name: "gitProvider",
-					message: "Git provider:",
-					choices: gitProviderChoices,
-				});
-
-				if (gitProvider.type !== "none") {
-					currentGitProvider = gitProvider;
-					options.gitProvider = currentGitProvider.type;
-
-					// set this git provider to default:
-					saveCliConfig({ currentGitProvider });
-				} else {
-					options.shouldUseGit = false;
-				}
-			} else {
-				// search for this git provider
-				currentGitProvider = await DB.findOne<IGitProvider>("git", { type: options.gitProvider });
-				if (!currentGitProvider) {
-					logError(`Git provider "${options.gitProvider}" not found.`);
-					return;
-				}
-
-				options.gitProvider = currentGitProvider.type;
-
-				// set this git provider to default:
-				saveCliConfig({ currentGitProvider });
-			}
-		}
+		// set this git provider to default:
+		// saveCliConfig({ currentGitProvider });
 	}
 
 	// Call API to create new app
@@ -177,11 +136,10 @@ export async function createAppByForm(options?: InputOptions) {
 
 	// console.log("createAppByForm > appData :>> ", appData);
 
-	if (options.shouldUseGit) {
-		appData.git.provider = options.gitProvider;
-		if (options.remoteSSH) appData.git.repoSSH = options.remoteSSH;
-		if (options.remoteURL) appData.git.repoURL = options.remoteURL;
-	}
+	appData.git.provider = options.gitProvider;
+	if (options.remoteSSH) appData.git.repoSSH = options.remoteSSH;
+	if (options.remoteURL) appData.git.repoURL = options.remoteURL;
+
 	if (options.isDebugging) log(`Create new app with data:`, appData);
 	const newApp = await DB.create<IApp>("app", appData);
 	if (options.isDebugging) log({ newApp });

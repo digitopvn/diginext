@@ -68,23 +68,22 @@ export default async function createApp(options: InputOptions) {
 
 	await initalizeAndCreateDefaultBranches(options);
 
-	if (options.shouldUseGit) {
-		try {
-			await initializeGitRemote(options);
-		} catch (e) {
-			logWarn(`Can't initialize git remote: ${options.remoteSSH}`);
-		}
+	// TODO: find git provider on server
+	try {
+		await initializeGitRemote(currentGitProvider, options.repoSlug, { dir: options.targetDirectory, username: options.username });
+	} catch (e) {
+		logWarn(`Can't initialize git remote: ${options.remoteSSH}`);
+	}
 
-		// update git info to database
-		const [updatedApp] = await DB.update<IApp>(
-			"app",
-			{ slug: options.slug },
-			{ git: { provider: options.gitProvider, repoSSH: options.remoteSSH, repoURL: options.remoteURL } }
-		);
-		if (!updatedApp) {
-			logError("Can't create new app due to network issue while updating git repo info.");
-			return;
-		}
+	// update git info to database
+	const [updatedApp] = await DB.update<IApp>(
+		"app",
+		{ slug: options.slug },
+		{ git: { provider: options.gitProvider, repoSSH: options.remoteSSH, repoURL: options.remoteURL } }
+	);
+	if (!updatedApp) {
+		logError("Can't create new app due to network issue while updating git repo info.");
+		return;
 	}
 
 	// write "dx.json"

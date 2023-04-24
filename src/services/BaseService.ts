@@ -3,28 +3,16 @@ import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { cloneDeepWith } from "lodash";
-import type { Document, Model, PipelineStage, Schema } from "mongoose";
+import type { Model, PipelineStage, Schema } from "mongoose";
 import { model } from "mongoose";
 
-import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
+import { flattenObject } from "@/plugins/object";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import { replaceObjectIdsToStrings } from "@/plugins/traverse";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
-
-function setDateWhenUpdateDocument(this: IBase & Document, next: (error?: NativeError) => void) {
-	this.updateOne({}, { $set: { updatedAt: new Date() } });
-	next();
-}
-
-function setDateWhenCreateDocument(this: IBase & Document, next: (error?: NativeError) => void) {
-	const now = new Date();
-	this.updatedAt = now;
-	if (!this.createdAt) this.createdAt = now;
-	next();
-}
 
 /**
  * ![DANGEROUS]
@@ -245,7 +233,8 @@ export default class BaseService<T = any> {
 		// set updated date
 		data.updatedAt = new Date();
 
-		const updateData = options?.raw ? data : { $set: data };
+		const updateData = options?.raw ? data : { $set: flattenObject(data) };
+		// console.log("updateData :>> ", updateData);
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
 
 		if (updateRes.acknowledged) {

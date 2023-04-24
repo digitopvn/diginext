@@ -123,7 +123,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
-		const provider = await this.service.findOne(this.filter, this.options);
+		let provider = await this.service.findOne(this.filter, this.options);
 		if (!provider) return respondFailure(`Git provider not found.`);
 
 		if (provider.type === "github" && provider.host !== "github.com") body.host = "github.com";
@@ -167,7 +167,18 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 			body.slug = await generateUniqueSlug(body.name, 1);
 		}
 
-		return super.update(body);
+		// update to db
+		provider = await this.service.updateOne(this.filter, body, this.options);
+
+		// verify
+		let msg = "";
+		try {
+			provider = await this.service.verify(provider);
+		} catch (e) {
+			msg = e.toString();
+		}
+
+		return respondSuccess({ data: provider, msg });
 	}
 
 	@Security("api_key")
@@ -193,12 +204,8 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 		// process
 		try {
-			const profile = await GitProviderAPI.getProfile(provider);
-
-			// mark this git provider as verified
-			provider = await this.service.updateOne(this.filter, { verified: true }, this.options);
-
-			return respondSuccess({ data: { provider, profile } });
+			provider = await this.service.verify(provider);
+			return respondSuccess({ data: { provider } });
 		} catch (e) {
 			return respondFailure(e.toString());
 		}
@@ -285,8 +292,8 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 		// process
 		try {
-			const repos = await GitProviderAPI.createOrgRepository(provider, body);
-			return respondSuccess({ data: repos });
+			const repo = await GitProviderAPI.createOrgRepository(provider, body);
+			return respondSuccess({ data: repo });
 		} catch (e) {
 			return respondFailure(e.toString());
 		}

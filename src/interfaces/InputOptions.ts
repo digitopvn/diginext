@@ -299,6 +299,9 @@ export type InputOptions = {
 	shouldUpdateCli?: boolean;
 
 	/**
+	 * @deprecated
+	 * ### This is required now!
+	 * ---
 	 * Enable GIT when create new or initialize app
 	 * @default true
 	 */

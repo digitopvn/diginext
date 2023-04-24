@@ -8,7 +8,7 @@ import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCre
 import { getAppConfig, getCurrentGitRepoData } from "@/plugins";
 
 import { DB } from "../api/DB";
-import { generateRepoSSH, generateRepoURL, initializeGitRemote } from "../git";
+import { generateRepoSSH, generateRepoURL } from "../git";
 import { printInformation } from "../project/printInformation";
 import { generateAppConfig, writeConfig } from "../project/writeConfig";
 import { createOrSelectApp } from "./create-or-select-app";
@@ -51,22 +51,23 @@ export async function execInitApp(options: InputOptions) {
 	options.repoURL = options.remoteURL;
 
 	// git setup
-	if (!remoteSSH) await initalizeAndCreateDefaultBranches(options);
-	if (options.shouldUseGit && !remoteSSH) await initializeGitRemote(options);
+	if (!remoteSSH) {
+		await initalizeAndCreateDefaultBranches(options);
+		// TODO: find "gitProvider"
+		// await initializeGitRemote();
+	}
 
 	// update GIT info in the database
 	const { framework } = options;
+
 	const updateData = {} as IApp;
 	if (framework) updateData.framework = framework;
+	updateData.git = {} as AppGitInfo;
+	updateData.git.provider = options.gitProvider;
+	updateData.git.repoURL = options.remoteURL;
+	updateData.git.repoSSH = options.remoteSSH;
 
-	if (options.shouldUseGit) {
-		updateData.git = {} as AppGitInfo;
-		updateData.git.provider = options.gitProvider;
-		updateData.git.repoURL = options.remoteURL;
-		updateData.git.repoSSH = options.remoteSSH;
-	}
 	if (options.isDebugging) console.log("[INIT APP] updateData :>> ", updateData);
-
 	const [updatedApp] = await DB.update<IApp>("app", { slug: initApp.slug }, updateData);
 	if (options.isDebugging) console.log("[INIT APP] updatedApp :>> ", updatedApp);
 

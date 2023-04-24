@@ -1,5 +1,6 @@
 import axios from "axios";
 import { logWarn } from "diginext-utils/dist/console/log";
+import { makeSlug } from "diginext-utils/dist/Slug";
 import { upperFirst } from "lodash";
 
 import type { IGitProvider } from "@/entities";
@@ -387,7 +388,7 @@ interface GitHubOrgRepository {
 	updated_at: string;
 }
 
-interface GitRepository {
+export interface GitRepository {
 	id: string;
 	name: string;
 	full_name: string;
@@ -537,6 +538,7 @@ const listOrgs = async (provider: IGitProvider) => {
 
 const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDto) => {
 	// validation
+	if (!data.name) data.name = makeSlug(data.name).toLocaleLowerCase();
 
 	// process
 	if (provider.type === "bitbucket") {
@@ -569,6 +571,7 @@ const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDt
 		const newBitbucketRepo = (await api(provider, orgRepoApiPath(provider.type, provider.gitWorkspace), {
 			data: {
 				name: data.name,
+				slug: data.name,
 				is_private: data.private,
 				description: data.description,
 				scm: "git",
