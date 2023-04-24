@@ -93,22 +93,6 @@ export interface GithubOAuthOptions {
 	verified?: boolean;
 }
 
-export const bitbucketOAuthSchema = new Schema<BitbucketOAuthOptions>({
-	consumer_key: { type: String },
-	consumer_secret: { type: String },
-	username: { type: String },
-	app_password: { type: String },
-	verified: { type: Boolean },
-});
-
-export const githubOAuthSchema = new Schema<GithubOAuthOptions>({
-	client_id: { type: String },
-	client_secret: { type: String },
-	username: { type: String },
-	personal_access_token: { type: String },
-	verified: { type: Boolean },
-});
-
 /**
  * An interface that extends IBase and describes the properties of a Git provider.
  *
@@ -205,6 +189,14 @@ export interface IGitProvider extends IBase {
 	 * @memberof IGitProvider
 	 */
 	refresh_token?: string;
+
+	/**
+	 * Verify status, `true` is successfully connected with the git workspace REST API.
+	 *
+	 * @type {boolean}
+	 * @memberof IGitProvider
+	 */
+	verified?: boolean;
 }
 
 export type GitProviderDto = Omit<IGitProvider, keyof HiddenBodyKeys>;
@@ -220,11 +212,24 @@ export const gitProviderSchema = new Schema<IGitProvider>(
 			sshPrefix: { type: String },
 		},
 		type: { type: String, enum: availableGitProviders },
-		github_oauth: { type: githubOAuthSchema },
-		bitbucket_oauth: { type: bitbucketOAuthSchema },
+		github_oauth: {
+			consumer_key: { type: String },
+			consumer_secret: { type: String },
+			username: { type: String },
+			app_password: { type: String },
+			verified: { type: Boolean },
+		},
+		bitbucket_oauth: {
+			client_id: { type: String },
+			client_secret: { type: String },
+			username: { type: String },
+			personal_access_token: { type: String },
+			verified: { type: Boolean },
+		},
 		method: { type: String, enum: ["bearer", "basic"] },
 		access_token: { type: String },
 		refresh_token: { type: String },
+		verified: { type: Boolean },
 	},
 	{ collection: "git_providers", timestamps: true }
 );

@@ -106,6 +106,20 @@ const api_key_user = new ApiKeyUserService();
 const service_account = new ServiceAccountService();
 const workspace = new WorkspaceService();
 
+export interface DBQueryOptions extends IQueryOptions {
+	filter?: any;
+
+	/**
+	 * Subpath of the API
+	 */
+	subpath?: string;
+
+	/**
+	 * Similar to "subpath" but for service -> function name:
+	 */
+	func?: any;
+}
+
 export class DB {
 	static service = {
 		app,
@@ -147,7 +161,7 @@ export class DB {
 	// 	return _filter;
 	// }
 
-	static async count(collection: DBCollection, filter: any = {}, options?: IQueryOptions, pagination?: IQueryPagination) {
+	static async count(collection: DBCollection, filter: any = {}, options?: DBQueryOptions, pagination?: IQueryPagination) {
 		let amount: number;
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -161,9 +175,13 @@ export class DB {
 				logError(`[DB] COUNT > Service "${collection}" :>>`, e);
 			}
 		} else {
+			// extract "subpath", then delete it from "options"
+			const { subpath = "" } = options;
+			delete options.subpath;
+
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr}`;
+			const url = `/api/v1/${collection}${subpath}?${filterStr.toString()}${optionStr}`;
 
 			const { data = [], status, messages = [""] } = await fetchApi({ url });
 			if (!status && messages[0]) logError(`[DB] COUNT - ${url} :>>`, messages);
@@ -173,7 +191,7 @@ export class DB {
 		return amount;
 	}
 
-	static async find<T = any>(collection: DBCollection, filter: any = {}, options?: IQueryOptions, pagination?: IQueryPagination) {
+	static async find<T = any>(collection: DBCollection, filter: any = {}, options: IQueryOptions = {}, pagination?: IQueryPagination) {
 		let items;
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -188,9 +206,13 @@ export class DB {
 				items = [];
 			}
 		} else {
+			// extract "subpath", then delete it from "options"
+			const { subpath = "" } = options;
+			delete options.subpath;
+
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr}`;
+			const url = `/api/v1/${collection}${subpath}?${filterStr.toString()}${optionStr}`;
 
 			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
 			if (!status && messages[0]) logError(`[DB] FIND MANY - ${url} :>>`, messages);
@@ -200,7 +222,7 @@ export class DB {
 		return items as T[];
 	}
 
-	static async findOne<T = any>(collection: DBCollection, filter: any = {}, options?: IQueryOptions) {
+	static async findOne<T = any>(collection: DBCollection, filter: any = {}, options: DBQueryOptions = {}) {
 		let item;
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -214,9 +236,13 @@ export class DB {
 				logError(`[DB] FIND ONE > Service "${collection}" :>>`, e);
 			}
 		} else {
-			const optionStr = queryOptionsToUrlOptions(options);
+			// extract "subpath", then delete it from "options"
+			const { subpath = "" } = options;
+			delete options.subpath;
+
 			const filterStr = queryFilterToUrlFilter(filter);
-			const url = `/api/v1/${collection}?${filterStr.toString()}&${optionStr}`;
+			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
+			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr}`;
 
 			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
 			if (!status && messages[0]) logError(`[DB] FIND ONE - ${url} :>>`, messages);
@@ -225,7 +251,7 @@ export class DB {
 		return item as T;
 	}
 
-	static async create<T = any>(collection: DBCollection, data: any, options?: IQueryOptions) {
+	static async create<T = any>(collection: DBCollection, data: any, options: DBQueryOptions = {}) {
 		let item;
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -239,12 +265,14 @@ export class DB {
 				logError(`[DB] CREATE > Service "${collection}" :>>`, e);
 			}
 		} else {
+			const { subpath = "" } = options;
+			delete options.subpath;
 			/**
-			 * <u>Notes</u>: use the same flatten method with UPDATE for convenience!
+			 * ___Notes___: use the same flatten method with UPDATE for convenience!
 			 */
 			let newData = flattenObjectPaths(data);
 			const optionStr = queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}?${optionStr.toString()}`;
+			const url = `/api/v1/${collection}${subpath}?${optionStr.toString()}`;
 			// console.log("newData :>> ", newData);
 			const {
 				data: result,
@@ -261,7 +289,7 @@ export class DB {
 		return item as T;
 	}
 
-	static async update<T = any>(collection: DBCollection, filter: any, data: any, options?: IQueryOptions) {
+	static async update<T = any>(collection: DBCollection, filter: any, data: any, options: DBQueryOptions = {}) {
 		let items;
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -277,9 +305,12 @@ export class DB {
 				items = [];
 			}
 		} else {
+			const { subpath = "" } = options;
+			delete options.subpath;
+
 			const filterStr = queryFilterToUrlFilter(filter);
-			const optionStr = (filterStr.toString() && "&") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}?${filterStr.toString()}${optionStr.toString()}`;
+			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
+			const url = `/api/v1/${collection}${subpath}?${filterStr.toString()}${optionStr.toString()}`;
 			// console.log("[DB] UPDATE > url :>> ", url);
 
 			const updateData = flattenObjectPaths(data);
@@ -303,7 +334,7 @@ export class DB {
 		return items as T[];
 	}
 
-	static async delete<T = any>(collection: DBCollection, filter: any) {
+	static async delete<T = any>(collection: DBCollection, filter: any, options: DBQueryOptions = {}) {
 		let item: { ok: boolean; affected: number };
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -317,8 +348,9 @@ export class DB {
 				logError(`[DB] DELETE > Service "${collection}" :>>`, e);
 			}
 		} else {
+			const { subpath = "" } = options;
 			const filterStr = queryFilterToUrlFilter(filter);
-			const url = `/api/v1/${collection}?${filterStr.toString()}`;
+			const url = `/api/v1/${collection}${subpath}?${filterStr.toString()}`;
 			const {
 				data: result,
 				status,

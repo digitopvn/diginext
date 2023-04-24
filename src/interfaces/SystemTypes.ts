@@ -30,7 +30,7 @@ export const registryProviderList = ["gcloud", "digitalocean", "dockerhub"] as c
 export type RegistryProviderType = typeof registryProviderList[number];
 
 // git providers
-export const availableGitProviders = ["bitbucket", "github", "gitlab"] as const;
+export const availableGitProviders = ["bitbucket", "github" /**, "gitlab" */] as const;
 export type GitProviderType = typeof availableGitProviders[number];
 
 // resource types

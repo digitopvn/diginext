@@ -723,7 +723,7 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 export const getGitProviderFromRepoSSH = (repoSSH: string): GitProviderType => {
 	if (repoSSH.indexOf("bitbucket") > -1) return "bitbucket";
 	if (repoSSH.indexOf("github") > -1) return "github";
-	if (repoSSH.indexOf("gitlab") > -1) return "gitlab";
+	// if (repoSSH.indexOf("gitlab") > -1) return "gitlab";
 	return;
 };
 

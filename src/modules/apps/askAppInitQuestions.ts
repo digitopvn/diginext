@@ -76,50 +76,42 @@ export async function askAppInitQuestions(options?: InputOptions) {
 	options.framework = { name: "unknown", slug: "unknown" } as IFramework;
 	options.frameworkVersion = "unknown";
 
-	if (options.shouldUseGit) {
-		let currentGitProvider;
-		if (!options.gitProvider) {
-			const { status, data, messages } = await fetchApi<IGitProvider>({
-				url: `/api/v1/git`,
-			});
-			if (!status) return logError(messages);
+	// setup git repo
+	let currentGitProvider;
+	if (!options.gitProvider) {
+		const { status, data, messages } = await fetchApi<IGitProvider>({
+			url: `/api/v1/git`,
+		});
+		if (!status) return logError(messages);
 
-			const gitProviders = data as IGitProvider[];
+		const gitProviders = data as IGitProvider[];
 
-			const choices = [
-				{ name: "none", value: { slug: "none" } },
-				...gitProviders.map((g) => {
-					return { name: g.name, value: g };
-				}),
-			];
+		const choices = gitProviders.map((g) => {
+			return { name: g.name, value: g };
+		});
 
-			const { gitProvider } = await inquirer.prompt({
-				type: "list",
-				name: "gitProvider",
-				message: "Git provider:",
-				choices: choices,
-			});
+		const { gitProvider } = await inquirer.prompt({
+			type: "list",
+			name: "gitProvider",
+			message: "Git provider:",
+			choices: choices,
+		});
 
-			if (gitProvider.slug != "none") {
-				currentGitProvider = gitProvider;
-				options.gitProvider = gitProvider.slug;
+		currentGitProvider = gitProvider;
+		options.gitProvider = gitProvider.slug;
 
-				// set this git provider to default:
-				saveCliConfig({ currentGitProvider });
-			} else {
-				options.shouldUseGit = false;
-			}
-		} else {
-			// search for this git provider
-			const { status, data, messages } = await fetchApi<IGitProvider>({
-				url: `/api/v1/git?slug=${options.gitProvider}`,
-			});
-			if (!status) return logError(messages);
-			currentGitProvider = data[0] as IGitProvider;
+		// set this git provider to default:
+		saveCliConfig({ currentGitProvider });
+	} else {
+		// search for this git provider
+		const { status, data, messages } = await fetchApi<IGitProvider>({
+			url: `/api/v1/git?slug=${options.gitProvider}`,
+		});
+		if (!status) return logError(messages);
+		currentGitProvider = data[0] as IGitProvider;
 
-			// set this git provider to default:
-			saveCliConfig({ currentGitProvider });
-		}
+		// set this git provider to default:
+		saveCliConfig({ currentGitProvider });
 	}
 
 	return options;

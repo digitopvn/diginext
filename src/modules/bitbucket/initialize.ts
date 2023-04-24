@@ -58,68 +58,63 @@ export async function createBitbucketRepo(options: InputOptions) {
 export async function initializeBitbucket(options: InputOptions) {
 	const { currentGitProvider } = getCliConfig();
 
-	if (options.shouldUseGit) {
-		// Remove existing bitbucket repository (if overwrite is set)
-		if (options.overwrite) {
-			try {
-				await bitbucket.repositories.delete({
-					workspace: currentGitProvider.gitWorkspace,
-					repo_slug: options.repoSlug,
-				});
-			} catch (e) {
-				// logBitbucketError(e, 400);
-				logWarn(e);
-			}
-		}
-
-		// Create new bitbucket repository
+	// Remove existing bitbucket repository (if overwrite is set)
+	if (options.overwrite) {
 		try {
-			await bitbucket.repositories.create({
+			await bitbucket.repositories.delete({
 				workspace: currentGitProvider.gitWorkspace,
-				repo_slug: options.slug,
-				_body: {
-					name: `${options.name} (${options.projectName})`,
-					is_private: true,
-					scm: "git",
-					project: { key: "WA" },
-				},
+				repo_slug: options.repoSlug,
 			});
-			// logBitbucket("CREATE REPO", data, 400)
 		} catch (e) {
-			logBitbucketError(e);
+			// logBitbucketError(e, 400);
+			logWarn(e);
 		}
+	}
+
+	// Create new bitbucket repository
+	try {
+		await bitbucket.repositories.create({
+			workspace: currentGitProvider.gitWorkspace,
+			repo_slug: options.slug,
+			_body: {
+				name: `${options.name} (${options.projectName})`,
+				is_private: true,
+				scm: "git",
+				project: { key: "WA" },
+			},
+		});
+		// logBitbucket("CREATE REPO", data, 400)
+	} catch (e) {
+		logBitbucketError(e);
 	}
 
 	// Add remote git origin
 	// log(`options.git >>`, options.git);
 	// log(`options.remoteURL >>`, options.remoteURL);
 
-	if (options.shouldUseGit) {
-		// add git origin:
-		const git = simpleGit(options.targetDirectory, { binary: "git" });
-		await git.addRemote("origin", options.remoteURL);
-		await git.push("origin", "master");
-		await applyBranchPermissions(options, "master", "pull-request-only", "push", []);
-		// logError('options.remoteURL', options.remoteURL);
-		return true;
+	// add git origin:
+	const git = simpleGit(options.targetDirectory, { binary: "git" });
+	await git.addRemote("origin", options.remoteURL);
+	await git.push("origin", "master");
+	await applyBranchPermissions(options, "master", "pull-request-only", "push", []);
+	// logError('options.remoteURL', options.remoteURL);
+	return true;
 
-		// await git.addRemote("origin", options.remoteURL);
-		// await git.push("origin", "master");
-		// await git.push("origin", "staging");
-		// await git.push("origin", "prod");
-		// await git.push("origin", `dev/${options.username}`);
+	// await git.addRemote("origin", options.remoteURL);
+	// await git.push("origin", "master");
+	// await git.push("origin", "staging");
+	// await git.push("origin", "prod");
+	// await git.push("origin", `dev/${options.username}`);
 
-		// // Enable bitbucket pipelines:
-		// await enablePipelines();
+	// // Enable bitbucket pipelines:
+	// await enablePipelines();
 
-		// // Apply default branch restrictions:
-		// await applyBranchPermissions(options, "master", "pull-request-only", "push", []);
-		// await applyBranchPermissions(options, "staging", "pull-request-only", "push", []);
-		// await applyBranchPermissions(options, "staging", "pull-request-only", "require_approvals_to_merge");
-		// await applyBranchPermissions(options, "prod", "pull-request-only", "push", []);
-		// await applyBranchPermissions(options, "prod", "pull-request-only", "restrict_merges");
-	}
+	// // Apply default branch restrictions:
+	// await applyBranchPermissions(options, "master", "pull-request-only", "push", []);
+	// await applyBranchPermissions(options, "staging", "pull-request-only", "push", []);
+	// await applyBranchPermissions(options, "staging", "pull-request-only", "require_approvals_to_merge");
+	// await applyBranchPermissions(options, "prod", "pull-request-only", "push", []);
+	// await applyBranchPermissions(options, "prod", "pull-request-only", "restrict_merges");
 
 	// await git.checkout(["master"]);
-	return true;
 }

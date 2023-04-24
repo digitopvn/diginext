@@ -14,17 +14,19 @@ import yargs from "yargs";
 
 import { cliOpts } from "@/config/config";
 import { HOME_DIR } from "@/config/const";
+import type { IGitProvider } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { execCmd, getCurrentGitRepoData, isMac, wait } from "@/plugins";
 
 import { conf } from "../..";
+import { DB } from "../api/DB";
 import { bitbucketProfile, repoList, signInBitbucket } from "../bitbucket";
 import { createPullRequest } from "../bitbucket/createPullRequest";
-import { createBitbucketRepo } from "../bitbucket/initialize";
 import { applyBranchPermissions } from "../bitbucket/permissions";
 import { bitbucketAuthentication } from "../bitbucket/promptForAuthOptions";
+import type { GitRepository, GitRepositoryDto } from "./git-provider-api";
 import Github from "./github";
 
 // git@github.com:digitopvn/fluffy-dollop.git
@@ -104,12 +106,34 @@ export const logout = async () => {
 	logSuccess(`Logged out from all git providers.`);
 };
 
+export interface InitializeGitRemoteOptions {
+	/**
+	 * App's working directory
+	 */
+	dir: string;
+
+	/**
+	 * Git repository's description
+	 */
+	description?: string;
+
+	/**
+	 * Git repository's privacy
+	 */
+	private?: boolean;
+
+	/**
+	 * Git username of the user
+	 */
+	username?: string;
+}
+
 /**
  * Create new repository on the git provider (bitbucket, github or gitlab)
  */
-export async function initializeGitRemote(options: InputOptions) {
+export async function initializeGitRemote(provider: IGitProvider, repoSlug: string, options: InitializeGitRemoteOptions) {
 	// Create new remote repository
-	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`.toLowerCase();
+	// options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`.toLowerCase();
 
 	// log(`options.git >>`, options.git);
 	// log("options.gitProvider :>> ", options.gitProvider);
@@ -118,27 +142,33 @@ export async function initializeGitRemote(options: InputOptions) {
 	// log(`options.remoteSSH >>`, options.remoteSSH);
 	// log(`options.repoURL >>`, options.repoURL);
 
-	if (options.shouldUseGit && options.gitProvider == "bitbucket") await createBitbucketRepo(options);
-	// TODO: Create new repo on "github"
-	// TODO: Create new repo on "gitlab"
+	log(`Created new repository on ${provider.type}`);
 
-	log(`Created new repository on ${options.gitProvider}`);
+	const { dir = process.cwd(), private: isPrivate = true } = options;
 
-	if (options.shouldUseGit) {
-		// add git origin:
-		const git = simpleGit(options.targetDirectory, { binary: "git" });
-		await git.addRemote("origin", options.remoteSSH);
-		await git.push("origin", "main");
+	const repoData = {
+		name: repoSlug,
+		description: options.description,
+		private: isPrivate,
+	} as GitRepositoryDto;
 
-		// create developer branches
-		const devBranch = `dev/${options.username}`;
-		await git.checkout(["-b", devBranch]);
-		await git.push("origin", devBranch);
+	// create new repo via REST API
+	const newRepo = await DB.create<GitRepository>("git", repoData, { subpath: `/orgs/repos` });
+	console.log("createRepoResult :>> ", newRepo);
 
-		return true;
-	}
+	// add git origin:
+	const git = simpleGit(dir, { binary: "git" });
+	await git.addRemote("origin", newRepo.ssh_url);
+	await git.push("origin", "main");
 
-	return true;
+	// create developer branches
+	const gitUsername = (await git.getConfig(`user.name`, "global")).value;
+	const username = options.username || (gitUsername ? makeSlug(gitUsername).toLowerCase() : undefined) || "developer";
+	const devBranch = `dev/${username}`;
+	await git.checkout(["-b", devBranch]);
+	await git.push("origin", devBranch);
+
+	return newRepo;
 }
 
 /**
@@ -435,10 +465,10 @@ export const verifySSH = async (options?: InputOptions) => {
 			}
 			break;
 
-		case "gitlab":
-			authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "[GIT] Gitlab authentication failed");
-			authResult = typeof authResult !== "undefined";
-			break;
+		// case "gitlab":
+		// 	authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "[GIT] Gitlab authentication failed");
+		// 	authResult = typeof authResult !== "undefined";
+		// 	break;
 
 		default:
 			authResult = false;
@@ -468,9 +498,9 @@ export const checkGitProviderAccess = async (gitProvider: GitProviderType) => {
 			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "Github authentication failed");
 			break;
 
-		case "gitlab":
-			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "Gitlab authentication failed");
-			break;
+		// case "gitlab":
+		// 	result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "Gitlab authentication failed");
+		// 	break;
 
 		default:
 			logError(`Git provider "${gitProvider}" is not valid.`);
