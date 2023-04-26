@@ -46,6 +46,7 @@ export default class ProjectController extends BaseController<IProject> {
 	@Delete("/")
 	async softDelete(@Queries() queryParams?: IDeleteQueryParams) {
 		const result = await this.service.softDelete(this.filter);
+		console.log("result :>> ", result);
 		return result.ok ? respondSuccess({ data: result }) : respondFailure(`Can't delete a project.`);
 	}
 

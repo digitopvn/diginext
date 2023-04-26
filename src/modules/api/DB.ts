@@ -46,19 +46,14 @@ export type DBCollection =
 	| "workspace";
 
 export function queryFilterToUrlFilter(filter: any = {}) {
-	return Object.entries(filter)
-		.map(([key, val]) => {
-			if (typeof val === "undefined") return `${key}=undefined`;
-			return val !== null && val !== "" ? `${key}=${val}` : null;
-		})
-		.filter((item) => item !== null)
-		.join("&");
+	return new URLSearchParams(filter).toString();
 }
 
 export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPagination = {}) {
 	let optionsStr = "";
 
-	const { $or, order, populate, select, total, total_items, total_pages, current_page, page_size, next_page, prev_page, ...rest } = options;
+	const { $or, order, populate, select, total, total_items, total_pages, current_page, page_size, next_page, prev_page, filter, func, ...rest } =
+		options;
 
 	if (!isEmpty(order)) {
 		const orderStr = Object.entries(options.order)
@@ -178,10 +173,11 @@ export class DB {
 			// extract "subpath", then delete it from "options"
 			const { subpath = "" } = options;
 			delete options.subpath;
+			delete options.filter;
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}${subpath}?${filterStr.toString()}${optionStr}`;
+			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
 			const { data = [], status, messages = [""] } = await fetchApi({ url });
 			if (!status && messages[0]) logError(`[DB] COUNT - ${url} :>>`, messages);
@@ -209,10 +205,11 @@ export class DB {
 			// extract "subpath", then delete it from "options"
 			const { subpath = "" } = options;
 			delete options.subpath;
+			delete options.filter;
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}${subpath}?${filterStr.toString()}${optionStr}`;
+			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
 			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
 			if (!status && messages[0]) logError(`[DB] FIND MANY - ${url} :>>`, messages);
@@ -223,6 +220,12 @@ export class DB {
 	}
 
 	static async findOne<T = any>(collection: DBCollection, filter: any = {}, options: DBQueryOptions = {}) {
+		// extract "subpath", then delete it from "options"
+		const { subpath = "", func } = options;
+		delete options.subpath;
+		delete options.filter;
+		delete options.func;
+
 		let item;
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -236,13 +239,9 @@ export class DB {
 				logError(`[DB] FIND ONE > Service "${collection}" :>>`, e);
 			}
 		} else {
-			// extract "subpath", then delete it from "options"
-			const { subpath = "" } = options;
-			delete options.subpath;
-
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr}`;
+			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
 			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
 			if (!status && messages[0]) logError(`[DB] FIND ONE - ${url} :>>`, messages);
@@ -252,27 +251,36 @@ export class DB {
 	}
 
 	static async create<T = any>(collection: DBCollection, data: any, options: DBQueryOptions = {}) {
-		let item;
+		const { subpath = "", filter, func } = options;
+		delete options.subpath;
+		delete options.filter;
+		delete options.func;
+
+		let item: T;
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
 				logError(`[DB] CREATE :>> Service "${collection}" not found.`);
 				return;
 			}
+			// if (func) {
+			// 	return svc[func]();
+			// }
 			try {
-				item = await svc.create(data);
+				item = (await svc.create(data)) as T;
 			} catch (e) {
 				logError(`[DB] CREATE > Service "${collection}" :>>`, e);
 			}
 		} else {
-			const { subpath = "" } = options;
-			delete options.subpath;
 			/**
 			 * ___Notes___: use the same flatten method with UPDATE for convenience!
 			 */
 			let newData = flattenObjectPaths(data);
-			const optionStr = queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}${subpath}?${optionStr.toString()}`;
+
+			const filterStr = queryFilterToUrlFilter(filter);
+			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
+			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
+
 			// console.log("newData :>> ", newData);
 			const {
 				data: result,
@@ -284,9 +292,9 @@ export class DB {
 				data: newData,
 			});
 			if (!status && messages[0]) logError(`[DB] CREATE - ${url} :>>`, messages);
-			item = result;
+			item = result as T;
 		}
-		return item as T;
+		return item;
 	}
 
 	static async update<T = any>(collection: DBCollection, filter: any, data: any, options: DBQueryOptions = {}) {
@@ -310,7 +318,7 @@ export class DB {
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}${subpath}?${filterStr.toString()}${optionStr.toString()}`;
+			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 			// console.log("[DB] UPDATE > url :>> ", url);
 
 			const updateData = flattenObjectPaths(data);
@@ -332,6 +340,12 @@ export class DB {
 			items = result;
 		}
 		return items as T[];
+	}
+
+	static async updateOne<T = any>(collection: DBCollection, filter: any, data: any, options: DBQueryOptions = {}) {
+		let items = await this.update(collection, filter, data, options);
+		if (!items || items.length === 0) return;
+		return items[0] as T;
 	}
 
 	static async delete<T = any>(collection: DBCollection, filter: any, options: DBQueryOptions = {}) {

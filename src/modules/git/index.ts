@@ -14,19 +14,16 @@ import yargs from "yargs";
 
 import { cliOpts } from "@/config/config";
 import { HOME_DIR } from "@/config/const";
-import type { IGitProvider } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { execCmd, getCurrentGitRepoData, isMac, wait } from "@/plugins";
 
 import { conf } from "../..";
-import { DB } from "../api/DB";
 import { bitbucketProfile, repoList, signInBitbucket } from "../bitbucket";
 import { createPullRequest } from "../bitbucket/createPullRequest";
 import { applyBranchPermissions } from "../bitbucket/permissions";
 import { bitbucketAuthentication } from "../bitbucket/promptForAuthOptions";
-import type { GitRepository, GitRepositoryDto } from "./git-provider-api";
 import Github from "./github";
 
 // git@github.com:digitopvn/fluffy-dollop.git
@@ -113,14 +110,9 @@ export interface InitializeGitRemoteOptions {
 	dir: string;
 
 	/**
-	 * Git repository's description
+	 * Git repository's SSH URL
 	 */
-	description?: string;
-
-	/**
-	 * Git repository's privacy
-	 */
-	private?: boolean;
+	remoteSSH?: string;
 
 	/**
 	 * Git username of the user
@@ -129,9 +121,10 @@ export interface InitializeGitRemoteOptions {
 }
 
 /**
- * Create new repository on the git provider (bitbucket, github or gitlab)
+ * @deprecated
+ * Setup "main" branch and "dev/*" branch
  */
-export async function initializeGitRemote(provider: IGitProvider, repoSlug: string, options: InitializeGitRemoteOptions) {
+export async function initializeGitRemote(options: InitializeGitRemoteOptions) {
 	// Create new remote repository
 	// options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`.toLowerCase();
 
@@ -142,23 +135,23 @@ export async function initializeGitRemote(provider: IGitProvider, repoSlug: stri
 	// log(`options.remoteSSH >>`, options.remoteSSH);
 	// log(`options.repoURL >>`, options.repoURL);
 
-	log(`Created new repository on ${provider.type}`);
+	// log(`Created new repository on ${provider.type}`);
 
-	const { dir = process.cwd(), private: isPrivate = true } = options;
+	const { dir = process.cwd() } = options;
 
-	const repoData = {
-		name: repoSlug,
-		description: options.description,
-		private: isPrivate,
-	} as GitRepositoryDto;
+	// const repoData = {
+	// 	name: repoSlug,
+	// 	description: options.description,
+	// 	private: isPrivate,
+	// } as GitRepositoryDto;
 
 	// create new repo via REST API
-	const newRepo = await DB.create<GitRepository>("git", repoData, { subpath: `/orgs/repos` });
-	console.log("createRepoResult :>> ", newRepo);
+	// const newRepo = await DB.create<GitRepository>("git", repoData, { subpath: `/orgs/repos`, filter: { slug: provider.slug } });
+	// console.log("createRepoResult :>> ", newRepo);
 
 	// add git origin:
 	const git = simpleGit(dir, { binary: "git" });
-	await git.addRemote("origin", newRepo.ssh_url);
+	await git.addRemote("origin", options.remoteSSH);
 	await git.push("origin", "main");
 
 	// create developer branches
@@ -168,7 +161,7 @@ export async function initializeGitRemote(provider: IGitProvider, repoSlug: stri
 	await git.checkout(["-b", devBranch]);
 	await git.push("origin", devBranch);
 
-	return newRepo;
+	return true;
 }
 
 /**

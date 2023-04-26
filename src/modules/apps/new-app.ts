@@ -1,14 +1,12 @@
-import { logError, logWarn } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import fs from "fs";
 // import Listr from "listr";
 import path from "path";
 
-import { getCliConfig } from "@/config/config";
 import type { IApp } from "@/entities/App";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { pullingFramework } from "@/modules/framework";
-import { generateRepoSSH, generateRepoURL, initializeGitRemote } from "@/modules/git";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { printInformation } from "@/modules/project/printInformation";
 import { generateAppConfig, writeConfig } from "@/modules/project/writeConfig";
@@ -56,25 +54,6 @@ export default async function createApp(options: InputOptions) {
 
 	if (options.shouldInstallPackage) await pullingFramework(options);
 
-	// setup git:
-
-	const { currentGitProvider } = getCliConfig();
-	// log({ currentGitProvider });
-	if (currentGitProvider?.gitWorkspace) {
-		options.remoteSSH = generateRepoSSH(options.gitProvider, `${currentGitProvider.gitWorkspace}/${options.repoSlug}`);
-		options.repoURL = generateRepoURL(options.gitProvider, `${currentGitProvider.gitWorkspace}/${options.repoSlug}`);
-		options.remoteURL = options.repoURL;
-	}
-
-	await initalizeAndCreateDefaultBranches(options);
-
-	// TODO: find git provider on server
-	try {
-		await initializeGitRemote(currentGitProvider, options.repoSlug, { dir: options.targetDirectory, username: options.username });
-	} catch (e) {
-		logWarn(`Can't initialize git remote: ${options.remoteSSH}`);
-	}
-
 	// update git info to database
 	const [updatedApp] = await DB.update<IApp>(
 		"app",
@@ -89,6 +68,9 @@ export default async function createApp(options: InputOptions) {
 	// write "dx.json"
 	const appConfig = generateAppConfig(options);
 	await writeConfig(appConfig, options);
+
+	// first commit & create default branches (main, dev/*)
+	await initalizeAndCreateDefaultBranches(options);
 
 	// print project information:
 	const finalConfig = getAppConfig(options.targetDirectory);

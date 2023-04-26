@@ -116,14 +116,17 @@ export const jwtStrategy = new Strategy(
 		// if (user) return done(null, user);
 
 		if (user) {
-			const updateData = {} as any;
-			updateData.token = tokenInfo.token;
-			// console.log(`[1] jwtStrategy > updateData :>> `, updateData);
-			// update the access token in database:
-			[user] = await DB.update<IUser>("user", { _id: payload.id }, updateData, {
-				populate: ["roles", "workspaces", "activeWorkspace"],
-			});
-			// console.log(`[1] jwtStrategy > updated user :>> `, user);
+			const isAccessTokenExisted = await DB.count("user", { _id: payload.id, "token.access_token": tokenInfo.token.access_token });
+			if (isAccessTokenExisted === 0) {
+				[user] = await DB.update<IUser>(
+					"user",
+					{ _id: payload.id },
+					{ token: tokenInfo.token },
+					{
+						populate: ["roles", "workspaces", "activeWorkspace"],
+					}
+				);
+			}
 			return done(null, user);
 		}
 

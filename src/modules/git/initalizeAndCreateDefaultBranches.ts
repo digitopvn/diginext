@@ -1,4 +1,5 @@
 // import { log } from "diginext-utils/dist/console/log";
+import { makeSlug } from "diginext-utils/dist/Slug";
 import * as fs from "fs";
 import path from "path";
 import { simpleGit } from "simple-git";
@@ -24,8 +25,16 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 	await git.add(".");
 	await git.commit("feat(initial): initial commit");
 
-	// // create developer branches
-	// await git.checkout(["-b", `dev/${options.username}`]);
+	// add git origin:
+	await git.addRemote("origin", options.remoteSSH);
+	await git.push("origin", "main");
+
+	// create developer branches
+	const gitUsername = (await git.getConfig(`user.name`, "global")).value;
+	const username = options.username || (gitUsername ? makeSlug(gitUsername).toLowerCase() : undefined) || "developer";
+	const devBranch = `dev/${username}`;
+	await git.checkout(["-b", devBranch]);
+	await git.push("origin", devBranch);
 
 	// log(`Finished initializing git!`);
 
