@@ -95,12 +95,7 @@ export default class DeployController extends BaseController {
 
 		// validation & conversion...
 		if (!buildParams) return { status: 0, messages: [`Build "params" is required.`] } as ResponseData;
-		// if (!isJSON(buildParamsJSON)) return { status: 0, messages: [`Invalid JSON format of build "params".`] } as ResponseData;
-		// const buildParams = JSON.parse(buildParamsJSON as unknown as string) as StartBuildParams;
-
 		if (!deployParams) return { status: 0, messages: [`Deploy "params" is required.`] } as ResponseData;
-		// if (!isJSON(deployParamsJSON)) return { status: 0, messages: [`Invalid JSON format of deploy "params".`] } as ResponseData;
-		// const deployParams = JSON.parse(deployParamsJSON as unknown as string) as DeployBuildInput;
 
 		const app = await DB.findOne<IApp>("app", { slug: buildParams.appSlug });
 		const author = await DB.findOne<IUser>("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] });
@@ -115,12 +110,10 @@ export default class DeployController extends BaseController {
 			workspace,
 			buildDirectory,
 		};
-		// log("[DEPLOY] options", options);
 
-		// TODO: Save client CLI version to server database for tracking purpose!
 		// check for version compatibility between CLI & SERVER:
-		const cliVersion = buildParams.cliVersion || "0.0.0";
-		const breakingChangeVersionCli = cliVersion.split(".")[0];
+		buildParams.cliVersion = buildParams.cliVersion || "0.0.0";
+		const breakingChangeVersionCli = buildParams.cliVersion.split(".")[0];
 		const serverVersion = pkg.version;
 		const breakingChangeVersionServer = serverVersion.split(".")[0];
 
@@ -128,7 +121,7 @@ export default class DeployController extends BaseController {
 			return {
 				status: 0,
 				messages: [
-					`Your CLI version (${cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please update your CLI with: "dx update"`,
+					`Your CLI version (${buildParams.cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please update your CLI with: "dx update"`,
 				],
 			};
 		}
