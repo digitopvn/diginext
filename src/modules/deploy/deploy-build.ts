@@ -17,11 +17,12 @@ export type DeployBuildOptions = {
 	author: IUser;
 	workspace: IWorkspace;
 	buildDirectory: string;
+	cliVersion?: string;
 	shouldUseFreshDeploy?: boolean;
 };
 
 export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
-	const { env, author, workspace, buildDirectory, shouldUseFreshDeploy = false } = options;
+	const { env, author, workspace, buildDirectory, cliVersion, shouldUseFreshDeploy = false } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
 	const { slug: username } = author;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;

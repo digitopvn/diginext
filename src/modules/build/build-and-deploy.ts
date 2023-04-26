@@ -16,7 +16,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	// [1] Build container image
 	const { build, startTime, SOCKET_ROOM } = await startBuild(buildParams);
 
-	if (!build) return;
+	if (!build) throw new Error(`Unable to build "${buildParams.appSlug}" app (${buildParams.env}).`);
 
 	const { appSlug, projectSlug } = build;
 	const { env } = deployParams;
@@ -24,7 +24,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	// [2] Deploy the build to target deploy environment
 	const { release, deployment } = await deployBuild(build, deployParams);
 
-	if (!release) return;
+	if (!release) throw new Error(`Unable to deploy "${build.slug}" build (${appSlug} - ${buildParams.env}).`);
 
 	const releaseId = MongoDB.toString(release._id);
 
