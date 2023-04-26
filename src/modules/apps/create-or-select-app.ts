@@ -1,3 +1,4 @@
+import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
@@ -45,6 +46,12 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 
 	options.app = app;
 	options.slug = app.slug;
+	options.name = app.name;
+	options.repoSlug = `${makeSlug(projectSlug)}-${makeSlug(options.name)}`.toLowerCase();
+	options.remoteSSH = app.git.repoSSH;
+	options.remoteURL = app.git.repoURL;
+	options.gitProvider = app.git.provider;
+	options.repoURL = options.remoteURL;
 
 	return app;
 }

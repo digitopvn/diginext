@@ -1,4 +1,5 @@
 import { log, logError } from "diginext-utils/dist/console/log";
+import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 import { isEmpty, upperFirst } from "lodash";
 
@@ -11,6 +12,7 @@ import { getAppConfig, getCurrentGitRepoData, parseGitRepoDataFromRepoSSH, updat
 import { DB } from "../api/DB";
 import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
 import { askForGitProvider } from "../git/ask-for-git-provider";
+import type { GitRepository, GitRepositoryDto } from "../git/git-provider-api";
 import { createOrSelectProject } from "./create-or-select-project";
 
 export async function createAppByForm(options?: InputOptions) {
@@ -34,8 +36,8 @@ export async function createAppByForm(options?: InputOptions) {
 		options.name = name;
 	}
 
-	// "kind of" unique slug
-	// options.slug = (makeSlug(options.name) + "-" + generatePassword(6, true)).toLowerCase();
+	// git repo slug
+	options.repoSlug = `${options.project.slug}-${makeSlug(options.name)}`.toLowerCase();
 
 	const noneFramework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
 	let curFramework = noneFramework;
@@ -107,13 +109,23 @@ export async function createAppByForm(options?: InputOptions) {
 		options.remoteSSH = currentGitData.remoteSSH;
 		options.remoteURL = currentGitData.remoteURL;
 	} else {
-		let currentGitProvider = await askForGitProvider();
-		options.gitProvider = currentGitProvider.type;
+		let gitProvider = await askForGitProvider();
 
-		// TODO: create new repo:
+		// Create new repo:
+		const repoData: GitRepositoryDto = {
+			name: options.repoSlug,
+			private: !options.isPublic,
+		};
+		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > repoData :>> ", repoData);
+		const newRepo = await DB.create<GitRepository>("git", repoData, {
+			subpath: "/orgs/repos",
+			filter: { slug: gitProvider.slug },
+		});
+		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > newRepo :>> ", newRepo);
 
-		// set this git provider to default:
-		// saveCliConfig({ currentGitProvider });
+		options.gitProvider = newRepo.provider;
+		options.remoteSSH = newRepo.ssh_url;
+		options.remoteURL = newRepo.repo_url;
 	}
 
 	// Call API to create new app

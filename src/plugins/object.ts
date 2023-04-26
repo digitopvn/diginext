@@ -1,4 +1,5 @@
 import { mapKeys } from "lodash";
+import mongoose from "mongoose";
 
 /**
  * Flatten the object into 1-level-object (with key paths)
@@ -11,7 +12,7 @@ export function flattenObject(obj: Record<string, any>): Record<string, any> {
 		return Object.keys(_obj).reduce((acc, key) => {
 			const newKey = prefix ? `${prefix}.${key}` : key;
 			const value = _obj[key];
-			if (typeof value === "object" && value !== null) {
+			if (typeof value === "object" && value !== null && !(value instanceof mongoose.Types.ObjectId) && !(value instanceof Date)) {
 				Object.assign(acc, flattenKeys(value, newKey));
 			} else {
 				acc[newKey] = value;

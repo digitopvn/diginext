@@ -389,6 +389,7 @@ interface GitHubOrgRepository {
 }
 
 export interface GitRepository {
+	provider: GitProviderType;
 	id: string;
 	name: string;
 	full_name: string;
@@ -582,6 +583,7 @@ const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDt
 		})) as BitbucketRepository;
 
 		return {
+			provider: provider.type,
 			id: newBitbucketRepo.uuid,
 			name: newBitbucketRepo.name,
 			full_name: newBitbucketRepo.full_name,
@@ -614,6 +616,7 @@ const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDt
 		if (newGithubRepo.message) throw new Error(`[GITHUB_API_ERROR] ${newGithubRepo.message}`);
 
 		return {
+			provider: provider.type,
 			id: newGithubRepo.id.toString(),
 			name: newGithubRepo.name,
 			full_name: newGithubRepo.full_name,

@@ -224,25 +224,24 @@ export default class BaseService<T = any> {
 	async update(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
 		const updateFilter = { ...filter };
 		updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
+		// console.log("updateFilter :>> ", updateFilter);
+
+		const results = await this.find(updateFilter, options);
 
 		// convert all valid "ObjectId" string to ObjectId()
-		data = cloneDeepWith(data, function (val) {
+		// console.log("[1] data :>> ", data);
+		const convertedData = cloneDeepWith(data, function (val) {
 			if (isValidObjectId(val)) return MongoDB.toObjectId(val);
 		});
 
 		// set updated date
-		data.updatedAt = new Date();
+		convertedData.updatedAt = new Date();
 
-		const updateData = options?.raw ? data : { $set: flattenObject(data) };
-		// console.log("updateData :>> ", updateData);
+		const updateData = options?.raw ? convertedData : { $set: flattenObject(convertedData) };
+		// console.log("[2] updateData :>> ", updateData);
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
 
-		if (updateRes.acknowledged) {
-			const results = await this.find(updateFilter, options);
-			return results;
-		} else {
-			return [];
-		}
+		return updateRes.acknowledged ? results : [];
 	}
 
 	async updateOne(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
@@ -251,8 +250,8 @@ export default class BaseService<T = any> {
 	}
 
 	async softDelete(filter?: IQueryFilter) {
-		const deleteFilter = filter;
-		const deletedItems = await this.update(deleteFilter, { deletedAt: new Date() });
+		const data = { deletedAt: new Date() };
+		const deletedItems = await this.update(filter, data);
 		console.log("deletedItems :>> ", deletedItems);
 		return { ok: deletedItems.length > 0, affected: deletedItems.length };
 	}

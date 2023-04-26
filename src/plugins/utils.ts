@@ -637,7 +637,7 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 };
 
 interface PullOrCloneGitRepoOptions {
-	onUpdate?: (msg) => void;
+	onUpdate?: (msg: string, progress?: number) => void;
 }
 
 export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
@@ -647,7 +647,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
 		const message = `git.${method} ${stage} stage ${progress}% complete`;
-		if (onUpdate) onUpdate(message);
+		if (onUpdate) onUpdate(message, progress);
 	};
 
 	if (fs.existsSync(dir)) {

@@ -444,6 +444,13 @@ export type InputOptions = {
 	printSuccess?: boolean;
 
 	/**
+	 * Git repository access policy, default is PRIVATE.
+	 * @type {Boolean}
+	 * @default false
+	 */
+	isPublic?: boolean;
+
+	/**
 	 * @type {Boolean}
 	 * @default false
 	 */
@@ -525,6 +532,11 @@ export type InputOptions = {
 	 * Git provider type
 	 */
 	gitProvider?: GitProviderType;
+
+	/**
+	 * A slug of git workspace
+	 */
+	gitWorkspace?: string;
 
 	/**
 	 * Specify a git branch

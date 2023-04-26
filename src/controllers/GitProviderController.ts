@@ -214,7 +214,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/profile")
-	async getProfile(@Body() body: any, @Queries() queryParams?: IPostQueryParams) {
+	async getProfile(@Queries() queryParams?: IPostQueryParams) {
 		// validation
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
@@ -282,7 +282,20 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/orgs/repos")
-	async createOrgRepo(@Body() body: GitRepositoryDto, @Queries() queryParams?: IPostQueryParams) {
+	async createOrgRepo(
+		@Body() body: GitRepositoryDto,
+		@Queries()
+		queryParams?: {
+			/**
+			 * Git provider's ID
+			 */
+			_id?: string;
+			/**
+			 * Git provider's SLUG
+			 */
+			slug?: string;
+		}
+	) {
 		// validation
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
@@ -347,7 +360,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/ssh/verify")
-	async verifySSH(@Queries() queryParams?: { provider: string }) {
+	async verifySSH(@Queries() queryParams?: { provider: GitProviderType }) {
 		const gitProvider = this.filter.provider as GitProviderType;
 		if (!gitProvider) {
 			return { status: 0, messages: [`Param "provider" is required.`] } as ResponseData;
