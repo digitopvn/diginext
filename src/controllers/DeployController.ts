@@ -7,7 +7,7 @@ import { Config } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IUser, IWorkspace } from "@/entities";
 import type { InputOptions, ResponseData } from "@/interfaces";
-import { IPostQueryParams, respondFailure } from "@/interfaces";
+import { IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import type { StartBuildParams } from "@/modules/build";
 import { buildAndDeploy } from "@/modules/build/build-and-deploy";
@@ -75,12 +75,13 @@ export default class DeployController extends BaseController {
 				],
 			};
 		}
+		// return respondSuccess({ msg: `Building...` });
 
 		log(`deployFromSource > options.buildNumber :>>`, inputOptions.buildNumber);
 		startBuildV1(inputOptions);
 
 		// start build in background:
-		return { messages: [`Building...`], status: 1 };
+		return respondSuccess({ msg: `Building...` });
 	}
 
 	/**

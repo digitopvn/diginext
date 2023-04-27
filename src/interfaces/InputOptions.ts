@@ -369,6 +369,7 @@ export type InputOptions = {
 	 * Should create something
 	 * @example
 	 * - Create "imagePullSecrets" in a namespace
+	 * @default false
 	 */
 	shouldCreate?: boolean;
 

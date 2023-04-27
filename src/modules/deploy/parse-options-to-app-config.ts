@@ -2,13 +2,13 @@ import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { isEmpty } from "lodash";
 
-import type { IApp, IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces";
-import { getAppConfig, getCurrentGitRepoData, saveAppConfig } from "@/plugins";
+import { getCurrentGitRepoData } from "@/plugins";
 
-import { DB } from "../api/DB";
-import { createOrSelectApp } from "../apps/create-or-select-app";
-import { createOrSelectProject } from "../apps/create-or-select-project";
+import { getAppConfigFromApp } from "../apps/app-helper";
+import { askForProjectAndApp } from "../apps/ask-project-and-app";
+import { updateAppConfig } from "../apps/update-config";
+import { askForDomain } from "../build";
 import { askForCertIssuer } from "./ask-deploy-environment-info";
 
 export const parseOptionsToAppConfig = async (options: InputOptions) => {
@@ -32,26 +32,13 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		zone,
 	} = options;
 
-	// get current config
-	let appConfig = getAppConfig(targetDirectory);
-	if (isEmpty(appConfig)) {
-		logError(`No "dx.json" found, please initialize first: $ dx init`);
-		return;
-	}
+	const { app, project } = await askForProjectAndApp(options.targetDirectory, options);
 
-	// validate project
-	if (typeof projectSlug !== "undefined") {
-		let project = await DB.findOne<IProject>("project", { slug: projectSlug });
-		if (!project) project = await createOrSelectProject(options);
-		appConfig.project = options.projectSlug = projectSlug;
-		options.project = project;
-	}
-	// validate app
-	if (typeof slug !== "undefined") {
-		let app = await DB.findOne<IApp>("app", { slug }, { populate: ["project", "owner", "workspace"] });
-		if (!app) app = await createOrSelectApp((app.project as IProject).slug, options);
-		appConfig.slug = options.appSlug = slug;
-		options.app = app;
+	// get current config
+	let appConfig = await getAppConfigFromApp(app);
+	if (isEmpty(appConfig)) {
+		logError(`No app configurations found, please initialize first: $ dx init`);
+		return;
 	}
 
 	// get remote SSH
@@ -74,10 +61,10 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 	options.gitBranch = branch;
 
 	// validate deploy environment
-	if (!appConfig.environment) appConfig.environment = {};
-	if (!appConfig.environment[env]) appConfig.environment[env] = {};
+	if (!appConfig.deployEnvironment) appConfig.deployEnvironment = {};
+	if (!appConfig.deployEnvironment[env]) appConfig.deployEnvironment[env] = {};
 
-	const deployEnvironment = appConfig.environment[env];
+	const deployEnvironment = appConfig.deployEnvironment[env];
 
 	// Google Cloud Info
 	if (typeof providerProject !== "undefined") deployEnvironment.project = providerProject;
@@ -100,8 +87,13 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		if (ssl) {
 			if (typeof deployEnvironment.ssl === "undefined" || deployEnvironment.ssl === "none") {
 				if (isEmpty(deployEnvironment.domains)) {
-					logError(`There is domains in "dx.json" (${env}).`);
-					return;
+					// generate one!
+					const domains = await askForDomain(env, project.slug, app.slug, deployEnvironment);
+					if (isEmpty(domains)) {
+						logError(`No domains to issue SSL certificate.`);
+						return;
+					}
+					deployEnvironment.domains = domains;
 				}
 				const primaryDomain = deployEnvironment.domains[0];
 				deployEnvironment.ssl = await askForCertIssuer();
@@ -123,9 +115,10 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		}
 	}
 
-	appConfig.environment[env] = deployEnvironment;
+	appConfig.deployEnvironment[env] = deployEnvironment;
 
-	appConfig = saveAppConfig(appConfig);
+	// save to app config on server
+	appConfig = await updateAppConfig(app, env, deployEnvironment);
 
 	return appConfig;
 };

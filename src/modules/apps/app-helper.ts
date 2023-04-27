@@ -23,7 +23,7 @@ export const getAppConfigFromApp = (app: IApp) => {
 		project: app.projectSlug || (app.project as IProject).slug,
 		framework: app.framework,
 		git: app.git,
-		environment: clientDeployEnvironment,
+		deployEnvironment: clientDeployEnvironment,
 	};
 
 	return appConfig;

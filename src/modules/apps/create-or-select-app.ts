@@ -14,8 +14,8 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 		name: "action",
 		message: question || `Create new or select an existing app?`,
 		choices: [
-			{ name: "Select existing app", value: "select" },
 			{ name: "Create new app", value: "create" },
+			{ name: "Select existing app", value: "select" },
 		],
 	});
 

@@ -45,7 +45,7 @@ export type DeployImageParams = {
 
 export const deployImage = async (options: DeployImageParams, appConfig: AppConfig, envVars?: KubeEnvironmentVariable[]) => {
 	const { env = "dev", projectSlug, slug, username, workspaceId, cliVersion } = options;
-	const { imageURL } = appConfig.environment[env];
+	const { imageURL } = appConfig.deployEnvironment[env];
 
 	// validates inputs...
 	if (!projectSlug) throw new Error(`Project slug is required.`);
@@ -70,7 +70,7 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 
 	// deploy environment
 	let targetEnvironmentFromDB = await getDeployEvironmentByApp(app, env);
-	const targetEnvironment = { ...appConfig.environment[env], ...targetEnvironmentFromDB };
+	const targetEnvironment = { ...appConfig.deployEnvironment[env], ...targetEnvironmentFromDB };
 	// log({ targetEnvironment });
 
 	// DOTENV variables
@@ -78,6 +78,7 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 
 	// generate YAML deployment files
 	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = await generateDeployment({
+		appSlug: slug,
 		env,
 		username,
 		appConfig,

@@ -9,10 +9,9 @@ import type { InputOptions } from "@/interfaces/InputOptions";
 import { pullingFramework } from "@/modules/framework";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { printInformation } from "@/modules/project/printInformation";
-import { generateAppConfig, writeConfig } from "@/modules/project/writeConfig";
-import { getAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { getAppConfigFromApp } from "./app-helper";
 import { createAppByForm } from "./new-app-by-form";
 
 /**
@@ -65,15 +64,11 @@ export default async function createApp(options: InputOptions) {
 		return;
 	}
 
-	// write "dx.json"
-	const appConfig = generateAppConfig(options);
-	await writeConfig(appConfig, options);
-
 	// first commit & create default branches (main, dev/*)
 	await initalizeAndCreateDefaultBranches(options);
 
 	// print project information:
-	const finalConfig = getAppConfig(options.targetDirectory);
+	const finalConfig = getAppConfigFromApp(updatedApp);
 	printInformation(finalConfig);
 
 	return newApp;
