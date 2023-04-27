@@ -6,6 +6,7 @@ import { cloneDeepWith, isEmpty, toNumber, trim } from "lodash";
 
 import { Config } from "@/app.config";
 import type { IUser, IWorkspace } from "@/entities";
+import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { isObjectId, isValidObjectId, MongoDB, toObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
@@ -17,8 +18,8 @@ import { respondFailure, respondSuccess } from "../interfaces/ResponseData";
 
 const DEFAULT_PAGE_SIZE = 100;
 
-export default class BaseController<T = any> {
-	service: BaseService<T>;
+export default class BaseController<T extends IBase = any, S extends BaseService<T> = BaseService> {
+	service: S;
 
 	user: IUser;
 
@@ -30,7 +31,7 @@ export default class BaseController<T = any> {
 
 	pagination: IResponsePagination;
 
-	constructor(service?: BaseService<T>) {
+	constructor(service?: S) {
 		if (service) this.service = service;
 	}
 
@@ -65,20 +66,18 @@ export default class BaseController<T = any> {
 	}
 
 	async delete() {
-		const tobeDeletedItems = await this.service.find(this.filter);
-
-		if (tobeDeletedItems && tobeDeletedItems.length === 0)
-			return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Items not found.` });
+		const tobeDeletedItems = await this.service.count(this.filter);
+		if (tobeDeletedItems === 0) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Items not found.` });
 
 		const data = await this.service.delete(this.filter);
-
 		return respondSuccess({ data });
 	}
 
 	async softDelete() {
-		const data = await this.service.softDelete(this.filter);
-		if (!data || !data.ok) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+		const tobeDeletedItems = await this.service.count(this.filter);
+		if (tobeDeletedItems === 0) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Items not found.` });
 
+		const data = await this.service.softDelete(this.filter);
 		return respondSuccess({ data });
 	}
 

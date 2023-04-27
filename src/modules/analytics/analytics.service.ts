@@ -5,8 +5,10 @@ import chalk from "chalk";
 import Table from "cli-table";
 import { log, logError } from "diginext-utils/dist/console/log";
 
+import type { IApp } from "@/entities";
+
 import { ANALYTICS_SA_PATH } from "../../config/const";
-import { getAppConfig, saveAppConfig } from "../../plugins/utils";
+import { getAppConfigFromApp } from "../apps/app-helper";
 
 // const { Account } = v1alpha;
 const { google } = protos;
@@ -35,14 +37,14 @@ export const listAnalyticsProperties = async () => {
 	return account;
 };
 
-export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
-	const appConfig = getAppConfig();
+export const createAnalyticsProperty = async (app: IApp, { env = "dev", name, url }) => {
+	const appConfig = getAppConfigFromApp(app);
 
 	// if (!name) logError(`"name" is required`);
 	// if (!url) logError(`"url" is required`);
 
 	const accountName = name || appConfig.name;
-	let websiteUrl = url || (appConfig.environment[env].domains && appConfig[env].domains[0]);
+	let websiteUrl = url || (appConfig.deployEnvironment[env].domains && appConfig[env].domains[0]);
 	if (typeof websiteUrl == "undefined" && env == "dev") websiteUrl = `https://dev3.digitop.vn/${appConfig.slug}`;
 
 	if (!websiteUrl) logError(`[${env.toUpperCase()}] Website URL is required, double check domain name in your "dx.json".`);
@@ -131,8 +133,6 @@ export const createAnalyticsProperty = async ({ env = "dev", name, url }) => {
 
 	// diginext.ga = diginext.ga || {};
 	// diginext.ga[env] = diginext.ga[env] ? [...diginext.ga[env], webStream.measurementId] : [webStream.measurementId];
-
-	saveAppConfig(appConfig);
 };
 
 // main(...process.argv.slice(2)).catch((err) => {

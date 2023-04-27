@@ -1,4 +1,4 @@
-import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
+import type { ApiKeyAccountDto, IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import { apiKeyAccountSchema } from "@/entities/ApiKeyAccount";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 
@@ -14,13 +14,13 @@ export default class ApiKeyUserService extends BaseService<IApiKeyAccount> {
 		return super.find(filter, options, pagination);
 	}
 
-	async create(data: IApiKeyAccount) {
+	async create(data: ApiKeyAccountDto) {
 		if (!data.username) data.username = data.slug;
 		data.type = "api_key";
 		return super.create(data);
 	}
 
-	async update(filter: IQueryFilter, data: IApiKeyAccount, options?: IQueryOptions) {
+	async update(filter: IQueryFilter, data: Partial<IApiKeyAccount>, options?: IQueryOptions) {
 		if (data.username) data.slug = data.username;
 		if (data.slug) data.username = data.slug;
 		if (data.type !== "api_key") data.type = "api_key";

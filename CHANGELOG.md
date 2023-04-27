@@ -1,8 +1,32 @@
-## [3.0.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.0.0...v3.0.1-prerelease.1) (2023-04-19)
+## [3.0.4](https://github.com/digitopvn/diginext/compare/v3.0.3...v3.0.4) (2023-04-20)
 
 
 ### Bug Fixes
 
+* **release flow:** skip ci when update pkg ver ([eb7f348](https://github.com/digitopvn/diginext/commit/eb7f34881e833169570010f74159bca5f725ece4))
+
+## [3.0.3](https://github.com/digitopvn/diginext/compare/v3.0.2...v3.0.3) (2023-04-20)
+
+
+### Bug Fixes
+
+* **request-deploy:** add more info to debug request deploy ([e7e3eb5](https://github.com/digitopvn/diginext/commit/e7e3eb569298bc1571d3e139e6b9216d32d01f52))
+
+## [3.0.2](https://github.com/digitopvn/diginext/compare/v3.0.1...v3.0.2) (2023-04-20)
+
+
+### Bug Fixes
+
+* **builds:** ensure workspace string to object id ([de57d3e](https://github.com/digitopvn/diginext/commit/de57d3efa79bb6d234d4426086344197557e7924))
+* **podman:** login issue with gcr.io ([77374b8](https://github.com/digitopvn/diginext/commit/77374b8fc21a6b415297dbb0e9d7d3f73d63ce19))
+* **user,service_account,api_key:** drop unique index in username field ([4e7f3c3](https://github.com/digitopvn/diginext/commit/4e7f3c3404daeda9428f535b2dccdfe3a05985f0))
+
+## [3.0.1](https://github.com/digitopvn/diginext/compare/v3.0.0...v3.0.1) (2023-04-19)
+
+
+### Bug Fixes
+
+* **package.json:** reorder semantic release plugins ([5263c77](https://github.com/digitopvn/diginext/commit/5263c7792837e97b0661d69e9006bc7093ed209c))
 * **write dx config:** ignore package.json if not existed ([7b338fa](https://github.com/digitopvn/diginext/commit/7b338fa5800d5b90c812abd750095ed56d202e5a))
 
 # [3.0.0](https://github.com/digitopvn/diginext/compare/v2.11.2...v3.0.0) (2023-04-19)

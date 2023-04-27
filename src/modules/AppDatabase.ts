@@ -8,8 +8,8 @@ import { Config } from "@/app.config";
 const dbName = Config.DB_NAME;
 
 export async function connect(onConnected?: (db?: typeof mongoose) => void) {
-	console.log("Config.DB_URI :>> ", Config.DB_URI);
-	console.log("Config.DB_NAME :>> ", Config.DB_NAME);
+	// console.log("Config.DB_URI :>> ", Config.DB_URI);
+	// console.log("Config.DB_NAME :>> ", Config.DB_NAME);
 	try {
 		const db = await mongoose.connect(Config.DB_URI, {
 			dbName,

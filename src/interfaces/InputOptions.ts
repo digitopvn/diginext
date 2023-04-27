@@ -299,6 +299,9 @@ export type InputOptions = {
 	shouldUpdateCli?: boolean;
 
 	/**
+	 * @deprecated
+	 * ### This is required now!
+	 * ---
 	 * Enable GIT when create new or initialize app
 	 * @default true
 	 */
@@ -366,6 +369,7 @@ export type InputOptions = {
 	 * Should create something
 	 * @example
 	 * - Create "imagePullSecrets" in a namespace
+	 * @default false
 	 */
 	shouldCreate?: boolean;
 
@@ -439,6 +443,13 @@ export type InputOptions = {
 	 * @default false
 	 */
 	printSuccess?: boolean;
+
+	/**
+	 * Git repository access policy, default is PRIVATE.
+	 * @type {Boolean}
+	 * @default false
+	 */
+	isPublic?: boolean;
 
 	/**
 	 * @type {Boolean}
@@ -522,6 +533,11 @@ export type InputOptions = {
 	 * Git provider type
 	 */
 	gitProvider?: GitProviderType;
+
+	/**
+	 * A slug of git workspace
+	 */
+	gitWorkspace?: string;
 
 	/**
 	 * Specify a git branch

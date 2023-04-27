@@ -54,7 +54,7 @@ export async function requestDeployImage(imageURL: string, options: InputOptions
 	let deployEnvironmentFromDB = await getDeployEvironmentByApp(app, env);
 
 	// merge with appConfig
-	const deployEnvironment = { ...appConfig.environment[env], ...deployEnvironmentFromDB };
+	const deployEnvironment = { ...appConfig.deployEnvironment[env], ...deployEnvironmentFromDB };
 	const serverEnvironmentVariables = deployEnvironment?.envVars || [];
 
 	// TODO: parse ENV variables from CLI "options" ?
@@ -63,7 +63,7 @@ export async function requestDeployImage(imageURL: string, options: InputOptions
 	log(`Requesting BUILD SERVER to deploy this image: "${projectSlug}/${slug}"`);
 
 	// additional params:
-	options.namespace = appConfig.environment[env].namespace;
+	options.namespace = appConfig.deployEnvironment[env].namespace;
 
 	// return;
 	// Make an API to request server to build:

@@ -3,7 +3,7 @@ import { log } from "diginext-utils/dist/console/log";
 import type { FrameworkDto, IFramework, IUser, IWorkspace } from "@/entities";
 import { DB } from "@/modules/api/DB";
 
-const initialFrameworks = [
+const initialFrameworks: FrameworkDto[] = [
 	{
 		name: "NextJS 13 Starter",
 		repoURL: "https://github.com/digitopvn/next13-starter",
@@ -20,7 +20,7 @@ const initialFrameworks = [
 		isPrivate: false,
 		mainBranch: "main",
 	},
-] as FrameworkDto[];
+];
 
 export const seedFrameworks = async (workspace: IWorkspace, owner: IUser) => {
 	const results = (

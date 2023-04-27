@@ -12,9 +12,18 @@ export const showServerInfo = async (options: InputOptions) => {
 	const table = new Table();
 
 	table.push(["OS", getOS().toUpperCase()]);
-	table.push(["Node", (await execa("node", ["-v"])).stdout]);
+	table.push(["Node.js", (await execa("node", ["-v"])).stdout]);
 	table.push(["NPM", (await execa("npm", ["-v"])).stdout]);
-	table.push(["Docker", (await execa("docker", ["-v"])).stdout]);
+	try {
+		table.push(["Docker", (await execa("docker", ["-v"])).stdout]);
+	} catch (e) {
+		table.push(["Docker", "N/A"]);
+	}
+	try {
+		table.push(["Podman", (await execa("podnan", ["-v"])).stdout]);
+	} catch (e) {
+		table.push(["Podman", "N/A"]);
+	}
 	table.push(["Mode", process.env.CLI_MODE || "client"]);
 	table.push(["Working dir", process.cwd()]);
 	table.push(["CLI Version", options.version]);

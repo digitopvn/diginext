@@ -105,7 +105,7 @@
 			},
 			"GitProviderType": {
 				"type": "string",
-				"enum": ["bitbucket", "github", "gitlab"]
+				"enum": ["bitbucket", "github"]
 			},
 			"AppGitInfo": {
 				"properties": {
@@ -128,6 +128,58 @@
 			},
 			"Types.ObjectId": {
 				"type": "string"
+			},
+			"BitbucketOAuthOptions": {
+				"properties": {
+					"consumer_key": {
+						"type": "string",
+						"description": "The CONSUMER_KEY for Bitbucket authentication:\nto create new repo, commit, pull & push changes to the repositories."
+					},
+					"consumer_secret": {
+						"type": "string",
+						"description": "The CONSUMER_SECRET for Bitbucket authentication:\nto create new repo, commit, pull & push changes to the repositories."
+					},
+					"username": {
+						"type": "string",
+						"description": "Your Bitbucket account's username"
+					},
+					"app_password": {
+						"type": "string",
+						"description": "The APP_PASSWORD for Bitbucket authentication:\nto create new repo, commit, pull & push changes to the repositories."
+					},
+					"verified": {
+						"type": "boolean",
+						"description": "`TRUE` if the REST API calling was successfully."
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GithubOAuthOptions": {
+				"properties": {
+					"client_id": {
+						"type": "string",
+						"description": "The app's CLIENT_ID for Github authentication:\nto create new repo, commit, pull & push changes to the repositories."
+					},
+					"client_secret": {
+						"type": "string",
+						"description": "The app's CLIENT_SECRET for Github authentication:\nto create new repo, commit, pull & push changes to the repositories."
+					},
+					"username": {
+						"type": "string",
+						"description": "Your Github account's username"
+					},
+					"personal_access_token": {
+						"type": "string",
+						"description": "The PERSONAL ACCESS TOKEN for Github authentication:\nto create new repo, commit, pull & push changes to the repositories."
+					},
+					"verified": {
+						"type": "boolean",
+						"description": "`TRUE` if the REST API calling was successfully."
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
 			},
 			"ProviderInfo": {
 				"properties": {
@@ -822,6 +874,31 @@
 					"type": {
 						"$ref": "#/components/schemas/GitProviderType",
 						"description": "The type of the Git provider."
+					},
+					"bitbucket_oauth": {
+						"$ref": "#/components/schemas/BitbucketOAuthOptions",
+						"description": "Bitbucket OAuth Information"
+					},
+					"github_oauth": {
+						"$ref": "#/components/schemas/GithubOAuthOptions",
+						"description": "Github OAuth Information"
+					},
+					"method": {
+						"type": "string",
+						"enum": ["bearer", "basic"],
+						"description": "Authorization header method"
+					},
+					"access_token": {
+						"type": "string",
+						"description": "The API access token of the Git provider,\nto create new repo, commit, pull & push changes to the repositories."
+					},
+					"refresh_token": {
+						"type": "string",
+						"description": "The API refresh token of the Git provider,\nto obtain new access token if it's expired"
+					},
+					"verified": {
+						"type": "boolean",
+						"description": "Verify status, `true` is successfully connected with the git workspace REST API."
 					}
 				},
 				"type": "object",
@@ -1109,6 +1186,9 @@
 				"$ref": "#/components/schemas/Pick_IApp.Exclude_keyofIApp.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
+			"AppDto": {
+				"$ref": "#/components/schemas/Omit_IApp.keyofHiddenBodyKeys_"
+			},
 			"IPatchQueryParams": {
 				"properties": {
 					"populate": {
@@ -1299,7 +1379,7 @@
 						},
 						"type": "object"
 					},
-					"environment": {
+					"deployEnvironment": {
 						"properties": {},
 						"additionalProperties": {
 							"$ref": "#/components/schemas/ClientDeployEnvironmentConfig"
@@ -2131,6 +2211,10 @@
 						"type": "string",
 						"description": "Specify a git branch"
 					},
+					"gitWorkspace": {
+						"type": "string",
+						"description": "A slug of git workspace"
+					},
 					"gitProvider": {
 						"$ref": "#/components/schemas/GitProviderType",
 						"description": "Git provider type"
@@ -2190,6 +2274,11 @@
 						"type": "boolean",
 						"default": "false"
 					},
+					"isPublic": {
+						"type": "boolean",
+						"description": "Git repository access policy, default is PRIVATE.",
+						"default": "false"
+					},
 					"printSuccess": {
 						"type": "boolean",
 						"default": "false"
@@ -2244,7 +2333,8 @@
 					},
 					"shouldCreate": {
 						"type": "boolean",
-						"description": "Should create something"
+						"description": "Should create something",
+						"default": "false"
 					},
 					"shouldEnableCDN": {
 						"type": "boolean",
@@ -2291,8 +2381,8 @@
 					},
 					"shouldUseGit": {
 						"type": "boolean",
-						"description": "Enable GIT when create new or initialize app",
-						"default": "true"
+						"default": "true",
+						"deprecated": true
 					},
 					"shouldUpdateCli": {
 						"type": "boolean",
@@ -3366,6 +3456,31 @@
 					"type": {
 						"$ref": "#/components/schemas/GitProviderType",
 						"description": "The type of the Git provider."
+					},
+					"bitbucket_oauth": {
+						"$ref": "#/components/schemas/BitbucketOAuthOptions",
+						"description": "Bitbucket OAuth Information"
+					},
+					"github_oauth": {
+						"$ref": "#/components/schemas/GithubOAuthOptions",
+						"description": "Github OAuth Information"
+					},
+					"method": {
+						"type": "string",
+						"enum": ["bearer", "basic"],
+						"description": "Authorization header method"
+					},
+					"access_token": {
+						"type": "string",
+						"description": "The API access token of the Git provider,\nto create new repo, commit, pull & push changes to the repositories."
+					},
+					"refresh_token": {
+						"type": "string",
+						"description": "The API refresh token of the Git provider,\nto obtain new access token if it's expired"
+					},
+					"verified": {
+						"type": "boolean",
+						"description": "Verify status, `true` is successfully connected with the git workspace REST API."
 					}
 				},
 				"type": "object",
@@ -3377,6 +3492,22 @@
 			},
 			"GitProviderDto": {
 				"$ref": "#/components/schemas/Omit_IGitProvider.keyofHiddenBodyKeys_"
+			},
+			"GitRepositoryDto": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"private": {
+						"type": "boolean"
+					}
+				},
+				"required": ["name", "private"],
+				"type": "object",
+				"additionalProperties": false
 			},
 			"Pick_IProject.Exclude_keyofIProject.keyofHiddenBodyKeys__": {
 				"properties": {
@@ -3850,6 +3981,10 @@
 					"type": {
 						"type": "string"
 					},
+					"verified": {
+						"type": "boolean",
+						"description": "Is this user's email or phone verified?"
+					},
 					"username": {
 						"type": "string",
 						"description": "Unique username of a user\nThis equavilent with \"slug\""
@@ -3857,10 +3992,6 @@
 					"email": {
 						"type": "string",
 						"description": "User email address"
-					},
-					"verified": {
-						"type": "boolean",
-						"description": "Is this user's email or phone verified?"
 					},
 					"providers": {
 						"items": {
@@ -4050,6 +4181,10 @@
 					"type": {
 						"type": "string"
 					},
+					"verified": {
+						"type": "boolean",
+						"description": "Is this user's email or phone verified?"
+					},
 					"username": {
 						"type": "string",
 						"description": "Unique username of a user\nThis equavilent with \"slug\""
@@ -4057,10 +4192,6 @@
 					"email": {
 						"type": "string",
 						"description": "User email address"
-					},
-					"verified": {
-						"type": "boolean",
-						"description": "Is this user's email or phone verified?"
 					},
 					"providers": {
 						"items": {
@@ -4300,6 +4431,10 @@
 						"type": "string",
 						"description": "Service Account is also a User with unexpired access token."
 					},
+					"verified": {
+						"type": "boolean",
+						"description": "Is this user's email or phone verified?"
+					},
 					"username": {
 						"type": "string",
 						"description": "Unique username of a user\nThis equavilent with \"slug\""
@@ -4307,10 +4442,6 @@
 					"email": {
 						"type": "string",
 						"description": "User email address"
-					},
-					"verified": {
-						"type": "boolean",
-						"description": "Is this user's email or phone verified?"
 					},
 					"providers": {
 						"items": {
@@ -4429,7 +4560,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "2.11.2",
+		"version": "3.0.4",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -4734,7 +4865,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/Omit_IApp.keyofHiddenBodyKeys_"
+								"$ref": "#/components/schemas/AppDto"
 							}
 						}
 					}
@@ -7552,6 +7683,318 @@
 				]
 			}
 		},
+		"/git/verify": {
+			"get": {
+				"operationId": "Verify",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["Git Provider"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
+		"/git/profile": {
+			"get": {
+				"operationId": "GetProfile",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["Git Provider"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
+		"/git/orgs": {
+			"get": {
+				"operationId": "GetListOrgs",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["Git Provider"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
+		"/git/orgs/repos": {
+			"get": {
+				"operationId": "GetListOrgRepos",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "List organization repositories",
+				"tags": ["Git Provider"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateOrgRepo",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "Create new repository in git provider organization",
+				"tags": ["Git Provider"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Git provider's SLUG",
+						"in": "query",
+						"name": "slug",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Git provider's ID",
+						"in": "query",
+						"name": "_id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/GitRepositoryDto"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/git/ssh/public-key": {
 			"get": {
 				"operationId": "GetPublicKey",
@@ -7694,7 +8137,7 @@
 						"name": "provider",
 						"required": true,
 						"schema": {
-							"type": "string"
+							"$ref": "#/components/schemas/GitProviderType"
 						}
 					}
 				]

@@ -22,7 +22,6 @@ import { execCmd, getCurrentGitRepoData, isMac, wait } from "@/plugins";
 import { conf } from "../..";
 import { bitbucketProfile, repoList, signInBitbucket } from "../bitbucket";
 import { createPullRequest } from "../bitbucket/createPullRequest";
-import { createBitbucketRepo } from "../bitbucket/initialize";
 import { applyBranchPermissions } from "../bitbucket/permissions";
 import { bitbucketAuthentication } from "../bitbucket/promptForAuthOptions";
 import Github from "./github";
@@ -104,34 +103,63 @@ export const logout = async () => {
 	logSuccess(`Logged out from all git providers.`);
 };
 
+export interface InitializeGitRemoteOptions {
+	/**
+	 * App's working directory
+	 */
+	dir: string;
+
+	/**
+	 * Git repository's SSH URL
+	 */
+	remoteSSH?: string;
+
+	/**
+	 * Git username of the user
+	 */
+	username?: string;
+}
+
 /**
- * Create new repository on the git provider (bitbucket, github or gitlab)
+ * @deprecated
+ * Setup "main" branch and "dev/*" branch
  */
-export async function initializeGitRemote(options: InputOptions) {
+export async function initializeGitRemote(options: InitializeGitRemoteOptions) {
 	// Create new remote repository
-	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`.toLowerCase();
+	// options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`.toLowerCase();
 
 	// log(`options.git >>`, options.git);
 	// log("options.gitProvider :>> ", options.gitProvider);
 	// log("options.repoSlug :>> ", options.repoSlug);
 	// log(`options.remoteURL >>`, options.remoteURL);
-	log(`options.remoteSSH >>`, options.remoteSSH);
+	// log(`options.remoteSSH >>`, options.remoteSSH);
 	// log(`options.repoURL >>`, options.repoURL);
 
-	if (options.shouldUseGit && options.gitProvider == "bitbucket") await createBitbucketRepo(options);
-	// TODO: Create new repo on "github"
-	// TODO: Create new repo on "gitlab"
+	// log(`Created new repository on ${provider.type}`);
 
-	log(`Created new repository on ${options.gitProvider}`);
+	const { dir = process.cwd() } = options;
 
-	if (options.shouldUseGit) {
-		// add git origin:
-		const git = simpleGit(options.targetDirectory, { binary: "git" });
-		await git.addRemote("origin", options.remoteSSH);
-		await git.push("origin", "main");
+	// const repoData = {
+	// 	name: repoSlug,
+	// 	description: options.description,
+	// 	private: isPrivate,
+	// } as GitRepositoryDto;
 
-		return true;
-	}
+	// create new repo via REST API
+	// const newRepo = await DB.create<GitRepository>("git", repoData, { subpath: `/orgs/repos`, filter: { slug: provider.slug } });
+	// console.log("createRepoResult :>> ", newRepo);
+
+	// add git origin:
+	const git = simpleGit(dir, { binary: "git" });
+	await git.addRemote("origin", options.remoteSSH);
+	await git.push("origin", "main");
+
+	// create developer branches
+	const gitUsername = (await git.getConfig(`user.name`, "global")).value;
+	const username = options.username || (gitUsername ? makeSlug(gitUsername).toLowerCase() : undefined) || "developer";
+	const devBranch = `dev/${username}`;
+	await git.checkout(["-b", devBranch]);
+	await git.push("origin", devBranch);
 
 	return true;
 }
@@ -430,10 +458,10 @@ export const verifySSH = async (options?: InputOptions) => {
 			}
 			break;
 
-		case "gitlab":
-			authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "[GIT] Gitlab authentication failed");
-			authResult = typeof authResult !== "undefined";
-			break;
+		// case "gitlab":
+		// 	authResult = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "[GIT] Gitlab authentication failed");
+		// 	authResult = typeof authResult !== "undefined";
+		// 	break;
 
 		default:
 			authResult = false;
@@ -463,9 +491,9 @@ export const checkGitProviderAccess = async (gitProvider: GitProviderType) => {
 			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "Github authentication failed");
 			break;
 
-		case "gitlab":
-			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "Gitlab authentication failed");
-			break;
+		// case "gitlab":
+		// 	result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@gitlab.com`, "Gitlab authentication failed");
+		// 	break;
 
 		default:
 			logError(`Git provider "${gitProvider}" is not valid.`);

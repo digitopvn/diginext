@@ -23,6 +23,7 @@ export default class BuildController extends BaseController<IBuild> {
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: IGetQueryParams) {
+		console.log("BuildController > this.filter :>> ", this.filter);
 		return super.read();
 	}
 

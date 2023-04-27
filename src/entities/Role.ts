@@ -39,9 +39,7 @@ export interface IRole extends IBase {
 }
 export type RoleDto = Omit<IRole, keyof HiddenBodyKeys>;
 
-const RoleRouteSchema = new Schema({
-	path: { type: String },
-	methods: { type: [String] },
+const RoleRouteSchema = new Schema<RoleRoute>({
 	route: { type: String },
 	scope: [{ type: String, enum: ["all", "workspace", "team", "project", "app"] }],
 	permissions: [{ type: String, enum: ["full", "own", "create", "read", "update", "delete"] }],
@@ -50,8 +48,8 @@ const RoleRouteSchema = new Schema({
 export const roleSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
-		name: { type: String, required: true },
-		routes: { type: [RoleRouteSchema], required: true },
+		name: { type: String },
+		routes: { type: [RoleRouteSchema] },
 		maskedFields: { type: [String] },
 		type: { type: String },
 		owner: { type: Schema.Types.ObjectId, ref: "users" },

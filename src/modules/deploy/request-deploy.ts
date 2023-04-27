@@ -42,12 +42,24 @@ export async function requestDeploy(options: InputOptions) {
 	let appConfig = await parseOptionsToAppConfig(options);
 	if (!appConfig) return;
 
+	if (options.isDebugging) {
+		console.log("Request deploy > app config :>>");
+		console.dir(appConfig, { depth: 10 });
+	}
+
 	/**
 	 * [2] Compare LOCAL & SERVER App Config,
 	 *     then upload local app config to server.
 	 */
 	const { deployEnvironment, appConfig: validatedAppConfig } = await askForDeployEnvironmentInfo(options);
 	appConfig = validatedAppConfig;
+
+	if (options.isDebugging) {
+		console.log("requestDeploy >  app config :>>");
+		console.dir(appConfig, { depth: 10 });
+		console.log("requestDeploy > deployEnvironment :>>");
+		console.dir(deployEnvironment, { depth: 10 });
+	}
 
 	/**
 	 * [3] Generate build number & build image as docker image tag
@@ -82,14 +94,27 @@ export async function requestDeploy(options: InputOptions) {
 
 	// Make an API to request server to build:
 	const deployOptions = JSON.stringify(options);
+
+	if (options.isDebugging) {
+		console.log("Request deploy data :>> ");
+		console.dir(options, { depth: 10 });
+	}
+
 	try {
-		fetchApi({
+		const requestResult = await fetchApi({
 			url: DEPLOY_API_PATH,
 			method: "POST",
 			data: { options: deployOptions },
 		});
+
+		if (options.isDebugging) {
+			console.log("Request deploy result :>> ");
+			console.dir(requestResult, { depth: 10 });
+		}
+
+		if (!requestResult.status) logError(requestResult.messages[0] || `Unable to call Request Deploy API.`);
 	} catch (e) {
-		logError(`Unexpected network error:`, e);
+		logError(`Unable to call Request Deploy API:`, e);
 		return;
 	}
 

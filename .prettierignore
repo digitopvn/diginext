@@ -20,9 +20,9 @@ node_modules
 *.js
 
 *.yaml
-*.yaml
 **/*.yaml
-**/*.yaml
+*.yml
+**/*.yml
 **/templates/**
 
 # __tests__/**

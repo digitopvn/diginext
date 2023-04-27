@@ -2,28 +2,16 @@ import { logError } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
-import type { Document, Model, PipelineStage, Schema } from "mongoose";
+import { cloneDeepWith } from "lodash";
+import type { Model, PipelineStage, Schema } from "mongoose";
 import { model } from "mongoose";
 
-import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import { isValidObjectId } from "@/plugins/mongodb";
+import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import { replaceObjectIdsToStrings } from "@/plugins/traverse";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
-
-function setDateWhenUpdateDocument(this: IBase & Document, next: (error?: NativeError) => void) {
-	this.updateOne({}, { $set: { updatedAt: new Date() } });
-	next();
-}
-
-function setDateWhenCreateDocument(this: IBase & Document, next: (error?: NativeError) => void) {
-	const now = new Date();
-	this.updatedAt = now;
-	if (!this.createdAt) this.createdAt = now;
-	next();
-}
 
 /**
  * ![DANGEROUS]
@@ -32,7 +20,7 @@ function setDateWhenCreateDocument(this: IBase & Document, next: (error?: Native
  */
 const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 
-export default class BaseService<T> {
+export default class BaseService<T = any> {
 	readonly model: Model<T>;
 
 	req?: AppRequest;
@@ -91,6 +79,11 @@ export default class BaseService<T> {
 					data.workspace = workspaceId;
 				}
 			}
+
+			// convert all valid "ObjectId" string to ObjectId()
+			data = cloneDeepWith(data, function (val) {
+				if (isValidObjectId(val)) return MongoDB.toObjectId(val);
+			});
 
 			// set created/updated date:
 			data.createdAt = data.updatedAt = new Date();
@@ -230,28 +223,36 @@ export default class BaseService<T> {
 	async update(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
 		const updateFilter = { ...filter };
 		updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
+		// console.log("updateFilter :>> ", updateFilter);
+
+		// convert all valid "ObjectId" string to ObjectId()
+		// console.log("[1] data :>> ", data);
+		const convertedData = cloneDeepWith(data, function (val) {
+			if (isValidObjectId(val)) return MongoDB.toObjectId(val);
+		});
 
 		// set updated date
-		data.updatedAt = new Date();
+		convertedData.updatedAt = new Date();
 
-		const updateData = options?.raw ? data : { $set: data };
+		const updateData = options?.raw ? convertedData : { $set: convertedData };
+		// console.log("[2] updateData :>> ", updateData);
+
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
+		// console.log("[3] updateRes :>> ", updateRes);
 
-		if (updateRes.acknowledged) {
-			const results = await this.find(updateFilter, options);
-			return results;
-		} else {
-			return [];
-		}
+		// response > results
+		const results = await this.find(updateFilter, options);
+		return updateRes.acknowledged ? results : [];
 	}
 
 	async updateOne(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
-		return this.update(filter, data, { ...options, limit: 1 });
+		const results = await this.update(filter, data, { ...options, limit: 1 });
+		return results && results.length > 0 ? results[0] : undefined;
 	}
 
 	async softDelete(filter?: IQueryFilter) {
-		const deleteFilter = filter;
-		const deletedItems = await this.update(deleteFilter, { deletedAt: new Date() });
+		const data = { deletedAt: new Date() };
+		const deletedItems = await this.update(filter, data);
 		console.log("deletedItems :>> ", deletedItems);
 		return { ok: deletedItems.length > 0, affected: deletedItems.length };
 	}

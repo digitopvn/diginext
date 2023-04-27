@@ -181,6 +181,7 @@ export async function startBuild(params: StartBuildParams) {
 
 	// build image
 	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}/${app.slug}` } = app;
+	if (params.isDebugging) console.log("startBuild > imageURL :>> ", imageURL);
 
 	// get latest build of this app to utilize the cache for this build process
 	const latestBuild = await DB.findOne<IBuild>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
