@@ -1186,6 +1186,9 @@
 				"$ref": "#/components/schemas/Pick_IApp.Exclude_keyofIApp.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
+			"AppDto": {
+				"$ref": "#/components/schemas/Omit_IApp.keyofHiddenBodyKeys_"
+			},
 			"IPatchQueryParams": {
 				"properties": {
 					"populate": {
@@ -1376,7 +1379,7 @@
 						},
 						"type": "object"
 					},
-					"environment": {
+					"deployEnvironment": {
 						"properties": {},
 						"additionalProperties": {
 							"$ref": "#/components/schemas/ClientDeployEnvironmentConfig"
@@ -2330,7 +2333,8 @@
 					},
 					"shouldCreate": {
 						"type": "boolean",
-						"description": "Should create something"
+						"description": "Should create something",
+						"default": "false"
 					},
 					"shouldEnableCDN": {
 						"type": "boolean",
@@ -4861,7 +4865,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/Omit_IApp.keyofHiddenBodyKeys_"
+								"$ref": "#/components/schemas/AppDto"
 							}
 						}
 					}

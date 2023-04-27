@@ -87,6 +87,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generating the deployment files on server...` });
 	try {
 		deployment = await generateDeployment({
+			appSlug,
 			env,
 			username,
 			workspace,

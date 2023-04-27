@@ -2,7 +2,6 @@ import { log } from "diginext-utils/dist/console/log";
 import type execa from "execa";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { toNumber } from "lodash";
-import path from "path";
 
 import type { ICloudDatabase } from "@/entities/CloudDatabase";
 import type { ICloudProvider } from "@/entities/CloudProvider";
@@ -15,8 +14,8 @@ import type { IWorkspace } from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 
-import { readJson, saveJson, showDocs } from "../plugins";
-import { CLI_CONFIG_DIR, CLI_CONFIG_FILE, CLI_DIR } from "./const";
+import { readJson, saveJson } from "../plugins";
+import { CLI_CONFIG_DIR, CLI_CONFIG_FILE } from "./const";
 
 // export const cliOpts: execa.Options = isWin() ? {} : { shell: "bash" };
 export const cliOpts: execa.Options = {};
@@ -83,44 +82,19 @@ export const saveCliConfig = (updatedConfig: CliConfig) => {
 };
 
 export const execConfig = async (options?: InputOptions) => {
-	const { secondAction, thirdAction } = options;
+	const conf = getCliConfig();
+	log(conf);
 
-	switch (secondAction) {
-		case "get":
-			const conf = getCliConfig();
-			log(conf);
-			return conf;
+	// const { secondAction, thirdAction } = options;
 
-		case "provider":
-			switch (thirdAction) {
-				case "current":
-					try {
-						const curProvider = getCliConfig().currentProvider;
-						log(curProvider.name);
-						return curProvider;
-					} catch (e) {
-						return null;
-					}
+	// switch (secondAction) {
+	// 	case "get":
+	// 		const conf = getCliConfig();
+	// 		log(conf);
+	// 		return conf;
 
-				case "list":
-					try {
-						const list = getCliConfig().gitProviders;
-						log(list.map((item) => item.name));
-						return list;
-					} catch (e) {
-						return null;
-					}
-
-				default:
-					break;
-			}
-			break;
-
-		case "cluster":
-			break;
-
-		default:
-			await showDocs(path.resolve(CLI_DIR, "docs/config.md"));
-			break;
-	}
+	// 	default:
+	// 		log(`Huh?`);
+	// 		break;
+	// }
 };

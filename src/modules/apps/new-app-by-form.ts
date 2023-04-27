@@ -7,7 +7,7 @@ import type { IApp } from "@/entities";
 import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
-import { getAppConfig, getCurrentGitRepoData, parseGitRepoDataFromRepoSSH, updateAppConfig } from "@/plugins";
+import { getCurrentGitRepoData, parseGitRepoDataFromRepoSSH, updateAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
@@ -167,8 +167,8 @@ export async function createAppByForm(options?: InputOptions) {
 	options.name = newApp.name;
 
 	// update existing "dx.json" if any
-	const appConfig = getAppConfig(options.targetDirectory);
-	if (appConfig) updateAppConfig({ slug: newApp.slug, project: options.project.slug, name: newApp.name });
+	let appConfig = await updateAppConfig({ slug: newApp.slug, project: options.project.slug, name: newApp.name });
+	if (options.isDebugging) console.log("createAppByForm > appConfig :>> ", appConfig);
 
 	return newApp;
 }

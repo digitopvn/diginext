@@ -2,11 +2,10 @@ import { logError } from "diginext-utils/dist/console/log";
 
 import type { AppGitInfo, IApp } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
-import { getAppConfig } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { printInformation } from "../project/printInformation";
-import { generateAppConfig, writeConfig } from "../project/writeConfig";
+import { getAppConfigFromApp } from "./app-helper";
 import { createOrSelectApp } from "./create-or-select-app";
 import { createOrSelectProject } from "./create-or-select-project";
 
@@ -34,12 +33,8 @@ export async function execInitApp(options: InputOptions) {
 
 	if (!updatedApp) logError(`[INIT APP] Can't initialize app due to network issue.`);
 
-	// write "dx.json"
-	const appConfig = generateAppConfig(options);
-	await writeConfig(appConfig, options);
-
 	// print project information:
-	const finalConfig = getAppConfig(options.targetDirectory);
+	const finalConfig = getAppConfigFromApp(updatedApp);
 	printInformation(finalConfig);
 
 	return options;

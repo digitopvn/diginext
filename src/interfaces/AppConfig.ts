@@ -21,7 +21,7 @@ export interface AppConfig {
 		repoSSH?: string;
 	};
 
-	environment?: {
+	deployEnvironment?: {
 		[key: string]: ClientDeployEnvironmentConfig;
 	};
 }

@@ -4,10 +4,11 @@ import path from "path";
 
 import type { CreateEnvVarsDto } from "@/controllers/AppController";
 import type { IApp } from "@/entities";
-import { flattenObjectPaths, getAppConfig, loadEnvFileAsContainerEnvVars } from "@/plugins";
+import { loadEnvFileAsContainerEnvVars } from "@/plugins";
 
 import { fetchApi } from "../api";
 import { DB } from "../api/DB";
+import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
 
 type UploadDotenvOptions = {
@@ -37,12 +38,12 @@ export const uploadDotenvFileByApp = async (envFile: string, app: IApp, env: str
 	updateAppData.env = env;
 
 	const url = `/api/v1/app/environment/variables`;
-	const updateData = flattenObjectPaths(updateAppData);
+	// const updateData = flattenObjectPaths(updateAppData);
 
 	const { status, data, messages } = await fetchApi<IApp>({
 		url,
 		method: "POST",
-		data: updateData,
+		data: updateAppData,
 	});
 
 	let updatedApp: IApp;
@@ -67,15 +68,8 @@ export const uploadDotenvFileByAppSlug = async (envFile: string, appSlug: string
 export const uploadDotenvFile = async (env: string = "dev", options: UploadDotenvOptions = {}) => {
 	const { targetDir = process.cwd(), fileName = `.env.${env}` } = options;
 
-	const appConfig = getAppConfig(targetDir);
-
-	const { slug: appSlug } = appConfig;
-	if (!appSlug) {
-		throw new Error(`Invalid working directory, the current "dx.json" might be corrupted, please re-initialize.`);
-	}
-
-	const app = await DB.findOne<IApp>("app", { slug: appSlug });
-	if (!app) throw new Error(`Can't upload dotenv variables to "${env}" deploy environment due to "${appSlug}" app not found.`);
+	const { app } = await askForProjectAndApp(targetDir);
+	if (!app) throw new Error(`Unable to upload dotenv variables file to "${env}" deploy environment.`);
 
 	const envFile = path.resolve(targetDir, fileName);
 	if (!existsSync(envFile)) {

@@ -4,9 +4,11 @@ import inquirer from "inquirer";
 import path from "path";
 
 import type { IApp } from "@/entities";
-import { getAppConfig, kubeEnvToDotenv } from "@/plugins";
+import { kubeEnvToDotenv } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { getAppConfigFromApp } from "../apps/app-helper";
+import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
 
 type DownloadDotenvOptions = {
@@ -78,9 +80,10 @@ export const downloadDotenvByAppSlug = async (appSlug: string, env: string = "de
 export const downloadDotenv = async (env: string, options: DownloadDotenvOptions = {}) => {
 	const { targetDir = process.cwd() } = options;
 
-	const appConfig = getAppConfig(targetDir);
-
+	const { app } = await askForProjectAndApp(targetDir);
+	const appConfig = getAppConfigFromApp(app);
 	const { slug: appSlug } = appConfig;
+
 	if (!appSlug) {
 		throw new Error(`Invalid working directory, the current "dx.json" might be corrupted, please re-initialize.`);
 	}

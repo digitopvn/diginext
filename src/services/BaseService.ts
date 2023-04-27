@@ -8,7 +8,6 @@ import { model } from "mongoose";
 
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
-import { flattenObject } from "@/plugins/object";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import { replaceObjectIdsToStrings } from "@/plugins/traverse";
 
@@ -226,8 +225,6 @@ export default class BaseService<T> {
 		updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
 		// console.log("updateFilter :>> ", updateFilter);
 
-		const results = await this.find(updateFilter, options);
-
 		// convert all valid "ObjectId" string to ObjectId()
 		// console.log("[1] data :>> ", data);
 		const convertedData = cloneDeepWith(data, function (val) {
@@ -237,10 +234,14 @@ export default class BaseService<T> {
 		// set updated date
 		convertedData.updatedAt = new Date();
 
-		const updateData = options?.raw ? convertedData : { $set: flattenObject(convertedData) };
+		const updateData = options?.raw ? convertedData : { $set: convertedData };
 		// console.log("[2] updateData :>> ", updateData);
-		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
 
+		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
+		// console.log("[3] updateRes :>> ", updateRes);
+
+		// response > results
+		const results = await this.find(updateFilter, options);
 		return updateRes.acknowledged ? results : [];
 	}
 

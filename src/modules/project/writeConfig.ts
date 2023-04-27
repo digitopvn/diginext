@@ -36,7 +36,7 @@ export function generateAppConfig(options: InputOptions) {
 	};
 
 	// environment
-	appConfig.environment = {};
+	appConfig.deployEnvironment = {};
 
 	return appConfig;
 }

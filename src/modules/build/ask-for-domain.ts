@@ -49,7 +49,6 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 			// save app config:
 			if (!deployEnvironment.domains) deployEnvironment.domains = [];
 			deployEnvironment.domains.push(generatedDomain);
-			// saveAppConfig(appConfig, { directory: options.targetDirectory });
 
 			domains = deployEnvironment.domains;
 

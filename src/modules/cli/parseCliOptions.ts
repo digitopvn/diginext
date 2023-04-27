@@ -226,13 +226,7 @@ export async function parseCliOptions() {
 		.usage("$0 login --url=<build_server_url>", "Login into your build server")
 		.usage("$0 logout", "Sign out from your build server")
 		// command: config
-		.command("config", "Configurate your CLI", (_yargs) =>
-			_yargs
-				.command("get", "Get current CLI configuration")
-				.command("provider", "View/add/remove cloud provider")
-				.command("cluster", "View/add/remove kubernetes cluster")
-				.demandCommand(1)
-		)
+		.command("config", "Show configuration your CLI")
 		// command: update
 		.command("update", "Update your CLI version")
 		.usage("$0 update <version>", "Update your CLI to specific version")
@@ -516,6 +510,7 @@ export async function parseCliOptions() {
 		shouldInherit: (argv.inherit as boolean) ?? true,
 		shouldUploadDotenv: argv["upload-env"] as boolean,
 		shouldUseFreshDeploy: argv.fresh as boolean,
+		shouldCreate: (argv.create as boolean) ?? false,
 
 		// deployment
 		app: argv.app as IApp,

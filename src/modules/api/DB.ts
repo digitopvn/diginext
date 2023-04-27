@@ -3,7 +3,6 @@ import { isEmpty } from "lodash";
 
 import { isServerMode } from "@/app.config";
 import type { IQueryOptions, IQueryPagination } from "@/interfaces";
-import { flattenObjectPaths } from "@/plugins";
 import {
 	ApiKeyUserService,
 	AppService,
@@ -275,7 +274,8 @@ export class DB {
 			/**
 			 * ___Notes___: use the same flatten method with UPDATE for convenience!
 			 */
-			let newData = flattenObjectPaths(data);
+			// let newData = flattenObjectPaths(data);
+			let newData = data;
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
@@ -321,9 +321,10 @@ export class DB {
 			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 			// console.log("[DB] UPDATE > url :>> ", url);
 
-			const updateData = flattenObjectPaths(data);
+			// const updateData = flattenObjectPaths(data);
+			const updateData = data;
 			// console.log("[DB] UPDATE > updateData :>> ", updateData);
-			// logFull(updateData);
+			// console.dir(updateData, { depth: 10 });
 
 			const {
 				status,
