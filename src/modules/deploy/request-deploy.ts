@@ -43,7 +43,7 @@ export async function requestDeploy(options: InputOptions) {
 	if (!appConfig) return;
 
 	if (options.isDebugging) {
-		console.log("[LOCAL] dx.json :>>");
+		console.log("Request deploy > app config :>>");
 		console.dir(appConfig, { depth: 10 });
 	}
 
@@ -55,8 +55,10 @@ export async function requestDeploy(options: InputOptions) {
 	appConfig = validatedAppConfig;
 
 	if (options.isDebugging) {
-		console.log("[SERVER] dx.json :>>");
+		console.log("requestDeploy >  app config :>>");
 		console.dir(appConfig, { depth: 10 });
+		console.log("requestDeploy > deployEnvironment :>>");
+		console.dir(deployEnvironment, { depth: 10 });
 	}
 
 	/**

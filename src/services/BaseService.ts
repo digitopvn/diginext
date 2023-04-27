@@ -3,28 +3,15 @@ import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { cloneDeepWith } from "lodash";
-import type { Document, Model, PipelineStage, Schema } from "mongoose";
+import type { Model, PipelineStage, Schema } from "mongoose";
 import { model } from "mongoose";
 
-import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import { replaceObjectIdsToStrings } from "@/plugins/traverse";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
-
-function setDateWhenUpdateDocument(this: IBase & Document, next: (error?: NativeError) => void) {
-	this.updateOne({}, { $set: { updatedAt: new Date() } });
-	next();
-}
-
-function setDateWhenCreateDocument(this: IBase & Document, next: (error?: NativeError) => void) {
-	const now = new Date();
-	this.updatedAt = now;
-	if (!this.createdAt) this.createdAt = now;
-	next();
-}
 
 /**
  * ![DANGEROUS]
@@ -236,24 +223,26 @@ export default class BaseService<T = any> {
 	async update(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
 		const updateFilter = { ...filter };
 		updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
+		// console.log("updateFilter :>> ", updateFilter);
 
 		// convert all valid "ObjectId" string to ObjectId()
-		data = cloneDeepWith(data, function (val) {
+		// console.log("[1] data :>> ", data);
+		const convertedData = cloneDeepWith(data, function (val) {
 			if (isValidObjectId(val)) return MongoDB.toObjectId(val);
 		});
 
 		// set updated date
-		data.updatedAt = new Date();
+		convertedData.updatedAt = new Date();
 
-		const updateData = options?.raw ? data : { $set: data };
+		const updateData = options?.raw ? convertedData : { $set: convertedData };
+		// console.log("[2] updateData :>> ", updateData);
+
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
+		// console.log("[3] updateRes :>> ", updateRes);
 
-		if (updateRes.acknowledged) {
-			const results = await this.find(updateFilter, options);
-			return results;
-		} else {
-			return [];
-		}
+		// response > results
+		const results = await this.find(updateFilter, options);
+		return updateRes.acknowledged ? results : [];
 	}
 
 	async updateOne(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
@@ -262,8 +251,8 @@ export default class BaseService<T = any> {
 	}
 
 	async softDelete(filter?: IQueryFilter) {
-		const deleteFilter = filter;
-		const deletedItems = await this.update(deleteFilter, { deletedAt: new Date() });
+		const data = { deletedAt: new Date() };
+		const deletedItems = await this.update(filter, data);
 		console.log("deletedItems :>> ", deletedItems);
 		return { ok: deletedItems.length > 0, affected: deletedItems.length };
 	}

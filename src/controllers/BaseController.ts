@@ -66,20 +66,18 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 	}
 
 	async delete() {
-		const tobeDeletedItems = await this.service.find(this.filter);
-
-		if (tobeDeletedItems && tobeDeletedItems.length === 0)
-			return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Items not found.` });
+		const tobeDeletedItems = await this.service.count(this.filter);
+		if (tobeDeletedItems === 0) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Items not found.` });
 
 		const data = await this.service.delete(this.filter);
-
 		return respondSuccess({ data });
 	}
 
 	async softDelete() {
-		const data = await this.service.softDelete(this.filter);
-		if (!data || !data.ok) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
+		const tobeDeletedItems = await this.service.count(this.filter);
+		if (tobeDeletedItems === 0) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Items not found.` });
 
+		const data = await this.service.softDelete(this.filter);
 		return respondSuccess({ data });
 	}
 

@@ -21,13 +21,11 @@ export function generateAppConfig(options: InputOptions) {
 	appConfig.project = options.projectSlug;
 
 	// git
-	if (options.shouldUseGit) {
-		appConfig.git = {
-			provider: options.gitProvider,
-			repoURL: options.repoURL,
-			repoSSH: options.remoteSSH,
-		};
-	}
+	appConfig.git = {
+		provider: options.gitProvider,
+		repoURL: options.repoURL,
+		repoSSH: options.remoteSSH,
+	};
 
 	// framework
 	appConfig.framework = {
@@ -38,7 +36,7 @@ export function generateAppConfig(options: InputOptions) {
 	};
 
 	// environment
-	appConfig.environment = {};
+	appConfig.deployEnvironment = {};
 
 	return appConfig;
 }

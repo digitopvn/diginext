@@ -5,7 +5,8 @@ import { makeSlug } from "diginext-utils/dist/Slug";
 import { isArray, isBoolean, isEmpty, isString, isUndefined } from "lodash";
 
 import type { AppGitInfo, IApp, ICluster, IContainerRegistry, IFramework, IProject } from "@/entities";
-import type { HiddenBodyKeys, SslType } from "@/interfaces";
+import { AppDto } from "@/entities";
+import type { SslType } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
@@ -316,7 +317,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: Omit<IApp, keyof HiddenBodyKeys>, @Queries() queryParams?: IPatchQueryParams) {
+	async update(@Body() body: AppDto, @Queries() queryParams?: IPatchQueryParams) {
 		let project: IProject,
 			projectSvc = new ProjectService();
 
