@@ -1,4 +1,15 @@
-## [3.0.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.0.0...v3.0.1-prerelease.1) (2023-04-19)
+## [3.0.5-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.0.4...v3.0.5-prerelease.1) (2023-04-27)
+
+
+### Bug Fixes
+
+* **bitbucket:** catch error when fetch api of bitbucket ([68a977a](https://github.com/digitopvn/diginext/commit/68a977a97822ccacb18084579ab7f29cada81a79))
+* **build,deploy:** add cli version for tracking ([86e54ba](https://github.com/digitopvn/diginext/commit/86e54bacc61c53af8b48cbd767aed6f07c14c42c))
+* **git provider:** add api connect github and bitbucket ([197a916](https://github.com/digitopvn/diginext/commit/197a916ef1252952c848c3f04b27ac87e5d24d86))
+* **github:** create github repo when create new or init app ([0cb841f](https://github.com/digitopvn/diginext/commit/0cb841fdb40ff0a6df481bc9e84c1b2a9d82b67c))
+* **server-info:** skip docker or podman ver if not available ([d5d2e15](https://github.com/digitopvn/diginext/commit/d5d2e15093e6ccc7086a44d58f98c705a4f1e77d))
+
+## [3.0.4](https://github.com/digitopvn/diginext/compare/v3.0.3...v3.0.4) (2023-04-20)
 
 
 ### Bug Fixes
