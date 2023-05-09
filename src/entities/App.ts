@@ -94,17 +94,12 @@ export interface IApp extends IBase {
 	/**
 	 * The framework information of the app.
 	 *
-	 * @type {{
-	 *     name?: string;
-	 *     slug?: string;
-	 *     repoURL?: string;
-	 *     repoSSH?: string;
-	 *   }}
 	 * @memberof IApp
 	 */
 	framework?: {
 		name?: string;
 		slug?: string;
+		version?: string;
 		repoURL?: string;
 		repoSSH?: string;
 	};
@@ -161,6 +156,7 @@ export const appSchema = new Schema(
 			slug: { type: String },
 			repoURL: { type: String },
 			repoSSH: { type: String },
+			version: { type: String },
 		},
 		environment: { type: Map, of: String },
 		deployEnvironment: { type: Map },
