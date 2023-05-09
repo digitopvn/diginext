@@ -16,8 +16,8 @@ const bitbucketApiBaseURL = "https://api.bitbucket.org/2.0";
 const userApiPath = (provider: GitProviderType, org?: string) => (provider === "bitbucket" ? "/user" : provider === "github" ? "/user" : undefined);
 const userOrgApiPath = (provider: GitProviderType, org?: string) =>
 	provider === "bitbucket" ? "/workspaces" : provider === "github" ? "/user/orgs" : undefined;
-const orgRepoApiPath = (provider: GitProviderType, org?: string) =>
-	provider === "bitbucket" ? `/repositories/${org}` : provider === "github" ? `/orgs/${org}/repos` : undefined;
+const orgRepoApiPath = (provider: GitProviderType, org?: string, slug?: string) =>
+	provider === "bitbucket" ? `/repositories/${org}${slug ? `/${slug}` : ""}` : provider === "github" ? `/orgs/${org}/repos` : undefined;
 /**
  * Only applicable for Bitbucket
  */
@@ -346,6 +346,8 @@ interface BitbucketOrgProjectListResponse extends BitbucketResponse {
 	values: BitbucketProject[];
 }
 
+type BitbucketOrgProjectResponse = BitbucketProject & BitbucketResponse;
+
 interface GitHubOrg {
 	login: string;
 	id: number;
@@ -458,8 +460,9 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 	}
 
 	const response = await axios({ url: `${baseURL}${path}`, headers, method, data });
-
+	console.log("response :>> ", response);
 	const resData = response.data;
+	console.log("resData :>> ", resData);
 
 	// catch errors
 	if (provider.type === "bitbucket" && resData.error) throw new Error(`${func} "${path}" > ${resData.error.message}`);
@@ -544,10 +547,15 @@ const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDt
 	// process
 	if (provider.type === "bitbucket") {
 		// check if "Diginext" project existed
-		const bitbucketProjectRes = (await api(provider, orgProjectApiPath(provider))) as BitbucketOrgProjectListResponse;
-		if (bitbucketProjectRes.error) logWarn(`[BITBUCKET_API_ERROR] ${bitbucketProjectRes.error.message}`);
+		const bitbucketProjectRes = (await api(provider, orgProjectApiPath(provider))) as BitbucketOrgProjectResponse;
 
-		let dxProject = bitbucketProjectRes.values && bitbucketProjectRes.values.length > 0 ? bitbucketProjectRes.values[0] : undefined;
+		let dxProject: BitbucketOrgProjectResponse;
+
+		if (bitbucketProjectRes.error) {
+			logWarn(`[BITBUCKET_API_ERROR] ${bitbucketProjectRes.error.message}`);
+		} else {
+			dxProject = bitbucketProjectRes;
+		}
 
 		// if not, create "Diginext" project
 		if (!dxProject) {
@@ -561,26 +569,28 @@ const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDt
 			const dxProjectRes = (await api(provider, orgProjectApiPath(provider), {
 				data: projectData,
 				method: "POST",
-			})) as BitbucketProject & BitbucketFailureResponse;
+			})) as BitbucketOrgProjectResponse;
 
 			if (dxProjectRes.error) throw new Error(`[BITBUCKET_API_ERROR] ${bitbucketProjectRes.error.message}`);
 
-			dxProject = dxProjectRes as BitbucketProject;
+			dxProject = dxProjectRes;
 		}
 
+		console.log("dxProject :>> ", dxProject);
+
 		// create new repository
-		const newBitbucketRepo = (await api(provider, orgRepoApiPath(provider.type, provider.gitWorkspace), {
+		const newBitbucketRepo = (await api(provider, orgRepoApiPath(provider.type, provider.gitWorkspace, data.name), {
 			data: {
 				name: data.name,
-				slug: data.name,
-				is_private: data.private,
 				description: data.description,
+				is_private: data.private,
 				scm: "git",
 				// assign "DXP" project to new repository:
 				project: { key: dxProject.key },
 			},
 			method: "POST",
 		})) as BitbucketRepository;
+		console.log("newBitbucketRepo :>> ", newBitbucketRepo);
 
 		return {
 			provider: provider.type,
