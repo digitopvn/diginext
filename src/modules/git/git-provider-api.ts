@@ -460,9 +460,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 	}
 
 	const response = await axios({ url: `${baseURL}${path}`, headers, method, data });
-	console.log("response :>> ", response);
 	const resData = response.data;
-	console.log("resData :>> ", resData);
 
 	// catch errors
 	if (provider.type === "bitbucket" && resData.error) throw new Error(`${func} "${path}" > ${resData.error.message}`);
@@ -576,7 +574,7 @@ const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDt
 			dxProject = dxProjectRes;
 		}
 
-		console.log("dxProject :>> ", dxProject);
+		// console.log("dxProject :>> ", dxProject);
 
 		// create new repository
 		const newBitbucketRepo = (await api(provider, orgRepoApiPath(provider.type, provider.gitWorkspace, data.name), {
@@ -590,7 +588,7 @@ const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDt
 			},
 			method: "POST",
 		})) as BitbucketRepository;
-		console.log("newBitbucketRepo :>> ", newBitbucketRepo);
+		// console.log("newBitbucketRepo :>> ", newBitbucketRepo);
 
 		return {
 			provider: provider.type,
