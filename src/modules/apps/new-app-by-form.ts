@@ -3,17 +3,18 @@ import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 import { isEmpty, upperFirst } from "lodash";
 
-import type { IApp } from "@/entities";
+import type { AppDto, AppGitInfo, IApp } from "@/entities";
 import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
-import { getCurrentGitRepoData, parseGitRepoDataFromRepoSSH, updateAppConfig } from "@/plugins";
+import { getCurrentGitRepoData, parseGitRepoDataFromRepoSSH } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
 import { askForGitProvider } from "../git/ask-for-git-provider";
 import type { GitRepository, GitRepositoryDto } from "../git/git-provider-api";
 import { createOrSelectProject } from "./create-or-select-project";
+import { updateAppConfig } from "./update-config";
 
 export async function createAppByForm(options?: InputOptions) {
 	if (!options.project) options.project = await createOrSelectProject(options);
@@ -99,6 +100,8 @@ export async function createAppByForm(options?: InputOptions) {
 			default: curFramework?.mainBranch || "main",
 		});
 		options.frameworkVersion = frameworkVersion;
+	} else {
+		options.frameworkVersion = "unknown";
 	}
 
 	const currentGitData = await getCurrentGitRepoData(options.targetDirectory);
@@ -129,22 +132,25 @@ export async function createAppByForm(options?: InputOptions) {
 	}
 
 	// Call API to create new app
-	const appData = {
+	const appData: AppDto = {
 		name: options.name,
-		createdBy: options.username,
-		owner: options.userId,
+		// createdBy: options.username,
+		// owner: options.userId,
+		// workspace: options.workspaceId,
 		project: options.project._id,
-		workspace: options.workspaceId,
 		framework: {
 			name: options.framework.name,
 			slug: options.framework.slug,
 			repoSSH: options.framework.repoSSH,
 			repoURL: options.framework.repoURL,
+			version: options.frameworkVersion,
 		},
-		git: currentGitData ? { repoSSH: currentGitData.remoteSSH, provider: currentGitData.provider, repoURL: currentGitData.remoteURL } : {},
+		git: currentGitData
+			? ({ repoSSH: currentGitData.remoteSSH, provider: currentGitData.provider, repoURL: currentGitData.remoteURL } as AppGitInfo)
+			: ({} as AppGitInfo),
 		environment: {},
 		deployEnvironment: {},
-	} as IApp;
+	};
 
 	// console.log("createAppByForm > appData :>> ", appData);
 
@@ -167,7 +173,7 @@ export async function createAppByForm(options?: InputOptions) {
 	options.name = newApp.name;
 
 	// update existing "dx.json" if any
-	let appConfig = await updateAppConfig({ slug: newApp.slug, project: options.project.slug, name: newApp.name });
+	let appConfig = await updateAppConfig(newApp);
 	if (options.isDebugging) console.log("createAppByForm > appConfig :>> ", appConfig);
 
 	return newApp;

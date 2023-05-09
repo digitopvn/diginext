@@ -96,7 +96,7 @@
 		"husky-show": "npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
 		"docker-driver": "docker buildx create --driver docker-container --name diginext-cli-builder",
 		"podman-build-beta": "podman build -f Dockerfile -t digitop/diginext:beta --cache-from digitop/diginext .",
-		"docker-build-beta": "docker buildx build -f Dockerfile --push -t digitop/diginext:beta --builder=diginext-cli-beta-builder --cache-from type=registry,ref=digitop/diginext:beta .",
+		"docker-build-beta": "docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile --push -t digitop/diginext:$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-) -t digitop/diginext:beta --cache-from type=registry,ref=digitop/diginext .",
 		"docker-build-beta-amd": "docker buildx build -o docker-cache --platform=linux/amd64 -f Dockerfile -t digitop/diginext:beta --builder=diginext-cli-beta-builder --cache-from type=local,ref=docker-cache .",
 		"docker-build-beta-arm": "docker buildx build --platform=linux/amd64 -f Dockerfile --push -t digitop/diginext:beta --builder=diginext-cli-beta-builder --cache-from type=registry,ref=digitop/diginext:beta .",
 		"docker-build": "docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile --push -t digitop/diginext:$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-) -t digitop/diginext:latest --cache-from type=registry,ref=digitop/diginext .",
