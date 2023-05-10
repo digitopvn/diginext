@@ -259,6 +259,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
 		if (!body.name) return respondFailure({ msg: `App's name is required.` });
+		if (!body.git) return respondFailure("App's git info is required.");
 
 		// find parent project of this app
 		if (MongoDB.isValidObjectId(body.project)) {

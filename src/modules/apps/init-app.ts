@@ -2,6 +2,7 @@ import { logError } from "diginext-utils/dist/console/log";
 
 import type { AppGitInfo, IApp } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
+import { getCurrentGitRepoData } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { printInformation } from "../project/printInformation";
@@ -17,15 +18,15 @@ export async function execInitApp(options: InputOptions) {
 	options.skipCreatingDirectory = true;
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
 
-	// update GIT info in the database
-	const { framework } = options;
+	// update framework & GIT info in the database
+	const gitInfo = await getCurrentGitRepoData(options.targetDirectory);
 
 	const updateData = {} as IApp;
-	if (framework) updateData.framework = framework;
+	if (options.framework) updateData.framework = options.framework;
 	updateData.git = {} as AppGitInfo;
-	updateData.git.provider = options.gitProvider;
-	updateData.git.repoURL = options.remoteURL;
-	updateData.git.repoSSH = options.remoteSSH;
+	updateData.git.provider = gitInfo.provider;
+	updateData.git.repoURL = gitInfo.remoteURL;
+	updateData.git.repoSSH = gitInfo.remoteSSH;
 
 	if (options.isDebugging) console.log("[INIT APP] updateData :>> ", updateData);
 	const [updatedApp] = await DB.update<IApp>("app", { slug: initApp.slug }, updateData);

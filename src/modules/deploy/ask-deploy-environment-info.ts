@@ -8,7 +8,7 @@ import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { availableResourceSizes } from "@/interfaces/SystemTypes";
-import { resolveEnvFilePath } from "@/plugins";
+import { getCurrentGitRepoData, resolveEnvFilePath } from "@/plugins";
 import { isNumeric } from "@/plugins/number";
 
 import { DB } from "../api/DB";
@@ -16,6 +16,7 @@ import { getAppConfigFromApp } from "../apps/app-helper";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { updateAppConfig } from "../apps/update-config";
+import { updateAppGitInfo } from "../apps/update-git-config";
 import { askForDomain } from "../build";
 import { askForRegistry } from "../registry/ask-for-registry";
 import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
@@ -52,6 +53,16 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	if (options.isDebugging) console.log("askForDeployEnvironmentInfo > project :>> ", project);
 
 	// TODO: validate owner, workspace, git & framework ?
+
+	// verify if this app's directory has any git remote integrated
+	if (!app.git || !app.git.provider || !app.git.repoSSH || !app.git.repoURL) {
+		const gitInfo = await getCurrentGitRepoData(options.targetDirectory);
+		if (options.isDebugging) console.log("askForDeployEnvironmentInfo > gitInfo :>> ", gitInfo);
+
+		if (!gitInfo) throw new Error(`This app's directory doesn't have any git remote integrated.`);
+
+		app = await updateAppGitInfo(app, { provider: gitInfo.provider, repoSSH: gitInfo.remoteSSH, repoURL: gitInfo.remoteURL });
+	}
 
 	/**
 	 * -----------------------------------------------------------------------
