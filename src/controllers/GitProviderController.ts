@@ -123,7 +123,6 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	async update(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
 		let provider = await this.service.findOne(this.filter, this.options);
 		if (!provider) return respondFailure(`Git provider not found.`);
-
 		if (provider.type === "github" && provider.host !== "github.com") body.host = "github.com";
 		if (provider.type === "bitbucket" && provider.host !== "bitbucket.org") body.host = "bitbucket.org";
 
@@ -167,14 +166,15 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 		// update to db
 		provider = await this.service.updateOne(this.filter, body, this.options);
+		// console.log("GitProviderController > provider :>> ", provider);
 
 		// verify
 		let msg = "";
-		try {
-			provider = await this.service.verify(provider);
-		} catch (e) {
-			msg = e.toString();
-		}
+		// try {
+		provider = await this.service.verify(provider);
+		// } catch (e) {
+		// 	msg = e.toString();
+		// }
 
 		return respondSuccess({ data: provider, msg });
 	}

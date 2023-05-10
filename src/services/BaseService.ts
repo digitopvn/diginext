@@ -240,6 +240,9 @@ export default class BaseService<T> {
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
 		// console.log("[3] updateRes :>> ", updateRes);
 
+		// MAGIC: when update slug of the items -> update the filter as well
+		if (data.slug) updateFilter.slug = data.slug;
+
 		// response > results
 		const results = await this.find(updateFilter, options);
 		return updateRes.acknowledged ? results : [];
@@ -253,7 +256,7 @@ export default class BaseService<T> {
 	async softDelete(filter?: IQueryFilter) {
 		const data = { deletedAt: new Date() };
 		const deletedItems = await this.update(filter, data);
-		console.log("deletedItems :>> ", deletedItems);
+		// console.log("deletedItems :>> ", deletedItems);
 		return { ok: deletedItems.length > 0, affected: deletedItems.length };
 	}
 
