@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.0.4",
+	"version": "3.0.5-prerelease.1",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -54,7 +54,7 @@
 	},
 	"scripts": {
 		"build": "rm -rf dist && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && npm run restruct && chmod -R +x dist && npm link && pnpm swagger",
-		"build:deploy": "pnpm build && skaffold run --platform=linux/amd64,linux/arm64",
+		"build:deploy": "git merge origin/main && pnpm build && skaffold run --platform=linux/amd64,linux/arm64",
 		"build:run": "pnpm build && skaffold run --platform=linux/amd64,linux/arm64",
 		"build:deploy-release": "pnpm build && skaffold run --platform=linux/amd64,linux/arm64 && pnpm release:nobuild",
 		"deploy": "skaffold run --tail",
@@ -96,7 +96,7 @@
 		"husky-show": "npm pkg set scripts.prepare='husky install' && npm pkg set scripts.postinstall='husky install'",
 		"docker-driver": "docker buildx create --driver docker-container --name diginext-cli-builder",
 		"podman-build-beta": "podman build -f Dockerfile -t digitop/diginext:beta --cache-from digitop/diginext .",
-		"docker-build-beta": "docker buildx build -f Dockerfile --push -t digitop/diginext:beta --builder=diginext-cli-beta-builder --cache-from type=registry,ref=digitop/diginext:beta .",
+		"docker-build-beta": "docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile --push -t digitop/diginext:$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-) -t digitop/diginext:beta --cache-from type=registry,ref=digitop/diginext .",
 		"docker-build-beta-amd": "docker buildx build -o docker-cache --platform=linux/amd64 -f Dockerfile -t digitop/diginext:beta --builder=diginext-cli-beta-builder --cache-from type=local,ref=docker-cache .",
 		"docker-build-beta-arm": "docker buildx build --platform=linux/amd64 -f Dockerfile --push -t digitop/diginext:beta --builder=diginext-cli-beta-builder --cache-from type=registry,ref=digitop/diginext:beta .",
 		"docker-build": "docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile --push -t digitop/diginext:$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-) -t digitop/diginext:latest --cache-from type=registry,ref=digitop/diginext .",

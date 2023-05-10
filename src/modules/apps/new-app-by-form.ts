@@ -1,17 +1,20 @@
 import { log, logError } from "diginext-utils/dist/console/log";
+import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 import { isEmpty, upperFirst } from "lodash";
 
-import { saveCliConfig } from "@/config/config";
-import type { IApp, IGitProvider } from "@/entities";
+import type { AppDto, AppGitInfo, IApp } from "@/entities";
 import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
-import { getAppConfig, getCurrentGitRepoData, parseGitRepoDataFromRepoSSH, updateAppConfig } from "@/plugins";
+import { getCurrentGitRepoData, parseGitRepoDataFromRepoSSH } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
+import { askForGitProvider } from "../git/ask-for-git-provider";
+import type { GitRepository, GitRepositoryDto } from "../git/git-provider-api";
 import { createOrSelectProject } from "./create-or-select-project";
+import { updateAppConfig } from "./update-config";
 
 export async function createAppByForm(options?: InputOptions) {
 	if (!options.project) options.project = await createOrSelectProject(options);
@@ -34,8 +37,8 @@ export async function createAppByForm(options?: InputOptions) {
 		options.name = name;
 	}
 
-	// "kind of" unique slug
-	// options.slug = (makeSlug(options.name) + "-" + generatePassword(6, true)).toLowerCase();
+	// git repo slug
+	options.repoSlug = `${options.project.slug}-${makeSlug(options.name)}`.toLowerCase();
 
 	const noneFramework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
 	let curFramework = noneFramework;
@@ -97,91 +100,64 @@ export async function createAppByForm(options?: InputOptions) {
 			default: curFramework?.mainBranch || "main",
 		});
 		options.frameworkVersion = frameworkVersion;
+	} else {
+		options.frameworkVersion = "unknown";
 	}
 
 	const currentGitData = await getCurrentGitRepoData(options.targetDirectory);
 	if (options.isDebugging) log(`[CREATE APP BY FORM] current git data :>>`, currentGitData);
 
 	if (currentGitData) {
-		options.shouldUseGit = true;
 		options.gitProvider = currentGitData.provider;
 		options.remoteSSH = currentGitData.remoteSSH;
 		options.remoteURL = currentGitData.remoteURL;
 	} else {
-		if (options.shouldUseGit) {
-			let currentGitProvider: IGitProvider;
-			if (!options.gitProvider) {
-				const gitProviders = await DB.find<IGitProvider>("git", {});
+		let gitProvider = await askForGitProvider();
 
-				if (isEmpty(gitProviders)) {
-					logError(`This workspace doesn't have any git providers integrated.`);
-					return;
-				}
+		// Create new repo:
+		const repoData: GitRepositoryDto = {
+			name: options.repoSlug,
+			private: !options.isPublic,
+		};
+		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > repoData :>> ", repoData);
+		const newRepo = await DB.create<GitRepository>("git", repoData, {
+			subpath: "/orgs/repos",
+			filter: { slug: gitProvider.slug },
+		});
+		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > newRepo :>> ", newRepo);
 
-				const gitProviderChoices = [
-					{ name: "None", value: { name: "None", type: "none" } },
-					...gitProviders.map((g) => {
-						return { name: g.name, value: g };
-					}),
-				];
-
-				const { gitProvider } = await inquirer.prompt({
-					type: "list",
-					name: "gitProvider",
-					message: "Git provider:",
-					choices: gitProviderChoices,
-				});
-
-				if (gitProvider.type !== "none") {
-					currentGitProvider = gitProvider;
-					options.gitProvider = currentGitProvider.type;
-
-					// set this git provider to default:
-					saveCliConfig({ currentGitProvider });
-				} else {
-					options.shouldUseGit = false;
-				}
-			} else {
-				// search for this git provider
-				currentGitProvider = await DB.findOne<IGitProvider>("git", { type: options.gitProvider });
-				if (!currentGitProvider) {
-					logError(`Git provider "${options.gitProvider}" not found.`);
-					return;
-				}
-
-				options.gitProvider = currentGitProvider.type;
-
-				// set this git provider to default:
-				saveCliConfig({ currentGitProvider });
-			}
-		}
+		options.gitProvider = newRepo.provider;
+		options.remoteSSH = newRepo.ssh_url;
+		options.remoteURL = newRepo.repo_url;
 	}
 
 	// Call API to create new app
-	const appData = {
+	const appData: AppDto = {
 		name: options.name,
-		createdBy: options.username,
-		owner: options.userId,
+		// createdBy: options.username,
+		// owner: options.userId,
+		// workspace: options.workspaceId,
 		project: options.project._id,
-		workspace: options.workspaceId,
 		framework: {
 			name: options.framework.name,
 			slug: options.framework.slug,
 			repoSSH: options.framework.repoSSH,
 			repoURL: options.framework.repoURL,
+			version: options.frameworkVersion,
 		},
-		git: currentGitData ? { repoSSH: currentGitData.remoteSSH, provider: currentGitData.provider, repoURL: currentGitData.remoteURL } : {},
+		git: currentGitData
+			? ({ repoSSH: currentGitData.remoteSSH, provider: currentGitData.provider, repoURL: currentGitData.remoteURL } as AppGitInfo)
+			: ({} as AppGitInfo),
 		environment: {},
 		deployEnvironment: {},
-	} as IApp;
+	};
 
 	// console.log("createAppByForm > appData :>> ", appData);
 
-	if (options.shouldUseGit) {
-		appData.git.provider = options.gitProvider;
-		if (options.remoteSSH) appData.git.repoSSH = options.remoteSSH;
-		if (options.remoteURL) appData.git.repoURL = options.remoteURL;
-	}
+	appData.git.provider = options.gitProvider;
+	if (options.remoteSSH) appData.git.repoSSH = options.remoteSSH;
+	if (options.remoteURL) appData.git.repoURL = options.remoteURL;
+
 	if (options.isDebugging) log(`Create new app with data:`, appData);
 	const newApp = await DB.create<IApp>("app", appData);
 	if (options.isDebugging) log({ newApp });
@@ -197,8 +173,8 @@ export async function createAppByForm(options?: InputOptions) {
 	options.name = newApp.name;
 
 	// update existing "dx.json" if any
-	const appConfig = getAppConfig(options.targetDirectory);
-	if (appConfig) updateAppConfig({ slug: newApp.slug, project: options.project.slug, name: newApp.name });
+	let appConfig = await updateAppConfig(newApp);
+	if (options.isDebugging) console.log("createAppByForm > appConfig :>> ", appConfig);
 
 	return newApp;
 }

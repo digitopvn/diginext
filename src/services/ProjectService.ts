@@ -47,11 +47,11 @@ export default class ProjectService extends BaseService<IProject> {
 					}
 				}
 			}
-		}
 
-		// find all related apps and delete them all:
-		const deletedApps = await appSvc.softDelete(appFilter);
-		logWarn(`[ProjectService] Deleted ${deletedApps.affected} apps.`);
+			// find all related apps and delete them all:
+			const deletedApps = await appSvc.softDelete(appFilter);
+			logWarn(`[ProjectService] Deleted ${deletedApps.affected} apps.`);
+		}
 
 		// delete the project in the database:
 		const result = await super.softDelete(filter);

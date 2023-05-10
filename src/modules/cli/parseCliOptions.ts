@@ -37,7 +37,7 @@ const argvOptions = {
 	host: { describe: "Input host address (withou http)" },
 	overwrite: { describe: "[DANGER] Force execute a command (skip any errors)", alias: "force" },
 	output: { describe: "Output type - default is 'string' (string | yaml | json)", alias: "o" },
-	git: { describe: "Create new remote repository or not" },
+	public: { describe: "Git repository access mode (private/public)" },
 	merge: { describe: "Force git merge" },
 	close: { describe: "Should close or not" },
 	create: { describe: "Should create something" },
@@ -58,6 +58,7 @@ const argvOptions = {
 	framework: { describe: "Specify framework", alias: "fw" },
 	targetDir: { describe: "Specify target project directory", alias: "dir" },
 	"git-provider": { describe: "Specify GIT provider", alias: "gp" },
+	"git-workspace": { describe: "Specify GIT workspace slug", alias: "gw" },
 	provider: { describe: "Specify selected cloud provider", alias: "cp" },
 	custom: { describe: "Select a custom provider", alias: "custom" },
 	do: { describe: "Select Digital Ocean as a provider", alias: "digitalocean" },
@@ -94,7 +95,6 @@ const globalOptions = {
 
 const newProjectOptions = {
 	overwrite: argvOptions.overwrite,
-	git: argvOptions.git,
 	update: argvOptions.update,
 	install: argvOptions.install,
 	projectName: argvOptions.projectName,
@@ -106,6 +106,8 @@ const newProjectOptions = {
 	app: argvOptions.app,
 	name: argvOptions.name,
 	slug: argvOptions.slug,
+	public: argvOptions.public,
+	"git-workspace": argvOptions["git-workspace"],
 };
 
 const userInputOptions = {
@@ -224,13 +226,7 @@ export async function parseCliOptions() {
 		.usage("$0 login --url=<build_server_url>", "Login into your build server")
 		.usage("$0 logout", "Sign out from your build server")
 		// command: config
-		.command("config", "Configurate your CLI", (_yargs) =>
-			_yargs
-				.command("get", "Get current CLI configuration")
-				.command("provider", "View/add/remove cloud provider")
-				.command("cluster", "View/add/remove kubernetes cluster")
-				.demandCommand(1)
-		)
+		.command("config", "Show configuration your CLI")
 		// command: update
 		.command("update", "Update your CLI version")
 		.usage("$0 update <version>", "Update your CLI to specific version")
@@ -482,14 +478,15 @@ export async function parseCliOptions() {
 		isTail: (argv.tail as boolean) ?? false,
 		isLocal: (argv.local as boolean) ?? false,
 		overwrite: (argv.overwrite as boolean) ?? false,
-		shouldUseGit: (argv.git as boolean) ?? true,
 		gitProvider: argv["git-provider"] as GitProviderType,
 
-		// project
+		// project & app
 		projectName: argv.projectName as string,
 		projectSlug: argv.projectSlug as string,
 		targetDirectory: argv.targetDir as string,
 		framework: argv.framework as any,
+		isPublic: (argv.public as boolean) ?? false,
+		gitWorkspace: argv["git-workspace"] as string,
 
 		// environment
 		env: (argv.env as string) ?? "dev",
@@ -513,6 +510,7 @@ export async function parseCliOptions() {
 		shouldInherit: (argv.inherit as boolean) ?? true,
 		shouldUploadDotenv: argv["upload-env"] as boolean,
 		shouldUseFreshDeploy: argv.fresh as boolean,
+		shouldCreate: (argv.create as boolean) ?? false,
 
 		// deployment
 		app: argv.app as IApp,

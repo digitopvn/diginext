@@ -17,11 +17,12 @@ export type DeployBuildOptions = {
 	author: IUser;
 	workspace: IWorkspace;
 	buildDirectory: string;
+	cliVersion?: string;
 	shouldUseFreshDeploy?: boolean;
 };
 
 export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
-	const { env, author, workspace, buildDirectory, shouldUseFreshDeploy = false } = options;
+	const { env, author, workspace, buildDirectory, cliVersion, shouldUseFreshDeploy = false } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
 	const { slug: username } = author;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
@@ -86,6 +87,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generating the deployment files on server...` });
 	try {
 		deployment = await generateDeployment({
+			appSlug,
 			env,
 			username,
 			workspace,

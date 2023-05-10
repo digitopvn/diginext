@@ -3,21 +3,19 @@ import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 import { isEmpty, isNaN } from "lodash";
 
-import { getCliConfig } from "@/config/config";
-import type { IApp, ICloudProvider, ICluster, IContainerRegistry, IProject } from "@/entities";
+import type { IApp, ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { availableResourceSizes } from "@/interfaces/SystemTypes";
-import { getAppConfig, resolveEnvFilePath, saveAppConfig } from "@/plugins";
+import { resolveEnvFilePath } from "@/plugins";
 import { isNumeric } from "@/plugins/number";
 
-import { fetchApi } from "../api";
 import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
-import { createOrSelectApp } from "../apps/create-or-select-app";
-import { createOrSelectProject } from "../apps/create-or-select-project";
+import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
+import { updateAppConfig } from "../apps/update-config";
 import { askForDomain } from "../build";
 import { askForRegistry } from "../registry/ask-for-registry";
 import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
@@ -48,30 +46,10 @@ export const askForCertIssuer = async (options: { question?: string; defaultValu
 export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequestOptions) => {
 	const { env, targetDirectory: appDirectory = process.cwd() } = options;
 
-	/**
-	 * --------------------------------------------------
-	 * VALIDATE & SAVE CONFIG TO LOCAL APP CONFIG (AGAIN)
-	 * --------------------------------------------------
-	 * (We need to validate "project" & "app" again here because this method is also used
-	 * by REQUEST DEPLOY IMAGE URL, which don't have "dx.json" app configuration)
-	 */
-
-	let localAppConfig = getAppConfig(appDirectory);
-	const localDeployEnvironment = localAppConfig.environment[env] || {};
-	const localDeployDomains = localDeployEnvironment.domains || [];
-
-	let project = localAppConfig.project ? await DB.findOne<IProject>("project", { slug: localAppConfig.project }) : undefined;
-	if (!project) project = await createOrSelectProject(options);
-	localAppConfig.project = project.slug;
-
-	// console.log("askForDeployEnvironmentInfo > project :>> ", project);
-
-	let app = localAppConfig.slug
-		? await DB.findOne<IApp>("app", { slug: localAppConfig.slug }, { populate: ["project", "owner", "workspace"] })
-		: undefined;
-	if (!app) app = await createOrSelectApp(project.slug, options);
-	// console.log("askForDeployEnvironmentInfo > app :>> ", app);
-	localAppConfig.slug = app.slug;
+	// ask for project & app information
+	let { project, app } = await askForProjectAndApp(options.targetDirectory, options);
+	if (options.isDebugging) console.log("askForDeployEnvironmentInfo > app :>> ", app);
+	if (options.isDebugging) console.log("askForDeployEnvironmentInfo > project :>> ", project);
 
 	// TODO: validate owner, workspace, git & framework ?
 
@@ -86,39 +64,42 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	 * - "namespace" is different
 	 */
 
-	const serverAppConfig = getAppConfigFromApp(app);
-	if (typeof serverAppConfig.environment === "undefined") serverAppConfig.environment = {};
-	const serverDeployEnvironment = serverAppConfig.environment[env] || {};
+	let serverAppConfig = getAppConfigFromApp(app);
+	if (options.isDebugging) console.log("askForDeployEnvironmentInfo > serverAppConfig :>> ", serverAppConfig);
+	if (typeof serverAppConfig.deployEnvironment === "undefined") serverAppConfig.deployEnvironment = {};
 
+	let serverDeployEnvironment = serverAppConfig.deployEnvironment[env] || {};
+	const environmentDomains = serverDeployEnvironment.domains || [];
+	if (options.isDebugging) console.log("askForDeployEnvironmentInfo > serverDeployEnvironment :>> ", serverDeployEnvironment);
 	// TODO: move this part to server side?
-	if (
-		serverAppConfig.project !== localAppConfig.project ||
-		serverAppConfig.slug !== localAppConfig.slug ||
-		serverDeployEnvironment.cluster !== localDeployEnvironment.cluster ||
-		serverDeployEnvironment.namespace !== localDeployEnvironment.namespace
-	) {
-		// Call API to terminate previous deployment
-		const { buildServerUrl } = getCliConfig();
-		const terminateData = { slug: serverAppConfig.slug, env };
-		// console.log("terminateData :>> ", terminateData);
-		const { status, messages } = await fetchApi({
-			url: `${buildServerUrl}/api/v1/app/environment`,
-			method: "DELETE",
-			data: terminateData,
-		});
-		if (!status) {
-			logWarn(`Can't terminate app's deploy environment:`, messages);
-		} else {
-			log(`Terminated "${app.slug}" app's "${env}" deploy environment since the app config was changed.`);
-		}
-	}
+	// if (
+	// 	serverAppConfig.project !== localAppConfig.project ||
+	// 	serverAppConfig.slug !== localAppConfig.slug ||
+	// 	serverDeployEnvironment.cluster !== localDeployEnvironment.cluster ||
+	// 	serverDeployEnvironment.namespace !== localDeployEnvironment.namespace
+	// ) {
+	// 	// Call API to terminate previous deployment
+	// 	const { buildServerUrl } = getCliConfig();
+	// 	const terminateData = { slug: serverAppConfig.slug, env };
+	// 	// console.log("terminateData :>> ", terminateData);
+	// 	const { status, messages } = await fetchApi({
+	// 		url: `${buildServerUrl}/api/v1/app/environment`,
+	// 		method: "DELETE",
+	// 		data: terminateData,
+	// 	});
+	// 	if (!status) {
+	// 		logWarn(`Can't terminate app's deploy environment:`, messages);
+	// 	} else {
+	// 		log(`Terminated "${app.slug}" app's "${env}" deploy environment since the app config was changed.`);
+	// 	}
+	// }
 
 	/**
 	 * PARSE LOCAL DEPLOYMENT CONFIG & ASK FOR MISSING INFO
 	 */
 
 	// request cluster
-	if (!localDeployEnvironment.cluster) {
+	if (!serverDeployEnvironment.cluster) {
 		const clusters = await DB.find<ICluster>("cluster", {}, { populate: ["provider"] }, { limit: 20 });
 		if (isEmpty(clusters)) {
 			logError(`No clusters found in this workspace. Please add one to deploy on.`);
@@ -133,27 +114,25 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 				return { name: _cluster.name, value: _cluster };
 			}),
 		});
-		localDeployEnvironment.cluster = cluster.shortName;
-		localDeployEnvironment.provider = (cluster.provider as ICloudProvider).shortName;
+		serverDeployEnvironment.cluster = cluster.shortName;
+		serverDeployEnvironment.provider = (cluster.provider as ICloudProvider).shortName;
 	} else {
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: localDeployEnvironment.cluster });
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: serverDeployEnvironment.cluster });
 		if (!cluster) {
-			logError(`Cluster "${localDeployEnvironment.cluster}" not found.`);
+			logError(`Cluster "${serverDeployEnvironment.cluster}" not found.`);
 			return;
 		}
 	}
 
-	localAppConfig.environment[env].cluster = localDeployEnvironment.cluster;
-	localAppConfig.environment[env].provider = localDeployEnvironment.provider;
-	options.cluster = localDeployEnvironment.cluster;
-	options.provider = localDeployEnvironment.provider;
+	options.cluster = serverDeployEnvironment.cluster;
+	options.provider = serverDeployEnvironment.provider;
 
 	// request domains
 	// console.log("deployEnvironment.domains :>> ", deployEnvironment.domains);
-	if (isEmpty(localDeployDomains)) {
+	if (isEmpty(environmentDomains)) {
 		try {
-			const domains = await askForDomain(env, project.slug, app.slug, localDeployEnvironment);
-			localDeployEnvironment.domains = isEmpty(domains) ? [] : domains;
+			const domains = await askForDomain(env, project.slug, app.slug, serverDeployEnvironment);
+			serverDeployEnvironment.domains = isEmpty(domains) ? [] : domains;
 		} catch (e) {
 			logError(`[ASK_DEPLOY_INFO] ${e}`);
 			return;
@@ -161,9 +140,8 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	} else {
 		// TODO: check for domain DNS ?
 	}
-	localAppConfig.environment[env].domains = localDeployEnvironment.domains;
 
-	if (isEmpty(localDeployEnvironment.domains)) {
+	if (isEmpty(serverDeployEnvironment.domains)) {
 		logWarn(
 			`This app doesn't have any domains configurated & will be reachable within namespace/cluster scope. 
 To expose this app to the internet later, you can add your own domain to "dx.json" & deploy it again.`
@@ -172,34 +150,31 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 
 	// request container registry
 	let registry: IContainerRegistry;
-	if (localDeployEnvironment.registry) {
-		registry = await DB.findOne("registry", { slug: localDeployEnvironment.registry });
-		if (registry) localDeployEnvironment.registry = registry.slug;
+	if (serverDeployEnvironment.registry) {
+		registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry });
+		if (registry) serverDeployEnvironment.registry = registry.slug;
 	}
-	if (!localDeployEnvironment.registry) {
+	if (!serverDeployEnvironment.registry) {
 		registry = await askForRegistry();
-		localDeployEnvironment.registry = registry.slug;
+		serverDeployEnvironment.registry = registry.slug;
 	}
-	localAppConfig.environment[env].registry = localDeployEnvironment.registry;
 
 	// request imageURL
-	if (!localDeployEnvironment.imageURL) {
+	if (!serverDeployEnvironment.imageURL) {
 		const imageSlug = `${project.slug}/${app.slug}`;
-		localDeployEnvironment.imageURL = `${registry.imageBaseURL}/${imageSlug}`;
+		serverDeployEnvironment.imageURL = `${registry.imageBaseURL}/${imageSlug}`;
 	}
-	options.imageURL = localDeployEnvironment.imageURL;
-	localAppConfig.environment[env].imageURL = localDeployEnvironment.imageURL;
+	options.imageURL = serverDeployEnvironment.imageURL;
 
 	// request ingress class
 	// deployEnvironment.ingress;
 
 	// request namespace
-	if (!localDeployEnvironment.namespace) localDeployEnvironment.namespace = `${project.slug}-${env}`;
-	localAppConfig.environment[env].namespace = localDeployEnvironment.namespace;
-	options.namespace = localDeployEnvironment.namespace;
+	if (!serverDeployEnvironment.namespace) serverDeployEnvironment.namespace = `${project.slug}-${env}`;
+	options.namespace = serverDeployEnvironment.namespace;
 
 	// request port
-	if (typeof localDeployEnvironment.port === "undefined" || isNaN(localDeployEnvironment.port)) {
+	if (typeof serverDeployEnvironment.port === "undefined" || isNaN(serverDeployEnvironment.port)) {
 		const { selectedPort } = await inquirer.prompt<{ selectedPort: number }>({
 			type: "number",
 			name: "selectedPort",
@@ -207,29 +182,25 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 			default: 3000,
 			validate: (input) => (isNaN(input) ? "Port should be a valid number." : true),
 		});
-		localDeployEnvironment.port = options.port = selectedPort;
+		serverDeployEnvironment.port = options.port = selectedPort;
 	}
-	options.port = localDeployEnvironment.port;
-	localAppConfig.environment[env].port = localDeployEnvironment.port;
+	options.port = serverDeployEnvironment.port;
 
 	// request inherit previous deployment config
-	if (typeof localDeployEnvironment.shouldInherit === "undefined") localDeployEnvironment.shouldInherit = true;
-	options.shouldInherit = localDeployEnvironment.shouldInherit;
-	localAppConfig.environment[env].shouldInherit = localDeployEnvironment.shouldInherit;
+	if (typeof serverDeployEnvironment.shouldInherit === "undefined") serverDeployEnvironment.shouldInherit = true;
+	options.shouldInherit = serverDeployEnvironment.shouldInherit;
 
 	// request cdn
-	if (typeof localDeployEnvironment.cdn === "undefined") localDeployEnvironment.cdn = false;
-	options.shouldEnableCDN = localDeployEnvironment.cdn;
-	localAppConfig.environment[env].cdn = localDeployEnvironment.cdn;
+	if (typeof serverDeployEnvironment.cdn === "undefined") serverDeployEnvironment.cdn = false;
+	options.shouldEnableCDN = serverDeployEnvironment.cdn;
 
 	// request replicas
-	if (typeof localDeployEnvironment.replicas === "undefined") localDeployEnvironment.replicas = 1;
-	if (!isNumeric(localDeployEnvironment.replicas)) localDeployEnvironment.replicas = 1;
-	options.replicas = localDeployEnvironment.replicas;
-	localAppConfig.environment[env].replicas = localDeployEnvironment.replicas;
+	if (typeof serverDeployEnvironment.replicas === "undefined") serverDeployEnvironment.replicas = 1;
+	if (!isNumeric(serverDeployEnvironment.replicas)) serverDeployEnvironment.replicas = 1;
+	options.replicas = serverDeployEnvironment.replicas;
 
 	// request container size
-	if (typeof localDeployEnvironment.size === "undefined") {
+	if (typeof serverDeployEnvironment.size === "undefined") {
 		const { selectedSize } = await inquirer.prompt<{ selectedSize: ResourceQuotaSize }>({
 			type: "list",
 			name: "selectedSize",
@@ -238,70 +209,55 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 				return { name: r, value: r };
 			}),
 		});
-		localDeployEnvironment.size = selectedSize;
+		serverDeployEnvironment.size = selectedSize;
 	}
-	options.size = localDeployEnvironment.size;
-	localAppConfig.environment[env].size = localDeployEnvironment.size;
+	options.size = serverDeployEnvironment.size;
 
 	// request SSL config
 	// TODO: Each domain should has its own tls secret
-	if (localDeployEnvironment.domains.length > 0) {
-		const primaryDomain = localDeployEnvironment.domains[0];
-		if (typeof localDeployEnvironment.ssl === "undefined" || localDeployEnvironment.ssl === "none") {
-			localDeployEnvironment.ssl = await askForCertIssuer();
+	if (serverDeployEnvironment.domains.length > 0) {
+		if (typeof serverDeployEnvironment.ssl === "undefined" || serverDeployEnvironment.ssl === "none") {
+			serverDeployEnvironment.ssl = await askForCertIssuer();
 		}
 
 		options.ssl = true;
-		if (localDeployEnvironment.ssl === "letsencrypt" || localDeployEnvironment.ssl === "none") {
+		if (serverDeployEnvironment.ssl === "letsencrypt" || serverDeployEnvironment.ssl === "none") {
 			// leave empty so the build server will generate it automatically
-			localDeployEnvironment.tlsSecret = "";
+			serverDeployEnvironment.tlsSecret = "";
 		} else {
 			// if they select "custom" SSL certificate -> ask for secret name:
 			const { customSecretName } = await inquirer.prompt({
 				type: "input",
 				name: "customSecretName",
 				message: `Name your predefined custom SSL secret (ENTER to use default):`,
-				default: localDeployEnvironment.tlsSecret,
+				default: serverDeployEnvironment.tlsSecret,
 			});
-			if (customSecretName) localDeployEnvironment.tlsSecret = customSecretName;
+			if (customSecretName) serverDeployEnvironment.tlsSecret = customSecretName;
 		}
 	} else {
 		options.ssl = false;
-		localDeployEnvironment.ssl = "none";
-		localDeployEnvironment.tlsSecret = undefined;
-		localDeployEnvironment.domains = [];
+		serverDeployEnvironment.ssl = "none";
+		serverDeployEnvironment.tlsSecret = undefined;
+		serverDeployEnvironment.domains = [];
 		// TODO: remove domains from database
 	}
-	localAppConfig.environment[env].ssl = localDeployEnvironment.ssl;
-	localAppConfig.environment[env].tlsSecret = localDeployEnvironment.tlsSecret;
-
-	// save deploy environment to "dx.json"
-	const appConfig = saveAppConfig(localAppConfig, { directory: appDirectory });
-	if (options.isDebugging) log(`[ASK DEPLOY INFO] appConfig :>>`, appConfig);
 
 	/**
-	 * PUSH LOCAL APP CONFIG TO SERVER:
+	 * UPDATE APP CONFIG ON SERVER:
 	 * (save app & its deploy environment data to database)
 	 */
-	const deployEnvironment = appConfig.environment[env];
-	const updateAppData = {
-		slug: appConfig.slug, // <-- update old app slug -> new app slug (if any)
-		projectSlug: appConfig.project, // <-- update old app projectSlug -> new app projectSlug (if any)
-		project: project._id, // <-- update old app's project -> new app's project (if any)
-		deployEnvironment: {
-			[env]: deployEnvironment, // <-- update new app's deploy environment
-		},
-	};
-	if (options.isDebugging) log(`[ASK DEPLOY INFO] updateAppData :>>`, updateAppData);
+	if (options.isDebugging) console.log(">>>>>>>>> askDeployEnvironmentInfo > updateAppConfig()");
+	if (options.isDebugging) console.log("askDeployEnvironmentInfo > serverAppConfig :>> ", serverAppConfig);
+	if (options.isDebugging) console.log("askDeployEnvironmentInfo > serverDeployEnvironment :>> ", serverDeployEnvironment);
 
-	const [updatedApp] = await DB.update<IApp>("app", { slug: appConfig.slug }, updateAppData);
+	const appConfig = await updateAppConfig(app, env, serverDeployEnvironment);
+	serverDeployEnvironment = appConfig.deployEnvironment[env];
 
-	if (!updatedApp) {
-		logError(`App not found (probably deleted?)`);
-		return;
-	}
+	if (options.isDebugging) log(`[ASK DEPLOY INFO] serverDeployEnvironment :>>`, serverDeployEnvironment);
 
-	if (options.isDebugging) log(`[ASK DEPLOY INFO] updatedApp :>>`, updatedApp);
+	// fetched latest app on server
+	app = await DB.findOne<IApp>("app", { slug: app.slug }, { populate: ["project", "owner", "workspace"] });
+	if (options.isDebugging) log(`[ASK DEPLOY INFO] updated app :>>`, app);
 
 	/**
 	 * UPLOAD ENVIRONMENT VARIABLES
@@ -342,5 +298,5 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	// [SECURITY CHECK] warns if DOTENV files are not listed in ".gitignore" file
 	await checkGitignoreContainsDotenvFiles({ targetDir: appDirectory });
 
-	return { project, app, appConfig, deployEnvironment };
+	return { project, app, appConfig, deployEnvironment: serverDeployEnvironment };
 };

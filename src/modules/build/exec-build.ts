@@ -6,7 +6,10 @@ import { isEmpty } from "lodash";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { SslIssuer } from "@/interfaces/SystemTypes";
 
-import { getAppConfig, resolveDockerfilePath, saveAppConfig } from "../../plugins/utils";
+import { resolveDockerfilePath } from "../../plugins/utils";
+import { getAppConfigFromApp } from "../apps/app-helper";
+import { askForProjectAndApp } from "../apps/ask-project-and-app";
+import { updateAppConfig } from "../apps/update-config";
 import { askForDomain } from "./ask-for-domain";
 import { startBuildV1 } from "./start-build";
 
@@ -20,9 +23,11 @@ export async function execBuild(options: InputOptions) {
 
 	const { env = "dev", targetDirectory } = options;
 
-	const appConfig = getAppConfig(options.targetDirectory);
+	let { app } = await askForProjectAndApp(options.targetDirectory, options);
+
+	let appConfig = getAppConfigFromApp(app);
 	const { project, slug } = appConfig;
-	const deployEnvironment = appConfig.environment[env];
+	const deployEnvironment = appConfig.deployEnvironment[env];
 
 	// check Dockerfile
 	let dockerFile = resolveDockerfilePath({ targetDirectory, env });
@@ -46,10 +51,10 @@ export async function execBuild(options: InputOptions) {
 			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "dx.json" to expose this app to the internet anytime.`
 		);
 	}
-	appConfig.environment[env].domains = domains;
+	appConfig.deployEnvironment[env].domains = domains;
 
 	// if they have any domains, ask if they want to use "letsencrypt":
-	if (appConfig.environment[env].domains.length > 0 && !appConfig.environment[env].ssl) {
+	if (appConfig.deployEnvironment[env].domains.length > 0 && !appConfig.deployEnvironment[env].ssl) {
 		const askSSL = await inquirer.prompt({
 			type: "list",
 			name: "selectedSSL",
@@ -59,7 +64,7 @@ export async function execBuild(options: InputOptions) {
 		});
 		selectedSSL = askSSL.selectedSSL;
 	}
-	selectedSecretName = `tls-secret-${selectedSSL}-${makeSlug(appConfig.environment[env].domains[0])}`;
+	selectedSecretName = `tls-secret-${selectedSSL}-${makeSlug(appConfig.deployEnvironment[env].domains[0])}`;
 
 	// if they select "custom" SSL certificate -> ask for secret name:
 	if (selectedSSL == "custom") {
@@ -72,11 +77,11 @@ export async function execBuild(options: InputOptions) {
 		selectedSecretName = askSecretName.secretName;
 	}
 
-	appConfig.environment[env].ssl = selectedSSL;
-	appConfig.environment[env].tlsSecret = selectedSecretName;
+	appConfig.deployEnvironment[env].ssl = selectedSSL;
+	appConfig.deployEnvironment[env].tlsSecret = selectedSecretName;
 
 	// save domains & SSL configs
-	saveAppConfig(appConfig, { directory: targetDirectory });
+	appConfig = await updateAppConfig(app, env, appConfig.deployEnvironment[env]);
 
 	// request build server to build & deploy:
 	const buildStatus = await startBuildV1(options);

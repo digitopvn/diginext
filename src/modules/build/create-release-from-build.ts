@@ -11,6 +11,7 @@ import { fetchDeploymentFromContent } from "../deploy/fetch-deployment";
 type OwnershipParams = {
 	author: IUser;
 	workspace?: IWorkspace;
+	cliVersion?: string;
 };
 
 export const createReleaseFromBuild = async (build: IBuild, env?: string, ownership?: OwnershipParams) => {
@@ -61,7 +62,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 	// prepare release data
 	const data = {
 		env,
-		cliVersion,
+		cliVersion: ownership?.cliVersion || cliVersion,
 		name: `${projectSlug}/${appSlug}:${buildNumber}`,
 		image: IMAGE_NAME,
 		// old diginext.json

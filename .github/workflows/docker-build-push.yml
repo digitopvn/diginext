@@ -73,6 +73,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         id: buildx
-
-      - name: Build & push to Docker Hub
+  
+      - name: Build & push to Docker Hub (main)
         run: pnpm docker-build
+        if: contains(github.head_ref, 'main') || contains(github.head_ref, 'release')
+
+      - name: Build & push to Docker Hub (beta)
+        run: pnpm docker-build-beta
+        if: contains(github.head_ref, 'beta') || contains(github.head_ref, 'prerelease')
+      
+

@@ -248,6 +248,7 @@ export async function startBuildV1(
 
 	try {
 		deployment = await generateDeployment({
+			appSlug,
 			env,
 			username,
 			workspace,
@@ -260,6 +261,8 @@ export async function startBuildV1(
 	}
 
 	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+	// sendLog({ SOCKET_ROOM, message: deploymentContent });
+	// if (env === "prod") sendLog({ SOCKET_ROOM, message: prereleaseDeploymentContent });
 
 	// update data to deploy environment:
 	serverDeployEnvironment.prereleaseUrl = prereleaseUrl;

@@ -10,13 +10,15 @@ import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH
 import type { IApp, ICluster, IContainerRegistry, IWorkspace } from "@/entities";
 import type { AppConfig, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
-import { getAppConfig, objectToDeploymentYaml } from "@/plugins";
+import { objectToDeploymentYaml } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { getAppConfigFromApp } from "../apps/app-helper";
 import { createImagePullSecretsInNamespace } from "../k8s/image-pull-secret";
 import { generateDomains } from "./generate-domain";
 
 export type GenerateDeploymentParams = {
+	appSlug: string;
 	env: string;
 	username: string;
 	workspace: IWorkspace;
@@ -52,9 +54,10 @@ export type GenerateDeploymentResult = {
 };
 
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
-	const { env = "dev", username, workspace, targetDirectory, buildNumber, appConfig } = params;
+	const { appSlug, env = "dev", username, workspace, buildNumber, appConfig } = params;
 
-	const currentAppConfig = appConfig || getAppConfig(targetDirectory);
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
+	const currentAppConfig = appConfig || getAppConfigFromApp(app);
 	const { slug } = currentAppConfig;
 
 	// console.log("generateDeployment() > params :>> ", params);
@@ -63,7 +66,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// DEFINE DEPLOYMENT PARTS:
 	const BUILD_NUMBER = makeSlug(buildNumber) || makeDaySlug({ divider: "" });
 
-	const deployEnvironmentConfig = currentAppConfig.environment[env];
+	const deployEnvironmentConfig = currentAppConfig.deployEnvironment[env];
 	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);
 
 	const registrySlug = deployEnvironmentConfig.registry;
@@ -130,11 +133,6 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (env === "prod") log({ prereleaseDomain });
 
 	// * [NEW TACTIC] Fetch ENV variables from database:
-	const app = await DB.findOne<IApp>("app", { slug });
-	if (!app) {
-		throw new Error(`[GENERATE DEPLOYMENT YAML] App "${slug}" not found.`);
-	}
-
 	const deployEnvironment = (app.deployEnvironment || {})[env] || {};
 	// console.log("generate deployment > deployEnvironment :>> ", deployEnvironment);
 

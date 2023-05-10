@@ -43,7 +43,7 @@ export async function requestDeploy(options: InputOptions) {
 	if (!appConfig) return;
 
 	if (options.isDebugging) {
-		console.log("[LOCAL] dx.json :>>");
+		console.log("Request deploy > app config :>>");
 		console.dir(appConfig, { depth: 10 });
 	}
 
@@ -55,8 +55,10 @@ export async function requestDeploy(options: InputOptions) {
 	appConfig = validatedAppConfig;
 
 	if (options.isDebugging) {
-		console.log("[SERVER] dx.json :>>");
+		console.log("requestDeploy >  app config :>>");
 		console.dir(appConfig, { depth: 10 });
+		console.log("requestDeploy > deployEnvironment :>>");
+		console.dir(deployEnvironment, { depth: 10 });
 	}
 
 	/**
@@ -104,12 +106,15 @@ export async function requestDeploy(options: InputOptions) {
 			method: "POST",
 			data: { options: deployOptions },
 		});
+
 		if (options.isDebugging) {
 			console.log("Request deploy result :>> ");
 			console.dir(requestResult, { depth: 10 });
 		}
+
+		if (!requestResult.status) logError(requestResult.messages[0] || `Unable to call Request Deploy API.`);
 	} catch (e) {
-		logError(`Unexpected network error:`, e);
+		logError(`Unable to call Request Deploy API:`, e);
 		return;
 	}
 

@@ -19,6 +19,7 @@ const writeFile = util.promisify(fs.writeFile);
 
 import { simpleGit } from "simple-git";
 
+import { isServerMode } from "@/app.config";
 import { conf } from "@/index";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
@@ -185,7 +186,7 @@ export async function stageAllFiles(options: GitStageOptions) {
 export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	// const repoSSH = `git@bitbucket.org:${config.workspace}/${config.framework[framework]}.git`;
 	const { frameworkVersion } = options;
-	const { repoSSH } = options.framework;
+	const { name, repoSSH } = options.framework;
 
 	// create tmp dir
 	const tmpDir = path.resolve(".fw/");
@@ -196,7 +197,19 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	}
 	await mkdir(tmpDir);
 
-	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, { onUpdate: (msg) => console.log(msg) });
+	const spin = ora(`Pulling "${name}" framework... 0%`).start();
+
+	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
+		onUpdate: (msg, progress) => {
+			if (isServerMode) {
+				console.log(msg);
+			} else {
+				spin.text = `Pulling "${name}" framework... ${progress}%`;
+			}
+		},
+	});
+
+	spin.stop();
 
 	// delete unneccessary files
 	if (fs.existsSync(".fw/dx.json")) await deleteFolderRecursive(".fw/dx.json");
@@ -491,6 +504,9 @@ export const repoList = async (options: InputOptions) => {
 	// }
 };
 
+/**
+ * @deprecated
+ */
 export const upgradeFramework = async (options) => {
 	// 	logWarn(
 	// 		chalk.bold("!!! CHÚ Ý !!!"),

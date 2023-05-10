@@ -4,10 +4,11 @@ import { isEmpty } from "lodash";
 
 import type { IRelease } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
-import { getAppConfig } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 
 import fetchApi from "../api/fetchApi";
+import { getAppConfigFromApp } from "../apps/app-helper";
+import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import ClusterManager from "../k8s";
 
 export const execRollOut = async (options?: InputOptions) => {
@@ -18,7 +19,8 @@ export const execRollOut = async (options?: InputOptions) => {
 	if (!releaseId) {
 		logWarn(`Release ID is required, for example: "dx rollout <release-id>", trying to get some latest releases of this app...`);
 
-		const appConfig = getAppConfig(targetDirectory);
+		const { app } = await askForProjectAndApp(options.targetDirectory, options);
+		const appConfig = getAppConfigFromApp(app);
 
 		if (!appConfig) {
 			logError(`Not found "dx.json" in the directory. Try: "dx rollout --dir=/path/to/dir"`);
