@@ -5,21 +5,31 @@ import { isEmpty } from "lodash";
 
 import type InputOptions from "@/interfaces/InputOptions";
 import type { SslIssuer } from "@/interfaces/SystemTypes";
-import { resolveDockerfilePath } from "@/plugins";
+import { getCurrentGitRepoData, resolveDockerfilePath } from "@/plugins";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppConfig } from "../apps/update-config";
+import { updateAppGitInfo } from "../apps/update-git-config";
 import { askForDomain } from "./ask-for-domain";
 import { startBuildV1 } from "./start-build";
 
 export const startBuildAndRun = async (options: InputOptions) => {
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
-	const { app } = await askForProjectAndApp(options.targetDirectory, options);
+	const { env = "dev", targetDirectory } = options;
+
+	let { app } = await askForProjectAndApp(options.targetDirectory, options);
+
+	if (!app.git || !app.git.provider || !app.git.repoSSH || !app.git.repoURL) {
+		const gitInfo = await getCurrentGitRepoData(options.targetDirectory);
+		if (!gitInfo) throw new Error(`This app's directory doesn't have any git remote integrated.`);
+
+		app = await updateAppGitInfo(app, { provider: gitInfo.provider, repoSSH: gitInfo.remoteSSH, repoURL: gitInfo.remoteURL });
+	}
+
 	let appConfig = getAppConfigFromApp(app);
 
-	const { env = "dev", targetDirectory } = options;
 	const { project, slug } = appConfig;
 	const deployEnvironment = appConfig.deployEnvironment[env];
 
