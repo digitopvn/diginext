@@ -1,3 +1,18 @@
+# [3.1.0](https://github.com/digitopvn/diginext/compare/v3.0.5...v3.1.0) (2023-05-10)
+
+
+### Bug Fixes
+
+* **server, cli:** update git info while deploying app ([e914041](https://github.com/digitopvn/diginext/commit/e914041f5ca1db951dbfdbecfc3302720f71975c))
+* **server, cli:** update git info while deploying app ([#126](https://github.com/digitopvn/diginext/issues/126)) ([4db5d4a](https://github.com/digitopvn/diginext/commit/4db5d4a26f4ea4457aedf49ebe50a25ee188cb85))
+* **server:** app constroller git info is required ([e4fa77e](https://github.com/digitopvn/diginext/commit/e4fa77ef08c9081abeb465226feff4bc1f7877da))
+* **server:** can't update app config ([355b16e](https://github.com/digitopvn/diginext/commit/355b16e6e19bcfa840dffa130cf4ffcf08c662fb))
+
+
+### Features
+
+* **admin:** connect and list connected git providers ([3018bae](https://github.com/digitopvn/diginext/commit/3018bae5eee14cc78cf33de878775aef0c40a27c))
+
 ## [3.0.5](https://github.com/digitopvn/diginext/compare/v3.0.4...v3.0.5) (2023-05-10)
 
 
