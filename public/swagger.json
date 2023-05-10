@@ -4709,7 +4709,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "3.0.5-prerelease.1",
+		"version": "3.0.5",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
