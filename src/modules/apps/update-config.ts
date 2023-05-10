@@ -16,7 +16,8 @@ export const updateAppConfig = async (app: IApp, env?: string, serverDeployEnvir
 	};
 
 	if (env && serverDeployEnvironment) {
-		// <-- update new app's deploy environment
+		// update new app's deploy environment
+		updateAppData.deployEnvironment = {};
 		updateAppData.deployEnvironment[env] = serverDeployEnvironment;
 	}
 
