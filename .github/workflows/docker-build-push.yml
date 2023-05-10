@@ -76,10 +76,10 @@ jobs:
   
       - name: Build & push to Docker Hub (main)
         run: pnpm docker-build
-        if: contains(github.head_ref, 'main') || contains(github.head_ref, 'release')
+        if: contains(github.ref, 'main') || contains(github.ref, 'release')
 
       - name: Build & push to Docker Hub (beta)
         run: pnpm docker-build-beta
-        if: contains(github.head_ref, 'beta') || contains(github.head_ref, 'prerelease')
+        if: contains(github.ref, 'beta') || contains(github.ref, 'prerelease')
       
 
