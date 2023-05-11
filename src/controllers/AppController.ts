@@ -17,10 +17,13 @@ import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environm
 import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
+import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
+import type { GenerateDeploymentResult } from "@/modules/deploy";
+import { fetchDeploymentFromContent, generateDeployment } from "@/modules/deploy";
 import { createDiginextDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
-import { parseGitRepoDataFromRepoSSH } from "@/plugins";
+import { currentVersion, parseGitRepoDataFromRepoSSH } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
@@ -884,5 +887,86 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [deleteEnvVarsRes] };
 		return result;
+	}
+
+	/**
+	 * Update a variable on the deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/environment/domains")
+	async addEnvironmentDomain(
+		@Body()
+		body: {
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+			/**
+			 * New domains to be added into this deploy environment
+			 * @example ["example.com", "www.example.com"]
+			 */
+			domains: string[];
+		},
+		@Queries() queryParams?: IPostQueryParams
+	) {
+		// validate
+		let { env, domains } = body;
+		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
+		if (!domains) return { status: 0, messages: [`Array of domains is required.`] };
+
+		// find app
+		const app = await this.service.findOne(this.filter);
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
+
+		// add new domains
+		const updateData: AppDto = {};
+		updateData[`deployEnvironment.${env}.domains`] = [...(app.deployEnvironment[env].domains || []), ...domains];
+
+		let updatedApp = await this.service.updateOne({ slug: app.slug }, updateData);
+		if (!updatedApp) return respondFailure("Failed to update new domains to " + app.slug + "app.");
+
+		console.log("updatedApp.deployEnvironment[env] :>> ", updatedApp.deployEnvironment[env]);
+
+		// generate deployment files and apply new config
+		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		console.log("buildNumber :>> ", buildNumber);
+		console.log("this.user :>> ", this.user);
+
+		let deployment: GenerateDeploymentResult = await generateDeployment({
+			appSlug: app.slug,
+			env,
+			username: this.user.slug,
+			workspace: this.workspace,
+			buildNumber,
+		});
+
+		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+
+		// update data to deploy environment:
+		let serverDeployEnvironment = await getDeployEvironmentByApp(app, env);
+		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
+		serverDeployEnvironment.deploymentYaml = deploymentContent;
+		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+		serverDeployEnvironment.updatedAt = new Date();
+		serverDeployEnvironment.lastUpdatedBy = this.user.username;
+
+		// Update {user}, {project}, {environment} to database before rolling out
+		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
+		updatedAppData.lastUpdatedBy = this.user.username;
+		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
+
+		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
+
+		// create new release and roll out
+		const release = await createReleaseFromApp(updatedApp, env, { author: this.user, cliVersion: currentVersion(), workspace: this.workspace });
+		const result = await ClusterManager.rollout(release._id.toString());
+
+		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
+
+		return respondSuccess({ data: updatedApp });
 	}
 }
