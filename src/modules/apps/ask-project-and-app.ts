@@ -3,7 +3,7 @@ import inquirer from "inquirer";
 import { isServerMode } from "@/app.config";
 import type { IApp, IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces";
-import { getCurrentGitRepoData } from "@/plugins";
+import { getAppConfig, getCurrentGitRepoData } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { createOrSelectApp } from "./create-or-select-app";
@@ -18,10 +18,19 @@ export const askForProjectAndApp = async (dir: string, options?: InputOptions) =
 	let app: IApp;
 	let project: IProject;
 
-	// if there are only 1 app with this git repo -> select it:
+	// no apps found -> create or select one:
 	if (!apps || apps.length === 0) {
-		if (isServerMode) throw new Error(`No project/app found, unable to process.`);
+		// try to find apps with deprecated "dx.json" file:
+		const oldAppConfig = getAppConfig();
+		if (oldAppConfig) {
+			app = await DB.findOne<IApp>("app", { slug: oldAppConfig.slug }, { populate: ["project", "owner", "workspace"] });
+			if (app) {
+				project = await DB.findOne<IProject>("project", { slug: oldAppConfig.project });
+				return { project, app };
+			}
+		}
 
+		// if still no results -> create or select one:
 		project = await createOrSelectProject(options);
 		app = await createOrSelectApp(project.slug, options);
 		return { project, app };
@@ -32,10 +41,6 @@ export const askForProjectAndApp = async (dir: string, options?: InputOptions) =
 		app = apps[0];
 		project = app.project as IProject;
 		return { project, app };
-	}
-
-	if (isServerMode) {
-		throw new Error(`There are more than 1 apps using the same git repository.`);
 	}
 
 	// if there are more than 1 app with this git repo -> select one:
