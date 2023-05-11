@@ -303,28 +303,30 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		usedDomain: string,
 		deleteIng: KubeIngress;
 
-	const domains = ingress.spec.rules.map((rule) => rule.host) || [];
-	console.log("domains :>> ", domains);
+	if (ingress) {
+		const domains = ingress.spec.rules.map((rule) => rule.host) || [];
+		console.log("domains :>> ", domains);
 
-	if (domains.length > 0) {
-		const allIngresses = await ClusterManager.getAllIngresses({ context });
+		if (domains.length > 0) {
+			const allIngresses = await ClusterManager.getAllIngresses({ context });
 
-		allIngresses.filter((ing) => {
-			domains.map((domain) => {
-				if (ing.spec.rules.map((rule) => rule.host).includes(domain)) {
-					isDomainUsed = true;
-					usedDomain = domain;
-					deleteIng = ing;
-				}
+			allIngresses.filter((ing) => {
+				domains.map((domain) => {
+					if (ing.spec.rules.map((rule) => rule.host).includes(domain)) {
+						isDomainUsed = true;
+						usedDomain = domain;
+						deleteIng = ing;
+					}
+				});
 			});
-		});
-		if (isDomainUsed) {
-			await ClusterManager.deleteIngress(deleteIng.metadata.name, deleteIng.metadata.namespace, { context });
+			if (isDomainUsed) {
+				await ClusterManager.deleteIngress(deleteIng.metadata.name, deleteIng.metadata.namespace, { context });
 
-			if (onUpdate)
-				onUpdate(
-					`Domain "${usedDomain}" has been used before at "${deleteIng.metadata.namespace}" namespace -> Deleted "${deleteIng.metadata.name}" ingress to create a new one.`
-				);
+				if (onUpdate)
+					onUpdate(
+						`Domain "${usedDomain}" has been used before at "${deleteIng.metadata.namespace}" namespace -> Deleted "${deleteIng.metadata.name}" ingress to create a new one.`
+					);
+			}
 		}
 	}
 
