@@ -4,9 +4,11 @@ import { isEmpty } from "lodash";
 
 import type { IApp } from "@/entities";
 import type { InputOptions } from "@/interfaces";
+import { getCurrentGitRepoData } from "@/plugins";
 
 import { createAppByForm } from "./new-app-by-form";
 import { searchApps } from "./search-apps";
+import { updateAppGitInfo } from "./update-git-config";
 
 export async function createOrSelectApp(projectSlug: string, options: InputOptions, question?: string) {
 	const { action } = await inquirer.prompt({
@@ -48,6 +50,18 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 	options.slug = app.slug;
 	options.name = app.name;
 	options.repoSlug = `${makeSlug(projectSlug)}-${makeSlug(options.name)}`.toLowerCase();
+
+	// If there are no git info of this app in database, try to fetch current git data:
+	if (!app.git) {
+		const gitInfo = await getCurrentGitRepoData(options.targetDirectory);
+		if (options.isDebugging) console.log(`[CREATE_OR_SELECT_APP] try to fetch current git data :>>`, gitInfo);
+
+		if (!gitInfo) throw new Error(`[CREATE_OR_SELECT_APP] This directory has no git remote integrated.`);
+
+		app = await updateAppGitInfo(app, { provider: gitInfo.provider, repoURL: gitInfo.remoteURL, repoSSH: gitInfo.remoteSSH });
+		if (!app) throw new Error(`[CREATE_OR_SELECT_APP] Failed to update new git info to this app (${options.slug} / ${projectSlug}).`);
+	}
+
 	options.remoteSSH = app.git.repoSSH;
 	options.remoteURL = app.git.repoURL;
 	options.gitProvider = app.git.provider;
