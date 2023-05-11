@@ -3,7 +3,7 @@ import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
 import { isEmpty, isNaN } from "lodash";
 
-import type { IApp, ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
+import type { AppGitInfo, IApp, ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
@@ -61,7 +61,11 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 
 		if (!gitInfo) throw new Error(`This app's directory doesn't have any git remote integrated.`);
 
-		app = await updateAppGitInfo(app, { provider: gitInfo.provider, repoSSH: gitInfo.remoteSSH, repoURL: gitInfo.remoteURL });
+		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.remoteSSH, repoURL: gitInfo.remoteURL };
+		if (options.isDebugging) console.log("askForDeployEnvironmentInfo > updateGitInfo :>> ", updateGitInfo);
+
+		app = await updateAppGitInfo(app, updateGitInfo);
+		if (options.isDebugging) console.log("askForDeployEnvironmentInfo > app :>> ", app);
 	}
 
 	/**

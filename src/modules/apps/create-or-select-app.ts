@@ -58,7 +58,12 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 
 		if (!gitInfo) throw new Error(`[CREATE_OR_SELECT_APP] This directory has no git remote integrated.`);
 
-		app = await updateAppGitInfo(app, { provider: gitInfo.provider, repoURL: gitInfo.remoteURL, repoSSH: gitInfo.remoteSSH });
+		app = await updateAppGitInfo(app, {
+			provider: gitInfo.provider,
+			repoURL: gitInfo.remoteURL,
+			repoSSH: gitInfo.remoteSSH,
+		});
+
 		if (!app) throw new Error(`[CREATE_OR_SELECT_APP] Failed to update new git info to this app (${options.slug} / ${projectSlug}).`);
 	}
 

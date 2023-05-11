@@ -148,6 +148,7 @@ export const appSchema = new Schema(
 		createdBy: { type: String },
 		lastUpdatedBy: { type: String },
 		git: {
+			provider: { type: String },
 			repoURL: { type: String },
 			repoSSH: { type: String },
 		},
