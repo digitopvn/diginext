@@ -921,6 +921,14 @@ export default class AppController extends BaseController<IApp> {
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
 
+		// check if added domains are existed
+		let existedDomain;
+		const currentDomains = app.deployEnvironment[env].domains || [];
+		domains.forEach((domain) => {
+			if (currentDomains.includes(domain)) existedDomain = domain;
+		});
+		if (existedDomain) return respondFailure(`Domain "${existedDomain}" is existed.`);
+
 		// add new domains
 		const updateData: AppDto = {};
 		updateData[`deployEnvironment.${env}.domains`] = [...(app.deployEnvironment[env].domains || []), ...domains];
