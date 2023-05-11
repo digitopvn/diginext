@@ -946,7 +946,7 @@ export default class AppController extends BaseController<IApp> {
 		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
 
 		// update data to deploy environment:
-		let serverDeployEnvironment = await getDeployEvironmentByApp(app, env);
+		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
 		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
 		serverDeployEnvironment.deploymentYaml = deploymentContent;
 		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
