@@ -1,3 +1,14 @@
+## [3.1.1](https://github.com/digitopvn/diginext/compare/v3.1.0...v3.1.1) (2023-05-11)
+
+
+### Bug Fixes
+
+* **cli,server:** update git provider name for apps if it's not existed ([a19e593](https://github.com/digitopvn/diginext/commit/a19e593d161fc1deb002973d0a021ba6ae69d438))
+* **cli:** fallback dx.json support for find project and app ([831b267](https://github.com/digitopvn/diginext/commit/831b267243553574ba626382cd95168106972756))
+* **cli:** fallback dx.json support for find project and app ([#127](https://github.com/digitopvn/diginext/issues/127)) ([cb3d229](https://github.com/digitopvn/diginext/commit/cb3d229f2bf1b102285924f2936c6c46f50597a3))
+* **server:** cannot verify git provider after connecting ([e59b84a](https://github.com/digitopvn/diginext/commit/e59b84a042bfa72b99cd1533b67526e816339c39))
+* **server:** when rollout skip checking ingress if ssl is none ([28f9f86](https://github.com/digitopvn/diginext/commit/28f9f8639f8cb5f1366e167e23da8a1f546e91bb))
+
 # [3.1.0](https://github.com/digitopvn/diginext/compare/v3.0.5...v3.1.0) (2023-05-10)
 
 
