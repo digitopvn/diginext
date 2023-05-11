@@ -5599,6 +5599,116 @@
 				}
 			}
 		},
+		"/app/environment/domains": {
+			"patch": {
+				"operationId": "AddEnvironmentDomain",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"$ref": "#/components/schemas/ResponseData"
+										},
+										{
+											"properties": {
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"description": "Update a variable on the deploy environment of the application.",
+				"tags": ["App"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"domains": {
+										"items": {
+											"type": "string"
+										},
+										"type": "array",
+										"description": "New domains to be added into this deploy environment",
+										"example": ["example.com", "www.example.com"]
+									},
+									"env": {
+										"type": "string",
+										"description": "Deploy environment name"
+									}
+								},
+								"required": ["domains", "env"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/build": {
 			"get": {
 				"operationId": "Read",

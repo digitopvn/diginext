@@ -19,9 +19,13 @@ router
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
 	.delete("/empty", processApiRequest(controller.empty.bind(controller)))
+	// environment
 	.get("/environment", processApiRequest(controller.getDeployEnvironment.bind(controller)))
 	.post("/environment", processApiRequest(controller.createDeployEnvironment.bind(controller)))
 	.delete("/environment", processApiRequest(controller.deleteDeployEnvironment.bind(controller)))
+	// domains
+	.post("/environment/domains", processApiRequest(controller.addEnvironmentDomain.bind(controller)))
+	// environment variables
 	.get("/environment/variables", processApiRequest(controller.getEnvVarsOnDeployEnvironment.bind(controller)))
 	.post("/environment/variables", processApiRequest(controller.createEnvVarsOnDeployEnvironment.bind(controller)))
 	.patch("/environment/variables", processApiRequest(controller.updateSingleEnvVarOnDeployEnvironment.bind(controller)))
