@@ -100,7 +100,7 @@ export default class BaseService<T> {
 	}
 
 	async find(filter: IQueryFilter = {}, options: IQueryOptions & IQueryPagination = {}, pagination?: IQueryPagination) {
-		// console.log(`BaseService > find :>> filter:`, filter);
+		// console.log(`BaseService > find in "${this.model.collection.name}" collection :>> filter:`, filter);
 
 		// where
 		let _filter = parseRequestFilter(filter);
@@ -109,7 +109,7 @@ export default class BaseService<T> {
 			..._filter,
 			$or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
 		};
-		// console.log(`"${this.model.collection.name}" > find > where :>>`, where);
+		console.log(`BaseService > collection "${this.model.collection.name}" > find > where :>>`, where);
 
 		const pipelines: PipelineStage[] = [
 			{
@@ -181,9 +181,11 @@ export default class BaseService<T> {
 		let [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(where).exec()]);
 		// console.log(`"${this.model.collection.name}" > results >>`, results);
 
-		if (pagination) {
+		if (pagination && this.req) {
 			pagination.total_items = totalItems || results.length;
 			pagination.total_pages = pagination.page_size ? Math.ceil(totalItems / pagination.page_size) : 1;
+
+			console.log("[BASE_SERVICE] this.req :>> ", this.req);
 
 			const prevPage = pagination.current_page - 1 <= 0 ? 1 : pagination.current_page - 1;
 			const nextPage =

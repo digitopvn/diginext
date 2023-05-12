@@ -76,6 +76,8 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		// Assign some default values if it's missing
 		if (isUndefined(body.public)) body.public = true;
 
+		// TODO: call DX API to retrieve DX_KEY automatically:
+
 		// [1] Create new workspace:
 		// console.log("createWorkspace > body :>> ", body);
 		const newWorkspace = await this.service.create(body);
