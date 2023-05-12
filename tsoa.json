@@ -9,7 +9,7 @@
 		"securityDefinitions": {
 			"api_key": {
 				"type": "apiKey",
-				"name": "API_ACCESS_TOKEN",
+				"name": "x-api-key",
 				"in": "header"
 			},
 			"jwt": {

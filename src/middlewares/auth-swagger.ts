@@ -32,7 +32,7 @@ export function swaggerAuthentication(request: express.Request, securityName: st
 			});
 		});
 	} else if (securityName === "apiKey") {
-		const token = request.headers.API_ACCESS_TOKEN;
+		const token = request.headers["x-api-key"];
 		return new Promise((resolve, reject) => {
 			if (!token) reject(new Error("No token provided"));
 			resolve(token);
