@@ -1,3 +1,19 @@
+# [3.2.0](https://github.com/digitopvn/diginext/compare/v3.1.1...v3.2.0) (2023-05-15)
+
+
+### Bug Fixes
+
+* **server,api:** add --build-arg to build process ([d6275f4](https://github.com/digitopvn/diginext/commit/d6275f42fde6a38fc0e8099c68843b938d3784de))
+* **server,api:** issue of x-api-key not working ([4e1ca4e](https://github.com/digitopvn/diginext/commit/4e1ca4ee1b898cf1b3ee6329f2da205ca6cd32ce))
+* **server:** check existing domain when add new ([2c87d2a](https://github.com/digitopvn/diginext/commit/2c87d2a16bfd6349238d56696ce4a95b5606d668))
+* **server:** issue of not update new domains ([6715df1](https://github.com/digitopvn/diginext/commit/6715df1b1aa5ec163988655ae422cca16963dc30))
+
+
+### Features
+
+* **server:** add domains to production environment ([aa459bf](https://github.com/digitopvn/diginext/commit/aa459bfec2f495be62034632a79ead9e3b937174))
+* **server:** add new domain to app deploy environment ([19ff3f6](https://github.com/digitopvn/diginext/commit/19ff3f6f73c3db136b329d1b27539f2115739622))
+
 ## [3.1.1](https://github.com/digitopvn/diginext/compare/v3.1.0...v3.1.1) (2023-05-11)
 
 
