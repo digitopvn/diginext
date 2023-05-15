@@ -9,6 +9,7 @@ import path from "path";
 import { isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IContainerRegistry, IProject, IUser, IWorkspace } from "@/entities";
+import type { BuildPlatform } from "@/interfaces/SystemTypes";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
 import { getIO, socketIO } from "@/server";
 
@@ -75,6 +76,16 @@ export type StartBuildParams = {
 	 * @default false
 	 */
 	isDebugging?: boolean;
+
+	/**
+	 * Targeted platform arch: linux/arm64, linux/amd64,...
+	 */
+	platforms?: BuildPlatform[];
+
+	/**
+	 * Build arguments
+	 */
+	args?: { name: string; value: string }[];
 };
 
 export async function testBuild() {
@@ -130,6 +141,7 @@ export async function startBuild(params: StartBuildParams) {
 		userId,
 		user,
 		appSlug,
+		args,
 		// optional
 		env,
 		isDebugging = false,
@@ -296,6 +308,7 @@ export async function startBuild(params: StartBuildParams) {
 	const buildEngine = buildEngineName === "docker" ? builder.Docker : builder.Podman;
 	buildEngine
 		.build(buildImage, {
+			args,
 			platforms: ["linux/amd64"],
 			builder: `${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`,
 			cacheFroms: latestBuild ? [{ type: "registry", value: latestBuild.image }] : [],
