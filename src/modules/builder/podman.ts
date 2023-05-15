@@ -19,14 +19,6 @@ interface PodmanBuildOptions {
 	 */
 	shouldPush?: boolean;
 	/**
-	 * Driver to use (available: `docker-container`, `remote`)
-	 * - [DEFAULT] `docker-container`: Uses a BuildKit container that will be spawned via docker. With this driver, both building multi-platform images and exporting cache are supported.
-	 * - `remote`: Uses a remote instance of buildkitd over an arbitrary connection. With this driver, you manually create and manage instances of buildkit yourself, and configure buildx to point at it.
-	 *
-	 * 	*Unlike docker driver, built images will not automatically appear in docker images and build --load needs to be used to achieve that.*
-	 */
-	// driver?: "docker-container" | "remote";
-	/**
 	 * Builder container name
 	 */
 	builder?: string;
@@ -44,6 +36,12 @@ interface PodmanBuildOptions {
 	 * docker buildx build --cache-from=type=s3,region=eu-west-1,bucket=mybucket .
 	 */
 	cacheFroms?: { type: "local" | "registry" | "s3"; value: string }[];
+	/**
+	 * Specify build arguments
+	 * @example
+	 * docker build --build-arg ARG_NAME_1=ARG_VALUE_1 --build-arg ARG_NAME_2=ARG_VALUE_2 -t IMAGE_NAME:TAG .
+	 */
+	args?: { name: string; value: string }[];
 	/**
 	 * Build logs listener
 	 */
@@ -64,6 +62,7 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 		// driver = "docker-container",
 		builder,
 		cacheFroms,
+		args,
 		platforms,
 		shouldPush = false,
 		onBuilding,
@@ -74,6 +73,14 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 	 * @example
 	 * docker buildx build -f Dockerfile --push -t asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 --cache-from type=registry,ref=asia.gcr.io/top-group-k8s/test-cli/front-end:2022-12-26-23-20-07 .
 	 **/
+
+	const argsFlags = !isEmpty(args)
+		? args.map(({ name, value }) => {
+				if (name.indexOf(" ") > -1) throw new Error(`Name of an argument in "--build-arg" SHOULD NOT contains spacing.`);
+				if (value.indexOf(" ") > -1) throw new Error(`Value of an argument in "--build-arg" SHOULD NOT contains spacing.`);
+				return `--build-arg ${name}=${value}`;
+		  })
+		: [];
 
 	// const buildContextNameFlag = !isEmpty(builder) ? `--name ${builder}` : "";
 	const platformFlag = !isEmpty(platforms) && `--arch=${platforms.map((p) => p.split("/")[1]).join(",")}`;
@@ -101,7 +108,7 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 	// const builderFlag = `--builder=${builder}`;
 	const directoryFlag = buildDirectory ?? ".";
 
-	const optionFlags = [platformFlag, dockerFileFlag, tagFlag, ...cacheFlags, directoryFlag]
+	const optionFlags = [...argsFlags, platformFlag, dockerFileFlag, tagFlag, ...cacheFlags, directoryFlag]
 		.filter((opt) => typeof opt !== "undefined") // <-- filter empty flags
 		.join(" ");
 

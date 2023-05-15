@@ -45,6 +45,12 @@ interface DockerBuildOptions {
 	 */
 	cacheFroms?: { type: "local" | "registry" | "s3"; value: string }[];
 	/**
+	 * Specify build arguments
+	 * @example
+	 * docker build --build-arg ARG_NAME_1=ARG_VALUE_1 --build-arg ARG_NAME_2=ARG_VALUE_2 -t IMAGE_NAME:TAG .
+	 */
+	args?: { name: string; value: string }[];
+	/**
 	 * Build logs listener
 	 */
 	onBuilding?: (message: string) => void;
@@ -64,6 +70,7 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 		driver = "docker-container",
 		builder,
 		cacheFroms,
+		args,
 		platforms,
 		shouldPush = false,
 		onBuilding,
@@ -84,6 +91,14 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 	);
 
 	// latestBuild ? ` --cache-from type=registry,ref=${latestBuild.image}` : "";
+	const argsFlags = !isEmpty(args)
+		? args.map(({ name, value }) => {
+				if (name.indexOf(" ") > -1) throw new Error(`Name of an argument in "--build-arg" SHOULD NOT contains spacing.`);
+				if (value.indexOf(" ") > -1) throw new Error(`Value of an argument in "--build-arg" SHOULD NOT contains spacing.`);
+				return `--build-arg ${name}=${value}`;
+		  })
+		: [];
+
 	const cacheFlags = !isEmpty(cacheFroms) ? cacheFroms.map((cache) => `--cache-from type=${cache.type || "registry"},ref=${cache.value}`) : [];
 	const dockerFileFlag = `-f ${dockerFile}`;
 	const pushFlag = shouldPush ? "--push" : undefined;
@@ -91,7 +106,7 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 	const builderFlag = `--builder=${builder}`;
 	const directoryFlag = buildDirectory ?? ".";
 
-	const optionFlags = [platformFlag, dockerFileFlag, pushFlag, tagFlag, ...cacheFlags, builderFlag, directoryFlag]
+	const optionFlags = [...argsFlags, platformFlag, dockerFileFlag, pushFlag, tagFlag, ...cacheFlags, builderFlag, directoryFlag]
 		.filter((opt) => typeof opt !== "undefined") // <-- filter empty flags
 		.join(" ");
 
