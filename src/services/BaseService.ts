@@ -185,8 +185,6 @@ export default class BaseService<T = any> {
 			pagination.total_items = totalItems || results.length;
 			pagination.total_pages = pagination.page_size ? Math.ceil(totalItems / pagination.page_size) : 1;
 
-			console.log("[BASE_SERVICE] this.req :>> ", this.req);
-
 			const prevPage = pagination.current_page - 1 <= 0 ? 1 : pagination.current_page - 1;
 			const nextPage =
 				pagination.current_page + 1 > pagination.total_pages && pagination.total_pages != 0
