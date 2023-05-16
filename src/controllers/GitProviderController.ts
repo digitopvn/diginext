@@ -6,6 +6,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import type { IGitProvider } from "@/entities";
 import { GitProviderDto } from "@/entities";
+import type { IQueryFilter } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -292,7 +293,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 			 */
 			_id?: string;
 			/**
-			 * Git provider's SLUG
+			 * Git provider's SLUG¸¸¸
 			 */
 			slug?: string;
 		}
@@ -301,7 +302,11 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
 
-		let provider = await this.service.findOne(this.filter, this.options);
+		const filter: IQueryFilter = {};
+		if (_id) filter._id = _id;
+		if (slug) filter.slug = slug;
+
+		let provider = await this.service.findOne(filter);
 		if (!provider) return respondFailure(`Git provider not found.`);
 
 		// process
