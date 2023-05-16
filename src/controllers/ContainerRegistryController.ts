@@ -25,6 +25,9 @@ export default class ContainerRegistryController extends BaseController<IContain
 		super(new ContainerRegistryService());
 	}
 
+	/**
+	 * List of container registry
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")

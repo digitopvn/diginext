@@ -20,6 +20,9 @@ export default class ProjectController extends BaseController<IProject> {
 		super(new ProjectService());
 	}
 
+	/**
+	 * List of projects
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")

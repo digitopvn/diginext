@@ -19,6 +19,9 @@ export default class ClusterController extends BaseController<ICluster> {
 		super(new ClusterService());
 	}
 
+	/**
+	 * List of K8S clusters
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
