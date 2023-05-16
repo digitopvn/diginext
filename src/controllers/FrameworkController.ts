@@ -14,6 +14,9 @@ export default class FrameworkController extends BaseController<IFramework> {
 		super(new FrameworkService());
 	}
 
+	/**
+	 * List of frameworks
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")

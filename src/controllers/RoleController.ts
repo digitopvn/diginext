@@ -15,6 +15,9 @@ export default class RoleController extends BaseController<IRole> {
 		super(new RoleService());
 	}
 
+	/**
+	 * List of roles
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")

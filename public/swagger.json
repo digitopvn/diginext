@@ -9801,6 +9801,54 @@
 				]
 			}
 		},
+		"/release/from-app": {
+			"post": {
+				"operationId": "CreateFromApp",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["Release"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"env": {
+										"type": "string",
+										"description": "Deploy environment"
+									},
+									"app": {
+										"type": "string",
+										"description": "App's slug"
+									}
+								},
+								"required": ["env", "app"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/release/from-build": {
 			"post": {
 				"operationId": "CreateFromBuild",

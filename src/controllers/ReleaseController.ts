@@ -22,6 +22,9 @@ export default class ReleaseController extends BaseController<IRelease> {
 		super(new ReleaseService());
 	}
 
+	/**
+	 * List of releases
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")

@@ -216,6 +216,9 @@ export default class AppController extends BaseController<IApp> {
 		super(new AppService());
 	}
 
+	/**
+	 * List of apps
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")

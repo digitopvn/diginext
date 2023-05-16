@@ -53,6 +53,9 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		super(new WorkspaceService());
 	}
 
+	/**
+	 * List of workspaces
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
