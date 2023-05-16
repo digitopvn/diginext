@@ -1,6 +1,6 @@
 import { log } from "diginext-utils/dist/console/log";
 import path from "path";
-import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
+import { Body, Deprecated, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import pkg from "@/../package.json";
 import { Config } from "@/app.config";
@@ -47,6 +47,7 @@ export default class DeployController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
+	@Deprecated()
 	deployFromSource(@Body() body: { options: InputOptions }, @Queries() queryParams?: IPostQueryParams) {
 		let { options: inputOptions } = body;
 
