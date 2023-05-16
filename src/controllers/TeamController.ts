@@ -14,6 +14,9 @@ export default class TeamController extends BaseController<ITeam> {
 		super(new TeamService());
 	}
 
+	/**
+	 * List of teams
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")

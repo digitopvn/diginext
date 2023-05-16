@@ -25,6 +25,9 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		super(new GitProviderService());
 	}
 
+	/**
+	 * List of GIT providers
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")

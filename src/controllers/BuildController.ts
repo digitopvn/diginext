@@ -19,6 +19,9 @@ export default class BuildController extends BaseController<IBuild> {
 		super(new BuildService());
 	}
 
+	/**
+	 * List of builds
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
