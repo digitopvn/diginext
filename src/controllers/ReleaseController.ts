@@ -1,10 +1,12 @@
 import { logError } from "diginext-utils/dist/console/log";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IRelease } from "@/entities";
+import type { IApp, IRelease } from "@/entities";
 import { ReleaseDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
+import { DB } from "@/modules/api/DB";
+import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import { createReleaseFromBuild } from "@/modules/build/create-release-from-build";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
@@ -48,6 +50,36 @@ export default class ReleaseController extends BaseController<IRelease> {
 	@Delete("/")
 	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/from-app")
+	async createFromApp(
+		@Body()
+		body: {
+			/**
+			 * App's slug
+			 */
+			app: string;
+			/**
+			 * Deploy environment
+			 * @example dev,prod,...
+			 */
+			env: string;
+		}
+	) {
+		if (!body.env) return respondFailure({ msg: `Param "env" (deploy environment code) is required.` });
+
+		const { app: appSlug } = body;
+
+		const app = await DB.findOne<IApp>("app", { slug: appSlug });
+		if (!app) return respondFailure(`App "${appSlug}" not found.`);
+
+		const newRelease = await createReleaseFromApp(app, body.env, { author: this.user, workspace: this.workspace });
+		if (!newRelease) return respondFailure({ msg: `Failed to create new release from build data.` });
+
+		return respondSuccess({ data: newRelease });
 	}
 
 	@Security("api_key")
