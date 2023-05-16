@@ -1,3 +1,12 @@
+## [3.2.1](https://github.com/digitopvn/diginext/compare/v3.2.0...v3.2.1) (2023-05-16)
+
+
+### Bug Fixes
+
+* **server,api:** add create release from app api ([dfac727](https://github.com/digitopvn/diginext/commit/dfac7270a5dae5bfcd2fdc7947738c185edbd986))
+* **server,api:** add create release from app api ([#129](https://github.com/digitopvn/diginext/issues/129)) ([4417a25](https://github.com/digitopvn/diginext/commit/4417a25089ac544a447ac8944c151b7ebfdcd442))
+* **server,api:** add swagger doc comments ([39d486d](https://github.com/digitopvn/diginext/commit/39d486dbcb23c87dd8079a0fe423da2de43f9bb5))
+
 # [3.2.0](https://github.com/digitopvn/diginext/compare/v3.1.1...v3.2.0) (2023-05-15)
 
 
