@@ -88,7 +88,20 @@ export default class ReleaseController extends BaseController<IRelease> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/from-build")
-	async createFromBuild(@Body() body: { build: string; env: string }) {
+	async createFromBuild(
+		@Body()
+		body: {
+			/**
+			 * Build's ID
+			 */
+			build: string;
+			/**
+			 * Deploy environment
+			 * @example dev,prod,...
+			 */
+			env: string;
+		}
+	) {
 		if (!body.env) return respondFailure({ msg: `Param "env" (deploy environment code) is required.` });
 
 		const { build: buildId } = body;
