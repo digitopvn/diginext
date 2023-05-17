@@ -2679,6 +2679,14 @@
 			},
 			"DeployBuildInput": {
 				"properties": {
+					"skipReadyCheck": {
+						"type": "boolean",
+						"description": "### WARNING\nSkip checking deployed POD's ready status, always return `SUCCESS` status response even if the pod is **unable to start up** properly."
+					},
+					"forceRollOut": {
+						"type": "boolean",
+						"description": "### FOR DEPLOY to PROD\nForce roll out the release to `prod` deploy environment (instead of `prerelease` environment)"
+					},
 					"shouldUseFreshDeploy": {
 						"type": "boolean",
 						"description": "[DANGER]\n---\nShould delete old deployment and deploy a new one from scratch",
