@@ -36,12 +36,15 @@ type DeployBuildInput = {
 	shouldUseFreshDeploy?: boolean;
 	/**
 	 * ### FOR DEPLOY to PROD
-	 * Force roll out the release to `prod` deploy environment (instead of `prerelease` environment)
+	 * Force roll out the release to "prod" deploy environment (instead of "prerelease" environment)
+	 * @default false
 	 */
 	forceRollOut?: boolean;
 	/**
 	 * ### WARNING
-	 * Skip checking deployed POD's ready status, always return `SUCCESS` status response even if the pod is **unable to start up** properly.
+	 * Skip checking deployed POD's ready status.
+	 * - The response status will always be SUCCESS even if the pod is unable to start up properly.
+	 * @default false
 	 */
 	skipReadyCheck?: boolean;
 };
