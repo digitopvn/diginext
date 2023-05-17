@@ -22,7 +22,7 @@ export const cliOpts: execa.Options = {};
 
 export const getContainerResourceBySize = (size: ResourceQuotaSize) => {
 	if (size == "none") return {};
-	const scale = toNumber(size.substring(size.length - 1));
+	const scale = toNumber(size.substring(0, size.length - 1));
 	return {
 		requests: {
 			cpu: `${50 * scale}m`,
