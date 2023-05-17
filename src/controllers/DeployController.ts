@@ -34,6 +34,16 @@ type DeployBuildInput = {
 	 * @default false
 	 */
 	shouldUseFreshDeploy?: boolean;
+	/**
+	 * ### FOR DEPLOY to PROD
+	 * Force roll out the release to `prod` deploy environment (instead of `prerelease` environment)
+	 */
+	forceRollOut?: boolean;
+	/**
+	 * ### WARNING
+	 * Skip checking deployed POD's ready status, always return `SUCCESS` status response even if the pod is **unable to start up** properly.
+	 */
+	skipReadyCheck?: boolean;
 };
 
 @Tags("Deploy")
@@ -185,6 +195,8 @@ export default class DeployController extends BaseController {
 			shouldUseFreshDeploy: body.shouldUseFreshDeploy,
 			workspace,
 			buildDirectory,
+			skipReadyCheck: body.skipReadyCheck,
+			forceRollOut: body.forceRollOut,
 		};
 		console.log("deployBuildOptions :>> ", deployBuildOptions);
 
