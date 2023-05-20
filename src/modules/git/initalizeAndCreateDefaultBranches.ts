@@ -14,7 +14,10 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 	if (fs.existsSync(gitDir)) fs.rmSync(gitDir, { recursive: true, force: true });
 
 	// Initialize local git...
-	const git = simpleGit(options.targetDirectory, { binary: "git" });
+	const git = simpleGit(options.targetDirectory, {
+		baseDir: `${options.targetDirectory}`,
+		binary: "git",
+	});
 	await git.init();
 
 	// create default brand: "main"
