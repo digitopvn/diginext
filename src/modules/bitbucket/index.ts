@@ -204,7 +204,7 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 			if (isServerMode) {
 				console.log(msg);
 			} else {
-				spin.text = `Pulling "${name}" framework... ${progress}%`;
+				spin.text = `Pulling "${name}" framework... ${progress || 0}%`;
 			}
 		},
 	});

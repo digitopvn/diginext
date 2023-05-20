@@ -6,12 +6,12 @@ import path from "path";
 
 import type { IApp } from "@/entities/App";
 import type { InputOptions } from "@/interfaces/InputOptions";
+import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { pullingFramework } from "@/modules/framework";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { printInformation } from "@/modules/project/printInformation";
 
 import { DB } from "../api/DB";
-import { getAppConfigFromApp } from "./app-helper";
 import { createAppByForm } from "./new-app-by-form";
 
 /**
@@ -64,7 +64,7 @@ export default async function createApp(options: InputOptions) {
 		return;
 	}
 
-	// first commit & create default branches (main, dev/*)
+	// // first commit & create default branches (main, dev/*)
 	await initalizeAndCreateDefaultBranches(options);
 
 	// print project information:
