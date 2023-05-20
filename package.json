@@ -68,6 +68,7 @@
 		"dev:server:win32": "set CLI_MODE=server && rimraf dist && concurrently \"tsup src/**/*.ts src/**/*.tsx --format esm,cjs --dts --legacy-output --watch\"",
 		"dev:server:darwin:linux": "CLI_MODE=server ts-node-dev --poll -r tsconfig-paths/register src/server.ts --debug --respawn --exit-child --watch src",
 		"dev:server:default": "CLI_MODE=server ts-node-dev --poll -r tsconfig-paths/register src/server.ts --debug --respawn --exit-child --watch src",
+		"dev:nodemon": "CLI_MODE=server nodemon --legacy-watch \"src/**/*.ts\" --ext \"ts,json\" --exec \"pnpm swagger && CLI_MODE=server ts-node -r tsconfig-paths/register src/server.ts\"",
 		"dev:swagger": "concurrently \"pnpm dev:spec\" \"pnpm dev:server\"",
 		"dev:spec": "ts-node-dev --respawn --transpile-only -- node_modules/tsoa/dist/cli.js spec",
 		"start:ts": "CLI_MODE=server ts-node -r tsconfig-paths/register src/server.ts",
