@@ -1,3 +1,11 @@
+## [3.2.2](https://github.com/digitopvn/diginext/compare/v3.2.1...v3.2.2) (2023-05-20)
+
+
+### Bug Fixes
+
+* **new-app:** skip check verbose git | display progress default 0 ([1ce901a](https://github.com/digitopvn/diginext/commit/1ce901aa89b0fac64083b601efb1fa36b58dd5ed))
+* restore dev:nodemon ([366fec5](https://github.com/digitopvn/diginext/commit/366fec52a7394be36d442561a309d2383dfba563))
+
 ## [3.2.1](https://github.com/digitopvn/diginext/compare/v3.2.0...v3.2.1) (2023-05-16)
 
 
