@@ -20,9 +20,10 @@ import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import type { GenerateDeploymentResult } from "@/modules/deploy";
 import { fetchDeploymentFromContent, generateDeployment } from "@/modules/deploy";
-import { createDiginextDomain } from "@/modules/diginext/dx-domain";
+import { createDxDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
+import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion, parseGitRepoDataFromRepoSSH } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { ProjectService } from "@/services";
@@ -184,7 +185,7 @@ export interface DeployEnvironmentData {
 	 * OPTIONAL
 	 * ---
 	 * Select your SSL Certificate Issuer, one of:
-	 * - `letenscrypt`
+	 * - `letsencrypt`
 	 * - `custom`
 	 * - `none`
 	 * @default letsencrypt
@@ -263,6 +264,12 @@ export default class AppController extends BaseController<IApp, AppService> {
 		let project: IProject,
 			appDto: IApp = { ...(body as any) };
 
+		// check dx quota
+		const quotaRes = await checkQuota(this.workspace);
+		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+		if (quotaRes.data && quotaRes.data.isExceed) return respondFailure(`You've exceeded the limit amount of apps.`);
+
+		// validate
 		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
 		if (!body.name) return respondFailure({ msg: `App's name is required.` });
 		if (!body.git) return respondFailure("App's git info is required.");
@@ -332,6 +339,25 @@ export default class AppController extends BaseController<IApp, AppService> {
 			project = await projectSvc.findOne({ _id: body.project });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
+		}
+
+		if (body.deployEnvironment) {
+			for (const env of Object.keys(body.deployEnvironment)) {
+				// check dx quota
+				const size = body.deployEnvironment[env].size;
+				if (size) {
+					const quotaRes = await checkQuota(this.workspace, { resourceSize: size });
+					if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+					if (quotaRes.data && quotaRes.data.isExceed) return respondFailure(`You've exceeded the limit amount of container size.`);
+				}
+
+				// magic -> not delete other deploy environment & previous configuration
+				for (const key of Object.keys(body.deployEnvironment[env])) {
+					body[`deployEnvironment.${env}.${key}`] = body.deployEnvironment[env][key];
+				}
+
+				delete body.deployEnvironment;
+			}
 		}
 
 		let apps: IApp[];
@@ -502,6 +528,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironmentData.replicas) deployEnvironmentData.replicas = 1;
 		if (!deployEnvironmentData.redirect) deployEnvironmentData.redirect = true;
 
+		// Check DX quota
+		const quotaRes = await checkQuota(this.workspace, { resourceSize: deployEnvironmentData.size });
+		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+		if (quotaRes.data && quotaRes.data.isExceed) return respondFailure(`You've exceeded the limit amount of container size.`);
+
 		// Validate deploy environment data:
 
 		// cluster
@@ -534,7 +565,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 				status,
 				messages,
 				data: { domain },
-			} = await createDiginextDomain({ name: subdomain, data: cluster.primaryIP });
+			} = await createDxDomain({ name: subdomain, data: cluster.primaryIP }, this.workspace.dx_key);
 			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
 			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
 		}
@@ -839,7 +870,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	}
 
 	/**
-	 * Update a variable on the deploy environment of the application.
+	 * Delete variables on the deploy environment of the application.
 	 */
 	@Security("api_key")
 	@Security("jwt")
@@ -923,6 +954,12 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne(this.filter);
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
+
+		// validate domain
+		for (const domain of domains) {
+			if (domain.indexOf(`http`) > -1) return respondFailure(`Invalid domain, no "http://" or "https://" needed`);
+			if (domain.indexOf(`/`) > -1) return respondFailure(`Invalid domain, no special characters.`);
+		}
 
 		// check if added domains are existed
 		let existedDomain;

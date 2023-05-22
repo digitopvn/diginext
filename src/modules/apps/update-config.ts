@@ -19,6 +19,7 @@ export const updateAppConfig = async (app: IApp, env?: string, serverDeployEnvir
 		// update new app's deploy environment
 		updateAppData.deployEnvironment = {};
 		updateAppData.deployEnvironment[env] = serverDeployEnvironment;
+		// updateAppData[`deployEnvironment.${env}`] = serverDeployEnvironment;
 	}
 
 	const updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updateAppData);

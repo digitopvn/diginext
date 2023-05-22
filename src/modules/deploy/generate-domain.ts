@@ -2,14 +2,18 @@ import { logError } from "diginext-utils/dist/console/log";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
 
 import { isServerMode } from "@/app.config";
-import type { ICluster } from "@/entities";
+import type { ICluster, IWorkspace } from "@/entities";
 
 import { fetchApi } from "../api";
 import { DB } from "../api/DB";
 import type { CreateDiginextDomainParams } from "../diginext/dx-domain";
-import { createDiginextDomain } from "../diginext/dx-domain";
+import { createDxDomain } from "../diginext/dx-domain";
 
 export interface GenerateDomainOptions {
+	/**
+	 * Workspace data
+	 */
+	workspace: IWorkspace;
 	/**
 	 * Subdomain name
 	 */
@@ -38,6 +42,7 @@ interface GenerateDomainResult {
 
 export const generateDomains = async (params: GenerateDomainOptions) => {
 	// Manage domains in database to avoid duplication
+	const dxKey = params.workspace.dx_key;
 
 	let { subdomainName, clusterShortName, ipAddress, primaryDomain } = params;
 	let domain = `${subdomainName}.${primaryDomain}`;
@@ -63,7 +68,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 
 	// create new subdomain:
 	const domainData: CreateDiginextDomainParams = { name: subdomainName, data: targetIP };
-	let res = isServerMode ? await createDiginextDomain(domainData) : await fetchApi({ url: `/api/v1/domain`, method: "POST", data: domainData });
+	let res = isServerMode ? await createDxDomain(domainData, dxKey) : await fetchApi({ url: `/api/v1/domain`, method: "POST", data: domainData });
 
 	// console.log("generateDomain > res :>> ", res);
 	let { status, messages } = res;
@@ -76,7 +81,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 			domain = `${subdomainName}.${primaryDomain}`;
 
 			// create new domain again if domain was existed
-			res = await createDiginextDomain({ name: subdomainName, data: targetIP });
+			res = await createDxDomain({ name: subdomainName, data: targetIP }, dxKey);
 
 			messages = res.messages;
 			status = res.status;

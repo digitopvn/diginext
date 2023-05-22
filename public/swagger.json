@@ -2681,11 +2681,13 @@
 				"properties": {
 					"skipReadyCheck": {
 						"type": "boolean",
-						"description": "### WARNING\nSkip checking deployed POD's ready status, always return `SUCCESS` status response even if the pod is **unable to start up** properly."
+						"description": "### WARNING\nSkip checking deployed POD's ready status.\n- The response status will always be SUCCESS even if the pod is unable to start up properly.",
+						"default": "false"
 					},
 					"forceRollOut": {
 						"type": "boolean",
-						"description": "### FOR DEPLOY to PROD\nForce roll out the release to `prod` deploy environment (instead of `prerelease` environment)"
+						"description": "### FOR DEPLOY to PROD\nForce roll out the release to \"prod\" deploy environment (instead of \"prerelease\" environment)",
+						"default": "false"
 					},
 					"shouldUseFreshDeploy": {
 						"type": "boolean",

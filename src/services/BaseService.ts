@@ -109,7 +109,7 @@ export default class BaseService<T = any> {
 			..._filter,
 			$or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
 		};
-		console.log(`BaseService > collection "${this.model.collection.name}" > find > where :>>`, where);
+		// console.log(`BaseService > collection "${this.model.collection.name}" > find > where :>>`, where);
 
 		const pipelines: PipelineStage[] = [
 			{

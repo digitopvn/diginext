@@ -1,13 +1,10 @@
 import { printHelp } from "../../plugins/utils";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
-import { signInBitbucket } from "../bitbucket";
 import { bitbucketAuthentication } from "../bitbucket/promptForAuthOptions";
 import { createAnalyticsProperty, getAnalyticsAccount } from "./analytics.service";
 
 export async function execAnalytics(options) {
 	options = await bitbucketAuthentication(options);
-
-	await signInBitbucket(options);
 
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
 

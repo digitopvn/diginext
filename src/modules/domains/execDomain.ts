@@ -3,7 +3,7 @@ import yargs from "yargs";
 
 import type InputOptions from "@/interfaces/InputOptions";
 
-import { createDiginextDomain } from "../diginext/dx-domain";
+import { createDxDomain } from "../diginext/dx-domain";
 
 const logTitle = `[EXEC_DOMAIN]`;
 
@@ -14,9 +14,19 @@ export const execDomain = async (options?: InputOptions) => {
 		case "new":
 		case "add":
 		case "create":
-			if (!name) logError(`Subdomain "name" is required.`);
-			if (!input) logError(`Subdomain "input" data (IP address) is required.`);
-			const { status, messages, data } = await createDiginextDomain({ name, data: input });
+			if (!name) {
+				logError(`Subdomain "name" is required.`);
+				return;
+			}
+			if (!input) {
+				logError(`Subdomain "input" data (IP address) is required.`);
+				return;
+			}
+			if (!options.workspace.dx_key) {
+				logError(`Missing "DX Key" in this workspace.`);
+				return;
+			}
+			const { status, messages, data } = await createDxDomain({ name, data: input }, options.workspace.dx_key);
 			if (status === 0) {
 				logError(logTitle, messages.join(". "));
 				return;

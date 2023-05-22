@@ -47,7 +47,6 @@ services:
             # HOST:CONTAINER
             - ./storage:/var/app/storage
         environment:
-            - DX_KEY= # <--- insert here
             - NODE_ENV=production
             - PORT=6969
             - BASE_URL=http://localhost:6969
