@@ -1,3 +1,11 @@
+# [3.4.0](https://github.com/digitopvn/diginext/compare/v3.3.1...v3.4.0) (2023-05-22)
+
+
+### Features
+
+* **server,admin:** modify deploy environment of app ([8c411e8](https://github.com/digitopvn/diginext/commit/8c411e84576311737c33e2e8623fcaad46a56a6d))
+* **server,admin:** modify deploy environment of app ([#135](https://github.com/digitopvn/diginext/issues/135)) ([13a57d9](https://github.com/digitopvn/diginext/commit/13a57d97bea15ca3e5edd97b14468f9b744d7a0b))
+
 ## [3.3.1](https://github.com/digitopvn/diginext/compare/v3.3.0...v3.3.1) (2023-05-22)
 
 
