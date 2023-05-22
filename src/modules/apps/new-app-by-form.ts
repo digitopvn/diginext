@@ -104,7 +104,7 @@ export async function createAppByForm(options?: InputOptions) {
 		options.frameworkVersion = "unknown";
 	}
 
-	const currentGitData = await getCurrentGitRepoData(options.targetDirectory);
+	const currentGitData = options.shouldCreate ? undefined : await getCurrentGitRepoData(options.targetDirectory);
 	if (options.isDebugging) log(`[CREATE APP BY FORM] current git data :>>`, currentGitData);
 
 	if (currentGitData) {
