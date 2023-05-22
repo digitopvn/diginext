@@ -22,7 +22,13 @@ router
 	// environment
 	.get("/environment", processApiRequest(controller.getDeployEnvironment.bind(controller)))
 	.post("/environment", processApiRequest(controller.createDeployEnvironment.bind(controller)))
+	.patch("/environment", processApiRequest(controller.updateDeployEnvironment.bind(controller)))
 	.delete("/environment", processApiRequest(controller.deleteDeployEnvironment.bind(controller)))
+	// deploy_environment
+	.get("/deploy_environment", processApiRequest(controller.getDeployEnvironmentV2.bind(controller)))
+	.post("/deploy_environment", processApiRequest(controller.createDeployEnvironmentV2.bind(controller)))
+	.patch("/deploy_environment", processApiRequest(controller.updateDeployEnvironmentV2.bind(controller)))
+	.delete("/deploy_environment", processApiRequest(controller.deleteDeployEnvironmentV2.bind(controller)))
 	// domains
 	.post("/environment/domains", processApiRequest(controller.addEnvironmentDomain.bind(controller)))
 	// environment variables
