@@ -1,3 +1,20 @@
+# [3.3.0](https://github.com/digitopvn/diginext/compare/v3.2.2...v3.3.0) (2023-05-22)
+
+
+### Bug Fixes
+
+* **server,api:** provider not found when creating git repo ([375e351](https://github.com/digitopvn/diginext/commit/375e3512f3518e03dcd06f76daeff875c91e1a14))
+* **server,cli:** issue of deleting env vars when update app config ([f798f1c](https://github.com/digitopvn/diginext/commit/f798f1ce8892b4c56d3c61c2325bb1ca06078a31))
+* **server,workspace:** delete related data when deleting workspace ([8850d36](https://github.com/digitopvn/diginext/commit/8850d36addc1f15ee1efd40e143b64c001ec1bd4))
+* **server:** generate incorrect resource quotas by size ([40a7485](https://github.com/digitopvn/diginext/commit/40a7485535cbe47d4663d9b2a42f034054456ad2))
+
+
+### Features
+
+* **server,api:** check dx key when create workspace,domain ([2cb5f3f](https://github.com/digitopvn/diginext/commit/2cb5f3f83f142ce35ec54ff48cd15312a4b77755))
+* **server,api:** check dx key when create workspace,domain ([#132](https://github.com/digitopvn/diginext/issues/132)) ([b422f7e](https://github.com/digitopvn/diginext/commit/b422f7e247b2e81419af29cf6e41b5c89aedf827))
+* **server,cli:** issue of checking quota limit of workspace ([3464d54](https://github.com/digitopvn/diginext/commit/3464d54049a906b4dc1199d36ce113a383bd8389))
+
 ## [3.2.2](https://github.com/digitopvn/diginext/compare/v3.2.1...v3.2.2) (2023-05-20)
 
 
