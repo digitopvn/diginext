@@ -283,6 +283,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 
 	let envFile = resolveEnvFilePath({ targetDirectory: appDirectory, env, ignoreIfNotExisted: true });
 	// console.log("envFile :>> ", envFile);
+	if (options.isDebugging) console.log("serverEnvironmentVariables :>> ", serverEnvironmentVariables);
 
 	// if "--upload-env" flag is specified:
 	if (options.shouldUploadDotenv) {

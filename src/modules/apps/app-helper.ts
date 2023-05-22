@@ -1,15 +1,15 @@
 import type { IApp, IProject, IUser, IWorkspace } from "@/entities";
-import type { AppConfig, ClientDeployEnvironmentConfig } from "@/interfaces";
+import type { AppConfig, ClientDeployEnvironmentConfig, InputOptions } from "@/interfaces";
 
 /**
  * Parse `AppConfig` data from `App` instance
  * @param app - Should be populated ["project", "owner", "workspace"]
  */
-export const getAppConfigFromApp = (app: IApp) => {
+export const getAppConfigFromApp = (app: IApp, options?: InputOptions) => {
 	// hide confidential information:
 	const clientDeployEnvironment: { [key: string]: ClientDeployEnvironmentConfig } = {};
 	Object.entries(app.deployEnvironment || {}).map(([env, deployEnvironment]) => {
-		const { deploymentYaml, prereleaseDeploymentYaml, prereleaseUrl, envVars, cliVersion, namespaceYaml, ..._clientDeployEnvironmentData } =
+		const { deploymentYaml, prereleaseDeploymentYaml, prereleaseUrl, cliVersion, namespaceYaml, ..._clientDeployEnvironmentData } =
 			deployEnvironment;
 
 		clientDeployEnvironment[env] = (_clientDeployEnvironmentData || {}) as ClientDeployEnvironmentConfig;
