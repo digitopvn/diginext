@@ -30,10 +30,11 @@ export default class BaseService<T> {
 		this.model = model<T>(collection, schema, collection);
 	}
 
-	async count(filter?: IQueryFilter, options?: IQueryOptions) {
+	async count(filter?: IQueryFilter) {
 		const parsedFilter = filter;
 		parsedFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
-		return this.model.countDocuments({ ...parsedFilter, ...options }).exec();
+		// console.log(`BaseService > COUNT "${this.model.collection.name}" collection > parsedFilter :>>`, parsedFilter);
+		return this.model.countDocuments(parsedFilter).exec();
 	}
 
 	async create(data: any): Promise<T> {

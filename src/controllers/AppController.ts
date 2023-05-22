@@ -267,7 +267,8 @@ export default class AppController extends BaseController<IApp> {
 		// check dx quota
 		const quotaRes = await checkQuota(this.workspace);
 		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
-		if (quotaRes.data && quotaRes.data.isExceed) return respondFailure(`You've exceeded the limit amount of apps.`);
+		if (quotaRes.data && quotaRes.data.isExceed)
+			return respondFailure(`You've exceeded the limit amount of apps (${quotaRes.data.type} / Max. ${quotaRes.data.limits.apps} apps).`);
 
 		// validate
 		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
@@ -348,7 +349,10 @@ export default class AppController extends BaseController<IApp> {
 				if (size) {
 					const quotaRes = await checkQuota(this.workspace, { resourceSize: size });
 					if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
-					if (quotaRes.data && quotaRes.data.isExceed) return respondFailure(`You've exceeded the limit amount of container size.`);
+					if (quotaRes.data && quotaRes.data.isExceed)
+						return respondFailure(
+							`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+						);
 				}
 
 				// magic -> not delete other deploy environment & previous configuration
@@ -531,7 +535,10 @@ export default class AppController extends BaseController<IApp> {
 		// Check DX quota
 		const quotaRes = await checkQuota(this.workspace, { resourceSize: deployEnvironmentData.size });
 		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
-		if (quotaRes.data && quotaRes.data.isExceed) return respondFailure(`You've exceeded the limit amount of container size.`);
+		if (quotaRes.data && quotaRes.data.isExceed)
+			return respondFailure(
+				`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+			);
 
 		// Validate deploy environment data:
 

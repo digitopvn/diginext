@@ -27,6 +27,7 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 		const { data: responseData } = res;
 		return responseData as T;
 	} catch (e) {
+		console.log("e :>> ", e);
 		return { status: 0, messages: [`${e}`] } as T;
 	}
 }

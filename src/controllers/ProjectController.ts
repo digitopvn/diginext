@@ -37,8 +37,12 @@ export default class ProjectController extends BaseController<IProject> {
 	async create(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
 		// check dx quota
 		const quotaRes = await checkQuota(this.workspace);
+		console.log("[ProjectController] quotaRes :>> ", quotaRes);
 		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
-		if (quotaRes.data && quotaRes.data.isExceed) return respondFailure(`You've exceeded the limit amount of projects.`);
+		if (quotaRes.data && quotaRes.data.isExceed)
+			return respondFailure(
+				`You've exceeded the limit amount of projects (${quotaRes.data.type} / Max. ${quotaRes.data.limits.projects} projects).`
+			);
 
 		return super.create(body);
 	}
