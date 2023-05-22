@@ -164,7 +164,7 @@ export class DB {
 				return;
 			}
 			try {
-				amount = (await svc.count(filter, options)) || 0;
+				amount = (await svc.count(filter)) || 0;
 			} catch (e) {
 				logError(`[DB] COUNT > Service "${collection}" :>>`, e);
 			}

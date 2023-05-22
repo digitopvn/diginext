@@ -20,6 +20,7 @@ export async function execInitApp(options: InputOptions) {
 
 	// update framework & GIT info in the database
 	const gitInfo = await getCurrentGitRepoData(options.targetDirectory);
+	if (options.isDebugging) console.log("[INIT APP] gitInfo :>> ", gitInfo);
 
 	const updateData = {} as IApp;
 	if (options.framework) updateData.framework = options.framework;

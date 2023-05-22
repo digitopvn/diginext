@@ -308,6 +308,10 @@
 					"domain": {
 						"type": "string",
 						"description": "Workspace domain name"
+					},
+					"dx_key": {
+						"type": "string",
+						"description": "Diginext API Key"
 					}
 				},
 				"type": "object",
@@ -1461,7 +1465,7 @@
 					},
 					"ssl": {
 						"$ref": "#/components/schemas/SslType",
-						"description": "OPTIONAL\n---\nSelect your SSL Certificate Issuer, one of:\n- `letenscrypt`\n- `custom`\n- `none`"
+						"description": "OPTIONAL\n---\nSelect your SSL Certificate Issuer, one of:\n- `letsencrypt`\n- `custom`\n- `none`"
 					},
 					"tlsSecret": {
 						"type": "string",
@@ -1684,6 +1688,9 @@
 						],
 						"description": "ID of the project"
 					},
+					"status": {
+						"$ref": "#/components/schemas/BuildStatus"
+					},
 					"name": {
 						"type": "string"
 					},
@@ -1736,9 +1743,6 @@
 					},
 					"cliVersion": {
 						"type": "string"
-					},
-					"status": {
-						"$ref": "#/components/schemas/BuildStatus"
 					},
 					"logs": {
 						"type": "string"
@@ -4357,15 +4361,19 @@
 					},
 					"owner": {
 						"type": "string",
-						"description": "User ID of the owner"
+						"description": "User ID of the owner (default is the current authenticated user)"
 					},
 					"public": {
 						"type": "boolean",
 						"description": "Set privacy mode for this workspace",
 						"default": "true"
+					},
+					"dx_key": {
+						"type": "string",
+						"description": "Diginext API Key"
 					}
 				},
-				"required": ["name", "owner"],
+				"required": ["name", "dx_key"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -4615,7 +4623,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "3.2.1",
+		"version": "3.2.2",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -5578,7 +5586,7 @@
 						}
 					}
 				},
-				"description": "Update a variable on the deploy environment of the application.",
+				"description": "Delete variables on the deploy environment of the application.",
 				"tags": ["App"],
 				"security": [
 					{
