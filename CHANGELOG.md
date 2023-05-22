@@ -1,3 +1,11 @@
+## [3.3.1](https://github.com/digitopvn/diginext/compare/v3.3.0...v3.3.1) (2023-05-22)
+
+
+### Bug Fixes
+
+* **server,cli:** flag --create when dx new, dx key in workspace setting ([1722a70](https://github.com/digitopvn/diginext/commit/1722a702c8e2fc4c7dde2ce21d7cef5716c28a7a))
+* **server,cli:** flag --create when dx new, dx key in workspace setting ([#134](https://github.com/digitopvn/diginext/issues/134)) ([55e8d69](https://github.com/digitopvn/diginext/commit/55e8d69dd15222c2a78d00978c0107367c23fb2e))
+
 # [3.3.0](https://github.com/digitopvn/diginext/compare/v3.2.2...v3.3.0) (2023-05-22)
 
 
