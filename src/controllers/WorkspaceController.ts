@@ -130,7 +130,28 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	async delete(@Queries() queryParams?: IDeleteQueryParams) {
+		// delete workspace in user:
+		const _user = await DB.findOne<IUser>("user", { workspaces: this.workspace._id });
+		const workspaces = _user.workspaces.filter((wsId) => MongoDB.toString(wsId) !== MongoDB.toString(this.workspace._id));
+		const updatedUser = await DB.updateOne<IUser>("user", { _id: _user._id }, { workspaces, activeWorkspace: undefined });
+		console.log("[WorkspaceController] delete > updatedUser :>> ", updatedUser);
+
+		// delete related data:
+		await DB.delete("project", { workspace: this.workspace._id });
+		await DB.delete("app", { workspace: this.workspace._id });
+		await DB.delete("build", { workspace: this.workspace._id });
+		await DB.delete("cluster", { workspace: this.workspace._id });
+		await DB.delete("framework", { workspace: this.workspace._id });
+		await DB.delete("git", { workspace: this.workspace._id });
+		await DB.delete("database", { workspace: this.workspace._id });
+		await DB.delete("api_key_user", { workspace: this.workspace._id });
+		await DB.delete("service_account", { workspace: this.workspace._id });
+		await DB.delete("registry", { workspace: this.workspace._id });
+		await DB.delete("release", { workspace: this.workspace._id });
+		await DB.delete("role", { workspace: this.workspace._id });
+		await DB.delete("route", { workspace: this.workspace._id });
+		await DB.delete("team", { workspace: this.workspace._id });
 		return super.delete();
 	}
 
