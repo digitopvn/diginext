@@ -698,8 +698,10 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 			baseDir: `${dir}`,
 			binary: "git",
 		});
-		const remotes = await git.getRemotes(false);
-
+		// const remoteInfo = await git.listRemote();
+		// console.log("remoteInfo :>> ", remoteInfo);
+		const remotes = await git.getRemotes(true);
+		// console.log("getCurrentGitRepoData > remotes :>> ", remotes);
 		const remoteSSH = (remotes[0] as any)?.refs?.fetch;
 		if (!remoteSSH) return;
 

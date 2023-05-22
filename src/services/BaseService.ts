@@ -30,10 +30,11 @@ export default class BaseService<T = any> {
 		this.model = model<T>(collection, schema, collection);
 	}
 
-	async count(filter?: IQueryFilter, options?: IQueryOptions) {
+	async count(filter?: IQueryFilter) {
 		const parsedFilter = filter;
 		parsedFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
-		return this.model.countDocuments({ ...parsedFilter, ...options }).exec();
+		// console.log(`BaseService > COUNT "${this.model.collection.name}" collection > parsedFilter :>>`, parsedFilter);
+		return this.model.countDocuments(parsedFilter).exec();
 	}
 
 	async create(data: any): Promise<T> {
@@ -109,7 +110,7 @@ export default class BaseService<T = any> {
 			..._filter,
 			$or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
 		};
-		console.log(`BaseService > collection "${this.model.collection.name}" > find > where :>>`, where);
+		// console.log(`BaseService > collection "${this.model.collection.name}" > find > where :>>`, where);
 
 		const pipelines: PipelineStage[] = [
 			{
@@ -184,8 +185,6 @@ export default class BaseService<T = any> {
 		if (pagination && this.req) {
 			pagination.total_items = totalItems || results.length;
 			pagination.total_pages = pagination.page_size ? Math.ceil(totalItems / pagination.page_size) : 1;
-
-			console.log("[BASE_SERVICE] this.req :>> ", this.req);
 
 			const prevPage = pagination.current_page - 1 <= 0 ? 1 : pagination.current_page - 1;
 			const nextPage =

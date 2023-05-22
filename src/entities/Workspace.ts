@@ -27,6 +27,10 @@ export interface IWorkspace extends IBase {
 	 * Workspace domain name
 	 */
 	domain?: string;
+	/**
+	 * Diginext API Key
+	 */
+	dx_key?: string;
 }
 
 export type WorkspaceDto = Omit<IWorkspace, keyof HiddenBodyKeys>;
@@ -39,6 +43,7 @@ export const workspaceSchema = new Schema(
 		public: { type: Boolean },
 		image: { type: String },
 		domain: { type: String },
+		dx_key: { type: String },
 		owner: { type: Schema.Types.ObjectId, ref: "users" },
 	},
 	{ collection: "workspaces", timestamps: true }

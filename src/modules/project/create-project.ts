@@ -44,6 +44,7 @@ export default async function createProjectByForm(options: InputOptions) {
 
 	// Save this project to database
 	const newProject = await DB.create<IProject>("project", newProjectData);
+	if (options.isDebugging) console.log("[createProjectByForm] newProject :>> ", newProject);
 	if (!newProject) {
 		logError(`Failed to create new project named "${newProjectData.name}"`);
 		return;

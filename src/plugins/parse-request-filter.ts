@@ -1,4 +1,4 @@
-import { cloneDeepWith, isString, trim } from "lodash";
+import { cloneDeepWith } from "lodash";
 
 import type { IQueryFilter } from "@/interfaces";
 
@@ -42,16 +42,6 @@ export const parseRequestFilter = (requestQuery: any) => {
 	}
 
 	// console.log("[2] _filter :>> ", _filter);
-
-	if (search === true) {
-		Object.entries(_filter).forEach(([key, val]) => {
-			_filter[key] = isString(val) ? { $regex: trim(val), $options: "i" } : val;
-		});
-	} else {
-		Object.entries(_filter).forEach(([key, val]) => {
-			_filter[key] = isString(val) ? trim(val) : val;
-		});
-	}
 
 	/**
 	 * Traverse filter object and transform the values.

@@ -5,6 +5,7 @@ import { ProjectDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
+import { checkQuota } from "@/modules/workspace/check-quota";
 import { MongoDB } from "@/plugins/mongodb";
 import AppService from "@/services/AppService";
 import ProjectService from "@/services/ProjectService";
@@ -33,7 +34,16 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
+		// check dx quota
+		const quotaRes = await checkQuota(this.workspace);
+		console.log("[ProjectController] quotaRes :>> ", quotaRes);
+		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+		if (quotaRes.data && quotaRes.data.isExceed)
+			return respondFailure(
+				`You've exceeded the limit amount of projects (${quotaRes.data.type} / Max. ${quotaRes.data.limits.projects} projects).`
+			);
+
 		return super.create(body);
 	}
 
