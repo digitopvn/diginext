@@ -14,7 +14,6 @@ on:
 # ENVIRONMENT VARIABLES
 env:
   DB_URI: mongodb://localhost:27017
-  DX_KEY: randomkey
   CLI_MODE: server
   BUILDER: podman
   PORT: 6969

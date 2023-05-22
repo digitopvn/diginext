@@ -121,6 +121,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// Setup a domain for prerelease
 	if (env == "prod") {
 		const { status, domain, messages } = await generateDomains({
+			workspace,
 			primaryDomain: DIGINEXT_DOMAIN,
 			subdomainName: prereleaseSubdomainName,
 			clusterShortName: deployEnvironmentConfig.cluster,

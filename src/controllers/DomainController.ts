@@ -1,7 +1,7 @@
 import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import { IPostQueryParams, respondFailure } from "@/interfaces";
-import { createDiginextDomain, CreateDiginextDomainParams } from "@/modules/diginext/dx-domain";
+import { CreateDiginextDomainParams, createDxDomain } from "@/modules/diginext/dx-domain";
 
 import BaseController from "./BaseController";
 
@@ -19,8 +19,9 @@ export default class DomainController extends BaseController {
 		if (!body.name) return respondFailure({ msg: `Subdomain name is required.` });
 		if (!body.data) return respondFailure({ msg: `Value of A RECORD is required (usually the IP address).` });
 
+		const dxKey = this.workspace.dx_key;
 		// process
-		const res = await createDiginextDomain(body);
+		const res = await createDxDomain(body, dxKey);
 		return res;
 	}
 }

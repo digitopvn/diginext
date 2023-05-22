@@ -8,7 +8,8 @@ import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { ResponseData } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
-import { sendDiginextEmail } from "@/modules/diginext/dx-email";
+import { sendDxEmail } from "@/modules/diginext/dx-email";
+import { createDxWorkspace } from "@/modules/diginext/dx-workspace";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
@@ -34,14 +35,18 @@ interface WorkspaceInputData {
 	 */
 	name: string;
 	/**
-	 * User ID of the owner
+	 * User ID of the owner (default is the current authenticated user)
 	 */
-	owner: string;
+	owner?: string;
 	/**
 	 * Set privacy mode for this workspace
 	 * @default true
 	 */
 	public?: boolean;
+	/**
+	 * Diginext API Key
+	 */
+	dx_key: string;
 }
 
 @Tags("Workspace")
@@ -67,10 +72,11 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: WorkspaceInputData) {
-		const { owner = MongoDB.toString(this.user._id), name } = body;
+		const { owner = MongoDB.toString(this.user._id), name, dx_key } = body;
 
-		if (!name) return respondFailure({ msg: `Workspace "name" is required.` });
-		if (!owner) return respondFailure({ msg: `Workspace "owner" (UserID) is required.` });
+		if (!name) return respondFailure({ msg: `Param "name" is required.` });
+		if (!owner) return respondFailure({ msg: `Param "owner" (UserID) is required.` });
+		if (!dx_key) return respondFailure(`Param "dx_key" is required.`);
 
 		// find owner
 		let ownerUser = await DB.findOne<IUser>("user", { _id: owner });
@@ -79,7 +85,12 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		// Assign some default values if it's missing
 		if (isUndefined(body.public)) body.public = true;
 
-		// TODO: call DX API to retrieve DX_KEY automatically:
+		// ----- VERIFY DX KEY -----
+
+		const createWsRes = await createDxWorkspace({ name }, dx_key);
+		if (!createWsRes.status) return respondFailure(`Unable to create Diginext workspace.`);
+
+		// ----- END VERIFYING -----
 
 		// [1] Create new workspace:
 		// console.log("createWorkspace > body :>> ", body);
@@ -152,13 +163,16 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		const mailContent = `Dear,<br/><br/>You've been invited to <strong>"${workspace.name}"</strong> workspace, please <a href="${Config.BASE_URL}" target="_blank">click here</a> to login.<br/><br/>Cheers,<br/>Diginext System`;
 
 		// send invitation email to those users:
-		const result = await sendDiginextEmail({
-			recipients: invitedMembers.map((member) => {
-				return { email: member.email };
-			}),
-			subject: `[DIGINEXT] "${this.user.name}" has invited you to join "${workspace.name}" workspace.`,
-			content: mailContent,
-		});
+		const result = await sendDxEmail(
+			{
+				recipients: invitedMembers.map((member) => {
+					return { email: member.email };
+				}),
+				subject: `[DIGINEXT] "${this.user.name}" has invited you to join "${workspace.name}" workspace.`,
+				content: mailContent,
+			},
+			workspace.dx_key
+		);
 
 		return result;
 	}

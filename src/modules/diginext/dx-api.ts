@@ -5,17 +5,15 @@ import { isEmpty } from "lodash";
 import { Config } from "@/app.config";
 import type { ResponseData } from "@/interfaces";
 
-export async function dxApi<T = ResponseData>(options: AxiosRequestConfig) {
-	const { method } = options;
-
-	const licenseKey = Config.DX_KEY;
+export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dxKey: string }) {
+	const { method, dxKey } = options;
 
 	if (isEmpty(options.headers)) options.headers = {};
-	if (!licenseKey) return { status: 0, messages: [`Diginext License Key is required.`] } as T;
 
 	options.baseURL = Config.DX_API_URL;
 
-	options.headers.Authorization = `Bearer ${licenseKey}`;
+	// options.headers.Authorization = `Bearer ${licenseKey}`;
+	if (dxKey) options.headers["X-API-Key"] = dxKey;
 
 	if (["POST", "PATCH", "DELETE"].includes(method?.toUpperCase())) {
 		if (isEmpty(options.headers["content-type"])) options.headers["content-type"] = "application/json";
@@ -26,7 +24,6 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig) {
 
 	try {
 		const res = await axios(options);
-		// console.log("[DX_API] res :>> ", res);
 		const { data: responseData } = res;
 		return responseData as T;
 	} catch (e) {

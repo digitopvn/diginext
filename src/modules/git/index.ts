@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import execa from "execa";
@@ -20,10 +20,6 @@ import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { execCmd, getCurrentGitRepoData, isMac, wait } from "@/plugins";
 
 import { conf } from "../..";
-import { bitbucketProfile, repoList, signInBitbucket } from "../bitbucket";
-import { createPullRequest } from "../bitbucket/createPullRequest";
-import { applyBranchPermissions } from "../bitbucket/permissions";
-import { bitbucketAuthentication } from "../bitbucket/promptForAuthOptions";
 import Github from "./github";
 
 // git@github.com:digitopvn/fluffy-dollop.git
@@ -65,24 +61,11 @@ export const login = async (options?: InputOptions) => {
 
 	switch (gitProvider) {
 		case "bitbucket":
-			if (options.thirdAction && options.fourAction) {
-				options.username = options.thirdAction;
-				options.token = options.fourAction;
-			} else {
-				options = await bitbucketAuthentication(options);
-			}
-
-			const loginRes = await signInBitbucket(options);
-
-			if (loginRes) {
-				logSuccess(`Đăng nhập Bitbucket thành công.`);
-				return true;
-			} else {
-				logError(`Đăng nhập Bitbucket that bai.`);
-				return false;
-			}
+			logWarn(`This feature is under development.`);
+			return false;
 
 		case "github":
+			// logWarn(`This feature is under development.`);
 			await Github.login();
 			break;
 
@@ -172,9 +155,8 @@ export const getUserProfile = async (options?: InputOptions) => {
 
 	switch (gitProvider) {
 		case "bitbucket":
-			options = await bitbucketAuthentication(options);
-			await signInBitbucket(options);
-			return bitbucketProfile();
+			logWarn(`This feature is under development.`);
+			return;
 
 		case "github":
 			const githubProfile = await Github.profile();
@@ -188,22 +170,23 @@ export const getUserProfile = async (options?: InputOptions) => {
 };
 
 export const setupRepositoryPermissions = async (options?: InputOptions) => {
-	await signInBitbucket(options);
+	logWarn(`This feature is under development.`);
 
-	await applyBranchPermissions(options, "master", "pull-request-only", "push", []);
-	await applyBranchPermissions(options, "staging", "pull-request-only", "push", []);
-	await applyBranchPermissions(options, "staging", "pull-request-only", "require_approvals_to_merge");
-	await applyBranchPermissions(options, "prod", "pull-request-only", "push", []);
-	await applyBranchPermissions(options, "prod", "pull-request-only", "restrict_merges");
+	// await applyBranchPermissions(options, "master", "pull-request-only", "push", []);
+	// await applyBranchPermissions(options, "staging", "pull-request-only", "push", []);
+	// await applyBranchPermissions(options, "staging", "pull-request-only", "require_approvals_to_merge");
+	// await applyBranchPermissions(options, "prod", "pull-request-only", "push", []);
+	// await applyBranchPermissions(options, "prod", "pull-request-only", "restrict_merges");
 
-	logSuccess(`Đã áp dụng quyền hạn chế truy cập mặc định.`);
+	// logSuccess(`Đã áp dụng quyền hạn chế truy cập mặc định.`);
 };
 
 export const getListRepositories = async (options?: InputOptions) => {
-	await bitbucketAuthentication(options);
-	await signInBitbucket(options);
+	logWarn(`This feature is under development.`);
+	// await bitbucketAuthentication(options);
+	// await signInBitbucket(options);
 
-	return repoList(options);
+	// return repoList(options);
 };
 
 export const createNewPullRequest = async (options?: InputOptions) => {
@@ -215,9 +198,7 @@ export const createNewPullRequest = async (options?: InputOptions) => {
 
 	switch (gitProvider) {
 		case "bitbucket":
-			await bitbucketAuthentication(options);
-			await signInBitbucket(options);
-			return createPullRequest(options);
+			logWarn(`This feature is under development.`);
 
 		case "github":
 			if (repoInfo.remoteURL) {

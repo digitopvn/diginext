@@ -114,10 +114,6 @@ export class Config {
 		return process.env.DX_API_URL ? process.env.DX_API_URL : "https://diginext.vn/api";
 	}
 
-	static get DX_KEY() {
-		return process.env.DX_KEY;
-	}
-
 	static get BUILDER() {
 		return process.env.BUILDER || "podman";
 	}

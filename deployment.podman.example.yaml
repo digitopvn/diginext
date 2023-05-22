@@ -67,8 +67,6 @@ spec:
               value: # GOOGLE_CLIENT_SECRET
             - name: BUILDER
               value: podman
-            - name: DX_KEY
-              value: randomkey
           volumeMounts:
             - name: storage
               mountPath: /var/app/storage
