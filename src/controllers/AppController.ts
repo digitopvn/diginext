@@ -1102,13 +1102,42 @@ export default class AppController extends BaseController<IApp, AppService> {
 			: [];
 
 		// console.log("updateEnvVars :>> ", updateEnvVars);
-		const [updatedApp] = await this.service.update(
+		let [updatedApp] = await this.service.update(
 			{ slug },
 			{
 				[`deployEnvironment.${env}.envVars`]: newEnvVars,
 			}
 		);
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
+
+		// generate deployment files and apply new config
+		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+
+		let deployment: GenerateDeploymentResult = await generateDeployment({
+			appSlug: app.slug,
+			env,
+			username: this.user.slug,
+			workspace: this.workspace,
+			buildNumber,
+		});
+
+		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+
+		// update data to deploy environment:
+		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
+		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
+		serverDeployEnvironment.deploymentYaml = deploymentContent;
+		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+		serverDeployEnvironment.updatedAt = new Date();
+		serverDeployEnvironment.lastUpdatedBy = this.user.username;
+
+		// Update {user}, {project}, {environment} to database before rolling out
+		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
+		updatedAppData.lastUpdatedBy = this.user.username;
+		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
+
+		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// Set environment variables to deployment in the cluster
 		const deployEnvironment = updatedApp.deployEnvironment[env];
