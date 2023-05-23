@@ -14,7 +14,7 @@ export const getAppConfigFromApp = (app: IApp, options?: InputOptions) => {
 
 		clientDeployEnvironment[env] = (_clientDeployEnvironmentData || {}) as ClientDeployEnvironmentConfig;
 	});
-	console.log("clientDeployEnvironment :>> ", clientDeployEnvironment);
+	if (options?.isDebugging) console.log("clientDeployEnvironment :>> ", clientDeployEnvironment);
 
 	// parse app config
 	const appConfig: AppConfig = {

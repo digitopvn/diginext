@@ -145,6 +145,13 @@ RUN mkdir -p /run/user/1000 && chmod 700 /run/user/1000
 RUN chown -R ${uid}:${gid} /run/user/1000
 RUN chmod -R ug+rwx /run/user/1000
 
+# Configuration files for PODMAN to resolve "docker.io" registry shortname alias
+COPY ./podman/containers/registries.conf /etc/containers/registries.conf
+COPY ./podman/containers/registries.conf /home/${user}/share/containers/registries.conf
+COPY ./podman/containers/registries.conf /home/${user}/.config/containers/registries.conf
+
+# PODMAN's image storage
+COPY ./podman/containers/storage.conf /home/${user}/share/containers/storage.conf
 COPY ./podman/containers/storage.conf /home/${user}/.config/containers/storage.conf
 COPY ./podman/containers/storage.conf /root/.config/containers/storage.conf
 RUN chmod -R ug+rwx /home/${user}/.config/containers/storage.conf
