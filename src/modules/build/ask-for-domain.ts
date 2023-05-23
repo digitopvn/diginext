@@ -22,10 +22,11 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 	}
 	const clusterShortName = deployEnvironment.cluster;
 
-	const app = await DB.findOne<IApp>("app", { slug: appSlug });
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["workspace"] });
 	if (!app) throw new Error(`[ASK_FOR_DOMAIN] App "${appSlug}" not found.`);
+	// console.log("app.workspace :>> ", app.workspace);
 
-	const workspace = await DB.findOne<IWorkspace>("workspace", { _id: app.workspace });
+	const workspace = app.workspace as IWorkspace;
 
 	// xử lý domains
 	if (typeof deployEnvironment.domains != "undefined" && deployEnvironment.domains.length > 0) {
