@@ -1,3 +1,12 @@
+## [3.4.1](https://github.com/digitopvn/diginext/compare/v3.4.0...v3.4.1) (2023-05-23)
+
+
+### Bug Fixes
+
+* **cli:** correct workspace dx_key when ask for domain ([6cc060d](https://github.com/digitopvn/diginext/commit/6cc060daca1cea5c202c96db896640376c4ebf85))
+* **cli:** correct workspace dx_key when ask for domain ([#136](https://github.com/digitopvn/diginext/issues/136)) ([32b89e7](https://github.com/digitopvn/diginext/commit/32b89e7bdf4d431b5e701f29b73abb0b6761942a))
+* **server,admin:** add env vars, deployment yaml drawer ([889f24f](https://github.com/digitopvn/diginext/commit/889f24fa44bc66213c808450179a533112b17e73))
+
 # [3.4.0](https://github.com/digitopvn/diginext/compare/v3.3.1...v3.4.0) (2023-05-22)
 
 
