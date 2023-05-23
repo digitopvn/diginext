@@ -1,3 +1,13 @@
+## [3.4.3](https://github.com/digitopvn/diginext/compare/v3.4.2...v3.4.3) (2023-05-23)
+
+
+### Bug Fixes
+
+* **server,app controller:** re-generate yaml after updating env vars ([796eddd](https://github.com/digitopvn/diginext/commit/796eddd2280ebd15eeb354adb437b87891d664ca))
+* **server,app controller:** re-generate yaml after updating env vars ([#138](https://github.com/digitopvn/diginext/issues/138)) ([04bff87](https://github.com/digitopvn/diginext/commit/04bff8750066f3df90888d018cf9ae734d020ef2))
+* **server:** add podman to clean up cronjob ([fec4ee3](https://github.com/digitopvn/diginext/commit/fec4ee32cae2fc97ed70d42d6e88587229e139f2))
+* **server:** close db connection when app is terminated ([ae63891](https://github.com/digitopvn/diginext/commit/ae63891ae99f112c1005e5c5336ffc70d49fec70))
+
 ## [3.4.2](https://github.com/digitopvn/diginext/compare/v3.4.1...v3.4.2) (2023-05-23)
 
 
