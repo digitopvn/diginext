@@ -184,6 +184,14 @@ function initialize() {
 if (CLI_MODE === "server") {
 	log(`Connecting to database. Please wait...`);
 	AppDatabase.connect(initialize);
+
+	/**
+	 * Close the database connection when the application is terminated
+	 */
+	process.on("SIGINT", async () => {
+		await AppDatabase.disconnect();
+		process.exit(0);
+	});
 }
 
 export const getIO = () => socketIO;
