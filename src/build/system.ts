@@ -2,6 +2,8 @@ import { log, logSuccess } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import execa from "execa";
 
+import { Config } from "@/app.config";
+
 import { Logger } from "../plugins/logger";
 import { execCmd } from "../plugins/utils";
 
@@ -17,7 +19,7 @@ export async function listImages() {
 
 	// convert to json:
 
-	const jsonList = await execa.command(`docker images --format "{{json .}}"`);
+	const jsonList = await execa.command(`${Config.BUILDER} images --format "{{json .}}"`);
 	const imgArr = jsonList.stdout.split("\n").map((line) => JSON.parse(line));
 
 	return JSON.stringify(imgArr, null, 2);
@@ -29,7 +31,7 @@ export async function cleanUp() {
 	let result;
 
 	// Clean up docker system
-	result = await execCmd("docker system prune -af --filter until=72h");
+	result = await execCmd(`${Config.BUILDER} system prune -af --filter until=72h`);
 	log(`>>> DOCKER SYSTEM HAVE BEEN CLEANED UP:`);
 	log(result);
 	logger?.append(result);
@@ -38,7 +40,7 @@ export async function cleanUp() {
 	logger?.append(`-------------------------`);
 
 	// Clean up docker volumes
-	result = await execCmd("docker volume prune -af --filter until=72h");
+	result = await execCmd(`${Config.BUILDER} volume prune -f --filter until=72h`);
 	log(`>>> DOCKER VOLUME HAVE BEEN CLEANED UP:`);
 	log(result);
 	logger?.append(result);
