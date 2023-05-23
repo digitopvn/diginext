@@ -1,3 +1,11 @@
+## [3.4.2](https://github.com/digitopvn/diginext/compare/v3.4.1...v3.4.2) (2023-05-23)
+
+
+### Bug Fixes
+
+* **server,dockerfile:** define unqualified-search registries for podman ([c9da8b2](https://github.com/digitopvn/diginext/commit/c9da8b2c9cbb94f5e559ec82233b3fb3fc9b5473))
+* **server,dockerfile:** define unqualified-search registries for podman ([#137](https://github.com/digitopvn/diginext/issues/137)) ([541aa67](https://github.com/digitopvn/diginext/commit/541aa6748b38172183673f8b364b0df1e7808fe1))
+
 ## [3.4.1](https://github.com/digitopvn/diginext/compare/v3.4.0...v3.4.1) (2023-05-23)
 
 
