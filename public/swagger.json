@@ -498,6 +498,10 @@
 				"type": "string",
 				"description": "A class representation of the BSON ObjectId type."
 			},
+			"AppStatus": {
+				"type": "string",
+				"enum": ["healthy", "partial_healthy", "undeployed", "failed", "crashed", "unknown"]
+			},
 			"ResourceQuotaSize": {
 				"type": "string",
 				"enum": [
@@ -665,6 +669,15 @@
 						"type": "string",
 						"format": "date-time",
 						"description": "Update time"
+					},
+					"status": {
+						"$ref": "#/components/schemas/AppStatus",
+						"description": "Deployment's status"
+					},
+					"readyCount": {
+						"type": "number",
+						"format": "double",
+						"description": "Amount of ready instances"
 					}
 				},
 				"type": "object",
@@ -1162,31 +1175,6 @@
 			},
 			"Pick_IApp.Exclude_keyofIApp.keyofHiddenBodyKeys__": {
 				"properties": {
-					"git": {
-						"$ref": "#/components/schemas/AppGitInfo",
-						"description": "The Git information of the app."
-					},
-					"framework": {
-						"properties": {
-							"repoSSH": {
-								"type": "string"
-							},
-							"repoURL": {
-								"type": "string"
-							},
-							"version": {
-								"type": "string"
-							},
-							"slug": {
-								"type": "string"
-							},
-							"name": {
-								"type": "string"
-							}
-						},
-						"type": "object",
-						"description": "The framework information of the app."
-					},
 					"project": {
 						"anyOf": [
 							{
@@ -1222,6 +1210,31 @@
 					"lastUpdatedBy": {
 						"type": "string",
 						"description": "The user who last updated the app."
+					},
+					"git": {
+						"$ref": "#/components/schemas/AppGitInfo",
+						"description": "The Git information of the app."
+					},
+					"framework": {
+						"properties": {
+							"repoSSH": {
+								"type": "string"
+							},
+							"repoURL": {
+								"type": "string"
+							},
+							"version": {
+								"type": "string"
+							},
+							"slug": {
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							}
+						},
+						"type": "object",
+						"description": "The framework information of the app."
 					},
 					"environment": {
 						"properties": {},
@@ -1582,6 +1595,10 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"BuildStatus": {
+				"type": "string",
+				"enum": ["failed", "start", "building", "success"]
+			},
 			"RegistryProviderType": {
 				"type": "string",
 				"enum": [
@@ -1726,44 +1743,10 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"BuildStatus": {
-				"type": "string",
-				"enum": [
-					"start",
-					"building",
-					"failed",
-					"success"
-				]
-			},
 			"Pick_IBuild.Exclude_keyofIBuild.keyofHiddenBodyKeys__": {
 				"properties": {
-					"app": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/Types.ObjectId"
-							},
-							{
-								"$ref": "#/components/schemas/IApp"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "ID of the app"
-					},
-					"registry": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/Types.ObjectId"
-							},
-							{
-								"$ref": "#/components/schemas/IContainerRegistry"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "ID of the container registry"
+					"status": {
+						"$ref": "#/components/schemas/BuildStatus"
 					},
 					"project": {
 						"anyOf": [
@@ -1779,8 +1762,19 @@
 						],
 						"description": "ID of the project"
 					},
-					"status": {
-						"$ref": "#/components/schemas/BuildStatus"
+					"app": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/Types.ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/IApp"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the app"
 					},
 					"name": {
 						"type": "string"
@@ -1804,6 +1798,20 @@
 					"env": {
 						"type": "string",
 						"description": "Build for which deploy environment\n- **[OPTIONAL] DO NOT rely on this!**\n- A build should be able to be used for any deploy environments."
+					},
+					"registry": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/Types.ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/IContainerRegistry"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the container registry"
 					},
 					"appSlug": {
 						"type": "string",
@@ -2214,20 +2222,6 @@
 			},
 			"Pick_ICluster.Exclude_keyofICluster.keyofHiddenBodyKeys__": {
 				"properties": {
-					"provider": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"$ref": "#/components/schemas/Types.ObjectId"
-							},
-							{
-								"$ref": "#/components/schemas/ICloudProvider"
-							}
-						],
-						"description": "Cloud provider of this cluster"
-					},
 					"project": {
 						"anyOf": [
 							{
@@ -2252,6 +2246,20 @@
 					},
 					"active": {
 						"type": "boolean"
+					},
+					"provider": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"$ref": "#/components/schemas/Types.ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/ICloudProvider"
+							}
+						],
+						"description": "Cloud provider of this cluster"
 					},
 					"isVerified": {
 						"type": "boolean",
@@ -3393,11 +3401,19 @@
 								"type": "number",
 								"format": "double"
 							},
-							"replicas": {
+							"availableReplicas": {
+								"type": "number",
+								"format": "double"
+							},
+							"unavailableReplicas": {
 								"type": "number",
 								"format": "double"
 							},
 							"readyReplicas": {
+								"type": "number",
+								"format": "double"
+							},
+							"replicas": {
 								"type": "number",
 								"format": "double"
 							},
@@ -3430,10 +3446,6 @@
 									"type": "object"
 								},
 								"type": "array"
-							},
-							"availableReplicas": {
-								"type": "number",
-								"format": "double"
 							}
 						},
 						"type": "object"
@@ -3508,17 +3520,6 @@
 			},
 			"Pick_IFramework.Exclude_keyofIFramework.keyofHiddenBodyKeys__": {
 				"properties": {
-					"git": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/Types.ObjectId"
-							},
-							{
-								"$ref": "#/components/schemas/IGitProvider"
-							}
-						],
-						"description": "ID of the Git Provider"
-					},
 					"project": {
 						"anyOf": [
 							{
@@ -3539,6 +3540,17 @@
 					"slug": {
 						"type": "string",
 						"description": "Slug of an item, generated automatically by its \"name\""
+					},
+					"git": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/Types.ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/IGitProvider"
+							}
+						],
+						"description": "ID of the Git Provider"
 					},
 					"active": {
 						"type": "boolean"
@@ -3842,10 +3854,6 @@
 			},
 			"Pick_IContainerRegistry.Exclude_keyofIContainerRegistry.keyofHiddenBodyKeys__": {
 				"properties": {
-					"provider": {
-						"$ref": "#/components/schemas/RegistryProviderType",
-						"description": "Provider's \"shortName\""
-					},
 					"project": {
 						"anyOf": [
 							{
@@ -3869,6 +3877,10 @@
 					},
 					"active": {
 						"type": "boolean"
+					},
+					"provider": {
+						"$ref": "#/components/schemas/RegistryProviderType",
+						"description": "Provider's \"shortName\""
 					},
 					"isVerified": {
 						"type": "boolean"
@@ -3934,40 +3946,6 @@
 			},
 			"Pick_IRelease.Exclude_keyofIRelease.keyofHiddenBodyKeys__": {
 				"properties": {
-					"app": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/Types.ObjectId"
-							},
-							{
-								"$ref": "#/components/schemas/IApp"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "ID of the app"
-					},
-					"build": {
-						"anyOf": [
-							{
-								"$ref": "#/components/schemas/Types.ObjectId"
-							},
-							{
-								"$ref": "#/components/schemas/IBuild"
-							},
-							{
-								"type": "string"
-							}
-						],
-						"description": "ID of the build"
-					},
-					"provider": {
-						"type": "string"
-					},
-					"cluster": {
-						"type": "string"
-					},
 					"project": {
 						"anyOf": [
 							{
@@ -3981,6 +3959,20 @@
 							}
 						],
 						"description": "ID of the project"
+					},
+					"app": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/Types.ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/IApp"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the app"
 					},
 					"name": {
 						"type": "string"
@@ -4004,6 +3996,26 @@
 					"env": {
 						"type": "string",
 						"description": "Targeted environment."
+					},
+					"build": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/Types.ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/IBuild"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the build"
+					},
+					"provider": {
+						"type": "string"
+					},
+					"cluster": {
+						"type": "string"
 					},
 					"appSlug": {
 						"type": "string"
@@ -4773,7 +4785,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "3.4.2",
+		"version": "3.4.3",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -6298,6 +6310,54 @@
 						}
 					}
 				}
+			}
+		},
+		"/app/environment/logs": {
+			"get": {
+				"operationId": "ViewLogs",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "View app's container logs",
+				"tags": ["App"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "App's deploy environment code (dev, prod,...)",
+						"in": "query",
+						"name": "env",
+						"required": false,
+						"schema": {
+							"default": "\"dev\"",
+							"type": "string"
+						}
+					},
+					{
+						"description": "App's slug",
+						"in": "query",
+						"name": "slug",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"/build": {
