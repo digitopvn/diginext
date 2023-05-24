@@ -72,15 +72,8 @@ export default class ProjectController extends BaseController<IProject> {
 		let result: ResponseData & { data: IProject[] } = { status: 1, data: [], messages: [] };
 		if (this.pagination) result = { ...result, ...this.pagination };
 
-		// // assign refreshed token if any:
-		// // TODO: this is not safe -> should use refresh token!
-		// const { token } = req as any;
-		// if (token) result.token = token;
-
 		// populate apps
 		const projectIDs = projects.map((p) => p._id);
-		// console.log("projectIDs :>> ", projectIDs);
-
 		const appSvc = new AppService();
 		let apps = await appSvc.find({ project: { $in: projectIDs } }, this.options);
 		// console.log("apps :>> ", apps);

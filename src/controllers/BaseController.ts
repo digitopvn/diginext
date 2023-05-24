@@ -130,6 +130,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			size = 0,
 			populate,
 			select,
+			status,
 			sort, // @example: -updatedAt,-createdAt
 			order, // @example: -updatedAt,-createdAt
 			search = false,
@@ -217,6 +218,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			size = DEFAULT_PAGE_SIZE,
 			populate,
 			select,
+			status,
 			sort = "createdAt",
 			search = false,
 			access_token,
