@@ -94,12 +94,14 @@ export async function startupScripts() {
 	/**
 	 * CRONJOBS
 	 * ---
-	 * Schedule a clean up task every 3 days at 00:00 AM
+	 * Schedule a clean up task every 7 days at 02:00 AM
 	 * (Skip for test environment)
 	 */
 	if (!IsTest()) {
-		logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every 3 days at 00:00 AM`);
-		cronjob.schedule("0 0 */3 * *", () => cleanUp());
+		const repeatDays = 7; // every 7 days
+		const atHour = 2; // 2AM
+		logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
+		cronjob.schedule(`0 ${atHour} */${repeatDays} * *`, () => cleanUp());
 	}
 
 	/**
