@@ -29,6 +29,8 @@ router
 	.post("/deploy_environment", processApiRequest(controller.createDeployEnvironmentV2.bind(controller)))
 	.patch("/deploy_environment", processApiRequest(controller.updateDeployEnvironmentV2.bind(controller)))
 	.delete("/deploy_environment", processApiRequest(controller.deleteDeployEnvironmentV2.bind(controller)))
+	// logs
+	.get("/environment/logs", processApiRequest(controller.viewLogs.bind(controller)))
 	// domains
 	.post("/environment/domains", processApiRequest(controller.addEnvironmentDomain.bind(controller)))
 	// environment variables

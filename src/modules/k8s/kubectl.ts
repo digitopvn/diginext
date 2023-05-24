@@ -620,7 +620,7 @@ export async function logPod(name, namespace = "default", options: KubeGenericOp
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 
-		args.push("-n", namespace, "logs", "pod", name, "--timestamps", "--prefix");
+		args.push("-n", namespace, "logs", name, "--timestamps", "--prefix");
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
