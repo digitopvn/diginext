@@ -154,8 +154,10 @@ COPY ./podman/containers/registries.conf /home/${user}/.config/containers/regist
 COPY ./podman/containers/storage.conf /home/${user}/share/containers/storage.conf
 COPY ./podman/containers/storage.conf /home/${user}/.config/containers/storage.conf
 COPY ./podman/containers/storage.conf /root/.config/containers/storage.conf
-RUN chmod -R ug+rwx /home/${user}/.config/containers/storage.conf
+COPY ./podman/cleanup.sh /home/${user}/cleanup.sh
 
+RUN chmod +x /home/${user}/cleanup.sh
+RUN chmod -R ug+rwx /home/${user}/.config/containers/storage.conf
 RUN mkdir -p /var/tmp/${user}/containers/storage
 RUN chown -R ${uid}:${gid} /var/tmp/${user}/containers/storage
 RUN chmod -R ug+rwx /var/tmp/${user}/containers/storage

@@ -96,6 +96,11 @@ export interface IQueryOptions extends IQueryGeneral {
 	 * @default false
 	 */
 	raw?: boolean;
+	/**
+	 * Should check for item's status
+	 * @default false
+	 */
+	status?: boolean;
 }
 
 export interface IQueryPagination extends IQueryGeneral {

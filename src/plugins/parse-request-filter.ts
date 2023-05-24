@@ -14,6 +14,7 @@ export const parseRequestFilter = (requestQuery: any) => {
 		size = 0,
 		populate,
 		select,
+		status,
 		sort, // @example: -updatedAt,-createdAt
 		order, // @example: -updatedAt,-createdAt
 		search = false,
