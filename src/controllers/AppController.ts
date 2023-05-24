@@ -1394,4 +1394,36 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		return respondSuccess({ data: updatedApp });
 	}
+
+	/**
+	 * View app's container logs
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/environment/logs")
+	async viewLogs(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's slug
+			 */
+			slug: string;
+			/**
+			 * App's deploy environment code (dev, prod,...)
+			 * @default "dev"
+			 */
+			env?: string;
+		}
+	) {
+		if (!this.filter.slug) return respondFailure(`App's slug is required.`);
+		if (!this.filter.env) return respondFailure(`App's deploy environment code is required.`);
+
+		const app = await this.service.findOne({ slug: this.filter.slug }, this.options);
+		if (!app) return respondFailure("App not found.");
+
+		const logs = await this.service.viewDeployEnvironmentLogs(app, this.filter.env);
+		if (!logs) return respondFailure({ data: "", msg: "No logs found." });
+
+		return respondSuccess({ data: logs });
+	}
 }

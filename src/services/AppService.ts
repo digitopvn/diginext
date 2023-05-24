@@ -1,3 +1,5 @@
+import { isEmpty } from "lodash";
+
 import type { ICluster } from "@/entities";
 import type { IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
@@ -72,14 +74,7 @@ export default class AppService extends BaseService<IApp> {
 							return;
 						}
 
-						// find status in all cluster deploys
-						// console.log(
-						// 	`Cluster "${appClusterShortName}" > App "${app.slug}" > clusterDeploys :>> `,
-						// 	clusterDeploys.map((d) => d.metadata?.labels || {})
-						// );
-
 						const deployOnCluster = clusterDeploys.find((deploy) => (deploy.metadata?.labels ?? {})["main-app"] === app.slug);
-						// console.log(`Cluster "${appClusterShortName}" > App "${app.slug}" > deployOnCluster :>> `, deployOnCluster);
 
 						if (!deployOnCluster) {
 							app.deployEnvironment[env].status = "undeployed";
@@ -117,6 +112,31 @@ export default class AppService extends BaseService<IApp> {
 				return app;
 			})
 			.filter((app) => typeof app !== "undefined");
+	}
+
+	async viewDeployEnvironmentLogs(app: IApp, env: string) {
+		const deployEnvironment = app.deployEnvironment[env];
+
+		const clusterShortName = deployEnvironment.cluster;
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: app.workspace });
+		if (!cluster) return;
+
+		const { contextName: context } = cluster;
+
+		const pods = await ClusterManager.getPodsByFilter(deployEnvironment.namespace, { context });
+		if (isEmpty(pods)) return;
+
+		const logs: { [pod: string]: string } = {};
+
+		await Promise.all(
+			pods.map(async (pod) => {
+				const podLogs = await ClusterManager.logPod(pod.metadata.name, deployEnvironment.namespace, { context });
+				logs[pod.metadata.name] = podLogs;
+				return podLogs;
+			})
+		);
+
+		return logs;
 	}
 }
 
