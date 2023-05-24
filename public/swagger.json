@@ -500,7 +500,14 @@
 			},
 			"AppStatus": {
 				"type": "string",
-				"enum": ["healthy", "partial_healthy", "undeployed", "failed", "crashed", "unknown"]
+				"enum": [
+					"healthy",
+					"partial_healthy",
+					"undeployed",
+					"failed",
+					"crashed",
+					"unknown"
+				]
 			},
 			"ResourceQuotaSize": {
 				"type": "string",
@@ -1597,7 +1604,12 @@
 			},
 			"BuildStatus": {
 				"type": "string",
-				"enum": ["failed", "start", "building", "success"]
+				"enum": [
+					"failed",
+					"start",
+					"building",
+					"success"
+				]
 			},
 			"RegistryProviderType": {
 				"type": "string",
@@ -6328,7 +6340,9 @@
 					}
 				},
 				"description": "View app's container logs",
-				"tags": ["App"],
+				"tags": [
+					"App"
+				],
 				"security": [
 					{
 						"api_key": []
