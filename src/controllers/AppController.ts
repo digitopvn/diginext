@@ -220,6 +220,8 @@ export interface DeployEnvironmentData {
 @Tags("App")
 @Route("app")
 export default class AppController extends BaseController<IApp, AppService> {
+	service: AppService;
+
 	constructor() {
 		super(new AppService());
 	}
@@ -231,35 +233,37 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("jwt")
 	@Get("/")
 	async read(@Queries() queryParams?: IGetQueryParams) {
-		let apps = await DB.find<IApp>("app", this.filter, this.options, this.pagination);
-
+		let apps = await this.service.find(this.filter, this.options, this.pagination);
+		// console.log("apps :>> ", apps);
 		if (isEmpty(apps)) return respondSuccess({ data: [] });
 
 		// TODO: remove this code after all "deployEnvironment.envVars" of apps are {Array}
 		// convert "envVars" Object to Array (if needed)
-		apps = apps.map((app) => {
-			if (app.deployEnvironment)
-				Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
-					if (deployEnvironment) {
-						const envVars = deployEnvironment.envVars;
-						if (envVars && !isArray(envVars)) {
-							/**
-							 * {Object} envVars
-							 * @example
-							 * {
-							 * 		"0": { name: "NAME", value: "VALUE" },
-							 * 		"1": { name: "NAME", value: "VALUE" },
-							 * 		...
-							 * }
-							 */
-							const convertedEnvVars = [];
-							Object.values(envVars).map((envVar) => convertedEnvVars.push(envVar));
-							app.deployEnvironment[env].envVars = convertedEnvVars;
+		apps = apps
+			.map((app) => {
+				if (app && app.deployEnvironment)
+					Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
+						if (deployEnvironment) {
+							const envVars = deployEnvironment.envVars;
+							if (envVars && !isArray(envVars)) {
+								/**
+								 * {Object} envVars
+								 * @example
+								 * {
+								 * 		"0": { name: "NAME", value: "VALUE" },
+								 * 		"1": { name: "NAME", value: "VALUE" },
+								 * 		...
+								 * }
+								 */
+								const convertedEnvVars = [];
+								Object.values(envVars).map((envVar) => convertedEnvVars.push(envVar));
+								app.deployEnvironment[env].envVars = convertedEnvVars;
+							}
 						}
-					}
-				});
-			return app;
-		});
+					});
+				return app;
+			})
+			.filter((app) => app !== null && app !== undefined);
 
 		return { status: 1, data: apps } as ResponseData;
 	}
@@ -1146,7 +1150,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!cluster) return respondFailure({ msg: `Cluster "${clusterShortName}" not found.` });
 
 		// if the workload has been deployed before -> update the environment variables
-		const workload = await ClusterManager.getDeployByFilter(namespace, {
+		const workload = await ClusterManager.getDeploysByFilter(namespace, {
 			context: cluster.contextName,
 			filterLabel: `main-app=${slug}`,
 		});
@@ -1389,5 +1393,37 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
 
 		return respondSuccess({ data: updatedApp });
+	}
+
+	/**
+	 * View app's container logs
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/environment/logs")
+	async viewLogs(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's slug
+			 */
+			slug: string;
+			/**
+			 * App's deploy environment code (dev, prod,...)
+			 * @default "dev"
+			 */
+			env?: string;
+		}
+	) {
+		if (!this.filter.slug) return respondFailure(`App's slug is required.`);
+		if (!this.filter.env) return respondFailure(`App's deploy environment code is required.`);
+
+		const app = await this.service.findOne({ slug: this.filter.slug }, this.options);
+		if (!app) return respondFailure("App not found.");
+
+		const logs = await this.service.viewDeployEnvironmentLogs(app, this.filter.env);
+		if (!logs) return respondFailure({ data: "", msg: "No logs found." });
+
+		return respondSuccess({ data: logs });
 	}
 }

@@ -3,7 +3,7 @@ import type { ObjectId } from "mongodb";
 import type { IUser } from "@/entities";
 
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
-import type { ResourceQuotaSize } from "./SystemTypes";
+import type { AppStatus, ResourceQuotaSize } from "./SystemTypes";
 
 export const availableSslTypes = ["letsencrypt", "custom", "none"] as const;
 /**
@@ -182,4 +182,14 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	 * Update time
 	 */
 	updatedAt?: Date;
+
+	/**
+	 * Deployment's status
+	 */
+	status?: AppStatus;
+
+	/**
+	 * Amount of ready instances
+	 */
+	readyCount?: number;
 }

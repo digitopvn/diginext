@@ -49,6 +49,18 @@ export const buildStatusList = ["start", "building", "failed", "success"] as con
 export type BuildStatus = typeof buildStatusList[number];
 
 /**
+ * App status:
+ * - `healthy`: App's containers are running well.
+ * - `partial_healthy`: Some of the app's containers are unhealthy.
+ * - `undeployed`: App has not been deployed yet.
+ * - `failed`: App's containers are unable to deploy due to image pull back-off or image pulling errors.
+ * - `crashed`: App's containers are facing some unexpected errors.
+ * - `unknown`: Other unknown errors.
+ */
+export const appStatusList = ["healthy", "partial_healthy", "undeployed", "failed", "crashed", "unknown"] as const;
+export type AppStatus = typeof appStatusList[number];
+
+/**
  * @default "letsencrypt"
  */
 export const sslIssuerList = ["letsencrypt", "custom", "none"] as const;

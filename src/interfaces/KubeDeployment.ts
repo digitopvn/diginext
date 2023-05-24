@@ -38,7 +38,6 @@ export interface KubeDeployment {
 		};
 	};
 	status?: {
-		availableReplicas?: number;
 		conditions?: {
 			lastTransitionTime?: string;
 			lastUpdateTime?: string;
@@ -48,8 +47,10 @@ export interface KubeDeployment {
 			type?: string;
 		}[];
 		observedGeneration?: number;
-		readyReplicas?: number;
 		replicas?: number;
+		readyReplicas?: number;
+		unavailableReplicas?: number;
+		availableReplicas?: number;
 		updatedReplicas?: number;
 	};
 }
