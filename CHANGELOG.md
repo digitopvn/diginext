@@ -1,3 +1,12 @@
+# [3.5.0](https://github.com/digitopvn/diginext/compare/v3.4.3...v3.5.0) (2023-05-24)
+
+
+### Features
+
+* **server,admin:** view application deploy environment logs ([e51b6cc](https://github.com/digitopvn/diginext/commit/e51b6cc8cb9ec5ef95dd514d43827e435b3c499f))
+* **server:** app, deploy env - add health status and ready count ([950ec4a](https://github.com/digitopvn/diginext/commit/950ec4a7fe6bbbbb0aa2f3b526a80182838dc18e))
+* **server:** app, deploy env, healthz, logs ([#139](https://github.com/digitopvn/diginext/issues/139)) ([7e00a1a](https://github.com/digitopvn/diginext/commit/7e00a1a1b4fe7643a62eb49600dbd86a7711f286))
+
 ## [3.4.3](https://github.com/digitopvn/diginext/compare/v3.4.2...v3.4.3) (2023-05-23)
 
 
