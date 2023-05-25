@@ -15,7 +15,7 @@ import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-s
 import { generateSSH, sshKeysExisted, verifySSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
-import { execCmd } from "@/plugins";
+import { execCmd, wait } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
 import { seedSystemInitialData } from "@/seeds/seed-system";
 import { setServerStatus } from "@/server";
@@ -78,7 +78,10 @@ export async function startupScripts() {
 	const registries = await registrySvc.find({});
 	if (registries.length > 0) {
 		for (const registry of registries) {
-			connectRegistry(registry);
+			connectRegistry(registry).catch((e) => {
+				// wait for 2 minutes and retry
+				wait(2 * 60 * 2000, connectRegistry(registry));
+			});
 		}
 	}
 

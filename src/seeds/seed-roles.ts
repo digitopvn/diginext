@@ -6,8 +6,6 @@ import { MongoDB } from "@/plugins/mongodb";
 export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	// ADMIN
 	let adminRole = await DB.findOne<IRole>("role", { type: "admin", workspace: workspace._id });
-	// console.log("workspace._id :>> ", workspace._id);
-	// console.log("adminRole :>> ", adminRole);
 
 	if (!adminRole) {
 		const adminRoleDto = {} as IRole;
@@ -23,20 +21,16 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 
 	// assign admin role to the "owner" user
 	const fullOwner = await DB.findOne<IUser>("user", { _id: owner._id }, { populate: ["roles", "activeWorkspace"] });
-	// console.log("fullOwner :>> ", fullOwner);
-	let userRoles = (fullOwner?.roles || []) as IRole[];
-	// console.log("userRoles :>> ", userRoles);
-	// console.log("adminRole._id :>> ", adminRole._id);
-	const userHasAdminRole = userRoles.map((role) => role._id).includes(MongoDB.toString(adminRole._id));
-	// console.log(userRoles.map((role) => MongoDB.toString(role._id)));
-	// console.log(MongoDB.toString(adminRole._id));
-	// console.log(`Workspace "${workspace.name}" > userHasAdminRole :>> `, userHasAdminRole);
 
-	if (!userHasAdminRole) {
-		userRoles = userRoles.filter((role) => MongoDB.toString(role.workspace) !== MongoDB.toString(workspace._id));
-		userRoles.push(adminRole);
+	let ownerRoles = (fullOwner?.roles || []) as IRole[];
+
+	const ownerHasAdminRole = ownerRoles.map((role) => role._id).includes(MongoDB.toString(adminRole._id));
+
+	if (!ownerHasAdminRole) {
+		ownerRoles = ownerRoles.filter((role) => MongoDB.toString(role.workspace) !== MongoDB.toString(workspace._id));
+		ownerRoles.push(adminRole);
 		// update role ids
-		const roleIds = userRoles.map((role) => role._id);
+		const roleIds = ownerRoles.map((role) => role._id);
 		const [user] = await DB.update<IUser>("user", { _id: owner._id }, { roles: roleIds });
 		// console.log(`Workspace "${workspace.name}" > User "${user.name}" is now an administrator.`);
 	}
