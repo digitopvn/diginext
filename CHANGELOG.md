@@ -1,3 +1,13 @@
+## [3.5.1](https://github.com/digitopvn/diginext/compare/v3.5.0...v3.5.1) (2023-05-26)
+
+
+### Bug Fixes
+
+* **server,startup script:** add retry method to registry connecting ([dda8c73](https://github.com/digitopvn/diginext/commit/dda8c73dbfdf2619d3d462bc0472181f79bba772))
+* **server:** authenticate registry before building & pushing image ([ecb682d](https://github.com/digitopvn/diginext/commit/ecb682db4b0bd6cf16964b7ecfa9bcfb4f3f413e))
+* **server:** authenticate registry before building & pushing image ([#140](https://github.com/digitopvn/diginext/issues/140)) ([44ddeaa](https://github.com/digitopvn/diginext/commit/44ddeaa8bab632478e8e96c879486550576a109a))
+* **server:** change clean up cronjob to 7 days ([e90eedc](https://github.com/digitopvn/diginext/commit/e90eedcf6c24cff3a979eb8b6646d5c290eefae2))
+
 # [3.5.0](https://github.com/digitopvn/diginext/compare/v3.4.3...v3.5.0) (2023-05-24)
 
 
