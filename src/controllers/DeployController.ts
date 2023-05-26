@@ -1,6 +1,6 @@
 import { log } from "diginext-utils/dist/console/log";
 import path from "path";
-import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
+import { Body, Deprecated, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import pkg from "@/../package.json";
 import { Config } from "@/app.config";
@@ -34,6 +34,19 @@ type DeployBuildInput = {
 	 * @default false
 	 */
 	shouldUseFreshDeploy?: boolean;
+	/**
+	 * ### FOR DEPLOY to PROD
+	 * Force roll out the release to "prod" deploy environment (instead of "prerelease" environment)
+	 * @default false
+	 */
+	forceRollOut?: boolean;
+	/**
+	 * ### WARNING
+	 * Skip checking deployed POD's ready status.
+	 * - The response status will always be SUCCESS even if the pod is unable to start up properly.
+	 * @default false
+	 */
+	skipReadyCheck?: boolean;
 };
 
 @Tags("Deploy")
@@ -47,6 +60,7 @@ export default class DeployController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
+	@Deprecated()
 	deployFromSource(@Body() body: { options: InputOptions }, @Queries() queryParams?: IPostQueryParams) {
 		let { options: inputOptions } = body;
 
@@ -184,6 +198,8 @@ export default class DeployController extends BaseController {
 			shouldUseFreshDeploy: body.shouldUseFreshDeploy,
 			workspace,
 			buildDirectory,
+			skipReadyCheck: body.skipReadyCheck,
+			forceRollOut: body.forceRollOut,
 		};
 		console.log("deployBuildOptions :>> ", deployBuildOptions);
 
@@ -195,65 +211,4 @@ export default class DeployController extends BaseController {
 
 		return { messages: [], status: 1, data: result };
 	}
-
-	// @Security("api_key")
-	// @Security("jwt")
-	// @Post("/from-image")
-	// async deployFromImage(
-	// 	@Body()
-	// 	body: {
-	// 		/**
-	// 		 * Project's slug
-	// 		 */
-	// 		projectSlug: string;
-	// 		/**
-	// 		 * App's slug
-	// 		 */
-	// 		slug: string;
-	// 		/**
-	// 		 * @example "dev" | "prod"
-	// 		 */
-	// 		env?: string;
-	// 		/**
-	// 		 * CLI's version
-	// 		 */
-	// 		cliVersion?: string;
-	// 		/**
-	// 		 * Kubernetes Environment Variables in JSON Array
-	// 		 * @example [ { "name": "TZ", "value": "Asia/Ho_Chi_Minh" } ]
-	// 		 */
-	// 		envVars?: string;
-	// 	},
-	// 	@Queries() queryParams?: IPostQueryParams
-	// ) {
-	// 	const { env, projectSlug, slug, envVars: envVarsStr, cliVersion } = body;
-	// 	if (!projectSlug) return { status: 0, messages: [`Project "slug" is required`] };
-	// 	if (!slug) return { status: 0, messages: [`App "slug" is required`] };
-
-	// 	const appSvc = new AppService();
-	// 	const app = await appSvc.findOne({ slug }, { populate: ["workspace"] });
-
-	// 	if (!app) return { status: 0, messages: [`App "${slug}" not found.`] };
-
-	// 	const appConfig = getAppConfigFromApp(app);
-
-	// 	const envVars: KubeEnvironmentVariable[] = isJSON(envVarsStr) ? JSON.parse(envVarsStr) : [];
-
-	// 	const params = {
-	// 		projectSlug,
-	// 		slug,
-	// 		env,
-	// 		envVars,
-	// 		workspace: this.user?.activeWorkspace,
-	// 		username: this.user?.slug,
-	// 		workspaceId: app.workspace,
-	// 		cliVersion,
-	// 	} as DeployImageParams;
-
-	// 	const result = await deployImage(params, appConfig, envVars);
-
-	// 	if (!result) return { status: 0, messages: [`Failed to deploy from image URL.`] };
-
-	// 	return { messages: [], status: 1, data: result };
-	// }
 }

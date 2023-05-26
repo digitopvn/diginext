@@ -121,6 +121,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// Setup a domain for prerelease
 	if (env == "prod") {
 		const { status, domain, messages } = await generateDomains({
+			workspace,
 			primaryDomain: DIGINEXT_DOMAIN,
 			subdomainName: prereleaseSubdomainName,
 			clusterShortName: deployEnvironmentConfig.cluster,
@@ -156,7 +157,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			let curValue = envVar.value;
 			if (curValue.indexOf(domains[0]) > -1) {
 				// replace all production domains with PRERELEASE domains
-				envVar.value = curValue.replace(new RegExp(domains[0], "gi"), prereleaseDomain);
+				envVar.value = (curValue || "").replace(new RegExp(domains[0], "gi"), prereleaseDomain);
 			}
 			return { ...envVar };
 		});

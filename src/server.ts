@@ -19,7 +19,7 @@ import swaggerUi from "swagger-ui-express";
 import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
-import { Config, IsDev } from "./app.config";
+import { Config, IsDev, IsProd } from "./app.config";
 import type { AppRequest } from "./interfaces/SystemTypes";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
 import AppDatabase from "./modules/AppDatabase";
@@ -160,8 +160,7 @@ function initialize() {
 	// app.use("*", route404_handler);
 
 	// make sure the Express app won't be crashed if there are any errors
-	// if (IsProd())
-	app.use(failSafeHandler);
+	if (IsProd()) app.use(failSafeHandler);
 
 	/**
 	 * SERVER HANDLING
@@ -185,6 +184,14 @@ function initialize() {
 if (CLI_MODE === "server") {
 	log(`Connecting to database. Please wait...`);
 	AppDatabase.connect(initialize);
+
+	/**
+	 * Close the database connection when the application is terminated
+	 */
+	process.on("SIGINT", async () => {
+		await AppDatabase.disconnect();
+		process.exit(0);
+	});
 }
 
 export const getIO = () => socketIO;

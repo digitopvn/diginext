@@ -653,11 +653,11 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	if (fs.existsSync(dir)) {
 		try {
 			git = simpleGit(dir, { progress: onProgress });
-			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
-			const originRemote = remotes[0];
+			const remotes = ((await git.getRemotes(false)) || []).filter((remote) => remote.name === "origin");
+			const originRemote = remotes[0] as any;
 			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
 			console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
-			if (originRemote.refs.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
+			if (originRemote?.refs?.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
 
 			const curBranch = await getCurrentGitBranch(dir);
 			await git.pull("origin", curBranch, ["--no-ff"]);
@@ -694,10 +694,15 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
  */
 export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 	try {
-		const git = simpleGit(dir, { binary: "git" });
+		const git = simpleGit(dir, {
+			baseDir: `${dir}`,
+			binary: "git",
+		});
+		// const remoteInfo = await git.listRemote();
+		// console.log("remoteInfo :>> ", remoteInfo);
 		const remotes = await git.getRemotes(true);
-
-		const remoteSSH = remotes[0].refs.fetch;
+		// console.log("getCurrentGitRepoData > remotes :>> ", remotes);
+		const remoteSSH = (remotes[0] as any)?.refs?.fetch;
 		if (!remoteSSH) return;
 
 		if (remoteSSH.indexOf("https://") > -1) {

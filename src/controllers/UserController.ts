@@ -32,6 +32,9 @@ export default class UserController extends BaseController<IUser> {
 		super(new UserService());
 	}
 
+	/**
+	 * List of users
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")

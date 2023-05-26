@@ -7,6 +7,7 @@ import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfa
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { startBuild, StartBuildParams, stopBuild } from "@/modules/build";
+import { checkQuota } from "@/modules/workspace/check-quota";
 import { Logger } from "@/plugins";
 import BuildService from "@/services/BuildService";
 
@@ -19,6 +20,9 @@ export default class BuildController extends BaseController<IBuild> {
 		super(new BuildService());
 	}
 
+	/**
+	 * List of builds
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
@@ -124,6 +128,11 @@ export default class BuildController extends BaseController<IBuild> {
 	@Security("jwt")
 	@Post("/start")
 	async startBuild(@Body() body: StartBuildParams) {
+		// check dx quota
+		const quotaRes = await checkQuota(this.workspace);
+		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+		if (quotaRes.data && quotaRes.data.isExceed) return respondFailure(`You've exceeded the limit amount of concurrent builds.`);
+
 		// default values
 		if (this.user) body.user = this.user;
 

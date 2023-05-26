@@ -5,6 +5,7 @@ import { ProjectDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
+import { checkQuota } from "@/modules/workspace/check-quota";
 import { MongoDB } from "@/plugins/mongodb";
 import AppService from "@/services/AppService";
 import ProjectService from "@/services/ProjectService";
@@ -20,6 +21,9 @@ export default class ProjectController extends BaseController<IProject> {
 		super(new ProjectService());
 	}
 
+	/**
+	 * List of projects
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
@@ -30,7 +34,16 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
+		// check dx quota
+		const quotaRes = await checkQuota(this.workspace);
+		console.log("[ProjectController] quotaRes :>> ", quotaRes);
+		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+		if (quotaRes.data && quotaRes.data.isExceed)
+			return respondFailure(
+				`You've exceeded the limit amount of projects (${quotaRes.data.type} / Max. ${quotaRes.data.limits.projects} projects).`
+			);
+
 		return super.create(body);
 	}
 
@@ -59,15 +72,8 @@ export default class ProjectController extends BaseController<IProject> {
 		let result: ResponseData & { data: IProject[] } = { status: 1, data: [], messages: [] };
 		if (this.pagination) result = { ...result, ...this.pagination };
 
-		// // assign refreshed token if any:
-		// // TODO: this is not safe -> should use refresh token!
-		// const { token } = req as any;
-		// if (token) result.token = token;
-
 		// populate apps
 		const projectIDs = projects.map((p) => p._id);
-		// console.log("projectIDs :>> ", projectIDs);
-
 		const appSvc = new AppService();
 		let apps = await appSvc.find({ project: { $in: projectIDs } }, this.options);
 		// console.log("apps :>> ", apps);

@@ -13,11 +13,11 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
   brew install node
 elif [[ -f /etc/redhat-release ]]; then
   # CentOS
-  curl --silent --location https://rpm.nodesource.com/setup_14.x | bash -
+  curl --silent --location https://rpm.nodesource.com/setup_18.x | bash -
   yum -y install nodejs
 elif [[ -f /etc/lsb-release ]]; then
   # Ubuntu
-  curl -sL https://deb.nodesource.com/setup_14.x | bash -
+  curl -sL https://deb.nodesource.com/setup_18.x | bash -
   apt-get install -y nodejs
 elif [[ "$(uname -s)" == "Windows" ]]; then
   # Windows

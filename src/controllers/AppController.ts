@@ -2,7 +2,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeSlug } from "diginext-utils/dist/Slug";
-import { isArray, isBoolean, isEmpty, isString, isUndefined } from "lodash";
+import { isArray, isBoolean, isEmpty, isNumber, isString, isUndefined } from "lodash";
 
 import type { AppGitInfo, IApp, ICluster, IContainerRegistry, IFramework, IProject } from "@/entities";
 import { AppDto } from "@/entities";
@@ -17,10 +17,14 @@ import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environm
 import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
-import { createDiginextDomain } from "@/modules/diginext/dx-domain";
+import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
+import type { GenerateDeploymentResult } from "@/modules/deploy";
+import { fetchDeploymentFromContent, generateDeployment } from "@/modules/deploy";
+import { createDxDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
-import { parseGitRepoDataFromRepoSSH } from "@/plugins";
+import { checkQuota } from "@/modules/workspace/check-quota";
+import { currentVersion, parseGitRepoDataFromRepoSSH } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
@@ -181,7 +185,7 @@ export interface DeployEnvironmentData {
 	 * OPTIONAL
 	 * ---
 	 * Select your SSL Certificate Issuer, one of:
-	 * - `letenscrypt`
+	 * - `letsencrypt`
 	 * - `custom`
 	 * - `none`
 	 * @default letsencrypt
@@ -204,48 +208,62 @@ export interface DeployEnvironmentData {
 	 * @example "nginx" | "kong"
 	 */
 	ingress?: string;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Username of the person who update the app
+	 */
+	lastUpdatedBy?: string;
 }
 
 @Tags("App")
 @Route("app")
 export default class AppController extends BaseController<IApp, AppService> {
+	service: AppService;
+
 	constructor() {
 		super(new AppService());
 	}
 
+	/**
+	 * List of apps
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	async read(@Queries() queryParams?: IGetQueryParams) {
-		let apps = await DB.find<IApp>("app", this.filter, this.options, this.pagination);
-
+		let apps = await this.service.find(this.filter, this.options, this.pagination);
+		// console.log("apps :>> ", apps);
 		if (isEmpty(apps)) return respondSuccess({ data: [] });
 
 		// TODO: remove this code after all "deployEnvironment.envVars" of apps are {Array}
 		// convert "envVars" Object to Array (if needed)
-		apps = apps.map((app) => {
-			if (app.deployEnvironment)
-				Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
-					if (deployEnvironment) {
-						const envVars = deployEnvironment.envVars;
-						if (envVars && !isArray(envVars)) {
-							/**
-							 * {Object} envVars
-							 * @example
-							 * {
-							 * 		"0": { name: "NAME", value: "VALUE" },
-							 * 		"1": { name: "NAME", value: "VALUE" },
-							 * 		...
-							 * }
-							 */
-							const convertedEnvVars = [];
-							Object.values(envVars).map((envVar) => convertedEnvVars.push(envVar));
-							app.deployEnvironment[env].envVars = convertedEnvVars;
+		apps = apps
+			.map((app) => {
+				if (app && app.deployEnvironment)
+					Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
+						if (deployEnvironment) {
+							const envVars = deployEnvironment.envVars;
+							if (envVars && !isArray(envVars)) {
+								/**
+								 * {Object} envVars
+								 * @example
+								 * {
+								 * 		"0": { name: "NAME", value: "VALUE" },
+								 * 		"1": { name: "NAME", value: "VALUE" },
+								 * 		...
+								 * }
+								 */
+								const convertedEnvVars = [];
+								Object.values(envVars).map((envVar) => convertedEnvVars.push(envVar));
+								app.deployEnvironment[env].envVars = convertedEnvVars;
+							}
 						}
-					}
-				});
-			return app;
-		});
+					});
+				return app;
+			})
+			.filter((app) => app !== null && app !== undefined);
 
 		return { status: 1, data: apps } as ResponseData;
 	}
@@ -257,8 +275,16 @@ export default class AppController extends BaseController<IApp, AppService> {
 		let project: IProject,
 			appDto: IApp = { ...(body as any) };
 
+		// check dx quota
+		const quotaRes = await checkQuota(this.workspace);
+		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+		if (quotaRes.data && quotaRes.data.isExceed)
+			return respondFailure(`You've exceeded the limit amount of apps (${quotaRes.data.type} / Max. ${quotaRes.data.limits.apps} apps).`);
+
+		// validate
 		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
 		if (!body.name) return respondFailure({ msg: `App's name is required.` });
+		if (!body.git) return respondFailure("App's git info is required.");
 
 		// find parent project of this app
 		if (MongoDB.isValidObjectId(body.project)) {
@@ -325,6 +351,28 @@ export default class AppController extends BaseController<IApp, AppService> {
 			project = await projectSvc.findOne({ _id: body.project });
 			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
 			body.projectSlug = project.slug;
+		}
+
+		if (body.deployEnvironment) {
+			for (const env of Object.keys(body.deployEnvironment)) {
+				// check dx quota
+				const size = body.deployEnvironment[env].size;
+				if (size) {
+					const quotaRes = await checkQuota(this.workspace, { resourceSize: size });
+					if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+					if (quotaRes.data && quotaRes.data.isExceed)
+						return respondFailure(
+							`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+						);
+				}
+
+				// magic -> not delete other deploy environment & previous configuration
+				for (const key of Object.keys(body.deployEnvironment[env])) {
+					body[`deployEnvironment.${env}.${key}`] = body.deployEnvironment[env][key];
+				}
+
+				delete body.deployEnvironment;
+			}
 		}
 
 		let apps: IApp[];
@@ -405,11 +453,45 @@ export default class AppController extends BaseController<IApp, AppService> {
 	}
 
 	/**
-	 * Create new deploy environment of the application.
+	 * Get new deploy environment of the application.
 	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/environment")
+	async getDeployEnvironmentV2(
+		@Queries()
+		queryParams: {
+			/**
+			 * App slug
+			 */
+			slug: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { slug, env } = this.filter;
+		if (!slug) return respondFailure({ msg: `App slug is required.` });
+		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
+
+		const app = await this.service.findOne({ slug });
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+		if (!app) return respondFailure({ msg: `App "${slug}" not found.` });
+		if (!app.deployEnvironment[env]) return respondFailure({ msg: `App "${slug}" doesn't have any deploy environment named "${env}".` });
+
+		const deployEnvironment = app.deployEnvironment[env];
+		let result = respondSuccess({ data: deployEnvironment });
+		return result;
+	}
+
+	/**
+	 * [V2] Get new deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/deploy_environment")
 	async getDeployEnvironment(
 		@Queries()
 		queryParams: {
@@ -436,6 +518,92 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const deployEnvironment = app.deployEnvironment[env];
 		let result = respondSuccess({ data: deployEnvironment });
 		return result;
+	}
+
+	/**
+	 * [V2] Create new deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/deploy_environment")
+	async createDeployEnvironmentV2(
+		/**
+		 * `REQUIRES`
+		 * ---
+		 * Deploy environment configuration
+		 */
+		@Body()
+		body: DeployEnvironmentData,
+		@Queries()
+		queryParams?: {
+			/**
+			 * App slug
+			 */
+			slug: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { slug, env } = this.filter;
+		return this.createDeployEnvironment({ appSlug: slug, env, deployEnvironmentData: body });
+	}
+
+	/**
+	 * [V2] Update new deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/deploy_environment")
+	async updateDeployEnvironmentV2(
+		/**
+		 * `REQUIRES`
+		 * ---
+		 * Deploy environment configuration
+		 */
+		@Body()
+		body: DeployEnvironmentData,
+		@Queries()
+		queryParams?: {
+			/**
+			 * App slug
+			 */
+			slug: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { slug, env } = this.filter;
+		return this.updateDeployEnvironment({ appSlug: slug, env, deployEnvironmentData: body });
+	}
+
+	/**
+	 * [V2] Update new deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/deploy_environment")
+	async deleteDeployEnvironmentV2(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App slug
+			 */
+			slug: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { slug, env } = this.filter;
+		return this.deleteDeployEnvironment({ slug, env });
 	}
 
 	/**
@@ -495,6 +663,14 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironmentData.replicas) deployEnvironmentData.replicas = 1;
 		if (!deployEnvironmentData.redirect) deployEnvironmentData.redirect = true;
 
+		// Check DX quota
+		const quotaRes = await checkQuota(this.workspace, { resourceSize: deployEnvironmentData.size });
+		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+		if (quotaRes.data && quotaRes.data.isExceed)
+			return respondFailure(
+				`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+			);
+
 		// Validate deploy environment data:
 
 		// cluster
@@ -527,7 +703,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 				status,
 				messages,
 				data: { domain },
-			} = await createDiginextDomain({ name: subdomain, data: cluster.primaryIP });
+			} = await createDxDomain({ name: subdomain, data: cluster.primaryIP }, this.workspace.dx_key);
 			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
 			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
 		}
@@ -554,7 +730,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		deployEnvironmentData.ingress = "nginx";
 
 		// create deploy environment in the app:
-		const [updatedApp] = await this.service.update(
+		let [updatedApp] = await this.service.update(
 			{ slug: appSlug },
 			{
 				[`deployEnvironment.${env}`]: deployEnvironmentData,
@@ -565,7 +741,217 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		const appConfig = await getAppConfigFromApp(updatedApp);
 
+		// generate deployment files and apply new config
+		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		console.log("buildNumber :>> ", buildNumber);
+		console.log("this.user :>> ", this.user);
+
+		let deployment: GenerateDeploymentResult = await generateDeployment({
+			appSlug: app.slug,
+			env,
+			username: this.user.slug,
+			workspace: this.workspace,
+			buildNumber,
+		});
+
+		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+
+		// update data to deploy environment:
+		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
+		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
+		serverDeployEnvironment.deploymentYaml = deploymentContent;
+		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+		serverDeployEnvironment.updatedAt = new Date();
+		serverDeployEnvironment.lastUpdatedBy = this.user.username;
+
+		// Update {user}, {project}, {environment} to database before rolling out
+		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
+		updatedAppData.lastUpdatedBy = this.user.username;
+		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
+
+		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
+
+		// create new release and roll out
+		const release = await createReleaseFromApp(updatedApp, env, { author: this.user, cliVersion: currentVersion(), workspace: this.workspace });
+		const result = await ClusterManager.rollout(release._id.toString());
+
+		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
+
 		return respondSuccess({ data: appConfig });
+	}
+
+	/**
+	 * Create new deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/environment")
+	async updateDeployEnvironment(
+		@Body()
+		body: {
+			/**
+			 * `REQUIRES`
+			 * ---
+			 * App slug
+			 */
+			appSlug: string;
+			/**
+			 * `REQUIRES`
+			 * ---
+			 * Deploy environment name
+			 * @default dev
+			 */
+			env: string;
+			/**
+			 * `REQUIRES`
+			 * ---
+			 * Deploy environment configuration
+			 */
+			deployEnvironmentData: DeployEnvironmentData;
+		},
+		@Queries() queryParams?: IPostQueryParams
+	) {
+		//
+		const { appSlug, env, deployEnvironmentData } = body;
+		if (!appSlug) return respondFailure({ msg: `App slug is required.` });
+		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
+		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
+
+		// get app data:
+		const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
+		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
+
+		const project = app.project as IProject;
+		const { slug: projectSlug } = project;
+
+		// Check DX quota
+		if (deployEnvironmentData.size) {
+			const quotaRes = await checkQuota(this.workspace, { resourceSize: deployEnvironmentData.size });
+			if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+			if (quotaRes.data && quotaRes.data.isExceed)
+				return respondFailure(
+					`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+				);
+		}
+
+		// Validate deploy environment data:
+
+		// cluster
+		let cluster: ICluster | undefined;
+		if (deployEnvironmentData.cluster) {
+			cluster = await DB.findOne<ICluster>("cluster", { shortName: deployEnvironmentData.cluster });
+		}
+
+		// namespace
+		if (deployEnvironmentData.namespace) {
+			// Check if namespace is existed...
+			const isNamespaceExisted = await ClusterManager.isNamespaceExisted(deployEnvironmentData.namespace, { context: cluster.contextName });
+			if (isNamespaceExisted)
+				return respondFailure({
+					msg: `Namespace "${deployEnvironmentData.namespace}" was existed in "${deployEnvironmentData.cluster}" cluster, please choose different name or leave empty to use generated namespace name.`,
+				});
+		}
+
+		// container registry
+		if (deployEnvironmentData.registry) {
+			const registry = await DB.findOne<IContainerRegistry>("registry", { slug: deployEnvironmentData.registry });
+			if (!registry) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
+		}
+
+		// Domains & SSL certificate...
+		// if (!deployEnvironmentData.domains) deployEnvironmentData.domains = [];
+		if (deployEnvironmentData.useGeneratedDomain) {
+			if (!cluster) return respondFailure(`Param "cluster" must be specified if you want to use "useGeneratedDomain".`);
+
+			const subdomain = `${projectSlug}-${appSlug}.${env}`;
+			const {
+				status,
+				messages,
+				data: { domain },
+			} = await createDxDomain({ name: subdomain, data: cluster.primaryIP }, this.workspace.dx_key);
+			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
+			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
+		}
+
+		// Exposing ports, enable/disable CDN, and select Ingress type
+		if (!isUndefined(deployEnvironmentData.port)) {
+			if (!isNumber(deployEnvironmentData.port)) return respondFailure({ msg: `Param "port" must be a number.` });
+		}
+		if (!isUndefined(deployEnvironmentData.cdn) && !isBoolean(deployEnvironmentData.cdn)) {
+			return respondFailure({ msg: `Param "cdn" must be a boolean.` });
+		}
+		// deployEnvironmentData.ingress = "nginx";
+
+		deployEnvironmentData.lastUpdatedBy = this.user.slug;
+
+		// create deploy environment in the app:
+		let updateDeployEnvData: any = {};
+		Object.keys(deployEnvironmentData).map((key) => (updateDeployEnvData[`deployEnvironment.${env}.${key}`] = deployEnvironmentData[key]));
+
+		let updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
+		console.log("updatedApp :>> ", updatedApp);
+		if (!updatedApp) return respondFailure({ msg: `Failed to create "${env}" deploy environment.` });
+
+		const appConfig = await getAppConfigFromApp(updatedApp);
+
+		if (!deployEnvironmentData.tlsSecret) {
+			if (appConfig.deployEnvironment[env].domains?.length > 0 && !appConfig.deployEnvironment[env].tlsSecret) {
+				if (deployEnvironmentData.ssl === "letsencrypt") {
+					deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
+				} else if (deployEnvironmentData.ssl === "custom") {
+					if (!deployEnvironmentData.tlsSecret) deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
+				} else {
+					deployEnvironmentData.tlsSecret = "";
+				}
+			}
+
+			// update app again
+			updateDeployEnvData = {};
+			Object.keys(deployEnvironmentData).map((key) => (updateDeployEnvData[`deployEnvironment.${env}.${key}`] = deployEnvironmentData[key]));
+			updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
+		}
+
+		// generate deployment files and apply new config
+		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		console.log("buildNumber :>> ", buildNumber);
+		console.log("this.user :>> ", this.user);
+
+		let deployment: GenerateDeploymentResult = await generateDeployment({
+			appSlug: app.slug,
+			env,
+			username: this.user.slug,
+			workspace: this.workspace,
+			buildNumber,
+		});
+
+		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+
+		// update data to deploy environment:
+		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
+		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
+		serverDeployEnvironment.deploymentYaml = deploymentContent;
+		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+		serverDeployEnvironment.updatedAt = new Date();
+		serverDeployEnvironment.lastUpdatedBy = this.user.username;
+
+		// Update {user}, {project}, {environment} to database before rolling out
+		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
+		updatedAppData.lastUpdatedBy = this.user.username;
+		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
+
+		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
+
+		// create new release and roll out
+		const release = await createReleaseFromApp(updatedApp, env, { author: this.user, cliVersion: currentVersion(), workspace: this.workspace });
+		const result = await ClusterManager.rollout(release._id.toString());
+
+		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
+
+		return respondSuccess({ data: updatedApp.deployEnvironment[env] });
 	}
 
 	/**
@@ -720,13 +1106,42 @@ export default class AppController extends BaseController<IApp, AppService> {
 			: [];
 
 		// console.log("updateEnvVars :>> ", updateEnvVars);
-		const [updatedApp] = await this.service.update(
+		let [updatedApp] = await this.service.update(
 			{ slug },
 			{
 				[`deployEnvironment.${env}.envVars`]: newEnvVars,
 			}
 		);
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
+
+		// generate deployment files and apply new config
+		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+
+		let deployment: GenerateDeploymentResult = await generateDeployment({
+			appSlug: app.slug,
+			env,
+			username: this.user.slug,
+			workspace: this.workspace,
+			buildNumber,
+		});
+
+		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+
+		// update data to deploy environment:
+		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
+		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
+		serverDeployEnvironment.deploymentYaml = deploymentContent;
+		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+		serverDeployEnvironment.updatedAt = new Date();
+		serverDeployEnvironment.lastUpdatedBy = this.user.username;
+
+		// Update {user}, {project}, {environment} to database before rolling out
+		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
+		updatedAppData.lastUpdatedBy = this.user.username;
+		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
+
+		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// Set environment variables to deployment in the cluster
 		const deployEnvironment = updatedApp.deployEnvironment[env];
@@ -735,7 +1150,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!cluster) return respondFailure({ msg: `Cluster "${clusterShortName}" not found.` });
 
 		// if the workload has been deployed before -> update the environment variables
-		const workload = await ClusterManager.getDeployByFilter(namespace, {
+		const workload = await ClusterManager.getDeploysByFilter(namespace, {
 			context: cluster.contextName,
 			filterLabel: `main-app=${slug}`,
 		});
@@ -832,7 +1247,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	}
 
 	/**
-	 * Update a variable on the deploy environment of the application.
+	 * Delete variables on the deploy environment of the application.
 	 */
 	@Security("api_key")
 	@Security("jwt")
@@ -883,5 +1298,132 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [deleteEnvVarsRes] };
 		return result;
+	}
+
+	/**
+	 * Update a variable on the deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/environment/domains")
+	async addEnvironmentDomain(
+		@Body()
+		body: {
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+			/**
+			 * New domains to be added into this deploy environment
+			 * @example ["example.com", "www.example.com"]
+			 */
+			domains: string[];
+		},
+		@Queries() queryParams?: IPostQueryParams
+	) {
+		// validate
+		let { env, domains } = body;
+		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
+		if (!domains) return { status: 0, messages: [`Array of domains is required.`] };
+
+		// find app
+		const app = await this.service.findOne(this.filter);
+		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
+
+		// validate domain
+		for (const domain of domains) {
+			if (domain.indexOf(`http`) > -1) return respondFailure(`Invalid domain, no "http://" or "https://" needed`);
+			if (domain.indexOf(`/`) > -1) return respondFailure(`Invalid domain, no special characters.`);
+		}
+
+		// check if added domains are existed
+		let existedDomain;
+		const currentDomains = app.deployEnvironment[env].domains || [];
+		domains.forEach((domain) => {
+			if (currentDomains.includes(domain)) existedDomain = domain;
+		});
+		if (existedDomain) return respondFailure(`Domain "${existedDomain}" is existed.`);
+
+		// add new domains
+		const updateData: AppDto = {};
+		updateData[`deployEnvironment.${env}.domains`] = [...(app.deployEnvironment[env].domains || []), ...domains];
+
+		let updatedApp = await this.service.updateOne({ slug: app.slug }, updateData);
+		if (!updatedApp) return respondFailure("Failed to update new domains to " + app.slug + "app.");
+
+		console.log("updatedApp.deployEnvironment[env] :>> ", updatedApp.deployEnvironment[env]);
+
+		// generate deployment files and apply new config
+		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		console.log("buildNumber :>> ", buildNumber);
+		console.log("this.user :>> ", this.user);
+
+		let deployment: GenerateDeploymentResult = await generateDeployment({
+			appSlug: app.slug,
+			env,
+			username: this.user.slug,
+			workspace: this.workspace,
+			buildNumber,
+		});
+
+		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+
+		// update data to deploy environment:
+		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
+		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
+		serverDeployEnvironment.deploymentYaml = deploymentContent;
+		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+		serverDeployEnvironment.updatedAt = new Date();
+		serverDeployEnvironment.lastUpdatedBy = this.user.username;
+
+		// Update {user}, {project}, {environment} to database before rolling out
+		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
+		updatedAppData.lastUpdatedBy = this.user.username;
+		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
+
+		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
+
+		// create new release and roll out
+		const release = await createReleaseFromApp(updatedApp, env, { author: this.user, cliVersion: currentVersion(), workspace: this.workspace });
+		const result = await ClusterManager.rollout(release._id.toString());
+
+		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
+
+		return respondSuccess({ data: updatedApp });
+	}
+
+	/**
+	 * View app's container logs
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/environment/logs")
+	async viewLogs(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's slug
+			 */
+			slug: string;
+			/**
+			 * App's deploy environment code (dev, prod,...)
+			 * @default "dev"
+			 */
+			env?: string;
+		}
+	) {
+		if (!this.filter.slug) return respondFailure(`App's slug is required.`);
+		if (!this.filter.env) return respondFailure(`App's deploy environment code is required.`);
+
+		const app = await this.service.findOne({ slug: this.filter.slug }, this.options);
+		if (!app) return respondFailure("App not found.");
+
+		const logs = await this.service.viewDeployEnvironmentLogs(app, this.filter.env);
+		if (!logs) return respondFailure({ data: "", msg: "No logs found." });
+
+		return respondSuccess({ data: logs });
 	}
 }

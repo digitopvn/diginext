@@ -124,6 +124,10 @@ export const createWorkspace = async (name: string) => {
 	const workspace = await workspaceCtl.create({
 		name,
 		owner: ownerId,
+		// hobby
+		// dx_key: "0fc5c0bac0647eabb70f955f7ec03332c13b0170d1ce0984184700a85c0e2007",
+		// self-hosted
+		dx_key: "0e84fbcad09d9a4b7e0ec3af75607c4a9a400e84b1f4004dcc8d8807032a0320",
 	});
 
 	currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "workspaces", "roles"] });

@@ -19,10 +19,32 @@ export type DeployBuildOptions = {
 	buildDirectory: string;
 	cliVersion?: string;
 	shouldUseFreshDeploy?: boolean;
+	/**
+	 * ### FOR DEPLOY to PROD
+	 * Force roll out the release to "prod" deploy environment (instead of "prerelease" environment)
+	 * @default false
+	 */
+	forceRollOut?: boolean;
+	/**
+	 * ### WARNING
+	 * Skip checking deployed POD's ready status.
+	 * - The response status will always be SUCCESS even if the pod is unable to start up properly.
+	 * @default false
+	 */
+	skipReadyCheck?: boolean;
 };
 
 export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
-	const { env, author, workspace, buildDirectory, cliVersion, shouldUseFreshDeploy = false } = options;
+	const {
+		env,
+		author,
+		workspace,
+		buildDirectory,
+		cliVersion,
+		shouldUseFreshDeploy = false,
+		skipReadyCheck = false,
+		forceRollOut = false,
+	} = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
 	const { slug: username } = author;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
@@ -186,7 +208,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		});
 	}
 
-	if (releaseId) {
+	if (skipReadyCheck) {
 		sendLog({
 			SOCKET_ROOM,
 			message:
@@ -195,22 +217,49 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 					: `Rolling out the deployment to "${env.toUpperCase()}" environment...`,
 		});
 
-		const onRolloutUpdate = (msg: string) => sendLog({ SOCKET_ROOM, message: msg });
-
 		try {
-			const result =
-				env === "prod"
-					? await ClusterManager.previewPrerelease(releaseId, { onUpdate: onRolloutUpdate })
-					: await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
-
-			if (result.error) {
-				sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${result.error}.` });
-				return;
+			if (forceRollOut) {
+				ClusterManager.rollout(releaseId);
+			} else {
+				if (env === "prod") {
+					ClusterManager.previewPrerelease(releaseId);
+				} else {
+					ClusterManager.rollout(releaseId);
+				}
 			}
-			newRelease = result.data;
 		} catch (e) {
 			sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}:` });
 			return;
+		}
+	} else {
+		if (releaseId) {
+			sendLog({
+				SOCKET_ROOM,
+				message:
+					env === "prod"
+						? `Rolling out the PRE-RELEASE deployment to "${env.toUpperCase()}" environment...`
+						: `Rolling out the deployment to "${env.toUpperCase()}" environment...`,
+			});
+
+			const onRolloutUpdate = (msg: string) => sendLog({ SOCKET_ROOM, message: msg });
+
+			try {
+				const result =
+					env === "prod"
+						? forceRollOut
+							? await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate })
+							: await ClusterManager.previewPrerelease(releaseId, { onUpdate: onRolloutUpdate })
+						: await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
+
+				if (result.error) {
+					sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${result.error}.` });
+					return;
+				}
+				newRelease = result.data;
+			} catch (e) {
+				sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}:` });
+				return;
+			}
 		}
 	}
 

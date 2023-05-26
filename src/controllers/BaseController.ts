@@ -2,7 +2,7 @@ import { isBooleanString, isJSON, isNumberString } from "class-validator";
 import { toBool, toInt } from "diginext-utils/dist/object";
 // import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
-import { cloneDeepWith, isEmpty, toNumber, trim } from "lodash";
+import { cloneDeepWith, isBoolean, isDate, isEmpty, isNumber, isString, toNumber, trim } from "lodash";
 
 import { Config } from "@/app.config";
 import type { IUser, IWorkspace } from "@/entities";
@@ -130,6 +130,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			size = 0,
 			populate,
 			select,
+			status,
 			sort, // @example: -updatedAt,-createdAt
 			order, // @example: -updatedAt,-createdAt
 			search = false,
@@ -147,6 +148,27 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			populate: _populate == "" ? [] : _populate.indexOf(",") > -1 ? _populate.split(",") : [_populate],
 			select: _select == "" ? [] : _select.indexOf(",") > -1 ? _select.split(",") : [_select],
 		};
+
+		// parse "search"
+		if (search === true) {
+			Object.entries(filter).forEach(([key, val]) => {
+				filter[key] =
+					isString(val) &&
+					!isValidObjectId(val) &&
+					!isBoolean(val) &&
+					!isDate(val) &&
+					!isNumber(val) &&
+					!isBooleanString(val) &&
+					!isNumberString(val)
+						? { $regex: trim(val), $options: "i" }
+						: val;
+			});
+		}
+		// else {
+		// 	Object.entries(filter).forEach(([key, val]) => {
+		// 		filter[key] = isString(val) ? trim(val) : val;
+		// 	});
+		// }
 
 		// parse "sort" (or "order") from the query url:
 		let _sortOptions: string[];
@@ -196,6 +218,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			size = DEFAULT_PAGE_SIZE,
 			populate,
 			select,
+			status,
 			sort = "createdAt",
 			search = false,
 			access_token,

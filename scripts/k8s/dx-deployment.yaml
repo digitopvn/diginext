@@ -1,0 +1,108 @@
+# NAMESPACE CONFIGURATION
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: diginext
+  labels:
+    project: diginext
+---
+# SERVICE CONFIGURATION
+apiVersion: v1
+kind: Service
+metadata:
+  name: diginext
+  namespace: diginext
+  labels:
+    app: diginext
+    # project label
+    project: diginext
+    owner: topgroup
+spec:
+  ports:
+    - port: 6969
+  selector:
+    app: diginext
+---
+# POD DEPLOYMENT CONFIGURATION
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diginext
+  namespace: diginext
+  labels:
+    project: diginext
+    owner: topgroup
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: diginext
+  template:
+    metadata:
+      labels:
+        owner: topgroup
+        app: diginext
+        # project label
+        project: diginext
+    spec:
+      containers:
+        - name: diginext
+          image: digitop/diginext:latest
+          ports:
+            - containerPort: 6969
+          securityContext:
+            priviledged: true
+            runAsUser: 1000
+            runAsGroup: 1000
+          env:
+            - name: TZ
+              value: Asia/Ho_Chi_Minh
+            - name: PORT
+              value: "6969"
+            - name: NODE_ENV
+              value: production
+            - name: CLI_MODE
+              value: server
+            - name: DEV_MODE
+              value: "false"
+            - name: BASE_URL
+              value: "{{base_url}}"
+            - name: DB_NAME
+              value: diginext
+            - name: DB_URI
+              value: "{{db_uri}}"
+            - name: JWT_SECRET
+              value: "{{jwt_secret}}"
+            - name: JWT_EXPIRE_TIME
+              value: 48h
+            - name: GOOGLE_CLIENT_ID
+              value: "{{google_client_id}}"
+            - name: GOOGLE_CLIENT_SECRET
+              value: "{{google_client_secret}}"
+            - name: BUILDER
+              value: docker
+          volumeMounts:
+            - name: storage
+              mountPath: /var/app/storage
+            - name: logs
+              mountPath: /usr/diginext-cli/public/logs
+            - name: home
+              mountPath: /home/app
+      volumes:
+        - name: storage
+          hostPath:
+            path: /home/dev/diginext-cli/storage
+        - name: logs
+          hostPath:
+            path: /home/dev/diginext-cli/public/logs
+        - name: home
+          hostPath:
+            path: /home/dev/diginext-cli/storage/home
+---
+# persistent volume
+

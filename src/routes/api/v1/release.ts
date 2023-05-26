@@ -21,6 +21,7 @@ router
 	.use(registerController(controller))
 	.get("/", processApiRequest(controller.read.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))
+	.post("/from-app", processApiRequest(controller.createFromApp.bind(controller)))
 	.post("/from-build", processApiRequest(controller.createFromBuild.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))

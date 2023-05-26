@@ -6,6 +6,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import type { IGitProvider } from "@/entities";
 import { GitProviderDto } from "@/entities";
+import type { IQueryFilter } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -25,6 +26,9 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		super(new GitProviderService());
 	}
 
+	/**
+	 * List of GIT providers
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
@@ -125,7 +129,6 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	async update(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
 		let provider = await this.service.findOne(this.filter, this.options);
 		if (!provider) return respondFailure(`Git provider not found.`);
-
 		if (provider.type === "github" && provider.host !== "github.com") body.host = "github.com";
 		if (provider.type === "bitbucket" && provider.host !== "bitbucket.org") body.host = "bitbucket.org";
 
@@ -169,14 +172,15 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 		// update to db
 		provider = await this.service.updateOne(this.filter, body, this.options);
+		// console.log("GitProviderController > provider :>> ", provider);
 
 		// verify
 		let msg = "";
-		try {
-			provider = await this.service.verify(provider);
-		} catch (e) {
-			msg = e.toString();
-		}
+		// try {
+		provider = await this.service.verify(provider);
+		// } catch (e) {
+		// 	msg = e.toString();
+		// }
 
 		return respondSuccess({ data: provider, msg });
 	}
@@ -291,7 +295,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 			 */
 			_id?: string;
 			/**
-			 * Git provider's SLUG
+			 * Git provider's SLUG¸¸¸
 			 */
 			slug?: string;
 		}
@@ -300,7 +304,11 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
 
-		let provider = await this.service.findOne(this.filter, this.options);
+		const filter: IQueryFilter = {};
+		if (_id) filter._id = _id;
+		if (slug) filter.slug = slug;
+
+		let provider = await this.service.findOne(filter);
 		if (!provider) return respondFailure(`Git provider not found.`);
 
 		// process

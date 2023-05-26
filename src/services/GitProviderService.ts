@@ -11,8 +11,10 @@ export default class GitProviderService extends BaseService<IGitProvider> {
 
 	async verify(provider: IGitProvider) {
 		// process
+		// console.log("GitProviderService > provider :>> ", provider);
 		const profile = await GitProviderAPI.getProfile(provider);
-		console.log("profile :>> ", profile);
+		// console.log("profile :>> ", profile);
+
 		if (profile.username) {
 			// mark this git provider as verified
 			const updateDto: GitProviderDto = { verified: true };

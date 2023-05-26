@@ -1,170 +1,108 @@
-FROM debian:latest
+# Use Debian as the base image
+FROM debian:latest as builder
 
 # Switch to "root" user
-# <--- Usually you won't be needed it - Depends on base image --->
 USER root
-# Enable password for "root" user
-# RUN echo "root:pass" | chpasswd
 
-# <-- Run privileged commands -->
-# RUN apt install <packages>
-# RUN apt <privileged command>
+# Install build dependencies
+RUN apt-get update && apt-get install -y curl wget git sed jq openssh-client
 
-# Install all APT-GET packages from scratch...
-# RUN apt-get clean
-# RUN apt-get update -yq
-
-# Git, kubectl & Open SSH
-RUN apt-get update -yq \
-  && apt-get install curl wget -yq \
-  && apt-get install git sed jq openssh-client -yq
-
-# Node.js & NPM
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash \
-  && apt-get update -yq \
-  && apt-get install nodejs -yq
+# Upgrade Node.js to version 16.x
+RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+RUN apt-get install -y nodejs
 
 # Install GCLOUD CLI / SDK
-RUN apt-get install apt-transport-https ca-certificates gnupg -yq \
-  && echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
-  && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg \
-  && apt-get update -yq \
-  && apt-get install google-cloud-sdk -y
+RUN apt-get install -y apt-transport-https ca-certificates gnupg lsb-release && \
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - && \
+    apt-get update && apt-get install -y google-cloud-sdk
 
 # Install KUBECTL
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
-  && chmod +x kubectl \
-  && mv ./kubectl /usr/bin/kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+    chmod +x kubectl && \
+    mv ./kubectl /usr/bin/kubectl
 
-# Kubernetes Gcloud Authentication plugin
-RUN apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
+# Install Kubernetes Gcloud Authentication plugin
+RUN apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
-# Helm
-RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \
-  && chmod 700 get_helm.sh \
-  && ./get_helm.sh
+# Install Helm
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
+    chmod 700 get_helm.sh && \
+    ./get_helm.sh
 
-# Docker
-RUN apt-get install lsb-release -yq \
-  && mkdir -m 0755 -p /etc/apt/keyrings \
-  && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
-  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-  && apt-get update -yq \
-  && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -yq
+# Install Docker
+RUN apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose
 
-# Docker Buildx
-COPY ./binaries/buildx-v0.9.1.linux-amd64 .
-
-RUN chmod a+x buildx-v0.9.1.linux-amd64 \
-  && mkdir -p ~/.docker/cli-plugins \
-  && mv buildx-v0.9.1.linux-amd64 ~/.docker/cli-plugins/docker-buildx
-
-# RUN wget https://github.com/docker/buildx/releases/download/v0.9.1/buildx-v0.9.1.linux-amd64 \
-#     && chmod a+x buildx-v0.9.1.linux-amd64 \
-#     && mkdir -p ~/.docker/cli-plugins \
-#     && mv buildx-v0.9.1.linux-amd64 ~/.docker/cli-plugins/docker-buildx
-
-# Podman
-RUN apt install fuse-overlayfs -yq
-RUN apt-get -y install podman iptables
+# Install Podman
+RUN apt-get install -y podman iptables
 
 # Install Digital Ocean CLI
-RUN cd ~ \
-  && wget https://github.com/digitalocean/doctl/releases/download/v1.78.0/doctl-1.78.0-linux-amd64.tar.gz \
-  && tar xf ~/doctl-1.78.0-linux-amd64.tar.gz \
-  && mv ~/doctl /usr/local/bin
-
-# Install PNPM (instead of YARN as the previous version)
-# RUN npm install -g yarn
-RUN npm install -g pnpm
-
-# MongoDB Client Shell
-RUN wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add - \
-  && echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list \
-  && apt-get update -yq \
-  && apt-get install -y mongodb-mongosh
-
-# FOR DEVELOPMENT ONLY
-# RUN apt-get install vim iputils-ping -yq
-
-# CLEAN UP
-RUN apt-get autoremove -y \
-  && apt-get clean -y
+RUN cd ~ && \
+    wget https://github.com/digitalocean/doctl/releases/download/v1.78.0/doctl-1.78.0-linux-amd64.tar.gz && \
+    tar xf doctl-1.78.0-linux-amd64.tar.gz && \
+    mv ~/doctl /usr/local/bin/doctl
 
 # Set working directory
 WORKDIR /usr/app
 
 # Copy package.json and package-lock.json before other files
-# Utilise Docker cache to save re-installing dependencies if unchanged
-COPY ./package*.json ./
+COPY package*.json ./
+# COPY pnpm-lock.yaml ./
 
 # Install dependencies
+RUN npm install -g pnpm
 RUN pnpm i
 
-# Copy neccessary files
-# COPY ./src ./src
+# Copy necessary files
 COPY ./dist ./dist
 COPY ./scripts ./scripts
 COPY ./public ./public
 COPY ./templates ./templates
 
-# Copy all files
-# COPY . .
+# Intermediate stage for permissions and final image
+FROM debian:latest
+
+# WORKDIR /usr/app
 
 # Set user and group
 ARG user=app
 ARG group=app
 ARG uid=1000
 ARG gid=1000
-RUN groupadd -g ${gid} ${group}
-RUN useradd -u ${uid} -g ${group} -s /bin/sh -m ${user} 
-# <--- the '-m' create a user home directory
+RUN groupadd -g ${gid} ${group} && \
+    useradd -u ${uid} -g ${group} -s /bin/sh -m ${user}
 
-# ----- HANDLING PERMISIONS ------
+# Copy installed binaries and dependencies from builder stage
+COPY --from=builder /usr/bin/ssh-keygen /usr/bin/ssh-keygen
+COPY --from=builder /usr/bin/git /usr/bin/git
+COPY --from=builder /usr/local /usr/local
+COPY --from=builder /usr/bin/kubectl /usr/bin/kubectl
+COPY --from=builder /usr/app /usr/app
 
-# Permissions of DOCKER BUILDX
-RUN mkdir -p /home/${user}/.docker/cli-plugins && cp ~/.docker/cli-plugins/docker-buildx /home/${user}/.docker/cli-plugins/docker-buildx
+# Copy Node.js from the builder stage
+COPY --from=builder /usr/bin/node /usr/bin/node
+COPY --from=builder /usr/include/node /usr/include/node
+COPY --from=builder /usr/lib/node_modules /usr/lib/node_modules
 
-# Startup scripts permission
-RUN chmod -R +x /usr/${user}/scripts
+# Copy docker buildx
+COPY --from=docker/buildx-bin /buildx /usr/local/bin/docker-buildx
 
-# Podman permisions
-RUN mkdir -p /home/${user}/.config
-RUN mkdir -p /home/${user}/.local
+# Set permissions for the binary
+RUN chmod +x /usr/local/bin/docker-buildx
 
-# Make "app" user has rights to its home directory
-RUN chown -R ${uid}:${gid} /home/${user}
-RUN chmod -R ug+rwx /home/${user}
+# Permissions
+RUN chmod -R +x /usr/app/scripts && \
+    mkdir -p /home/${user}/.config && \
+    mkdir -p /home/${user}/.local && \
+    chown -R ${uid}:${gid} /home/${user} && \
+    chmod -R ug+rwx /home/${user}
 
-# Make "app" user has rights to "/usr/app" directory
-RUN chown -R ${uid}:${gid} /usr/app
-RUN chmod -R ug+rwx /usr/app
-
-# podman storage directory
-RUN mkdir -p /run/user/1000 && chmod 700 /run/user/1000
-RUN chown -R ${uid}:${gid} /run/user/1000
-RUN chmod -R ug+rwx /run/user/1000
-
-COPY ./podman/containers/storage.conf /home/${user}/.config/containers/storage.conf
-COPY ./podman/containers/storage.conf /root/.config/containers/storage.conf
-RUN chmod -R ug+rwx /home/${user}/.config/containers/storage.conf
-
-RUN mkdir -p /var/tmp/${user}/containers/storage
-RUN chown -R ${uid}:${gid} /var/tmp/${user}/containers/storage
-RUN chmod -R ug+rwx /var/tmp/${user}/containers/storage
-
-RUN mkdir -p /var/tmp/${user}/containers/storage
-RUN chown -R ${uid}:${gid} /var/tmp/${user}/containers/storage
-
-RUN touch /etc/sub{u,g}id
-# RUN usermod --add-subuids 10000-75535 ${user}
-# RUN usermod --add-subgids 10000-75535 ${user}
-RUN chmod 755 /etc/subuid
-RUN chmod 755 /etc/subgid
-
-# [SECURITY] Switch to "app" user before starting container !!!
-ENV USER=${user}
+# Set user
 USER ${uid}:${gid}
+WORKDIR /usr/app
 
-# CMD [ "/bin/sh", "-c", "sleep infinity" ]
-ENTRYPOINT [ "/usr/app/scripts/startup.sh" ]
+# Set the entrypoint
+ENTRYPOINT ["/usr/app/scripts/startup.sh"]

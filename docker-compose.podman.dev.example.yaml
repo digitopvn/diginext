@@ -35,7 +35,6 @@ services:
             - ./public:/usr/app/public
             - ./storage:/var/app/storage
         environment:
-            - DX_KEY= # <--- insert here
             - NODE_ENV=development
             - PORT=6969
             - BASE_URL=http://localhost:6969

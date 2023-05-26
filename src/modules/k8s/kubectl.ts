@@ -306,7 +306,7 @@ export async function getDeploy(name: string, namespace = "default", options: Ku
 /**
  * Get deployments in a namespace by filter labels
  */
-export async function getDeployByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+export async function getDeploysByFilter(namespace = "default", options: KubeCommandOptions = {}) {
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -433,13 +433,37 @@ export async function deleteDeploymentsByFilter(namespace = "default", options: 
  * Get all deployments of a namespace
  * @param namespace @default "default"
  */
-export async function getAllDeploys(namespace = "default", options: KubeCommandOptions = {}) {
+export async function getDeploys(namespace = "default", options: KubeCommandOptions = {}) {
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 
 		args.push("-n", namespace, "get", "deploy");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		return items as KubeDeployment[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getDeploys >`, e);
+		return [];
+	}
+}
+
+/**
+ * Get all deployments of a cluster
+ */
+export async function getAllDeploys(options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("get", "deploy", "-A");
 
 		if (filterLabel) args.push("-l", filterLabel);
 
@@ -589,6 +613,42 @@ export async function getAllPods(namespace = "default", options: KubeCommandOpti
 }
 
 export const getPodsByFilter = getAllPods;
+
+export async function logPod(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "logs", name, "--timestamps", "--prefix");
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] logPod >`, e);
+		return;
+	}
+}
+
+export async function logPodByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "logs");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("--timestamps", "--prefix");
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] logPod >`, e);
+		return;
+	}
+}
 
 export async function setEnvVar(envVars: KubeEnvironmentVariable[], deploy: string, namespace = "default", options: KubeGenericOptions = {}) {
 	const { context, skipOnError } = options;

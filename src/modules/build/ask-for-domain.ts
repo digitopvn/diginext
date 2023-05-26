@@ -4,8 +4,10 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import inquirer from "inquirer";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
+import type { IApp, IWorkspace } from "@/entities";
 import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
+import { DB } from "../api/DB";
 import { generateDomains } from "../deploy/generate-domain";
 
 export const askForDomain = async (env: string, projectSlug: string, appSlug: string, deployEnvironment: ClientDeployEnvironmentConfig) => {
@@ -19,6 +21,12 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 		logWarn(`This app's domain is too long, it will be shorten randomly to: ${generatedDomain}`);
 	}
 	const clusterShortName = deployEnvironment.cluster;
+
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["workspace"] });
+	if (!app) throw new Error(`[ASK_FOR_DOMAIN] App "${appSlug}" not found.`);
+	// console.log("app.workspace :>> ", app.workspace);
+
+	const workspace = app.workspace as IWorkspace;
 
 	// xử lý domains
 	if (typeof deployEnvironment.domains != "undefined" && deployEnvironment.domains.length > 0) {
@@ -36,6 +44,7 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 
 		if (useGeneratedDomain) {
 			const { status, ip, domain, messages } = await generateDomains({
+				workspace,
 				primaryDomain: DIGINEXT_DOMAIN,
 				subdomainName,
 				clusterShortName,

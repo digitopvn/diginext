@@ -17,6 +17,7 @@ import { isValidObjectId } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
 import ClusterManager from ".";
+import { logPodByFilter } from "./kubectl";
 
 export interface RolloutOptions {
 	onUpdate?: (msg?: string) => void;
@@ -147,7 +148,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	/**
 	 * Delete current PRE-RELEASE deployments
 	 */
-	const curPrereleaseDeployments = await ClusterManager.getDeployByFilter(namespace, {
+	const curPrereleaseDeployments = await ClusterManager.getDeploysByFilter(namespace, {
 		context,
 		filterLabel: `phase=prerelease,main-app=${appSlug}`,
 	});
@@ -303,28 +304,30 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		usedDomain: string,
 		deleteIng: KubeIngress;
 
-	const domains = ingress.spec.rules.map((rule) => rule.host) || [];
-	console.log("domains :>> ", domains);
+	if (ingress) {
+		const domains = ingress.spec.rules.map((rule) => rule.host) || [];
+		console.log("domains :>> ", domains);
 
-	if (domains.length > 0) {
-		const allIngresses = await ClusterManager.getAllIngresses({ context });
+		if (domains.length > 0) {
+			const allIngresses = await ClusterManager.getAllIngresses({ context });
 
-		allIngresses.filter((ing) => {
-			domains.map((domain) => {
-				if (ing.spec.rules.map((rule) => rule.host).includes(domain)) {
-					isDomainUsed = true;
-					usedDomain = domain;
-					deleteIng = ing;
-				}
+			allIngresses.filter((ing) => {
+				domains.map((domain) => {
+					if (ing.spec.rules.map((rule) => rule.host).includes(domain)) {
+						isDomainUsed = true;
+						usedDomain = domain;
+						deleteIng = ing;
+					}
+				});
 			});
-		});
-		if (isDomainUsed) {
-			await ClusterManager.deleteIngress(deleteIng.metadata.name, deleteIng.metadata.namespace, { context });
+			if (isDomainUsed) {
+				await ClusterManager.deleteIngress(deleteIng.metadata.name, deleteIng.metadata.namespace, { context });
 
-			if (onUpdate)
-				onUpdate(
-					`Domain "${usedDomain}" has been used before at "${deleteIng.metadata.namespace}" namespace -> Deleted "${deleteIng.metadata.name}" ingress to create a new one.`
-				);
+				if (onUpdate)
+					onUpdate(
+						`Domain "${usedDomain}" has been used before at "${deleteIng.metadata.namespace}" namespace -> Deleted "${deleteIng.metadata.name}" ingress to create a new one.`
+					);
+			}
 		}
 	}
 
@@ -357,7 +360,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	 * and apply new app for production
 	 */
 
-	const oldDeploys = await ClusterManager.getAllDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${mainAppName}` });
+	const oldDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${mainAppName}` });
 	if (onUpdate) onUpdate(`Current app deployments (to be deleted later on): ${oldDeploys.map((d) => d.metadata.name).join(",")}`);
 
 	const createNewDeployment = async (appDoc) => {
@@ -433,7 +436,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 	// Wait until the deployment is ready!
 	const isNewDeploymentReady = async () => {
-		const newDeploys = await ClusterManager.getAllDeploys(namespace, { context, filterLabel: `phase=live,app=${deploymentName}` });
+		const newDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase=live,app=${deploymentName}` });
 		// log(`${namespace} > ${deploymentName} > newDeploys :>>`, newDeploys);
 
 		let isReady = false;
@@ -453,7 +456,14 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		log(`[INTERVAL] Checking new deployment's status -> Is Ready:`, isReady);
 		return isReady;
 	};
-	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 5 * 60);
+
+	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 2 * 60);
+
+	// print the container logs
+	const containerLogs = await logPodByFilter(namespace, { filterLabel: `phase=live,app=${deploymentName}` });
+	if (onUpdate && containerLogs) onUpdate(containerLogs);
+
+	// throw the error
 	if (!isReallyReady) {
 		return {
 			error: `New app deployment stucked or crashed, probably because of the unauthorized container registry or the app was crashed on start up.`,

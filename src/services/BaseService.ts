@@ -30,10 +30,11 @@ export default class BaseService<T = any> {
 		this.model = model<T>(collection, schema, collection);
 	}
 
-	async count(filter?: IQueryFilter, options?: IQueryOptions) {
+	async count(filter?: IQueryFilter) {
 		const parsedFilter = filter;
 		parsedFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
-		return this.model.countDocuments({ ...parsedFilter, ...options }).exec();
+		// console.log(`BaseService > COUNT "${this.model.collection.name}" collection > parsedFilter :>>`, parsedFilter);
+		return this.model.countDocuments(parsedFilter).exec();
 	}
 
 	async create(data: any): Promise<T> {
@@ -100,7 +101,7 @@ export default class BaseService<T = any> {
 	}
 
 	async find(filter: IQueryFilter = {}, options: IQueryOptions & IQueryPagination = {}, pagination?: IQueryPagination) {
-		// console.log(`BaseService > find :>> filter:`, filter);
+		// console.log(`BaseService > find in "${this.model.collection.name}" collection :>> filter:`, filter);
 
 		// where
 		let _filter = parseRequestFilter(filter);
@@ -109,7 +110,7 @@ export default class BaseService<T = any> {
 			..._filter,
 			$or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
 		};
-		// console.log(`"${this.model.collection.name}" > find > where :>>`, where);
+		// console.log(`BaseService > collection "${this.model.collection.name}" > find > where :>>`, where);
 
 		const pipelines: PipelineStage[] = [
 			{
@@ -181,7 +182,7 @@ export default class BaseService<T = any> {
 		let [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(where).exec()]);
 		// console.log(`"${this.model.collection.name}" > results >>`, results);
 
-		if (pagination) {
+		if (pagination && this.req) {
 			pagination.total_items = totalItems || results.length;
 			pagination.total_pages = pagination.page_size ? Math.ceil(totalItems / pagination.page_size) : 1;
 
@@ -240,6 +241,9 @@ export default class BaseService<T = any> {
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
 		// console.log("[3] updateRes :>> ", updateRes);
 
+		// MAGIC: when update slug of the items -> update the filter as well
+		if (data.slug) updateFilter.slug = data.slug;
+
 		// response > results
 		const results = await this.find(updateFilter, options);
 		return updateRes.acknowledged ? results : [];
@@ -253,7 +257,7 @@ export default class BaseService<T = any> {
 	async softDelete(filter?: IQueryFilter) {
 		const data = { deletedAt: new Date() };
 		const deletedItems = await this.update(filter, data);
-		console.log("deletedItems :>> ", deletedItems);
+		// console.log("deletedItems :>> ", deletedItems);
 		return { ok: deletedItems.length > 0, affected: deletedItems.length };
 	}
 
