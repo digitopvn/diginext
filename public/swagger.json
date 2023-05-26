@@ -500,7 +500,14 @@
 			},
 			"AppStatus": {
 				"type": "string",
-				"enum": ["healthy", "partial_healthy", "undeployed", "failed", "crashed", "unknown"]
+				"enum": [
+					"healthy",
+					"partial_healthy",
+					"undeployed",
+					"failed",
+					"crashed",
+					"unknown"
+				]
 			},
 			"ResourceQuotaSize": {
 				"type": "string",
@@ -1597,7 +1604,12 @@
 			},
 			"BuildStatus": {
 				"type": "string",
-				"enum": ["failed", "start", "building", "success"]
+				"enum": [
+					"failed",
+					"start",
+					"building",
+					"success"
+				]
 			},
 			"RegistryProviderType": {
 				"type": "string",
@@ -1894,7 +1906,10 @@
 									"type": "string"
 								}
 							},
-							"required": ["value", "name"],
+							"required": [
+								"value",
+								"name"
+							],
 							"type": "object"
 						},
 						"type": "array",
@@ -4532,7 +4547,7 @@
 				},
 				"required": [
 					"name",
-					"owner"
+					"dx_key"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4819,6 +4834,7 @@
 						}
 					}
 				},
+				"description": "List of apps",
 				"tags": [
 					"App"
 				],
@@ -5233,7 +5249,7 @@
 						}
 					}
 				},
-				"description": "Create new deploy environment of the application.",
+				"description": "Get new deploy environment of the application.",
 				"tags": [
 					"App"
 				],
@@ -5376,7 +5392,9 @@
 					}
 				},
 				"description": "Create new deploy environment of the application.",
-				"tags": ["App"],
+				"tags": [
+					"App"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -5443,7 +5461,11 @@
 										"description": "`REQUIRES`\n---\nApp slug"
 									}
 								},
-								"required": ["deployEnvironmentData", "env", "appSlug"],
+								"required": [
+									"deployEnvironmentData",
+									"env",
+									"appSlug"
+								],
 								"type": "object"
 							}
 						}
@@ -5523,7 +5545,9 @@
 					}
 				},
 				"description": "[V2] Get new deploy environment of the application.",
-				"tags": ["App"],
+				"tags": [
+					"App"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -5568,7 +5592,9 @@
 					}
 				},
 				"description": "[V2] Create new deploy environment of the application.",
-				"tags": ["App"],
+				"tags": [
+					"App"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -5625,7 +5651,9 @@
 					}
 				},
 				"description": "[V2] Update new deploy environment of the application.",
-				"tags": ["App"],
+				"tags": [
+					"App"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -5682,7 +5710,9 @@
 					}
 				},
 				"description": "[V2] Update new deploy environment of the application.",
-				"tags": ["App"],
+				"tags": [
+					"App"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -6106,7 +6136,7 @@
 						}
 					}
 				},
-				"description": "Update a variable on the deploy environment of the application.",
+				"description": "Delete variables on the deploy environment of the application.",
 				"tags": [
 					"App"
 				],
@@ -6208,7 +6238,10 @@
 													"format": "double"
 												}
 											},
-											"required": ["messages", "status"],
+											"required": [
+												"messages",
+												"status"
+											],
 											"type": "object"
 										}
 									]
@@ -6218,7 +6251,9 @@
 					}
 				},
 				"description": "Update a variable on the deploy environment of the application.",
-				"tags": ["App"],
+				"tags": [
+					"App"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -6277,14 +6312,20 @@
 										},
 										"type": "array",
 										"description": "New domains to be added into this deploy environment",
-										"example": ["example.com", "www.example.com"]
+										"example": [
+											"example.com",
+											"www.example.com"
+										]
 									},
 									"env": {
 										"type": "string",
 										"description": "Deploy environment name"
 									}
 								},
-								"required": ["domains", "env"],
+								"required": [
+									"domains",
+									"env"
+								],
 								"type": "object"
 							}
 						}
@@ -6308,7 +6349,9 @@
 					}
 				},
 				"description": "View app's container logs",
-				"tags": ["App"],
+				"tags": [
+					"App"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -6355,6 +6398,7 @@
 						}
 					}
 				},
+				"description": "List of builds",
 				"tags": [
 					"Build"
 				],
@@ -6882,6 +6926,7 @@
 						}
 					}
 				},
+				"description": "List of K8S clusters",
 				"tags": [
 					"Cluster"
 				],
@@ -7280,6 +7325,7 @@
 				"tags": [
 					"Deploy"
 				],
+				"deprecated": true,
 				"security": [
 					{
 						"api_key": []
@@ -7879,6 +7925,7 @@
 						}
 					}
 				},
+				"description": "List of frameworks",
 				"tags": [
 					"Framework"
 				],
@@ -8212,6 +8259,7 @@
 						}
 					}
 				},
+				"description": "List of GIT providers",
 				"tags": [
 					"Git Provider"
 				],
@@ -9026,6 +9074,7 @@
 						}
 					}
 				},
+				"description": "List of projects",
 				"tags": [
 					"Project"
 				],
@@ -9849,6 +9898,7 @@
 						}
 					}
 				},
+				"description": "List of container registry",
 				"tags": [
 					"Container Registry"
 				],
@@ -10238,6 +10288,7 @@
 						}
 					}
 				},
+				"description": "List of releases",
 				"tags": [
 					"Release"
 				],
@@ -10571,7 +10622,9 @@
 						}
 					}
 				},
-				"tags": ["Release"],
+				"tags": [
+					"Release"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -10596,7 +10649,10 @@
 										"description": "App's slug"
 									}
 								},
-								"required": ["env", "app"],
+								"required": [
+									"env",
+									"app"
+								],
 								"type": "object"
 							}
 						}
@@ -10766,6 +10822,7 @@
 						}
 					}
 				},
+				"description": "List of roles",
 				"tags": [
 					"Role"
 				],
@@ -11666,6 +11723,7 @@
 						}
 					}
 				},
+				"description": "List of teams",
 				"tags": [
 					"Team"
 				],
@@ -11999,6 +12057,7 @@
 						}
 					}
 				},
+				"description": "List of users",
 				"tags": [
 					"User"
 				],
@@ -12557,6 +12616,7 @@
 						}
 					}
 				},
+				"description": "List of workspaces",
 				"tags": [
 					"Workspace"
 				],
