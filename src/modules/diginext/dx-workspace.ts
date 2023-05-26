@@ -4,6 +4,7 @@ import { dxApi } from "./dx-api";
 
 export type CreateWorkspaceParams = {
 	name: string;
+	type?: "default" | "hobby" | "self_hosted";
 };
 
 export type CreateWorkspaceResponse = ResponseData & {
