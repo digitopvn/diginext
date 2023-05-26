@@ -22,6 +22,7 @@ import type { GenerateDeploymentResult } from "../deploy";
 import { generateDeployment } from "../deploy";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
+import { connectRegistry } from "../registry/connect-registry";
 import { createReleaseFromBuild, sendLog, updateBuildStatus, updateBuildStatusByAppSlug } from "./index";
 
 export let queue = new PQueue({ concurrency: 1 });
@@ -284,6 +285,10 @@ export async function startBuildV1(
 	// build the app with Docker:
 	try {
 		sendLog({ SOCKET_ROOM, message: `Start building the Docker image...` });
+
+		// authenticate registry before building & pushing image
+		const registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry });
+		await connectRegistry(registry);
 
 		const buildEngine = process.env.BUILDER === "docker" ? builder.Docker : builder.Podman;
 		await buildEngine.build(buildImage, {

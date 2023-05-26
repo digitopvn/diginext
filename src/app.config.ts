@@ -106,6 +106,10 @@ export class Config {
 		return process.env.CLI_MODE || "client";
 	}
 
+	static get SERVER_TYPE() {
+		return (process.env.SERVER_TYPE || "default") as "default" | "hobby";
+	}
+
 	static get DX_SITE_URL() {
 		return process.env.DX_SITE_URL ? process.env.DX_SITE_URL : "https://diginext.vn";
 	}
