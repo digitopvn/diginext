@@ -1,3 +1,12 @@
+## [3.5.2](https://github.com/digitopvn/diginext/compare/v3.5.1...v3.5.2) (2023-05-26)
+
+
+### Bug Fixes
+
+* **server,env vars:** fix env var can be empty ([14b3e79](https://github.com/digitopvn/diginext/commit/14b3e79b247e6e67a3a0f61251aeebc17eb292bc))
+* **server,env vars:** fix env var can be empty ([#141](https://github.com/digitopvn/diginext/issues/141)) ([e67e01c](https://github.com/digitopvn/diginext/commit/e67e01c373da98fc2699d8efcc8e95f0112414ab))
+* **server,generate deploy yaml:** env var value can be undefined ([5862cfb](https://github.com/digitopvn/diginext/commit/5862cfbf5b1b7fd6887164d77e8e8f5f5c4bdcd5))
+
 ## [3.5.1](https://github.com/digitopvn/diginext/compare/v3.5.0...v3.5.1) (2023-05-26)
 
 
