@@ -1,3 +1,10 @@
+## [3.5.3-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.5.2...v3.5.3-prerelease.1) (2023-05-26)
+
+
+### Bug Fixes
+
+* **bitbucket repo:** issue of creating new bitbucket repo ([#123](https://github.com/digitopvn/diginext/issues/123)) ([c4a6919](https://github.com/digitopvn/diginext/commit/c4a6919f919f8aa8a1279864b36ccc445f1789a0))
+
 ## [3.5.2](https://github.com/digitopvn/diginext/compare/v3.5.1...v3.5.2) (2023-05-26)
 
 
