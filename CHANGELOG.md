@@ -1,4 +1,158 @@
-## [3.0.5-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.0.5-prerelease.1...v3.0.5-prerelease.2) (2023-05-09)
+## [3.5.3-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.5.2...v3.5.3-prerelease.1) (2023-05-26)
+
+
+### Bug Fixes
+
+* **bitbucket repo:** issue of creating new bitbucket repo ([#123](https://github.com/digitopvn/diginext/issues/123)) ([c4a6919](https://github.com/digitopvn/diginext/commit/c4a6919f919f8aa8a1279864b36ccc445f1789a0))
+
+## [3.5.2](https://github.com/digitopvn/diginext/compare/v3.5.1...v3.5.2) (2023-05-26)
+
+
+### Bug Fixes
+
+* **server,env vars:** fix env var can be empty ([14b3e79](https://github.com/digitopvn/diginext/commit/14b3e79b247e6e67a3a0f61251aeebc17eb292bc))
+* **server,env vars:** fix env var can be empty ([#141](https://github.com/digitopvn/diginext/issues/141)) ([e67e01c](https://github.com/digitopvn/diginext/commit/e67e01c373da98fc2699d8efcc8e95f0112414ab))
+* **server,generate deploy yaml:** env var value can be undefined ([5862cfb](https://github.com/digitopvn/diginext/commit/5862cfbf5b1b7fd6887164d77e8e8f5f5c4bdcd5))
+
+## [3.5.1](https://github.com/digitopvn/diginext/compare/v3.5.0...v3.5.1) (2023-05-26)
+
+
+### Bug Fixes
+
+* **server,startup script:** add retry method to registry connecting ([dda8c73](https://github.com/digitopvn/diginext/commit/dda8c73dbfdf2619d3d462bc0472181f79bba772))
+* **server:** authenticate registry before building & pushing image ([ecb682d](https://github.com/digitopvn/diginext/commit/ecb682db4b0bd6cf16964b7ecfa9bcfb4f3f413e))
+* **server:** authenticate registry before building & pushing image ([#140](https://github.com/digitopvn/diginext/issues/140)) ([44ddeaa](https://github.com/digitopvn/diginext/commit/44ddeaa8bab632478e8e96c879486550576a109a))
+* **server:** change clean up cronjob to 7 days ([e90eedc](https://github.com/digitopvn/diginext/commit/e90eedcf6c24cff3a979eb8b6646d5c290eefae2))
+
+# [3.5.0](https://github.com/digitopvn/diginext/compare/v3.4.3...v3.5.0) (2023-05-24)
+
+
+### Features
+
+* **server,admin:** view application deploy environment logs ([e51b6cc](https://github.com/digitopvn/diginext/commit/e51b6cc8cb9ec5ef95dd514d43827e435b3c499f))
+* **server:** app, deploy env - add health status and ready count ([950ec4a](https://github.com/digitopvn/diginext/commit/950ec4a7fe6bbbbb0aa2f3b526a80182838dc18e))
+* **server:** app, deploy env, healthz, logs ([#139](https://github.com/digitopvn/diginext/issues/139)) ([7e00a1a](https://github.com/digitopvn/diginext/commit/7e00a1a1b4fe7643a62eb49600dbd86a7711f286))
+
+## [3.4.3](https://github.com/digitopvn/diginext/compare/v3.4.2...v3.4.3) (2023-05-23)
+
+
+### Bug Fixes
+
+* **server,app controller:** re-generate yaml after updating env vars ([796eddd](https://github.com/digitopvn/diginext/commit/796eddd2280ebd15eeb354adb437b87891d664ca))
+* **server,app controller:** re-generate yaml after updating env vars ([#138](https://github.com/digitopvn/diginext/issues/138)) ([04bff87](https://github.com/digitopvn/diginext/commit/04bff8750066f3df90888d018cf9ae734d020ef2))
+* **server:** add podman to clean up cronjob ([fec4ee3](https://github.com/digitopvn/diginext/commit/fec4ee32cae2fc97ed70d42d6e88587229e139f2))
+* **server:** close db connection when app is terminated ([ae63891](https://github.com/digitopvn/diginext/commit/ae63891ae99f112c1005e5c5336ffc70d49fec70))
+
+## [3.4.2](https://github.com/digitopvn/diginext/compare/v3.4.1...v3.4.2) (2023-05-23)
+
+
+### Bug Fixes
+
+* **server,dockerfile:** define unqualified-search registries for podman ([c9da8b2](https://github.com/digitopvn/diginext/commit/c9da8b2c9cbb94f5e559ec82233b3fb3fc9b5473))
+* **server,dockerfile:** define unqualified-search registries for podman ([#137](https://github.com/digitopvn/diginext/issues/137)) ([541aa67](https://github.com/digitopvn/diginext/commit/541aa6748b38172183673f8b364b0df1e7808fe1))
+
+## [3.4.1](https://github.com/digitopvn/diginext/compare/v3.4.0...v3.4.1) (2023-05-23)
+
+
+### Bug Fixes
+
+* **cli:** correct workspace dx_key when ask for domain ([6cc060d](https://github.com/digitopvn/diginext/commit/6cc060daca1cea5c202c96db896640376c4ebf85))
+* **cli:** correct workspace dx_key when ask for domain ([#136](https://github.com/digitopvn/diginext/issues/136)) ([32b89e7](https://github.com/digitopvn/diginext/commit/32b89e7bdf4d431b5e701f29b73abb0b6761942a))
+* **server,admin:** add env vars, deployment yaml drawer ([889f24f](https://github.com/digitopvn/diginext/commit/889f24fa44bc66213c808450179a533112b17e73))
+
+# [3.4.0](https://github.com/digitopvn/diginext/compare/v3.3.1...v3.4.0) (2023-05-22)
+
+
+### Features
+
+* **server,admin:** modify deploy environment of app ([8c411e8](https://github.com/digitopvn/diginext/commit/8c411e84576311737c33e2e8623fcaad46a56a6d))
+* **server,admin:** modify deploy environment of app ([#135](https://github.com/digitopvn/diginext/issues/135)) ([13a57d9](https://github.com/digitopvn/diginext/commit/13a57d97bea15ca3e5edd97b14468f9b744d7a0b))
+
+## [3.3.1](https://github.com/digitopvn/diginext/compare/v3.3.0...v3.3.1) (2023-05-22)
+
+
+### Bug Fixes
+
+* **server,cli:** flag --create when dx new, dx key in workspace setting ([1722a70](https://github.com/digitopvn/diginext/commit/1722a702c8e2fc4c7dde2ce21d7cef5716c28a7a))
+* **server,cli:** flag --create when dx new, dx key in workspace setting ([#134](https://github.com/digitopvn/diginext/issues/134)) ([55e8d69](https://github.com/digitopvn/diginext/commit/55e8d69dd15222c2a78d00978c0107367c23fb2e))
+
+# [3.3.0](https://github.com/digitopvn/diginext/compare/v3.2.2...v3.3.0) (2023-05-22)
+
+
+### Bug Fixes
+
+* **server,api:** provider not found when creating git repo ([375e351](https://github.com/digitopvn/diginext/commit/375e3512f3518e03dcd06f76daeff875c91e1a14))
+* **server,cli:** issue of deleting env vars when update app config ([f798f1c](https://github.com/digitopvn/diginext/commit/f798f1ce8892b4c56d3c61c2325bb1ca06078a31))
+* **server,workspace:** delete related data when deleting workspace ([8850d36](https://github.com/digitopvn/diginext/commit/8850d36addc1f15ee1efd40e143b64c001ec1bd4))
+* **server:** generate incorrect resource quotas by size ([40a7485](https://github.com/digitopvn/diginext/commit/40a7485535cbe47d4663d9b2a42f034054456ad2))
+
+
+### Features
+
+* **server,api:** check dx key when create workspace,domain ([2cb5f3f](https://github.com/digitopvn/diginext/commit/2cb5f3f83f142ce35ec54ff48cd15312a4b77755))
+* **server,api:** check dx key when create workspace,domain ([#132](https://github.com/digitopvn/diginext/issues/132)) ([b422f7e](https://github.com/digitopvn/diginext/commit/b422f7e247b2e81419af29cf6e41b5c89aedf827))
+* **server,cli:** issue of checking quota limit of workspace ([3464d54](https://github.com/digitopvn/diginext/commit/3464d54049a906b4dc1199d36ce113a383bd8389))
+
+## [3.2.2](https://github.com/digitopvn/diginext/compare/v3.2.1...v3.2.2) (2023-05-20)
+
+
+### Bug Fixes
+
+* **new-app:** skip check verbose git | display progress default 0 ([1ce901a](https://github.com/digitopvn/diginext/commit/1ce901aa89b0fac64083b601efb1fa36b58dd5ed))
+* restore dev:nodemon ([366fec5](https://github.com/digitopvn/diginext/commit/366fec52a7394be36d442561a309d2383dfba563))
+
+## [3.2.1](https://github.com/digitopvn/diginext/compare/v3.2.0...v3.2.1) (2023-05-16)
+
+
+### Bug Fixes
+
+* **server,api:** add create release from app api ([dfac727](https://github.com/digitopvn/diginext/commit/dfac7270a5dae5bfcd2fdc7947738c185edbd986))
+* **server,api:** add create release from app api ([#129](https://github.com/digitopvn/diginext/issues/129)) ([4417a25](https://github.com/digitopvn/diginext/commit/4417a25089ac544a447ac8944c151b7ebfdcd442))
+* **server,api:** add swagger doc comments ([39d486d](https://github.com/digitopvn/diginext/commit/39d486dbcb23c87dd8079a0fe423da2de43f9bb5))
+
+# [3.2.0](https://github.com/digitopvn/diginext/compare/v3.1.1...v3.2.0) (2023-05-15)
+
+
+### Bug Fixes
+
+* **server,api:** add --build-arg to build process ([d6275f4](https://github.com/digitopvn/diginext/commit/d6275f42fde6a38fc0e8099c68843b938d3784de))
+* **server,api:** issue of x-api-key not working ([4e1ca4e](https://github.com/digitopvn/diginext/commit/4e1ca4ee1b898cf1b3ee6329f2da205ca6cd32ce))
+* **server:** check existing domain when add new ([2c87d2a](https://github.com/digitopvn/diginext/commit/2c87d2a16bfd6349238d56696ce4a95b5606d668))
+* **server:** issue of not update new domains ([6715df1](https://github.com/digitopvn/diginext/commit/6715df1b1aa5ec163988655ae422cca16963dc30))
+
+
+### Features
+
+* **server:** add domains to production environment ([aa459bf](https://github.com/digitopvn/diginext/commit/aa459bfec2f495be62034632a79ead9e3b937174))
+* **server:** add new domain to app deploy environment ([19ff3f6](https://github.com/digitopvn/diginext/commit/19ff3f6f73c3db136b329d1b27539f2115739622))
+
+## [3.1.1](https://github.com/digitopvn/diginext/compare/v3.1.0...v3.1.1) (2023-05-11)
+
+
+### Bug Fixes
+
+* **cli,server:** update git provider name for apps if it's not existed ([a19e593](https://github.com/digitopvn/diginext/commit/a19e593d161fc1deb002973d0a021ba6ae69d438))
+* **cli:** fallback dx.json support for find project and app ([831b267](https://github.com/digitopvn/diginext/commit/831b267243553574ba626382cd95168106972756))
+* **cli:** fallback dx.json support for find project and app ([#127](https://github.com/digitopvn/diginext/issues/127)) ([cb3d229](https://github.com/digitopvn/diginext/commit/cb3d229f2bf1b102285924f2936c6c46f50597a3))
+* **server:** cannot verify git provider after connecting ([e59b84a](https://github.com/digitopvn/diginext/commit/e59b84a042bfa72b99cd1533b67526e816339c39))
+* **server:** when rollout skip checking ingress if ssl is none ([28f9f86](https://github.com/digitopvn/diginext/commit/28f9f8639f8cb5f1366e167e23da8a1f546e91bb))
+
+# [3.1.0](https://github.com/digitopvn/diginext/compare/v3.0.5...v3.1.0) (2023-05-10)
+
+
+### Bug Fixes
+
+* **server, cli:** update git info while deploying app ([e914041](https://github.com/digitopvn/diginext/commit/e914041f5ca1db951dbfdbecfc3302720f71975c))
+* **server, cli:** update git info while deploying app ([#126](https://github.com/digitopvn/diginext/issues/126)) ([4db5d4a](https://github.com/digitopvn/diginext/commit/4db5d4a26f4ea4457aedf49ebe50a25ee188cb85))
+* **server:** app constroller git info is required ([e4fa77e](https://github.com/digitopvn/diginext/commit/e4fa77ef08c9081abeb465226feff4bc1f7877da))
+* **server:** can't update app config ([355b16e](https://github.com/digitopvn/diginext/commit/355b16e6e19bcfa840dffa130cf4ffcf08c662fb))
+
+
+### Features
+
+* **admin:** connect and list connected git providers ([3018bae](https://github.com/digitopvn/diginext/commit/3018bae5eee14cc78cf33de878775aef0c40a27c))
+
+## [3.0.5](https://github.com/digitopvn/diginext/compare/v3.0.4...v3.0.5) (2023-05-10)
 
 
 ### Bug Fixes
