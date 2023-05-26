@@ -157,7 +157,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			let curValue = envVar.value;
 			if (curValue.indexOf(domains[0]) > -1) {
 				// replace all production domains with PRERELEASE domains
-				envVar.value = curValue.replace(new RegExp(domains[0], "gi"), prereleaseDomain);
+				envVar.value = (curValue || "").replace(new RegExp(domains[0], "gi"), prereleaseDomain);
 			}
 			return { ...envVar };
 		});
