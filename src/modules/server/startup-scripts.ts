@@ -15,7 +15,7 @@ import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-s
 import { generateSSH, sshKeysExisted, verifySSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
-import { execCmd } from "@/plugins";
+import { execCmd, wait } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
 import { seedSystemInitialData } from "@/seeds/seed-system";
 import { setServerStatus } from "@/server";
@@ -78,7 +78,10 @@ export async function startupScripts() {
 	const registries = await registrySvc.find({});
 	if (registries.length > 0) {
 		for (const registry of registries) {
-			connectRegistry(registry);
+			connectRegistry(registry).catch((e) => {
+				// wait for 2 minutes and retry
+				wait(2 * 60 * 2000, connectRegistry(registry));
+			});
 		}
 	}
 
@@ -94,12 +97,14 @@ export async function startupScripts() {
 	/**
 	 * CRONJOBS
 	 * ---
-	 * Schedule a clean up task every 3 days at 00:00 AM
+	 * Schedule a clean up task every 7 days at 02:00 AM
 	 * (Skip for test environment)
 	 */
 	if (!IsTest()) {
-		logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every 3 days at 00:00 AM`);
-		cronjob.schedule("0 0 */3 * *", () => cleanUp());
+		const repeatDays = 7; // every 7 days
+		const atHour = 2; // 2AM
+		logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
+		cronjob.schedule(`0 ${atHour} */${repeatDays} * *`, () => cleanUp());
 	}
 
 	/**
