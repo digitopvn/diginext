@@ -77,12 +77,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Hide "husky" hook
-        run: pnpm husky-hide
-
       - name: Install package dependencies
       #   run: npm ci
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build source code
         run: pnpm build
