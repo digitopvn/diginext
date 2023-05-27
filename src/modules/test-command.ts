@@ -1,7 +1,6 @@
-import path from "path";
+import simpleGit from "simple-git";
 
 import type { InputOptions } from "@/interfaces";
-import { pullOrCloneGitRepo } from "@/plugins";
 
 export const testCommand = async (options?: InputOptions) => {
 	// 63b117e2387f529fc07d7673
@@ -16,9 +15,19 @@ export const testCommand = async (options?: InputOptions) => {
 	// const curBranch = status.current;
 	// console.log(`getCurrentGitBranch >`, { curBranch });
 
-	await pullOrCloneGitRepo(
-		"git@bitbucket.org:digitopvn/static-site-framework.git",
-		path.resolve(process.cwd(), "cli-static-test"),
-		"test/dx-deploy"
-	);
+	// await pullOrCloneGitRepo(
+	// 	"git@bitbucket.org:digitopvn/static-site-framework.git",
+	// 	path.resolve(process.cwd(), "cli-static-test"),
+	// 	"test/dx-deploy"
+	// );
+
+	const git = simpleGit(process.cwd());
+
+	const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
+	console.log("remotes :>> ", remotes);
+
+	const originRemote = remotes[0] as any;
+	if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
+
+	console.log("originRemote :>> ", originRemote);
 };
