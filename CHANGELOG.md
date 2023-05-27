@@ -1,3 +1,11 @@
+## [3.5.3-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.2...v3.5.3-prerelease.3) (2023-05-27)
+
+
+### Bug Fixes
+
+* **github actions:** run next job on succesful jobs ([236bb91](https://github.com/digitopvn/diginext/commit/236bb9181c9f1a9c4a789f7e01aac72b9d740aeb))
+* **github actions:** run next job on succesful jobs ([#146](https://github.com/digitopvn/diginext/issues/146)) ([ba99e16](https://github.com/digitopvn/diginext/commit/ba99e1616a78655d0fe219f9e07869dfed7b33f1))
+
 ## [3.5.3-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.1...v3.5.3-prerelease.2) (2023-05-27)
 
 
