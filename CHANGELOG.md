@@ -1,3 +1,11 @@
+## [3.5.3-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.1...v3.5.3-prerelease.2) (2023-05-27)
+
+
+### Bug Fixes
+
+* **github actions:** combine docker release with main release flow ([ac13dc2](https://github.com/digitopvn/diginext/commit/ac13dc2f1d8009f5d4407fb4bf191f38823f052b))
+* **github actions:** combine docker release with main release flow ([#145](https://github.com/digitopvn/diginext/issues/145)) ([6c9bd5e](https://github.com/digitopvn/diginext/commit/6c9bd5ee2a5adf832a0d94ea018f578b846d01d8))
+
 ## [3.5.3-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.5.2...v3.5.3-prerelease.1) (2023-05-26)
 
 
