@@ -100,9 +100,7 @@ jobs:
           context: .
           file: Dockerfile.base
           push: true
-          tags: |
-            digitop/diginext-base:1
-            digitop/diginext:latest
+          tags: digitop/diginext-base:1,digitop/diginext-base:latest
           platforms: |
             linux/amd64
             linux/arm64
