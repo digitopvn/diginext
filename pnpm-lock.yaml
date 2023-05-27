@@ -139,6 +139,9 @@ dependencies:
   humanize-duration:
     specifier: ^3.25.1
     version: 3.25.1
+  husky:
+    specifier: ^8.0.0
+    version: 8.0.0
   inquirer:
     specifier: 8.2.5
     version: 8.2.5
@@ -435,9 +438,6 @@ devDependencies:
   eslint-plugin-unused-imports:
     specifier: ^2.0.0
     version: 2.0.0(@typescript-eslint/eslint-plugin@5.45.0)(eslint@8.28.0)
-  husky:
-    specifier: ^8.0.0
-    version: 8.0.0
   lint-staged:
     specifier: ^13.0.4
     version: 13.0.4
@@ -7852,7 +7852,7 @@ packages:
     resolution: {integrity: sha512-4qbE/5dzNDNxFEkX9MNRPKl5+omTXQzdILCUWiqG/lWIAioiM5vln265/l6I2Zx8gpW8l1ukZwGQeCFbBZ6+6w==}
     engines: {node: '>=14'}
     hasBin: true
-    dev: true
+    dev: false
 
   /iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
