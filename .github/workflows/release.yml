@@ -94,7 +94,16 @@ jobs:
         id: buildx
 
       - name: Build Docker & push image to Docker Hub
-        run: docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile.base --push -t digitop/diginext-base:1 -t digitop/diginext:latest --cache-from type=registry,ref=digitop/diginext .
+        # run: docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile.base --push -t digitop/diginext-base:1 -t digitop/diginext:latest --cache-from type=gha --cache-to type=gha,mode=max .
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: Dockerfile.base
+          push: true
+          tags: digitop/diginext-base:1,digitop/diginext:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   docker-release:
     name: Release Docker Image
