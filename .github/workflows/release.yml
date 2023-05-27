@@ -89,12 +89,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker image
-        run: docker build -f Dockerfile.base -t digitop/diginext-base .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
 
-      - name: Push image to Docker Hub
-        run: docker push digitop/diginext-base
-        if: contains(github.ref, 'beta') || contains(github.ref, 'prerelease')
+      - name: Build Docker & push image to Docker Hub
+        run: docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile.base --push -t digitop/diginext-base:1 -t digitop/diginext:latest --cache-from type=registry,ref=digitop/diginext .
 
   docker-release:
     name: Release Docker Image
