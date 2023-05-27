@@ -94,7 +94,6 @@ jobs:
         id: buildx
 
       - name: Build Docker & push image to Docker Hub
-        # run: docker buildx build --platform=linux/amd64,linux/arm64 -f Dockerfile.base --push -t digitop/diginext-base:1 -t digitop/diginext:latest --cache-from type=gha --cache-to type=gha,mode=max .
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -160,11 +159,31 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         id: buildx
-  
+          
       - name: Build & push to Docker Hub (main)
-        run: pnpm docker-build
+        uses: docker/build-push-action@v4
         if: contains(github.ref, 'main') || contains(github.ref, 'release')
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: digitop/diginext:${{github.ref_name}},digitop/diginext:latest
+          platforms: |
+            linux/amd64
+            linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build & push to Docker Hub (beta)
-        run: pnpm docker-build-beta
+      - name: Build & push to Docker Hub (prerelease)
+        uses: docker/build-push-action@v4
         if: contains(github.ref, 'beta') || contains(github.ref, 'prerelease')
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: digitop/diginext:${{github.ref_name}},digitop/diginext:latest
+          platforms: |
+            linux/amd64
+            linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
