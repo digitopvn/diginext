@@ -1,3 +1,11 @@
+## [3.5.3-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.4...v3.5.3-prerelease.5) (2023-05-29)
+
+
+### Bug Fixes
+
+* **server:** select correct ingress class when generate yaml ([35ba370](https://github.com/digitopvn/diginext/commit/35ba3702658c64f171cd3751846b520ac5ac3448))
+* **server:** select correct ingress class when generate yaml ([#163](https://github.com/digitopvn/diginext/issues/163)) ([7364300](https://github.com/digitopvn/diginext/commit/7364300c7201e81f729fc4dbe1dfc39a62cbdd0f))
+
 ## [3.5.3-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.3...v3.5.3-prerelease.4) (2023-05-29)
 
 
