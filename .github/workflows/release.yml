@@ -252,6 +252,7 @@ jobs:
           LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
           git checkout $LATEST_TAG
 
+      - run: echo $LATEST_TAG
       - run: echo "${{ github.ref }}"
       - run: echo "${{ github.ref_name }}"
       - run: echo "${{ secrets.KUBECONFIG_DEV }}" >> ~/.kube/config
@@ -285,7 +286,10 @@ jobs:
         run: |
           LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
           git checkout $LATEST_TAG
-      
+
+      - run: echo $LATEST_TAG
+      - run: echo "${{ github.ref }}"
+      - run: echo "${{ github.ref_name }}"
       - run: echo "${{ secrets.KUBECONFIG_DEV }}" >> ~/.kube/config
 
       - name: Setup Kubernetes Tools
