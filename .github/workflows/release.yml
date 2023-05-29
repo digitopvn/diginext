@@ -162,7 +162,7 @@ jobs:
           
       - name: Build & push to Docker Hub (main)
         uses: docker/build-push-action@v4
-        if: contains(github.ref, 'main') || contains(github.ref, 'release')
+        if: contains(github.ref, 'main')
         with:
           context: .
           file: Dockerfile
@@ -181,7 +181,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: digitop/diginext:${{github.ref_name}},digitop/diginext:latest
+          tags: digitop/diginext:${{github.ref_name}},digitop/diginext:prerelease
           platforms: |
             linux/amd64
             linux/arm64
