@@ -136,6 +136,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: dist-artifact
+          path: dist
 
       - name: Display structure of downloaded files
         run: ls -R
@@ -188,6 +189,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: dist-artifact
+          path: dist
 
       - name: Display structure of downloaded files
         run: ls -R
