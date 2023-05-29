@@ -352,6 +352,7 @@ export async function setDeployImageByFilter(imageURL: string, namespace = "defa
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 		args.push("-n", namespace, "set", "image", "deploy", `*=${imageURL}`);
+		// kubectl --context=<context> -n namespace set image deploy *=<image_url>
 
 		if (filterLabel) args.push(`-l`, filterLabel);
 
