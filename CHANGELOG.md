@@ -1,3 +1,10 @@
+## [3.5.3-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.3...v3.5.3-prerelease.4) (2023-05-29)
+
+
+### Bug Fixes
+
+* **github actions:** deploy topgroup-v2 ([f57ce8d](https://github.com/digitopvn/diginext/commit/f57ce8d8a17b28bebedf79622f3571fbcc6ad313))
+
 ## [3.5.3-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.2...v3.5.3-prerelease.3) (2023-05-27)
 
 
