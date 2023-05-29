@@ -258,6 +258,13 @@ jobs:
 
       - name: Setup Kubernetes Tools
         uses: yokawasa/action-setup-kube-tools@v0.9.3
+        with:
+          kubectl: '1.24.10'
+
+      - run: kubectl version --client
+      - run: kubectl config get-contexts
+      - run: kubectl config current-context
+      - run: kubectl config use-context topgroup-k3s
 
       - name: Set image to K8S deployment
         run: --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
@@ -283,6 +290,13 @@ jobs:
 
       - name: Setup Kubernetes Tools
         uses: yokawasa/action-setup-kube-tools@v0.9.3
+        with:
+          kubectl: '1.24.10'
+      
+      - run: kubectl version --client
+      - run: kubectl config get-contexts
+      - run: kubectl config current-context
+      - run: kubectl config use-context topgroup-k3s
 
       - name: Set image to K8S deployment
         run: --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
