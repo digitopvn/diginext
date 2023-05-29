@@ -1,3 +1,10 @@
+# [3.6.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.1...v3.6.0-prerelease.2) (2023-05-29)
+
+
+### Bug Fixes
+
+* **server:** generate yaml not redirect when ssl issuer is none ([7d58ae3](https://github.com/digitopvn/diginext/commit/7d58ae314438d741da55a346d01bf52bbb3a835b))
+
 # [3.6.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.6...v3.6.0-prerelease.1) (2023-05-29)
 
 
