@@ -1,3 +1,11 @@
+# [3.6.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.6...v3.6.0-prerelease.1) (2023-05-29)
+
+
+### Features
+
+* **server,cli:** add microk8s installation script ([99c7b7b](https://github.com/digitopvn/diginext/commit/99c7b7b5455e963001a98cce9aaa6b418aa2f578))
+* **server,cli:** add microk8s installation script ([#167](https://github.com/digitopvn/diginext/issues/167)) ([674b057](https://github.com/digitopvn/diginext/commit/674b0571b64811802eeac93d09f4e0e22721b1b7))
+
 ## [3.5.3-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.5...v3.5.3-prerelease.6) (2023-05-29)
 
 
