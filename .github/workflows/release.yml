@@ -12,7 +12,7 @@ on:
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+  BRANCH_NAME: ${{ github.head_ref || github.ref }} 
 
 # CI/CD STEPS
 jobs:
@@ -20,6 +20,9 @@ jobs:
     name: Release Github & NPM
     runs-on: ubuntu-latest
     steps:
+      - name: Show current branch
+        run: echo "${{ env.BRANCH_NAME }}"
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -109,11 +112,7 @@ jobs:
     name: Release Docker Image (MAIN)
     runs-on: ubuntu-latest
     needs: [release,docker-base]
-    if: |
-      always() && 
-      contains(github.env.BRANCH_NAME, 'main') &&
-      (needs.release.result == 'success' || needs.release.result == 'skipped') &&
-      (needs.docker-base.result == 'success' || needs.docker-base.result == 'skipped')
+    if: always() && !cancelled() && !failure() && !contains(github.env.BRANCH_NAME, 'prerelease')
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -148,11 +147,7 @@ jobs:
     name: Release Docker Image (BETA)
     runs-on: ubuntu-latest
     needs: [release,docker-base]
-    if: |
-      always() && 
-      contains(github.env.BRANCH_NAME, 'prerelease') &&
-      (needs.release.result == 'success' || needs.release.result == 'skipped') &&
-      (needs.docker-base.result == 'success' || needs.docker-base.result == 'skipped')
+    if: always() && !cancelled() && !failure() && contains(github.env.BRANCH_NAME, 'prerelease')
     steps:
       - name: Checkout
         uses: actions/checkout@v3

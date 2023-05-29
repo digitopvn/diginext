@@ -5,6 +5,10 @@ on:
   workflow_run:
     workflows:
       - "Release All Workflow"
+    branches: 
+      - main
+      - prerelease
+      - beta
     types:
       - completed
 
