@@ -246,15 +246,21 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.CI_GITHUB_TOKEN }}
+      
+      - name: Checkout latest release tag
+        run: |
+          LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          git checkout $LATEST_TAG
 
       - run: echo "${{ github.ref }}"
       - run: echo "${{ github.ref_name }}"
+      - run: echo "${{ secrets.KUBECONFIG_DEV }}" >> ~/.kube/config
 
-      - uses: actions-hub/kubectl@master
-        env:
-          KUBE_CONFIG: ${{ secrets.KUBECONFIG_DEV }}
-        with:
-          args: --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
+      - name: Setup Kubernetes Tools
+        uses: yokawasa/action-setup-kube-tools@v0.9.3
+
+      - name: Set image to K8S deployment
+        run: --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
 
   deploy-topgroup-v2:
     name: Deploy to [topgroup-v2.diginext.site]
@@ -268,11 +274,15 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.CI_GITHUB_TOKEN }}
       
-      - run: echo "${{ github.ref }}"
-      - run: echo "${{ github.ref_name }}"
+      - name: Checkout latest release tag
+        run: |
+          LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          git checkout $LATEST_TAG
+      
+      - run: echo "${{ secrets.KUBECONFIG_DEV }}" >> ~/.kube/config
 
-      - uses: actions-hub/kubectl@master
-        env:
-          KUBE_CONFIG: ${{ secrets.KUBECONFIG_DEV }}
-        with:
-          args: --context=topgroup-k3s -n diginext-v2 set image deploy *=digitop/diginext:${{github.ref_name}}
+      - name: Setup Kubernetes Tools
+        uses: yokawasa/action-setup-kube-tools@v0.9.3
+
+      - name: Set image to K8S deployment
+        run: --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
