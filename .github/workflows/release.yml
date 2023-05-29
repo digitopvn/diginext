@@ -75,6 +75,11 @@ jobs:
         with:
           commit_message: "chore(package.json): update version [skip ci]"
           commit_options: '--allow-empty --no-verify --signoff'
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist-artifact
+          path: dist
       
       - name: Show current branch
         run: echo "${{ env.BRANCH_NAME }}"
@@ -126,6 +131,11 @@ jobs:
         run: echo "${{ env.BRANCH_NAME }}"
       - name: Show current ref
         run: echo "${{ github.ref }}"
+      
+      - name: Download dist artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-artifact
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -164,7 +174,12 @@ jobs:
     steps:
       - name: Show current ref
         run: echo "${{ github.ref }}"
-        
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-artifact
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
