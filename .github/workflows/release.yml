@@ -255,6 +255,7 @@ jobs:
       - run: echo $LATEST_TAG
       - run: echo "${{ github.ref }}"
       - run: echo "${{ github.ref_name }}"
+      - run: mkdir ~/.kube
       - run: echo "${{ secrets.KUBECONFIG_DEV }}" >> ~/.kube/config
 
       - name: Setup Kubernetes Tools
@@ -290,6 +291,7 @@ jobs:
       - run: echo $LATEST_TAG
       - run: echo "${{ github.ref }}"
       - run: echo "${{ github.ref_name }}"
+      - run: mkdir ~/.kube
       - run: echo "${{ secrets.KUBECONFIG_DEV }}" >> ~/.kube/config
 
       - name: Setup Kubernetes Tools
