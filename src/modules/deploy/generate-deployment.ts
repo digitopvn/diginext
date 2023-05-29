@@ -224,6 +224,8 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 					if (deployEnvironmentConfig.ssl == "letsencrypt") {
 						ingCfg.metadata.annotations["cert-manager.io/cluster-issuer"] = "letsencrypt-prod";
+					} else {
+						ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/ssl-redirect"] = "false";
 					}
 
 					// ingress class
