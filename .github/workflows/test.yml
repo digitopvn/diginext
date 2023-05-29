@@ -25,6 +25,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    if: startsWith(github.event.head_commit.message, 'ci(') == false
     steps:
       - name: Checkout
         uses: actions/checkout@v3

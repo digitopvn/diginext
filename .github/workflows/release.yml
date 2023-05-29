@@ -75,7 +75,7 @@ jobs:
   docker-base:
     name: Build Diginext Docker Base Image
     runs-on: ubuntu-latest
-    needs: release
+    # needs: release
     if: ${{ contains(github.event.head_commit.modified, 'Dockerfile.base') }}
     steps:
       - name: Checkout
@@ -110,7 +110,7 @@ jobs:
   docker-release-main:
     name: Release Docker Image (MAIN)
     runs-on: ubuntu-latest
-    needs: [release, docker-base]
+    needs: [release,docker-base]
     if: contains(github.ref, 'main')
     steps:
       - name: Checkout
@@ -145,7 +145,7 @@ jobs:
   docker-release-beta:
     name: Release Docker Image (BETA)
     runs-on: ubuntu-latest
-    needs: [release, docker-base]
+    needs: [release,docker-base]
     if: contains(github.ref, 'prerelease')
     steps:
       - name: Checkout
