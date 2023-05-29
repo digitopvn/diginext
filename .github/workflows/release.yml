@@ -239,13 +239,15 @@ jobs:
     name: Deploy to [topgroup.diginext.site]
     runs-on: ubuntu-latest
     needs: [docker-release-main]
-    if: contains(github.event.head_commit.message, 'deploy topgroup-v1')
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - run: echo "${{ github.ref }}"
+      - run: echo "${{ github.ref_name }}"
 
       - uses: actions-hub/kubectl@master
         env:
@@ -257,13 +259,15 @@ jobs:
     name: Deploy to [topgroup-v2.diginext.site]
     runs-on: ubuntu-latest
     needs: [docker-release-beta]
-    if: contains(github.event.head_commit.message, 'deploy topgroup-v2')
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           token: ${{ secrets.CI_GITHUB_TOKEN }}
+      
+      - run: echo "${{ github.ref }}"
+      - run: echo "${{ github.ref_name }}"
 
       - uses: actions-hub/kubectl@master
         env:

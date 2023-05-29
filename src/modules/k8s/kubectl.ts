@@ -9,6 +9,7 @@ import { CLI_DIR } from "@/config/const";
 import type { ICluster } from "@/entities";
 import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
+import type { KubeIngressClass } from "@/interfaces/KubeIngressClass";
 import type { KubePod } from "@/interfaces/KubePod";
 import { execCmd } from "@/plugins";
 
@@ -227,6 +228,24 @@ export async function getAllIngresses(options: KubeGenericOptions = {}) {
 		return JSON.parse(stdout).items as KubeIngress[];
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllIngresses >`, e);
+		return;
+	}
+}
+
+export async function getIngressClasses(options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("get", "ingressclass");
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout).items as KubeIngressClass[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getIngressClasses >`, e);
 		return;
 	}
 }
