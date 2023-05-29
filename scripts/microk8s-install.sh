@@ -72,32 +72,7 @@ EOF
 microk8s kubectl create ns dev
 
 # create deployment "dev"
-microk8s kubectl apply -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dev
-  namespace: dev
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: dev
-  template:
-    metadata:
-      labels:
-        app: dev
-        project: dev
-    spec:
-      containers:
-        - name: dev
-          image: digitop/static:latest
-          ports:
-            - containerPort: 80
-          env:
-            - name: NEXT_PUBLIC_ENV
-              value: production
-EOF
+microk8s kubectl -n dev create deployment dev --image=digitop/static --port=80
 
 # expose service "dev"
 microk8s kubectl -n dev expose deployment dev
@@ -108,7 +83,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: dev
-  namespace: dev2
+  namespace: dev
   annotations:
     # kubernetes.io/ingress.class: public
     cert-manager.io/cluster-issuer: letsencrypt-prod
