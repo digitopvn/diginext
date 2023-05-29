@@ -12,6 +12,7 @@ on:
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
 
 # CI/CD STEPS
 jobs:
@@ -59,9 +60,6 @@ jobs:
 
       - name: Release GITHUB & NPM
         run: npx semantic-release
-
-      - name: Restore "husky" hook
-        run: pnpm husky-show
       
       - name: Update "package.json" version
         run: pnpm pkg-version
@@ -111,7 +109,7 @@ jobs:
     name: Release Docker Image (MAIN)
     runs-on: ubuntu-latest
     needs: [release,docker-base]
-    if: contains(github.ref, 'main')
+    if: contains(github.env.BRANCH_NAME, 'main')
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -146,7 +144,7 @@ jobs:
     name: Release Docker Image (BETA)
     runs-on: ubuntu-latest
     needs: [release,docker-base]
-    if: contains(github.ref, 'prerelease')
+    if: contains(github.env.BRANCH_NAME, 'prerelease')
     steps:
       - name: Checkout
         uses: actions/checkout@v3
