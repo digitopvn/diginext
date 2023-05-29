@@ -269,7 +269,7 @@ jobs:
       - run: kubectl config use-context topgroup-k3s
 
       - name: Set image to K8S deployment
-        run: --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
+        run: kubectl --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
 
   deploy-topgroup-v2:
     name: Deploy to [topgroup-v2.diginext.site]
@@ -305,4 +305,4 @@ jobs:
       - run: kubectl config use-context topgroup-k3s
 
       - name: Set image to K8S deployment
-        run: --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
+        run: kubectl --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
