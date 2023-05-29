@@ -1,3 +1,11 @@
+## [3.5.3-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.5...v3.5.3-prerelease.6) (2023-05-29)
+
+
+### Bug Fixes
+
+* **ga:** deploy condition fix ([17818f2](https://github.com/digitopvn/diginext/commit/17818f2607f2a53b74cd206f9933297586681663))
+* **ga:** deploy condition fix ([#165](https://github.com/digitopvn/diginext/issues/165)) ([982aae5](https://github.com/digitopvn/diginext/commit/982aae54cdd652509cd25be53cd25fab14701d57))
+
 ## [3.5.3-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.4...v3.5.3-prerelease.5) (2023-05-29)
 
 
