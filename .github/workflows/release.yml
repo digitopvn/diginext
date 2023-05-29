@@ -238,7 +238,7 @@ jobs:
   deploy-topgroup:
     name: Deploy to [topgroup.diginext.site]
     runs-on: ubuntu-latest
-    needs: docker-release-main
+    needs: [docker-release-main]
     if: always() && !cancelled() && !failure()
     steps:
       - name: Checkout
@@ -259,7 +259,7 @@ jobs:
   deploy-topgroup-v2:
     name: Deploy to [topgroup-v2.diginext.site]
     runs-on: ubuntu-latest
-    needs: docker-release-beta
+    needs: [docker-release-beta]
     if: always() && !cancelled() && !failure()
     steps:
       - name: Checkout
