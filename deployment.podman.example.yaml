@@ -69,9 +69,9 @@ spec:
               value: podman
           volumeMounts:
             - name: storage
-              mountPath: /var/app/storage
+              mountPath: /usr/app/storage
             - name: home
-              mountPath: /var/app
+              mountPath: /usr/app
             # PODMAN
             # - name: podman-local
             #   mountPath: /home/podman/.local/share/containers

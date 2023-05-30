@@ -39,6 +39,7 @@ import {
 	rollbackDeploy,
 	rollbackDeployRevision,
 	setDeployImage,
+	setDeployImageAll,
 	setDeployImagePullSecretByFilter,
 	setEnvVar,
 	setEnvVarByFilter,
@@ -90,6 +91,7 @@ const ClusterManager = {
 	setEnvVar,
 	setEnvVarByFilter,
 	setDeployImage,
+	setDeployImageAll,
 	setDeployImagePullSecretByFilter,
 	// deploy
 	previewPrerelease,

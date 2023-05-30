@@ -345,9 +345,29 @@ export async function getDeploysByFilter(namespace = "default", options: KubeCom
 }
 
 /**
- * Set image to deployments in a namespace by filter
+ * Set image to a container of a deployment in a namespace
  */
-export async function setDeployImage(name: string, imageURL: string, namespace = "default", options: KubeGenericOptions = {}) {
+export async function setDeployImage(name: string, container: string, imageURL: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "set", "image", `deployment/${name}`, `${container}=${imageURL}`);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] setDeployImage >`, e);
+		return;
+	}
+}
+
+/**
+ * Set image to all containers of a deployment in a namespace
+ * @param name - Deployment's name
+ */
+export async function setDeployImageAll(name: string, imageURL: string, namespace = "default", options: KubeGenericOptions = {}) {
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
@@ -613,13 +633,17 @@ export async function getAllPods(namespace = "default", options: KubeCommandOpti
 
 export const getPodsByFilter = getAllPods;
 
-export async function logPod(name, namespace = "default", options: KubeGenericOptions = {}) {
-	const { context, skipOnError } = options;
+export async function logPod(name, namespace = "default", options: KubeGenericOptions & { timestamps?: boolean; prefix?: boolean } = {}) {
+	const { context, skipOnError, timestamps, prefix } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 
-		args.push("-n", namespace, "logs", name, "--timestamps", "--prefix");
+		args.push("-n", namespace, "logs", name);
+
+		// options
+		if (timestamps) args.push("--timestamps");
+		if (prefix) args.push("--prefix");
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
