@@ -30,7 +30,7 @@ export const execKubectl = async (options?: InputOptions) => {
 					const targetDeployment = await askForDeployment(cluster, targetNamespace);
 
 					if (imageURL) {
-						const imgRes = await ClusterManager.setDeployImage(targetDeployment, imageURL, targetNamespace, { context });
+						const imgRes = await ClusterManager.setDeployImageAll(targetDeployment, imageURL, targetNamespace, { context });
 						if (imgRes)
 							logSuccess(
 								`[DX_KB] Successfully set new image (${imageURL}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`

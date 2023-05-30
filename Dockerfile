@@ -1,5 +1,5 @@
 # Use Debian as the base image
-FROM digitop/diginext-base
+FROM digitop/diginext-base:2
 
 # Set user and group
 ARG user=app

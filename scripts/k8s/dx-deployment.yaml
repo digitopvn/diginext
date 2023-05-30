@@ -88,9 +88,9 @@ spec:
               value: docker
           volumeMounts:
             - name: storage
-              mountPath: /var/app/storage
+              mountPath: /usr/app/storage
             - name: logs
-              mountPath: /usr/diginext-cli/public/logs
+              mountPath: /usr/app/public/logs
             - name: home
               mountPath: /home/app
       volumes:
