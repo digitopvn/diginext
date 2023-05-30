@@ -90,7 +90,7 @@ jobs:
     name: Build Diginext Docker Base Image
     runs-on: ubuntu-latest
     # needs: release
-    if: ${{ contains(github.event.head_commit.modified, 'Dockerfile.base') }}
+    if: contains(github.event.head_commit.modified, 'Dockerfile.base')
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -267,7 +267,7 @@ jobs:
       - run: kubectl config use-context topgroup-k3s
 
       - name: Set image to K8S deployment
-        run: kubectl --context=topgroup-k3s -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:${{github.ref_name}}
+        run: kubectl --context=topgroup-k3s -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
 
   deploy-topgroup-v2:
     name: Deploy to [topgroup-v2.diginext.site]
@@ -301,4 +301,4 @@ jobs:
       - run: kubectl config use-context topgroup-k3s
 
       - name: Set image to K8S deployment
-        run: kubectl -n diginext-v2 set image deployment/diginext diginext=digitop/diginext:${{github.ref_name}}
+        run: kubectl -n diginext-v2 set image deployment/diginext diginext=digitop/diginext:$LATEST_TAG
