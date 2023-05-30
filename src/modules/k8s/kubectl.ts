@@ -363,27 +363,6 @@ export async function setDeployImage(name: string, imageURL: string, namespace =
 }
 
 /**
- * Set image to deployments in a namespace by filter
- */
-export async function setDeployImageByFilter(imageURL: string, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel, skipOnError } = options;
-	try {
-		const args = [];
-		if (context) args.push(`--context=${context}`);
-		args.push("-n", namespace, "set", "image", "deploy", `*=${imageURL}`);
-		// kubectl --context=<context> -n namespace set image deploy *=<image_url>
-
-		if (filterLabel) args.push(`-l`, filterLabel);
-
-		const { stdout } = await execa("kubectl", args);
-		return stdout;
-	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] setDeployImageByFilter >`, e);
-		return;
-	}
-}
-
-/**
  * Set "imagePullSecrets" name to deployments in a namespace by filter
  */
 export async function setDeployImagePullSecretByFilter(imagePullSecretName: string, namespace = "default", options: KubeCommandOptions = {}) {
@@ -778,5 +757,37 @@ export async function deleteEnvVarByFilter(envVarNames: string[], namespace = "d
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] deleteEnvVar >`, e);
 		return;
+	}
+}
+
+export async function rollbackDeploy(name: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "rollout", "undo", `deployment/${name}`);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
+		return [];
+	}
+}
+
+export async function rollbackDeployRevision(name: string, revision: number, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "rollout", "undo", `deployment/${name}`, `--revision=${revision}`);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
+		return [];
 	}
 }
