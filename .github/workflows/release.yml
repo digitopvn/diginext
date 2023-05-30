@@ -90,7 +90,7 @@ jobs:
     name: Build Diginext Docker Base Image
     runs-on: ubuntu-latest
     # needs: release
-    if: contains(github.event.head_commit.modified, 'Dockerfile.base')
+    if: contains(github.event.head_commit.message, 'docker base')
     steps:
       - name: Checkout
         uses: actions/checkout@v3
