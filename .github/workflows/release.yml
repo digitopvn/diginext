@@ -150,6 +150,7 @@ jobs:
       - name: Checkout latest release tag
         run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
       - run: echo $LATEST_TAG
+      - run: echo ${{github.env.LATEST_TAG}}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -167,7 +168,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: digitop/diginext:$LATEST_TAG,digitop/diginext:latest
+          tags: digitop/diginext:${{github.env.LATEST_TAG}},digitop/diginext:latest
           platforms: |
             linux/amd64
             linux/arm64
@@ -191,7 +192,8 @@ jobs:
 
       - name: Checkout latest release tag
         run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
-      - run: echo $LATEST_TAG
+      - run: echo ${LATEST_TAG}
+      - run: echo ${{github.env.LATEST_TAG}}
           
       - name: Download dist artifact
         uses: actions/download-artifact@v3
@@ -218,7 +220,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: digitop/diginext:$LATEST_TAG,digitop/diginext:prerelease
+          tags: digitop/diginext:${{github.env.LATEST_TAG}},digitop/diginext:prerelease
           platforms: |
             linux/amd64
             linux/arm64
