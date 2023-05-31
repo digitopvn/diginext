@@ -77,14 +77,14 @@ export default class ProjectController extends BaseController<IProject> {
 		if (this.pagination) result = { ...result, ...this.pagination };
 
 		// populate apps
-		const projectIDs = projects.map((p) => p._id);
+		const projectIDs = projects.map((pro) => pro._id);
 		const appSvc = new AppService();
-		let apps = await appSvc.find({ project: { $in: projectIDs } }, this.options);
+		let apps = await appSvc.find({ project: { $in: projectIDs } });
 		// console.log("apps :>> ", apps);
 
-		result.data = projects.map((p) => {
-			const projectWithApps = { ...p };
-			projectWithApps.apps = apps.filter((a) => MongoDB.toString(a.project) === MongoDB.toString(p._id));
+		result.data = projects.map((project) => {
+			const projectWithApps = { ...project };
+			projectWithApps.apps = apps.filter((app) => MongoDB.toString(app.project) === MongoDB.toString(project._id));
 			return projectWithApps;
 		});
 
