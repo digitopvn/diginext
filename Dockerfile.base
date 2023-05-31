@@ -60,6 +60,11 @@ RUN chmod +x /usr/local/bin/docker-buildx
 COPY ./scripts/set_env /usr/bin/set_env
 RUN chmod +x /usr/bin/set_env
 
+# podman storage directory 
+RUN mkdir -p /run/user/1000 && chmod 700 /run/user/1000 
+RUN chown -R ${uid}:${gid} /run/user/1000 
+RUN chmod -R ug+rwx /run/user/1000
+
 # Configuration files for PODMAN to resolve "docker.io" registry shortname alias
 COPY ./podman/containers/registries.conf /etc/containers/registries.conf
 COPY ./podman/containers/registries.conf /home/${user}/share/containers/registries.conf
