@@ -25,7 +25,7 @@ export default class AppService extends BaseService<IApp> {
 	}
 
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<IApp[]> {
-		const { status = true } = options;
+		const { status = true } = options || {};
 
 		const apps = await super.find(filter, options, pagination);
 

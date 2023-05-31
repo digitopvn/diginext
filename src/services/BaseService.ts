@@ -106,10 +106,8 @@ export default class BaseService<T = any> {
 		// where
 		let _filter = parseRequestFilter(filter);
 
-		const where = {
-			..._filter,
-			$or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
-		};
+		const where = { ..._filter };
+		if (!options?.deleted) where.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
 		// console.log(`BaseService > collection "${this.model.collection.name}" > find > where :>>`, where);
 
 		const pipelines: PipelineStage[] = [
@@ -223,8 +221,7 @@ export default class BaseService<T = any> {
 
 	async update(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
 		const updateFilter = { ...filter };
-		updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
-		// console.log("updateFilter :>> ", updateFilter);
+		if (!options?.deleted) updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
 
 		// convert all valid "ObjectId" string to ObjectId()
 		// console.log("[1] data :>> ", data);
@@ -256,8 +253,8 @@ export default class BaseService<T = any> {
 
 	async softDelete(filter?: IQueryFilter) {
 		const data = { deletedAt: new Date() };
-		const deletedItems = await this.update(filter, data);
-		// console.log("deletedItems :>> ", deletedItems);
+		const deletedItems = await this.update(filter, data, { deleted: true });
+		// console.log("softDelete > deletedItems :>> ", deletedItems, deletedItems.length);
 		return { ok: deletedItems.length > 0, affected: deletedItems.length };
 	}
 

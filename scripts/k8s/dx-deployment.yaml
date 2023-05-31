@@ -96,13 +96,13 @@ spec:
       volumes:
         - name: storage
           hostPath:
-            path: /home/dev/diginext-cli/storage
+            path: /home/dev/diginext/storage
         - name: logs
           hostPath:
-            path: /home/dev/diginext-cli/public/logs
+            path: /home/dev/diginext/public/logs
         - name: home
           hostPath:
-            path: /home/dev/diginext-cli/storage/home
+            path: /home/dev/diginext/storage/home
 ---
 # persistent volume
 
