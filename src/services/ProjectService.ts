@@ -29,6 +29,7 @@ export default class ProjectService extends BaseService<IProject> {
 		// delete all workloads of each deploy environment in an app:
 		if (!isEmpty(apps)) {
 			for (const app of apps) {
+				if (!app.deployEnvironment) break;
 				for (const [env, deployEnvironment] of Object.entries(app.deployEnvironment)) {
 					if (!isEmpty(deployEnvironment)) {
 						const { cluster: clusterShortName, namespace } = deployEnvironment;
