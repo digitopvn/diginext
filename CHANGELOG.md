@@ -1,3 +1,21 @@
+# [3.6.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.2...v3.6.0-prerelease.3) (2023-05-31)
+
+
+### Bug Fixes
+
+* **server:** delete project issue ([8798ba0](https://github.com/digitopvn/diginext/commit/8798ba03c510c563e695b53321630a53275ec9c7))
+
+
+### Features
+
+* **server,admin:** partial support mobile screen ([aee3593](https://github.com/digitopvn/diginext/commit/aee3593820dde4ae73945a2538b0b928fce02c25))
+* **server,admin:** partial support mobile screen ([#175](https://github.com/digitopvn/diginext/issues/175)) ([6d515fe](https://github.com/digitopvn/diginext/commit/6d515fe04f780366ec84e4c191b395d5d04a59d1))
+
+
+### Performance Improvements
+
+* **server:** delete project faster ([a06798a](https://github.com/digitopvn/diginext/commit/a06798a2f5994d8e86db60c5e73ade3b47e5771c))
+
 # [3.6.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.1...v3.6.0-prerelease.2) (2023-05-29)
 
 
