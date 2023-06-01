@@ -402,37 +402,38 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
-			if (!isEmpty(deployEnvironment)) {
-				const { cluster: clusterShortName, namespace } = deployEnvironment;
-				const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
-				let errorMsg;
+		if (app.deployEnvironment)
+			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
+				if (!isEmpty(deployEnvironment)) {
+					const { cluster: clusterShortName, namespace } = deployEnvironment;
+					const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+					let errorMsg;
 
-				if (cluster) {
-					const { contextName: context } = cluster;
-					try {
-						// switch to the cluster of this environment
-						await ClusterManager.authCluster(clusterShortName);
+					if (cluster) {
+						const { contextName: context } = cluster;
+						try {
+							// switch to the cluster of this environment
+							await ClusterManager.authCluster(clusterShortName);
 
-						/**
-						 * IMPORTANT
-						 * ---
-						 * Should NOT delete namespace because it will affect other apps in a project!
-						 */
+							/**
+							 * IMPORTANT
+							 * ---
+							 * Should NOT delete namespace because it will affect other apps in a project!
+							 */
 
-						// Delete INGRESS
-						await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
-						// Delete SERVICE
-						await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
-						// Delete DEPLOYMENT
-						await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
-					} catch (e) {
-						logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
-						errorMsg = e.message;
+							// Delete INGRESS
+							await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+							// Delete SERVICE
+							await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+							// Delete DEPLOYMENT
+							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+						} catch (e) {
+							logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
+							errorMsg = e.message;
+						}
 					}
 				}
-			}
-		});
+			});
 
 		// remove this app ID from project.apps
 		const [project] = await new ProjectService().update(

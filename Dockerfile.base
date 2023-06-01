@@ -75,4 +75,16 @@ COPY ./podman/containers/storage.conf /home/${user}/share/containers/storage.con
 COPY ./podman/containers/storage.conf /home/${user}/.config/containers/storage.conf
 COPY ./podman/containers/storage.conf /root/.config/containers/storage.conf
 
+RUN chmod -R ug+rwx /home/${user}/.config/containers/storage.conf
+RUN mkdir -p /var/tmp/${user}/containers/storage
+RUN chown -R ${uid}:${gid} /var/tmp/${user}/containers/storage
+RUN chmod -R ug+rwx /var/tmp/${user}/containers/storage
+
+RUN mkdir -p /var/tmp/${user}/containers/storage
+RUN chown -R ${uid}:${gid} /var/tmp/${user}/containers/storage
+
+RUN touch /etc/sub{u,g}id
+RUN chmod 755 /etc/subuid
+RUN chmod 755 /etc/subgid
+
 # end

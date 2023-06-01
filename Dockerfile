@@ -28,16 +28,44 @@ RUN mkdir -p /home/${user}/.config && \
   chown -R ${uid}:${gid} /home/${user} && \
   chmod -R ug+rwx /home/${user}
 
-# Set user
-USER ${uid}:${gid}
+# podman storage directory 
+RUN mkdir -p /run/user/1000 && chmod 700 /run/user/1000 
+RUN chown -R ${uid}:${gid} /run/user/1000 
+RUN chmod -R ug+rwx /run/user/1000
+
+# Configuration files for PODMAN to resolve "docker.io" registry shortname alias
+COPY ./podman/containers/registries.conf /etc/containers/registries.conf
+COPY ./podman/containers/registries.conf /home/${user}/share/containers/registries.conf
+COPY ./podman/containers/registries.conf /home/${user}/.config/containers/registries.conf
+
+# PODMAN's image storage
+COPY ./podman/containers/storage.conf /home/${user}/share/containers/storage.conf
+COPY ./podman/containers/storage.conf /home/${user}/.config/containers/storage.conf
+COPY ./podman/containers/storage.conf /root/.config/containers/storage.conf
+
+RUN chmod -R ug+rwx /home/${user}/.config/containers/storage.conf
+RUN mkdir -p /var/tmp/${user}/containers/storage
+RUN chown -R ${uid}:${gid} /var/tmp/${user}/containers/storage
+RUN chmod -R ug+rwx /var/tmp/${user}/containers/storage
+
+RUN mkdir -p /var/tmp/${user}/containers/storage
+RUN chown -R ${uid}:${gid} /var/tmp/${user}/containers/storage
+
+RUN touch /etc/sub{u,g}id
+RUN chmod 755 /etc/subuid
+RUN chmod 755 /etc/subgid
 
 # Copy necessary files
 COPY ./dist ./dist
 COPY ./public ./public
 COPY ./templates ./templates
 
-# RUN chown -R ${uid}:${gid} /usr/app && \
-#     chmod -R ug+rwx /usr/app
+RUN chown -R ${uid}:${gid} /usr/app && \
+  chmod -R ug+rwx /usr/app
+
+# Set user
+ENV USER=${user}
+USER ${uid}:${gid}
 
 # Set the entrypoint
 ENTRYPOINT ["/usr/app/scripts/startup.sh"]
