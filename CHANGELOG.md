@@ -1,3 +1,20 @@
+# [3.6.0-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.5...v3.6.0-prerelease.6) (2023-06-01)
+
+
+### Bug Fixes
+
+* **startup script:** build docker base, catch error of startup scripts ([ff5f0ac](https://github.com/digitopvn/diginext/commit/ff5f0ac9ae274262b4d8e2703e9db20efd09e7cb))
+* **startup script:** build docker base, catch error of startup scripts ([#179](https://github.com/digitopvn/diginext/issues/179)) ([d071b94](https://github.com/digitopvn/diginext/commit/d071b9472f84188513f4cb939706ac15e4c112d1))
+
+# [3.6.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.4...v3.6.0-prerelease.5) (2023-06-01)
+
+
+### Bug Fixes
+
+* **clean up:** build docker base and deploy prerelease ([08e908f](https://github.com/digitopvn/diginext/commit/08e908f783d98bc6e1f14799f921ae42b6ffd178))
+* **clean up:** build docker base and deploy prerelease ([#178](https://github.com/digitopvn/diginext/issues/178)) ([5054cd9](https://github.com/digitopvn/diginext/commit/5054cd98725b2d3ec914024695bfeb51fab2f0e1))
+* **server:** update resource quota scale matrix ([1d859b7](https://github.com/digitopvn/diginext/commit/1d859b728b1837295e8af867477aef6cb809882f))
+
 # [3.6.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.3...v3.6.0-prerelease.4) (2023-06-01)
 
 
