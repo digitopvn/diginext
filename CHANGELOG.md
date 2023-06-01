@@ -1,3 +1,11 @@
+# [3.6.0-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.6...v3.6.0-prerelease.7) (2023-06-01)
+
+
+### Bug Fixes
+
+* **admin:** correct url to diginext official website ([88fe210](https://github.com/digitopvn/diginext/commit/88fe210fdd51e940599aefd2456b1c6155d68077))
+* **admin:** correct url to diginext official website ([#180](https://github.com/digitopvn/diginext/issues/180)) ([eef882e](https://github.com/digitopvn/diginext/commit/eef882e713e5e73a215aef47f703d67fcbe19206))
+
 # [3.6.0-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.5...v3.6.0-prerelease.6) (2023-06-01)
 
 
