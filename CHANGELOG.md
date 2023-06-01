@@ -1,3 +1,11 @@
+# [3.6.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.3...v3.6.0-prerelease.4) (2023-06-01)
+
+
+### Bug Fixes
+
+* **admin:** more responsive support for mobile screen ([940a5bf](https://github.com/digitopvn/diginext/commit/940a5bfe48922e91781a3f018a9a538dae19a9cf))
+* **admin:** more responsive support for mobile screen ([#177](https://github.com/digitopvn/diginext/issues/177)) ([5610304](https://github.com/digitopvn/diginext/commit/56103048f8496289ad34840a983bb661cddf54c9))
+
 # [3.6.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.2...v3.6.0-prerelease.3) (2023-05-31)
 
 
