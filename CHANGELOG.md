@@ -1,3 +1,12 @@
+# [3.6.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.4...v3.6.0-prerelease.5) (2023-06-01)
+
+
+### Bug Fixes
+
+* **clean up:** build docker base and deploy prerelease ([08e908f](https://github.com/digitopvn/diginext/commit/08e908f783d98bc6e1f14799f921ae42b6ffd178))
+* **clean up:** build docker base and deploy prerelease ([#178](https://github.com/digitopvn/diginext/issues/178)) ([5054cd9](https://github.com/digitopvn/diginext/commit/5054cd98725b2d3ec914024695bfeb51fab2f0e1))
+* **server:** update resource quota scale matrix ([1d859b7](https://github.com/digitopvn/diginext/commit/1d859b728b1837295e8af867477aef6cb809882f))
+
 # [3.6.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.3...v3.6.0-prerelease.4) (2023-06-01)
 
 
