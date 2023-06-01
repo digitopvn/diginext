@@ -9,6 +9,7 @@ import { CLI_DIR } from "@/config/const";
 import type { ICluster } from "@/entities";
 import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
+import type { KubeIngressClass } from "@/interfaces/KubeIngressClass";
 import type { KubePod } from "@/interfaces/KubePod";
 import { execCmd } from "@/plugins";
 
@@ -231,6 +232,24 @@ export async function getAllIngresses(options: KubeGenericOptions = {}) {
 	}
 }
 
+export async function getIngressClasses(options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("get", "ingressclass");
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout).items as KubeIngressClass[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getIngressClasses >`, e);
+		return;
+	}
+}
+
 export async function getIngress(name, namespace = "default", options: KubeGenericOptions = {}) {
 	const { context, skipOnError } = options;
 
@@ -326,14 +345,15 @@ export async function getDeploysByFilter(namespace = "default", options: KubeCom
 }
 
 /**
- * Set image to deployments in a namespace by filter
+ * Set image to a container of a deployment in a namespace
  */
-export async function setDeployImage(name: string, imageURL: string, namespace = "default", options: KubeGenericOptions = {}) {
+export async function setDeployImage(name: string, container: string, imageURL: string, namespace = "default", options: KubeGenericOptions = {}) {
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
-		args.push("-n", namespace, "set", "image", `deployment/${name}`, `*=${imageURL}`);
+
+		args.push("-n", namespace, "set", "image", `deployment/${name}`, `${container}=${imageURL}`);
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
@@ -344,21 +364,20 @@ export async function setDeployImage(name: string, imageURL: string, namespace =
 }
 
 /**
- * Set image to deployments in a namespace by filter
+ * Set image to all containers of a deployment in a namespace
+ * @param name - Deployment's name
  */
-export async function setDeployImageByFilter(imageURL: string, namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel, skipOnError } = options;
+export async function setDeployImageAll(name: string, imageURL: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
-		args.push("-n", namespace, "set", "image", "deploy", `*=${imageURL}`);
-
-		if (filterLabel) args.push(`-l`, filterLabel);
+		args.push("-n", namespace, "set", "image", `deployment/${name}`, `*=${imageURL}`);
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] setDeployImageByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] setDeployImage >`, e);
 		return;
 	}
 }
@@ -614,13 +633,17 @@ export async function getAllPods(namespace = "default", options: KubeCommandOpti
 
 export const getPodsByFilter = getAllPods;
 
-export async function logPod(name, namespace = "default", options: KubeGenericOptions = {}) {
-	const { context, skipOnError } = options;
+export async function logPod(name, namespace = "default", options: KubeGenericOptions & { timestamps?: boolean; prefix?: boolean } = {}) {
+	const { context, skipOnError, timestamps, prefix } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 
-		args.push("-n", namespace, "logs", name, "--timestamps", "--prefix");
+		args.push("-n", namespace, "logs", name);
+
+		// options
+		if (timestamps) args.push("--timestamps");
+		if (prefix) args.push("--prefix");
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
@@ -758,5 +781,37 @@ export async function deleteEnvVarByFilter(envVarNames: string[], namespace = "d
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] deleteEnvVar >`, e);
 		return;
+	}
+}
+
+export async function rollbackDeploy(name: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "rollout", "undo", `deployment/${name}`);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
+		return [];
+	}
+}
+
+export async function rollbackDeployRevision(name: string, revision: number, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "rollout", "undo", `deployment/${name}`, `--revision=${revision}`);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
+		return [];
 	}
 }

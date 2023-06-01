@@ -14,6 +14,7 @@ import { objectToDeploymentYaml } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
+import ClusterManager from "../k8s";
 import { createImagePullSecretsInNamespace } from "../k8s/image-pull-secret";
 import { generateDomains } from "./generate-domain";
 
@@ -106,6 +107,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (!cluster) {
 		throw new Error(`Cannot find any clusters with short name as "${clusterShortName}", please contact your admin or create a new one.`);
 	}
+	const { contextName: context } = cluster;
 
 	// get registry secret as image pulling secret:
 	const { imagePullSecret } = registry;
@@ -179,6 +181,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		}
 	}
 
+	// get available ingress class
+	const ingressClasses = (await ClusterManager.getIngressClasses({ context })) || [];
+
 	// write namespace.[env].yaml
 	let namespaceContent = fs.readFileSync(NAMESPACE_TEMPLATE_PATH, "utf8");
 
@@ -219,7 +224,21 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 					if (deployEnvironmentConfig.ssl == "letsencrypt") {
 						ingCfg.metadata.annotations["cert-manager.io/cluster-issuer"] = "letsencrypt-prod";
+					} else {
+						ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/ssl-redirect"] = "false";
 					}
+
+					// ingress class
+					let ingressClass = "";
+					if (
+						deployEnvironmentConfig.ingress &&
+						ingressClasses.map((ingClass) => ingClass.metadata?.name).includes(deployEnvironmentConfig.ingress)
+					) {
+						ingressClass = deployEnvironmentConfig.ingress;
+					} else {
+						ingressClass = ingressClasses[0].metadata.name;
+					}
+					if (ingressClass) ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
 
 					// labels
 					if (!doc.metadata.labels) doc.metadata.labels = {};

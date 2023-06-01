@@ -1,0 +1,34 @@
+name: Release All Workflow
+
+# TRIGGERS
+on:
+  workflow_run:
+    workflows:
+      - "Release All Workflow"
+    branches: 
+      - main
+      - prerelease
+      - beta
+    types:
+      - completed
+
+# CI/CD STEPS
+jobs:
+  deploy-topgroup:
+    name: Deploy to topgroup.diginext.site
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success'
+      && github.ref == 'refs/heads/deploy/topgroup'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - uses: actions-hub/kubectl@master
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBECONFIG_DEV }}
+        with:
+          args: --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}

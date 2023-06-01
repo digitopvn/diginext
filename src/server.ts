@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import session from "cookie-session";
-import { log, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import type { Express, Request, Response } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";
@@ -178,7 +178,7 @@ function initialize() {
 	 * - Connect container registries (if any)
 	 * - Connect K8S clusters (if any)
 	 */
-	startupScripts();
+	startupScripts().catch((reason) => logWarn(reason));
 }
 
 if (CLI_MODE === "server") {

@@ -1,4 +1,4 @@
-name: Release Workflow
+name: Release All Workflow
 
 # TRIGGERS
 on:
@@ -12,13 +12,20 @@ on:
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+  BRANCH_NAME: ${{ github.head_ref || github.ref }} 
 
 # CI/CD STEPS
 jobs:
   release:
-    name: Release
+    name: Release Github & NPM
     runs-on: ubuntu-latest
     steps:
+      - name: Show current branch
+        run: echo "${{ env.BRANCH_NAME }}"
+
+      - name: Show current ref
+        run: echo "${{ github.ref }}"
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -51,23 +58,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Hide "husky" hook
-        run: pnpm husky-hide
-
       - name: Install package dependencies
-      #   run: npm ci
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build source code
         run: pnpm build
 
       - name: Release GITHUB & NPM
         run: npx semantic-release
-        # run: npm run release
-        # run: pnpm release
-
-      - name: Restore "husky" hook
-        run: pnpm husky-show
       
       - name: Update "package.json" version
         run: pnpm pkg-version
@@ -78,15 +76,242 @@ jobs:
           commit_message: "chore(package.json): update version [skip ci]"
           commit_options: '--allow-empty --no-verify --signoff'
 
-      # - name: Login to Docker Hub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist-artifact
+          path: dist
+      
+      - name: Show current branch
+        run: echo "${{ env.BRANCH_NAME }}"
+      - name: Show current ref
+        run: echo "${{ github.ref }}"
 
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v2
-      #   id: buildx
+  docker-base:
+    name: Build Diginext Docker Base Image
+    runs-on: ubuntu-latest
+    # needs: release
+    if: contains(github.event.head_commit.message, 'docker base')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
 
-      # - name: Build & push to Docker Hub
-      #   run: pnpm docker-build
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
+
+      - name: Build Docker & push image to Docker Hub
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile.base
+          push: true
+          tags: digitop/diginext-base:3,digitop/diginext-base:latest
+          platforms: |
+            linux/amd64
+            linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  docker-release-main:
+    name: Release Docker Image (MAIN)
+    runs-on: ubuntu-latest
+    needs: [release,docker-base]
+    if: always() && !cancelled() && !failure() && contains(github.ref, 'main')
+    steps:
+      - name: Show current branch
+        run: echo "${{ env.BRANCH_NAME }}"
+      - name: Show current ref
+        run: echo "${{ github.ref }}"
+      
+      - name: Download dist artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-artifact
+          path: dist
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Checkout latest release tag
+        run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
+      - run: echo $LATEST_TAG
+      - run: echo ${{env.LATEST_TAG}}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
+          
+      - name: Build & push to Docker Hub (main)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: digitop/diginext:${{env.LATEST_TAG}},digitop/diginext:latest
+          platforms: |
+            linux/amd64
+            linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  
+  docker-release-beta:
+    name: Release Docker Image (BETA)
+    runs-on: ubuntu-latest
+    needs: [release,docker-base]
+    if: always() && !cancelled() && !failure() && contains(github.ref, 'prerelease')
+    steps:
+      - name: Show current ref
+        run: echo "${{ github.ref }}"
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Checkout latest release tag
+        run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
+      - run: echo ${LATEST_TAG}
+      - run: echo ${{env.LATEST_TAG}}
+          
+      - name: Download dist artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-artifact
+          path: dist
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
+          
+      - name: Build & push to Docker Hub (BETA)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: digitop/diginext:${{env.LATEST_TAG}},digitop/diginext:prerelease
+          platforms: |
+            linux/amd64
+            linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # deploy-diginext:
+  #   name: Deploy to [app.diginext.site]
+  #   runs-on: ubuntu-latest
+  #   needs: [docker-release-main]
+  #   if: contains(github.event.head_commit.message, 'deploy diginext')
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
+  #         token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+  #     - uses: actions-hub/kubectl@master
+  #       env:
+  #         KUBE_CONFIG: ${{ secrets.KUBECONFIG_DEV }}
+  #       with:
+  #         args: --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
+
+  deploy-topgroup:
+    name: Deploy to [topgroup.diginext.site]
+    runs-on: ubuntu-latest
+    needs: [docker-release-main]
+    if: always() && !cancelled() && !failure() && contains(github.ref, 'main')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+      
+      - name: Checkout latest release tag
+        run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
+      - run: echo $LATEST_TAG
+
+      - run: echo "${{ github.ref }}"
+      - run: echo "${{ github.ref_name }}"
+      - run: mkdir ~/.kube
+      - run: echo "${{ secrets.KUBECONFIG_DEV }}" >> ~/.kube/config
+
+      - name: Setup Kubernetes Tools
+        uses: yokawasa/action-setup-kube-tools@v0.9.3
+        with:
+          kubectl: '1.24.10'
+
+      - run: kubectl version --client
+      - run: kubectl config get-contexts
+      - run: kubectl config current-context
+      - run: kubectl config use-context topgroup-k3s
+
+      - name: Set image to [topgroup.diginext.site] deployment
+        run: kubectl --context=topgroup-k3s -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
+
+      - name: Set image to [hobby.diginext.site] deployment
+        run: kubectl --context=topgroup-k3s -n diginext-hobby set image deployment/diginext-hobby diginext-hobby=digitop/diginext:$LATEST_TAG
+
+  deploy-topgroup-v2:
+    name: Deploy to [topgroup-v2.diginext.site]
+    runs-on: ubuntu-latest
+    needs: [docker-release-beta]
+    if: always() && !cancelled() && !failure() && contains(github.ref, 'prerelease')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+      
+      - name: Checkout latest release tag
+        run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
+      - run: echo $LATEST_TAG
+
+      - run: echo "${{ github.ref }}"
+      - run: echo "${{ github.ref_name }}"
+      - run: mkdir ~/.kube
+      - run: echo "${{ secrets.KUBECONFIG_DEV }}" >> ~/.kube/config
+
+      - name: Setup Kubernetes Tools
+        uses: yokawasa/action-setup-kube-tools@v0.9.3
+        with:
+          kubectl: '1.24.10'
+      
+      - run: kubectl version --client
+      - run: kubectl config get-contexts
+      - run: kubectl config current-context
+      - run: kubectl config use-context topgroup-k3s
+
+      - name: Set image to K8S deployment
+        run: kubectl -n diginext-v2 set image deployment/diginext diginext=digitop/diginext:$LATEST_TAG

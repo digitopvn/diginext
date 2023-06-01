@@ -136,8 +136,16 @@ export interface DeployEnvironmentData {
 	 * @default 1x
 	 * @example
 	 * "none" - {}
-	 * "1x" - { requests: { cpu: `50m`, memory: `256Mi` }, limits: { cpu: `50m`, memory: `256Mi` } }
-	 * "2x" - { requests: { cpu: `100m`, memory: `512Mi` }, limits: { cpu: `100m`, memory: `512Mi` } }
+	 * "1x" - { requests: { cpu: "20m", memory: "128Mi" }, limits: { cpu: "20m", memory: 128Mi" } }
+	 * "2x" - { requests: { cpu: "40m", memory: "256Mi" }, limits: { cpu: "40m", memory: "256Mi" } }
+	 * "3x" - { requests: { cpu: "80m", memory: "512Mi" }, limits: { cpu: "80m", memory: "512Mi" } }
+	 * "4x" - { requests: { cpu: "160m", memory: "1024Mi" }, limits: { cpu: "160m", memory: "1024Mi" } }
+	 * "5x" - { requests: { cpu: "320m", memory: "2048Mi" }, limits: { cpu: "320m", memory: "2048Mi" } }
+	 * "6x" - { requests: { cpu: "640m", memory: "4058Mi" }, limits: { cpu: "640m", memory: "4058Mi" } }
+	 * "7x" - { requests: { cpu: "1280m", memory: "2048Mi" }, limits: { cpu: "1280m", memory: "2048Mi" } }
+	 * "8x" - { requests: { cpu: "2560m", memory: "8116Mi" }, limits: { cpu: "2560m", memory: "8116Mi" } }
+	 * "9x" - { requests: { cpu: "5120m", memory: "16232Mi" }, limits: { cpu: "5120m", memory: "16232Mi" } }
+	 * "10x" - { requests: { cpu: "10024m", memory: "32464Mi" }, limits: { cpu: "10024m", memory: "32464Mi" } }
 	 */
 	size?: ResourceQuotaSize;
 
@@ -394,37 +402,38 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
-			if (!isEmpty(deployEnvironment)) {
-				const { cluster: clusterShortName, namespace } = deployEnvironment;
-				const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
-				let errorMsg;
+		if (app.deployEnvironment)
+			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
+				if (!isEmpty(deployEnvironment)) {
+					const { cluster: clusterShortName, namespace } = deployEnvironment;
+					const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+					let errorMsg;
 
-				if (cluster) {
-					const { contextName: context } = cluster;
-					try {
-						// switch to the cluster of this environment
-						await ClusterManager.authCluster(clusterShortName);
+					if (cluster) {
+						const { contextName: context } = cluster;
+						try {
+							// switch to the cluster of this environment
+							await ClusterManager.authCluster(clusterShortName);
 
-						/**
-						 * IMPORTANT
-						 * ---
-						 * Should NOT delete namespace because it will affect other apps in a project!
-						 */
+							/**
+							 * IMPORTANT
+							 * ---
+							 * Should NOT delete namespace because it will affect other apps in a project!
+							 */
 
-						// Delete INGRESS
-						await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
-						// Delete SERVICE
-						await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
-						// Delete DEPLOYMENT
-						await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
-					} catch (e) {
-						logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
-						errorMsg = e.message;
+							// Delete INGRESS
+							await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+							// Delete SERVICE
+							await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+							// Delete DEPLOYMENT
+							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+						} catch (e) {
+							logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
+							errorMsg = e.message;
+						}
 					}
 				}
-			}
-		});
+			});
 
 		// remove this app ID from project.apps
 		const [project] = await new ProjectService().update(

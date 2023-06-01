@@ -88,21 +88,21 @@ spec:
               value: docker
           volumeMounts:
             - name: storage
-              mountPath: /var/app/storage
+              mountPath: /usr/app/storage
             - name: logs
-              mountPath: /usr/diginext-cli/public/logs
+              mountPath: /usr/app/public/logs
             - name: home
               mountPath: /home/app
       volumes:
         - name: storage
           hostPath:
-            path: /home/dev/diginext-cli/storage
+            path: /home/dev/diginext/storage
         - name: logs
           hostPath:
-            path: /home/dev/diginext-cli/public/logs
+            path: /home/dev/diginext/public/logs
         - name: home
           hostPath:
-            path: /home/dev/diginext-cli/storage/home
+            path: /home/dev/diginext/storage/home
 ---
 # persistent volume
 

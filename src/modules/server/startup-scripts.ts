@@ -40,9 +40,6 @@ export async function startupScripts() {
 	const isSSHKeysExisted = await sshKeysExisted();
 	if (!isSSHKeysExisted) await generateSSH();
 
-	// console.log("gitProviders :>> ");
-	// console.dir(gitProviders, { depth: 10 });
-
 	/**
 	 * No need to verify SSH for "test" environment?
 	 */

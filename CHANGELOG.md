@@ -1,3 +1,107 @@
+# [3.6.0-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.5...v3.6.0-prerelease.6) (2023-06-01)
+
+
+### Bug Fixes
+
+* **startup script:** build docker base, catch error of startup scripts ([ff5f0ac](https://github.com/digitopvn/diginext/commit/ff5f0ac9ae274262b4d8e2703e9db20efd09e7cb))
+* **startup script:** build docker base, catch error of startup scripts ([#179](https://github.com/digitopvn/diginext/issues/179)) ([d071b94](https://github.com/digitopvn/diginext/commit/d071b9472f84188513f4cb939706ac15e4c112d1))
+
+# [3.6.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.4...v3.6.0-prerelease.5) (2023-06-01)
+
+
+### Bug Fixes
+
+* **clean up:** build docker base and deploy prerelease ([08e908f](https://github.com/digitopvn/diginext/commit/08e908f783d98bc6e1f14799f921ae42b6ffd178))
+* **clean up:** build docker base and deploy prerelease ([#178](https://github.com/digitopvn/diginext/issues/178)) ([5054cd9](https://github.com/digitopvn/diginext/commit/5054cd98725b2d3ec914024695bfeb51fab2f0e1))
+* **server:** update resource quota scale matrix ([1d859b7](https://github.com/digitopvn/diginext/commit/1d859b728b1837295e8af867477aef6cb809882f))
+
+# [3.6.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.3...v3.6.0-prerelease.4) (2023-06-01)
+
+
+### Bug Fixes
+
+* **admin:** more responsive support for mobile screen ([940a5bf](https://github.com/digitopvn/diginext/commit/940a5bfe48922e91781a3f018a9a538dae19a9cf))
+* **admin:** more responsive support for mobile screen ([#177](https://github.com/digitopvn/diginext/issues/177)) ([5610304](https://github.com/digitopvn/diginext/commit/56103048f8496289ad34840a983bb661cddf54c9))
+
+# [3.6.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.2...v3.6.0-prerelease.3) (2023-05-31)
+
+
+### Bug Fixes
+
+* **server:** delete project issue ([8798ba0](https://github.com/digitopvn/diginext/commit/8798ba03c510c563e695b53321630a53275ec9c7))
+
+
+### Features
+
+* **server,admin:** partial support mobile screen ([aee3593](https://github.com/digitopvn/diginext/commit/aee3593820dde4ae73945a2538b0b928fce02c25))
+* **server,admin:** partial support mobile screen ([#175](https://github.com/digitopvn/diginext/issues/175)) ([6d515fe](https://github.com/digitopvn/diginext/commit/6d515fe04f780366ec84e4c191b395d5d04a59d1))
+
+
+### Performance Improvements
+
+* **server:** delete project faster ([a06798a](https://github.com/digitopvn/diginext/commit/a06798a2f5994d8e86db60c5e73ade3b47e5771c))
+
+# [3.6.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.6.0-prerelease.1...v3.6.0-prerelease.2) (2023-05-29)
+
+
+### Bug Fixes
+
+* **server:** generate yaml not redirect when ssl issuer is none ([7d58ae3](https://github.com/digitopvn/diginext/commit/7d58ae314438d741da55a346d01bf52bbb3a835b))
+
+# [3.6.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.6...v3.6.0-prerelease.1) (2023-05-29)
+
+
+### Features
+
+* **server,cli:** add microk8s installation script ([99c7b7b](https://github.com/digitopvn/diginext/commit/99c7b7b5455e963001a98cce9aaa6b418aa2f578))
+* **server,cli:** add microk8s installation script ([#167](https://github.com/digitopvn/diginext/issues/167)) ([674b057](https://github.com/digitopvn/diginext/commit/674b0571b64811802eeac93d09f4e0e22721b1b7))
+
+## [3.5.3-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.5...v3.5.3-prerelease.6) (2023-05-29)
+
+
+### Bug Fixes
+
+* **ga:** deploy condition fix ([17818f2](https://github.com/digitopvn/diginext/commit/17818f2607f2a53b74cd206f9933297586681663))
+* **ga:** deploy condition fix ([#165](https://github.com/digitopvn/diginext/issues/165)) ([982aae5](https://github.com/digitopvn/diginext/commit/982aae54cdd652509cd25be53cd25fab14701d57))
+
+## [3.5.3-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.4...v3.5.3-prerelease.5) (2023-05-29)
+
+
+### Bug Fixes
+
+* **server:** select correct ingress class when generate yaml ([35ba370](https://github.com/digitopvn/diginext/commit/35ba3702658c64f171cd3751846b520ac5ac3448))
+* **server:** select correct ingress class when generate yaml ([#163](https://github.com/digitopvn/diginext/issues/163)) ([7364300](https://github.com/digitopvn/diginext/commit/7364300c7201e81f729fc4dbe1dfc39a62cbdd0f))
+
+## [3.5.3-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.3...v3.5.3-prerelease.4) (2023-05-29)
+
+
+### Bug Fixes
+
+* **github actions:** deploy topgroup-v2 ([f57ce8d](https://github.com/digitopvn/diginext/commit/f57ce8d8a17b28bebedf79622f3571fbcc6ad313))
+
+## [3.5.3-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.2...v3.5.3-prerelease.3) (2023-05-27)
+
+
+### Bug Fixes
+
+* **github actions:** run next job on succesful jobs ([236bb91](https://github.com/digitopvn/diginext/commit/236bb9181c9f1a9c4a789f7e01aac72b9d740aeb))
+* **github actions:** run next job on succesful jobs ([#146](https://github.com/digitopvn/diginext/issues/146)) ([ba99e16](https://github.com/digitopvn/diginext/commit/ba99e1616a78655d0fe219f9e07869dfed7b33f1))
+
+## [3.5.3-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.5.3-prerelease.1...v3.5.3-prerelease.2) (2023-05-27)
+
+
+### Bug Fixes
+
+* **github actions:** combine docker release with main release flow ([ac13dc2](https://github.com/digitopvn/diginext/commit/ac13dc2f1d8009f5d4407fb4bf191f38823f052b))
+* **github actions:** combine docker release with main release flow ([#145](https://github.com/digitopvn/diginext/issues/145)) ([6c9bd5e](https://github.com/digitopvn/diginext/commit/6c9bd5ee2a5adf832a0d94ea018f578b846d01d8))
+
+## [3.5.3-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.5.2...v3.5.3-prerelease.1) (2023-05-26)
+
+
+### Bug Fixes
+
+* **bitbucket repo:** issue of creating new bitbucket repo ([#123](https://github.com/digitopvn/diginext/issues/123)) ([c4a6919](https://github.com/digitopvn/diginext/commit/c4a6919f919f8aa8a1279864b36ccc445f1789a0))
+
 ## [3.5.2](https://github.com/digitopvn/diginext/compare/v3.5.1...v3.5.2) (2023-05-26)
 
 
@@ -151,11 +255,15 @@
 ### Bug Fixes
 
 * **bitbucket repo:** issue of creating new bitbucket repo ([ee3d23b](https://github.com/digitopvn/diginext/commit/ee3d23bea6fe47ecf55384a1475568fb09d7f6a0))
+<<<<<<< HEAD
 * **bitbucket:** catch error when fetch api of bitbucket ([68a977a](https://github.com/digitopvn/diginext/commit/68a977a97822ccacb18084579ab7f29cada81a79))
 * **build,deploy:** add cli version for tracking ([86e54ba](https://github.com/digitopvn/diginext/commit/86e54bacc61c53af8b48cbd767aed6f07c14c42c))
 * **git provider:** add api connect github and bitbucket ([197a916](https://github.com/digitopvn/diginext/commit/197a916ef1252952c848c3f04b27ac87e5d24d86))
 * **github:** create github repo when create new or init app ([0cb841f](https://github.com/digitopvn/diginext/commit/0cb841fdb40ff0a6df481bc9e84c1b2a9d82b67c))
 * **server-info:** skip docker or podman ver if not available ([d5d2e15](https://github.com/digitopvn/diginext/commit/d5d2e15093e6ccc7086a44d58f98c705a4f1e77d))
+=======
+* **bitbucket repo:** issue of creating new bitbucket repo ([#123](https://github.com/digitopvn/diginext/issues/123)) ([c4a6919](https://github.com/digitopvn/diginext/commit/c4a6919f919f8aa8a1279864b36ccc445f1789a0))
+>>>>>>> origin/prerelease
 
 ## [3.0.5-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.0.4...v3.0.5-prerelease.1) (2023-04-27)
 

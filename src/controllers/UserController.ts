@@ -1,5 +1,5 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
-import { isArray, isEmpty } from "lodash";
+import { isArray } from "lodash";
 import type { ObjectId } from "mongodb";
 
 import BaseController from "@/controllers/BaseController";
@@ -171,14 +171,14 @@ export default class UserController extends BaseController<IUser> {
 			}
 
 			// set default roles if this user doesn't have one
-			const memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: workspaceId });
+			// const memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: workspaceId });
 			// console.dir(memberRole, { depth: 10 });
 
-			const roles = user.roles || [];
-			if (isEmpty(roles) || !roles.includes(memberRole._id)) roles.push(memberRole._id);
+			// const roles = user.roles || [];
+			// if (roles.length === 0 && !roles.includes(memberRole._id)) roles.push(memberRole._id);
 
 			// set active workspace of this user -> this workspace
-			[user] = await this.service.update({ _id: userId }, { activeWorkspace: workspaceId, workspaces: workspaceIds, roles }, this.options);
+			[user] = await this.service.update({ _id: userId }, { activeWorkspace: workspaceId, workspaces: workspaceIds }, this.options);
 			// console.log("user :>> ");
 			// console.dir(user, { depth: 10 });
 

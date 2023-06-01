@@ -29,6 +29,7 @@ export default class ProjectService extends BaseService<IProject> {
 		// delete all workloads of each deploy environment in an app:
 		if (!isEmpty(apps)) {
 			for (const app of apps) {
+				if (!app.deployEnvironment) break;
 				for (const [env, deployEnvironment] of Object.entries(app.deployEnvironment)) {
 					if (!isEmpty(deployEnvironment)) {
 						const { cluster: clusterShortName, namespace } = deployEnvironment;
@@ -36,13 +37,14 @@ export default class ProjectService extends BaseService<IProject> {
 
 						if (cluster) {
 							const { contextName: context } = cluster;
-							try {
-								// delete namespace
-								await ClusterManager.deleteNamespace(namespace, { context });
-								logSuccess(`[PROJECT_DELETE] ${app.slug} > Deleted "${namespace}" namespace on "${cluster.name}" cluster.`);
-							} catch (e) {
-								logWarn(`[PROJECT_DELETE] ${app.slug} > Can't delete "${namespace}" namespace on "${cluster.name}" cluster:`, e);
-							}
+							// delete namespace
+							ClusterManager.deleteNamespace(namespace, { context })
+								.then(() =>
+									logSuccess(`[PROJECT_DELETE] ${app.slug} > Deleted "${namespace}" namespace on "${cluster.name}" cluster.`)
+								)
+								.catch((e) =>
+									logWarn(`[PROJECT_DELETE] ${app.slug} > Can't delete "${namespace}" namespace on "${cluster.name}" cluster:`, e)
+								);
 						}
 					}
 				}
