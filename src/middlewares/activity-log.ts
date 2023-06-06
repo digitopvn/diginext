@@ -42,11 +42,11 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 		activityDto.owner = user._id;
 		activityDto.workspace = workspace || (user.activeWorkspace as IWorkspace);
 		activityDto.name = user.name;
-		activityDto.response = res.body;
-		activityDto.responseStatus = isJSON(res.body) ? JSON.parse(res.body).status : undefined;
-		activityDto.method = req.method;
 		activityDto.query = req.query;
+		activityDto.method = req.method;
+		activityDto.responseStatus = isJSON(res.body) ? JSON.parse(res.body).status : undefined;
 		activityDto.httpStatus = req.statusCode;
+		// activityDto.response = res.body;
 
 		const route = await DB.findOne<IRoute>("route", { path: req.originalUrl });
 		activityDto.url = req.originalUrl;

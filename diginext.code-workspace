@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"yaml.schemas": {
+			"file:///Users/duynguyen/.vscode/extensions/atlassian.atlascode-2.10.12/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml",
+			"https://json.schemastore.org/github-workflow.json": [
+				"file:///Users/duynguyen/www/diginext/scripts/github-actions/deploy.yml",
+				"file:///Users/duynguyen/www/diginext/scripts/github-actions/docker-build-push.yml"
+			]
+		}
+	}
+}
