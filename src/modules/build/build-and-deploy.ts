@@ -14,7 +14,9 @@ import { sendLog } from "./send-log-message";
 
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildOptions) => {
 	// [1] Build container image
+	buildParams.buildWatch = true;
 	const { build, startTime, SOCKET_ROOM } = await startBuild(buildParams);
+	console.log("[BUILD_AND_DEPLOY] Finished building > build :>> ", build);
 
 	if (!build) throw new Error(`Unable to build "${buildParams.appSlug}" app (${buildParams.env}).`);
 
@@ -23,6 +25,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 
 	// [2] Deploy the build to target deploy environment
 	const { release, deployment } = await deployBuild(build, deployParams);
+	console.log("[BUILD_AND_DEPLOY] Finished deploying > release :>> ", release);
 
 	if (!release) throw new Error(`Unable to deploy "${build.slug}" build (${appSlug} - ${buildParams.env}).`);
 
