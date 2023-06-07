@@ -1,3 +1,10 @@
+## [3.6.2](https://github.com/digitopvn/diginext/compare/v3.6.1...v3.6.2) (2023-06-07)
+
+
+### Bug Fixes
+
+* **server,api:** add build number to create,update deploy environment api ([ceeb968](https://github.com/digitopvn/diginext/commit/ceeb968fc009eb591def542e49547d6a111b0205))
+
 ## [3.6.1](https://github.com/digitopvn/diginext/compare/v3.6.0...v3.6.1) (2023-06-07)
 
 
