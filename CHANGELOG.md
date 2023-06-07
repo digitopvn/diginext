@@ -1,3 +1,13 @@
+## [3.6.1](https://github.com/digitopvn/diginext/compare/v3.6.0...v3.6.1) (2023-06-07)
+
+
+### Bug Fixes
+
+* **admin:** correct url to diginext official website ([#180](https://github.com/digitopvn/diginext/issues/180)) ([eef882e](https://github.com/digitopvn/diginext/commit/eef882e713e5e73a215aef47f703d67fcbe19206))
+* **cli:** show update warning only when there are breaking changes ([171dcd5](https://github.com/digitopvn/diginext/commit/171dcd57455e9fb37cad97c349bba64842b19267))
+* **server:** disable body in activity logs to save disk usage ([7d84a71](https://github.com/digitopvn/diginext/commit/7d84a710aab252429d02ee2cd58c257179d07f37))
+* **server:** disable body in activity logs to save disk usage ([#183](https://github.com/digitopvn/diginext/issues/183)) ([7043b4a](https://github.com/digitopvn/diginext/commit/7043b4a46b77f35fb894ae586c7337e78b29b5aa))
+
 ## [3.6.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.6.0...v3.6.1-prerelease.1) (2023-06-06)
 
 
