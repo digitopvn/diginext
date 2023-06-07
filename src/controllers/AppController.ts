@@ -115,6 +115,12 @@ export interface DeployEnvironmentData {
 	imageURL: string;
 
 	/**
+	 * Build number is image's tag (no special characters, eg. "dot" or "comma")
+	 * @example latest, v01, prerelease, alpha, beta,...
+	 */
+	buildNumber: string;
+
+	/**
 	 * OPTIONAL
 	 * ---
 	 * Container's scaling replicas
@@ -661,6 +667,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
+		if (!deployEnvironmentData.buildNumber) respondFailure({ msg: `Build number (image's tag) is required.` });
+
+		const { buildNumber } = deployEnvironmentData;
 
 		const project = app.project as IProject;
 		const { slug: projectSlug } = project;
@@ -736,7 +745,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// Exposing ports, enable/disable CDN, and select Ingress type
 		if (isUndefined(deployEnvironmentData.port)) return respondFailure({ msg: `Param "port" is required.` });
 		if (isUndefined(deployEnvironmentData.cdn) || !isBoolean(deployEnvironmentData.cdn)) deployEnvironmentData.cdn = false;
-		deployEnvironmentData.ingress = "nginx";
+		// deployEnvironmentData.ingress = "nginx";
 
 		// create deploy environment in the app:
 		let [updatedApp] = await this.service.update(
@@ -750,10 +759,17 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		const appConfig = await getAppConfigFromApp(updatedApp);
 
-		// generate deployment files and apply new config
-		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		console.log("buildNumber :>> ", buildNumber);
-		console.log("this.user :>> ", this.user);
+		// if (
+		// 	typeof buildNumber === "undefined" &&
+		// 	updatedApp.deployEnvironment &&
+		// 	updatedApp.deployEnvironment[env] &&
+		// 	updatedApp.deployEnvironment[env].deploymentYaml
+		// ) {
+		// 	// generate deployment files and apply new config
+		// 	const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		// 	console.log("buildNumber :>> ", buildNumber);
+		// 	console.log("this.user :>> ", this.user);
+		// }
 
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
@@ -826,6 +842,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!appSlug) return respondFailure({ msg: `App slug is required.` });
 		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
 		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
+		if (!deployEnvironmentData.buildNumber) respondFailure({ msg: `Build number (image's tag) is required.` });
+
+		const { buildNumber } = deployEnvironmentData;
 
 		// get app data:
 		const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
@@ -923,11 +942,13 @@ export default class AppController extends BaseController<IApp, AppService> {
 			updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
 		}
 
-		// generate deployment files and apply new config
-		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		console.log("buildNumber :>> ", buildNumber);
-		console.log("this.user :>> ", this.user);
+		// if (updatedApp.deployEnvironment[env].deploymentYaml) {
+		// 	const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		// 	console.log("buildNumber :>> ", buildNumber);
+		// 	console.log("this.user :>> ", this.user);
+		// }
 
+		// generate deployment files and apply new config
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
 			env,
