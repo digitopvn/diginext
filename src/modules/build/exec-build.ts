@@ -1,10 +1,10 @@
 import { logError, logWarn } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
 import type InputOptions from "@/interfaces/InputOptions";
 import type { SslIssuer } from "@/interfaces/SystemTypes";
+import { makeSlug } from "@/plugins/slug";
 
 import { resolveDockerfilePath } from "../../plugins/utils";
 import { getAppConfigFromApp } from "../apps/app-helper";

@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import execa from "execa";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
@@ -18,6 +17,7 @@ import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { execCmd, getCurrentGitRepoData, isMac, wait } from "@/plugins";
+import { makeSlug } from "@/plugins/slug";
 
 import { conf } from "../..";
 import Github from "./github";

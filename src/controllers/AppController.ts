@@ -1,7 +1,6 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import { isArray, isBoolean, isEmpty, isNumber, isString, isUndefined } from "lodash";
 
 import type { AppGitInfo, IApp, ICluster, IContainerRegistry, IFramework, IProject } from "@/entities";
@@ -26,6 +25,7 @@ import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion, parseGitRepoDataFromRepoSSH } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
+import { makeSlug } from "@/plugins/slug";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
@@ -770,6 +770,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// 	console.log("buildNumber :>> ", buildNumber);
 		// 	console.log("this.user :>> ", this.user);
 		// }
+
+		console.log("buildNumber :>> ", buildNumber);
 
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,

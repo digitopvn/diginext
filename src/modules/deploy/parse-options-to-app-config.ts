@@ -1,9 +1,9 @@
 import { logError } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import { isEmpty } from "lodash";
 
 import type { InputOptions } from "@/interfaces";
 import { getCurrentGitRepoData } from "@/plugins";
+import { makeSlug } from "@/plugins/slug";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";

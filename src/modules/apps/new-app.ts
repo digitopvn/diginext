@@ -1,5 +1,4 @@
 import { logError } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import fs from "fs";
 // import Listr from "listr";
 import path from "path";
@@ -10,6 +9,7 @@ import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { pullingFramework } from "@/modules/framework";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { printInformation } from "@/modules/project/printInformation";
+import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 import { createAppByForm } from "./new-app-by-form";

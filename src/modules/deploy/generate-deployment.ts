@@ -1,5 +1,4 @@
 import { log, logWarn } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import * as fs from "fs";
 import yaml from "js-yaml";
@@ -11,6 +10,7 @@ import type { IApp, ICluster, IContainerRegistry, IWorkspace } from "@/entities"
 import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { objectToDeploymentYaml } from "@/plugins";
+import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
@@ -55,17 +55,25 @@ export type GenerateDeploymentResult = {
 };
 
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
-	const { appSlug, env = "dev", username, workspace, buildNumber, appConfig } = params;
+	const {
+		appSlug,
+		env = "dev",
+		buildNumber = makeDaySlug({ divider: "" }),
+		username,
+		workspace,
+		appConfig,
+		//
+	} = params;
 
 	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
 	const { slug } = currentAppConfig;
 
-	// console.log("generateDeployment() > params :>> ", params);
+	console.log("generateDeployment() > buildNumber :>> ", buildNumber);
 	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
 
 	// DEFINE DEPLOYMENT PARTS:
-	const BUILD_NUMBER = makeSlug(buildNumber) || makeDaySlug({ divider: "" });
+	const BUILD_NUMBER = makeSlug(buildNumber);
 
 	const deployEnvironmentConfig = currentAppConfig.deployEnvironment[env];
 	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);
