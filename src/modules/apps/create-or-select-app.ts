@@ -1,10 +1,10 @@
-import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
 import type { IApp } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 import { getCurrentGitRepoData } from "@/plugins";
+import { makeSlug } from "@/plugins/slug";
 
 import { createAppByForm } from "./new-app-by-form";
 import { searchApps } from "./search-apps";

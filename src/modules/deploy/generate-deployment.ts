@@ -1,5 +1,4 @@
 import { log, logWarn } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import * as fs from "fs";
 import yaml from "js-yaml";
@@ -11,6 +10,7 @@ import type { IApp, ICluster, IContainerRegistry, IWorkspace } from "@/entities"
 import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { objectToDeploymentYaml } from "@/plugins";
+import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
@@ -69,7 +69,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
 	const { slug } = currentAppConfig;
 
-	// console.log("generateDeployment() > params :>> ", params);
+	console.log("generateDeployment() > buildNumber :>> ", buildNumber);
 	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
 
 	// DEFINE DEPLOYMENT PARTS:

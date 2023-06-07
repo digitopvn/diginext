@@ -1,10 +1,10 @@
 import axios from "axios";
 import { logWarn } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import { upperFirst } from "lodash";
 
 import type { IGitProvider } from "@/entities";
 import type { GitProviderType, RequestMethodType } from "@/interfaces/SystemTypes";
+import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 

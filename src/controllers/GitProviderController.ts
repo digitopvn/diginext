@@ -1,5 +1,4 @@
 import axios from "axios";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { upperCase } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
@@ -13,6 +12,7 @@ import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
 import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
+import { makeSlug } from "@/plugins/slug";
 import GitProviderService from "@/services/GitProviderService";
 
 import BaseController from "./BaseController";

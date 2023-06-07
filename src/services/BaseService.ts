@@ -1,5 +1,4 @@
 import { logError } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { cloneDeepWith } from "lodash";
@@ -9,6 +8,7 @@ import { model } from "mongoose";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
+import { makeSlug } from "@/plugins/slug";
 import { replaceObjectIdsToStrings } from "@/plugins/traverse";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interfaces/IQuery";
