@@ -18,7 +18,7 @@ export const createReleaseFromApp = async (app: IApp, env?: string, ownership?: 
 	const deployedEnvironment = await getDeployEvironmentByApp(app, env || "dev");
 	const { BUILD_NUMBER } = fetchDeploymentFromContent(deployedEnvironment.deploymentYaml);
 
-	const build = await DB.findOne<IBuild>("build", { tag: BUILD_NUMBER });
+	const build = await DB.findOne<IBuild>("build", { projectSlug: app.projectSlug, appSlug: app.slug, tag: BUILD_NUMBER });
 	if (!build) throw new Error(`Build "${BUILD_NUMBER}" not found.`);
 
 	const project = await DB.findOne<IProject>("project", { slug: app.projectSlug });

@@ -55,7 +55,15 @@ export type GenerateDeploymentResult = {
 };
 
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
-	const { appSlug, env = "dev", username, workspace, buildNumber, appConfig } = params;
+	const {
+		appSlug,
+		env = "dev",
+		buildNumber = makeDaySlug({ divider: "" }),
+		username,
+		workspace,
+		appConfig,
+		//
+	} = params;
 
 	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
@@ -65,7 +73,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
 
 	// DEFINE DEPLOYMENT PARTS:
-	const BUILD_NUMBER = makeSlug(buildNumber) || makeDaySlug({ divider: "" });
+	const BUILD_NUMBER = makeSlug(buildNumber);
 
 	const deployEnvironmentConfig = currentAppConfig.deployEnvironment[env];
 	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);

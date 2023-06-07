@@ -771,6 +771,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// 	console.log("this.user :>> ", this.user);
 		// }
 
+		console.log("buildNumber :>> ", buildNumber);
+
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
 			env,
