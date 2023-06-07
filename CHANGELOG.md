@@ -1,3 +1,12 @@
+## [3.6.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.6.0...v3.6.1-prerelease.1) (2023-06-06)
+
+
+### Bug Fixes
+
+* **admin:** correct url to diginext official website ([#180](https://github.com/digitopvn/diginext/issues/180)) ([eef882e](https://github.com/digitopvn/diginext/commit/eef882e713e5e73a215aef47f703d67fcbe19206))
+* **server:** disable body in activity logs to save disk usage ([7d84a71](https://github.com/digitopvn/diginext/commit/7d84a710aab252429d02ee2cd58c257179d07f37))
+* **server:** disable body in activity logs to save disk usage ([#183](https://github.com/digitopvn/diginext/issues/183)) ([7043b4a](https://github.com/digitopvn/diginext/commit/7043b4a46b77f35fb894ae586c7337e78b29b5aa))
+
 # [3.6.0](https://github.com/digitopvn/diginext/compare/v3.5.2...v3.6.0) (2023-06-01)
 
 
@@ -294,15 +303,11 @@
 ### Bug Fixes
 
 * **bitbucket repo:** issue of creating new bitbucket repo ([ee3d23b](https://github.com/digitopvn/diginext/commit/ee3d23bea6fe47ecf55384a1475568fb09d7f6a0))
-<<<<<<< HEAD
 * **bitbucket:** catch error when fetch api of bitbucket ([68a977a](https://github.com/digitopvn/diginext/commit/68a977a97822ccacb18084579ab7f29cada81a79))
 * **build,deploy:** add cli version for tracking ([86e54ba](https://github.com/digitopvn/diginext/commit/86e54bacc61c53af8b48cbd767aed6f07c14c42c))
 * **git provider:** add api connect github and bitbucket ([197a916](https://github.com/digitopvn/diginext/commit/197a916ef1252952c848c3f04b27ac87e5d24d86))
 * **github:** create github repo when create new or init app ([0cb841f](https://github.com/digitopvn/diginext/commit/0cb841fdb40ff0a6df481bc9e84c1b2a9d82b67c))
 * **server-info:** skip docker or podman ver if not available ([d5d2e15](https://github.com/digitopvn/diginext/commit/d5d2e15093e6ccc7086a44d58f98c705a4f1e77d))
-=======
-* **bitbucket repo:** issue of creating new bitbucket repo ([#123](https://github.com/digitopvn/diginext/issues/123)) ([c4a6919](https://github.com/digitopvn/diginext/commit/c4a6919f919f8aa8a1279864b36ccc445f1789a0))
->>>>>>> origin/prerelease
 
 ## [3.0.5-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.0.4...v3.0.5-prerelease.1) (2023-04-27)
 

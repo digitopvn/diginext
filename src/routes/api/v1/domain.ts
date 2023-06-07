@@ -17,6 +17,6 @@ router
 	.use(authenticate, authorize)
 	.use(registerController(controller))
 	// create new domain
-	.post("/", processApiRequest(controller.createDiginextDomain));
+	.post("/", processApiRequest(controller.createDiginextDomain.bind(controller)));
 
 export default router;
