@@ -68,6 +68,12 @@ export type StartBuildParams = {
 	buildDir?: string;
 
 	/**
+	 * Enable async to watch the build process
+	 * @default false
+	 */
+	buildWatch?: boolean;
+
+	/**
 	 * Diginext CLI version of client user
 	 */
 	cliVersion?: string;
@@ -130,20 +136,28 @@ export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug:
 	return stoppedBuild;
 };
 
-export async function startBuild(params: StartBuildParams) {
+export async function startBuild(
+	params: StartBuildParams,
+	options?: {
+		onSucceed?: (build: IBuild) => void;
+		onError?: (msg: string) => void;
+	}
+) {
 	// parse variables
 	const startTime = dayjs();
 
 	const {
+		// require
 		buildNumber,
 		gitBranch,
 		registrySlug,
-		userId,
-		user,
 		appSlug,
-		args,
+		userId,
 		// optional
+		args: buildArgs,
+		user,
 		env,
+		buildWatch = false,
 		isDebugging = false,
 		cliVersion,
 	} = params;
@@ -166,6 +180,7 @@ export async function startBuild(params: StartBuildParams) {
 	// Validating...
 	if (isEmpty(app)) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" not found.` });
+		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" not found.`);
 		return;
 	}
 
@@ -174,16 +189,19 @@ export async function startBuild(params: StartBuildParams) {
 
 	if (isEmpty(registry)) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
+		if (options?.onError) options?.onError(`[START BUILD] Container registry "${registrySlug}" not found.`);
 		return;
 	}
 
 	if (isEmpty(app.project)) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" doesn't belong to any projects (probably deleted?).` });
+		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" doesn't belong to any projects (probably deleted?).`);
 		return;
 	}
 
 	if (isEmpty(app.git) || isEmpty(app.git?.repoSSH)) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" doesn't have any git repository data (probably deleted?).` });
+		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" doesn't have any git repository data (probably deleted?).`);
 		return;
 	}
 
@@ -243,6 +261,7 @@ export async function startBuild(params: StartBuildParams) {
 	if (!newBuild) {
 		console.log("buildData :>> ", buildData);
 		sendLog({ SOCKET_ROOM, message: "[START BUILD] Failed to create new build on server." });
+		if (options?.onError) options?.onError("[START BUILD] Failed to create new build on server.");
 		return;
 	}
 	sendLog({ SOCKET_ROOM, message: "[START BUILD] Created new build on server!" });
@@ -251,6 +270,7 @@ export async function startBuild(params: StartBuildParams) {
 	const gitAuth = await verifySSH({ gitProvider });
 	if (!gitAuth) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.` });
+		if (options?.onError) options?.onError(`[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`);
 		await updateBuildStatus(newBuild, "failed");
 		return;
 	}
@@ -258,7 +278,13 @@ export async function startBuild(params: StartBuildParams) {
 	// Git SSH verified -> start pulling now...
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Pulling latest source code from "${repoSSH}" at "${gitBranch}" branch...` });
 
-	await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, { onUpdate: (message) => sendLog({ SOCKET_ROOM, message }) });
+	try {
+		await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, { onUpdate: (message) => sendLog({ SOCKET_ROOM, message }) });
+	} catch (e) {
+		sendLog({ SOCKET_ROOM, type: "error", message: `Failed to pull "${repoSSH}": ${e}` });
+		if (options?.onError) options?.onError(`Failed to pull "${repoSSH}": ${e}`);
+		await updateBuildStatus(newBuild, "failed");
+	}
 
 	// emit socket message to "digirelease" app:
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Finished pulling latest files of "${gitBranch}"...` });
@@ -270,17 +296,31 @@ export async function startBuild(params: StartBuildParams) {
 	if (isDebugging) console.log("dockerFile :>> ", dockerFile);
 
 	if (!dockerFile) {
+		if (options?.onError) options?.onError(`No "Dockerfile" found in the repository.`);
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
 			message: `[START BUILD] Missing "Dockerfile" to build the application, please create your "Dockerfile" in the root directory of the source code.`,
 		});
+		await updateBuildStatus(newBuild, "failed");
 		return;
 	}
 
 	// Update app so it can be sorted on top!
 	const updatedAppData = { lastUpdatedBy: username } as IApp;
-	const [updatedApp] = await DB.update<IApp>("app", { slug: appSlug, image: imageURL }, updatedAppData);
+	let updatedApp: IApp;
+	try {
+		updatedApp = await DB.updateOne<IApp>("app", { slug: appSlug, image: imageURL }, updatedAppData);
+	} catch (e) {
+		if (options?.onError) options?.onError(`Server network error, unable to perform data updating.`);
+		sendLog({
+			SOCKET_ROOM,
+			type: "error",
+			message: `Server network error, unable to perform data updating.`,
+		});
+		await updateBuildStatus(newBuild, "failed");
+		return;
+	}
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
 
@@ -306,18 +346,20 @@ export async function startBuild(params: StartBuildParams) {
 
 	const buildEngineName = process.env.BUILDER || "podman";
 	const buildEngine = buildEngineName === "docker" ? builder.Docker : builder.Podman;
-	buildEngine
-		.build(buildImage, {
-			args,
-			platforms: ["linux/amd64"],
-			builder: `${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`,
-			cacheFroms: latestBuild ? [{ type: "registry", value: latestBuild.image }] : [],
-			dockerFile: dockerFile,
-			buildDirectory: buildDir,
-			shouldPush: true,
-			onBuilding: (message) => sendLog({ SOCKET_ROOM, message }),
-		})
-		.then(async () => {
+
+	if (buildWatch === true) {
+		try {
+			await buildEngine.build(buildImage, {
+				args: buildArgs,
+				platforms: ["linux/amd64"],
+				builder: `${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`,
+				cacheFroms: latestBuild ? [{ type: "registry", value: latestBuild.image }] : [],
+				dockerFile: dockerFile,
+				buildDirectory: buildDir,
+				shouldPush: true,
+				onBuilding: (message) => sendLog({ SOCKET_ROOM, message }),
+			});
+
 			// update build status as "success"
 			await updateBuildStatus(newBuild, "success");
 
@@ -327,13 +369,48 @@ export async function startBuild(params: StartBuildParams) {
 			});
 
 			notifyClients();
-		})
-		.catch(async (e) => {
+
+			if (options?.onSucceed) options?.onSucceed(newBuild);
+		} catch (e) {
 			await updateBuildStatus(newBuild, "failed");
 			sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
+			if (options?.onError) options?.onError(`Build failed: ${e}`);
 
 			notifyClients();
-		});
+		}
+	} else {
+		buildEngine
+			.build(buildImage, {
+				args: buildArgs,
+				platforms: ["linux/amd64"],
+				builder: `${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`,
+				cacheFroms: latestBuild ? [{ type: "registry", value: latestBuild.image }] : [],
+				dockerFile: dockerFile,
+				buildDirectory: buildDir,
+				shouldPush: true,
+				onBuilding: (message) => sendLog({ SOCKET_ROOM, message }),
+			})
+			.then(async () => {
+				// update build status as "success"
+				await updateBuildStatus(newBuild, "success");
+
+				sendLog({
+					SOCKET_ROOM,
+					message: `✓ Pushed to container registry (${registrySlug}) successfully!`,
+				});
+
+				notifyClients();
+
+				if (options?.onSucceed) options?.onSucceed(newBuild);
+			})
+			.catch(async (e) => {
+				await updateBuildStatus(newBuild, "failed");
+				sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
+				if (options?.onError) options?.onError(`Build failed: ${e}`);
+
+				notifyClients();
+			});
+	}
 
 	return { SOCKET_ROOM, build: newBuild, imageURL, buildImage, startTime, builder: buildEngineName };
 }

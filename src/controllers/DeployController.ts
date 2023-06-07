@@ -17,7 +17,7 @@ import { deployWithBuildSlug } from "@/modules/deploy/deploy-build";
 
 import BaseController from "./BaseController";
 
-type DeployBuildInput = {
+export type DeployBuildParams = {
 	/**
 	 * Deploy environment
 	 * @example "dev", "prod"
@@ -26,7 +26,7 @@ type DeployBuildInput = {
 	/**
 	 * User ID of the author
 	 */
-	author: string;
+	author?: string;
 	/**
 	 * [DANGER]
 	 * ---
@@ -105,7 +105,10 @@ export default class DeployController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/build-first")
-	async buildAndDeploy(@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildInput }, @Queries() queryParams?: IPostQueryParams) {
+	async buildAndDeploy(
+		@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildParams },
+		@Queries() queryParams?: IPostQueryParams
+	) {
 		let { buildParams, deployParams } = body;
 
 		// validation & conversion...
@@ -113,33 +116,38 @@ export default class DeployController extends BaseController {
 		if (!deployParams) return { status: 0, messages: [`Deploy "params" is required.`] } as ResponseData;
 
 		const app = await DB.findOne<IApp>("app", { slug: buildParams.appSlug });
-		const author = await DB.findOne<IUser>("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] });
+		const author = this.user || (await DB.findOne<IUser>("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] }));
 		const workspace = author.activeWorkspace as IWorkspace;
 		const SOURCE_CODE_DIR = `cache/${app.projectSlug}/${app.slug}/${buildParams.gitBranch}`;
 		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
 
 		const deployBuildOptions: DeployBuildOptions = {
-			author,
-			env: buildParams.env,
+			env: deployParams.env || buildParams.env || "dev",
 			shouldUseFreshDeploy: deployParams.shouldUseFreshDeploy,
+			author,
 			workspace,
 			buildDirectory,
 		};
 
 		// check for version compatibility between CLI & SERVER:
-		buildParams.cliVersion = buildParams.cliVersion || "0.0.0";
-		const breakingChangeVersionCli = buildParams.cliVersion.split(".")[0];
-		const serverVersion = pkg.version;
-		const breakingChangeVersionServer = serverVersion.split(".")[0];
+		buildParams.user = author;
 
-		if (breakingChangeVersionCli != breakingChangeVersionServer) {
-			return {
-				status: 0,
-				messages: [
-					`Your CLI version (${buildParams.cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please update your CLI with: "dx update"`,
-				],
-			};
+		if (buildParams.cliVersion) {
+			const breakingChangeVersionCli = buildParams.cliVersion.split(".")[0];
+			const serverVersion = pkg.version;
+			const breakingChangeVersionServer = serverVersion.split(".")[0];
+
+			if (breakingChangeVersionCli != breakingChangeVersionServer) {
+				return {
+					status: 0,
+					messages: [
+						`Your CLI version (${buildParams.cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please update your CLI with: "dx update"`,
+					],
+				};
+			}
 		}
+
+		// if (typeof buildParams.buildWatch === "undefined") buildParams.buildWatch = true;
 
 		log(`buildAndDeploy > buildParams.buildNumber :>>`, buildParams.buildNumber);
 		buildAndDeploy(buildParams, deployBuildOptions);
@@ -161,7 +169,7 @@ export default class DeployController extends BaseController {
 	@Security("jwt")
 	@Post("/from-source")
 	buildFromSourceAndDeploy(
-		@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildInput },
+		@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildParams },
 		@Queries() queryParams?: IPostQueryParams
 	) {
 		return this.buildAndDeploy(body);
@@ -177,7 +185,7 @@ export default class DeployController extends BaseController {
 			 * Build's slug
 			 */
 			buildSlug: string;
-		} & DeployBuildInput,
+		} & DeployBuildParams,
 		@Queries() queryParams?: IPostQueryParams
 	) {
 		const { buildSlug } = body;

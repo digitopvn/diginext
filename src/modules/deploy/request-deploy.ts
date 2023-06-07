@@ -4,6 +4,7 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
+import type { DeployBuildParams } from "@/controllers/DeployController";
 import type { IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
@@ -11,6 +12,7 @@ import { stageAllFiles } from "@/modules/bitbucket";
 import { resolveDockerfilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
+import type { StartBuildParams } from "../build";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
 import { parseOptionsToAppConfig } from "./parse-options-to-app-config";
 
@@ -51,7 +53,9 @@ export async function requestDeploy(options: InputOptions) {
 	 * [2] Compare LOCAL & SERVER App Config,
 	 *     then upload local app config to server.
 	 */
-	const { deployEnvironment, appConfig: validatedAppConfig } = await askForDeployEnvironmentInfo(options);
+	const deployInfo = await askForDeployEnvironmentInfo(options);
+	if (options.isDebugging) console.log("deployInfo :>> ", deployInfo);
+	const { deployEnvironment, appConfig: validatedAppConfig } = deployInfo;
 	appConfig = validatedAppConfig;
 
 	if (options.isDebugging) {
@@ -93,18 +97,55 @@ export async function requestDeploy(options: InputOptions) {
 	options.slug = appConfig.slug;
 
 	// Make an API to request server to build:
-	const deployOptions = JSON.stringify(options);
+	// const deployOptions = JSON.stringify(options);
+
+	// if (options.isDebugging) {
+	// 	console.log("Request deploy data :>> ");
+	// 	console.dir(options, { depth: 10 });
+	// }
+
+	// try {
+	// 	const requestResult = await fetchApi({
+	// 		url: DEPLOY_API_PATH,
+	// 		method: "POST",
+	// 		data: { options: deployOptions },
+	// 	});
+
+	// 	if (options.isDebugging) {
+	// 		console.log("Request deploy result :>> ");
+	// 		console.dir(requestResult, { depth: 10 });
+	// 	}
+
+	// 	if (!requestResult.status) logError(requestResult.messages[0] || `Unable to call Request Deploy API.`);
+	// } catch (e) {
+	// 	logError(`Unable to call Request Deploy API:`, e);
+	// 	return;
+	// }
+
+	// const deployOptions = JSON.stringify(options);
+	const requestDeployData: { buildParams: StartBuildParams; deployParams: DeployBuildParams } = {
+		buildParams: {
+			buildNumber: options.buildNumber,
+			gitBranch: options.gitBranch,
+			registrySlug: deployEnvironment.registry,
+			appSlug: options.appSlug,
+		},
+		deployParams: {
+			env,
+			shouldUseFreshDeploy: options.shouldUseFreshDeploy,
+		},
+	};
 
 	if (options.isDebugging) {
 		console.log("Request deploy data :>> ");
-		console.dir(options, { depth: 10 });
+		console.dir(requestDeployData, { depth: 10 });
 	}
 
 	try {
 		const requestResult = await fetchApi({
-			url: DEPLOY_API_PATH,
+			url: `${buildServerUrl}/api/v1/deploy/from-source`,
 			method: "POST",
-			data: { options: deployOptions },
+			data: requestDeployData,
 		});
 
 		if (options.isDebugging) {
