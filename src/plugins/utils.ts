@@ -404,7 +404,11 @@ export async function getLatestCliVersion() {
  */
 export async function checkForUpdate() {
 	const latestVersion = await getLatestCliVersion();
-	return latestVersion !== currentVersion();
+	const latestVersionData = latestVersion.split(".");
+	const currentVer = currentVersion();
+	const curVersionData = currentVer.split(".");
+	// show update warning only when there are breaking changes
+	return latestVersionData[0] > curVersionData[0] || latestVersionData[1] > curVersionData[1];
 }
 
 async function logBitbucketError(error: any, delay?: number, location?: string, shouldExit = false) {
