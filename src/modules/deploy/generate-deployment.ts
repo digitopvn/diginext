@@ -8,7 +8,7 @@ import _, { isEmpty, isObject, toNumber } from "lodash";
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
 import type { IApp, ICluster, IContainerRegistry, IWorkspace } from "@/entities";
-import type { AppConfig, KubeDeployment, KubeNamespace } from "@/interfaces";
+import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { objectToDeploymentYaml } from "@/plugins";
 
@@ -136,7 +136,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (env === "prod") log({ prereleaseDomain });
 
 	// * [NEW TACTIC] Fetch ENV variables from database:
-	const deployEnvironment = (app.deployEnvironment || {})[env] || {};
+	const deployEnvironment = app.deployEnvironment[env] || ({} as DeployEnvironment);
 	// console.log("generate deployment > deployEnvironment :>> ", deployEnvironment);
 
 	let containerEnvs = deployEnvironment.envVars || [];
