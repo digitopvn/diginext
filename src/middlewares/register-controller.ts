@@ -22,6 +22,7 @@ export const registerController = (controller: BaseController) => {
 						? (controller.user?.activeWorkspace as IWorkspace)
 						: await DB.findOne<IWorkspace>("workspace", { _id: wsId });
 			}
+			// console.log("Register controller > controller.workspace :>> ", controller.workspace);
 
 			// parse filter, body and pagination data:
 			await controller.parsePagination(req);
