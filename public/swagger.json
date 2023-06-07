@@ -558,6 +558,10 @@
 						"type": "string",
 						"description": "Kubernetes Ingress Class"
 					},
+					"buildNumber": {
+						"type": "string",
+						"description": "Build number is image's tag (no special characters, eg. \"dot\" or \"comma\")"
+					},
 					"cliVersion": {
 						"type": "string",
 						"description": "The CLI version"
@@ -619,6 +623,7 @@
 						"description": "Amount of ready instances"
 					}
 				},
+				"required": ["buildNumber"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -1435,6 +1440,10 @@
 						"example": "asia.gcr.io/my-workspace/my-project/my-app",
 						"default": "<registry-image-base-url>/<project-slug>/<app-name-slug>"
 					},
+					"buildNumber": {
+						"type": "string",
+						"description": "Build number is image's tag (no special characters, eg. \"dot\" or \"comma\")"
+					},
 					"replicas": {
 						"type": "number",
 						"format": "double",
@@ -1495,7 +1504,7 @@
 						"description": "OPTIONAL\n---\nUsername of the person who update the app"
 					}
 				},
-				"required": ["registry", "cluster", "port", "imageURL"],
+				"required": ["registry", "cluster", "port", "imageURL", "buildNumber"],
 				"type": "object",
 				"additionalProperties": false
 			},
