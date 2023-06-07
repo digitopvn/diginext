@@ -16,13 +16,16 @@ type OwnershipParams = {
 
 export const createReleaseFromApp = async (app: IApp, env?: string, ownership?: OwnershipParams) => {
 	const deployedEnvironment = await getDeployEvironmentByApp(app, env || "dev");
-	const { BUILD_NUMBER } = fetchDeploymentFromContent(deployedEnvironment.deploymentYaml);
+	const { BUILD_NUMBER, IMAGE_NAME } = fetchDeploymentFromContent(deployedEnvironment.deploymentYaml);
 
-	const build = await DB.findOne<IBuild>("build", { projectSlug: app.projectSlug, appSlug: app.slug, tag: BUILD_NUMBER });
-	if (!build) throw new Error(`Build "${BUILD_NUMBER}" not found.`);
+	console.log("createReleaseFromApp() > IMAGE_NAME :>> ", IMAGE_NAME);
+	// console.log("createReleaseFromApp() > BUILD_NUMBER :>> ", BUILD_NUMBER);
+
+	const build = await DB.findOne<IBuild>("build", { image: IMAGE_NAME });
+	if (!build) throw new Error(`Unable to create new release: build image "${IMAGE_NAME}" not found.`);
 
 	const project = await DB.findOne<IProject>("project", { slug: app.projectSlug });
-	if (!project) throw new Error(`Project "${app.projectSlug}" not found.`);
+	if (!project) throw new Error(`Unable to create new release: project "${app.projectSlug}" not found.`);
 	// console.log("project :>> ", project);
 
 	// get deployment data
@@ -42,8 +45,7 @@ export const createReleaseFromApp = async (app: IApp, env?: string, ownership?: 
 
 	// log({ deploymentData });
 	// log({ prereleaseDeploymentData });
-
-	const { IMAGE_NAME } = deploymentData;
+	// const { IMAGE_NAME } = deploymentData;
 
 	let defaultAuthor = owner as IUser;
 	if (!defaultAuthor) defaultAuthor = await DB.findOne<IApiKeyAccount>("api_key_user", { workspaces: workspaceId });
