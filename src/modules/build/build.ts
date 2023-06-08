@@ -237,6 +237,14 @@ export async function startBuild(
 	// detect "gitProvider" from git repo SSH URI:
 	const gitProvider = getGitProviderFromRepoSSH(repoSSH);
 
+	// check if build tag is existed:
+	// const build = await DB.findOne<IBuild>("build", { image: buildImage, tag: buildNumber });
+	// if (build) {
+	// 	sendLog({ SOCKET_ROOM, message: `Build "${buildImage}" existed, please choose a different tag name.` });
+	// 	if (options?.onError) options?.onError(`Build "${buildImage}" existed, please choose a different tag name.`);
+	// 	return;
+	// }
+
 	// create new build on build server:
 	const buildData = {
 		slug: SOCKET_ROOM,
