@@ -1,3 +1,15 @@
+# [3.7.0](https://github.com/digitopvn/diginext/compare/v3.6.4...v3.7.0) (2023-06-08)
+
+
+### Bug Fixes
+
+* **cli:** refactor build command to request server to build image ([12b1ac2](https://github.com/digitopvn/diginext/commit/12b1ac291f5014d85bf1fbb59928ef13585e5bc2))
+
+
+### Features
+
+* **cli:** request server to build image ([#190](https://github.com/digitopvn/diginext/issues/190)) ([7aceaff](https://github.com/digitopvn/diginext/commit/7aceaff483d6f58e021b4a224a5d12bbec6b5397))
+
 ## [3.6.4](https://github.com/digitopvn/diginext/compare/v3.6.3...v3.6.4) (2023-06-08)
 
 
