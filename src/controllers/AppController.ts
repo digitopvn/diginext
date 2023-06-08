@@ -701,11 +701,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 			deployEnvironmentData.namespace = `${projectSlug}-${env}`;
 		} else {
 			// Check if namespace is existed...
-			const isNamespaceExisted = await ClusterManager.isNamespaceExisted(deployEnvironmentData.namespace, { context: cluster.contextName });
-			if (isNamespaceExisted)
-				return respondFailure({
-					msg: `Namespace "${deployEnvironmentData.namespace}" was existed in "${deployEnvironmentData.cluster}" cluster, please choose different name or leave empty to use generated namespace name.`,
-				});
+			// const isNamespaceExisted = await ClusterManager.isNamespaceExisted(deployEnvironmentData.namespace, { context: cluster.contextName });
+			// if (isNamespaceExisted)
+			// 	return respondFailure({
+			// 		msg: `Namespace "${deployEnvironmentData.namespace}" was existed in "${deployEnvironmentData.cluster}" cluster, please choose different name or leave empty to use generated namespace name.`,
+			// 	});
 		}
 
 		// container registry
@@ -800,7 +800,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// create new release and roll out
-		const release = await createReleaseFromApp(updatedApp, env, { author: this.user, cliVersion: currentVersion(), workspace: this.workspace });
+		const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			author: this.user,
+			cliVersion: currentVersion(),
+			workspace: this.workspace,
+		});
 		const result = await ClusterManager.rollout(release._id.toString());
 
 		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
@@ -978,7 +982,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// create new release and roll out
-		const release = await createReleaseFromApp(updatedApp, env, { author: this.user, cliVersion: currentVersion(), workspace: this.workspace });
+		const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			author: this.user,
+			cliVersion: currentVersion(),
+			workspace: this.workspace,
+		});
 		const result = await ClusterManager.rollout(release._id.toString());
 
 		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
@@ -1421,7 +1429,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// create new release and roll out
-		const release = await createReleaseFromApp(updatedApp, env, { author: this.user, cliVersion: currentVersion(), workspace: this.workspace });
+		const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			author: this.user,
+			cliVersion: currentVersion(),
+			workspace: this.workspace,
+		});
 		const result = await ClusterManager.rollout(release._id.toString());
 
 		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
