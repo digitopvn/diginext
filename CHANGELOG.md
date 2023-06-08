@@ -1,3 +1,11 @@
+## [3.7.3](https://github.com/digitopvn/diginext/compare/v3.7.2...v3.7.3) (2023-06-08)
+
+
+### Bug Fixes
+
+* **server:** issue of roll out still remain prerelease env vars ([926cfee](https://github.com/digitopvn/diginext/commit/926cfeef532f34e94b0b6e1a7b05c8ec971bc362))
+* **server:** issue of roll out still remain prerelease env vars ([#193](https://github.com/digitopvn/diginext/issues/193)) ([223b408](https://github.com/digitopvn/diginext/commit/223b4087d241bf73621e7c2c8e1c9f880edaaf29))
+
 ## [3.7.2](https://github.com/digitopvn/diginext/compare/v3.7.1...v3.7.2) (2023-06-08)
 
 
