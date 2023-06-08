@@ -1,3 +1,11 @@
+## [3.7.1](https://github.com/digitopvn/diginext/compare/v3.7.0...v3.7.1) (2023-06-08)
+
+
+### Bug Fixes
+
+* **cli,server:** issue of resolving dockerfile ([a5f8efa](https://github.com/digitopvn/diginext/commit/a5f8efaf718aae874144471502ebc4d1481e54e2))
+* **cli,server:** issue of resolving dockerfile ([#191](https://github.com/digitopvn/diginext/issues/191)) ([66e68b8](https://github.com/digitopvn/diginext/commit/66e68b8efc76bc35bf829862798849d33694f8da))
+
 # [3.7.0](https://github.com/digitopvn/diginext/compare/v3.6.4...v3.7.0) (2023-06-08)
 
 
