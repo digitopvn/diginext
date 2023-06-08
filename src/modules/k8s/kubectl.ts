@@ -377,7 +377,47 @@ export async function setDeployImageAll(name: string, imageURL: string, namespac
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] setDeployImage >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] setDeployImageAll >`, e);
+		return;
+	}
+}
+
+/**
+ * Set port to all containers of a deployment in a namespace
+ * @param name - Deployment's name
+ * @param port - New port
+ */
+export async function setDeployPortAll(name: string, port: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		// get all container names
+		const deployment = await getDeploy(name, namespace, options);
+
+		const containers = deployment.spec.template.spec.containers;
+		let res: string = "";
+
+		for (let i = 0; i < containers.length; i++) {
+			const args = [];
+			if (context) args.push(`--context=${context}`);
+			args.push(
+				"-n",
+				namespace,
+				"patch",
+				"deployment",
+				name,
+				"--type",
+				"json",
+				`--patch`,
+				`[{"op": "replace", "path": "/spec/template/spec/containers/${i}/ports/0/containerPort", "value": ${port}}]`
+			);
+
+			const { stdout } = await execa("kubectl", args);
+			res += stdout + "\n";
+		}
+
+		return res;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] setDeployPortAll >`, e);
 		return;
 	}
 }
@@ -399,7 +439,8 @@ export async function setDeployImagePullSecretByFilter(imagePullSecretName: stri
 		args.push(
 			"--type",
 			"json",
-			`-p='[{"op": "replace", "path": "/spec/containers/0/imagePullSecrets/0/name", "value":"${imagePullSecretName}"}]'`
+			`--patch`,
+			`'[{"op": "replace", "path": "/spec/containers/0/imagePullSecrets/0/name", "value":"${imagePullSecretName}"}]'`
 		);
 
 		const { stdout } = await execa("kubectl", args);
