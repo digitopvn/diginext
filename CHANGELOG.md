@@ -1,3 +1,11 @@
+## [3.7.6](https://github.com/digitopvn/diginext/compare/v3.7.5...v3.7.6) (2023-06-08)
+
+
+### Bug Fixes
+
+* **server:** clean up prerelease, fallback support deperecated main-app ([a4031bb](https://github.com/digitopvn/diginext/commit/a4031bb0e36ad583e4ede5526599b995bc460896))
+* **server:** clean up prerelease, fallback support deperecated main-app ([#196](https://github.com/digitopvn/diginext/issues/196)) ([e2b0adc](https://github.com/digitopvn/diginext/commit/e2b0adc858ecd1b4f676499f12a93a0a188f7103))
+
 ## [3.7.5](https://github.com/digitopvn/diginext/compare/v3.7.4...v3.7.5) (2023-06-08)
 
 
