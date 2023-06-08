@@ -45,7 +45,7 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 		releaseData = idOrRelease as IRelease;
 	}
 
-	const { slug: releaseSlug, cluster: clusterShortName, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
+	const { slug: releaseSlug, cluster: clusterShortName, projectSlug, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
 
 	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
@@ -57,7 +57,10 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	}
 	const { contextName: context } = cluster;
 
-	const mainAppName = appSlug;
+	/**
+	 * "main-app" == projectSlug + "-" + appSlug
+	 */
+	const mainAppName = projectSlug + "-" + appSlug;
 
 	// Clean up Prerelease YAML
 	const cleanUpCommands = [];
@@ -278,7 +281,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	});
 	// log(`3`, { appSlug, service, svcName, ingress, ingressName, deploymentName });
 
-	const mainAppName = appSlug;
+	const mainAppName = projectSlug + "-" + appSlug;
 
 	// create new service if it's not existed
 	const currentServices = await ClusterManager.getAllServices(namespace, `phase=live,main-app=${mainAppName}`, { context });
