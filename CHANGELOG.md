@@ -1,3 +1,11 @@
+## [3.6.4](https://github.com/digitopvn/diginext/compare/v3.6.3...v3.6.4) (2023-06-08)
+
+
+### Bug Fixes
+
+* **server,api:** skip checking namespace when create deploy environment ([91aa0dc](https://github.com/digitopvn/diginext/commit/91aa0dc7f8b1f8d2dd878d2670a3ae7910ef5280))
+* **server,api:** skip checking namespace when create deploy environment ([#189](https://github.com/digitopvn/diginext/issues/189)) ([68ae632](https://github.com/digitopvn/diginext/commit/68ae6323fda4ce828f28c6a0dc1c632ee78bca49))
+
 ## [3.6.3](https://github.com/digitopvn/diginext/compare/v3.6.2...v3.6.3) (2023-06-07)
 
 
