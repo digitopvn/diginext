@@ -1,3 +1,11 @@
+## [3.7.5](https://github.com/digitopvn/diginext/compare/v3.7.4...v3.7.5) (2023-06-08)
+
+
+### Bug Fixes
+
+* **server:** generate yaml, main app name is project slug and app slug ([174108e](https://github.com/digitopvn/diginext/commit/174108e582a064f2b715242572f6236a4e454790))
+* **server:** generate yaml, main app name is project slug and app slug ([#195](https://github.com/digitopvn/diginext/issues/195)) ([8fefd40](https://github.com/digitopvn/diginext/commit/8fefd40222a09f7c4413bcfc198e296ffa83210b))
+
 ## [3.7.4](https://github.com/digitopvn/diginext/compare/v3.7.3...v3.7.4) (2023-06-08)
 
 
