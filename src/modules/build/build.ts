@@ -373,7 +373,7 @@ export async function startBuild(
 
 			sendLog({
 				SOCKET_ROOM,
-				message: `✓ Pushed to container registry (${registrySlug}) successfully!`,
+				message: `✓ Pushed "${buildImage}" to container registry (${registrySlug}) successfully!`,
 			});
 
 			notifyClients();
@@ -404,7 +404,7 @@ export async function startBuild(
 
 				sendLog({
 					SOCKET_ROOM,
-					message: `✓ Pushed to container registry (${registrySlug}) successfully!`,
+					message: `✓ Pushed "${buildImage}" to container registry (${registrySlug}) successfully!`,
 				});
 
 				notifyClients();
