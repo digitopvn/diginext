@@ -67,7 +67,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
-	const { slug } = currentAppConfig;
+	const { slug, project } = currentAppConfig;
 
 	console.log("generateDeployment() > buildNumber :>> ", buildNumber);
 	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
@@ -80,10 +80,13 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 	const registrySlug = deployEnvironmentConfig.registry;
 	let nsName = deployEnvironmentConfig.namespace;
-	let ingName = slug.toLowerCase();
-	let svcName = slug.toLowerCase();
-	let appName = slug.toLowerCase() + "-" + BUILD_NUMBER;
-	let mainAppName = appSlug;
+	let ingName = project + "-" + slug.toLowerCase();
+	let svcName = project + "-" + slug.toLowerCase();
+	let appName = project + "-" + slug.toLowerCase() + "-" + BUILD_NUMBER;
+	/**
+	 * "main-app" == projectSlug + "-" + appSlug
+	 */
+	let mainAppName = project + "-" + appSlug;
 	let basePath = deployEnvironmentConfig.basePath ?? "";
 
 	// Prepare for building docker image
