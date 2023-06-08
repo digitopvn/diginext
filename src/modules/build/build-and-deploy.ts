@@ -15,6 +15,8 @@ import { sendLog } from "./send-log-message";
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildOptions) => {
 	// [1] Build container image
 	buildParams.buildWatch = true;
+	buildParams.env = deployParams.env;
+
 	const { build, startTime, SOCKET_ROOM } = await startBuild(buildParams);
 	console.log("[BUILD_AND_DEPLOY] Finished building > build :>> ", build);
 
