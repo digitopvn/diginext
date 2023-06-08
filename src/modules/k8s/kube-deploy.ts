@@ -424,14 +424,9 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	/**
 	 * 3. [ONLY PROD DEPLOY] Update ENV variables to PRODUCTION values
 	 */
-	if (env === "prod") {
-		const prodEnvVars = envVars.filter((envVar) => envVar.value.toString().indexOf(endpointUrl) > -1);
-		console.log("prodEnvVars :>> ", prodEnvVars);
-
-		if (!isEmpty(prodEnvVars)) {
-			const setPreEnvVarRes = await ClusterManager.setEnvVar(prodEnvVars, prereleaseAppName, namespace, { context });
-			if (setPreEnvVarRes) if (onUpdate) onUpdate(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
-		}
+	if (env === "prod" && !isEmpty(envVars)) {
+		const setPreEnvVarRes = await ClusterManager.setEnvVar(envVars, prereleaseAppName, namespace, { context });
+		if (setPreEnvVarRes) if (onUpdate) onUpdate(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
 	}
 
 	// Wait until the deployment is ready!
