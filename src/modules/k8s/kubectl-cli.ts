@@ -7,6 +7,8 @@ import { askForCluster } from "../cluster/ask-for-cluster";
 import ClusterManager from ".";
 import { askForDeployment } from "./ask-for-deployment";
 import { askForNamespace } from "./ask-for-namespace";
+import { askForNewValue } from "./ask-for-new-value";
+import { askForTargetProp } from "./ask-for-target-prop";
 
 const kubectlCommand = (resource: string) => {};
 
@@ -25,24 +27,46 @@ export const execKubectl = async (options?: InputOptions) => {
 			switch (resource) {
 				case "deploy":
 				case "deployment":
-					const { imageURL, port, size, key: imagePullSecret } = options;
 					const targetNamespace = namespace ?? (await askForNamespace(cluster));
+
 					const targetDeployment = await askForDeployment(cluster, targetNamespace);
+					if (!targetDeployment) return;
 
-					if (imageURL) {
-						const imgRes = await ClusterManager.setDeployImageAll(targetDeployment, imageURL, targetNamespace, { context });
-						if (imgRes)
-							logSuccess(
-								`[DX_KB] Successfully set new image (${imageURL}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`
-							);
-					}
+					const targetProp = await askForTargetProp("deployment");
 
-					if (imagePullSecret) {
-						const imgPullRes = await ClusterManager.setDeployImagePullSecretByFilter(imagePullSecret, targetNamespace, { context });
-						if (imgPullRes)
-							logSuccess(
-								`[DX_KB] Successfully set new imagePullSecret (${imagePullSecret}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`
-							);
+					switch (targetProp) {
+						case "image":
+							let { imageURL } = options;
+							if (!imageURL) imageURL = await askForNewValue();
+
+							const imgRes = await ClusterManager.setDeployImageAll(targetDeployment, imageURL, targetNamespace, { context });
+							if (imgRes)
+								logSuccess(
+									`[DX_KB] Successfully set new image (${imageURL}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`
+								);
+							break;
+
+						case "imagePullSecrets":
+							let { key: imagePullSecret } = options;
+							if (!imagePullSecret) imagePullSecret = await askForNewValue();
+
+							const imgPullRes = await ClusterManager.setDeployImagePullSecretByFilter(imagePullSecret, targetNamespace, { context });
+							if (imgPullRes)
+								logSuccess(
+									`[DX_KB] Successfully set new imagePullSecret (${imagePullSecret}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`
+								);
+							break;
+
+						case "port":
+							let { port } = options;
+							if (typeof port === "undefined") port = await askForNewValue<number>();
+
+							const portRes = await ClusterManager.setDeployPortAll(targetDeployment, port.toString(), targetNamespace, { context });
+							if (portRes)
+								logSuccess(
+									`[DX_KB] Successfully set new image (${imageURL}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`
+								);
+							break;
 					}
 					break;
 
