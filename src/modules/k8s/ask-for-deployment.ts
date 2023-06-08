@@ -18,7 +18,7 @@ export const askForDeployment = async (cluster: ICluster, namespace: string = "d
 	}
 
 	const deployments = await ClusterManager.getDeploys(namespace, { context });
-	console.log("deployments :>> ", deployments);
+
 	if (!deployments || deployments.length === 0) {
 		logError(`This namespace (${namespace}) doesn't have any deployments.`);
 		return;
