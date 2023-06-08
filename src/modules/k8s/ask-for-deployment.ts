@@ -1,6 +1,5 @@
 import { logError } from "diginext-utils/dist/console/log";
 import inquirer from "inquirer";
-import { isEmpty } from "lodash";
 
 import type { ICluster } from "@/entities";
 
@@ -19,8 +18,8 @@ export const askForDeployment = async (cluster: ICluster, namespace: string = "d
 	}
 
 	const deployments = await ClusterManager.getDeploys(namespace, { context });
-
-	if (isEmpty(deployments)) {
+	console.log("deployments :>> ", deployments);
+	if (!deployments || deployments.length === 0) {
 		logError(`This namespace (${namespace}) doesn't have any deployments.`);
 		return;
 	}
