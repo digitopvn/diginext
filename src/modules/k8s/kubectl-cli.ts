@@ -64,7 +64,7 @@ export const execKubectl = async (options?: InputOptions) => {
 							const portRes = await ClusterManager.setDeployPortAll(targetDeployment, port.toString(), targetNamespace, { context });
 							if (portRes)
 								logSuccess(
-									`[DX_KB] Successfully set new image (${imageURL}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`
+									`[DX_KB] Successfully set new port (${port}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`
 								);
 							break;
 					}

@@ -407,7 +407,8 @@ export async function setDeployPortAll(name: string, port: string, namespace = "
 				name,
 				"--type",
 				"json",
-				`-p='[{"op": "replace", "path": "/spec/containers/${i}/ports/0/containerPort", "value": ${port}}]'`
+				`--patch`,
+				`[{"op": "replace", "path": "/spec/template/spec/containers/${i}/ports/0/containerPort", "value": ${port}}]`
 			);
 
 			const { stdout } = await execa("kubectl", args);
@@ -438,7 +439,8 @@ export async function setDeployImagePullSecretByFilter(imagePullSecretName: stri
 		args.push(
 			"--type",
 			"json",
-			`-p='[{"op": "replace", "path": "/spec/containers/0/imagePullSecrets/0/name", "value":"${imagePullSecretName}"}]'`
+			`--patch`,
+			`'[{"op": "replace", "path": "/spec/containers/0/imagePullSecrets/0/name", "value":"${imagePullSecretName}"}]'`
 		);
 
 		const { stdout } = await execa("kubectl", args);
