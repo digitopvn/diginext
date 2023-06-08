@@ -1,3 +1,12 @@
+## [3.7.2](https://github.com/digitopvn/diginext/compare/v3.7.1...v3.7.2) (2023-06-08)
+
+
+### Bug Fixes
+
+* **cli:** improve kubectl command set image, port, secret ([bcc14c5](https://github.com/digitopvn/diginext/commit/bcc14c50e20c196d6066a3bb660a5b8abdff2675))
+* **cli:** improve kubectl command set image, port, secret ([#192](https://github.com/digitopvn/diginext/issues/192)) ([e82b8ee](https://github.com/digitopvn/diginext/commit/e82b8ee0184fecf899e47026a677436d5adbbc31))
+* **cli:** kb set deploy - cannot access image url before init ([3323f20](https://github.com/digitopvn/diginext/commit/3323f205a05128af2dc0a1b555a6aa981d135994))
+
 ## [3.7.1](https://github.com/digitopvn/diginext/compare/v3.7.0...v3.7.1) (2023-06-08)
 
 
