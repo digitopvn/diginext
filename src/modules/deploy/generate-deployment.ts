@@ -83,7 +83,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	let ingName = slug.toLowerCase();
 	let svcName = slug.toLowerCase();
 	let appName = slug.toLowerCase() + "-" + BUILD_NUMBER;
-	let mainAppName = makeSlug(currentAppConfig.name).toLowerCase();
+	let mainAppName = appSlug;
 	let basePath = deployEnvironmentConfig.basePath ?? "";
 
 	// Prepare for building docker image
