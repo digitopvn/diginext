@@ -30,7 +30,7 @@
     npm i diginext@latest -g
     ```
 
-## Deployment
+## Build & Deployment
 
 -   Authenticate Google Cloud with Service Account:
 
@@ -58,14 +58,14 @@
     dx do registry connect
     ```
 
--   Build the application on your computer & push that Docker image to the Container Registry:
+-   Request Diginext Server to build the application & push that image to the Container Registry (**It won't deploy the app**):
 
     ```bash
-    # cần authenticate provider & connect to registry trước (xem ở trên)
-    # build & push to DEV environment
     dx build
-    # build & push to PROD environment
-    dx build --prod
+
+    # options
+    dx build --registry=<registry-slug>
+    dx build --image=<image_url>:<image_tag>
     ```
 
 -   Deploy your web app to **DEV environment**:

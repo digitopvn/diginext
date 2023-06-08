@@ -52,8 +52,6 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	if (options.isDebugging) console.log("askForDeployEnvironmentInfo > app :>> ", app);
 	if (options.isDebugging) console.log("askForDeployEnvironmentInfo > project :>> ", project);
 
-	// TODO: validate owner, workspace, git & framework ?
-
 	// verify if this app's directory has any git remote integrated
 	if (!app.git || !app.git.provider || !app.git.repoSSH || !app.git.repoURL) {
 		const gitInfo = await getCurrentGitRepoData(options.targetDirectory);
