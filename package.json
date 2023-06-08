@@ -106,8 +106,8 @@
 		"docker-build-arm": "docker buildx build -f Dockerfile --load -t digitop/diginext:latest --builder=diginext-cli-builder --cache-from type=registry,ref=digitop/diginext:latest .",
 		"docker-release": "pnpm build && pnpm docker-build",
 		"swagger": "tsoa spec",
-		"prepare": "husky install",
-		"postinstall": "husky install"
+		"prepare": "husky install || true",
+		"postinstall": "husky install || true"
 	},
 	"config": {
 		"commitizen": {

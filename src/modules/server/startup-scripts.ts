@@ -55,8 +55,8 @@ export async function startupScripts() {
 	if (!isDevMode) {
 		// <-- to make sure it won't override your GIT config when developing Diginext
 		execCmd(`git init`);
-		execCmd(`git config --global user.email server@diginext.site`);
-		execCmd(`git config --global --add user.name Diginext`);
+		execCmd(`git config --location=global user.email server@diginext.site`);
+		execCmd(`git config --location=global --add user.name Diginext`);
 	}
 
 	// seed system initial data: Cloud Providers
