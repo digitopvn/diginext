@@ -1,3 +1,11 @@
+## [3.7.7](https://github.com/digitopvn/diginext/compare/v3.7.6...v3.7.7) (2023-06-09)
+
+
+### Performance Improvements
+
+* **server,api:** improve build and deploy api with error message ([c5683f5](https://github.com/digitopvn/diginext/commit/c5683f593fbc2c239f4536a1e6eefe5310f56ba4))
+* **server,api:** improve build and deploy api with error message ([#197](https://github.com/digitopvn/diginext/issues/197)) ([cc2ba93](https://github.com/digitopvn/diginext/commit/cc2ba9304e5ce0c227433e216ef80453832802c2))
+
 ## [3.7.6](https://github.com/digitopvn/diginext/compare/v3.7.5...v3.7.6) (2023-06-08)
 
 
