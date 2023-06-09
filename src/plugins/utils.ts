@@ -404,11 +404,7 @@ export async function getLatestCliVersion() {
  */
 export async function checkForUpdate() {
 	const latestVersion = await getLatestCliVersion();
-	const latestVersionData = latestVersion.split(".");
-	const currentVer = currentVersion();
-	const curVersionData = currentVer.split(".");
-	// show update warning only when there are breaking changes
-	return latestVersionData[0] > curVersionData[0] || latestVersionData[1] > curVersionData[1];
+	return latestVersion !== currentVersion();
 }
 
 async function logBitbucketError(error: any, delay?: number, location?: string, shouldExit = false) {
@@ -641,14 +637,14 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 };
 
 interface PullOrCloneGitRepoOptions {
-	isDebugging?: boolean;
 	onUpdate?: (msg: string, progress?: number) => void;
 }
 
-export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
+export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOrCloneGitRepoOptions = {}) => {
+	//
 	let git: SimpleGit;
 
-	const { onUpdate, isDebugging = false } = options;
+	const { onUpdate } = options;
 
 	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
 		const message = `git.${method} ${stage} stage ${progress}% complete`;
@@ -658,17 +654,31 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	if (fs.existsSync(dir)) {
 		try {
 			git = simpleGit(dir, { progress: onProgress });
+			await git.clone(repoSSH, dir);
 
-			/**
-			 * DO NOT USE `git.getRemotes(true)` BECAUSE IT WON'T RETURN THE REMOTE URLs
-			 */
-			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
-			if (isDebugging) console.log("remotes :>> ", remotes);
+			console.log("\ndone");
+		} catch (e) {}
+	}
+};
+//
 
+export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
+	let git: SimpleGit;
+
+	const { onUpdate } = options;
+
+	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
+		const message = `git.${method} ${stage} stage ${progress}% complete`;
+		if (onUpdate) onUpdate(message, progress);
+	};
+
+	if (fs.existsSync(dir)) {
+		try {
+			git = simpleGit(dir, { progress: onProgress });
+			const remotes = ((await git.getRemotes(false)) || []).filter((remote) => remote.name === "origin");
 			const originRemote = remotes[0] as any;
 			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
-
-			if (isDebugging) console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
+			console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
 			if (originRemote?.refs?.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
 
 			const curBranch = await getCurrentGitBranch(dir);
@@ -701,60 +711,6 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	}
 };
 
-export const pullOrCloneGitRepoHTTPS = async (url: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
-	let git: SimpleGit;
-
-	const { onUpdate } = options;
-
-	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
-		const message = `git.${method} ${stage} stage ${progress}% complete`;
-		if (onUpdate) onUpdate(message, progress);
-	};
-
-	if (fs.existsSync(dir)) {
-		// if the directory is existed, try to pull the repo
-		try {
-			git = simpleGit(dir, { progress: onProgress });
-
-			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
-
-			const originRemote = remotes[0] as any;
-			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
-
-			console.log("originRemote :>> ", originRemote, `>`, { url });
-			if (originRemote?.refs?.fetch !== url) await git.addRemote("origin", url);
-
-			const curBranch = await getCurrentGitBranch(dir);
-			await git.pull("origin", curBranch, ["--no-ff"]);
-		} catch (e) {
-			// if unable to pull -> delete that directory & clone a new one
-			if (onUpdate) onUpdate(`Failed to pull "${url}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
-
-			// just for sure...
-			await deleteFolderRecursive(dir);
-
-			// for CLI create new app from a framework
-			git = simpleGit({ progress: onProgress });
-
-			try {
-				await git.clone(url, dir, [`--branch=${branch}`, "--single-branch"]);
-			} catch (e2) {
-				if (onUpdate) onUpdate(`Failed to clone "${url}" (${branch}) to "${dir}" directory: ${e.message}`);
-			}
-		}
-	} else {
-		if (onUpdate) onUpdate(`Cache source code not found. Cloning "${url}" (${branch}) to "${dir}" directory.`);
-
-		git = simpleGit({ progress: onProgress });
-
-		try {
-			await git.clone(url, dir, [`--branch=${branch}`, "--single-branch"]);
-		} catch (e) {
-			if (onUpdate) onUpdate(`Failed to clone "${url}" (${branch}) to "${dir}" directory: ${e.message}`);
-		}
-	}
-};
-
 /**
  * Get current remote SSH & URL
  */
@@ -764,10 +720,8 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 			baseDir: `${dir}`,
 			binary: "git",
 		});
-		// const remoteInfo = await git.listRemote();
-		// console.log("remoteInfo :>> ", remoteInfo);
-		const remotes = await git.getRemotes(true);
-		// console.log("getCurrentGitRepoData > remotes :>> ", remotes);
+		const remotes = await git.getRemotes(false);
+
 		const remoteSSH = (remotes[0] as any)?.refs?.fetch;
 		if (!remoteSSH) return;
 

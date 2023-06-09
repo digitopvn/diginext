@@ -8,6 +8,7 @@ import pkg from "@/../package.json";
 import { execConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
+import cloneRepo from "@/modules/apps/cloneRepo";
 import createApp from "@/modules/apps/new-app";
 import { execCDN } from "@/modules/cdn";
 import { cliAuthenticate, cliLogin, cliLogout, parseCliOptions } from "@/modules/cli";
@@ -45,6 +46,7 @@ export const conf = new Configstore(pkg.name);
 export async function processCLI(options?: InputOptions) {
 	options.version = currentVersion();
 
+	console.log("options.action :>> ", options.action);
 	let env = "dev";
 	if (options.isStaging) env = "staging";
 	if (options.isProd) env = "prod";
@@ -219,6 +221,14 @@ export async function processCLI(options?: InputOptions) {
 		case "free":
 			await cliAuthenticate(options);
 			await freeUp();
+			return;
+
+		case "clone":
+			console.log("1");
+			await cliAuthenticate(options);
+			console.log("2");
+
+			await cloneRepo(options);
 			return;
 
 		default:

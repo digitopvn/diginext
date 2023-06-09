@@ -22,7 +22,7 @@ import { isServerMode } from "@/app.config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
 // import { conf } from "../cli/update-cli";
-import { deleteFolderRecursive, pullOrCloneGitRepo } from "../../plugins";
+import { cloneGitRepo, deleteFolderRecursive, pullOrCloneGitRepo } from "../../plugins";
 
 export let bitbucket, workspaceId;
 
@@ -198,6 +198,46 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	const spin = ora(`Pulling "${name}" framework... 0%`).start();
 
 	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
+		onUpdate: (msg, progress) => {
+			if (isServerMode) {
+				console.log(msg);
+			} else {
+				spin.text = `Pulling "${name}" framework... ${progress || 0}%`;
+			}
+		},
+	});
+
+	spin.stop();
+
+	// delete unneccessary files
+	if (fs.existsSync(".fw/dx.json")) await deleteFolderRecursive(".fw/dx.json");
+	if (fs.existsSync(".fw/.git")) await deleteFolderRecursive(".fw/.git");
+	if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
+	if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
+	if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
+	if (fs.existsSync(".fw/yarn.lock")) fs.unlinkSync(".fw/yarn.lock");
+	if (fs.existsSync(".fw/logo.png")) fs.unlinkSync(".fw/logo.png");
+
+	return true;
+};
+
+export const cloneGitFramework = async (options: InputOptions) => {
+	//
+	const { name, repoSSH } = options.framework;
+
+	// create tmp dir
+	const tmpDir = path.resolve(".fw/");
+	try {
+		await deleteFolderRecursive(tmpDir);
+	} catch (e) {
+		logError(e);
+	}
+	await mkdir(tmpDir);
+
+	const spin = ora(`Pulling "${name}" framework... 0%`).start();
+
+	console.log("repoSSH, tmpDir :>> ", repoSSH, tmpDir);
+	await cloneGitRepo(repoSSH, tmpDir, {
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
 				console.log(msg);
