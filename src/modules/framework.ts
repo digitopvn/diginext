@@ -1,6 +1,6 @@
 import type { InputOptions } from "@/interfaces/InputOptions";
 
-import { cleanUp, copyAllResources, pullingLatestFrameworkVersion } from "./bitbucket";
+import { cleanUp, cloneGitFramework, copyAllResources, pullingLatestFrameworkVersion } from "./bitbucket";
 
 export const getLatestFrameworkVersion = async (framework = "diginext") => {
 	// let { data } = await bitbucket.repositories.listTags({
@@ -41,9 +41,6 @@ export const selectFrameworkVersion = async (framework = "diginext") => {
 	// return versionList;
 };
 
-/**
- * @param  {InputOptions} options
- */
 export async function pullingFramework(options: InputOptions) {
 	if (options.framework.name != "none") {
 		// TODO: Select specific branch as a version?
@@ -64,6 +61,16 @@ export async function pullingFramework(options: InputOptions) {
 
 		await cleanUp();
 	}
+
+	return true;
+}
+
+export async function pullingOldRepo(options: InputOptions) {
+	await cloneGitFramework(options);
+
+	await copyAllResources(options.targetDirectory);
+
+	await cleanUp();
 
 	return true;
 }
