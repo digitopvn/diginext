@@ -56,41 +56,45 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 			type: "error",
 			message: `[DEPLOY BUILD] App "${appSlug}" not found.`,
 		});
-		return;
+		return { error: `[DEPLOY BUILD] App "${appSlug}" not found.` };
 	}
 
 	let serverDeployEnvironment = await getDeployEvironmentByApp(app, env);
 	let isPassedDeployEnvironmentValidation = true;
+	const errMsgs: string[] = [];
 
 	// validating...
 	if (isEmpty(serverDeployEnvironment)) {
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
-			message: `[START BUILD] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app is empty (probably deleted?).`,
+			message: `Deploy environment (${env.toUpperCase()}) of "${appSlug}" app is empty (probably deleted?).`,
 		});
 		isPassedDeployEnvironmentValidation = false;
+		errMsgs.push(`Deploy environment (${env.toUpperCase()}) of "${appSlug}" app is empty (probably deleted?).`);
 	}
 
 	if (!serverDeployEnvironment.cluster) {
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
-			message: `[START BUILD] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`,
+			message: `Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`,
 		});
 		isPassedDeployEnvironmentValidation = false;
+		errMsgs.push(`Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`);
 	}
 
 	if (!serverDeployEnvironment.namespace) {
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
-			message: `[START BUILD] Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`,
+			message: `Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`,
 		});
 		isPassedDeployEnvironmentValidation = false;
+		errMsgs.push(`Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`);
 	}
 
-	if (!isPassedDeployEnvironmentValidation) return;
+	if (!isPassedDeployEnvironmentValidation) return { error: errMsgs.join(",") };
 
 	const { namespace, cluster: clusterShortName } = serverDeployEnvironment;
 
@@ -120,7 +124,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	} catch (e) {
 		console.log("e :>> ", e);
 		sendLog({ SOCKET_ROOM, type: "error", message: e.message });
-		return;
+		return { error: e.message };
 	}
 
 	// console.log("deployment :>> ", deployment);
@@ -155,7 +159,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	} catch (e) {
 		console.log("e :>> ", e);
 		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error" });
-		return;
+		return { error: e.message };
 	}
 
 	/**
@@ -165,7 +169,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	const isNsExisted = await ClusterManager.isNamespaceExisted(serverDeployEnvironment.namespace, { context });
 	if (!isNsExisted) {
 		const createNsResult = await ClusterManager.createNamespace(serverDeployEnvironment.namespace, { context });
-		if (!createNsResult) return;
+		if (!createNsResult) return { error: `Unable to create new namespace: ${serverDeployEnvironment.namespace}` };
 	}
 
 	try {
@@ -174,9 +178,9 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
-			message: `[PREVIEW] Can't create "imagePullSecrets" in the "${namespace}" namespace.`,
+			message: `Can't create "imagePullSecrets" in the "${namespace}" namespace.`,
 		});
-		return;
+		return { error: `Can't create "imagePullSecrets" in the "${namespace}" namespace.` };
 	}
 
 	// Start rolling out new release
@@ -229,7 +233,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 			}
 		} catch (e) {
 			sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}:` });
-			return;
+			return { error: `Failed to roll out the release :>> ${e.message}:` };
 		}
 	} else {
 		if (releaseId) {
@@ -257,8 +261,8 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 				}
 				newRelease = result.data;
 			} catch (e) {
-				sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}:` });
-				return;
+				sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}` });
+				return { error: `Failed to roll out the release :>> ${e.message}` };
 			}
 		}
 	}
