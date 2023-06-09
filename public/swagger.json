@@ -4065,6 +4065,12 @@
 					"cliVersion": {
 						"type": "string"
 					},
+					"deploymentYaml": {
+						"type": "string"
+					},
+					"prereleaseUrl": {
+						"type": "string"
+					},
 					"prereleaseEnvironment": {
 						"anyOf": [
 							{
@@ -4090,13 +4096,7 @@
 					"preYaml": {
 						"type": "string"
 					},
-					"prereleaseUrl": {
-						"type": "string"
-					},
 					"productionUrl": {
-						"type": "string"
-					},
-					"deploymentYaml": {
 						"type": "string"
 					},
 					"endpoint": {
@@ -4814,7 +4814,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "3.7.5",
+		"version": "3.7.6",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -7724,23 +7724,40 @@
 										{
 											"properties": {
 												"data": {
-													"properties": {
-														"deployment": {
-															"$ref": "#/components/schemas/GenerateDeploymentResult"
+													"anyOf": [
+														{
+															"properties": {
+																"deployment": {},
+																"release": {},
+																"build": {},
+																"error": {}
+															},
+															"required": [
+																"error"
+															],
+															"type": "object"
 														},
-														"release": {
-															"$ref": "#/components/schemas/IRelease"
-														},
-														"build": {
-															"$ref": "#/components/schemas/IBuild"
+														{
+															"properties": {
+																"error": {},
+																"deployment": {
+																	"$ref": "#/components/schemas/GenerateDeploymentResult"
+																},
+																"release": {
+																	"$ref": "#/components/schemas/IRelease"
+																},
+																"build": {
+																	"$ref": "#/components/schemas/IBuild"
+																}
+															},
+															"required": [
+																"deployment",
+																"release",
+																"build"
+															],
+															"type": "object"
 														}
-													},
-													"required": [
-														"deployment",
-														"release",
-														"build"
-													],
-													"type": "object"
+													]
 												},
 												"status": {
 													"type": "number",
