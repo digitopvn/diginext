@@ -40,7 +40,7 @@ export const authenticate = async (options?: InputOptions) => {
 		const { stdout } = await execa.command(`kubectl config view --flatten`);
 		currentKubeConfigContent = stdout;
 	} catch (e) {
-		logError(e);
+		logError(`[CUSTOM_PROVIDER_AUTH]`, e);
 		return;
 	}
 
@@ -142,7 +142,7 @@ export const execCustomProvider = async (options?: InputOptions) => {
 			try {
 				await authenticate(options);
 			} catch (e) {
-				logError(e);
+				logError(`[CUSTOM_PROVIDER_AUTH]`, e);
 			}
 			break;
 
@@ -150,7 +150,7 @@ export const execCustomProvider = async (options?: InputOptions) => {
 			try {
 				await connectDockerRegistry(options);
 			} catch (e) {
-				logError(e);
+				logError(`[CONNECT_REGISTRY]`, e);
 			}
 			break;
 
