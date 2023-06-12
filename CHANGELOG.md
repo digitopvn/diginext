@@ -1,3 +1,11 @@
+# [3.8.0](https://github.com/digitopvn/diginext/compare/v3.7.7...v3.8.0) (2023-06-12)
+
+
+### Features
+
+* **server:** implement basic auth with register and password login ([d93fca6](https://github.com/digitopvn/diginext/commit/d93fca6051e3323e21fb04b4d4d9c07e0994755d))
+* **server:** implement basic auth with register and password login ([#198](https://github.com/digitopvn/diginext/issues/198)) ([f4c03ed](https://github.com/digitopvn/diginext/commit/f4c03ed1d14be4596c2c41f787bc8710bf0cac51))
+
 ## [3.7.7](https://github.com/digitopvn/diginext/compare/v3.7.6...v3.7.7) (2023-06-09)
 
 
