@@ -1,5 +1,4 @@
 import { log, logWarn } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import * as fs from "fs";
 import yaml from "js-yaml";
@@ -8,9 +7,10 @@ import _, { isEmpty, isObject, toNumber } from "lodash";
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
 import type { IApp, ICluster, IContainerRegistry, IWorkspace } from "@/entities";
-import type { AppConfig, KubeDeployment, KubeNamespace } from "@/interfaces";
+import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { objectToDeploymentYaml } from "@/plugins";
+import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
@@ -55,27 +55,38 @@ export type GenerateDeploymentResult = {
 };
 
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
-	const { appSlug, env = "dev", username, workspace, buildNumber, appConfig } = params;
+	const {
+		appSlug,
+		env = "dev",
+		buildNumber = makeDaySlug({ divider: "" }),
+		username,
+		workspace,
+		appConfig,
+		//
+	} = params;
 
 	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
-	const { slug } = currentAppConfig;
+	const { slug, project } = currentAppConfig;
 
-	// console.log("generateDeployment() > params :>> ", params);
+	console.log("generateDeployment() > buildNumber :>> ", buildNumber);
 	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
 
 	// DEFINE DEPLOYMENT PARTS:
-	const BUILD_NUMBER = makeSlug(buildNumber) || makeDaySlug({ divider: "" });
+	const BUILD_NUMBER = makeSlug(buildNumber);
 
 	const deployEnvironmentConfig = currentAppConfig.deployEnvironment[env];
 	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);
 
 	const registrySlug = deployEnvironmentConfig.registry;
 	let nsName = deployEnvironmentConfig.namespace;
-	let ingName = slug.toLowerCase();
-	let svcName = slug.toLowerCase();
-	let appName = slug.toLowerCase() + "-" + BUILD_NUMBER;
-	let mainAppName = makeSlug(currentAppConfig.name).toLowerCase();
+	let ingName = project + "-" + slug.toLowerCase();
+	let svcName = project + "-" + slug.toLowerCase();
+	let appName = project + "-" + slug.toLowerCase() + "-" + BUILD_NUMBER;
+	/**
+	 * "main-app" == projectSlug + "-" + appSlug
+	 */
+	let mainAppName = project + "-" + appSlug;
 	let basePath = deployEnvironmentConfig.basePath ?? "";
 
 	// Prepare for building docker image
@@ -136,7 +147,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (env === "prod") log({ prereleaseDomain });
 
 	// * [NEW TACTIC] Fetch ENV variables from database:
-	const deployEnvironment = (app.deployEnvironment || {})[env] || {};
+	const deployEnvironment = app.deployEnvironment[env] || ({} as DeployEnvironment);
 	// console.log("generate deployment > deployEnvironment :>> ", deployEnvironment);
 
 	let containerEnvs = deployEnvironment.envVars || [];
@@ -153,9 +164,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// console.log("[2] containerEnvs :>> ", containerEnvs);
 
 	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
-	let prereleaseEnvs = [...containerEnvs];
+	let prereleaseEnvs = [];
 	if (env === "prod" && !isEmpty(domains)) {
-		prereleaseEnvs = prereleaseEnvs.map((envVar) => {
+		prereleaseEnvs = containerEnvs.map((envVar) => {
 			let curValue = envVar.value;
 			if (curValue.indexOf(domains[0]) > -1) {
 				// replace all production domains with PRERELEASE domains

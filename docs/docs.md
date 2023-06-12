@@ -1,4 +1,4 @@
-# Documentation
+# CLI Documentation
 
 ## Project & App Helper
 
@@ -30,7 +30,7 @@
     npm i diginext@latest -g
     ```
 
-## Deployment
+## Build & Deployment
 
 -   Authenticate Google Cloud with Service Account:
 
@@ -58,14 +58,14 @@
     dx do registry connect
     ```
 
--   Build the application on your computer & push that Docker image to the Container Registry:
+-   Request Diginext Server to build the application & push that image to the Container Registry (**It won't deploy the app**):
 
     ```bash
-    # cần authenticate provider & connect to registry trước (xem ở trên)
-    # build & push to DEV environment
     dx build
-    # build & push to PROD environment
-    dx build --prod
+
+    # options
+    dx build --registry=<registry-slug>
+    dx build --image=<image_url>:<image_tag>
     ```
 
 -   Deploy your web app to **DEV environment**:
@@ -93,25 +93,13 @@
 
     **New deployment of PROD environment will not be rolled out immediately like other environments.**
 
-    After the build process finished, access [Diginext Admin](https://app.diginext.site) to preview the deployment, if everything is okay, you can process ROLLING OUT within the Admin UI.
+    After the build process finished, access [Diginext Workspace](https://hobby.diginext.site) to preview the deployment, if everything is okay, you can process ROLLING OUT within the Admin UI.
 
--   Deploy to **any enviroments**:
+-   Deploy to **custom enviroments**:
 
     ```bash
     dx deploy --env=canary
     ```
-
-### App Deployment Configuration File Explain - `dx.json` 
-
--   Add new domain to **DEVELOPMENT environment**:
-    - Open `dx.json` & add your domain to "environment > dev > domains"
-    - (eg: `{ dev: { domains: ["example.com"] } }`)
-
--   Add new domain to **PRODUCTION environment**:
-    - Open `dx.json` &  add your domain to "environment > dev > domains"
-    - (eg: `{ prod: { domains: ["example.com"] } }`)
-
--   Do the same for other environments.
 
 ## Build
 

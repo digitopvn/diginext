@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.6.1-prerelease.1",
+	"version": "3.7.6",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -106,8 +106,8 @@
 		"docker-build-arm": "docker buildx build -f Dockerfile --load -t digitop/diginext:latest --builder=diginext-cli-builder --cache-from type=registry,ref=digitop/diginext:latest .",
 		"docker-release": "pnpm build && pnpm docker-build",
 		"swagger": "tsoa spec",
-		"prepare": "husky install",
-		"postinstall": "husky install"
+		"prepare": "husky install || true",
+		"postinstall": "husky install || true"
 	},
 	"config": {
 		"commitizen": {
@@ -217,6 +217,7 @@
 		"passport-jwt": "4.0.0",
 		"pkg-install": "^0.2.0",
 		"pm2": "^5.2.2",
+		"rate-limiter-flexible": "^2.4.1",
 		"recursive-copy": "^2.0.14",
 		"redis": "^4.3.1",
 		"reflect-metadata": "^0.1.13",

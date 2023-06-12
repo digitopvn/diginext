@@ -1,5 +1,4 @@
 import { log, logError } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import inquirer from "inquirer";
 import { isEmpty, upperFirst } from "lodash";
 
@@ -8,6 +7,7 @@ import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { getCurrentGitRepoData, parseGitRepoDataFromRepoSSH } from "@/plugins";
+import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 import { checkGitProviderAccess, checkGitRepoAccess } from "../git";

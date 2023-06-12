@@ -1,7 +1,6 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import { isArray, isBoolean, isEmpty, isNumber, isString, isUndefined } from "lodash";
 
 import type { AppGitInfo, IApp, ICluster, IContainerRegistry, IFramework, IProject } from "@/entities";
@@ -26,6 +25,7 @@ import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion, parseGitRepoDataFromRepoSSH } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
+import { makeSlug } from "@/plugins/slug";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
 
@@ -113,6 +113,12 @@ export interface DeployEnvironmentData {
 	 * @example "asia.gcr.io/my-workspace/my-project/my-app"
 	 */
 	imageURL: string;
+
+	/**
+	 * Build number is image's tag (no special characters, eg. "dot" or "comma")
+	 * @example latest, v01, prerelease, alpha, beta,...
+	 */
+	buildNumber: string;
 
 	/**
 	 * OPTIONAL
@@ -661,6 +667,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
+		if (!deployEnvironmentData.buildNumber) respondFailure({ msg: `Build number (image's tag) is required.` });
+
+		const { buildNumber } = deployEnvironmentData;
 
 		const project = app.project as IProject;
 		const { slug: projectSlug } = project;
@@ -692,11 +701,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 			deployEnvironmentData.namespace = `${projectSlug}-${env}`;
 		} else {
 			// Check if namespace is existed...
-			const isNamespaceExisted = await ClusterManager.isNamespaceExisted(deployEnvironmentData.namespace, { context: cluster.contextName });
-			if (isNamespaceExisted)
-				return respondFailure({
-					msg: `Namespace "${deployEnvironmentData.namespace}" was existed in "${deployEnvironmentData.cluster}" cluster, please choose different name or leave empty to use generated namespace name.`,
-				});
+			// const isNamespaceExisted = await ClusterManager.isNamespaceExisted(deployEnvironmentData.namespace, { context: cluster.contextName });
+			// if (isNamespaceExisted)
+			// 	return respondFailure({
+			// 		msg: `Namespace "${deployEnvironmentData.namespace}" was existed in "${deployEnvironmentData.cluster}" cluster, please choose different name or leave empty to use generated namespace name.`,
+			// 	});
 		}
 
 		// container registry
@@ -736,7 +745,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// Exposing ports, enable/disable CDN, and select Ingress type
 		if (isUndefined(deployEnvironmentData.port)) return respondFailure({ msg: `Param "port" is required.` });
 		if (isUndefined(deployEnvironmentData.cdn) || !isBoolean(deployEnvironmentData.cdn)) deployEnvironmentData.cdn = false;
-		deployEnvironmentData.ingress = "nginx";
+		// deployEnvironmentData.ingress = "nginx";
 
 		// create deploy environment in the app:
 		let [updatedApp] = await this.service.update(
@@ -750,10 +759,19 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		const appConfig = await getAppConfigFromApp(updatedApp);
 
-		// generate deployment files and apply new config
-		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		// if (
+		// 	typeof buildNumber === "undefined" &&
+		// 	updatedApp.deployEnvironment &&
+		// 	updatedApp.deployEnvironment[env] &&
+		// 	updatedApp.deployEnvironment[env].deploymentYaml
+		// ) {
+		// 	// generate deployment files and apply new config
+		// 	const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		// 	console.log("buildNumber :>> ", buildNumber);
+		// 	console.log("this.user :>> ", this.user);
+		// }
+
 		console.log("buildNumber :>> ", buildNumber);
-		console.log("this.user :>> ", this.user);
 
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
@@ -782,7 +800,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// create new release and roll out
-		const release = await createReleaseFromApp(updatedApp, env, { author: this.user, cliVersion: currentVersion(), workspace: this.workspace });
+		const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			author: this.user,
+			cliVersion: currentVersion(),
+			workspace: this.workspace,
+		});
 		const result = await ClusterManager.rollout(release._id.toString());
 
 		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
@@ -826,6 +848,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!appSlug) return respondFailure({ msg: `App slug is required.` });
 		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
 		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
+		if (!deployEnvironmentData.buildNumber) respondFailure({ msg: `Build number (image's tag) is required.` });
+
+		const { buildNumber } = deployEnvironmentData;
 
 		// get app data:
 		const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
@@ -923,11 +948,13 @@ export default class AppController extends BaseController<IApp, AppService> {
 			updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
 		}
 
-		// generate deployment files and apply new config
-		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		console.log("buildNumber :>> ", buildNumber);
-		console.log("this.user :>> ", this.user);
+		// if (updatedApp.deployEnvironment[env].deploymentYaml) {
+		// 	const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		// 	console.log("buildNumber :>> ", buildNumber);
+		// 	console.log("this.user :>> ", this.user);
+		// }
 
+		// generate deployment files and apply new config
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
 			env,
@@ -955,7 +982,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// create new release and roll out
-		const release = await createReleaseFromApp(updatedApp, env, { author: this.user, cliVersion: currentVersion(), workspace: this.workspace });
+		const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			author: this.user,
+			cliVersion: currentVersion(),
+			workspace: this.workspace,
+		});
 		const result = await ClusterManager.rollout(release._id.toString());
 
 		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
@@ -1398,7 +1429,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// create new release and roll out
-		const release = await createReleaseFromApp(updatedApp, env, { author: this.user, cliVersion: currentVersion(), workspace: this.workspace });
+		const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			author: this.user,
+			cliVersion: currentVersion(),
+			workspace: this.workspace,
+		});
 		const result = await ClusterManager.rollout(release._id.toString());
 
 		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);

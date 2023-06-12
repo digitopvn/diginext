@@ -41,6 +41,7 @@ import {
 	setDeployImage,
 	setDeployImageAll,
 	setDeployImagePullSecretByFilter,
+	setDeployPortAll,
 	setEnvVar,
 	setEnvVarByFilter,
 } from "./kubectl";
@@ -93,6 +94,7 @@ const ClusterManager = {
 	setDeployImage,
 	setDeployImageAll,
 	setDeployImagePullSecretByFilter,
+	setDeployPortAll,
 	// deploy
 	previewPrerelease,
 	rollout,

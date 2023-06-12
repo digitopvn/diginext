@@ -1,8 +1,4 @@
-lockfileVersion: '6.1'
-
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false
+lockfileVersion: '6.0'
 
 dependencies:
   '@babel/runtime':
@@ -230,6 +226,9 @@ dependencies:
   pm2:
     specifier: ^5.2.2
     version: 5.2.2
+  rate-limiter-flexible:
+    specifier: ^2.4.1
+    version: 2.4.1
   recursive-copy:
     specifier: ^2.0.14
     version: 2.0.14
@@ -11176,6 +11175,10 @@ packages:
   /range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
+    dev: false
+
+  /rate-limiter-flexible@2.4.1:
+    resolution: {integrity: sha512-dgH4T44TzKVO9CLArNto62hJOwlWJMLUjVVr/ii0uUzZXEXthDNr7/yefW5z/1vvHAfycc1tnuiYyNJ8CTRB3g==}
     dev: false
 
   /raw-body@2.4.0:

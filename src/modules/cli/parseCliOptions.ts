@@ -26,7 +26,7 @@ const argvOptions = {
 	debug: { describe: "Show debug logs while executing the command.", alias: "D" },
 	tail: { describe: "Follow the output of the command until it's finished" },
 	"show-options": { describe: "Show current input options [for debugging].", alias: "s" },
-	local: { describe: "[TEST] For testing CLI & BUILD SERVER on local machine" },
+	local: { describe: "For running process on local machine" },
 	input: { describe: "Input string", alias: "i" },
 	type: { describe: "Input type as string" },
 	data: { describe: "Input data", alias: "d" },
@@ -196,7 +196,7 @@ export async function parseCliOptions() {
 		logWarn(chalk.yellow(`There is new version of the CLI (${latestVersion}), update with:`));
 		logWarn("  dx update");
 		logWarn(chalk.gray("  OR"));
-		logWarn("  npm update @topgroup/diginext --global");
+		logWarn("  npm update @topgroup/diginext --location=global");
 		logWarn(`-----------------------------------------------------------`);
 	}
 

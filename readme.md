@@ -136,7 +136,7 @@ On the other hand, [Podman](https://podman.io/) is a daemonless container engine
 
 ## Update
 
-- To update your CLI to the latest version: `dx update` or `npm update @topgroup/diginext --global`.
+- To update your CLI to the latest version: `dx update` or `npm update @topgroup/diginext --location=global`.
 
 ## Documentation
 

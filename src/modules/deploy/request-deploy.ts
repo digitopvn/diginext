@@ -125,6 +125,7 @@ export async function requestDeploy(options: InputOptions) {
 	// const deployOptions = JSON.stringify(options);
 	const requestDeployData: { buildParams: StartBuildParams; deployParams: DeployBuildParams } = {
 		buildParams: {
+			env,
 			buildNumber: options.buildNumber,
 			gitBranch: options.gitBranch,
 			registrySlug: deployEnvironment.registry,

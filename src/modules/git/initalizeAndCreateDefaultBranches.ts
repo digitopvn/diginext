@@ -1,10 +1,10 @@
 // import { log } from "diginext-utils/dist/console/log";
-import { makeSlug } from "diginext-utils/dist/Slug";
 import * as fs from "fs";
 import path from "path";
 import { simpleGit } from "simple-git";
 
 import type InputOptions from "@/interfaces/InputOptions";
+import { makeSlug } from "@/plugins/slug";
 
 export const initalizeAndCreateDefaultBranches = async (options: InputOptions) => {
 	// console.log("options.username :>> ", options.username);

@@ -9,11 +9,12 @@ import path from "path";
 import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { ICluster, IRelease } from "@/entities";
+import type { IApp, ICluster, IRelease } from "@/entities";
 import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { objectToDeploymentYaml, waitUntil } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
+import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 import ClusterManager from ".";
@@ -45,7 +46,7 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 		releaseData = idOrRelease as IRelease;
 	}
 
-	const { slug: releaseSlug, cluster: clusterShortName, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
+	const { slug: releaseSlug, cluster: clusterShortName, projectSlug, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
 
 	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
@@ -57,20 +58,26 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	}
 	const { contextName: context } = cluster;
 
-	const mainAppName = appSlug;
+	/**
+	 * "main-app" == projectSlug + "-" + appSlug
+	 */
+	const mainAppName = projectSlug + "-" + appSlug;
+
+	// support deprecated "main-app" name
+	const app = await DB.findOne<IApp>("app", { slug: appSlug });
+	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 	// Clean up Prerelease YAML
 	const cleanUpCommands = [];
-	const prereleaseYaml = releaseData.preYaml;
-	const prereleaseConfigs = [];
-	yaml.loadAll(prereleaseYaml, function (doc) {
-		if (doc) prereleaseConfigs.push(doc);
 
-		// Delete INGRESS to optimize cluster
-		if (doc && doc.kind == "Ingress") {
-			cleanUpCommands.push(ClusterManager.deleteIngress(doc.metadata.name, doc.metadata.namespace, { context, skipOnError: true }));
-		}
-	});
+	// Delete INGRESS to optimize cluster
+	cleanUpCommands.push(
+		ClusterManager.deleteIngressByFilter(namespace, {
+			context,
+			skipOnError: true,
+			filterLabel: `phase=prerelease,main-app=${mainAppName}`,
+		})
+	);
 
 	// Delete Prerelease SERVICE to optimize cluster
 	cleanUpCommands.push(ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${mainAppName}` }));
@@ -78,20 +85,45 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	// Clean up Prerelease Deployments
 	cleanUpCommands.push(ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${mainAppName}` }));
 
+	// ! --- fallback support deprecated app name ---
+	// Delete INGRESS (fallback support deprecated app name)
+	if (deprecatedMainAppName)
+		cleanUpCommands.push(
+			ClusterManager.deleteIngressByFilter(namespace, {
+				context,
+				skipOnError: true,
+				filterLabel: `phase=prerelease,main-app=${deprecatedMainAppName}`,
+			})
+		);
+
+	// ! --- fallback support deprecated app name ---
+	// Delete Prerelease SERVICE to optimize cluster (fallback support deprecated app name)
+	if (deprecatedMainAppName)
+		cleanUpCommands.push(
+			ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${deprecatedMainAppName}` })
+		);
+
+	// ! --- fallback support deprecated app name ---
+	// Clean up Prerelease Deployments
+	if (deprecatedMainAppName)
+		cleanUpCommands.push(
+			ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${deprecatedMainAppName}` })
+		);
+
 	// Clean up immediately & just ignore if any errors
-	cleanUpCommands.forEach(async (cmd) => {
+	for (const cmd of cleanUpCommands) {
 		try {
 			await cmd;
 		} catch (e) {
 			logWarn(`[CLEAN UP] Ignore command: ${e}`);
 		}
-	});
+	}
 
 	// * Print success:
 	let msg = `🎉  PRERELEASE DEPLOYMENT DELETED  🎉`;
 	logSuccess(msg);
 
-	return { error: null, data: { prereleaseConfigs } };
+	return { error: null, data: releaseData };
 }
 
 /**
@@ -278,7 +310,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	});
 	// log(`3`, { appSlug, service, svcName, ingress, ingressName, deploymentName });
 
-	const mainAppName = appSlug;
+	const mainAppName = projectSlug + "-" + appSlug;
 
 	// create new service if it's not existed
 	const currentServices = await ClusterManager.getAllServices(namespace, `phase=live,main-app=${mainAppName}`, { context });
@@ -359,8 +391,13 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	 * 2. Delete prerelease app if it contains "prerelease" (OLD WAY)
 	 * and apply new app for production
 	 */
+	const app = await DB.findOne<IApp>("app", { slug: appSlug });
+	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
-	const oldDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${mainAppName}` });
+	let oldDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${mainAppName}` });
+	if (oldDeploys.length === 0)
+		oldDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${deprecatedMainAppName}` });
+
 	if (onUpdate) onUpdate(`Current app deployments (to be deleted later on): ${oldDeploys.map((d) => d.metadata.name).join(",")}`);
 
 	const createNewDeployment = async (appDoc) => {
@@ -424,14 +461,9 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	/**
 	 * 3. [ONLY PROD DEPLOY] Update ENV variables to PRODUCTION values
 	 */
-	if (env === "prod") {
-		const prodEnvVars = envVars.filter((envVar) => envVar.value.toString().indexOf(endpointUrl) > -1);
-		console.log("prodEnvVars :>> ", prodEnvVars);
-
-		if (!isEmpty(prodEnvVars)) {
-			const setPreEnvVarRes = await ClusterManager.setEnvVar(prodEnvVars, prereleaseAppName, namespace, { context });
-			if (setPreEnvVarRes) if (onUpdate) onUpdate(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
-		}
+	if (env === "prod" && !isEmpty(envVars)) {
+		const setPreEnvVarRes = await ClusterManager.setEnvVar(envVars, prereleaseAppName, namespace, { context });
+		if (setPreEnvVarRes) if (onUpdate) onUpdate(`Patched ENV to "${prereleaseAppName}" deployment successfully.`);
 	}
 
 	// Wait until the deployment is ready!

@@ -15,6 +15,8 @@ import { sendLog } from "./send-log-message";
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildOptions) => {
 	// [1] Build container image
 	buildParams.buildWatch = true;
+	buildParams.env = deployParams.env;
+
 	const { build, startTime, SOCKET_ROOM } = await startBuild(buildParams);
 	console.log("[BUILD_AND_DEPLOY] Finished building > build :>> ", build);
 
@@ -24,13 +26,13 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	const { env } = deployParams;
 
 	// [2] Deploy the build to target deploy environment
-	const { release, deployment } = await deployBuild(build, deployParams);
+	const deployRes = await deployBuild(build, deployParams);
+	if (deployRes?.error) throw new Error(`Unable to deploy "${buildParams.appSlug}" app (${buildParams.env}): ${deployRes?.error}`);
+
+	const { release, deployment } = deployRes;
 	console.log("[BUILD_AND_DEPLOY] Finished deploying > release :>> ", release);
 
-	if (!release) throw new Error(`Unable to deploy "${build.slug}" build (${appSlug} - ${buildParams.env}).`);
-
 	const releaseId = MongoDB.toString(release._id);
-
 	const { endpoint, prereleaseUrl } = deployment;
 
 	// [3] Print success information

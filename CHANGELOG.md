@@ -1,3 +1,97 @@
+## [3.7.6](https://github.com/digitopvn/diginext/compare/v3.7.5...v3.7.6) (2023-06-08)
+
+
+### Bug Fixes
+
+* **server:** clean up prerelease, fallback support deperecated main-app ([a4031bb](https://github.com/digitopvn/diginext/commit/a4031bb0e36ad583e4ede5526599b995bc460896))
+* **server:** clean up prerelease, fallback support deperecated main-app ([#196](https://github.com/digitopvn/diginext/issues/196)) ([e2b0adc](https://github.com/digitopvn/diginext/commit/e2b0adc858ecd1b4f676499f12a93a0a188f7103))
+
+## [3.7.5](https://github.com/digitopvn/diginext/compare/v3.7.4...v3.7.5) (2023-06-08)
+
+
+### Bug Fixes
+
+* **server:** generate yaml, main app name is project slug and app slug ([174108e](https://github.com/digitopvn/diginext/commit/174108e582a064f2b715242572f6236a4e454790))
+* **server:** generate yaml, main app name is project slug and app slug ([#195](https://github.com/digitopvn/diginext/issues/195)) ([8fefd40](https://github.com/digitopvn/diginext/commit/8fefd40222a09f7c4413bcfc198e296ffa83210b))
+
+## [3.7.4](https://github.com/digitopvn/diginext/compare/v3.7.3...v3.7.4) (2023-06-08)
+
+
+### Bug Fixes
+
+* **server:** generate yaml, main app name is app slug ([0aa40d3](https://github.com/digitopvn/diginext/commit/0aa40d3ccaf4c0f9b7cb6fd3aa5cc37e6fecaad7))
+* **server:** generate yaml, main app name is app slug ([#194](https://github.com/digitopvn/diginext/issues/194)) ([0b11367](https://github.com/digitopvn/diginext/commit/0b1136734aa2b2bcaca5d4ca652acf73ff687254))
+
+## [3.7.3](https://github.com/digitopvn/diginext/compare/v3.7.2...v3.7.3) (2023-06-08)
+
+
+### Bug Fixes
+
+* **server:** issue of roll out still remain prerelease env vars ([926cfee](https://github.com/digitopvn/diginext/commit/926cfeef532f34e94b0b6e1a7b05c8ec971bc362))
+* **server:** issue of roll out still remain prerelease env vars ([#193](https://github.com/digitopvn/diginext/issues/193)) ([223b408](https://github.com/digitopvn/diginext/commit/223b4087d241bf73621e7c2c8e1c9f880edaaf29))
+
+## [3.7.2](https://github.com/digitopvn/diginext/compare/v3.7.1...v3.7.2) (2023-06-08)
+
+
+### Bug Fixes
+
+* **cli:** improve kubectl command set image, port, secret ([bcc14c5](https://github.com/digitopvn/diginext/commit/bcc14c50e20c196d6066a3bb660a5b8abdff2675))
+* **cli:** improve kubectl command set image, port, secret ([#192](https://github.com/digitopvn/diginext/issues/192)) ([e82b8ee](https://github.com/digitopvn/diginext/commit/e82b8ee0184fecf899e47026a677436d5adbbc31))
+* **cli:** kb set deploy - cannot access image url before init ([3323f20](https://github.com/digitopvn/diginext/commit/3323f205a05128af2dc0a1b555a6aa981d135994))
+
+## [3.7.1](https://github.com/digitopvn/diginext/compare/v3.7.0...v3.7.1) (2023-06-08)
+
+
+### Bug Fixes
+
+* **cli,server:** issue of resolving dockerfile ([a5f8efa](https://github.com/digitopvn/diginext/commit/a5f8efaf718aae874144471502ebc4d1481e54e2))
+* **cli,server:** issue of resolving dockerfile ([#191](https://github.com/digitopvn/diginext/issues/191)) ([66e68b8](https://github.com/digitopvn/diginext/commit/66e68b8efc76bc35bf829862798849d33694f8da))
+
+# [3.7.0](https://github.com/digitopvn/diginext/compare/v3.6.4...v3.7.0) (2023-06-08)
+
+
+### Bug Fixes
+
+* **cli:** refactor build command to request server to build image ([12b1ac2](https://github.com/digitopvn/diginext/commit/12b1ac291f5014d85bf1fbb59928ef13585e5bc2))
+
+
+### Features
+
+* **cli:** request server to build image ([#190](https://github.com/digitopvn/diginext/issues/190)) ([7aceaff](https://github.com/digitopvn/diginext/commit/7aceaff483d6f58e021b4a224a5d12bbec6b5397))
+
+## [3.6.4](https://github.com/digitopvn/diginext/compare/v3.6.3...v3.6.4) (2023-06-08)
+
+
+### Bug Fixes
+
+* **server,api:** skip checking namespace when create deploy environment ([91aa0dc](https://github.com/digitopvn/diginext/commit/91aa0dc7f8b1f8d2dd878d2670a3ae7910ef5280))
+* **server,api:** skip checking namespace when create deploy environment ([#189](https://github.com/digitopvn/diginext/issues/189)) ([68ae632](https://github.com/digitopvn/diginext/commit/68ae6323fda4ce828f28c6a0dc1c632ee78bca49))
+
+## [3.6.3](https://github.com/digitopvn/diginext/compare/v3.6.2...v3.6.3) (2023-06-07)
+
+
+### Bug Fixes
+
+* **server,api:** correct build base on number,app,project when releasing ([cb23f74](https://github.com/digitopvn/diginext/commit/cb23f74241a54a0939458ea3a67d00a509979edd))
+* **server:** unable to read build number to generate deploy yaml ([20c0f94](https://github.com/digitopvn/diginext/commit/20c0f943c7a19dda67447137de1adea44e7b6fd6))
+
+## [3.6.2](https://github.com/digitopvn/diginext/compare/v3.6.1...v3.6.2) (2023-06-07)
+
+
+### Bug Fixes
+
+* **server,api:** add build number to create,update deploy environment api ([ceeb968](https://github.com/digitopvn/diginext/commit/ceeb968fc009eb591def542e49547d6a111b0205))
+
+## [3.6.1](https://github.com/digitopvn/diginext/compare/v3.6.0...v3.6.1) (2023-06-07)
+
+
+### Bug Fixes
+
+* **admin:** correct url to diginext official website ([#180](https://github.com/digitopvn/diginext/issues/180)) ([eef882e](https://github.com/digitopvn/diginext/commit/eef882e713e5e73a215aef47f703d67fcbe19206))
+* **cli:** show update warning only when there are breaking changes ([171dcd5](https://github.com/digitopvn/diginext/commit/171dcd57455e9fb37cad97c349bba64842b19267))
+* **server:** disable body in activity logs to save disk usage ([7d84a71](https://github.com/digitopvn/diginext/commit/7d84a710aab252429d02ee2cd58c257179d07f37))
+* **server:** disable body in activity logs to save disk usage ([#183](https://github.com/digitopvn/diginext/issues/183)) ([7043b4a](https://github.com/digitopvn/diginext/commit/7043b4a46b77f35fb894ae586c7337e78b29b5aa))
+
 ## [3.6.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.6.0...v3.6.1-prerelease.1) (2023-06-06)
 
 
