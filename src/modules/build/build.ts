@@ -369,7 +369,7 @@ export async function startBuild(
 			});
 
 			// update build status as "success"
-			await updateBuildStatus(newBuild, "success");
+			await updateBuildStatus(newBuild, "success", { env });
 
 			sendLog({
 				SOCKET_ROOM,
@@ -400,7 +400,7 @@ export async function startBuild(
 			})
 			.then(async () => {
 				// update build status as "success"
-				await updateBuildStatus(newBuild, "success");
+				await updateBuildStatus(newBuild, "success", { env });
 
 				sendLog({
 					SOCKET_ROOM,
