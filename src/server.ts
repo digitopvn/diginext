@@ -10,9 +10,11 @@ import express from "express";
 import { queryParser } from "express-query-parser";
 import type { Server } from "http";
 import { createServer } from "http";
+import type mongoose from "mongoose";
 import morgan from "morgan";
 import passport from "passport";
 import path from "path";
+import { RateLimiterMongo } from "rate-limiter-flexible";
 import { Server as SocketServer } from "socket.io";
 import swaggerUi from "swagger-ui-express";
 
@@ -24,10 +26,8 @@ import type { AppRequest } from "./interfaces/SystemTypes";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
 import AppDatabase from "./modules/AppDatabase";
 import { startupScripts } from "./modules/server/startup-scripts";
+import basicAuthRouter from "./routes/api/v1/basic-auth";
 import routes from "./routes/routes";
-
-// const logger = new LogStream();
-
 /**
  * ENVIRONMENT CONFIG
  */
@@ -45,7 +45,7 @@ export function setServerStatus(status: boolean) {
 	isServerReady = status;
 }
 
-function initialize() {
+function initialize(db?: typeof mongoose) {
 	// log(`Server is initializing...`);
 
 	app = express();
@@ -70,7 +70,7 @@ function initialize() {
 	 */
 	app.use((req, res, next) => {
 		res.header("Access-Control-Allow-Origin", "*");
-		res.header("Access-Control-Allow-Methods", "GET, PATCH, POST, DELETE");
+		res.header("Access-Control-Allow-Methods", "OPTIONS, GET, PATCH, POST, DELETE");
 		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control");
 		res.header("X-Powered-By", "TOP GROUP");
 		next();
@@ -151,8 +151,37 @@ function initialize() {
 	} as unknown as morgan.Options<Request, Response>;
 	app.use(morgan(morganMessage, morganOptions));
 
-	// Mở lộ ra path cho HEALTHCHECK & APIs (nếu có)
+	// Public paths for HEALTHCHECK & Rest APIs:
 	app.use(`/${BASE_PATH}`, routes);
+
+	/**
+	 * RATE LIMITING MIDDLEWARE
+	 */
+	const rateLimiter = new RateLimiterMongo({
+		storeClient: db.connection,
+		tableName: "auth-rate-limit",
+		points: 5, // Requests
+		duration: 60, // Per second(s)
+		blockDuration: 60 * 60 * 1, // 1 hour
+	});
+
+	const authRateLimiterMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+		rateLimiter
+			.consume(`${req.ip}-${req.headers["user-agent"]}`)
+			.then(() => {
+				console.log("req.ip :>> ", req.ip);
+				console.log("req.headers['user-agent'] :>> ", req.headers["user-agent"]);
+				next();
+			})
+			.catch(() => {
+				if (!IsDev()) {
+					res.status(429).send("Too Many Requests");
+				} else {
+					next();
+				}
+			});
+	};
+	app.use(`/api/v1`, authRateLimiterMiddleware, basicAuthRouter);
 
 	/**
 	 * ROUTE 404 & FAIL SAFE HANDLING MIDDLEWARE
