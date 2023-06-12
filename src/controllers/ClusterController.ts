@@ -5,7 +5,7 @@ import type { ICloudProvider, ICluster } from "@/entities";
 import { ClusterDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
-import { respondFailure } from "@/interfaces/ResponseData";
+import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
 import { CloudProviderService } from "@/services";
 import ClusterService from "@/services/ClusterService";
@@ -41,6 +41,10 @@ export default class ClusterController extends BaseController<ICluster> {
 
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 
+		// check duplication
+		const existingShortName = await this.service.findOne({ shortName: body.shortName, workspace: this.workspace._id });
+		if (existingShortName) return respondFailure(`Cluster with short name "${body.shortName}" is existed, please use different short name.`);
+
 		// validate cloud provider...
 		const cloudProviderSvc = new CloudProviderService();
 
@@ -72,18 +76,14 @@ export default class ClusterController extends BaseController<ICluster> {
 		if (newCluster) {
 			try {
 				const auth = await ClusterManager.authCluster(newCluster.shortName);
-				if (!auth) {
-					return { status: 0, messages: [`Failed to connect to the cluster, please double check your information.`] } as ResponseData;
-				}
+				if (!auth) return respondFailure(`Failed to connect to the cluster, please double check your information.`);
 
-				[newCluster] = await this.service.update({ _id: newCluster._id }, { isVerified: true });
-
-				return { status: 1, data: newCluster } as ResponseData;
+				return respondSuccess({ data: newCluster });
 			} catch (e) {
-				return { status: 0, messages: [`Failed to connect to the cluster: ${e}`] } as ResponseData;
+				return respondFailure(`Failed to connect to the cluster: ${e}`);
 			}
 		} else {
-			return { status: 0, messages: [`Can't create new cluster`] } as ResponseData;
+			return respondFailure(`Unable to create new cluster (internal server error).`);
 		}
 	}
 
@@ -188,7 +188,7 @@ export default class ClusterController extends BaseController<ICluster> {
 				result.messages.push(`Cluster authentication failed.`);
 			}
 		} catch (e) {
-			logError(e);
+			logError(`[CLUSTER AUTH]`, e);
 			result.status = 0;
 			result.messages.push(`Cluster authentication failed: ${e}`);
 		}

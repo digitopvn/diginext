@@ -120,7 +120,7 @@ export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug:
 	// Validate...
 	if (!appSlug) {
 		error = `App "${appSlug}" not found.`;
-		logError(error);
+		logError(`[STOP_BUILD]`, error);
 		return { error };
 	}
 

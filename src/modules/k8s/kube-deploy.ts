@@ -147,7 +147,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	try {
 		cluster = await ClusterManager.authCluster(clusterShortName);
 	} catch (e) {
-		logError(e);
+		logError(`[PREVIEW_PRERELEASE]`, e);
 		return { error: e.message };
 	}
 	const { contextName: context } = cluster;
@@ -234,7 +234,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	try {
 		await ClusterManager.authCluster(clusterShortName);
 	} catch (e) {
-		logError(e);
+		logError(`[ROLL_OUT]`, e);
 		return { error: e.message };
 	}
 
@@ -261,7 +261,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		const createNsRes = await ClusterManager.createNamespace(namespace, { context });
 		if (!createNsRes) {
 			const err = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
-			logError(err);
+			logError(`[ROLL_OUT]`, err);
 			if (onUpdate) onUpdate(err);
 			return;
 		}

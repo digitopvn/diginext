@@ -62,9 +62,7 @@ export const switchContextToCluster = async (clusterShortName: string, providerS
 export const authCluster = async (clusterShortName: string, options: ClusterAuthOptions = { shouldSwitchContextToThisCluster: true }) => {
 	let filePath: string;
 
-	if (!clusterShortName) {
-		throw new Error(`Param "clusterShortName" is required.`);
-	}
+	if (!clusterShortName) throw new Error(`Param "clusterShortName" is required.`);
 
 	// find the cluster in the database:
 	let cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
