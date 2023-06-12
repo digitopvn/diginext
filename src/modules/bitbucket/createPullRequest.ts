@@ -75,7 +75,7 @@ async function processCreatingPullRequest(repoSlug, fromBranch, destBranch, opti
 		}
 	} catch (e) {
 		// console.log('e', e)
-		logError(e);
+		logError(`[CREATE PR]`, e);
 	}
 }
 

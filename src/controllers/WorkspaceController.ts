@@ -107,6 +107,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		 * - Default API_KEY
 		 * - Default Service Account
 		 * - Default Frameworks
+		 * - Default Clusters (if any)
 		 */
 		await seedWorkspaceInitialData(newWorkspace, ownerUser);
 
