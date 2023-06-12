@@ -1,3 +1,16 @@
+# [3.9.0](https://github.com/digitopvn/diginext/compare/v3.8.0...v3.9.0) (2023-06-12)
+
+
+### Bug Fixes
+
+* **server,dashboard:** add loading spin to all list pages ([ec78b60](https://github.com/digitopvn/diginext/commit/ec78b608afdf50e087c0629e8bd803c3d19a7ab5))
+
+
+### Features
+
+* **server:** seed initial cluster when create workspace if any ([f0baf99](https://github.com/digitopvn/diginext/commit/f0baf998ba93344d80a383ef148c6c0d38405520))
+* **server:** seed initial cluster when create workspace if any ([#201](https://github.com/digitopvn/diginext/issues/201)) ([a71e9ee](https://github.com/digitopvn/diginext/commit/a71e9ee1fea12d8b723df437775bbf6b6dccf184))
+
 # [3.8.0](https://github.com/digitopvn/diginext/compare/v3.7.7...v3.8.0) (2023-06-12)
 
 
