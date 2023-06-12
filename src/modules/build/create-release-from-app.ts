@@ -19,6 +19,8 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: 
 	const { imageURL: IMAGE_NAME } = deployedEnvironment;
 	// const { BUILD_NUMBER } = fetchDeploymentFromContent(deployedEnvironment.deploymentYaml);
 
+	if (!buildNumber) throw new Error(`Build not found due to "undefined" build number (app: "${app.slug}" - env: "${env}")`);
+
 	console.log("createReleaseFromApp() > IMAGE_NAME :>> ", IMAGE_NAME);
 	console.log("createReleaseFromApp() > BUILD_NUMBER :>> ", buildNumber);
 

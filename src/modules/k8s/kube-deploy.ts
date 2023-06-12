@@ -137,7 +137,9 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 
 	if (isEmpty(releaseData)) return { error: `Release not found.` };
 
-	const { slug: releaseSlug, cluster: clusterShortName, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
+	const { slug: releaseSlug, cluster: clusterShortName, appSlug, projectSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
+
+	const mainAppName = projectSlug + "-" + appSlug;
 
 	log(`Preview the release: "${releaseSlug}" (${id})...`);
 	if (onUpdate) onUpdate(`Preview the release: "${releaseSlug}" (${id})...`);
@@ -182,12 +184,12 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	 */
 	const curPrereleaseDeployments = await ClusterManager.getDeploysByFilter(namespace, {
 		context,
-		filterLabel: `phase=prerelease,main-app=${appSlug}`,
+		filterLabel: `phase=prerelease,main-app=${mainAppName}`,
 	});
 	if (!isEmpty(curPrereleaseDeployments)) {
 		await ClusterManager.deleteDeploymentsByFilter(namespace, {
 			context,
-			filterLabel: `phase=prerelease,main-app=${appSlug}`,
+			filterLabel: `phase=prerelease,main-app=${mainAppName}`,
 		});
 	}
 
