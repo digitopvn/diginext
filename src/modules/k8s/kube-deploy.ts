@@ -475,15 +475,15 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 		let isReady = false;
 		newDeploys.forEach((deploy) => {
-			log(deploy.status.conditions);
+			log(`[INTERVAL] deploy.status.conditions :>>`, deploy.status.conditions);
 			if (onUpdate) {
-				deploy.status.conditions.map((condition) => {
+				deploy.status?.conditions?.map((condition) => {
 					// if (condition.type === "False") isReady = true;
 					onUpdate(`DEPLOY STATUS: [${condition.type.toUpperCase()}] - ${condition.reason} - ${condition.message}`);
 				});
 			}
 
-			// log(`deploy.status.replicas =`, deploy.status.replicas);
+			log(`[INTERVAL] deploy.status.replicas :>>`, deploy.status.replicas);
 			if (deploy.status.readyReplicas >= 1) isReady = true;
 		});
 
