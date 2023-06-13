@@ -68,7 +68,7 @@ export const authenticate = async (options?: InputOptions) => {
  * Connect Docker to Google Cloud Registry
  */
 export const connectDockerToRegistry = async (options?: InputOptions) => {
-	const { host, filePath, userId, workspaceId } = options;
+	const { host, filePath, userId, workspaceId, registry: registrySlug } = options;
 
 	// Validation
 	if (!host) {
@@ -115,12 +115,11 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 		return;
 	}
 
-	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { provider: "gcloud", host: options.host });
+	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 	if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { existingRegistry });
-
 	if (existingRegistry) return existingRegistry;
 
-	// save this container registry to database
+	// IF NOT EXISTED -> Save this container registry to database!
 	const registryHost = host || "asia.gcr.io";
 	const imageBaseURL = `${registryHost}/${serviceAccountObject.project_id}`;
 	const newRegistry = await DB.create<IContainerRegistry>("registry", {

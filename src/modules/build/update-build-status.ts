@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { log, logError } from "diginext-utils/dist/console/log";
 
-import type { AppDto, IApp, IBuild, IProject } from "@/entities";
+import type { IApp, IBuild, IProject } from "@/entities";
 import type { BuildStatus } from "@/interfaces/SystemTypes";
 
 import { DB } from "../api/DB";
@@ -26,8 +26,8 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, extr
 	}
 
 	// update latest build to current app
-	const updateDto: AppDto = { latestBuild: build.slug };
-	if (extra?.env) updateDto.deployEnvironment[extra.env].buildNumber = build.tag;
+	const updateDto: any = { latestBuild: build.slug };
+	if (extra?.env && status === "success") updateDto.deployEnvironment = { [`${extra.env}.buildNumber`]: build.tag };
 
 	const [updatedApp] = await DB.update<IApp>("app", { _id: appId }, updateDto);
 	log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp.latestBuild);
