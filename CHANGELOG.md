@@ -1,3 +1,11 @@
+## [3.10.2](https://github.com/digitopvn/diginext/compare/v3.10.1...v3.10.2) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server:** issue of checking ready deployment ([fc8d420](https://github.com/digitopvn/diginext/commit/fc8d42010b32b394d4d6d749f011257ed7c6a2f6))
+* **server:** issue of checking ready deployment ([#208](https://github.com/digitopvn/diginext/issues/208)) ([8ce5c8c](https://github.com/digitopvn/diginext/commit/8ce5c8c626c5916d7c73288f406787646944c076))
+
 ## [3.10.1](https://github.com/digitopvn/diginext/compare/v3.10.0...v3.10.1) (2023-06-13)
 
 
