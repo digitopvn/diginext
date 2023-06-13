@@ -137,7 +137,9 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 
 	if (isEmpty(releaseData)) return { error: `Release not found.` };
 
-	const { slug: releaseSlug, cluster: clusterShortName, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
+	const { slug: releaseSlug, cluster: clusterShortName, appSlug, projectSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
+
+	const mainAppName = projectSlug + "-" + appSlug;
 
 	log(`Preview the release: "${releaseSlug}" (${id})...`);
 	if (onUpdate) onUpdate(`Preview the release: "${releaseSlug}" (${id})...`);
@@ -147,7 +149,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	try {
 		cluster = await ClusterManager.authCluster(clusterShortName);
 	} catch (e) {
-		logError(e);
+		logError(`[PREVIEW_PRERELEASE]`, e);
 		return { error: e.message };
 	}
 	const { contextName: context } = cluster;
@@ -182,19 +184,19 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	 */
 	const curPrereleaseDeployments = await ClusterManager.getDeploysByFilter(namespace, {
 		context,
-		filterLabel: `phase=prerelease,main-app=${appSlug}`,
+		filterLabel: `phase=prerelease,main-app=${mainAppName}`,
 	});
 	if (!isEmpty(curPrereleaseDeployments)) {
 		await ClusterManager.deleteDeploymentsByFilter(namespace, {
 			context,
-			filterLabel: `phase=prerelease,main-app=${appSlug}`,
+			filterLabel: `phase=prerelease,main-app=${mainAppName}`,
 		});
 	}
 
 	/**
 	 * Apply PRE-RELEASE deployment YAML
 	 */
-	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, namespace, { context });
+	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, { context });
 	if (!prereleaseDeploymentRes)
 		throw new Error(
 			`Can't preview the pre-release "${id}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${preYaml}`
@@ -234,7 +236,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	try {
 		await ClusterManager.authCluster(clusterShortName);
 	} catch (e) {
-		logError(e);
+		logError(`[ROLL_OUT]`, e);
 		return { error: e.message };
 	}
 
@@ -261,7 +263,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		const createNsRes = await ClusterManager.createNamespace(namespace, { context });
 		if (!createNsRes) {
 			const err = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
-			logError(err);
+			logError(`[ROLL_OUT]`, err);
 			if (onUpdate) onUpdate(err);
 			return;
 		}
@@ -323,7 +325,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	// Always apply new service, since the PORT could be changed !!!
 
 	const SVC_CONTENT = objectToDeploymentYaml(service);
-	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, namespace, { context });
+	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, { context });
 	if (!applySvcRes)
 		throw new Error(
 			`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`
@@ -365,7 +367,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 	// ! ALWAYS Create new ingress
 	const ING_CONTENT = objectToDeploymentYaml(ingress);
-	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, namespace, { context });
+	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, { context });
 	if (!ingCreateResult)
 		throw new Error(
 			`Failed to apply invalid INGRESS config (${env.toUpperCase()}) to "${ingressName}" in "${namespace}" namespace of "${context}" context:\n${ING_CONTENT}`
@@ -423,7 +425,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		newApp.spec.selector.matchLabels.app = newAppName;
 
 		let APP_CONTENT = objectToDeploymentYaml(newApp);
-		const appCreateResult = await ClusterManager.kubectlApplyContent(APP_CONTENT, namespace, { context });
+		const appCreateResult = await ClusterManager.kubectlApplyContent(APP_CONTENT, { context });
 		if (!appCreateResult)
 			throw new Error(
 				`Failed to apply APP DEPLOYMENT config to "${newAppName}" in "${namespace}" namespace of "${context}" context:\n${APP_CONTENT}`
@@ -473,15 +475,15 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 		let isReady = false;
 		newDeploys.forEach((deploy) => {
-			log(deploy.status.conditions);
+			log(`[INTERVAL] deploy.status.conditions :>>`, deploy.status.conditions);
 			if (onUpdate) {
-				deploy.status.conditions.map((condition) => {
+				deploy.status?.conditions?.map((condition) => {
 					// if (condition.type === "False") isReady = true;
 					onUpdate(`DEPLOY STATUS: [${condition.type.toUpperCase()}] - ${condition.reason} - ${condition.message}`);
 				});
 			}
 
-			// log(`deploy.status.replicas =`, deploy.status.replicas);
+			log(`[INTERVAL] deploy.status.replicas :>>`, deploy.status.replicas);
 			if (deploy.status.readyReplicas >= 1) isReady = true;
 		});
 
@@ -492,13 +494,16 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 2 * 60);
 
 	// print the container logs
-	const containerLogs = await logPodByFilter(namespace, { filterLabel: `phase=live,app=${deploymentName}` });
+	let containerLogs = await logPodByFilter(namespace, { filterLabel: `app=${deploymentName}` });
+	if (!containerLogs) containerLogs = await logPodByFilter(namespace, { filterLabel: `main-app=${mainAppName}` });
+	if (!containerLogs) containerLogs = await logPodByFilter(namespace, { filterLabel: `app=${deploymentName}`, previous: true });
+	if (!containerLogs) containerLogs = await logPodByFilter(namespace, { filterLabel: `main-app=${mainAppName}`, previous: true });
 	if (onUpdate && containerLogs) onUpdate(containerLogs);
 
 	// throw the error
 	if (!isReallyReady) {
 		return {
-			error: `New app deployment stucked or crashed, probably because of the unauthorized container registry or the app was crashed on start up.`,
+			error: `New app deployment stucked or crashed: ${containerLogs}`,
 		};
 	}
 

@@ -8,7 +8,7 @@ import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
 import DockerRegistry from "./docker-registry";
 
-export const connectRegistry = async (registry: IContainerRegistry, options?: { userId?: any; workspaceId?: any }) => {
+export const connectRegistry = async (registry: IContainerRegistry, options?: { userId?: any; workspaceId?: any; insertDatabase?: boolean }) => {
 	const { slug, provider, host } = registry;
 
 	let connectedRegistry: IContainerRegistry;
@@ -42,7 +42,7 @@ export const connectRegistry = async (registry: IContainerRegistry, options?: { 
 			const doAuthResult = await digitalocean.authenticate({ ...options, key: apiAccessToken });
 			if (!doAuthResult) throw new Error(`Can't authenticate with Digital Ocean using this API access token.`);
 
-			connectedRegistry = await digitalocean.connectDockerRegistry({ ...options, key: apiAccessToken });
+			connectedRegistry = await digitalocean.connectDockerRegistry({ ...options, key: apiAccessToken, registry: slug });
 
 			if (connectedRegistry) {
 				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}".`);
@@ -57,7 +57,7 @@ export const connectRegistry = async (registry: IContainerRegistry, options?: { 
 
 			connectedRegistry = await DockerRegistry.connectDockerToRegistry(
 				{ username: dockerUsername, password: dockerPassword },
-				{ workspaceId: options.workspaceId }
+				{ workspaceId: options?.workspaceId, registry: slug }
 			);
 
 			if (connectedRegistry) {

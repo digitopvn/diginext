@@ -1,6 +1,7 @@
 import type { IUser, IWorkspace } from "@/entities";
 
 import { seedApiKeys } from "./seed-api-key";
+import { seedClusters } from "./seed-clusters";
 import { seedFrameworks } from "./seed-frameworks";
 import { seedDefaultRoles } from "./seed-roles";
 import { seedServiceAccounts } from "./seed-service-account";
@@ -15,7 +16,12 @@ const seedWorkspaceInitialData = async (workspace: IWorkspace, owner: IUser) => 
 	// [2] Create default API access token for this workspace
 	// [3] Create default service account for this workspace
 	// [4] Create default framework for this workspace
-	const results = await Promise.all([seedServiceAccounts(workspace, owner), seedApiKeys(workspace, owner), seedFrameworks(workspace, owner)]);
+	const results = await Promise.all([
+		seedServiceAccounts(workspace, owner),
+		seedApiKeys(workspace, owner),
+		seedFrameworks(workspace, owner),
+		seedClusters(workspace, owner),
+	]);
 
 	return [roles, ...results];
 };

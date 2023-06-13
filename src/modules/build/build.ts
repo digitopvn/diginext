@@ -120,7 +120,7 @@ export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug:
 	// Validate...
 	if (!appSlug) {
 		error = `App "${appSlug}" not found.`;
-		logError(error);
+		logError(`[STOP_BUILD]`, error);
 		return { error };
 	}
 
@@ -210,7 +210,7 @@ export async function startBuild(
 	const { slug: projectSlug } = project;
 
 	// build image
-	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}/${app.slug}` } = app;
+	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}-${app.slug}` } = app;
 	if (params.isDebugging) console.log("startBuild > imageURL :>> ", imageURL);
 
 	// get latest build of this app to utilize the cache for this build process
@@ -369,7 +369,7 @@ export async function startBuild(
 			});
 
 			// update build status as "success"
-			await updateBuildStatus(newBuild, "success");
+			await updateBuildStatus(newBuild, "success", { env });
 
 			sendLog({
 				SOCKET_ROOM,
@@ -400,7 +400,7 @@ export async function startBuild(
 			})
 			.then(async () => {
 				// update build status as "success"
-				await updateBuildStatus(newBuild, "success");
+				await updateBuildStatus(newBuild, "success", { env });
 
 				sendLog({
 					SOCKET_ROOM,

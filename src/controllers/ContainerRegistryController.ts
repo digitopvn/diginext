@@ -67,11 +67,13 @@ export default class ContainerRegistryController extends BaseController<IContain
 		if (providerShortName === "gcloud") {
 			if (!host) host = "gcr.io";
 			if (!serviceAccount) return respondFailure({ msg: `Service Account (JSON) is required to authenticate Google Container Registry.` });
+			organization = JSON.parse(serviceAccount).project_id;
 		}
 
 		if (providerShortName === "digitalocean") {
 			if (!host) host = "registry.digitalocean.com";
 			if (!apiAccessToken) return respondFailure({ msg: `API access token is required to authenticate DigitalOcean Container Registry.` });
+			if (!organization) organization = this.workspace.slug;
 		}
 
 		if (providerShortName === "dockerhub") {
@@ -79,6 +81,7 @@ export default class ContainerRegistryController extends BaseController<IContain
 			if (!dockerPassword) return respondFailure({ msg: `Docker password is required.` });
 			if (!dockerServer) dockerServer = "https://index.docker.io/v2/";
 			if (!host) host = "docker.io";
+			if (!organization) organization = dockerUsername;
 
 			// const saltRounds = 10;
 			// dockerPassword = await bcrypt.hash(dockerPassword, saltRounds);

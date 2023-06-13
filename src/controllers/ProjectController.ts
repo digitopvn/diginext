@@ -79,7 +79,7 @@ export default class ProjectController extends BaseController<IProject> {
 		// populate apps
 		const projectIDs = projects.map((pro) => pro._id);
 		const appSvc = new AppService();
-		let apps = await appSvc.find({ project: { $in: projectIDs } });
+		let apps = await appSvc.find({ project: { $in: projectIDs } }, { status: true });
 		// console.log("apps :>> ", apps);
 
 		result.data = projects.map((project) => {

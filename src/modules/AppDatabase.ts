@@ -36,7 +36,7 @@ export async function disconnect() {
 		await mongoose.disconnect();
 		db = undefined;
 	} catch (e) {
-		logError(e);
+		logError(`[DB_DISCONNECT]`, e);
 	}
 }
 

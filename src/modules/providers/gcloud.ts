@@ -68,7 +68,7 @@ export const authenticate = async (options?: InputOptions) => {
  * Connect Docker to Google Cloud Registry
  */
 export const connectDockerToRegistry = async (options?: InputOptions) => {
-	const { host, filePath, userId, workspaceId } = options;
+	const { host, filePath, userId, workspaceId, registry: registrySlug } = options;
 
 	// Validation
 	if (!host) {
@@ -115,12 +115,11 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 		return;
 	}
 
-	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { provider: "gcloud", host: options.host });
+	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 	if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { existingRegistry });
-
 	if (existingRegistry) return existingRegistry;
 
-	// save this container registry to database
+	// IF NOT EXISTED -> Save this container registry to database!
 	const registryHost = host || "asia.gcr.io";
 	const imageBaseURL = `${registryHost}/${serviceAccountObject.project_id}`;
 	const newRegistry = await DB.create<IContainerRegistry>("registry", {
@@ -177,8 +176,10 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	// check if namespace is existed
 	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 	if (!isNsExisted) {
-		logError(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
-		return;
+		// create new namespace?
+		const ns = await ClusterManager.createNamespace(namespace, { context });
+		// still can't create namespace -> throw error!
+		if (!ns) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
 	}
 
 	// check if the secret is existed within the namespace, try to delete it!
