@@ -19,7 +19,7 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, extr
 	const endTime = status === "failed" || status === "success" ? new Date() : undefined;
 	const duration = endTime ? dayjs(endTime).diff(startTime, "millisecond") : undefined;
 
-	const [updatedBuild] = await DB.update<IBuild>("build", { _id: build._id }, { status, endTime, duration }, { populate: ["project"] });
+	const updatedBuild = await DB.updateOne<IBuild>("build", { _id: build._id }, { status, endTime, duration }, { populate: ["project"] });
 	if (!updatedBuild) {
 		logError(`[START BUILD] updateBuildStatus >> error!`);
 		return;
@@ -27,13 +27,16 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, extr
 
 	// update latest build to current app
 	const updateDto: any = { latestBuild: build.slug };
-	if (extra?.env && status === "success") updateDto.deployEnvironment = { [`${extra.env}.buildNumber`]: build.tag };
+	if (extra?.env && status === "success") updateDto[`deployEnvironment.${extra.env}.buildNumber`] = build.tag;
+	log(`[START BUILD] updateBuildStatus > updateDto :>>`, updateDto);
 
-	const [updatedApp] = await DB.update<IApp>("app", { _id: appId }, updateDto);
-	log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp.latestBuild);
+	const updatedApp = await DB.updateOne<IApp>("app", { _id: appId }, updateDto);
+	log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp);
 
-	const [updatedProject] = await DB.update<IProject>("project", { _id: updatedApp.project }, { latestBuild: build.slug });
-	log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject.latestBuild);
+	if (updatedApp) {
+		const updatedProject = await DB.updateOne<IProject>("project", { _id: updatedApp.project }, { latestBuild: build.slug });
+		log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject);
+	}
 
 	return updatedBuild;
 }

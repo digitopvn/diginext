@@ -85,7 +85,7 @@ export async function requestBuild(options: InputOptions) {
 	/**
 	 * Generate build number & build image as docker image tag
 	 */
-	const imageURL = `${registry.imageBaseURL}/${app.projectSlug}/${app.slug}`;
+	const imageURL = `${registry.imageBaseURL}/${app.projectSlug}-${app.slug}`;
 	options.buildNumber = makeDaySlug({ divider: "" });
 	options.buildImage = `${imageURL}:${options.buildNumber}`;
 

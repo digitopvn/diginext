@@ -174,7 +174,7 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 
 	// request imageURL
 	if (!serverDeployEnvironment.imageURL) {
-		const imageSlug = `${project.slug}/${app.slug}`;
+		const imageSlug = `${project.slug}-${app.slug}`;
 		serverDeployEnvironment.imageURL = `${registry.imageBaseURL}/${imageSlug}`;
 	}
 	options.imageURL = serverDeployEnvironment.imageURL;
