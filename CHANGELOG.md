@@ -1,3 +1,10 @@
+## [3.9.1](https://github.com/digitopvn/diginext/compare/v3.9.0...v3.9.1) (2023-06-12)
+
+
+### Bug Fixes
+
+* **server:** incorrect main-app-name,set env vars,deploy ([1f09c6c](https://github.com/digitopvn/diginext/commit/1f09c6c92c452cb899a147262f7cc237e5d34b77))
+
 # [3.9.0](https://github.com/digitopvn/diginext/compare/v3.8.0...v3.9.0) (2023-06-12)
 
 
