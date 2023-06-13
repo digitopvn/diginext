@@ -1,3 +1,11 @@
+## [3.9.4](https://github.com/digitopvn/diginext/compare/v3.9.3...v3.9.4) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server:** try catch update build status ([0c9fbbc](https://github.com/digitopvn/diginext/commit/0c9fbbc9258562cb1435edabc42e25dba22e016d))
+* **server:** update status latest build undefined ([72debd2](https://github.com/digitopvn/diginext/commit/72debd2c1f8d3f0e434662f99e85f53661ec4a06))
+
 ## [3.9.3](https://github.com/digitopvn/diginext/compare/v3.9.2...v3.9.3) (2023-06-13)
 
 
