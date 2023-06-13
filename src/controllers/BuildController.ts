@@ -16,6 +16,8 @@ import BaseController from "./BaseController";
 @Tags("Build")
 @Route("build")
 export default class BuildController extends BaseController<IBuild> {
+	service: BuildService;
+
 	constructor() {
 		super(new BuildService());
 	}
@@ -163,12 +165,13 @@ export default class BuildController extends BaseController<IBuild> {
 
 		if (!slug) return respondFailure(`Build "slug" is required.`);
 
-		const build = await this.service.findOne({ slug });
+		let build = await this.service.findOne({ slug });
 		if (!build) return respondFailure(`Build "${slug}" not found.`);
 
 		const stoppedBuild = await stopBuild(build.projectSlug, build.appSlug, slug.toString());
-		if ((stoppedBuild as { error: string }).error) return respondFailure((stoppedBuild as { error: string }).error);
+		if ((stoppedBuild as { error: string })?.error) return respondFailure((stoppedBuild as { error: string }).error);
 
-		return respondSuccess({ data: stoppedBuild });
+		build = await this.service.updateOne({ _id: build._id }, { status: "failed" });
+		return respondSuccess({ data: build });
 	}
 }
