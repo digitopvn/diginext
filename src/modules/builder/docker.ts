@@ -138,7 +138,7 @@ export const stopBuild = async (builder: string) => {
 		await wait(500); // <-- just to be sure...
 	} catch (e) {
 		logError(`[BUILDER] Docker > stopBuild :>>`, e);
-		return false;
+		// return false;
 	}
 	return true;
 };
