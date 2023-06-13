@@ -674,8 +674,12 @@ export async function getAllPods(namespace = "default", options: KubeCommandOpti
 
 export const getPodsByFilter = getAllPods;
 
-export async function logPod(name, namespace = "default", options: KubeGenericOptions & { timestamps?: boolean; prefix?: boolean } = {}) {
-	const { context, skipOnError, timestamps, prefix } = options;
+export async function logPod(
+	name,
+	namespace = "default",
+	options: KubeGenericOptions & { timestamps?: boolean; prefix?: boolean; previous?: boolean } = {}
+) {
+	const { context, skipOnError, timestamps, prefix, previous } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
@@ -685,6 +689,7 @@ export async function logPod(name, namespace = "default", options: KubeGenericOp
 		// options
 		if (timestamps) args.push("--timestamps");
 		if (prefix) args.push("--prefix");
+		if (previous) args.push("--previous");
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
@@ -694,8 +699,11 @@ export async function logPod(name, namespace = "default", options: KubeGenericOp
 	}
 }
 
-export async function logPodByFilter(namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, skipOnError, filterLabel } = options;
+export async function logPodByFilter(
+	namespace = "default",
+	options: KubeCommandOptions & { timestamps?: boolean; prefix?: boolean; previous?: boolean } = {}
+) {
+	const { context, skipOnError, filterLabel, timestamps, prefix, previous } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
@@ -704,7 +712,11 @@ export async function logPodByFilter(namespace = "default", options: KubeCommand
 
 		if (filterLabel) args.push("-l", filterLabel);
 
-		args.push("--timestamps", "--prefix");
+		// options
+		if (timestamps) args.push("--timestamps");
+		if (prefix) args.push("--prefix");
+		if (previous) args.push("--previous");
+		// args.push("--timestamps", "--prefix");
 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
