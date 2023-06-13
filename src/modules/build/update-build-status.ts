@@ -49,6 +49,7 @@ export async function updateBuildStatusByAppSlug(appSlug: string, buildSlug: str
 	}
 
 	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	if (!app) return;
 
 	// update latest build to current project
 	let projectSlug = (app.project as IProject).slug;
