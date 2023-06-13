@@ -14,11 +14,12 @@ import { sendLog } from "./send-log-message";
 
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildOptions) => {
 	// [1] Build container image
+	if (!deployParams.env) deployParams.env = "dev";
 	buildParams.buildWatch = true;
 	buildParams.env = deployParams.env;
 
 	const { build, startTime, SOCKET_ROOM } = await startBuild(buildParams);
-	console.log("[BUILD_AND_DEPLOY] Finished building > build :>> ", build);
+	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > buildNumber :>> ${build.tag}` });
 
 	if (!build) throw new Error(`Unable to build "${buildParams.appSlug}" app (${buildParams.env}).`);
 
@@ -27,10 +28,22 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 
 	// [2] Deploy the build to target deploy environment
 	const deployRes = await deployBuild(build, deployParams);
-	if (deployRes?.error) throw new Error(`Unable to deploy "${buildParams.appSlug}" app (${buildParams.env}): ${deployRes?.error}`);
+
+	let errorMsg = ``;
+	if (deployRes?.error) {
+		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${buildParams.env}): ${deployRes?.error}`;
+		sendLog({ SOCKET_ROOM, message: errorMsg });
+		throw new Error(errorMsg);
+	}
+	if (!deployRes) {
+		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${buildParams.env}): UNKNOWN_REASON`;
+		sendLog({ SOCKET_ROOM, message: errorMsg });
+		throw new Error(errorMsg);
+	}
 
 	const { release, deployment } = deployRes;
 	console.log("[BUILD_AND_DEPLOY] Finished deploying > release :>> ", release);
+	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > Release ID :>> ${release._id}` });
 
 	const releaseId = MongoDB.toString(release._id);
 	const { endpoint, prereleaseUrl } = deployment;
@@ -38,7 +51,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	// [3] Print success information
 	const endTime = dayjs();
 	const buildDuration = endTime.diff(startTime, "millisecond");
-	const humanDuration = humanizeDuration(buildDuration);
+	const humanDuration = humanizeDuration(buildDuration, { round: true });
 
 	sendLog({ SOCKET_ROOM, message: chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanDuration} 🎉`), type: "success" });
 
