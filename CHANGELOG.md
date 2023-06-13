@@ -1,3 +1,10 @@
+## [3.9.2](https://github.com/digitopvn/diginext/compare/v3.9.1...v3.9.2) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server:** update build number to deploy env when update status ([0b2a079](https://github.com/digitopvn/diginext/commit/0b2a079614f5b61bf47305248497b8be3cad0b79))
+
 ## [3.9.1](https://github.com/digitopvn/diginext/compare/v3.9.0...v3.9.1) (2023-06-12)
 
 
