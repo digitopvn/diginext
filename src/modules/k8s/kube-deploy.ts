@@ -196,7 +196,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	/**
 	 * Apply PRE-RELEASE deployment YAML
 	 */
-	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, namespace, { context });
+	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, { context });
 	if (!prereleaseDeploymentRes)
 		throw new Error(
 			`Can't preview the pre-release "${id}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${preYaml}`
@@ -325,7 +325,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	// Always apply new service, since the PORT could be changed !!!
 
 	const SVC_CONTENT = objectToDeploymentYaml(service);
-	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, namespace, { context });
+	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, { context });
 	if (!applySvcRes)
 		throw new Error(
 			`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`
@@ -367,7 +367,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 	// ! ALWAYS Create new ingress
 	const ING_CONTENT = objectToDeploymentYaml(ingress);
-	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, namespace, { context });
+	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, { context });
 	if (!ingCreateResult)
 		throw new Error(
 			`Failed to apply invalid INGRESS config (${env.toUpperCase()}) to "${ingressName}" in "${namespace}" namespace of "${context}" context:\n${ING_CONTENT}`
@@ -425,7 +425,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		newApp.spec.selector.matchLabels.app = newAppName;
 
 		let APP_CONTENT = objectToDeploymentYaml(newApp);
-		const appCreateResult = await ClusterManager.kubectlApplyContent(APP_CONTENT, namespace, { context });
+		const appCreateResult = await ClusterManager.kubectlApplyContent(APP_CONTENT, { context });
 		if (!appCreateResult)
 			throw new Error(
 				`Failed to apply APP DEPLOYMENT config to "${newAppName}" in "${namespace}" namespace of "${context}" context:\n${APP_CONTENT}`
@@ -494,13 +494,14 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 2 * 60);
 
 	// print the container logs
-	const containerLogs = await logPodByFilter(namespace, { filterLabel: `phase=live,app=${deploymentName}` });
+	let containerLogs = await logPodByFilter(namespace, { filterLabel: `app=${deploymentName}` });
+	if (!containerLogs) containerLogs = await logPodByFilter(namespace, { filterLabel: `main-app=${mainAppName}` });
 	if (onUpdate && containerLogs) onUpdate(containerLogs);
 
 	// throw the error
 	if (!isReallyReady) {
 		return {
-			error: `New app deployment stucked or crashed, probably because of the unauthorized container registry or the app was crashed on start up.`,
+			error: `New app deployment stucked or crashed, probably because of the unauthorized container registry or the app was crashed on start up: ${containerLogs}`,
 		};
 	}
 
