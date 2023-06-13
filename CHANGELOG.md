@@ -1,3 +1,10 @@
+## [3.9.3](https://github.com/digitopvn/diginext/compare/v3.9.2...v3.9.3) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server,dashboard:** create edit docker hub registry ([b5df988](https://github.com/digitopvn/diginext/commit/b5df988bf498fc2e9369bdf671c19982840a30e2))
+
 ## [3.9.2](https://github.com/digitopvn/diginext/compare/v3.9.1...v3.9.2) (2023-06-13)
 
 
