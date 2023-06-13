@@ -226,9 +226,17 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 				ClusterManager.rollout(releaseId);
 			} else {
 				if (env === "prod") {
-					ClusterManager.previewPrerelease(releaseId);
+					ClusterManager.previewPrerelease(releaseId, {
+						onUpdate: (msg) => {
+							sendLog({ SOCKET_ROOM, message: msg });
+						},
+					});
 				} else {
-					ClusterManager.rollout(releaseId);
+					ClusterManager.rollout(releaseId, {
+						onUpdate: (msg) => {
+							sendLog({ SOCKET_ROOM, message: msg });
+						},
+					});
 				}
 			}
 		} catch (e) {

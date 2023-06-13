@@ -496,12 +496,14 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	// print the container logs
 	let containerLogs = await logPodByFilter(namespace, { filterLabel: `app=${deploymentName}` });
 	if (!containerLogs) containerLogs = await logPodByFilter(namespace, { filterLabel: `main-app=${mainAppName}` });
+	if (!containerLogs) containerLogs = await logPodByFilter(namespace, { filterLabel: `app=${deploymentName}`, previous: true });
+	if (!containerLogs) containerLogs = await logPodByFilter(namespace, { filterLabel: `main-app=${mainAppName}`, previous: true });
 	if (onUpdate && containerLogs) onUpdate(containerLogs);
 
 	// throw the error
 	if (!isReallyReady) {
 		return {
-			error: `New app deployment stucked or crashed, probably because of the unauthorized container registry or the app was crashed on start up: ${containerLogs}`,
+			error: `New app deployment stucked or crashed: ${containerLogs}`,
 		};
 	}
 
