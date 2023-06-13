@@ -95,7 +95,12 @@ const DockerRegistry = {
 
 		// check if namespace is existed
 		const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
-		if (!isNsExisted) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+		if (!isNsExisted) {
+			// create new namespace?
+			const ns = await ClusterManager.createNamespace(namespace, { context });
+			// still can't create namespace -> throw error!
+			if (!ns) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+		}
 
 		// check if the secret is existed within the namespace, try to delete it!
 		const isSecretExisted = await ClusterManager.isSecretExisted(secretName, namespace, { context });

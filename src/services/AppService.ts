@@ -25,11 +25,11 @@ export default class AppService extends BaseService<IApp> {
 	}
 
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<IApp[]> {
-		const { status = true } = options || {};
+		const { status = false } = options || {};
 
 		const apps = await super.find(filter, options, pagination);
 
-		if (typeof status === "undefined") return apps;
+		if (!status) return apps;
 
 		// check app deploy environment's status in clusters
 		const allClusterDeploys: { [cluster: string]: KubeDeploymentOnCluster[] } = {};
