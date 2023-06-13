@@ -210,7 +210,7 @@ export async function startBuild(
 	const { slug: projectSlug } = project;
 
 	// build image
-	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}/${app.slug}` } = app;
+	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}-${app.slug}` } = app;
 	if (params.isDebugging) console.log("startBuild > imageURL :>> ", imageURL);
 
 	// get latest build of this app to utilize the cache for this build process
