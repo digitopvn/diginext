@@ -1,3 +1,11 @@
+## [3.10.3](https://github.com/digitopvn/diginext/compare/v3.10.2...v3.10.3) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server:** try to get container log when deploy failed ([f2f8d6a](https://github.com/digitopvn/diginext/commit/f2f8d6a7cb5247c85a7d2bff55d13e76e56eadea))
+* **server:** try to get container log when deploy failed ([#209](https://github.com/digitopvn/diginext/issues/209)) ([94a2a63](https://github.com/digitopvn/diginext/commit/94a2a63616d57e8499f0c0c06827f280af4cf186))
+
 ## [3.10.2](https://github.com/digitopvn/diginext/compare/v3.10.1...v3.10.2) (2023-06-13)
 
 
