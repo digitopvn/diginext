@@ -71,8 +71,6 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: 
 		cliVersion: ownership?.cliVersion || cliVersion,
 		name: `${projectSlug}/${appSlug}:${buildNumber}`,
 		image: IMAGE_NAME,
-		// old diginext.json
-		diginext: JSON.stringify(appConfig),
 		appConfig: appConfig,
 		// build status
 		branch: branch,
@@ -89,7 +87,6 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: 
 		envVars: app.deployEnvironment[env].envVars || [],
 		// production
 		productionUrl: !isEmpty(deploymentData.domains) ? deploymentData.domains[0] : "",
-		prodYaml: deploymentData.deployContent,
 		// relationship
 		build: build._id,
 		app: app._id,

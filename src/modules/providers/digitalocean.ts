@@ -195,7 +195,10 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	// check namespace is existed
 	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 	if (!isNsExisted) {
-		logError(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+		// create new namespace?
+		const ns = await ClusterManager.createNamespace(namespace, { context });
+		// still can't create namespace -> throw error!
+		if (!ns) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
 		return;
 	}
 
