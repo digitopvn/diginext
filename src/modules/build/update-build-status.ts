@@ -33,8 +33,10 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, extr
 	const updatedApp = await DB.updateOne<IApp>("app", { _id: appId }, updateDto);
 	log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp);
 
-	const updatedProject = await DB.updateOne<IProject>("project", { _id: updatedApp.project }, { latestBuild: build.slug });
-	log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject);
+	if (updatedApp) {
+		const updatedProject = await DB.updateOne<IProject>("project", { _id: updatedApp.project }, { latestBuild: build.slug });
+		log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject);
+	}
 
 	return updatedBuild;
 }
