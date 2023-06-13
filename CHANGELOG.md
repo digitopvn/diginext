@@ -1,3 +1,10 @@
+# [3.10.0](https://github.com/digitopvn/diginext/compare/v3.9.4...v3.10.0) (2023-06-13)
+
+
+### Features
+
+* **server,cli:** always update image url, add build list page ([d41e563](https://github.com/digitopvn/diginext/commit/d41e5634efda560e714ffa122d60992968508a11))
+
 ## [3.9.4](https://github.com/digitopvn/diginext/compare/v3.9.3...v3.9.4) (2023-06-13)
 
 
