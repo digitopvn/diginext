@@ -150,7 +150,11 @@ export default class DeployController extends BaseController {
 		// if (typeof buildParams.buildWatch === "undefined") buildParams.buildWatch = true;
 
 		log(`buildAndDeploy > buildParams.buildNumber :>>`, buildParams.buildNumber);
-		buildAndDeploy(buildParams, deployBuildOptions);
+		try {
+			buildAndDeploy(buildParams, deployBuildOptions);
+		} catch (e) {
+			return respondFailure(`${e}`);
+		}
 
 		const { appSlug, buildNumber } = buildParams;
 		const buildServerUrl = Config.BASE_URL;
@@ -212,11 +216,15 @@ export default class DeployController extends BaseController {
 		console.log("deployBuildOptions :>> ", deployBuildOptions);
 
 		// DEPLOY A BUILD:
-		const result = await deployWithBuildSlug(buildSlug, deployBuildOptions);
-		const { release } = result;
+		try {
+			const result = await deployWithBuildSlug(buildSlug, deployBuildOptions);
+			const { release } = result;
 
-		if (!release) return { status: 0, messages: [`Failed to deploy from a build (${buildSlug}).`] };
+			if (!release) return { status: 0, messages: [`Failed to deploy from a build (${buildSlug}).`] };
 
-		return { messages: [], status: 1, data: result };
+			return { messages: [], status: 1, data: result };
+		} catch (e) {
+			return respondFailure(`${e}`);
+		}
 	}
 }
