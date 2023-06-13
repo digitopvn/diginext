@@ -1,3 +1,12 @@
+## [3.10.1](https://github.com/digitopvn/diginext/compare/v3.10.0...v3.10.1) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server:** remove namespace in kube apply func ([fe31af4](https://github.com/digitopvn/diginext/commit/fe31af4a2388fd78ba7dc2959ca778488a21f37d))
+* **server:** show container logs when deploy failed ([0c17821](https://github.com/digitopvn/diginext/commit/0c178210b006e9f486d5ce63390f844e283a035d))
+* **server:** try catch build and deploy ([c03c5e1](https://github.com/digitopvn/diginext/commit/c03c5e164a0889b71df6217f145f6bdc0575f467))
+
 # [3.10.0](https://github.com/digitopvn/diginext/compare/v3.9.4...v3.10.0) (2023-06-13)
 
 
