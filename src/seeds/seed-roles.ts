@@ -11,10 +11,6 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	let adminMaskedFields: string[] = [];
 	if (!Config.SHARE_RESOURCE_CREDENTIAL) adminMaskedFields = [...credentialFields];
 
-	console.log("Config.SHARE_RESOURCE_CREDENTIAL :>> ", Config.SHARE_RESOURCE_CREDENTIAL);
-	console.log("adminRole.maskedFields :>> ", adminRole.maskedFields);
-	console.log("adminMaskedFields :>> ", adminMaskedFields);
-
 	if (!adminRole) {
 		const adminRoleDto = {} as IRole;
 		adminRoleDto.name = "Administrator";
