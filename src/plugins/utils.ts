@@ -678,7 +678,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	if (fs.existsSync(dir)) {
 		try {
 			git = simpleGit(dir, { progress: onProgress });
-			const remotes = ((await git.getRemotes(false)) || []).filter((remote) => remote.name === "origin");
+			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
 			const originRemote = remotes[0] as any;
 			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
 			console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
@@ -723,9 +723,6 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 			baseDir: `${dir}`,
 			binary: "git",
 		});
-		// -----------------------
-		// ! DO NOT SET TO "FALSE"
-		// -----------------------
 		const remotes = await git.getRemotes(true);
 
 		const remoteSSH = (remotes[0] as any)?.refs?.fetch;
