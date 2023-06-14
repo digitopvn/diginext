@@ -46,7 +46,6 @@ export const conf = new Configstore(pkg.name);
 export async function processCLI(options?: InputOptions) {
 	options.version = currentVersion();
 
-	console.log("options.action :>> ", options.action);
 	let env = "dev";
 	if (options.isStaging) env = "staging";
 	if (options.isProd) env = "prod";
@@ -224,9 +223,7 @@ export async function processCLI(options?: InputOptions) {
 			return;
 
 		case "clone":
-			console.log("1");
 			await cliAuthenticate(options);
-			console.log("2");
 
 			await cloneRepo(options);
 			return;

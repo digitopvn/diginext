@@ -2,18 +2,22 @@ import { logError } from "diginext-utils/dist/console/log";
 import * as fs from "fs";
 import path from "path";
 
+import type { IApp } from "@/entities";
 import type { InputOptions } from "@/interfaces";
+import { DB } from "@/modules/api/DB";
+import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import selectApp from "@/modules/apps/selectApp";
 import selectProject from "@/modules/apps/selectProject";
-import { pullingOldRepo } from "@/modules/framework";
+import { pullingRepoToNewGitDir } from "@/modules/framework";
+import { askForGitProvider } from "@/modules/git/ask-for-git-provider";
+import type { GitRepository, GitRepositoryDto } from "@/modules/git/git-provider-api";
+import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
+import { printInformation } from "@/modules/project/printInformation";
 
 //
 export default async function cloneRepo(options: InputOptions) {
-	options.project = await selectProject(options);
+	options.project = await selectProject(options, false);
 	options.app = await selectApp(options, false);
-	//
-
-	console.log("options :>> ", options);
 
 	options.targetDirectory = path.resolve(process.cwd(), options.repoSlug);
 
@@ -32,19 +36,49 @@ export default async function cloneRepo(options: InputOptions) {
 		framework: {
 			...options.app.framework,
 			...options.app?.git,
+			name: options.app?.git?.repoSSH,
 		},
 
 		targetDirectory: options.targetDirectory,
 	};
 
-	console.log("options :>> ", __option);
+	await pullingRepoToNewGitDir(__option);
 
-	await pullingOldRepo(__option);
+	// //create git in github
+	let gitProvider = await askForGitProvider();
 
-	// console.log("options.project :>> ", options.project);
-	// console.log("3");
-	// const newApp = await createAppByForm(options);
+	// Create new repo:
+	const repoData: GitRepositoryDto = {
+		name: options.repoSlug,
+		private: !options.isPublic,
+	};
+	if (options.isDebugging) console.log("[cloneRepo] CREATE REPO > repoData :>> ", repoData);
+	const newRepo = await DB.create<GitRepository>("git", repoData, {
+		subpath: "/orgs/repos",
+		filter: { slug: gitProvider.slug },
+	});
+	if (options.isDebugging) console.log("[cloneRepo] CREATE REPO > newRepo :>> ", newRepo);
 
-	// console.log("newApp :>> ", newApp);
+	options.gitProvider = newRepo.provider;
+	options.remoteSSH = newRepo.ssh_url;
+	options.remoteURL = newRepo.repo_url;
+
+	// update git info to database
+	const [updatedApp] = await DB.update<IApp>(
+		"app",
+		{ slug: options.slug },
+		{ git: { provider: options.gitProvider, repoSSH: options.remoteSSH, repoURL: options.remoteURL } }
+	);
+	if (!updatedApp) {
+		logError("Can't create new app due to network issue while updating git repo info.");
+		return;
+	}
+
+	// // first commit & create default branches (main, dev/*)
+	await initalizeAndCreateDefaultBranches(options);
+
+	// print project information:
+	const finalConfig = getAppConfigFromApp(updatedApp);
+	printInformation(finalConfig);
 }
 export { cloneRepo };

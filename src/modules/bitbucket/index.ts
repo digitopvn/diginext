@@ -234,15 +234,14 @@ export const cloneGitFramework = async (options: InputOptions) => {
 	}
 	await mkdir(tmpDir);
 
-	const spin = ora(`Pulling "${name}" framework... 0%`).start();
+	const spin = ora(`Pulling "${name}"... 0%`).start();
 
-	console.log("repoSSH, tmpDir :>> ", repoSSH, tmpDir);
 	await cloneGitRepo(repoSSH, tmpDir, {
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
 				console.log(msg);
 			} else {
-				spin.text = `Pulling "${name}" framework... ${progress || 0}%`;
+				spin.text = `Pulling "${name}"... ${progress || 0}%`;
 			}
 		},
 	});
