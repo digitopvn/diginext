@@ -232,6 +232,8 @@ export async function parseCliOptions() {
 		.usage("$0 update <version>", "Update your CLI to specific version")
 		// command: new
 		.command("new", "Create new project & application", newProjectOptions)
+		// command: clone
+		.command("clone", "Clone repo from bitbucket to github", newProjectOptions)
 		// command: init
 		.command("init", "Initialize CLI in the current project directory")
 		// command: upgrade
