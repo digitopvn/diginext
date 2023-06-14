@@ -102,7 +102,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 				// if current ssl is "letsencrypt" or "custom"...
 				if (isEmpty(deployEnvironment.domains)) {
 					logError(
-						`There is domains in "dx.json" (${env}) but the SSL was enabled, deploy again without "--ssl" flag or delete "ssl" in "dx.json".`
+						`There is domains in deploy environment config (${env}) but the SSL was enabled, deploy again without "--ssl" flag or delete "ssl" in deploy environment config on Diginext workspace.`
 					);
 					return;
 				}

@@ -39,7 +39,7 @@ export async function requestDeploy(options: InputOptions) {
 
 	/**
 	 * [1] Parse cli options, validate the input params
-	 *     and save it to "dx.json"
+	 *     and save it to deploy environment config on Diginext workspace
 	 */
 	let appConfig = await parseOptionsToAppConfig(options);
 	if (!appConfig) return;

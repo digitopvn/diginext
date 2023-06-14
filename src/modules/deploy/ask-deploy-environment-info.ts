@@ -157,7 +157,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	if (isEmpty(serverDeployEnvironment.domains)) {
 		logWarn(
 			`This app doesn't have any domains configurated & will be reachable within namespace/cluster scope. 
-To expose this app to the internet later, you can add your own domain to "dx.json" & deploy it again.`
+To expose this app to the internet later, you can add your own domain to deploy environment config on Diginext workspace & deploy it again.`
 		);
 	}
 
