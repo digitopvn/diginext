@@ -96,3 +96,28 @@ export const buildPlatformList = [
 	"linux/arm/v6",
 ] as const;
 export type BuildPlatform = typeof buildPlatformList[number];
+
+/**
+ * Credential fields
+ */
+export const credentialFields: string[] = [
+	// account
+	"token.access_token",
+	// clusters & registries
+	"apiAccessToken",
+	"serviceAccount",
+	"dockerPassword",
+	"kubeConfig",
+	"imagePullSecret.value",
+	// git
+	"bitbucket_oauth.consumer_secret",
+	"bitbucket_oauth.app_password",
+	"github_oauth.client_secret",
+	"github_oauth.personal_access_token",
+	// metadata
+	"metadata.email",
+	"metadata.apiAccessToken",
+	"metadata.serviceAccount",
+	"metadata.dockerPassword",
+	"metadata.kubeConfig",
+];

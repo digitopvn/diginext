@@ -402,6 +402,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	 * and apply new app for production
 	 */
 
+	// TODO: Check crashed / failed deployments -> delete them!
 	let oldDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${mainAppName}` });
 	if (oldDeploys.length === 0)
 		oldDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${deprecatedMainAppName}` });

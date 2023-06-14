@@ -118,34 +118,80 @@ EOF
 
 # --- Deploy "hello-world" app ---
 
-# create namespace "hello"
-microk8s kubectl create ns hello
+# # create namespace "hello"
+# # microk8s kubectl create ns hello
+# microk8s kubectl apply -f - <<EOF
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: diginext
+# EOF
 
-# create deployment "hello"
-microk8s kubectl -n hello create deployment hello --image=digitop/static --port=80
+# # create deployment "hello"
+# # microk8s kubectl -n hello create deployment hello --image=digitop/static --port=80
+# microk8s kubectl apply -f - <<EOF
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   labels:
+#     app: hello
+#   name: hello
+#   namespace: hello
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: hello
+#   template:
+#     metadata:
+#       labels:
+#         app: hello
+#     spec:
+#       containers:
+#         - image: digitop/static
+#           name: static
+#           ports:
+#             - containerPort: 80
+# EOF
 
-# expose service "hello"
-microk8s kubectl -n hello expose deployment hello
+# # expose service "hello"
+# # microk8s kubectl -n hello expose deployment hello
+# microk8s kubectl apply -f - <<EOF
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   labels:
+#     app: hello
+#   name: hello
+#   namespace: hello
+# spec:
+#   ports:
+#   - port: 80
+#     targetPort: 80
+#   selector:
+#     app: hello
+#   type: ClusterIP
+# EOF
 
-# create ingress "hello" to expose service via
-microk8s kubectl apply -f - <<EOF
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: hello
-  namespace: hello
-spec:
-  rules:
-  - http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: hello
-            port:
-              number: 80
-EOF
+# # create ingress "hello" to expose service via
+# microk8s kubectl apply -f - <<EOF
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: hello
+#   namespace: hello
+# spec:
+#   rules:
+#   - http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: hello
+#             port:
+#               number: 80
+# EOF
 
 # create ingress "hello" (HTTPS)
 # microk8s kubectl apply -f - <<EOF
@@ -175,9 +221,7 @@ EOF
 #                   number: 80
 # EOF
 
-microk8s kubectl -n hello get all,ing -o wide
-
-curl http://localhost:80
+# microk8s kubectl -n hello get all,ing -o wide
 
 # Install MongoDB using Helm
 MONGODB_NAMESPACE=mongodb
@@ -185,7 +229,14 @@ MONGODB_STATEFULSET_NAME=mongodb
 MONGODB_ROOT_PW=diginext
 MONGODB_URI=mongodb://root:${MONGODB_ROOT_PW}@mongodb.mongodb:27017/diginext?authSource=admin
 
-microk8s kubectl create ns $MONGODB_NAMESPACE
+# microk8s kubectl create ns $MONGODB_NAMESPACEopenssl
+microk8s kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${MONGODB_NAMESPACE}
+EOF
+
 microk8s helm upgrade --install $MONGODB_STATEFULSET_NAME -n $MONGODB_NAMESPACE \
   --set architecture=replicaset \
   --set global.namespaceOverride=$MONGODB_NAMESPACE \
@@ -194,7 +245,7 @@ microk8s helm upgrade --install $MONGODB_STATEFULSET_NAME -n $MONGODB_NAMESPACE 
 
 # Check if the MongoDB StatefulSet is ready
 is_statefulset_ready() {
-  kubectl get statefulset "$MONGODB_STATEFULSET_NAME" -n "$MONGODB_NAMESPACE" -ojsonpath='{.status.readyReplicas}' | grep -q "$(kubectl get statefulset "$MONGODB_STATEFULSET_NAME" -n "$MONGODB_NAMESPACE" -ojsonpath='{.status.replicas}')"
+  microk8s kubectl get statefulset "$MONGODB_STATEFULSET_NAME" -n "$MONGODB_NAMESPACE" -ojsonpath='{.status.readyReplicas}' | grep -q "$(microk8s kubectl get statefulset "$MONGODB_STATEFULSET_NAME" -n "$MONGODB_NAMESPACE" -ojsonpath='{.status.replicas}')"
 }
 
 # Wait for the StatefulSet to be ready
@@ -208,7 +259,9 @@ echo "MongoDB is fully ready."
 # ----- Deploy Diginext -----
 
 export KUBECONFIG=$(microk8s config)
-export INITIAL_CLUSTER_URL=http://${IP_ADDRESS}:6969
+export DX_BASE_URL=http://${IP_ADDRESS}
+# generate random 64 character length string
+export JWT_SECRET=$(openssl rand -hex 32)
 
 # Deploy "FUSE Drive" plugin
 microk8s kubectl apply -f - <<EOF
@@ -332,24 +385,23 @@ spec:
             limits:
               github.com/fuse: 1
           env:
-            - name: TZ
-              value: Asia/Ho_Chi_Minh
             - name: PORT
               value: "6969"
             - name: NODE_ENV
               value: production
             - name: CLI_MODE
               value: server
-            - name: DEV_MODE
-              value: "false"
             - name: BASE_URL
-              value: ${INITIAL_CLUSTER_URL}
+              value: ${DX_BASE_URL}
+            - name: JWT_SECRET
+              value: ${JWT_SECRET}
             - name: DB_NAME
               value: diginext
             - name: DB_URI
               value: ${MONGODB_URI}
             - name: INITIAL_CLUSTER_KUBECONFIG
-              value: ${KUBECONFIG}
+              value: |
+                ${KUBECONFIG}
           volumeMounts:
             - name: storage
               mountPath: /usr/app/storage
@@ -366,4 +418,7 @@ spec:
           emptyDir: {}
 EOF
 
+# curl http://localhost
+
 echo "MicroK8S Cluster has been set up successfully."
+echo "  - Diginext URL: ${DX_BASE_URL}"
