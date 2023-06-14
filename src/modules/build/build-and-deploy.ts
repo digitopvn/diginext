@@ -33,16 +33,18 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	if (deployRes?.error) {
 		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${buildParams.env}): ${deployRes?.error}`;
 		sendLog({ SOCKET_ROOM, message: errorMsg });
-		throw new Error(errorMsg);
+		// throw new Error(errorMsg);
+		return;
 	}
 	if (!deployRes) {
 		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${buildParams.env}): UNKNOWN_REASON`;
 		sendLog({ SOCKET_ROOM, message: errorMsg });
-		throw new Error(errorMsg);
+		// throw new Error(errorMsg);
+		return;
 	}
 
 	const { release, deployment } = deployRes;
-	console.log("[BUILD_AND_DEPLOY] Finished deploying > release :>> ", release);
+	// console.log("[BUILD_AND_DEPLOY] Finished deploying > release :>> ", release);
 	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > Release ID :>> ${release._id}` });
 
 	const releaseId = MongoDB.toString(release._id);

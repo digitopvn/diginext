@@ -378,6 +378,9 @@ export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCal
 	}
 }
 
+/**
+ * Get current CLI version
+ */
 export function currentVersion() {
 	return pkg.version;
 }
