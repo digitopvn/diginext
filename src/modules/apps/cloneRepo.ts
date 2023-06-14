@@ -18,6 +18,8 @@ import { printInformation } from "@/modules/project/printInformation";
 export default async function cloneRepo(options: InputOptions) {
 	options.project = await selectProject(options, false);
 	options.app = await selectApp(options, false);
+	console.log("Chọn git provider muốn clone đến (Đừng chọn bitbucket, chưa test! )");
+	let gitProvider = await askForGitProvider();
 
 	options.targetDirectory = path.resolve(process.cwd(), options.repoSlug);
 
@@ -45,7 +47,6 @@ export default async function cloneRepo(options: InputOptions) {
 	await pullingRepoToNewGitDir(__option);
 
 	// //create git in github
-	let gitProvider = await askForGitProvider();
 
 	// Create new repo:
 	const repoData: GitRepositoryDto = {
