@@ -691,11 +691,13 @@ export async function logPod(
 		if (prefix) args.push("--prefix");
 		if (previous) args.push("--previous");
 
-		const { stdout } = await execa("kubectl", args);
-		return stdout;
+		const { stdout, stderr } = await execa("kubectl", args);
+		console.log(`[KUBE_CTL] logPod > stdout :>>`, stdout);
+		console.log(`[KUBE_CTL] logPod > stderr :>>`, stderr);
+		return stdout || stderr;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] logPod >`, e);
-		return;
+		return e.toString() as string;
 	}
 }
 
@@ -716,13 +718,14 @@ export async function logPodByFilter(
 		if (timestamps) args.push("--timestamps");
 		if (prefix) args.push("--prefix");
 		if (previous) args.push("--previous");
-		// args.push("--timestamps", "--prefix");
 
-		const { stdout } = await execa("kubectl", args);
-		return stdout;
+		const { stdout, stderr } = await execa("kubectl", args);
+		console.log(`[KUBE_CTL] logPod > stdout :>>`, stdout);
+		console.log(`[KUBE_CTL] logPod > stderr :>>`, stderr);
+		return stdout || stderr;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] logPod >`, e);
-		return;
+		return e.toString() as string;
 	}
 }
 

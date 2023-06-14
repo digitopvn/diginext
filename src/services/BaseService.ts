@@ -43,7 +43,7 @@ export default class BaseService<T = any> {
 			const scope = this;
 			const slugRange = "zxcvbnmasdfghjklqwertyuiop1234567890";
 			async function generateUniqueSlug(input, attempt = 1) {
-				let slug = makeSlug(input);
+				let slug = makeSlug(input, { delimiter: "" });
 
 				let count = await scope.count({ slug });
 				if (count > 0) slug = slug + "-" + randomStringByLength(attempt, slugRange).toLowerCase();

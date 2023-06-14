@@ -9,7 +9,7 @@ import type { IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
-import { resolveDockerfilePath } from "@/plugins";
+import { currentVersion, resolveDockerfilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
 import type { StartBuildParams } from "../build";
@@ -130,6 +130,7 @@ export async function requestDeploy(options: InputOptions) {
 			gitBranch: options.gitBranch,
 			registrySlug: deployEnvironment.registry,
 			appSlug: options.appSlug,
+			cliVersion: currentVersion(),
 		},
 		deployParams: {
 			env,

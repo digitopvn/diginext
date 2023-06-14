@@ -138,12 +138,9 @@ export default class DeployController extends BaseController {
 			const breakingChangeVersionServer = serverVersion.split(".")[0];
 
 			if (breakingChangeVersionCli != breakingChangeVersionServer) {
-				return {
-					status: 0,
-					messages: [
-						`Your CLI version (${buildParams.cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please update your CLI with: "dx update"`,
-					],
-				};
+				return respondFailure(
+					`Your CLI version (${buildParams.cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please update your CLI with: "dx update"`
+				);
 			}
 		}
 
