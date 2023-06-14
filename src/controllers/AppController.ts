@@ -689,6 +689,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
 		if (!deployEnvironmentData.buildNumber) respondFailure({ msg: `Build number (image's tag) is required.` });
 
+		const mainAppName = getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+
 		const { buildNumber } = deployEnvironmentData;
 
 		const project = app.project as IProject;
@@ -819,15 +822,31 @@ export default class AppController extends BaseController<IApp, AppService> {
 		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
-		// create new release and roll out
-		const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
-			author: this.user,
-			cliVersion: currentVersion(),
-			workspace: this.workspace,
-		});
-		const result = await ClusterManager.rollout(release._id.toString());
+		// ----- SHOULD ROLL OUT NEW RELEASE OR NOT ----
 
-		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
+		let workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
+			context: cluster.contextName,
+			filterLabel: `main-app=${mainAppName}`,
+		});
+		// Fallback support for deprecated mainAppName
+		if (!workloads || workloads.length === 0) {
+			workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${deprecatedMainAppName}`,
+			});
+		}
+
+		if (workloads && workloads.length > 0) {
+			// create new release and roll out
+			const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+				author: this.user,
+				cliVersion: currentVersion(),
+				workspace: this.workspace,
+			});
+
+			const result = await ClusterManager.rollout(release._id.toString());
+			if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
+		}
 
 		return respondSuccess({ data: appConfig });
 	}
@@ -888,10 +907,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 				delete releaseFilter.active;
 				latestRelease = await DB.findOne<IRelease>("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
 			}
-			if (!latestRelease) throw new Error(`updateDeployEnvironment() > Release not found (app: "${app.slug}" - env: "${env}")`);
+			if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Release not found (app: "${app.slug}" - env: "${env}")`);
 
 			const latestBuild = latestRelease.build as IBuild;
-			if (!latestRelease) throw new Error(`updateDeployEnvironment() > Latest build not found (app: "${app.slug}" - env: "${env}")`);
+			if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Latest build not found (app: "${app.slug}" - env: "${env}")`);
 			deployEnvironmentData.buildNumber = latestBuild.tag;
 		}
 
@@ -1031,7 +1050,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		});
 		const result = await ClusterManager.rollout(release._id.toString());
 
-		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
+		if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
 
 		return respondSuccess({ data: updatedApp.deployEnvironment[env] });
 	}
@@ -1086,7 +1105,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// check if the environment is existed
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+
 		const mainAppName = getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		const deployEnvironment = (app.deployEnvironment || {})[env.toString()];
 		if (!deployEnvironment) {
@@ -1106,10 +1127,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (cluster) {
 			const { contextName: context } = cluster;
-			try {
-				// switch to the cluster of this environment
-				await ClusterManager.authCluster(clusterShortName);
 
+			// switch to the cluster of this environment
+			await ClusterManager.authCluster(clusterShortName);
+
+			try {
 				/**
 				 * IMPORTANT
 				 * ---
@@ -1123,7 +1145,22 @@ export default class AppController extends BaseController<IApp, AppService> {
 				// Delete DEPLOYMENT
 				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 			} catch (e) {
-				logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
+				logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) - "main-app=${mainAppName}" :>>`, e);
+				errorMsg = e.message;
+			}
+
+			/**
+			 * FALLBACK SUPPORT FOR DEPRECATED MAIN APP NAME
+			 */
+			try {
+				// Delete INGRESS
+				await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+				// Delete SERVICE
+				await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+				// Delete DEPLOYMENT
+				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+			} catch (e) {
+				logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace} - "main-app=${deprecatedMainAppName}") :>>`, e);
 				errorMsg = e.message;
 			}
 		}
@@ -1181,7 +1218,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		const app = await this.service.findOne({ ...this.filter, slug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
-		const projectSlug = app.projectSlug;
+
 		const mainAppName = getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
@@ -1492,7 +1529,15 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// find app
 		const app = await this.service.findOne(this.filter);
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+		if (!app.deployEnvironment) return respondFailure(`App "${app.slug}" doesn't have any deploy environments.`);
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
+
+		const clusterShortName = app.deployEnvironment[env].cluster;
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		if (cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
+
+		const mainAppName = getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		// validate domain
 		for (const domain of domains) {
@@ -1548,15 +1593,28 @@ export default class AppController extends BaseController<IApp, AppService> {
 		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
-		// create new release and roll out
-		const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
-			author: this.user,
-			cliVersion: currentVersion(),
-			workspace: this.workspace,
+		let workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
+			context: cluster.contextName,
+			filterLabel: `main-app=${mainAppName}`,
 		});
-		const result = await ClusterManager.rollout(release._id.toString());
+		// Fallback support for deprecated mainAppName
+		if (!workloads || workloads.length === 0) {
+			workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${deprecatedMainAppName}`,
+			});
+		}
 
-		if (result.error) throw new Error(`Failed to roll out the release :>> ${result.error}.`);
+		if (workloads && workloads.length > 0) {
+			// create new release and roll out
+			const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+				author: this.user,
+				cliVersion: currentVersion(),
+				workspace: this.workspace,
+			});
+			const result = await ClusterManager.rollout(release._id.toString());
+			if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
+		}
 
 		return respondSuccess({ data: updatedApp });
 	}
