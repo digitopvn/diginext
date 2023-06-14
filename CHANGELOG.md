@@ -1,3 +1,10 @@
+## [3.10.6](https://github.com/digitopvn/diginext/compare/v3.10.5...v3.10.6) (2023-06-14)
+
+
+### Bug Fixes
+
+* **server:** default to share resource credential ([26e8c17](https://github.com/digitopvn/diginext/commit/26e8c17e3103a1828b3c92e9f891b1811d64a566))
+
 ## [3.10.5](https://github.com/digitopvn/diginext/compare/v3.10.4...v3.10.5) (2023-06-14)
 
 
