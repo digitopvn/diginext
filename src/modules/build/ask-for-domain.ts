@@ -38,7 +38,9 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 		const { useGeneratedDomain } = await inquirer.prompt({
 			name: "useGeneratedDomain",
 			type: "confirm",
-			message: `Do you want to use our generated domain: ${chalk.green(generatedDomain)}? (You can update it anytime in your "dx.json" file)`,
+			message: `Do you want to use our generated domain: ${chalk.green(
+				generatedDomain
+			)}? (You can update it anytime in your Diginext workspace)`,
 			default: true,
 		});
 

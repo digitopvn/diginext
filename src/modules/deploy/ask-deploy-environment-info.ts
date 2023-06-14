@@ -165,12 +165,13 @@ To expose this app to the internet later, you can add your own domain to "dx.jso
 	let registry: IContainerRegistry;
 	if (serverDeployEnvironment.registry) {
 		registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry });
-		if (registry) serverDeployEnvironment.registry = registry.slug;
+		serverDeployEnvironment.registry = registry?.slug;
 	}
 	if (!serverDeployEnvironment.registry) {
 		registry = await askForRegistry();
-		serverDeployEnvironment.registry = registry.slug;
+		serverDeployEnvironment.registry = registry?.slug;
 	}
+	if (!registry) return;
 
 	// ALWAYS UPDATE NEW "imageURL"
 	// if (!serverDeployEnvironment.imageURL) {
