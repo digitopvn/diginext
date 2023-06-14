@@ -5,9 +5,9 @@ import type { InputOptions } from "@/interfaces";
 import { searchProjects } from "./search-projects";
 //
 
-export default async function selectProject(options?: InputOptions) {
+export default async function selectProject(options?: InputOptions, canSkip: boolean = true) {
 	//
-	const projects = await searchProjects();
+	const projects = await searchProjects({ canSkip });
 
 	// display list to select:
 	const { selectedProject } = await inquirer.prompt({

@@ -65,7 +65,7 @@ export async function pullingFramework(options: InputOptions) {
 	return true;
 }
 
-export async function pullingOldRepo(options: InputOptions) {
+export async function pullingRepoToNewGitDir(options: InputOptions) {
 	await cloneGitFramework(options);
 
 	await copyAllResources(options.targetDirectory);

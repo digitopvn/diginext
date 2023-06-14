@@ -13,8 +13,6 @@ export default async function selectApp(options?: InputOptions, canSkip: boolean
 
 	const apps = await searchApps({ projectSlug, canSkip });
 
-	console.log("canSkip :>> ", canSkip);
-	console.log("apps :>> ", apps.length);
 	// display list to select:
 	const { selectedApp } = await inquirer.prompt<{ selectedApp: IApp }>({
 		type: "list",
