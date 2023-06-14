@@ -55,6 +55,8 @@ export async function requestDeploy(options: InputOptions) {
 	 */
 	const deployInfo = await askForDeployEnvironmentInfo(options);
 	if (options.isDebugging) console.log("deployInfo :>> ", deployInfo);
+	if (!deployInfo.appConfig || !deployInfo.deployEnvironment) return;
+
 	const { deployEnvironment, appConfig: validatedAppConfig } = deployInfo;
 	appConfig = validatedAppConfig;
 
