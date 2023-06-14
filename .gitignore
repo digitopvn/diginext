@@ -66,6 +66,7 @@ storage/**/*
 ./redis_data/*
 redis_data/
 public/logs
+public/swagger.json
 redis_data/
 # /public.__image-compressed__
 !public/assets/images/nextjs-starter-banner.png
