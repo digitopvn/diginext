@@ -7131,6 +7131,23 @@
 										},
 										{
 											"properties": {
+												"data": {},
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
+										},
+										{
+											"properties": {
 												"data": {
 													"properties": {
 														"logURL": {
@@ -7241,6 +7258,23 @@
 									"anyOf": [
 										{
 											"$ref": "#/components/schemas/ResponseData"
+										},
+										{
+											"properties": {
+												"data": {},
+												"messages": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"status": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": ["messages", "status"],
+											"type": "object"
 										},
 										{
 											"properties": {
