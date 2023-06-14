@@ -1,4 +1,6 @@
+import { Config } from "@/app.config";
 import type { IRole, IUser, IWorkspace, RoleRoute } from "@/entities";
+import { credentialFields } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
 
@@ -6,6 +8,8 @@ import { MongoDB } from "@/plugins/mongodb";
 export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	// ADMIN
 	let adminRole = await DB.findOne<IRole>("role", { type: "admin", workspace: workspace._id });
+	const adminMaskedFields: string[] = [];
+	if (!Config.SHARE_RESOURCE_CREDENTIAL) adminMaskedFields.push(...credentialFields);
 
 	if (!adminRole) {
 		const adminRoleDto = {} as IRole;
@@ -13,10 +17,14 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		adminRoleDto.routes = [{ route: "*", permissions: ["full"] }];
 		adminRoleDto.workspace = workspace._id;
 		adminRoleDto.type = "admin";
-		adminRoleDto.maskedFields = [];
+		adminRoleDto.maskedFields = adminMaskedFields;
 
 		adminRole = await DB.create<IRole>("role", adminRoleDto);
 		console.log(`Workspace "${workspace.name}" > Created default admin role :>> `, adminRoleDto.name);
+	} else {
+		if (adminRole.maskedFields?.join(",") !== adminMaskedFields.join(",")) {
+			adminRole = await DB.updateOne<IRole>("role", { _id: adminRole._id }, { maskedFields: adminMaskedFields });
+		}
 	}
 
 	// assign admin role to the "owner" user
@@ -60,30 +68,26 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		{ route: "/api/v1/service_account", permissions: ["read"] },
 	];
 
+	const memberRoleMaskedFields = ["email", ...credentialFields];
+	// Only the server can read cloud resource's credentials, others (CLI & API) won't, even Workspace Administrators or Moderators.
+	if (!Config.SHARE_RESOURCE_CREDENTIAL) memberRoleMaskedFields.push(...credentialFields);
+
 	if (!memberRole) {
 		const memberRoleDto = {} as IRole;
 		memberRoleDto.name = "Member";
 		memberRoleDto.routes = memberRoleRoutes;
 		memberRoleDto.workspace = workspace._id;
 		memberRoleDto.type = "member";
-		memberRoleDto.maskedFields = [
-			"email",
-			"apiAccessToken",
-			"serviceAccount",
-			"dockerPassword",
-			"kubeConfig",
-			"token.access_token",
-			"imagePullSecret.value",
-			"metadata.email",
-			"metadata.apiAccessToken",
-			"metadata.serviceAccount",
-			"metadata.dockerPassword",
-			"metadata.kubeConfig",
-		];
+		memberRoleDto.maskedFields = memberRoleMaskedFields;
 
 		memberRole = await DB.create<IRole>("role", memberRoleDto);
 		console.log(`Workspace "${workspace.name}" > Created default member role :>> `, memberRoleDto.name);
 	} else {
+		// Update maskFields if it's not correct
+		if (memberRole.maskedFields?.join(",") !== memberRoleMaskedFields.join(",")) {
+			memberRole = await DB.updateOne<IRole>("role", { _id: memberRole._id }, { maskedFields: memberRoleMaskedFields });
+		}
+
 		// compare routes & permissions, if it doesn't match -> update!
 		const defaultMemberRoleRoutes = memberRoleRoutes.map((r) => `${r.route}:${r.permissions?.join(",")}`).join("|");
 		const dbMemberRoleRoutes = memberRole.routes.map((r) => `${r.route}:${r.permissions?.join(",")}`).join("|");
@@ -103,11 +107,16 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		moderatorRoleDto.routes = moderatorRoleRoutes;
 		moderatorRoleDto.workspace = workspace._id;
 		moderatorRoleDto.type = "moderator";
-		moderatorRoleDto.maskedFields = [];
+		moderatorRoleDto.maskedFields = adminMaskedFields;
 
 		moderatorRole = await DB.create<IRole>("role", moderatorRoleDto);
 		console.log(`Workspace "${workspace.name}" > Created default moderator role :>> `, moderatorRole.name);
 	} else {
+		// Update maskedFields if it is incorrect
+		if (moderatorRole.maskedFields?.join(",") !== adminMaskedFields.join(",")) {
+			moderatorRole = await DB.updateOne<IRole>("role", { _id: moderatorRole._id }, { maskedFields: adminMaskedFields });
+		}
+
 		// compare routes & permissions, if it doesn't match -> update!
 		const defaultModRoleRoutes = moderatorRoleRoutes.map((r) => `${r.route}:${r.permissions?.join(",")}`).join("|");
 		const dbModRoleRoutes = moderatorRole.routes.map((r) => `${r.route}:${r.permissions?.join(",")}`).join("|");
