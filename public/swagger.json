@@ -32,10 +32,7 @@
 					},
 					"status": {
 						"type": "number",
-						"enum": [
-							0,
-							1
-						],
+						"enum": [0, 1],
 						"description": "1 = succeed | 0 = failed"
 					},
 					"data": {},
@@ -47,11 +44,7 @@
 						"description": "Error/warning messages"
 					}
 				},
-				"required": [
-					"status",
-					"data",
-					"messages"
-				],
+				"required": ["status", "data", "messages"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -112,10 +105,7 @@
 			},
 			"GitProviderType": {
 				"type": "string",
-				"enum": [
-					"bitbucket",
-					"github"
-				]
+				"enum": ["bitbucket", "github"]
 			},
 			"AppGitInfo": {
 				"properties": {
@@ -132,9 +122,7 @@
 						"description": "OPTIONAL\n---\nGit provider's type: `github`, `bitbucket`, `gitlab`"
 					}
 				},
-				"required": [
-					"repoSSH"
-				],
+				"required": ["repoSSH"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -205,9 +193,7 @@
 						"type": "string"
 					}
 				},
-				"required": [
-					"name"
-				],
+				"required": ["name"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -228,35 +214,17 @@
 						"type": "string"
 					}
 				},
-				"required": [
-					"access_token",
-					"expiredTimestamp",
-					"expiredDate",
-					"expiredDateGTM7"
-				],
+				"required": ["access_token", "expiredTimestamp", "expiredDate", "expiredDateGTM7"],
 				"type": "object",
 				"additionalProperties": false
 			},
 			"IRoutePermission": {
 				"type": "string",
-				"enum": [
-					"full",
-					"own",
-					"create",
-					"read",
-					"update",
-					"delete"
-				]
+				"enum": ["full", "own", "create", "read", "update", "delete"]
 			},
 			"IRouteScope": {
 				"type": "string",
-				"enum": [
-					"all",
-					"workspace",
-					"team",
-					"project",
-					"app"
-				]
+				"enum": ["all", "workspace", "team", "project", "app"]
 			},
 			"RoleRoute": {
 				"properties": {
@@ -276,10 +244,7 @@
 						"description": "(TBC)"
 					}
 				},
-				"required": [
-					"route",
-					"permissions"
-				],
+				"required": ["route", "permissions"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -305,10 +270,7 @@
 						"description": "One of:\n- undefined | \"custom\": custom role\n- \"admin\": default super admin role\n- \"member\": default member role\n- \"moderator\": default moderator role"
 					}
 				},
-				"required": [
-					"name",
-					"routes"
-				],
+				"required": ["name", "routes"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -321,9 +283,7 @@
 						"type": "string"
 					}
 				},
-				"required": [
-					"name"
-				],
+				"required": ["name"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -471,10 +431,7 @@
 						]
 					}
 				},
-				"required": [
-					"name",
-					"email"
-				],
+				"required": ["name", "email"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -487,10 +444,7 @@
 						"type": "string"
 					}
 				},
-				"required": [
-					"name",
-					"value"
-				],
+				"required": ["name", "value"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -500,39 +454,16 @@
 			},
 			"AppStatus": {
 				"type": "string",
-				"enum": [
-					"healthy",
-					"partial_healthy",
-					"undeployed",
-					"failed",
-					"crashed",
-					"unknown"
-				]
+				"enum": ["healthy", "partial_healthy", "undeployed", "failed", "crashed", "unknown"]
 			},
 			"ResourceQuotaSize": {
 				"type": "string",
-				"enum": [
-					"none",
-					"1x",
-					"2x",
-					"3x",
-					"4x",
-					"5x",
-					"6x",
-					"7x",
-					"8x",
-					"9x",
-					"10x"
-				],
+				"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"],
 				"description": "Container quota resources"
 			},
 			"SslType": {
 				"type": "string",
-				"enum": [
-					"none",
-					"letsencrypt",
-					"custom"
-				],
+				"enum": ["none", "letsencrypt", "custom"],
 				"default": "\"letsencrypt\""
 			},
 			"DeployEnvironment": {
@@ -692,9 +623,7 @@
 						"description": "Amount of ready instances"
 					}
 				},
-				"required": [
-					"buildNumber"
-				],
+				"required": ["buildNumber"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -982,10 +911,7 @@
 					},
 					"method": {
 						"type": "string",
-						"enum": [
-							"bearer",
-							"basic"
-						],
+						"enum": ["bearer", "basic"],
 						"description": "Authorization header method"
 					},
 					"access_token": {
@@ -1158,11 +1084,7 @@
 						"description": "OPTIONAL\n---\nFramework's ID or slug or {Framework} instance"
 					}
 				},
-				"required": [
-					"name",
-					"project",
-					"git"
-				],
+				"required": ["name", "project", "git"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -1582,13 +1504,7 @@
 						"description": "OPTIONAL\n---\nUsername of the person who update the app"
 					}
 				},
-				"required": [
-					"registry",
-					"cluster",
-					"port",
-					"imageURL",
-					"buildNumber"
-				],
+				"required": ["registry", "cluster", "port", "imageURL", "buildNumber"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -1607,30 +1523,17 @@
 						"description": "Array of variables to be created on deploy environment in JSON format"
 					}
 				},
-				"required": [
-					"slug",
-					"env",
-					"envVars"
-				],
+				"required": ["slug", "env", "envVars"],
 				"type": "object",
 				"additionalProperties": false
 			},
 			"BuildStatus": {
 				"type": "string",
-				"enum": [
-					"failed",
-					"start",
-					"building",
-					"success"
-				]
+				"enum": ["failed", "start", "building", "success"]
 			},
 			"RegistryProviderType": {
 				"type": "string",
-				"enum": [
-					"gcloud",
-					"digitalocean",
-					"dockerhub"
-				]
+				"enum": ["gcloud", "digitalocean", "dockerhub"]
 			},
 			"IContainerRegistry": {
 				"properties": {
@@ -1910,10 +1813,7 @@
 									"type": "string"
 								}
 							},
-							"required": [
-								"value",
-								"name"
-							],
+							"required": ["value", "name"],
 							"type": "object"
 						},
 						"type": "array",
@@ -1972,21 +1872,12 @@
 						"description": "App's slug"
 					}
 				},
-				"required": [
-					"registrySlug",
-					"gitBranch",
-					"buildNumber",
-					"appSlug"
-				],
+				"required": ["registrySlug", "gitBranch", "buildNumber", "appSlug"],
 				"type": "object"
 			},
 			"CloudProviderType": {
 				"type": "string",
-				"enum": [
-					"custom",
-					"gcloud",
-					"digitalocean"
-				]
+				"enum": ["custom", "gcloud", "digitalocean"]
 			},
 			"ICloudProvider": {
 				"properties": {
@@ -2630,11 +2521,7 @@
 							},
 							{
 								"type": "string",
-								"enum": [
-									"dev",
-									"prod",
-									"staging"
-								]
+								"enum": ["dev", "prod", "staging"]
 							}
 						],
 						"description": "Specify environment code:\n- One of: `dev, prod, staging,...`",
@@ -2853,9 +2740,7 @@
 						"description": "Deploy environment"
 					}
 				},
-				"required": [
-					"env"
-				],
+				"required": ["env"],
 				"type": "object"
 			},
 			"IBuild": {
@@ -3213,9 +3098,7 @@
 					},
 					"kind": {
 						"type": "string",
-						"enum": [
-							"Namespace"
-						],
+						"enum": ["Namespace"],
 						"nullable": false
 					},
 					"metadata": {
@@ -3237,9 +3120,7 @@
 								"type": "string"
 							}
 						},
-						"required": [
-							"labels"
-						],
+						"required": ["labels"],
 						"type": "object"
 					},
 					"spec": {
@@ -3317,9 +3198,7 @@
 								"type": "string"
 							}
 						},
-						"required": [
-							"labels"
-						],
+						"required": ["labels"],
 						"type": "object"
 					},
 					"spec": {
@@ -3542,10 +3421,7 @@
 						"description": "Subdomain name"
 					}
 				},
-				"required": [
-					"data",
-					"name"
-				],
+				"required": ["data", "name"],
 				"type": "object"
 			},
 			"Pick_IFramework.Exclude_keyofIFramework.keyofHiddenBodyKeys__": {
@@ -3687,10 +3563,7 @@
 					},
 					"method": {
 						"type": "string",
-						"enum": [
-							"bearer",
-							"basic"
-						],
+						"enum": ["bearer", "basic"],
 						"description": "Authorization header method"
 					},
 					"access_token": {
@@ -3728,10 +3601,7 @@
 						"type": "boolean"
 					}
 				},
-				"required": [
-					"name",
-					"private"
-				],
+				"required": ["name", "private"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -4163,10 +4033,7 @@
 						"type": "array"
 					}
 				},
-				"required": [
-					"name",
-					"routes"
-				],
+				"required": ["name", "routes"],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
@@ -4312,10 +4179,7 @@
 						]
 					}
 				},
-				"required": [
-					"name",
-					"email"
-				],
+				"required": ["name", "email"],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
@@ -4335,10 +4199,7 @@
 						"type": "string"
 					}
 				},
-				"required": [
-					"userId",
-					"workspace"
-				],
+				"required": ["userId", "workspace"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -4372,9 +4233,7 @@
 						"type": "boolean"
 					}
 				},
-				"required": [
-					"name"
-				],
+				"required": ["name"],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
@@ -4520,10 +4379,7 @@
 						]
 					}
 				},
-				"required": [
-					"name",
-					"email"
-				],
+				"required": ["name", "email"],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
@@ -4554,10 +4410,7 @@
 						"description": "Diginext API Key"
 					}
 				},
-				"required": [
-					"name",
-					"dx_key"
-				],
+				"required": ["name", "dx_key"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -4573,10 +4426,7 @@
 						"$ref": "#/components/schemas/Types.ObjectId"
 					}
 				},
-				"required": [
-					"userId",
-					"workspaceId"
-				],
+				"required": ["userId", "workspaceId"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -4643,9 +4493,7 @@
 						"description": "Workspace ID or slug"
 					}
 				},
-				"required": [
-					"workspace"
-				],
+				"required": ["workspace"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -4785,10 +4633,7 @@
 						]
 					}
 				},
-				"required": [
-					"name",
-					"email"
-				],
+				"required": ["name", "email"],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
@@ -4815,7 +4660,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "3.10.6",
+		"version": "3.11.0",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -4844,9 +4689,7 @@
 					}
 				},
 				"description": "List of apps",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -4981,9 +4824,7 @@
 						}
 					}
 				},
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5055,9 +4896,7 @@
 						}
 					}
 				},
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5147,9 +4986,7 @@
 						}
 					}
 				},
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5207,11 +5044,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"data",
-												"status"
-											],
+											"required": ["messages", "data", "status"],
 											"type": "object"
 										}
 									]
@@ -5220,9 +5053,7 @@
 						}
 					}
 				},
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5259,9 +5090,7 @@
 					}
 				},
 				"description": "Get new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5306,9 +5135,7 @@
 					}
 				},
 				"description": "Create new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5375,11 +5202,7 @@
 										"description": "`REQUIRES`\n---\nApp slug"
 									}
 								},
-								"required": [
-									"deployEnvironmentData",
-									"env",
-									"appSlug"
-								],
+								"required": ["deployEnvironmentData", "env", "appSlug"],
 								"type": "object"
 							}
 						}
@@ -5401,9 +5224,7 @@
 					}
 				},
 				"description": "Create new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5470,11 +5291,7 @@
 										"description": "`REQUIRES`\n---\nApp slug"
 									}
 								},
-								"required": [
-									"deployEnvironmentData",
-									"env",
-									"appSlug"
-								],
+								"required": ["deployEnvironmentData", "env", "appSlug"],
 								"type": "object"
 							}
 						}
@@ -5496,9 +5313,7 @@
 					}
 				},
 				"description": "Delete a deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5554,9 +5369,7 @@
 					}
 				},
 				"description": "[V2] Get new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5601,9 +5414,7 @@
 					}
 				},
 				"description": "[V2] Create new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5660,9 +5471,7 @@
 					}
 				},
 				"description": "[V2] Update new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5719,9 +5528,7 @@
 					}
 				},
 				"description": "[V2] Update new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5782,11 +5589,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"data",
-												"status"
-											],
+											"required": ["messages", "data", "status"],
 											"type": "object"
 										},
 										{
@@ -5802,10 +5605,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -5815,9 +5615,7 @@
 					}
 				},
 				"description": "Get list of variables on the deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5870,10 +5668,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -5883,9 +5678,7 @@
 					}
 				},
 				"description": "Create new variables on the deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5972,11 +5765,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"data",
-												"status"
-											],
+											"required": ["messages", "data", "status"],
 											"type": "object"
 										},
 										{
@@ -5992,10 +5781,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -6005,9 +5791,7 @@
 					}
 				},
 				"description": "Update a variable on the deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6073,11 +5857,7 @@
 										"description": "App slug"
 									}
 								},
-								"required": [
-									"envVar",
-									"env",
-									"slug"
-								],
+								"required": ["envVar", "env", "slug"],
 								"type": "object"
 							}
 						}
@@ -6113,11 +5893,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"data",
-												"status"
-											],
+											"required": ["messages", "data", "status"],
 											"type": "object"
 										},
 										{
@@ -6133,10 +5909,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -6146,9 +5919,7 @@
 					}
 				},
 				"description": "Delete variables on the deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6210,10 +5981,7 @@
 										"description": "App slug"
 									}
 								},
-								"required": [
-									"env",
-									"slug"
-								],
+								"required": ["env", "slug"],
 								"type": "object"
 							}
 						}
@@ -6247,10 +6015,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -6260,9 +6025,7 @@
 					}
 				},
 				"description": "Update a variable on the deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6321,20 +6084,14 @@
 										},
 										"type": "array",
 										"description": "New domains to be added into this deploy environment",
-										"example": [
-											"example.com",
-											"www.example.com"
-										]
+										"example": ["example.com", "www.example.com"]
 									},
 									"env": {
 										"type": "string",
 										"description": "Deploy environment name"
 									}
 								},
-								"required": [
-									"domains",
-									"env"
-								],
+								"required": ["domains", "env"],
 								"type": "object"
 							}
 						}
@@ -6358,9 +6115,7 @@
 					}
 				},
 				"description": "View app's container logs",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6408,9 +6163,7 @@
 					}
 				},
 				"description": "List of builds",
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6545,9 +6298,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6619,9 +6370,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6693,9 +6442,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6745,9 +6492,7 @@
 													"type": "string"
 												}
 											},
-											"required": [
-												"data"
-											],
+											"required": ["data"],
 											"type": "object"
 										}
 									]
@@ -6756,9 +6501,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6798,9 +6541,7 @@
 													"type": "string"
 												}
 											},
-											"required": [
-												"data"
-											],
+											"required": ["data"],
 											"type": "object"
 										}
 									]
@@ -6810,9 +6551,7 @@
 					}
 				},
 				"description": "Check status then build container image finish.",
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6849,9 +6588,7 @@
 					}
 				},
 				"description": "Create a new {Build} instance, then start building container image.",
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6888,9 +6625,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6910,9 +6645,7 @@
 										"type": "string"
 									}
 								},
-								"required": [
-									"slug"
-								],
+								"required": ["slug"],
 								"type": "object"
 							}
 						}
@@ -6936,9 +6669,7 @@
 					}
 				},
 				"description": "List of K8S clusters",
-				"tags": [
-					"Cluster"
-				],
+				"tags": ["Cluster"],
 				"security": [
 					{
 						"api_key": []
@@ -7073,9 +6804,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cluster"
-				],
+				"tags": ["Cluster"],
 				"security": [
 					{
 						"api_key": []
@@ -7147,9 +6876,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cluster"
-				],
+				"tags": ["Cluster"],
 				"security": [
 					{
 						"api_key": []
@@ -7221,9 +6948,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cluster"
-				],
+				"tags": ["Cluster"],
 				"security": [
 					{
 						"api_key": []
@@ -7269,9 +6994,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cluster"
-				],
+				"tags": ["Cluster"],
 				"security": [
 					{
 						"api_key": []
@@ -7318,10 +7041,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -7331,9 +7051,7 @@
 					}
 				},
 				"description": "### [DEPRECATED SOON]\n#### Use `buildAndDeploy()` instead.\nBuild container image first, then deploy that build to target deploy environment.",
-				"tags": [
-					"Deploy"
-				],
+				"tags": ["Deploy"],
 				"deprecated": true,
 				"security": [
 					{
@@ -7391,9 +7109,7 @@
 										"$ref": "#/components/schemas/InputOptions"
 									}
 								},
-								"required": [
-									"options"
-								],
+								"required": ["options"],
 								"type": "object"
 							}
 						}
@@ -7422,9 +7138,7 @@
 															"type": "string"
 														}
 													},
-													"required": [
-														"logURL"
-													],
+													"required": ["logURL"],
 													"type": "object"
 												},
 												"status": {
@@ -7438,11 +7152,7 @@
 													"type": "array"
 												}
 											},
-											"required": [
-												"data",
-												"status",
-												"messages"
-											],
+											"required": ["data", "status", "messages"],
 											"type": "object"
 										}
 									]
@@ -7452,9 +7162,7 @@
 					}
 				},
 				"description": "Build container image first, then deploy that build to target deploy environment.\n- `Alias of \"/api/v1/deploy/from-source\"`",
-				"tags": [
-					"Deploy"
-				],
+				"tags": ["Deploy"],
 				"security": [
 					{
 						"api_key": []
@@ -7514,10 +7222,7 @@
 										"$ref": "#/components/schemas/StartBuildParams"
 									}
 								},
-								"required": [
-									"deployParams",
-									"buildParams"
-								],
+								"required": ["deployParams", "buildParams"],
 								"type": "object"
 							}
 						}
@@ -7546,9 +7251,7 @@
 															"type": "string"
 														}
 													},
-													"required": [
-														"logURL"
-													],
+													"required": ["logURL"],
 													"type": "object"
 												},
 												"status": {
@@ -7562,11 +7265,7 @@
 													"type": "array"
 												}
 											},
-											"required": [
-												"data",
-												"status",
-												"messages"
-											],
+											"required": ["data", "status", "messages"],
 											"type": "object"
 										}
 									]
@@ -7576,9 +7275,7 @@
 					}
 				},
 				"description": "Build container image first, then deploy that build to target deploy environment.\n- `Alias of \"/api/v1/deploy/build-first\"`",
-				"tags": [
-					"Deploy"
-				],
+				"tags": ["Deploy"],
 				"security": [
 					{
 						"api_key": []
@@ -7638,10 +7335,7 @@
 										"$ref": "#/components/schemas/StartBuildParams"
 									}
 								},
-								"required": [
-									"deployParams",
-									"buildParams"
-								],
+								"required": ["deployParams", "buildParams"],
 								"type": "object"
 							}
 						}
@@ -7676,10 +7370,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										},
 										{
@@ -7693,9 +7384,7 @@
 																"build": {},
 																"error": {}
 															},
-															"required": [
-																"error"
-															],
+															"required": ["error"],
 															"type": "object"
 														},
 														{
@@ -7711,11 +7400,7 @@
 																	"$ref": "#/components/schemas/IBuild"
 																}
 															},
-															"required": [
-																"deployment",
-																"release",
-																"build"
-															],
+															"required": ["deployment", "release", "build"],
 															"type": "object"
 														}
 													]
@@ -7729,11 +7414,7 @@
 													"type": "array"
 												}
 											},
-											"required": [
-												"data",
-												"status",
-												"messages"
-											],
+											"required": ["data", "status", "messages"],
 											"type": "object"
 										}
 									]
@@ -7742,9 +7423,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Deploy"
-				],
+				"tags": ["Deploy"],
 				"security": [
 					{
 						"api_key": []
@@ -7804,9 +7483,7 @@
 												"description": "Build's slug"
 											}
 										},
-										"required": [
-											"buildSlug"
-										],
+										"required": ["buildSlug"],
 										"type": "object"
 									},
 									{
@@ -7835,9 +7512,7 @@
 					}
 				},
 				"description": "Create new Diginext domain",
-				"tags": [
-					"Domain"
-				],
+				"tags": ["Domain"],
 				"security": [
 					{
 						"api_key": []
@@ -7912,9 +7587,7 @@
 					}
 				},
 				"description": "List of frameworks",
-				"tags": [
-					"Framework"
-				],
+				"tags": ["Framework"],
 				"security": [
 					{
 						"api_key": []
@@ -8049,9 +7722,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Framework"
-				],
+				"tags": ["Framework"],
 				"security": [
 					{
 						"api_key": []
@@ -8123,9 +7794,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Framework"
-				],
+				"tags": ["Framework"],
 				"security": [
 					{
 						"api_key": []
@@ -8197,9 +7866,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Framework"
-				],
+				"tags": ["Framework"],
 				"security": [
 					{
 						"api_key": []
@@ -8246,9 +7913,7 @@
 					}
 				},
 				"description": "List of GIT providers",
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8383,9 +8048,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8457,9 +8120,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8531,9 +8192,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8579,9 +8238,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8645,9 +8302,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8711,9 +8366,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8778,9 +8431,7 @@
 					}
 				},
 				"description": "List organization repositories",
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8843,9 +8494,7 @@
 					}
 				},
 				"description": "Create new repository in git provider organization",
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8901,9 +8550,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8930,9 +8577,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8955,10 +8600,7 @@
 										"type": "string"
 									}
 								},
-								"required": [
-									"publicKey",
-									"privateKey"
-								],
+								"required": ["publicKey", "privateKey"],
 								"type": "object"
 							}
 						}
@@ -8993,9 +8635,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9022,9 +8662,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9061,9 +8699,7 @@
 					}
 				},
 				"description": "List of projects",
-				"tags": [
-					"Project"
-				],
+				"tags": ["Project"],
 				"security": [
 					{
 						"api_key": []
@@ -9198,9 +8834,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Project"
-				],
+				"tags": ["Project"],
 				"security": [
 					{
 						"api_key": []
@@ -9272,9 +8906,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Project"
-				],
+				"tags": ["Project"],
 				"security": [
 					{
 						"api_key": []
@@ -9346,9 +8978,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Project"
-				],
+				"tags": ["Project"],
 				"security": [
 					{
 						"api_key": []
@@ -9401,9 +9031,7 @@
 													"type": "array"
 												}
 											},
-											"required": [
-												"data"
-											],
+											"required": ["data"],
 											"type": "object"
 										}
 									]
@@ -9412,9 +9040,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Project"
-				],
+				"tags": ["Project"],
 				"security": [
 					{
 						"api_key": []
@@ -9551,9 +9177,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cloud Provider"
-				],
+				"tags": ["Cloud Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9688,9 +9312,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cloud Provider"
-				],
+				"tags": ["Cloud Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9762,9 +9384,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cloud Provider"
-				],
+				"tags": ["Cloud Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9836,9 +9456,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cloud Provider"
-				],
+				"tags": ["Cloud Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9885,9 +9503,7 @@
 					}
 				},
 				"description": "List of container registry",
-				"tags": [
-					"Container Registry"
-				],
+				"tags": ["Container Registry"],
 				"security": [
 					{
 						"api_key": []
@@ -10022,9 +9638,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Container Registry"
-				],
+				"tags": ["Container Registry"],
 				"security": [
 					{
 						"api_key": []
@@ -10096,9 +9710,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Container Registry"
-				],
+				"tags": ["Container Registry"],
 				"security": [
 					{
 						"api_key": []
@@ -10170,9 +9782,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Container Registry"
-				],
+				"tags": ["Container Registry"],
 				"security": [
 					{
 						"api_key": []
@@ -10225,20 +9835,14 @@
 											"format": "double"
 										}
 									},
-									"required": [
-										"data",
-										"messages",
-										"status"
-									],
+									"required": ["data", "messages", "status"],
 									"type": "object"
 								}
 							}
 						}
 					}
 				},
-				"tags": [
-					"Container Registry"
-				],
+				"tags": ["Container Registry"],
 				"security": [
 					{
 						"api_key": []
@@ -10275,9 +9879,7 @@
 					}
 				},
 				"description": "List of releases",
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -10412,9 +10014,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -10486,9 +10086,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -10560,9 +10158,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -10608,9 +10204,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -10639,11 +10233,7 @@
 										"description": "App's slug"
 									}
 								},
-								"required": [
-									"buildNumber",
-									"env",
-									"app"
-								],
+								"required": ["buildNumber", "env", "app"],
 								"type": "object"
 							}
 						}
@@ -10666,9 +10256,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -10693,10 +10281,7 @@
 										"description": "Build's ID"
 									}
 								},
-								"required": [
-									"env",
-									"build"
-								],
+								"required": ["env", "build"],
 								"type": "object"
 							}
 						}
@@ -10719,9 +10304,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -10741,9 +10324,7 @@
 										"type": "string"
 									}
 								},
-								"required": [
-									"id"
-								],
+								"required": ["id"],
 								"type": "object"
 							}
 						}
@@ -10766,9 +10347,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -10788,9 +10367,7 @@
 										"type": "string"
 									}
 								},
-								"required": [
-									"id"
-								],
+								"required": ["id"],
 								"type": "object"
 							}
 						}
@@ -10814,9 +10391,7 @@
 					}
 				},
 				"description": "List of roles",
-				"tags": [
-					"Role"
-				],
+				"tags": ["Role"],
 				"security": [
 					{
 						"api_key": []
@@ -10951,9 +10526,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Role"
-				],
+				"tags": ["Role"],
 				"security": [
 					{
 						"api_key": []
@@ -11025,9 +10598,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Role"
-				],
+				"tags": ["Role"],
 				"security": [
 					{
 						"api_key": []
@@ -11099,9 +10670,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Role"
-				],
+				"tags": ["Role"],
 				"security": [
 					{
 						"api_key": []
@@ -11148,9 +10717,7 @@
 					}
 				},
 				"description": "Get all routes",
-				"tags": [
-					"Route"
-				],
+				"tags": ["Route"],
 				"security": [
 					{
 						"api_key": []
@@ -11288,9 +10855,7 @@
 					}
 				},
 				"description": "Check access permissions",
-				"tags": [
-					"Route"
-				],
+				"tags": ["Route"],
 				"security": [
 					{
 						"api_key": []
@@ -11316,10 +10881,7 @@
 										"$ref": "#/components/schemas/IRoutePermission"
 									}
 								},
-								"required": [
-									"route",
-									"action"
-								],
+								"required": ["route", "action"],
 								"type": "object"
 							}
 						}
@@ -11342,9 +10904,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Service Account"
-				],
+				"tags": ["Service Account"],
 				"security": [
 					{
 						"api_key": []
@@ -11479,9 +11039,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Service Account"
-				],
+				"tags": ["Service Account"],
 				"security": [
 					{
 						"api_key": []
@@ -11553,9 +11111,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Service Account"
-				],
+				"tags": ["Service Account"],
 				"security": [
 					{
 						"api_key": []
@@ -11627,9 +11183,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Service Account"
-				],
+				"tags": ["Service Account"],
 				"security": [
 					{
 						"api_key": []
@@ -11675,9 +11229,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Service Account"
-				],
+				"tags": ["Service Account"],
 				"security": [
 					{
 						"api_key": []
@@ -11715,9 +11267,7 @@
 					}
 				},
 				"description": "List of teams",
-				"tags": [
-					"Team"
-				],
+				"tags": ["Team"],
 				"security": [
 					{
 						"api_key": []
@@ -11852,9 +11402,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Team"
-				],
+				"tags": ["Team"],
 				"security": [
 					{
 						"api_key": []
@@ -11926,9 +11474,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Team"
-				],
+				"tags": ["Team"],
 				"security": [
 					{
 						"api_key": []
@@ -12000,9 +11546,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Team"
-				],
+				"tags": ["Team"],
 				"security": [
 					{
 						"api_key": []
@@ -12049,9 +11593,7 @@
 					}
 				},
 				"description": "List of users",
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -12186,9 +11728,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key2": []
@@ -12260,9 +11800,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -12334,9 +11872,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -12382,9 +11918,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -12521,9 +12055,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -12543,9 +12075,7 @@
 										"$ref": "#/components/schemas/ObjectId"
 									}
 								},
-								"required": [
-									"roleId"
-								],
+								"required": ["roleId"],
 								"type": "object"
 							}
 						}
@@ -12568,9 +12098,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -12608,9 +12136,7 @@
 					}
 				},
 				"description": "List of workspaces",
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -12745,9 +12271,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -12782,9 +12306,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -12856,9 +12378,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -12904,9 +12424,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -12929,9 +12447,7 @@
 										"type": "array"
 									}
 								},
-								"required": [
-									"emails"
-								],
+								"required": ["emails"],
 								"type": "object"
 							}
 						}
@@ -12954,9 +12470,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -12994,9 +12508,7 @@
 					}
 				},
 				"description": "======================= SERVICE ACCOUNT ======================",
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -13141,9 +12653,7 @@
 					}
 				},
 				"description": "======================= API KEY USER ACCOUNT ======================",
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -13287,9 +12797,7 @@
 						}
 					}
 				},
-				"tags": [
-					"API Key"
-				],
+				"tags": ["API Key"],
 				"security": [
 					{
 						"api_key": []
@@ -13424,9 +12932,7 @@
 						}
 					}
 				},
-				"tags": [
-					"API Key"
-				],
+				"tags": ["API Key"],
 				"security": [
 					{
 						"api_key": []
@@ -13498,9 +13004,7 @@
 						}
 					}
 				},
-				"tags": [
-					"API Key"
-				],
+				"tags": ["API Key"],
 				"security": [
 					{
 						"api_key": []
@@ -13572,9 +13076,7 @@
 						}
 					}
 				},
-				"tags": [
-					"API Key"
-				],
+				"tags": ["API Key"],
 				"security": [
 					{
 						"api_key": []
@@ -13620,9 +13122,7 @@
 						}
 					}
 				},
-				"tags": [
-					"API Key"
-				],
+				"tags": ["API Key"],
 				"security": [
 					{
 						"api_key": []

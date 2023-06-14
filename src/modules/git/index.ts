@@ -431,6 +431,7 @@ export const verifySSH = async (options?: InputOptions) => {
 			break;
 
 		case "github":
+			// has to use this because "Github does not provide shell access"
 			try {
 				await execa.command(`ssh -o StrictHostKeyChecking=no -T git@github.com`);
 				authResult = true;
@@ -469,7 +470,12 @@ export const checkGitProviderAccess = async (gitProvider: GitProviderType) => {
 			break;
 
 		case "github":
-			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "Github authentication failed");
+			// has to use this because "Github does not provide shell access"
+			try {
+				result = await execa.command(`ssh -o StrictHostKeyChecking=no -T git@github.com`);
+			} catch (e) {
+				result = e.toString().indexOf("successfully authenticated") > -1 ? true : undefined;
+			}
 			break;
 
 		// case "gitlab":
@@ -482,7 +488,7 @@ export const checkGitProviderAccess = async (gitProvider: GitProviderType) => {
 			break;
 	}
 
-	return result ? true : false;
+	return typeof result !== "undefined" ? true : false;
 };
 
 /**
