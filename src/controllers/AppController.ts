@@ -410,6 +410,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
 		const mainAppName = getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		if (app.deployEnvironment)
 			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
@@ -420,10 +421,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 					if (cluster) {
 						const { contextName: context } = cluster;
-						try {
-							// switch to the cluster of this environment
-							await ClusterManager.authCluster(clusterShortName);
 
+						// switch to the cluster of this environment
+						await ClusterManager.authCluster(clusterShortName);
+
+						try {
 							/**
 							 * IMPORTANT
 							 * ---
@@ -439,6 +441,21 @@ export default class AppController extends BaseController<IApp, AppService> {
 						} catch (e) {
 							logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
 							errorMsg = e.message;
+						}
+
+						try {
+							/**
+							 * FALLBACK SUPPORT for deprecated mainAppName
+							 */
+							// Delete INGRESS
+							await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+							// Delete SERVICE
+							await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+							// Delete DEPLOYMENT
+							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+						} catch (e) {
+							logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
+							errorMsg += e.message;
 						}
 					}
 				}
@@ -1165,6 +1182,17 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne({ ...this.filter, slug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		const projectSlug = app.projectSlug;
+		const mainAppName = getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+
+		const deployEnvironment = app.deployEnvironment[env];
+		if (!deployEnvironment) return respondFailure(`Deploy environment "${env}" is not existed in "${slug}" app.`);
+		if (!deployEnvironment.namespace) return respondFailure(`Namespace not existed in deploy environment "${env}" of "${slug}" app.`);
+		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
+
+		const { namespace, cluster: clusterShortName } = deployEnvironment;
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
 		const newEnvVars = isJSON(envVars)
 			? (JSON.parse(envVars) as KubeEnvironmentVariable[])
@@ -1213,24 +1241,29 @@ export default class AppController extends BaseController<IApp, AppService> {
 		}
 
 		// Set environment variables to deployment in the cluster
-		const deployEnvironment = updatedApp.deployEnvironment[env];
-		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
-		if (!cluster) return respondFailure({ msg: `Cluster "${clusterShortName}" not found.` });
-
-		const mainAppName = getDeploymentName(app);
-
 		// if the workload has been deployed before -> update the environment variables
-		const workload = await ClusterManager.getDeploysByFilter(namespace, {
+		let workloads = await ClusterManager.getDeploysByFilter(namespace, {
 			context: cluster.contextName,
 			filterLabel: `main-app=${mainAppName}`,
 		});
-
-		if (workload) {
-			const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
+		// Fallback support for deprecated mainAppName
+		if (!workloads || workloads.length === 0) {
+			workloads = await ClusterManager.getDeploysByFilter(namespace, {
 				context: cluster.contextName,
-				filterLabel: `main-app=${mainAppName}`,
+				filterLabel: `main-app=${deprecatedMainAppName}`,
 			});
+		}
+
+		if (workloads && workloads.length > 0) {
+			try {
+				const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
+					context: cluster.contextName,
+					filterLabel: `main-app=${mainAppName}`,
+				});
+				console.log("setEnvVarsRes :>> ", setEnvVarsRes);
+			} catch (e) {
+				return respondFailure(e.toString());
+			}
 		}
 
 		return respondSuccess({ data: updatedApp.deployEnvironment[env].envVars });
@@ -1271,11 +1304,40 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 
+		const mainAppName = getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+
 		envVar = isJSON(envVar) ? (JSON.parse(envVar as unknown as string) as KubeEnvironmentVariable) : isArray(envVar) ? envVar : undefined;
 		if (!envVar) return respondFailure(`ENV VAR is invalid.`);
 
 		const envVars = app.deployEnvironment[env].envVars || [];
 		const varToBeUpdated = envVars.find((v) => v.name === envVar.name);
+
+		const deployEnvironment = app.deployEnvironment[env];
+		if (!deployEnvironment) return respondFailure(`Deploy environment "${env}" is not existed in "${slug}" app.`);
+		if (!deployEnvironment.namespace) return respondFailure(`Namespace not existed in deploy environment "${env}" of "${slug}" app.`);
+		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
+
+		const { namespace, cluster: clusterShortName } = deployEnvironment;
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
+
+		// check if deployment is existed in the cluster / namespace
+		let workloads = await ClusterManager.getDeploysByFilter(namespace, {
+			context: cluster.contextName,
+			filterLabel: `main-app=${mainAppName}`,
+		});
+		// Fallback support for deprecated mainAppName
+		if (!workloads || workloads.length === 0) {
+			workloads = await ClusterManager.getDeploysByFilter(namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${deprecatedMainAppName}`,
+			});
+		}
+		if (!workloads || workloads.length === 0)
+			return respondFailure(`There are no deployments in "${namespace}" namespace of "${clusterShortName}" cluster `);
+
+		// --- validation success ---
 
 		let updatedApp: IApp;
 
@@ -1304,19 +1366,18 @@ export default class AppController extends BaseController<IApp, AppService> {
 			if (!updatedApp) return { status: 0, messages: [`Failed to add "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
 		}
 
-		const mainAppName = getDeploymentName(app);
-
 		// Set environment variables to deployment in the cluster
-		const deployEnvironment = updatedApp.deployEnvironment[env];
-		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
-		const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(envVars, namespace, {
-			context: cluster.contextName,
-			filterLabel: `main-app=${mainAppName}`,
-		});
+		try {
+			const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(envVars, namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${mainAppName}`,
+			});
 
-		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [setEnvVarsRes] };
-		return result;
+			let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [setEnvVarsRes] };
+			return result;
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
 	}
 
 	/**
@@ -1351,27 +1412,54 @@ export default class AppController extends BaseController<IApp, AppService> {
 			return { status: 0, messages: [`This deploy environment (${env}) of "${slug}" app doesn't have any environment variables.`] };
 
 		const mainAppName = getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 		const envVars = app.deployEnvironment[env].envVars;
+		const deployEnvironment = app.deployEnvironment[env];
+
+		if (!deployEnvironment) return respondFailure(`Deploy environment "${env}" is not existed in "${slug}" app.`);
+		if (!deployEnvironment.namespace) return respondFailure(`Namespace not existed in deploy environment "${env}" of "${slug}" app.`);
+		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
+
+		const { namespace, cluster: clusterShortName } = deployEnvironment;
+
+		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
+
+		// check if deployment is existed in the cluster / namespace
+		let workloads = await ClusterManager.getDeploysByFilter(namespace, {
+			context: cluster.contextName,
+			filterLabel: `main-app=${mainAppName}`,
+		});
+		// Fallback support for deprecated mainAppName
+		if (!workloads || workloads.length === 0) {
+			workloads = await ClusterManager.getDeploysByFilter(namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${deprecatedMainAppName}`,
+			});
+		}
+		if (!workloads || workloads.length === 0)
+			return respondFailure(`There are no deployments in "${namespace}" namespace of "${clusterShortName}" cluster.`);
 
 		// delete in database
 		let [updatedApp] = await this.service.update({ _id: app._id }, { [`deployEnvironment.${env}.envVars`]: [] });
 		if (!updatedApp) return { status: 0, messages: [`Failed to delete environment variables in "${env}" deploy environment of "${slug}" app.`] };
 
 		// Set environment variables to deployment in the cluster
-		const deployEnvironment = updatedApp.deployEnvironment[env];
-		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
-		const deleteEnvVarsRes = await ClusterManager.deleteEnvVarByFilter(
-			envVars.map((_var) => _var.name),
-			namespace,
-			{
-				context: cluster.contextName,
-				filterLabel: `main-app=${mainAppName}`,
-			}
-		);
+		try {
+			const deleteEnvVarsRes = await ClusterManager.deleteEnvVarByFilter(
+				envVars.map((_var) => _var.name),
+				namespace,
+				{
+					context: cluster.contextName,
+					filterLabel: `main-app=${mainAppName}`,
+				}
+			);
 
-		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [deleteEnvVarsRes] };
-		return result;
+			let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [deleteEnvVarsRes] };
+			return result;
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
 	}
 
 	/**
