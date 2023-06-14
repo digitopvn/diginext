@@ -1,3 +1,10 @@
+## [3.11.1](https://github.com/digitopvn/diginext/compare/v3.11.0...v3.11.1) (2023-06-14)
+
+
+### Performance Improvements
+
+* **client:** choose git provider ([d430f8d](https://github.com/digitopvn/diginext/commit/d430f8d8ff60d8d9b6b0b9ee7b68d1116fadb2f9))
+
 # [3.11.0](https://github.com/digitopvn/diginext/compare/v3.10.6...v3.11.0) (2023-06-14)
 
 
