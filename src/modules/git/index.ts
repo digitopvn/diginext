@@ -11,7 +11,6 @@ import path from "path";
 import { simpleGit } from "simple-git";
 import yargs from "yargs";
 
-import { cliOpts } from "@/config/config";
 import { HOME_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
@@ -284,7 +283,7 @@ export const generateSSH = async (options?: InputOptions) => {
 		publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
 
 		try {
-			await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", "''"], cliOpts);
+			await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", ""], { shell: "bash" });
 		} catch (e) {
 			logError(`Can't generate SSH private & public key:`, e);
 			throw new Error(`Can't generate SSH private & public key: ${e}`);
