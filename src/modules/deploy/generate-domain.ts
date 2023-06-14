@@ -59,7 +59,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 
 	if (!targetIP) {
 		if (!ipAddress) {
-			logError(`Failed to generate domain: "clusterShortName" or "ipAddress" is required.`);
+			logError(`Failed to generate domain: "ipAddress" is required.`);
 			return { status: 0, messages: [`Failed to generate domain: "clusterShortName" or "ipAddress" is required.`] } as GenerateDomainResult;
 		} else {
 			targetIP = ipAddress;

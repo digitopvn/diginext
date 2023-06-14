@@ -85,7 +85,9 @@ export const downloadDotenv = async (env: string, options: DownloadDotenvOptions
 	const { slug: appSlug } = appConfig;
 
 	if (!appSlug) {
-		throw new Error(`Invalid working directory, the current "dx.json" might be corrupted, please re-initialize.`);
+		throw new Error(
+			`Invalid working directory, the current deploy environment config on Diginext workspace might be corrupted, please re-initialize.`
+		);
 	}
 
 	return downloadDotenvByAppSlug(appSlug, env, options).then(async (result) => {

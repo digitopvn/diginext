@@ -12,7 +12,9 @@ import { createOrSelectProject } from "./create-or-select-project";
 export const askForProjectAndApp = async (dir: string, options?: InputOptions) => {
 	if (isServerMode) throw new Error(`Unable to use "askForProjectAndApp()" in SERVER mode.`);
 
-	const currentGitData = await getCurrentGitRepoData(dir || options.targetDirectory);
+	const currentGitData = await getCurrentGitRepoData(dir || options?.targetDirectory);
+
+	if (options?.isDebugging) console.log("askForProjectAndApp() > currentGitData :>> ", currentGitData);
 
 	let apps = await DB.find<IApp>("app", { "git.repoURL": currentGitData.remoteURL }, { populate: ["project", "owner", "workspace"] });
 	let app: IApp;
@@ -33,6 +35,7 @@ export const askForProjectAndApp = async (dir: string, options?: InputOptions) =
 		// if still no results -> create or select one:
 		project = await createOrSelectProject(options);
 		app = await createOrSelectApp(project.slug, options);
+
 		return { project, app };
 	}
 

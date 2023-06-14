@@ -263,9 +263,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					// redirect
 					if (deployEnvironmentConfig.redirect) {
 						if (!domains.length) {
-							logWarn(`Can't redirect to primary domain if there are no domains in "${env}" of "dx.json"`);
+							logWarn(`Can't redirect to primary domain if there are no domains in "${env}" deploy environment`);
 						} else if (domains.length == 1) {
-							logWarn(`Can't redirect to primary domain if there is only 1 domain in "${env}" dx.json`);
+							logWarn(`Can't redirect to primary domain if there is only 1 domain in "${env}" deploy environment`);
 						} else {
 							const otherDomains = domains.slice(1);
 							let redirectStr = "";

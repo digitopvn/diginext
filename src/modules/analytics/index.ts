@@ -1,4 +1,3 @@
-import { printHelp } from "../../plugins/utils";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { bitbucketAuthentication } from "../bitbucket/promptForAuthOptions";
 import { createAnalyticsProperty, getAnalyticsAccount } from "./analytics.service";
@@ -25,8 +24,7 @@ export async function execAnalytics(options) {
 			default:
 				break;
 		}
-	} else {
-		printHelp();
 	}
+
 	return options;
 }
