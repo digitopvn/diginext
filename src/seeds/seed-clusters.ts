@@ -19,8 +19,16 @@ export const seedClusters = async (workspace: IWorkspace, owner: IUser) => {
 	const kubeConfigObject = yaml.load(initialClusterKubeConfig) as KubeConfig;
 	const clusterShortName = kubeConfigObject.clusters[0].name;
 
+	const clusterServer = kubeConfigObject.clusters[0].cluster?.server;
+	if (!clusterServer) return;
+
+	const clusterServerURL = new URL(clusterServer);
+	const clusterIP = clusterServerURL?.hostname;
+	if (!clusterIP) return;
+
 	console.log("kubeConfigObject :>> ", kubeConfigObject);
 	console.log("clusterShortName :>> ", clusterShortName);
+	console.log("clusterIP :>> ", clusterIP);
 
 	// get custom provider
 	const customCloudProvider = await DB.findOne<ICloudProvider>("provider", { shortName: "custom" });
@@ -32,6 +40,7 @@ export const seedClusters = async (workspace: IWorkspace, owner: IUser) => {
 		active: true,
 		shortName: clusterShortName,
 		provider: customCloudProvider._id,
+		primaryIP: clusterIP,
 		providerShortName: "custom",
 		owner: owner._id,
 		workspace: workspace._id,
