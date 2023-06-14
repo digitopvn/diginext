@@ -1,3 +1,11 @@
+# [3.11.0](https://github.com/digitopvn/diginext/compare/v3.10.6...v3.11.0) (2023-06-14)
+
+
+### Features
+
+* **client:** clone repo to other provider ([235577d](https://github.com/digitopvn/diginext/commit/235577d0fa199332ac9bf0ad3ad0c0821bf853e8))
+* **client:** working on clone repo from bitbucket to github ([ec7f6d7](https://github.com/digitopvn/diginext/commit/ec7f6d7fd26ab09a52d0ac9afcb0316af79b0cc3))
+
 ## [3.10.6](https://github.com/digitopvn/diginext/compare/v3.10.5...v3.10.6) (2023-06-14)
 
 
