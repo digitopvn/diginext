@@ -103,13 +103,20 @@ export type BuildPlatform = typeof buildPlatformList[number];
 export const credentialFields: string[] = [
 	// account
 	"token.access_token",
+	"owner.password",
+	"owner.token.access_token",
 	// clusters & registries
 	"apiAccessToken",
 	"serviceAccount",
 	"dockerPassword",
 	"kubeConfig",
 	"imagePullSecret.value",
+	"registry.apiAccessToken",
+	"registry.dockerPassword",
+	"registry.serviceAccount",
+	"registry.imagePullSecret.value",
 	// git
+	"access_token",
 	"bitbucket_oauth.consumer_secret",
 	"bitbucket_oauth.app_password",
 	"github_oauth.client_secret",
