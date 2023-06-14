@@ -277,13 +277,13 @@ export const generateSSH = async (options?: InputOptions) => {
 		await execCmd(`mkdir -p ${idRsaDir}`, `Can't create '${idRsaDir}' directory`);
 	}
 
-	// If no "id_rsa" existed -> generate one: ssh-keygen -b 2048 -t rsa -p -f $HOME/.ssh -q -N "" -> id_rsa  id_rsa.pub
+	// If no "id_rsa" existed -> generate one: ssh-keygen -b 2048 -t rsa -p -f $HOME/.ssh/id_rsa -q -N "" -> id_rsa  id_rsa.pub
 	if (!publicIdRsaFile) {
 		privateIdRsaFile = path.resolve(idRsaDir, "id_rsa");
 		publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
 
 		try {
-			await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", ""], { shell: "bash" });
+			await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", '""'], { shell: "bash" });
 		} catch (e) {
 			logError(`Can't generate SSH private & public key:`, e);
 			throw new Error(`Can't generate SSH private & public key: ${e}`);
