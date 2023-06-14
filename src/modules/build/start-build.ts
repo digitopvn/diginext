@@ -36,7 +36,7 @@ export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug:
 	// Validate...
 	if (!appSlug) {
 		error = `App "${appSlug}" not found.`;
-		logError(error);
+		logError(`[STOP_BUILD]`, error);
 		return { error };
 	}
 
@@ -302,7 +302,7 @@ export async function startBuildV1(
 		});
 
 		// update build status as "success"
-		await updateBuildStatus(newBuild, "success");
+		await updateBuildStatus(newBuild, "success", { env });
 
 		sendLog({
 			SOCKET_ROOM,

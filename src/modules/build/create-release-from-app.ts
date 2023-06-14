@@ -19,6 +19,8 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: 
 	const { imageURL: IMAGE_NAME } = deployedEnvironment;
 	// const { BUILD_NUMBER } = fetchDeploymentFromContent(deployedEnvironment.deploymentYaml);
 
+	if (!buildNumber) throw new Error(`Build not found due to "undefined" build number (app: "${app.slug}" - env: "${env}")`);
+
 	console.log("createReleaseFromApp() > IMAGE_NAME :>> ", IMAGE_NAME);
 	console.log("createReleaseFromApp() > BUILD_NUMBER :>> ", buildNumber);
 
@@ -69,8 +71,6 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: 
 		cliVersion: ownership?.cliVersion || cliVersion,
 		name: `${projectSlug}/${appSlug}:${buildNumber}`,
 		image: IMAGE_NAME,
-		// old diginext.json
-		diginext: JSON.stringify(appConfig),
 		appConfig: appConfig,
 		// build status
 		branch: branch,
@@ -87,7 +87,6 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: 
 		envVars: app.deployEnvironment[env].envVars || [],
 		// production
 		productionUrl: !isEmpty(deploymentData.domains) ? deploymentData.domains[0] : "",
-		prodYaml: deploymentData.deployContent,
 		// relationship
 		build: build._id,
 		app: app._id,

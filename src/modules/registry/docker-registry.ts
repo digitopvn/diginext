@@ -13,6 +13,10 @@ import type { ContainerRegistrySecretOptions, DockerRegistryCredentials } from "
 interface DockerRegistryConnectOptions {
 	workspaceId: string;
 	/**
+	 * Container registry slug
+	 */
+	registry?: string;
+	/**
 	 * @default false
 	 */
 	isDebugging?: boolean;
@@ -20,7 +24,7 @@ interface DockerRegistryConnectOptions {
 
 const DockerRegistry = {
 	connectDockerToRegistry: async (creds: DockerRegistryCredentials, options: DockerRegistryConnectOptions) => {
-		const { workspaceId } = options;
+		const { workspaceId, registry: registrySlug } = options;
 
 		const { server = "https://index.docker.io/v2/", username, password, email } = creds;
 
@@ -41,12 +45,12 @@ const DockerRegistry = {
 		const workspace = await DB.findOne<IWorkspace>("workspace", { _id: workspaceId });
 		if (!workspace) throw new Error(`[DOCKER] Workspace not found.`);
 
-		const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { provider: "dockerhub", host: server });
+		const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 		if (options.isDebugging) log(`[DOCKER] connectDockerRegistry >`, { existingRegistry });
 
 		if (existingRegistry) return existingRegistry;
 
-		// save this container registry to database
+		// IF NOT EXISTED -> Save this container registry to database!
 		const imageBaseURL = `${server}/${workspace.slug}`;
 		const newRegistry = await DB.create<IContainerRegistry>("registry", {
 			name: "Docker Registry",
@@ -58,7 +62,6 @@ const DockerRegistry = {
 			email,
 			workspace: workspaceId,
 		});
-
 		if (options.isDebugging) log(`[DOCKER] Added new container registry: "${newRegistry.name}" (${newRegistry.slug}).`);
 
 		return newRegistry;
@@ -92,7 +95,12 @@ const DockerRegistry = {
 
 		// check if namespace is existed
 		const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
-		if (!isNsExisted) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+		if (!isNsExisted) {
+			// create new namespace?
+			const ns = await ClusterManager.createNamespace(namespace, { context });
+			// still can't create namespace -> throw error!
+			if (!ns) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+		}
 
 		// check if the secret is existed within the namespace, try to delete it!
 		const isSecretExisted = await ClusterManager.isSecretExisted(secretName, namespace, { context });

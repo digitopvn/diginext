@@ -1,4 +1,4 @@
-# Documentation
+# CLI Documentation
 
 ## Project & App Helper
 
@@ -93,25 +93,13 @@
 
     **New deployment of PROD environment will not be rolled out immediately like other environments.**
 
-    After the build process finished, access [Diginext Admin](https://app.diginext.site) to preview the deployment, if everything is okay, you can process ROLLING OUT within the Admin UI.
+    After the build process finished, access [Diginext Workspace](https://hobby.diginext.site) to preview the deployment, if everything is okay, you can process ROLLING OUT within the Admin UI.
 
--   Deploy to **any enviroments**:
+-   Deploy to **custom enviroments**:
 
     ```bash
     dx deploy --env=canary
     ```
-
-### App Deployment Configuration File Explain - `dx.json` 
-
--   Add new domain to **DEVELOPMENT environment**:
-    - Open `dx.json` & add your domain to "environment > dev > domains"
-    - (eg: `{ dev: { domains: ["example.com"] } }`)
-
--   Add new domain to **PRODUCTION environment**:
-    - Open `dx.json` &  add your domain to "environment > dev > domains"
-    - (eg: `{ prod: { domains: ["example.com"] } }`)
-
--   Do the same for other environments.
 
 ## Build
 

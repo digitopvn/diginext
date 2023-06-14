@@ -19,6 +19,8 @@ export const migrateAllFrameworks = async () => {
 		await Promise.all(
 			frameworks.map(async (framework) => {
 				// update the migration:
+				console.log("framework :>> ", framework);
+				console.log("framework.repoSSH :>> ", framework.repoSSH);
 				const { gitProvider } = parseGitRepoDataFromRepoSSH(framework.repoSSH);
 				return DB.update<IFramework>("framework", { _id: framework._id }, { isPrivate: true, gitProvider });
 			})

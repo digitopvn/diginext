@@ -3,7 +3,7 @@ import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { isArray, isBoolean, isEmpty, isNumber, isString, isUndefined } from "lodash";
 
-import type { AppGitInfo, IApp, ICluster, IContainerRegistry, IFramework, IProject } from "@/entities";
+import type { AppGitInfo, IApp, IBuild, ICluster, IContainerRegistry, IFramework, IProject, IRelease } from "@/entities";
 import { AppDto } from "@/entities";
 import type { SslType } from "@/interfaces";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
@@ -19,6 +19,7 @@ import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import type { GenerateDeploymentResult } from "@/modules/deploy";
 import { fetchDeploymentFromContent, generateDeployment } from "@/modules/deploy";
+import getDeploymentName from "@/modules/deploy/generate-deployment-name";
 import { createDxDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
@@ -408,6 +409,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
+		const mainAppName = getDeploymentName(app);
+
 		if (app.deployEnvironment)
 			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
 				if (!isEmpty(deployEnvironment)) {
@@ -428,11 +431,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 							 */
 
 							// Delete INGRESS
-							await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+							await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 							// Delete SERVICE
-							await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+							await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 							// Delete DEPLOYMENT
-							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 						} catch (e) {
 							logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
 							errorMsg = e.message;
@@ -848,15 +851,37 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!appSlug) return respondFailure({ msg: `App slug is required.` });
 		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
 		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
-		if (!deployEnvironmentData.buildNumber) respondFailure({ msg: `Build number (image's tag) is required.` });
-
-		const { buildNumber } = deployEnvironmentData;
 
 		// get app data:
 		const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
+
+		// build number
+		if (!deployEnvironmentData.buildNumber) deployEnvironmentData.buildNumber = app.deployEnvironment[env].buildNumber;
+
+		if (!deployEnvironmentData.buildNumber) {
+			const releaseFilter = { appSlug: app.slug, buildStatus: "success", env, active: true };
+			console.log("updateDeployEnvironment() > releaseFilter :>> ", releaseFilter);
+
+			let latestRelease = await DB.findOne<IRelease>("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
+			// "sometime" there are no "active" release, so just get the "success" release instead :)
+			if (!latestRelease) {
+				delete releaseFilter.active;
+				latestRelease = await DB.findOne<IRelease>("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
+			}
+			if (!latestRelease) throw new Error(`updateDeployEnvironment() > Release not found (app: "${app.slug}" - env: "${env}")`);
+
+			const latestBuild = latestRelease.build as IBuild;
+			if (!latestRelease) throw new Error(`updateDeployEnvironment() > Latest build not found (app: "${app.slug}" - env: "${env}")`);
+			deployEnvironmentData.buildNumber = latestBuild.tag;
+		}
+
+		if (!deployEnvironmentData.buildNumber) return respondFailure({ msg: `Build number (image's tag) is required.` });
+
+		// finish checking build number
+		const { buildNumber } = deployEnvironmentData;
 
 		const project = app.project as IProject;
 		const { slug: projectSlug } = project;
@@ -926,7 +951,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		Object.keys(deployEnvironmentData).map((key) => (updateDeployEnvData[`deployEnvironment.${env}.${key}`] = deployEnvironmentData[key]));
 
 		let updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
-		console.log("updatedApp :>> ", updatedApp);
+		// console.log("updatedApp :>> ", updatedApp);
 		if (!updatedApp) return respondFailure({ msg: `Failed to create "${env}" deploy environment.` });
 
 		const appConfig = await getAppConfigFromApp(updatedApp);
@@ -1040,10 +1065,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// find the app
 		const appFilter = typeof id != "undefined" ? { _id: id } : { slug };
-		const app = await this.service.findOne(appFilter);
+		const app = await this.service.findOne(appFilter, { populate: ["project"] });
 
 		// check if the environment is existed
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+		const mainAppName = getDeploymentName(app);
 
 		const deployEnvironment = (app.deployEnvironment || {})[env.toString()];
 		if (!deployEnvironment) {
@@ -1074,11 +1100,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 				 */
 
 				// Delete INGRESS
-				await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+				await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 				// Delete SERVICE
-				await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+				await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 				// Delete DEPLOYMENT
-				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${app.slug}` });
+				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 			} catch (e) {
 				logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
 				errorMsg = e.message;
@@ -1136,8 +1162,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!envVars) return { status: 0, messages: [`Array of environment variables (envVars) is required.`] };
 		// if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
 
-		const app = await this.service.findOne({ ...this.filter, slug });
+		const app = await this.service.findOne({ ...this.filter, slug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+		const projectSlug = app.projectSlug;
 
 		const newEnvVars = isJSON(envVars)
 			? (JSON.parse(envVars) as KubeEnvironmentVariable[])
@@ -1191,16 +1218,18 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure({ msg: `Cluster "${clusterShortName}" not found.` });
 
+		const mainAppName = getDeploymentName(app);
+
 		// if the workload has been deployed before -> update the environment variables
 		const workload = await ClusterManager.getDeploysByFilter(namespace, {
 			context: cluster.contextName,
-			filterLabel: `main-app=${slug}`,
+			filterLabel: `main-app=${mainAppName}`,
 		});
 
 		if (workload) {
 			const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
 				context: cluster.contextName,
-				filterLabel: `main-app=${slug}`,
+				filterLabel: `main-app=${mainAppName}`,
 			});
 		}
 
@@ -1238,7 +1267,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!envVar) return { status: 0, messages: [`A variable (envVar { name, value }) is required.`] };
 		// if (!isJSON(envVar)) return { status: 0, messages: [`A variable (envVar { name, value }) should be a valid JSON format.`] };
 
-		const app = await this.service.findOne({ ...this.filter, slug });
+		const app = await this.service.findOne({ ...this.filter, slug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 
@@ -1275,13 +1304,15 @@ export default class AppController extends BaseController<IApp, AppService> {
 			if (!updatedApp) return { status: 0, messages: [`Failed to add "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
 		}
 
+		const mainAppName = getDeploymentName(app);
+
 		// Set environment variables to deployment in the cluster
 		const deployEnvironment = updatedApp.deployEnvironment[env];
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
 		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(envVars, namespace, {
 			context: cluster.contextName,
-			filterLabel: `main-app=${slug}`,
+			filterLabel: `main-app=${mainAppName}`,
 		});
 
 		let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [setEnvVarsRes] };
@@ -1313,12 +1344,13 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
 
-		const app = await this.service.findOne({ ...this.filter, slug });
+		const app = await this.service.findOne({ ...this.filter, slug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 		if (isEmpty(app.deployEnvironment[env]))
 			return { status: 0, messages: [`This deploy environment (${env}) of "${slug}" app doesn't have any environment variables.`] };
 
+		const mainAppName = getDeploymentName(app);
 		const envVars = app.deployEnvironment[env].envVars;
 
 		// delete in database
@@ -1334,7 +1366,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			namespace,
 			{
 				context: cluster.contextName,
-				filterLabel: `main-app=${slug}`,
+				filterLabel: `main-app=${mainAppName}`,
 			}
 		);
 

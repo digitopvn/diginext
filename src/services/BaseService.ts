@@ -43,7 +43,7 @@ export default class BaseService<T = any> {
 			const scope = this;
 			const slugRange = "zxcvbnmasdfghjklqwertyuiop1234567890";
 			async function generateUniqueSlug(input, attempt = 1) {
-				let slug = makeSlug(input);
+				let slug = makeSlug(input, { delimiter: "" });
 
 				let count = await scope.count({ slug });
 				if (count > 0) slug = slug + "-" + randomStringByLength(attempt, slugRange).toLowerCase();
@@ -64,8 +64,19 @@ export default class BaseService<T = any> {
 
 			// generate metadata (for searching)
 			data.metadata = {};
+			const metadataExcludes: string[] = [
+				"_id",
+				"password",
+				"slug",
+				"token",
+				"access_token",
+				"secret",
+				"kubeConfig",
+				"serviceAccount",
+				"apiAccessToken",
+			];
 			for (const [key, value] of Object.entries(data)) {
-				if (key != "_id" && key != "metadata" && key != "slug" && !isValidObjectId(value) && value)
+				if (!metadataExcludes.includes(key) && !isValidObjectId(value) && value)
 					data.metadata[key] = clearUnicodeCharacters(value.toString());
 			}
 
@@ -95,7 +106,7 @@ export default class BaseService<T = any> {
 			// convert all {ObjectId} to {string}:
 			return replaceObjectIdsToStrings(newItem) as T;
 		} catch (e) {
-			logError(e);
+			logError(`[BASE_SERVICE] Create:`, e);
 			return;
 		}
 	}

@@ -36,8 +36,7 @@ export default class ReleaseController extends BaseController<IRelease> {
 	@Security("jwt")
 	@Post("/")
 	create(@Body() body: ReleaseDto, @Queries() queryParams?: IPostQueryParams) {
-		// const { envVars } = body;
-		// if (isJSON(envVars)) body.env = JSON.parse(envVars as string);
+		// TODO: validate body and check for required params
 		return super.create(body);
 	}
 

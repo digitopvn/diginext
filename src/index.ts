@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import Configstore from "configstore";
-import { log, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
@@ -240,5 +240,9 @@ if (process.env.CLI_MODE == "test") {
 	import("@/server");
 } else {
 	// Execute CLI commands...
-	parseCliOptions().then((inputOptions) => processCLI(inputOptions).then(() => process.exit(0)));
+	parseCliOptions().then((inputOptions) =>
+		processCLI(inputOptions)
+			.then(() => process.exit(0))
+			.catch((e) => logError(e.toString()))
+	);
 }

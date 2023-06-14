@@ -166,14 +166,23 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	 * Create namespace & imagePullScrets here!
 	 * Because it will generate the name of secret to put into deployment yaml
 	 */
-	const isNsExisted = await ClusterManager.isNamespaceExisted(serverDeployEnvironment.namespace, { context });
+	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 	if (!isNsExisted) {
-		const createNsResult = await ClusterManager.createNamespace(serverDeployEnvironment.namespace, { context });
-		if (!createNsResult) return { error: `Unable to create new namespace: ${serverDeployEnvironment.namespace}` };
+		const createNsResult = await ClusterManager.createNamespace(namespace, { context });
+		if (!createNsResult) return { error: `Unable to create new namespace: ${namespace}` };
 	}
 
 	try {
-		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, serverDeployEnvironment.cluster, serverDeployEnvironment.namespace);
+		const { name: imagePullSecretName } = await ClusterManager.createImagePullSecretsInNamespace(
+			appSlug,
+			env,
+			serverDeployEnvironment.cluster,
+			namespace
+		);
+		sendLog({
+			SOCKET_ROOM,
+			message: `Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace.`,
+		});
 	} catch (e) {
 		sendLog({
 			SOCKET_ROOM,
@@ -203,7 +212,10 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 				type: "error",
 				message: `Unable to delete "${namespace}" namespace of "${serverDeployEnvironment.cluster}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
 			});
-			return;
+
+			return {
+				error: `Unable to delete "${namespace}" namespace of "${serverDeployEnvironment.cluster}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
+			};
 		}
 
 		sendLog({
@@ -226,9 +238,17 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 				ClusterManager.rollout(releaseId);
 			} else {
 				if (env === "prod") {
-					ClusterManager.previewPrerelease(releaseId);
+					ClusterManager.previewPrerelease(releaseId, {
+						onUpdate: (msg) => {
+							sendLog({ SOCKET_ROOM, message: msg });
+						},
+					});
 				} else {
-					ClusterManager.rollout(releaseId);
+					ClusterManager.rollout(releaseId, {
+						onUpdate: (msg) => {
+							sendLog({ SOCKET_ROOM, message: msg });
+						},
+					});
 				}
 			}
 		} catch (e) {
@@ -245,9 +265,18 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 						: `Rolling out the deployment to "${env.toUpperCase()}" environment...`,
 			});
 
-			const onRolloutUpdate = (msg: string) => sendLog({ SOCKET_ROOM, message: msg });
-
 			try {
+				const onRolloutUpdate = (msg: string) => {
+					// if any errors on rolling out -> stop processing deployment
+					if (msg.indexOf("Error from server") > -1) {
+						sendLog({ SOCKET_ROOM, type: "error", message: msg });
+						throw new Error(msg);
+					} else {
+						// if normal log message -> print out to the Web UI
+						sendLog({ SOCKET_ROOM, message: msg });
+					}
+				};
+
 				const result =
 					env === "prod"
 						? forceRollOut
@@ -256,9 +285,11 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 						: await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
 
 				if (result.error) {
-					sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${result.error}.` });
-					return;
+					const errMsg = `Failed to roll out the release :>> ${result.error}.`;
+					sendLog({ SOCKET_ROOM, type: "error", message: errMsg });
+					return { error: errMsg };
 				}
+
 				newRelease = result.data;
 			} catch (e) {
 				sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}` });

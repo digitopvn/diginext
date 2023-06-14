@@ -117,7 +117,11 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 	stream.stdio.forEach((_stdio) => {
 		if (_stdio) {
 			_stdio.on("data", (data) => {
-				if (onBuilding) onBuilding(data.toString());
+				let buildMessage = data.toString();
+				// just ignore cache import error
+				if (buildMessage.indexOf("importing cache manifest from") > -1) return;
+				if (buildMessage.indexOf("failed to configure registry cache") > -1) return;
+				if (onBuilding && buildMessage) onBuilding(buildMessage);
 			});
 		}
 	});
@@ -138,7 +142,7 @@ export const stopBuild = async (builder: string) => {
 		await wait(500); // <-- just to be sure...
 	} catch (e) {
 		logError(`[BUILDER] Docker > stopBuild :>>`, e);
-		return false;
+		// return false;
 	}
 	return true;
 };

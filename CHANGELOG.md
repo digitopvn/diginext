@@ -1,3 +1,106 @@
+## [3.10.6](https://github.com/digitopvn/diginext/compare/v3.10.5...v3.10.6) (2023-06-14)
+
+
+### Bug Fixes
+
+* **server:** default to share resource credential ([26e8c17](https://github.com/digitopvn/diginext/commit/26e8c17e3103a1828b3c92e9f891b1811d64a566))
+
+## [3.10.5](https://github.com/digitopvn/diginext/compare/v3.10.4...v3.10.5) (2023-06-14)
+
+
+### Bug Fixes
+
+* **server,cli:** improve security by masking sensitive credentials ([00cfbef](https://github.com/digitopvn/diginext/commit/00cfbefe2bedae6cf1f307c7b9547385f9bf0e46))
+
+## [3.10.4](https://github.com/digitopvn/diginext/compare/v3.10.3...v3.10.4) (2023-06-14)
+
+
+### Bug Fixes
+
+* **server:** long deployment name, container error logs ([c49c2a3](https://github.com/digitopvn/diginext/commit/c49c2a3982dc2bf15304bf619bc5938ef9352b25))
+
+## [3.10.3](https://github.com/digitopvn/diginext/compare/v3.10.2...v3.10.3) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server:** try to get container log when deploy failed ([f2f8d6a](https://github.com/digitopvn/diginext/commit/f2f8d6a7cb5247c85a7d2bff55d13e76e56eadea))
+* **server:** try to get container log when deploy failed ([#209](https://github.com/digitopvn/diginext/issues/209)) ([94a2a63](https://github.com/digitopvn/diginext/commit/94a2a63616d57e8499f0c0c06827f280af4cf186))
+
+## [3.10.2](https://github.com/digitopvn/diginext/compare/v3.10.1...v3.10.2) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server:** issue of checking ready deployment ([fc8d420](https://github.com/digitopvn/diginext/commit/fc8d42010b32b394d4d6d749f011257ed7c6a2f6))
+* **server:** issue of checking ready deployment ([#208](https://github.com/digitopvn/diginext/issues/208)) ([8ce5c8c](https://github.com/digitopvn/diginext/commit/8ce5c8c626c5916d7c73288f406787646944c076))
+
+## [3.10.1](https://github.com/digitopvn/diginext/compare/v3.10.0...v3.10.1) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server:** remove namespace in kube apply func ([fe31af4](https://github.com/digitopvn/diginext/commit/fe31af4a2388fd78ba7dc2959ca778488a21f37d))
+* **server:** show container logs when deploy failed ([0c17821](https://github.com/digitopvn/diginext/commit/0c178210b006e9f486d5ce63390f844e283a035d))
+* **server:** try catch build and deploy ([c03c5e1](https://github.com/digitopvn/diginext/commit/c03c5e164a0889b71df6217f145f6bdc0575f467))
+
+# [3.10.0](https://github.com/digitopvn/diginext/compare/v3.9.4...v3.10.0) (2023-06-13)
+
+
+### Features
+
+* **server,cli:** always update image url, add build list page ([d41e563](https://github.com/digitopvn/diginext/commit/d41e5634efda560e714ffa122d60992968508a11))
+
+## [3.9.4](https://github.com/digitopvn/diginext/compare/v3.9.3...v3.9.4) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server:** try catch update build status ([0c9fbbc](https://github.com/digitopvn/diginext/commit/0c9fbbc9258562cb1435edabc42e25dba22e016d))
+* **server:** update status latest build undefined ([72debd2](https://github.com/digitopvn/diginext/commit/72debd2c1f8d3f0e434662f99e85f53661ec4a06))
+
+## [3.9.3](https://github.com/digitopvn/diginext/compare/v3.9.2...v3.9.3) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server,dashboard:** create edit docker hub registry ([b5df988](https://github.com/digitopvn/diginext/commit/b5df988bf498fc2e9369bdf671c19982840a30e2))
+
+## [3.9.2](https://github.com/digitopvn/diginext/compare/v3.9.1...v3.9.2) (2023-06-13)
+
+
+### Bug Fixes
+
+* **server:** update build number to deploy env when update status ([0b2a079](https://github.com/digitopvn/diginext/commit/0b2a079614f5b61bf47305248497b8be3cad0b79))
+
+## [3.9.1](https://github.com/digitopvn/diginext/compare/v3.9.0...v3.9.1) (2023-06-12)
+
+
+### Bug Fixes
+
+* **server:** incorrect main-app-name,set env vars,deploy ([1f09c6c](https://github.com/digitopvn/diginext/commit/1f09c6c92c452cb899a147262f7cc237e5d34b77))
+
+# [3.9.0](https://github.com/digitopvn/diginext/compare/v3.8.0...v3.9.0) (2023-06-12)
+
+
+### Bug Fixes
+
+* **server,dashboard:** add loading spin to all list pages ([ec78b60](https://github.com/digitopvn/diginext/commit/ec78b608afdf50e087c0629e8bd803c3d19a7ab5))
+
+
+### Features
+
+* **server:** seed initial cluster when create workspace if any ([f0baf99](https://github.com/digitopvn/diginext/commit/f0baf998ba93344d80a383ef148c6c0d38405520))
+* **server:** seed initial cluster when create workspace if any ([#201](https://github.com/digitopvn/diginext/issues/201)) ([a71e9ee](https://github.com/digitopvn/diginext/commit/a71e9ee1fea12d8b723df437775bbf6b6dccf184))
+
+# [3.8.0](https://github.com/digitopvn/diginext/compare/v3.7.7...v3.8.0) (2023-06-12)
+
+
+### Features
+
+* **server:** implement basic auth with register and password login ([d93fca6](https://github.com/digitopvn/diginext/commit/d93fca6051e3323e21fb04b4d4d9c07e0994755d))
+* **server:** implement basic auth with register and password login ([#198](https://github.com/digitopvn/diginext/issues/198)) ([f4c03ed](https://github.com/digitopvn/diginext/commit/f4c03ed1d14be4596c2c41f787bc8710bf0cac51))
+
 ## [3.7.7](https://github.com/digitopvn/diginext/compare/v3.7.6...v3.7.7) (2023-06-09)
 
 

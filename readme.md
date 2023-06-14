@@ -16,6 +16,8 @@
 
 ## Getting Started
 
+- [Getting started (Latest updates)](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4)
+
 ### If you are a developer and you just want to deploy your app immediately)
 
 #### Required

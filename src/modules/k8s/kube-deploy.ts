@@ -12,11 +12,12 @@ import { CLI_DIR } from "@/config/const";
 import type { IApp, ICluster, IRelease } from "@/entities";
 import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
-import { objectToDeploymentYaml, waitUntil } from "@/plugins";
+import { objectToDeploymentYaml, wait, waitUntil } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
+import getDeploymentName from "../deploy/generate-deployment-name";
 import ClusterManager from ".";
 import { logPodByFilter } from "./kubectl";
 
@@ -58,14 +59,10 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	}
 	const { contextName: context } = cluster;
 
-	/**
-	 * "main-app" == projectSlug + "-" + appSlug
-	 */
-	const mainAppName = projectSlug + "-" + appSlug;
-
-	// support deprecated "main-app" name
-	const app = await DB.findOne<IApp>("app", { slug: appSlug });
+	// Fallback support to the deprecated "main-app" name
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+	const mainAppName = getDeploymentName(app);
 
 	// Clean up Prerelease YAML
 	const cleanUpCommands = [];
@@ -137,7 +134,10 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 
 	if (isEmpty(releaseData)) return { error: `Release not found.` };
 
-	const { slug: releaseSlug, cluster: clusterShortName, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
+	const { slug: releaseSlug, cluster: clusterShortName, appSlug, projectSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
+
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	const mainAppName = getDeploymentName(app);
 
 	log(`Preview the release: "${releaseSlug}" (${id})...`);
 	if (onUpdate) onUpdate(`Preview the release: "${releaseSlug}" (${id})...`);
@@ -147,7 +147,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	try {
 		cluster = await ClusterManager.authCluster(clusterShortName);
 	} catch (e) {
-		logError(e);
+		logError(`[PREVIEW_PRERELEASE]`, e);
 		return { error: e.message };
 	}
 	const { contextName: context } = cluster;
@@ -161,10 +161,9 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 		log(`[KUBE_DEPLOY] Namespace "${namespace}" not found, creating one...`);
 		const createNsRes = await ClusterManager.createNamespace(namespace, { context });
 		if (!createNsRes) {
-			logError(
-				`[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`
-			);
-			return;
+			const errMsg = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
+			logError(errMsg);
+			return { error: errMsg };
 		}
 	}
 
@@ -172,9 +171,11 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	 * Create "imagePullSecrets" in a namespace
 	 */
 	try {
-		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+		const { name: imagePullSecretName } = await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+		if (onUpdate)
+			onUpdate(`[PREVIEW] Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace (cluster: "${clusterShortName}").`);
 	} catch (e) {
-		throw new Error(`[PREVIEW] Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
+		throw new Error(`[PREVIEW] Can't create "imagePullSecrets" in the "${namespace}" namespace (cluster: "${clusterShortName}").`);
 	}
 
 	/**
@@ -182,19 +183,19 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	 */
 	const curPrereleaseDeployments = await ClusterManager.getDeploysByFilter(namespace, {
 		context,
-		filterLabel: `phase=prerelease,main-app=${appSlug}`,
+		filterLabel: `phase=prerelease,main-app=${mainAppName}`,
 	});
 	if (!isEmpty(curPrereleaseDeployments)) {
 		await ClusterManager.deleteDeploymentsByFilter(namespace, {
 			context,
-			filterLabel: `phase=prerelease,main-app=${appSlug}`,
+			filterLabel: `phase=prerelease,main-app=${mainAppName}`,
 		});
 	}
 
 	/**
 	 * Apply PRE-RELEASE deployment YAML
 	 */
-	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, namespace, { context });
+	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, { context });
 	if (!prereleaseDeploymentRes)
 		throw new Error(
 			`Can't preview the pre-release "${id}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${preYaml}`
@@ -212,7 +213,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const { onUpdate } = options;
 
 	const releaseData = await DB.findOne<IRelease>("release", { id });
-	if (isEmpty(releaseData)) return { error: `Release" ${id}" not found.` };
+	if (isEmpty(releaseData)) return { error: `Release "${id}" not found.` };
 
 	const {
 		slug: releaseSlug,
@@ -224,17 +225,25 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		endpoint: endpointUrl,
 		namespace,
 		env,
-		appConfig,
 	} = releaseData as IRelease;
 
 	log(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
 	if (onUpdate) onUpdate(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
 
+	// get the app
+	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	log(`Rolling out > app:`, app);
+
+	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+	const mainAppName = getDeploymentName(app);
+	log(`Rolling out > mainAppName:`, mainAppName);
+
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
 		await ClusterManager.authCluster(clusterShortName);
+		log(`Rolling out > Checked connectivity of "${clusterShortName}" cluster.`);
 	} catch (e) {
-		logError(e);
+		logError(`[ROLL_OUT]`, e);
 		return { error: e.message };
 	}
 
@@ -244,6 +253,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		return { error: `Cluster "${clusterShortName}" not found.` };
 	}
 	const { name: context } = await ClusterManager.getKubeContextByCluster(cluster);
+	log(`Rolling out > Connected to "${clusterShortName}" cluster.`);
 
 	const tmpDir = path.resolve(CLI_DIR, `storage/releases/${releaseSlug}`);
 	if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
@@ -261,17 +271,23 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		const createNsRes = await ClusterManager.createNamespace(namespace, { context });
 		if (!createNsRes) {
 			const err = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
-			logError(err);
+			logError(`[ROLL_OUT]`, err);
 			if (onUpdate) onUpdate(err);
-			return;
+			return { error: err };
 		}
 	}
 
 	// create "imagePullSecret" in namespace:
 	try {
-		await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+		const { name: imagePullSecretName } = await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+		if (onUpdate)
+			onUpdate(
+				`[ROLL OUT] Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace (cluster: "${clusterShortName}").`
+			);
 	} catch (e) {
-		throw new Error(`[ROLL OUT] Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
+		const error = `[ROLL OUT] Can't create "imagePullSecrets" in the "${namespace}" namespace (cluster: "${clusterShortName}").`;
+		// throw new Error();
+		return { error };
 	}
 
 	/**
@@ -310,8 +326,6 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	});
 	// log(`3`, { appSlug, service, svcName, ingress, ingressName, deploymentName });
 
-	const mainAppName = projectSlug + "-" + appSlug;
-
 	// create new service if it's not existed
 	const currentServices = await ClusterManager.getAllServices(namespace, `phase=live,main-app=${mainAppName}`, { context });
 
@@ -323,11 +337,15 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	// Always apply new service, since the PORT could be changed !!!
 
 	const SVC_CONTENT = objectToDeploymentYaml(service);
-	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, namespace, { context });
-	if (!applySvcRes)
-		throw new Error(
-			`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`
-		);
+	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, { context });
+	if (!applySvcRes) {
+		// throw new Error(
+		// 	`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`
+		// );
+		const error = `Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`;
+		// throw new Error();
+		return { error };
+	}
 
 	if (onUpdate) onUpdate(`Created new service named "${appSlug}".`);
 
@@ -363,14 +381,6 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		}
 	}
 
-	// ! ALWAYS Create new ingress
-	const ING_CONTENT = objectToDeploymentYaml(ingress);
-	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, namespace, { context });
-	if (!ingCreateResult)
-		throw new Error(
-			`Failed to apply invalid INGRESS config (${env.toUpperCase()}) to "${ingressName}" in "${namespace}" namespace of "${context}" context:\n${ING_CONTENT}`
-		);
-
 	// log(`5`);
 
 	let prereleaseApp, prereleaseAppName;
@@ -391,9 +401,8 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	 * 2. Delete prerelease app if it contains "prerelease" (OLD WAY)
 	 * and apply new app for production
 	 */
-	const app = await DB.findOne<IApp>("app", { slug: appSlug });
-	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
+	// TODO: Check crashed / failed deployments -> delete them!
 	let oldDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${mainAppName}` });
 	if (oldDeploys.length === 0)
 		oldDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${deprecatedMainAppName}` });
@@ -423,11 +432,12 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		newApp.spec.selector.matchLabels.app = newAppName;
 
 		let APP_CONTENT = objectToDeploymentYaml(newApp);
-		const appCreateResult = await ClusterManager.kubectlApplyContent(APP_CONTENT, namespace, { context });
-		if (!appCreateResult)
+		const appCreateResult = await ClusterManager.kubectlApplyContent(APP_CONTENT, { context });
+		if (!appCreateResult) {
 			throw new Error(
-				`Failed to apply APP DEPLOYMENT config to "${newAppName}" in "${namespace}" namespace of "${context}" context:\n${APP_CONTENT}`
+				`[ROLL OUT] Failed to apply APP DEPLOYMENT config to "${newAppName}" in "${namespace}" namespace of "${context}" context:\n${APP_CONTENT}`
 			);
+		}
 
 		if (onUpdate) onUpdate(`Created new deployment "${newAppName}" successfully.`);
 
@@ -473,16 +483,24 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 		let isReady = false;
 		newDeploys.forEach((deploy) => {
-			log(deploy.status.conditions);
+			log(`[INTERVAL] deploy.status.conditions :>>`, deploy.status.conditions);
 			if (onUpdate) {
-				deploy.status.conditions.map((condition) => {
+				deploy.status?.conditions?.map((condition) => {
 					// if (condition.type === "False") isReady = true;
-					onUpdate(`DEPLOY STATUS: [${condition.type.toUpperCase()}] - ${condition.reason} - ${condition.message}`);
+					if (condition.type.toLowerCase() === "progressing")
+						onUpdate(`DEPLOY STATUS: [${condition.type.toUpperCase()}] - ${condition.reason} - ${condition.message}`);
 				});
 			}
 
-			// log(`deploy.status.replicas =`, deploy.status.replicas);
-			if (deploy.status.readyReplicas >= 1) isReady = true;
+			log(`[INTERVAL] deploy.status.replicas :>>`, deploy.status.replicas);
+			log(`[INTERVAL] deploy.status.unavailableReplicas :>>`, deploy.status.unavailableReplicas);
+			log(`[INTERVAL] deploy.status.readyReplicas :>>`, deploy.status.readyReplicas);
+
+			if (deploy.status.unavailableReplicas && deploy.status.unavailableReplicas >= 1) {
+				isReady = false;
+			} else if (deploy.status.readyReplicas && deploy.status.readyReplicas >= 1) {
+				isReady = true;
+			}
 		});
 
 		log(`[INTERVAL] Checking new deployment's status -> Is Ready:`, isReady);
@@ -490,15 +508,40 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	};
 
 	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 2 * 60);
+	log(`[INTERVAL] Checking new deployment's status -> Is Fully Ready:`, isReallyReady);
 
-	// print the container logs
-	const containerLogs = await logPodByFilter(namespace, { filterLabel: `phase=live,app=${deploymentName}` });
-	if (onUpdate && containerLogs) onUpdate(containerLogs);
+	// TODO: check app's health instead of 15 seconds
+	// Wait another 15s to make sure app is not crashing...
+	if (isReallyReady) {
+		if (onUpdate) onUpdate(`App is being started up, please wait...`);
+		await wait(15 * 1000);
+	}
+	let isCrashed = false;
+	const newDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase=live,app=${deploymentName}` });
+	newDeploys.forEach((deploy) => {
+		isCrashed = deploy.status.unavailableReplicas && deploy.status.unavailableReplicas >= 1;
+	});
+
+	// Try to get the container logs and print to the web ui
+	let containerLogs = await logPodByFilter(namespace, { filterLabel: `app=${deploymentName}`, context });
+	if (!containerLogs) containerLogs += "\n\n-----\n\n" + (await logPodByFilter(namespace, { filterLabel: `main-app=${mainAppName}`, context }));
+	if (!containerLogs)
+		containerLogs += "\n\n-----\n\n" + (await logPodByFilter(namespace, { filterLabel: `app=${deploymentName}`, previous: true, context }));
+	if (!containerLogs)
+		containerLogs += "\n\n-----\n\n" + (await logPodByFilter(namespace, { filterLabel: `main-app=${mainAppName}`, previous: true, context }));
+
+	if (onUpdate && containerLogs) onUpdate(`---- CONTAINER'S LOGS ----- \n${containerLogs}`);
 
 	// throw the error
-	if (!isReallyReady) {
+	if (
+		!isReallyReady ||
+		isCrashed ||
+		containerLogs.indexOf("Error from server") > -1 ||
+		containerLogs.indexOf("An error occurred") > -1 ||
+		containerLogs.indexOf("Command failed") > -1
+	) {
 		return {
-			error: `New app deployment stucked or crashed, probably because of the unauthorized container registry or the app was crashed on start up.`,
+			error: `[ERROR] Your app deployment has been stucked or crashed, check the container's logs to identify the problems.`,
 		};
 	}
 
@@ -522,7 +565,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		);
 		if (onUpdate) onUpdate(`Patched "${svcName}" service successfully >> new deployment: ${deploymentName}`);
 	} catch (e) {
-		if (onUpdate) onUpdate(`Patched "${svcName}" service failure: ${e.message}`);
+		if (onUpdate) onUpdate(`[WARNING] Patched "${svcName}" service failure: ${e.message}`);
 		// return { error: e.message };
 	}
 
@@ -533,7 +576,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		await execa("kubectl", [`--context=${context}`, "scale", `--replicas=${replicas}`, `deploy`, deploymentName, `-n`, namespace], cliOpts);
 		if (onUpdate) onUpdate(`Scaled "${deploymentName}" replicas to ${replicas} successfully`);
 	} catch (e) {
-		if (onUpdate) onUpdate(`Scaled "${deploymentName}" replicas to ${replicas} failure: ${e.message}`);
+		if (onUpdate) onUpdate(`[WARNING] Scaled "${deploymentName}" replicas to ${replicas} failure: ${e.message}`);
 	}
 
 	/**
@@ -546,10 +589,18 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 			await execa.command(resouceCommand);
 			if (onUpdate) onUpdate(`Applied resource quotas to ${deploymentName} successfully`);
 		} catch (e) {
-			if (onUpdate) onUpdate(`Command failed: ${resouceCommand}`);
-			if (onUpdate) onUpdate(`Applied "resources" quotas failure: ${e.message}`);
+			if (onUpdate) onUpdate(`[WARNING] Command failed: ${resouceCommand}`);
+			if (onUpdate) onUpdate(`[WARNING] Applied "resources" quotas failure: ${e.message}`);
 		}
 	}
+
+	// ! ALWAYS Create new ingress
+	const ING_CONTENT = objectToDeploymentYaml(ingress);
+	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, { context });
+	if (!ingCreateResult)
+		throw new Error(
+			`Failed to apply invalid INGRESS config (${env.toUpperCase()}) to "${ingressName}" in "${namespace}" namespace of "${context}" context:\n${ING_CONTENT}`
+		);
 
 	// Print success:
 	const prodUrlInCLI = chalk.bold(`https://${endpointUrl}`);

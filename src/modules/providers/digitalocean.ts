@@ -195,7 +195,10 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	// check namespace is existed
 	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 	if (!isNsExisted) {
-		logError(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+		// create new namespace?
+		const ns = await ClusterManager.createNamespace(namespace, { context });
+		// still can't create namespace -> throw error!
+		if (!ns) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
 		return;
 	}
 
@@ -231,7 +234,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
  * @param {InputOptions} options
  */
 export const connectDockerToRegistry = async (options?: InputOptions) => {
-	const { host, key: API_ACCESS_TOKEN, userId, workspaceId } = options;
+	const { host, key: API_ACCESS_TOKEN, userId, workspaceId, registry: registrySlug } = options;
 
 	try {
 		let connectRes;
@@ -253,12 +256,12 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 		return;
 	}
 
-	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { provider: "digitalocean", host });
+	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
 	if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { existingRegistry });
 
 	if (existingRegistry) return existingRegistry;
 
-	// Save this container registry to database
+	// IF NOT EXISTED -> Save this container registry to database!
 	const registryHost = host || "registry.digitalocean.com";
 	const imageBaseURL = `${registryHost}/${options.workspace?.slug || "diginext"}`;
 	let newRegistry = await DB.create<IContainerRegistry>("registry", {

@@ -159,8 +159,7 @@ export default class UserController extends BaseController<IUser> {
 			const wsId = workspaceId;
 			const workspaceIds = user.workspaces || [];
 			const isUserInWorkspace = workspaceIds.includes(wsId);
-			// console.log("workspaceIds :>> ", workspaceIds);
-			// console.log("isUserInWorkspace :>> ", isUserInWorkspace);
+
 			// add this workspace to user's workspace list
 			if (!isUserInWorkspace) workspaceIds.push(workspaceId);
 
@@ -169,13 +168,6 @@ export default class UserController extends BaseController<IUser> {
 				// if this user hasn't joined yet:
 				if (!isUserInWorkspace) throw new Error(`This workspace is private, you need an invitation to access.`);
 			}
-
-			// set default roles if this user doesn't have one
-			// const memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: workspaceId });
-			// console.dir(memberRole, { depth: 10 });
-
-			// const roles = user.roles || [];
-			// if (roles.length === 0 && !roles.includes(memberRole._id)) roles.push(memberRole._id);
 
 			// set active workspace of this user -> this workspace
 			[user] = await this.service.update({ _id: userId }, { activeWorkspace: workspaceId, workspaces: workspaceIds }, this.options);

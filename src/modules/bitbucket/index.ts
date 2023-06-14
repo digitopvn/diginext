@@ -98,7 +98,7 @@ export const patchPackage = () => {
 	return curPackage;
 };
 
-export const copyAllResources = async (destDirectory) => {
+export const copyAllResources = async (destDirectory: string) => {
 	let options = {
 		overwrite: true,
 		expand: true,
@@ -109,7 +109,8 @@ export const copyAllResources = async (destDirectory) => {
 
 	let success = false;
 	try {
-		await copy(".fw", destDirectory, options);
+		const tmpFrameworkDir = path.resolve(".fw");
+		await copy(tmpFrameworkDir, destDirectory, options);
 		success = true;
 	} catch (e) {
 		logError(e);

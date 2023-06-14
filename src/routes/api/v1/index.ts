@@ -25,9 +25,13 @@ import workspaceRouter from "./workspace";
 const router = express.Router();
 
 /**
- * Register API routes
+ * Healh check
  */
 router.get("/healthz", (req, res) => res.status(200).json({ status: 1, data: { ready: isServerReady } }));
+
+/**
+ * Register API routes
+ */
 router.use("/user", userRouter);
 router.use("/service_account", serviceAccountRouter);
 router.use("/api_key", apiKeyUserRouter);
