@@ -8,8 +8,8 @@ import { MongoDB } from "@/plugins/mongodb";
 export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	// ADMIN
 	let adminRole = await DB.findOne<IRole>("role", { type: "admin", workspace: workspace._id });
-	const adminMaskedFields: string[] = [];
-	if (!Config.SHARE_RESOURCE_CREDENTIAL) adminMaskedFields.push(...credentialFields);
+	let adminMaskedFields: string[] = [];
+	if (!Config.SHARE_RESOURCE_CREDENTIAL) adminMaskedFields = [...credentialFields];
 
 	if (!adminRole) {
 		const adminRoleDto = {} as IRole;
@@ -69,8 +69,6 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 	];
 
 	const memberRoleMaskedFields = ["email", ...credentialFields];
-	// Only the server can read cloud resource's credentials, others (CLI & API) won't, even Workspace Administrators or Moderators.
-	if (!Config.SHARE_RESOURCE_CREDENTIAL) memberRoleMaskedFields.push(...credentialFields);
 
 	if (!memberRole) {
 		const memberRoleDto = {} as IRole;

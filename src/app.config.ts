@@ -129,12 +129,11 @@ export class Config {
 	 * @default true
 	 */
 	static get SHARE_RESOURCE_CREDENTIAL() {
-		return (
-			process.env.SHARE_RESOURCE_CREDENTIAL === "true" ||
-			process.env.SHARE_RESOURCE_CREDENTIAL === "TRUE" ||
-			process.env.SHARE_RESOURCE_CREDENTIAL === "1" ||
-			true
-		);
+		return typeof process.env.SHARE_RESOURCE_CREDENTIAL === "undefined"
+			? true
+			: process.env.SHARE_RESOURCE_CREDENTIAL === "true" ||
+					process.env.SHARE_RESOURCE_CREDENTIAL === "TRUE" ||
+					process.env.SHARE_RESOURCE_CREDENTIAL === "1";
 	}
 
 	static get DISABLE_INPECT_MEMORY() {
