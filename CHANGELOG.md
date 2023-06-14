@@ -1,3 +1,10 @@
+## [3.10.5](https://github.com/digitopvn/diginext/compare/v3.10.4...v3.10.5) (2023-06-14)
+
+
+### Bug Fixes
+
+* **server,cli:** improve security by masking sensitive credentials ([00cfbef](https://github.com/digitopvn/diginext/commit/00cfbefe2bedae6cf1f307c7b9547385f9bf0e46))
+
 ## [3.10.4](https://github.com/digitopvn/diginext/compare/v3.10.3...v3.10.4) (2023-06-14)
 
 
