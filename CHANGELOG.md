@@ -1,3 +1,10 @@
+## [3.10.4](https://github.com/digitopvn/diginext/compare/v3.10.3...v3.10.4) (2023-06-14)
+
+
+### Bug Fixes
+
+* **server:** long deployment name, container error logs ([c49c2a3](https://github.com/digitopvn/diginext/commit/c49c2a3982dc2bf15304bf619bc5938ef9352b25))
+
 ## [3.10.3](https://github.com/digitopvn/diginext/compare/v3.10.2...v3.10.3) (2023-06-13)
 
 
