@@ -1,9 +1,9 @@
 import inquirer from "inquirer";
 
 import type { InputOptions } from "@/interfaces";
+import selectProject from "@/modules/apps/selectProject";
 
 import createProjectByForm from "../project/create-project";
-import { searchProjects } from "./search-projects";
 
 export async function createOrSelectProject(options?: InputOptions) {
 	if (!options.project) {
@@ -23,18 +23,8 @@ export async function createOrSelectProject(options?: InputOptions) {
 
 		if (action === "select") {
 			// find/search projects
-			const projects = await searchProjects();
-
-			// display list to select:
-			const { selectedProject } = await inquirer.prompt({
-				type: "list",
-				name: "selectedProject",
-				message: "Select your project:",
-				choices: projects.map((p, i) => {
-					return { name: `[${i + 1}] ${p.name} (${p.slug})`, value: p };
-				}),
-			});
-			options.project = selectedProject;
+			const projects = await selectProject(options);
+			options.project = projects;
 		} else {
 			const newProject = await createProjectByForm(options);
 			options.project = newProject;
