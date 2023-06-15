@@ -1534,7 +1534,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		const clusterShortName = app.deployEnvironment[env].cluster;
 		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
-		if (cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
+		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
 		const mainAppName = getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
