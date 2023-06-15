@@ -163,7 +163,7 @@ If you are a collaborator, please follow our [Pull Request principle](https://gi
 
 ## Community and Support:
 
-Join our community on [Discord]()!
+Join our community on [Discord](https://discord.gg/xMuW5pN2Kn)!
 
 Suggest improvements and report problems.
 
