@@ -1,4 +1,4 @@
-import { logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/xconsole/log";
 import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";

@@ -1,6 +1,6 @@
 // import { Role } from "@/entities";
 
-import { log } from "diginext-utils/dist/console/log";
+import { log } from "diginext-utils/dist/xconsole/log";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IRole, IUser, IWorkspace } from "@/entities";

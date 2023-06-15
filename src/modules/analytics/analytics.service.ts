@@ -3,7 +3,7 @@
 import { AnalyticsAdminServiceClient, protos } from "@google-analytics/admin";
 import chalk from "chalk";
 import Table from "cli-table";
-import { log, logError } from "diginext-utils/dist/console/log";
+import { log, logError } from "diginext-utils/dist/xconsole/log";
 
 import type { IApp } from "@/entities";
 

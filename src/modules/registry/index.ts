@@ -1,5 +1,5 @@
 import { isJSON } from "class-validator";
-import { logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/xconsole/log";
 import { existsSync, readFileSync } from "fs";
 
 import type { ContainerRegistryDto, ICluster, IContainerRegistry } from "@/entities";

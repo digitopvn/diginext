@@ -1,6 +1,6 @@
 import chalk from "chalk";
-import { logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";

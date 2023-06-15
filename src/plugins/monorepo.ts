@@ -1,4 +1,4 @@
-import { logWarn } from "diginext-utils/dist/console/log";
+import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { existsSync } from "fs";
 import path from "path";
 

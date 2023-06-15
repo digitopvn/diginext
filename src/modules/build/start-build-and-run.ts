@@ -1,5 +1,5 @@
-import { logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 

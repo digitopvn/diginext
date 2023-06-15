@@ -1,6 +1,6 @@
 import chalk from "chalk";
-import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";

@@ -1,3 +1,5 @@
+import detectPrivateKey from "diginext-utils/dist/file/detectPrivateKey";
+
 import type { InputOptions } from "@/interfaces/InputOptions";
 
 import { cleanUp, cloneGitFramework, copyAllResources, pullingLatestFrameworkVersion } from "./bitbucket";
@@ -71,6 +73,16 @@ export async function pullingRepoToNewGitDir(options: InputOptions) {
 	await copyAllResources(options.targetDirectory);
 
 	await cleanUp();
+
+	const result = detectPrivateKey(options.targetDirectory);
+	if (result.status) {
+		//
+	} else {
+		//
+		console.log("FOUND PRIVATE KEY OR SECRET ENV, PLEASE IGNORE THEM BEFORE PUSH TO GIT");
+		console.log(result.list);
+		return false;
+	}
 
 	return true;
 }

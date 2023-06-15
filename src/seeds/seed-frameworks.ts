@@ -1,4 +1,4 @@
-import { log } from "diginext-utils/dist/console/log";
+import { log } from "diginext-utils/dist/xconsole/log";
 
 import type { FrameworkDto, IFramework, IUser, IWorkspace } from "@/entities";
 import { DB } from "@/modules/api/DB";

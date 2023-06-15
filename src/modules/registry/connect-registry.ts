@@ -1,4 +1,4 @@
-import { logError, logSuccess } from "diginext-utils/dist/console/log";
+import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import { existsSync, unlink } from "fs";
 
 import type { IContainerRegistry } from "@/entities";

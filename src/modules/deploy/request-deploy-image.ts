@@ -1,4 +1,4 @@
-import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";

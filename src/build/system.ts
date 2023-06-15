@@ -1,5 +1,5 @@
-import { log, logSuccess } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
 import execa from "execa";
 
 import { Config } from "@/app.config";

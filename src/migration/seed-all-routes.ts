@@ -1,4 +1,4 @@
-import { log } from "diginext-utils/dist/console/log";
+import { log } from "diginext-utils/dist/xconsole/log";
 import listEndpoints from "express-list-endpoints";
 import { isEmpty, upperFirst } from "lodash";
 

@@ -1,4 +1,4 @@
-import { logError, logSuccess } from "diginext-utils/dist/console/log";
+import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import generator from "generate-password";
 import { MongoClient } from "mongodb";
 
