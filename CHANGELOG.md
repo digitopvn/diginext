@@ -1,9 +1,11 @@
-# [3.12.0](https://github.com/digitopvn/diginext/compare/v3.11.4...v3.12.0) (2023-06-15)
+# [3.12.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.11.4...v3.12.0-prerelease.1) (2023-06-15)
 
 
 ### Features
 
-* **client:** update diginext-utils to 3.0.2 | [cloneRepo] checking private key or secret env ([223685c](https://github.com/digitopvn/diginext/commit/223685ce6f00d65353a10ba44fb79219f276ae17))
+* **server:** add export pdf, capture screenshot webpage ([e44c64e](https://github.com/digitopvn/diginext/commit/e44c64e0cd4f25ae194e45a49ed5392d4ad7bad1))
+* **server:** add export pdf, capture screenshot webpage ([#225](https://github.com/digitopvn/diginext/issues/225)) ([2e6801a](https://github.com/digitopvn/diginext/commit/2e6801ab7019b875218df9d1229597738519c5f7))
+* **server:** capture screenshot when build and deploy ([353319a](https://github.com/digitopvn/diginext/commit/353319aa5dae77f556d5e5db3feb4dc26dc6b253))
 
 ## [3.11.4](https://github.com/digitopvn/diginext/compare/v3.11.3...v3.11.4) (2023-06-15)
 
