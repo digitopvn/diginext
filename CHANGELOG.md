@@ -1,3 +1,41 @@
+## [3.11.4](https://github.com/digitopvn/diginext/compare/v3.11.3...v3.11.4) (2023-06-15)
+
+
+### Bug Fixes
+
+* **server:** issue of project name validation when add domain ([cd8b5c7](https://github.com/digitopvn/diginext/commit/cd8b5c75e4631ac60818f94d621bbca97a48bf9c))
+
+## [3.11.3](https://github.com/digitopvn/diginext/compare/v3.11.2...v3.11.3) (2023-06-15)
+
+
+### Bug Fixes
+
+* **server:** issue cluster not found when add domain ([5c52b46](https://github.com/digitopvn/diginext/commit/5c52b46cef0e2f79973cbb94bc6ddd2d7a4356fd))
+* **server:** print env vars when server start up ([424947b](https://github.com/digitopvn/diginext/commit/424947b5ec7fef9930681e14484d2f0361a19ef8))
+
+## [3.11.2](https://github.com/digitopvn/diginext/compare/v3.11.1...v3.11.2) (2023-06-14)
+
+
+### Bug Fixes
+
+* **cli:** improve --debug flag ([b5b8cf1](https://github.com/digitopvn/diginext/commit/b5b8cf1c18c42680446762328a7e58f500109040))
+* **cli:** issue github does not provide shell access ([0af8893](https://github.com/digitopvn/diginext/commit/0af88938c4bc89aa9e44d43f8e8645a6284b647d))
+* **cli:** stop request deploy when deploy info undefined ([8c01329](https://github.com/digitopvn/diginext/commit/8c0132912bcd059e487722ce4827779dcbabbd41))
+* **server,api:** add missing masked fields ([8bf1466](https://github.com/digitopvn/diginext/commit/8bf14669dc40636fb76aa05eb7e8fc5f88a50f8a))
+* **server,api:** error 504 when create deploy environment ([2898d08](https://github.com/digitopvn/diginext/commit/2898d0892bde5d4a667a6a4e13050e0b13450f1a))
+* **server,cli:** generate ssh with no pass ([848eb0e](https://github.com/digitopvn/diginext/commit/848eb0e1e421d32681d6336cca0400e5533f088c))
+* **server,cli:** remove logs contains dx.json ([bd7cb0a](https://github.com/digitopvn/diginext/commit/bd7cb0affb7627a9aa75ec18946bce36feb99a98))
+* **server:** add primary ip when seed initial cluster ([89334aa](https://github.com/digitopvn/diginext/commit/89334aa4caa61ffa9da1ab6893ba75a0d9c4c484))
+* **server:** add resource validation in env vars crud ([e8cc1c2](https://github.com/digitopvn/diginext/commit/e8cc1c26cc43818ed027aecc4dafedb42777a33c))
+* **server:** podman container.conf log to file ([c242f66](https://github.com/digitopvn/diginext/commit/c242f661a9be2c56a3e33a20f3531560f92e1a94))
+
+## [3.11.1](https://github.com/digitopvn/diginext/compare/v3.11.0...v3.11.1) (2023-06-14)
+
+
+### Performance Improvements
+
+* **client:** choose git provider ([d430f8d](https://github.com/digitopvn/diginext/commit/d430f8d8ff60d8d9b6b0b9ee7b68d1116fadb2f9))
+
 # [3.11.0](https://github.com/digitopvn/diginext/compare/v3.10.6...v3.11.0) (2023-06-14)
 
 

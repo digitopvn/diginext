@@ -23,7 +23,7 @@ export const execRollOut = async (options?: InputOptions) => {
 		const appConfig = getAppConfigFromApp(app);
 
 		if (!appConfig) {
-			logError(`Not found "dx.json" in the directory. Try: "dx rollout --dir=/path/to/dir"`);
+			logError(`Not found deploy environment config on Diginext workspace.`);
 			return;
 		}
 

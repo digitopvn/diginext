@@ -241,8 +241,10 @@ if (process.env.CLI_MODE == "test") {
 } else {
 	// Execute CLI commands...
 	parseCliOptions().then((inputOptions) =>
-		processCLI(inputOptions)
-			.then(() => process.exit(0))
-			.catch((e) => logError(e.toString()))
+		!inputOptions.isDebugging
+			? processCLI(inputOptions)
+					.then(() => process.exit(0))
+					.catch((e) => logError(e.toString()))
+			: processCLI(inputOptions).then(() => process.exit(0))
 	);
 }

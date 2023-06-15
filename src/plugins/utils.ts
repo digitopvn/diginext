@@ -216,136 +216,6 @@ function toBase64(str) {
 	return Buffer.from(str).toString("base64");
 }
 
-export function printHelp(options?: InputOptions) {
-	console.info(chalk.yellow(`[Diginext CLI - v${pkg.version}] USAGE DOCUMENTATION:`));
-	console.info(pkg.description);
-
-	console.info(chalk.redBright("\n  [TIPS] Alternatively you can use 'dx' as an alias of 'diginext' command (for faster typing):"));
-	console.info("\n" + chalk.gray("  # This command:"));
-	console.info(" ", chalk.yellow("diginext"), "--help");
-	console.info(chalk.gray("  # is equivalent with:"));
-	console.info(" ", chalk.yellow("dx"), "--help");
-
-	console.info(chalk.yellowBright("\n  Create new project:"));
-	console.info("  diginext new");
-
-	console.info(chalk.yellowBright("\n  Force creating new project (overwrite the existing one):"));
-	console.info("  diginext new --force");
-	console.info("  diginext new --overwrite");
-
-	console.info(chalk.yellowBright("\n  Initialize an existing project directory with our specific framework:"));
-	console.info("  diginext init");
-
-	// Update CLI
-	console.info(chalk.yellowBright("\n  Update CLI:"));
-	console.info("  diginext update");
-	console.info("  diginext --update");
-	console.info("  diginext -U");
-
-	// CLOUD PROVIDERS
-	console.info(chalk.yellowBright("\n  Connect to cloud providers (GCLOUD, Digital Ocean):"));
-	console.info("  diginext gcloud auth -f", chalk.cyan("/path/to/service-account.json"));
-	console.info("  diginext gcloud registry connect --host=", chalk.cyan("<GOOGLE_CONTAINER_REGISTRY_HOST>"));
-	console.info(chalk.gray("  # GOOGLE_CONTAINER_REGISTRY_HOST should be one of: gcr.io, asia.gcr.io, eu.gcr.io, us.gcr.io"));
-	console.info(chalk.gray("  # Learn more about Google Service Account: https://cloud.google.com/iam/docs/service-accounts"));
-	console.info("  diginext do auth --key", chalk.cyan("<API_ACCESS_TOKEN>"));
-	console.info("  diginext do registry connect");
-	console.info(chalk.gray("  # Learn more about API_ACCESS_TOKEN: https://docs.digitalocean.com/reference/api/create-personal-access-token/"));
-
-	console.info(chalk.yellowBright("\n  Deploy to DEVELOPMENT server:"));
-	console.info(chalk.gray("  # Mặc định deploy lên môi trường DEV tại DEV3.DIGITOP.VN (Digital Ocean)"));
-	console.info("  diginext deploy");
-	console.info("  diginext deploy --dev");
-
-	console.info(chalk.gray("\n  # Tương đương với"));
-	console.info("  diginext deploy --do");
-	console.info("  diginext deploy --provider=digitalocean");
-
-	console.info(chalk.yellowBright("\n  Deploy to ANY ENVIRONMENTS: "));
-	console.info(chalk.gray.italic(`  # Digital Ocean / DEV3.DIGITOP.VN:`));
-	console.info("  diginext deploy --env=canary " + chalk.gray.italic(`--do`));
-
-	console.info(chalk.gray.italic(`\n  # Google Cloud / DEV1.DIGITOP.VN:`));
-	console.info("  diginext deploy --env=canary " + chalk.gray.italic(`--gcloud`));
-
-	console.info(chalk.yellowBright("\n  Deploy to ANY PROVIDERS & ANY CLUSTERS: "));
-	console.info(chalk.gray.italic(`  # Digital Ocean / cluster name "dev3-digitop-vn":`));
-	console.info("  diginext deploy --do --cluster=dev3-digitop-vn");
-	console.info(chalk.gray.italic(`\n  # Google Cloud / project name "top-group-k8s" / cluster name "digitop-cluster":`));
-	console.info("  diginext deploy --gcloud --project=top-group-k8s --cluster=digitop-cluster");
-
-	console.info(chalk.yellowBright("\n  Generate deployment YAML for different environments:"));
-	console.info(chalk.gray.italic(`  # This command will take the "dx.json" configuration and`));
-	console.info(chalk.gray.italic(`  # the according ENV files in "deployment" directory to generate K8S deployment YAML:`));
-	console.info("  diginext deploy generate --prod");
-	console.info("  diginext deploy generate --staging");
-	console.info("  diginext deploy generate --env=staging");
-	console.info("  diginext deploy generate --env=canary");
-
-	console.info(chalk.yellowBright("\n  Push assets to CDN (dev):"));
-	console.info(`  diginext cdn push ${chalk.cyan("[DIRECTORY]")}`);
-	console.info(chalk.yellowBright("\n  Push assets to CDN (staging):"));
-	console.info(`  diginext cdn push ${chalk.cyan("[DIRECTORY]")} --staging`);
-	console.info(chalk.yellowBright("\n  Push assets to CDN (production):"));
-	console.info(`  diginext cdn push ${chalk.cyan("[DIRECTORY]")} --prod`);
-	console.info(chalk.yellowBright("\n  Push assets to CDN (any environments):"));
-	console.info(`  diginext cdn push ${chalk.cyan("[DIRECTORY]")} --env=${chalk.cyan("[ENVIRONMENT_NAME]")}`);
-
-	console.info(chalk.yellowBright("\n  Clear cache CDN of the current project (dev):"));
-	console.info(`  diginext cdn purge ${chalk.cyan("[DIRECTORY]")}`);
-	console.info(chalk.yellowBright("\n  Clear cache CDN of the current project (production):"));
-	console.info(`  diginext cdn purge ${chalk.cyan("[DIRECTORY]")} --prod`);
-	console.info(chalk.yellowBright("\n  Clear cache CDN (any environments):"));
-	console.info(`  diginext cdn purge ${chalk.cyan("[DIRECTORY]")} --env=${chalk.cyan("[ENVIRONMENT_NAME]")}`);
-
-	console.info(chalk.yellowBright("\n  Enable CDN in the project (dev):"));
-	console.info("  diginext cdn enable");
-	console.info(chalk.yellowBright("\n  Enable CDN in the project (staging):"));
-	console.info("  diginext cdn enable --staging");
-	console.info(chalk.yellowBright("\n  Enable CDN in the project (production):"));
-	console.info("  diginext cdn enable --prod");
-	console.info(chalk.yellowBright("\n  Enable CDN in the project (any environments):"));
-	console.info(`  diginext cdn enable --env=${chalk.cyan("[ENVIRONMENT_NAME]")}`);
-
-	console.info(chalk.yellowBright("\n  Disable CDN in the project (staging):"));
-	console.info("  diginext cdn disable");
-	console.info(chalk.yellowBright("\n  Disable CDN in the project (production):"));
-	console.info("  diginext cdn disable --prod");
-	console.info(chalk.yellowBright("\n  Disable CDN in the project (any environments):"));
-	console.info(`  diginext cdn disable --env=${chalk.cyan("[ENVIRONMENT_NAME]")}`);
-
-	console.info(chalk.yellowBright("\n  Login to Bitbucket:"));
-	console.info("  diginext git login");
-	console.info(chalk.yellowBright("\n  Log out current Bitbucket account:"));
-	console.info("  diginext git logout");
-	console.info(chalk.yellowBright("\n  Profile of current Bitbucket account:"));
-	console.info("  diginext git profile");
-
-	console.info(chalk.yellowBright("\n  List all recent active repositories:"));
-	console.info("  diginext git repo");
-	console.info("  diginext git repos");
-
-	console.info(chalk.yellowBright("\n  Create pull request to another branch:"));
-	console.info(`  diginext git pr ${chalk.cyan("[DESTINATION_BRANCH]")}`);
-
-	console.info(chalk.yellowBright("\n  Create pull request to multiple branches: (use COMMA)"));
-	console.info(`  diginext git pr ${chalk.cyan("[DEST_BRANCH_1],[DEST_BRANCH_2]")}`);
-
-	console.info(chalk.yellowBright("\n  Create pull request & auto merge ") + chalk.redBright("(ONLY IF YOU ARE AN ADMIN)"));
-	console.info(`  diginext git pr ${chalk.cyan("[DESTINATION_BRANCH]")} --merge`);
-
-	console.info(chalk.yellowBright("\n  Create new database (DEV):"));
-	console.info(`  diginext db new ${chalk.cyan("<db-name>")}`);
-	console.info(chalk.yellowBright("\n  Create new database (PROD):"));
-	console.info(`  diginext db new ${chalk.cyan("<db-name>")} --prod`);
-
-	console.info(chalk.yellowBright("\n  Create default auth user (admin/Top@123#) to a database:"));
-	console.info(`  diginext db add-default-user ${chalk.cyan("<db-name>")}`);
-
-	console.info(chalk.yellowBright("\n  Create auth user with custom username/password to a database:"));
-	console.info(`  diginext db add-user ${chalk.cyan("<db-name>")} ${chalk.cyan("<username>")} ${chalk.cyan("<password>")}`);
-}
-
 export function logVersion() {
 	console.warn(chalk.bgWhite(chalk.bold(chalk.black(` [ Diginext CLI - v${pkg.version} | ${nowStr()} ] `))));
 }
@@ -723,6 +593,9 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 			baseDir: `${dir}`,
 			binary: "git",
 		});
+		// -----------------------
+		// ! DO NOT SET TO "FALSE"
+		// -----------------------
 		const remotes = await git.getRemotes(true);
 
 		const remoteSSH = (remotes[0] as any)?.refs?.fetch;
@@ -1080,7 +953,7 @@ export const cliContainerExec = async (command, options) => {
 };
 
 async function logHelp(options?: InputOptions) {
-	printHelp(options);
+	log(`Nothing... bwahahaha...`);
 }
 
 export const getIPFromDomain = async (domain) => {

@@ -1842,6 +1842,13 @@
 						"type": "string",
 						"description": "App's slug"
 					},
+					"cliVersion": {
+						"type": "string"
+					},
+					"branch": {
+						"type": "string",
+						"description": "Build from which git branch"
+					},
 					"tag": {
 						"type": "string",
 						"description": "Image tag is also \"buildNumber\""
@@ -1860,13 +1867,6 @@
 						"type": "number",
 						"format": "double",
 						"description": "Build duration in miliseconds"
-					},
-					"branch": {
-						"type": "string",
-						"description": "Build from which git branch"
-					},
-					"cliVersion": {
-						"type": "string"
 					},
 					"logs": {
 						"type": "string"
@@ -4050,27 +4050,18 @@
 					"appSlug": {
 						"type": "string"
 					},
+					"namespace": {
+						"type": "string"
+					},
+					"cliVersion": {
+						"type": "string"
+					},
 					"envVars": {
 						"items": {
 							"$ref": "#/components/schemas/KubeEnvironmentVariable"
 						},
 						"type": "array",
 						"description": "Environment variables"
-					},
-					"namespace": {
-						"type": "string"
-					},
-					"branch": {
-						"type": "string"
-					},
-					"cliVersion": {
-						"type": "string"
-					},
-					"deploymentYaml": {
-						"type": "string"
-					},
-					"prereleaseUrl": {
-						"type": "string"
 					},
 					"prereleaseEnvironment": {
 						"anyOf": [
@@ -4097,10 +4088,19 @@
 					"preYaml": {
 						"type": "string"
 					},
+					"prereleaseUrl": {
+						"type": "string"
+					},
 					"productionUrl": {
 						"type": "string"
 					},
+					"deploymentYaml": {
+						"type": "string"
+					},
 					"endpoint": {
+						"type": "string"
+					},
+					"branch": {
 						"type": "string"
 					},
 					"providerProjectId": {
@@ -4815,7 +4815,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "3.10.6",
+		"version": "3.11.3",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"

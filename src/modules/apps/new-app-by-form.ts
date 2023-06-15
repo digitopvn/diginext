@@ -167,12 +167,12 @@ export async function createAppByForm(options?: InputOptions) {
 		return;
 	}
 
-	// to make sure it write down the correct app "slug" in "dx.json"
+	// to make sure it write down the correct app "slug" in app config
 	options.app = newApp;
 	options.slug = newApp.slug;
 	options.name = newApp.name;
 
-	// update existing "dx.json" if any
+	// update existing app config if any
 	let appConfig = await updateAppConfig(newApp);
 	if (options.isDebugging) console.log("createAppByForm > appConfig :>> ", appConfig);
 

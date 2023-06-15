@@ -43,6 +43,9 @@ COPY ./podman/containers/storage.conf /home/${user}/share/containers/storage.con
 COPY ./podman/containers/storage.conf /home/${user}/.config/containers/storage.conf
 COPY ./podman/containers/storage.conf /root/.config/containers/storage.conf
 
+# PODMAN's container conf
+COPY ./podman/containers/containers.conf /etc/containers/containers.conf
+
 RUN chmod -R ug+rwx /home/${user}/.config/containers/storage.conf
 RUN mkdir -p /var/tmp/${user}/containers/storage
 RUN chown -R ${uid}:${gid} /var/tmp/${user}/containers/storage

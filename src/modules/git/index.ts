@@ -11,7 +11,6 @@ import path from "path";
 import { simpleGit } from "simple-git";
 import yargs from "yargs";
 
-import { cliOpts } from "@/config/config";
 import { HOME_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
@@ -278,13 +277,13 @@ export const generateSSH = async (options?: InputOptions) => {
 		await execCmd(`mkdir -p ${idRsaDir}`, `Can't create '${idRsaDir}' directory`);
 	}
 
-	// If no "id_rsa" existed -> generate one: ssh-keygen -b 2048 -t rsa -p -f $HOME/.ssh -q -N "" -> id_rsa  id_rsa.pub
+	// If no "id_rsa" existed -> generate one: ssh-keygen -b 2048 -t rsa -p -f $HOME/.ssh/id_rsa -q -N "" -> id_rsa  id_rsa.pub
 	if (!publicIdRsaFile) {
 		privateIdRsaFile = path.resolve(idRsaDir, "id_rsa");
 		publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
 
 		try {
-			await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", "''"], cliOpts);
+			await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", '""'], { shell: "bash" });
 		} catch (e) {
 			logError(`Can't generate SSH private & public key:`, e);
 			throw new Error(`Can't generate SSH private & public key: ${e}`);
@@ -431,6 +430,7 @@ export const verifySSH = async (options?: InputOptions) => {
 			break;
 
 		case "github":
+			// has to use this because "Github does not provide shell access"
 			try {
 				await execa.command(`ssh -o StrictHostKeyChecking=no -T git@github.com`);
 				authResult = true;
@@ -469,7 +469,12 @@ export const checkGitProviderAccess = async (gitProvider: GitProviderType) => {
 			break;
 
 		case "github":
-			result = await execCmd(`ssh -o StrictHostKeyChecking=no -T git@github.com`, "Github authentication failed");
+			// has to use this because "Github does not provide shell access"
+			try {
+				result = await execa.command(`ssh -o StrictHostKeyChecking=no -T git@github.com`);
+			} catch (e) {
+				result = e.toString().indexOf("successfully authenticated") > -1 ? true : undefined;
+			}
 			break;
 
 		// case "gitlab":
@@ -482,7 +487,7 @@ export const checkGitProviderAccess = async (gitProvider: GitProviderType) => {
 			break;
 	}
 
-	return result ? true : false;
+	return typeof result !== "undefined" ? true : false;
 };
 
 /**

@@ -30,7 +30,7 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 
 	// xử lý domains
 	if (typeof deployEnvironment.domains != "undefined" && deployEnvironment.domains.length > 0) {
-		// lấy domain trong "dx.json"
+		// lấy domain trong app config
 		domains = deployEnvironment.domains;
 	} else {
 		logWarn(`No domains were found in this deploy environment (${env})`);
@@ -38,7 +38,9 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 		const { useGeneratedDomain } = await inquirer.prompt({
 			name: "useGeneratedDomain",
 			type: "confirm",
-			message: `Do you want to use our generated domain: ${chalk.green(generatedDomain)}? (You can update it anytime in your "dx.json" file)`,
+			message: `Do you want to use our generated domain: ${chalk.green(
+				generatedDomain
+			)}? (You can update it anytime in your Diginext workspace)`,
 			default: true,
 		});
 
@@ -63,7 +65,7 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 
 			logSuccess(`Great! Domain "${generatedDomain}" has been created and pointed to this IP address: ${ip}`);
 		} else {
-			// logError(`You need a domain to deploy this app. Please add one in "dx.json" at path ".environment.${env}.domains[]"`);
+			// logError(`You need a domain to deploy this app. Please add one in: Diginext workspace > project > app > deploy environment"`);
 		}
 	}
 
