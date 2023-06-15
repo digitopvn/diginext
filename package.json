@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.10.3",
+	"version": "3.11.4",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -65,7 +65,7 @@
 		"restruct": "ncp dist/src dist && rimraf dist/src dist/package.json",
 		"dev": "pnpm dev:server",
 		"dev:server": "run-script-os",
-		"dev:server:win32": "set CLI_MODE=server && rimraf dist && concurrently \"tsup src/**/*.ts src/**/*.tsx --format esm,cjs --dts --legacy-output --watch\"",
+		"dev:server:win32": "set CLI_MODE=server && rimraf dist && concurrently \"tsup src/**/*.ts src/**/*.tsx --format esm,cjs --legacy-output --watch\"",
 		"dev:server:darwin:linux": "CLI_MODE=server ts-node-dev --poll -r tsconfig-paths/register src/server.ts --debug --respawn --exit-child --watch src",
 		"dev:server:default": "CLI_MODE=server ts-node-dev --poll -r tsconfig-paths/register src/server.ts --debug --respawn --exit-child --watch src",
 		"dev:nodemon": "CLI_MODE=server nodemon --legacy-watch \"src/**/*.ts\" --ext \"ts,json\" --exec \"pnpm swagger && CLI_MODE=server ts-node -r tsconfig-paths/register src/server.ts\"",
@@ -217,6 +217,7 @@
 		"passport-jwt": "4.0.0",
 		"pkg-install": "^0.2.0",
 		"pm2": "^5.2.2",
+		"puppeteer": "^20.7.1",
 		"rate-limiter-flexible": "^2.4.1",
 		"recursive-copy": "^2.0.14",
 		"redis": "^4.3.1",

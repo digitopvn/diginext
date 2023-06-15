@@ -216,136 +216,6 @@ function toBase64(str) {
 	return Buffer.from(str).toString("base64");
 }
 
-export function printHelp(options?: InputOptions) {
-	console.info(chalk.yellow(`[Diginext CLI - v${pkg.version}] USAGE DOCUMENTATION:`));
-	console.info(pkg.description);
-
-	console.info(chalk.redBright("\n  [TIPS] Alternatively you can use 'dx' as an alias of 'diginext' command (for faster typing):"));
-	console.info("\n" + chalk.gray("  # This command:"));
-	console.info(" ", chalk.yellow("diginext"), "--help");
-	console.info(chalk.gray("  # is equivalent with:"));
-	console.info(" ", chalk.yellow("dx"), "--help");
-
-	console.info(chalk.yellowBright("\n  Create new project:"));
-	console.info("  diginext new");
-
-	console.info(chalk.yellowBright("\n  Force creating new project (overwrite the existing one):"));
-	console.info("  diginext new --force");
-	console.info("  diginext new --overwrite");
-
-	console.info(chalk.yellowBright("\n  Initialize an existing project directory with our specific framework:"));
-	console.info("  diginext init");
-
-	// Update CLI
-	console.info(chalk.yellowBright("\n  Update CLI:"));
-	console.info("  diginext update");
-	console.info("  diginext --update");
-	console.info("  diginext -U");
-
-	// CLOUD PROVIDERS
-	console.info(chalk.yellowBright("\n  Connect to cloud providers (GCLOUD, Digital Ocean):"));
-	console.info("  diginext gcloud auth -f", chalk.cyan("/path/to/service-account.json"));
-	console.info("  diginext gcloud registry connect --host=", chalk.cyan("<GOOGLE_CONTAINER_REGISTRY_HOST>"));
-	console.info(chalk.gray("  # GOOGLE_CONTAINER_REGISTRY_HOST should be one of: gcr.io, asia.gcr.io, eu.gcr.io, us.gcr.io"));
-	console.info(chalk.gray("  # Learn more about Google Service Account: https://cloud.google.com/iam/docs/service-accounts"));
-	console.info("  diginext do auth --key", chalk.cyan("<API_ACCESS_TOKEN>"));
-	console.info("  diginext do registry connect");
-	console.info(chalk.gray("  # Learn more about API_ACCESS_TOKEN: https://docs.digitalocean.com/reference/api/create-personal-access-token/"));
-
-	console.info(chalk.yellowBright("\n  Deploy to DEVELOPMENT server:"));
-	console.info(chalk.gray("  # Mặc định deploy lên môi trường DEV tại DEV3.DIGITOP.VN (Digital Ocean)"));
-	console.info("  diginext deploy");
-	console.info("  diginext deploy --dev");
-
-	console.info(chalk.gray("\n  # Tương đương với"));
-	console.info("  diginext deploy --do");
-	console.info("  diginext deploy --provider=digitalocean");
-
-	console.info(chalk.yellowBright("\n  Deploy to ANY ENVIRONMENTS: "));
-	console.info(chalk.gray.italic(`  # Digital Ocean / DEV3.DIGITOP.VN:`));
-	console.info("  diginext deploy --env=canary " + chalk.gray.italic(`--do`));
-
-	console.info(chalk.gray.italic(`\n  # Google Cloud / DEV1.DIGITOP.VN:`));
-	console.info("  diginext deploy --env=canary " + chalk.gray.italic(`--gcloud`));
-
-	console.info(chalk.yellowBright("\n  Deploy to ANY PROVIDERS & ANY CLUSTERS: "));
-	console.info(chalk.gray.italic(`  # Digital Ocean / cluster name "dev3-digitop-vn":`));
-	console.info("  diginext deploy --do --cluster=dev3-digitop-vn");
-	console.info(chalk.gray.italic(`\n  # Google Cloud / project name "top-group-k8s" / cluster name "digitop-cluster":`));
-	console.info("  diginext deploy --gcloud --project=top-group-k8s --cluster=digitop-cluster");
-
-	console.info(chalk.yellowBright("\n  Generate deployment YAML for different environments:"));
-	console.info(chalk.gray.italic(`  # This command will take the "dx.json" configuration and`));
-	console.info(chalk.gray.italic(`  # the according ENV files in "deployment" directory to generate K8S deployment YAML:`));
-	console.info("  diginext deploy generate --prod");
-	console.info("  diginext deploy generate --staging");
-	console.info("  diginext deploy generate --env=staging");
-	console.info("  diginext deploy generate --env=canary");
-
-	console.info(chalk.yellowBright("\n  Push assets to CDN (dev):"));
-	console.info(`  diginext cdn push ${chalk.cyan("[DIRECTORY]")}`);
-	console.info(chalk.yellowBright("\n  Push assets to CDN (staging):"));
-	console.info(`  diginext cdn push ${chalk.cyan("[DIRECTORY]")} --staging`);
-	console.info(chalk.yellowBright("\n  Push assets to CDN (production):"));
-	console.info(`  diginext cdn push ${chalk.cyan("[DIRECTORY]")} --prod`);
-	console.info(chalk.yellowBright("\n  Push assets to CDN (any environments):"));
-	console.info(`  diginext cdn push ${chalk.cyan("[DIRECTORY]")} --env=${chalk.cyan("[ENVIRONMENT_NAME]")}`);
-
-	console.info(chalk.yellowBright("\n  Clear cache CDN of the current project (dev):"));
-	console.info(`  diginext cdn purge ${chalk.cyan("[DIRECTORY]")}`);
-	console.info(chalk.yellowBright("\n  Clear cache CDN of the current project (production):"));
-	console.info(`  diginext cdn purge ${chalk.cyan("[DIRECTORY]")} --prod`);
-	console.info(chalk.yellowBright("\n  Clear cache CDN (any environments):"));
-	console.info(`  diginext cdn purge ${chalk.cyan("[DIRECTORY]")} --env=${chalk.cyan("[ENVIRONMENT_NAME]")}`);
-
-	console.info(chalk.yellowBright("\n  Enable CDN in the project (dev):"));
-	console.info("  diginext cdn enable");
-	console.info(chalk.yellowBright("\n  Enable CDN in the project (staging):"));
-	console.info("  diginext cdn enable --staging");
-	console.info(chalk.yellowBright("\n  Enable CDN in the project (production):"));
-	console.info("  diginext cdn enable --prod");
-	console.info(chalk.yellowBright("\n  Enable CDN in the project (any environments):"));
-	console.info(`  diginext cdn enable --env=${chalk.cyan("[ENVIRONMENT_NAME]")}`);
-
-	console.info(chalk.yellowBright("\n  Disable CDN in the project (staging):"));
-	console.info("  diginext cdn disable");
-	console.info(chalk.yellowBright("\n  Disable CDN in the project (production):"));
-	console.info("  diginext cdn disable --prod");
-	console.info(chalk.yellowBright("\n  Disable CDN in the project (any environments):"));
-	console.info(`  diginext cdn disable --env=${chalk.cyan("[ENVIRONMENT_NAME]")}`);
-
-	console.info(chalk.yellowBright("\n  Login to Bitbucket:"));
-	console.info("  diginext git login");
-	console.info(chalk.yellowBright("\n  Log out current Bitbucket account:"));
-	console.info("  diginext git logout");
-	console.info(chalk.yellowBright("\n  Profile of current Bitbucket account:"));
-	console.info("  diginext git profile");
-
-	console.info(chalk.yellowBright("\n  List all recent active repositories:"));
-	console.info("  diginext git repo");
-	console.info("  diginext git repos");
-
-	console.info(chalk.yellowBright("\n  Create pull request to another branch:"));
-	console.info(`  diginext git pr ${chalk.cyan("[DESTINATION_BRANCH]")}`);
-
-	console.info(chalk.yellowBright("\n  Create pull request to multiple branches: (use COMMA)"));
-	console.info(`  diginext git pr ${chalk.cyan("[DEST_BRANCH_1],[DEST_BRANCH_2]")}`);
-
-	console.info(chalk.yellowBright("\n  Create pull request & auto merge ") + chalk.redBright("(ONLY IF YOU ARE AN ADMIN)"));
-	console.info(`  diginext git pr ${chalk.cyan("[DESTINATION_BRANCH]")} --merge`);
-
-	console.info(chalk.yellowBright("\n  Create new database (DEV):"));
-	console.info(`  diginext db new ${chalk.cyan("<db-name>")}`);
-	console.info(chalk.yellowBright("\n  Create new database (PROD):"));
-	console.info(`  diginext db new ${chalk.cyan("<db-name>")} --prod`);
-
-	console.info(chalk.yellowBright("\n  Create default auth user (admin/Top@123#) to a database:"));
-	console.info(`  diginext db add-default-user ${chalk.cyan("<db-name>")}`);
-
-	console.info(chalk.yellowBright("\n  Create auth user with custom username/password to a database:"));
-	console.info(`  diginext db add-user ${chalk.cyan("<db-name>")} ${chalk.cyan("<username>")} ${chalk.cyan("<password>")}`);
-}
-
 export function logVersion() {
 	console.warn(chalk.bgWhite(chalk.bold(chalk.black(` [ Diginext CLI - v${pkg.version} | ${nowStr()} ] `))));
 }
@@ -378,6 +248,9 @@ export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCal
 	}
 }
 
+/**
+ * Get current CLI version
+ */
 export function currentVersion() {
 	return pkg.version;
 }
@@ -404,11 +277,7 @@ export async function getLatestCliVersion() {
  */
 export async function checkForUpdate() {
 	const latestVersion = await getLatestCliVersion();
-	const latestVersionData = latestVersion.split(".");
-	const currentVer = currentVersion();
-	const curVersionData = currentVer.split(".");
-	// show update warning only when there are breaking changes
-	return latestVersionData[0] > curVersionData[0] || latestVersionData[1] > curVersionData[1];
+	return latestVersion !== currentVersion();
 }
 
 async function logBitbucketError(error: any, delay?: number, location?: string, shouldExit = false) {
@@ -641,14 +510,14 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 };
 
 interface PullOrCloneGitRepoOptions {
-	isDebugging?: boolean;
 	onUpdate?: (msg: string, progress?: number) => void;
 }
 
-export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
+export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOrCloneGitRepoOptions = {}) => {
+	//
 	let git: SimpleGit;
 
-	const { onUpdate, isDebugging = false } = options;
+	const { onUpdate } = options;
 
 	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
 		const message = `git.${method} ${stage} stage ${progress}% complete`;
@@ -658,17 +527,31 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	if (fs.existsSync(dir)) {
 		try {
 			git = simpleGit(dir, { progress: onProgress });
+			await git.clone(repoSSH, dir);
 
-			/**
-			 * DO NOT USE `git.getRemotes(true)` BECAUSE IT WON'T RETURN THE REMOTE URLs
-			 */
+			console.log("\ndone");
+		} catch (e) {}
+	}
+};
+//
+
+export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
+	let git: SimpleGit;
+
+	const { onUpdate } = options;
+
+	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
+		const message = `git.${method} ${stage} stage ${progress}% complete`;
+		if (onUpdate) onUpdate(message, progress);
+	};
+
+	if (fs.existsSync(dir)) {
+		try {
+			git = simpleGit(dir, { progress: onProgress });
 			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
-			if (isDebugging) console.log("remotes :>> ", remotes);
-
 			const originRemote = remotes[0] as any;
 			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
-
-			if (isDebugging) console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
+			console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
 			if (originRemote?.refs?.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
 
 			const curBranch = await getCurrentGitBranch(dir);
@@ -701,60 +584,6 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	}
 };
 
-export const pullOrCloneGitRepoHTTPS = async (url: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
-	let git: SimpleGit;
-
-	const { onUpdate } = options;
-
-	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
-		const message = `git.${method} ${stage} stage ${progress}% complete`;
-		if (onUpdate) onUpdate(message, progress);
-	};
-
-	if (fs.existsSync(dir)) {
-		// if the directory is existed, try to pull the repo
-		try {
-			git = simpleGit(dir, { progress: onProgress });
-
-			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
-
-			const originRemote = remotes[0] as any;
-			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
-
-			console.log("originRemote :>> ", originRemote, `>`, { url });
-			if (originRemote?.refs?.fetch !== url) await git.addRemote("origin", url);
-
-			const curBranch = await getCurrentGitBranch(dir);
-			await git.pull("origin", curBranch, ["--no-ff"]);
-		} catch (e) {
-			// if unable to pull -> delete that directory & clone a new one
-			if (onUpdate) onUpdate(`Failed to pull "${url}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
-
-			// just for sure...
-			await deleteFolderRecursive(dir);
-
-			// for CLI create new app from a framework
-			git = simpleGit({ progress: onProgress });
-
-			try {
-				await git.clone(url, dir, [`--branch=${branch}`, "--single-branch"]);
-			} catch (e2) {
-				if (onUpdate) onUpdate(`Failed to clone "${url}" (${branch}) to "${dir}" directory: ${e.message}`);
-			}
-		}
-	} else {
-		if (onUpdate) onUpdate(`Cache source code not found. Cloning "${url}" (${branch}) to "${dir}" directory.`);
-
-		git = simpleGit({ progress: onProgress });
-
-		try {
-			await git.clone(url, dir, [`--branch=${branch}`, "--single-branch"]);
-		} catch (e) {
-			if (onUpdate) onUpdate(`Failed to clone "${url}" (${branch}) to "${dir}" directory: ${e.message}`);
-		}
-	}
-};
-
 /**
  * Get current remote SSH & URL
  */
@@ -764,10 +593,11 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 			baseDir: `${dir}`,
 			binary: "git",
 		});
-		// const remoteInfo = await git.listRemote();
-		// console.log("remoteInfo :>> ", remoteInfo);
+		// -----------------------
+		// ! DO NOT SET TO "FALSE"
+		// -----------------------
 		const remotes = await git.getRemotes(true);
-		// console.log("getCurrentGitRepoData > remotes :>> ", remotes);
+
 		const remoteSSH = (remotes[0] as any)?.refs?.fetch;
 		if (!remoteSSH) return;
 
@@ -1123,7 +953,7 @@ export const cliContainerExec = async (command, options) => {
 };
 
 async function logHelp(options?: InputOptions) {
-	printHelp(options);
+	log(`Nothing... bwahahaha...`);
 }
 
 export const getIPFromDomain = async (domain) => {

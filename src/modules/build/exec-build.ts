@@ -48,7 +48,7 @@ export async function execBuild(options: InputOptions) {
 	if (isEmpty(domains)) {
 		domains = [];
 		logWarn(
-			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to "dx.json" to expose this app to the internet anytime.`
+			`This app doesn't have any domains configurated & only visible to the namespace scope, you can add your own domain to app config in Diginext workspace to expose this app to the internet anytime.`
 		);
 	}
 	appConfig.deployEnvironment[env].domains = domains;

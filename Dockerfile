@@ -1,5 +1,5 @@
 # Use Debian as the base image
-FROM digitop/diginext-base:3
+FROM digitop/diginext-base:4
 
 # Set user and group
 ARG user=app
@@ -42,6 +42,9 @@ COPY ./podman/containers/registries.conf /home/${user}/.config/containers/regist
 COPY ./podman/containers/storage.conf /home/${user}/share/containers/storage.conf
 COPY ./podman/containers/storage.conf /home/${user}/.config/containers/storage.conf
 COPY ./podman/containers/storage.conf /root/.config/containers/storage.conf
+
+# PODMAN's container conf
+COPY ./podman/containers/containers.conf /etc/containers/containers.conf
 
 RUN chmod -R ug+rwx /home/${user}/.config/containers/storage.conf
 RUN mkdir -p /var/tmp/${user}/containers/storage

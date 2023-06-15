@@ -41,7 +41,7 @@ if (process.env.CLI_MODE === "server") {
 	Object.entries(process.env).forEach(([key, val]) => {
 		if (isNoEnvFile) {
 			const value = _.truncate(val.toString(), { length: 60, separator: " " });
-			if (key.indexOf("npm_") < -1) table.push([key, value]);
+			if (key.indexOf("npm_") === -1) table.push([key, value]);
 		} else {
 			if (Object.keys(appEnv).includes(key)) {
 				const value = _.truncate(val.toString(), { length: 60, separator: " " });
@@ -120,6 +120,20 @@ export class Config {
 
 	static get BUILDER() {
 		return process.env.BUILDER || "podman";
+	}
+
+	/**
+	 * Share resource credentials to workspaces?
+	 * - If TRUE -> Everyone can read the cloud resource's credentials (such as secrets, service accounts, api access token,...)
+	 * - If FALSE -> Only the server can read cloud resource's credentials, others (CLI & API) won't, even Workspace Administrators or Moderators.
+	 * @default true
+	 */
+	static get SHARE_RESOURCE_CREDENTIAL() {
+		return typeof process.env.SHARE_RESOURCE_CREDENTIAL === "undefined"
+			? true
+			: process.env.SHARE_RESOURCE_CREDENTIAL === "true" ||
+					process.env.SHARE_RESOURCE_CREDENTIAL === "TRUE" ||
+					process.env.SHARE_RESOURCE_CREDENTIAL === "1";
 	}
 
 	static get DISABLE_INPECT_MEMORY() {

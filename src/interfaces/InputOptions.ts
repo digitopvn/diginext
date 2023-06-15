@@ -202,6 +202,7 @@ export type InputOptions = {
 		| "release"
 		| "down"
 		| "free"
+		| "clone"
 		| string;
 
 	/**

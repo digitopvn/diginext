@@ -1,13 +1,14 @@
 #! /usr/bin/env node
 
 import Configstore from "configstore";
-import { log, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/console/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
 import { execConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
+import cloneRepo from "@/modules/apps/cloneRepo";
 import createApp from "@/modules/apps/new-app";
 import { execCDN } from "@/modules/cdn";
 import { cliAuthenticate, cliLogin, cliLogout, parseCliOptions } from "@/modules/cli";
@@ -221,6 +222,12 @@ export async function processCLI(options?: InputOptions) {
 			await freeUp();
 			return;
 
+		case "clone":
+			await cliAuthenticate(options);
+
+			await cloneRepo(options);
+			return;
+
 		default:
 			yargs.showHelp();
 			break;
@@ -233,5 +240,11 @@ if (process.env.CLI_MODE == "test") {
 	import("@/server");
 } else {
 	// Execute CLI commands...
-	parseCliOptions().then((inputOptions) => processCLI(inputOptions).then(() => process.exit(0)));
+	parseCliOptions().then((inputOptions) =>
+		!inputOptions.isDebugging
+			? processCLI(inputOptions)
+					.then(() => process.exit(0))
+					.catch((e) => logError(e.toString()))
+			: processCLI(inputOptions).then(() => process.exit(0))
+	);
 }

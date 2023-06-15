@@ -53,10 +53,15 @@ RUN npm install -g pnpm
 
 # Copy docker buildx
 COPY --from=docker/buildx-bin /buildx /usr/local/bin/docker-buildx
-
 # Set permissions for the binary
 RUN chmod +x /usr/local/bin/docker-buildx
 
+# puppeteer install
+RUN apk add udev ttf-freefont chromium git
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+ENV CHROMIUM_PATH /usr/bin/chromium-browser
+
+# plugin to set environment variable
 COPY ./scripts/set_env /usr/bin/set_env
 RUN chmod +x /usr/bin/set_env
 
@@ -74,6 +79,9 @@ COPY ./podman/containers/registries.conf /home/${user}/.config/containers/regist
 COPY ./podman/containers/storage.conf /home/${user}/share/containers/storage.conf
 COPY ./podman/containers/storage.conf /home/${user}/.config/containers/storage.conf
 COPY ./podman/containers/storage.conf /root/.config/containers/storage.conf
+
+# PODMAN's container conf
+COPY ./podman/containers/containers.conf /etc/containers/containers.conf
 
 RUN chmod -R ug+rwx /home/${user}/.config/containers/storage.conf
 RUN mkdir -p /var/tmp/${user}/containers/storage

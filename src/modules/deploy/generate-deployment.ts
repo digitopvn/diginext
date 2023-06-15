@@ -16,6 +16,7 @@ import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
 import ClusterManager from "../k8s";
 import { createImagePullSecretsInNamespace } from "../k8s/image-pull-secret";
+import getDeploymentName from "./generate-deployment-name";
 import { generateDomains } from "./generate-domain";
 
 export type GenerateDeploymentParams = {
@@ -79,14 +80,15 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);
 
 	const registrySlug = deployEnvironmentConfig.registry;
+
+	// let deploymentName = project + "-" + appSlug.toLowerCase();
+	let deploymentName = getDeploymentName(app);
+
 	let nsName = deployEnvironmentConfig.namespace;
-	let ingName = project + "-" + slug.toLowerCase();
-	let svcName = project + "-" + slug.toLowerCase();
-	let appName = project + "-" + slug.toLowerCase() + "-" + BUILD_NUMBER;
-	/**
-	 * "main-app" == projectSlug + "-" + appSlug
-	 */
-	let mainAppName = project + "-" + appSlug;
+	let ingName = deploymentName;
+	let svcName = deploymentName;
+	let mainAppName = deploymentName;
+	let appName = deploymentName + "-" + BUILD_NUMBER;
 	let basePath = deployEnvironmentConfig.basePath ?? "";
 
 	// Prepare for building docker image
@@ -261,9 +263,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					// redirect
 					if (deployEnvironmentConfig.redirect) {
 						if (!domains.length) {
-							logWarn(`Can't redirect to primary domain if there are no domains in "${env}" of "dx.json"`);
+							logWarn(`Can't redirect to primary domain if there are no domains in "${env}" deploy environment`);
 						} else if (domains.length == 1) {
-							logWarn(`Can't redirect to primary domain if there is only 1 domain in "${env}" dx.json`);
+							logWarn(`Can't redirect to primary domain if there is only 1 domain in "${env}" deploy environment`);
 						} else {
 							const otherDomains = domains.slice(1);
 							let redirectStr = "";

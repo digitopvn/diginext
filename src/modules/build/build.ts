@@ -379,12 +379,16 @@ export async function startBuild(
 			notifyClients();
 
 			if (options?.onSucceed) options?.onSucceed(newBuild);
+
+			return { SOCKET_ROOM, build: newBuild, imageURL, buildImage, startTime, builder: buildEngineName };
 		} catch (e) {
 			await updateBuildStatus(newBuild, "failed");
 			sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
 			if (options?.onError) options?.onError(`Build failed: ${e}`);
 
 			notifyClients();
+
+			return;
 		}
 	} else {
 		buildEngine

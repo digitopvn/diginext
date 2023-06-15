@@ -6,7 +6,7 @@ import type { InputOptions } from "@/interfaces/InputOptions";
 import { getPackageConfig, saveAppConfig } from "@/plugins";
 
 /**
- * Generate "dx.json" (app configuration file)
+ * Generate deploy environment config on Diginext workspace
  */
 export function generateAppConfig(options: InputOptions) {
 	const pkgConfig = getPackageConfig({ directory: options.targetDirectory });

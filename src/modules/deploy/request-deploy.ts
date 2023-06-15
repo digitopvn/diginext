@@ -9,7 +9,7 @@ import type { IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { stageAllFiles } from "@/modules/bitbucket";
-import { resolveDockerfilePath } from "@/plugins";
+import { currentVersion, resolveDockerfilePath } from "@/plugins";
 
 import { DB } from "../api/DB";
 import type { StartBuildParams } from "../build";
@@ -39,7 +39,7 @@ export async function requestDeploy(options: InputOptions) {
 
 	/**
 	 * [1] Parse cli options, validate the input params
-	 *     and save it to "dx.json"
+	 *     and save it to deploy environment config on Diginext workspace
 	 */
 	let appConfig = await parseOptionsToAppConfig(options);
 	if (!appConfig) return;
@@ -55,6 +55,8 @@ export async function requestDeploy(options: InputOptions) {
 	 */
 	const deployInfo = await askForDeployEnvironmentInfo(options);
 	if (options.isDebugging) console.log("deployInfo :>> ", deployInfo);
+	if (!deployInfo.appConfig || !deployInfo.deployEnvironment) return;
+
 	const { deployEnvironment, appConfig: validatedAppConfig } = deployInfo;
 	appConfig = validatedAppConfig;
 
@@ -130,6 +132,7 @@ export async function requestDeploy(options: InputOptions) {
 			gitBranch: options.gitBranch,
 			registrySlug: deployEnvironment.registry,
 			appSlug: options.appSlug,
+			cliVersion: currentVersion(),
 		},
 		deployParams: {
 			env,
