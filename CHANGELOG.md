@@ -1,3 +1,11 @@
+## [3.11.3](https://github.com/digitopvn/diginext/compare/v3.11.2...v3.11.3) (2023-06-15)
+
+
+### Bug Fixes
+
+* **server:** issue cluster not found when add domain ([5c52b46](https://github.com/digitopvn/diginext/commit/5c52b46cef0e2f79973cbb94bc6ddd2d7a4356fd))
+* **server:** print env vars when server start up ([424947b](https://github.com/digitopvn/diginext/commit/424947b5ec7fef9930681e14484d2f0361a19ef8))
+
 ## [3.11.2](https://github.com/digitopvn/diginext/compare/v3.11.1...v3.11.2) (2023-06-14)
 
 
