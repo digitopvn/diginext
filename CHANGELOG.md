@@ -1,3 +1,10 @@
+# [3.12.0](https://github.com/digitopvn/diginext/compare/v3.11.4...v3.12.0) (2023-06-15)
+
+
+### Features
+
+* **client:** update diginext-utils to 3.0.2 | [cloneRepo] checking private key or secret env ([223685c](https://github.com/digitopvn/diginext/commit/223685ce6f00d65353a10ba44fb79219f276ae17))
+
 ## [3.11.4](https://github.com/digitopvn/diginext/compare/v3.11.3...v3.11.4) (2023-06-15)
 
 
