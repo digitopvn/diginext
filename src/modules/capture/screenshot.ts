@@ -1,5 +1,11 @@
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { existsSync, mkdirSync } from "fs";
+import path from "path";
 import type { ScreenshotOptions, Viewport } from "puppeteer";
 import puppeteer from "puppeteer";
+
+import { Config } from "@/app.config";
+import { CLI_DIR } from "@/config/const";
 
 export type CaptureScreenshotOptions = {
 	/**
@@ -71,6 +77,16 @@ const screenshot = async (url: string, options: ScreenshotOptions = defaultExpor
 	const _options = { ...defaultExportPdfOptions, ...options };
 	const { viewport, ...screenshotOptions } = _options;
 
+	// upload directory
+	const dir = path.resolve(CLI_DIR, "public/upload/screenshot");
+	if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+
+	const fileName = `screenshot-${makeDaySlug({ divider: "" })}.${screenshotOptions.type}`;
+	const filePath = path.resolve(dir, fileName);
+	const fileUrl = `${Config.BASE_URL}/upload/screenshot/${fileName}`;
+
+	screenshotOptions.path = filePath;
+
 	const browser = await puppeteer.launch({
 		headless: "new",
 		defaultViewport: viewport,
@@ -95,7 +111,7 @@ const screenshot = async (url: string, options: ScreenshotOptions = defaultExpor
 
 	// res.contentType("application/pdf");
 	// res.send(pdfBuffer);
-	return { buffer, mime: "image/png" };
+	return { name: fileName, url: fileUrl, path: filePath, buffer, mime: `image/${screenshotOptions.type}` };
 };
 
 export default screenshot;
