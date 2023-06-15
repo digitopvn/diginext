@@ -1527,7 +1527,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!domains) return { status: 0, messages: [`Array of domains is required.`] };
 
 		// find app
-		const app = await this.service.findOne(this.filter);
+		const app = await this.service.findOne(this.filter, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment) return respondFailure(`App "${app.slug}" doesn't have any deploy environments.`);
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
