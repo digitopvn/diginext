@@ -53,10 +53,15 @@ RUN npm install -g pnpm
 
 # Copy docker buildx
 COPY --from=docker/buildx-bin /buildx /usr/local/bin/docker-buildx
-
 # Set permissions for the binary
 RUN chmod +x /usr/local/bin/docker-buildx
 
+# puppeteer install
+RUN apk add udev ttf-freefont chromium git
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+ENV CHROMIUM_PATH /usr/bin/chromium-browser
+
+# plugin to set environment variable
 COPY ./scripts/set_env /usr/bin/set_env
 RUN chmod +x /usr/bin/set_env
 
