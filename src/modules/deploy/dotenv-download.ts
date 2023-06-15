@@ -1,4 +1,4 @@
-import { logSuccess } from "diginext-utils/dist/console/log";
+import { logSuccess } from "diginext-utils/dist/xconsole/log";
 import { existsSync, unlinkSync, writeFileSync } from "fs";
 import inquirer from "inquirer";
 import path from "path";

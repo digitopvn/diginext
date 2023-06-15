@@ -1,4 +1,4 @@
-import { logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import path from "path";
 
@@ -44,7 +44,8 @@ export default async function cloneRepo(options: InputOptions) {
 		targetDirectory: options.targetDirectory,
 	};
 
-	await pullingRepoToNewGitDir(__option);
+	const success = await pullingRepoToNewGitDir(__option);
+	if (!success) return;
 
 	// //create git in github
 

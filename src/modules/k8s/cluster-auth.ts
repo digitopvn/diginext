@@ -1,4 +1,4 @@
-import { logError, logSuccess } from "diginext-utils/dist/console/log";
+import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import { unlink } from "fs";
 
 import type { ICluster } from "@/entities";

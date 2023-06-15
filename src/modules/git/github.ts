@@ -1,6 +1,6 @@
 import axios from "axios";
 import { isJSON } from "class-validator";
-import { logError, logSuccess } from "diginext-utils/dist/console/log";
+import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import open from "open";
 

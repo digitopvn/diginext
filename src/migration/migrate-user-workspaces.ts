@@ -1,4 +1,4 @@
-import { log } from "diginext-utils/dist/console/log";
+import { log } from "diginext-utils/dist/xconsole/log";
 
 import type { IUser } from "@/entities";
 import { isObjectId } from "@/plugins/mongodb";

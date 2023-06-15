@@ -1,4 +1,4 @@
-import { logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
 import type InputOptions from "@/interfaces/InputOptions";

@@ -1,4 +1,4 @@
-import { logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/xconsole/log";
 import fs from "fs";
 // import Listr from "listr";
 import path from "path";

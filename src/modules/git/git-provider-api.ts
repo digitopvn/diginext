@@ -1,5 +1,5 @@
 import axios from "axios";
-import { logWarn } from "diginext-utils/dist/console/log";
+import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { upperFirst } from "lodash";
 
 import type { IGitProvider } from "@/entities";

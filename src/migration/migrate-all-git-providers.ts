@@ -1,4 +1,4 @@
-import { log } from "diginext-utils/dist/console/log";
+import { log } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
 import type { IGitProvider } from "@/entities";

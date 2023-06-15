@@ -1,4 +1,4 @@
-import { logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/xconsole/log";
 
 import type { AppDto, IApp, IProject } from "@/entities";
 import type { ClientDeployEnvironmentConfig } from "@/interfaces";

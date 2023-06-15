@@ -1,5 +1,5 @@
-import { logError } from "diginext-utils/dist/console/log";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
+import { logError } from "diginext-utils/dist/xconsole/log";
 
 import { isServerMode } from "@/app.config";
 import type { ICluster, IWorkspace } from "@/entities";
