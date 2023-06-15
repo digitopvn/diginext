@@ -92,8 +92,8 @@ dependencies:
     specifier: ^4.3.4
     version: 4.3.4(supports-color@8.1.1)
   diginext-utils:
-    specifier: 2.0.26
-    version: 2.0.26(ts-node@10.9.1)
+    specifier: 3.0.2
+    version: 3.0.2(ts-node@10.9.1)
   dotenv:
     specifier: ^8.2.0
     version: 8.2.0
@@ -3090,6 +3090,10 @@ packages:
       '@types/qs': 6.9.7
       '@types/serve-static': 1.15.1
 
+  /@types/file-saver@2.0.5:
+    resolution: {integrity: sha512-zv9kNf3keYegP5oThGLaPk8E081DFDuwfqjtiTzm6PoxChdJ1raSuADf2YGCVIyrSynLrgc8JWv296s7Q7pQSQ==}
+    dev: false
+
   /@types/graceful-fs@4.1.6:
     resolution: {integrity: sha512-Sig0SNORX9fdW+bQuTEovKj3uHcUL6LQKbCrrqb1X7J6/ReAbhCXRAhc+SMejhLELFj2QcyuxmUooZ4bt5ReSw==}
     dependencies:
@@ -4385,6 +4389,10 @@ packages:
 
   /bluebird@3.7.2:
     resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
+    dev: false
+
+  /blueimp-load-image@5.16.0:
+    resolution: {integrity: sha512-3DUSVdOtlfNRk7moRZuTwDmA3NnG8KIJuLcq3c0J7/BIr6X3Vb/EpX3kUH1joxUhmoVF4uCpDfz7wHkz8pQajA==}
     dev: false
 
   /bodec@0.1.0:
@@ -5755,21 +5763,25 @@ packages:
       heap: 0.2.7
     dev: false
 
-  /diginext-utils@2.0.26(ts-node@10.9.1):
-    resolution: {integrity: sha512-+Gss4CNMGu3HEk02WXpaAi/xpMXoAoRWLbvm5KJHDfQXJRbatyMcGtbDUzTTg1UjJAqoNBH72kCn9WAY6CqS7Q==}
+  /diginext-utils@3.0.2(ts-node@10.9.1):
+    resolution: {integrity: sha512-/Bjr/1UV1FKQRssb972OAGok5naE80pxOOflj9jQsA4eQ848rhBgPt8mP3T6oISKvACbaomwVI7tqXmBRts3ng==}
     dependencies:
+      '@types/file-saver': 2.0.5
       '@types/jest': 26.0.22
       '@types/node': 18.8.5
       '@types/react': 17.0.58
       '@types/react-dom': 17.0.19
+      blueimp-load-image: 5.16.0
       chalk: 4.1.2
       concurrently: 7.6.0
       config: 3.3.9
       core-js: 3.30.1
       dayjs: 1.11.7
       esm: 3.2.25
+      file-saver: 2.0.5
       gsap: 3.11.5
       lodash: 4.17.21
+      run-script-os: 1.1.6
       tsconfig: 7.0.0
       tsup: 6.3.0(ts-node@10.9.1)(typescript@4.9.5)
       typescript: 4.9.5
@@ -6995,6 +7007,10 @@ packages:
     dependencies:
       flat-cache: 3.0.4
     dev: true
+
+  /file-saver@2.0.5:
+    resolution: {integrity: sha512-P9bmyZ3h/PRG+Nzga+rbdI4OEpNDzAVyy74uVO9ATgzLK6VtAsYybF/+TOCvrc0MO793d6+42lLyZTw7/ArVzA==}
+    dev: false
 
   /file-type@18.2.1:
     resolution: {integrity: sha512-Yw5MtnMv7vgD2/6Bjmmuegc8bQEVA9GmAyaR18bMYWKqsWDG9wgYZ1j4I6gNMF5Y5JBDcUcjRQqNQx7Y8uotcg==}
@@ -11868,7 +11884,6 @@ packages:
   /run-script-os@1.1.6:
     resolution: {integrity: sha512-ql6P2LzhBTTDfzKts+Qo4H94VUKpxKDFz6QxxwaUZN0mwvi7L3lpOI7BqPCq7lgDh3XLl0dpeXwfcVIitlrYrw==}
     hasBin: true
-    dev: true
 
   /run-series@1.1.9:
     resolution: {integrity: sha512-Arc4hUN896vjkqCYrUXquBFtRZdv1PfLbTYP71efP6butxyQ0kWpiNJyAgsxscmQg1cqvHY32/UCBzXedTpU2g==}

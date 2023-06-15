@@ -1,4 +1,4 @@
-import { log, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
 import execa from "execa";
 
 import { Config, isServerMode } from "@/app.config";

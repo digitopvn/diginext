@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import execa from "execa";
 import fs, { readFileSync } from "fs";
 import inquirer from "inquirer";

@@ -1,5 +1,5 @@
-import { logRes } from "diginext-utils/dist/console/log";
 import { Response as ApiResponse } from "diginext-utils/dist/response";
+import { logRes } from "diginext-utils/dist/xconsole/log";
 import type { NextFunction } from "express";
 
 import type { AppRequest, AppResponse } from "@/interfaces/SystemTypes";

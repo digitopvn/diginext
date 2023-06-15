@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import session from "cookie-session";
-import { log, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { log, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import type { Express, Request, Response } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";

@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import Configstore from "configstore";
-import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";

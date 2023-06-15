@@ -3,7 +3,7 @@ const path = require("path");
 const cliProgress = require("cli-progress");
 
 import { firstElement } from "diginext-utils/dist/array";
-import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import globby from "globby";
 
 import { DIGITOP_CDN_URL } from "../../config/const";

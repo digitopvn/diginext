@@ -1,4 +1,4 @@
-import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import execa from "execa";
 import inquirer from "inquirer";
 import _ from "lodash";

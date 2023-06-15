@@ -1,5 +1,4 @@
-import { logError } from "diginext-utils/dist/console/log";
-import inquirer from "inquirer";
+import { logError } from "diginext-utils/dist/xconsole/log";
 
 import type { IProject } from "@/entities";
 import { type AppGitInfo, type IApp } from "@/entities";

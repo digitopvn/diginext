@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import stripAnsi from "strip-ansi";
 
 import { Logger } from "@/plugins";

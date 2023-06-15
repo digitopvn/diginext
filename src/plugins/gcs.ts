@@ -1,6 +1,6 @@
 import Axios from "axios";
 import Configstore from "configstore";
-import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 
 import pkg from "@/../package.json";
 

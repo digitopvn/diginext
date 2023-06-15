@@ -1,4 +1,4 @@
-import { log } from "diginext-utils/dist/console/log";
+import { log } from "diginext-utils/dist/xconsole/log";
 import path from "path";
 import { Body, Deprecated, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 

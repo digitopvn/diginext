@@ -1,4 +1,4 @@
-import { log, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import { isEmpty } from "lodash";
 import cronjob from "node-cron";
