@@ -66,6 +66,8 @@ storage/**/*
 ./redis_data/*
 redis_data/
 public/logs
+public/upload
+public/upload/*
 public/swagger.json
 redis_data/
 # /public.__image-compressed__

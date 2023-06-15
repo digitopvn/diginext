@@ -20,6 +20,7 @@ import routeRouter from "./route";
 import serviceAccountRouter from "./service_account";
 import teamRouter from "./team";
 import userRouter from "./user";
+import utilityRouter from "./utility";
 import workspaceRouter from "./workspace";
 
 const router = express.Router();
@@ -51,5 +52,6 @@ router.use("/registry", registryRouter);
 router.use("/deploy", deployRouter);
 router.use("/domain", domainRouter);
 router.use("/route", routeRouter);
+router.use("/utility", utilityRouter);
 
 export default router;
