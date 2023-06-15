@@ -1,3 +1,10 @@
+## [3.11.4](https://github.com/digitopvn/diginext/compare/v3.11.3...v3.11.4) (2023-06-15)
+
+
+### Bug Fixes
+
+* **server:** issue of project name validation when add domain ([cd8b5c7](https://github.com/digitopvn/diginext/commit/cd8b5c75e4631ac60818f94d621bbca97a48bf9c))
+
 ## [3.11.3](https://github.com/digitopvn/diginext/compare/v3.11.2...v3.11.3) (2023-06-15)
 
 
