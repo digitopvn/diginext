@@ -52,6 +52,9 @@ export async function createAppByForm(
 
 	const noneFramework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
 	let curFramework = noneFramework;
+	// can skip selecting framework if wanted (eg. when deploy existing app)
+	if (skipFramework) options.framework = curFramework = noneFramework;
+
 	if (!options.framework) {
 		const frameworks = await DB.find<IFramework>("framework", {});
 

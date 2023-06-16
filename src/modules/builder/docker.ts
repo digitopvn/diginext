@@ -113,15 +113,18 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 	// docker build command:
 	const buildCmd = `docker buildx build ${optionFlags}`;
 
+	const skippedErrors: string[] = ["importing cache manifest from", "failed to configure registry cache"];
+
 	const stream = execa.command(buildCmd, cliOpts);
 	stream.stdio.forEach((_stdio) => {
 		if (_stdio) {
 			_stdio.on("data", (data) => {
-				let buildMessage = data.toString();
+				let logMsg = data.toString();
 				// just ignore cache import error
-				if (buildMessage.indexOf("importing cache manifest from") > -1) return;
-				if (buildMessage.indexOf("failed to configure registry cache") > -1) return;
-				if (onBuilding && buildMessage) onBuilding(buildMessage);
+				for (const skippedErr of skippedErrors) {
+					if (logMsg.indexOf(skippedErr) > -1) return;
+				}
+				if (onBuilding && logMsg) onBuilding(logMsg);
 			});
 		}
 	});

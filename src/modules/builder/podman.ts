@@ -118,10 +118,16 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 	let stream = execa.command(buildCmd, cliOpts);
 	processes[builder] = stream;
 
+	const skippedErrors: string[] = ["User-selected graph driver"];
+
 	stream.stdio.forEach((_stdio) => {
 		if (_stdio) {
 			_stdio.on("data", (data) => {
-				if (onBuilding) onBuilding(data.toString());
+				const logMsg: string = data.toString();
+				for (const skippedErr of skippedErrors) {
+					if (logMsg.indexOf(skippedErr) > -1) return;
+				}
+				if (onBuilding && logMsg) onBuilding(logMsg);
 			});
 		}
 	});
