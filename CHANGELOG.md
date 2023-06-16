@@ -1,3 +1,10 @@
+# [3.13.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.2...v3.13.0-prerelease.3) (2023-06-16)
+
+
+### Bug Fixes
+
+* **cli:** correct notify cli version update ([697eb8b](https://github.com/digitopvn/diginext/commit/697eb8bc8974d20a5a0f019dce2377c345672e59))
+
 # [3.13.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.1...v3.13.0-prerelease.2) (2023-06-16)
 
 
