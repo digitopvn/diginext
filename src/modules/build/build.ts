@@ -16,6 +16,7 @@ import { getIO, socketIO } from "@/server";
 import { DB } from "../api/DB";
 import builder from "../builder";
 import { verifySSH } from "../git";
+import { connectRegistry } from "../registry/connect-registry";
 import { sendLog } from "./send-log-message";
 import { updateBuildStatus, updateBuildStatusByAppSlug } from "./update-build-status";
 
@@ -352,6 +353,21 @@ export async function startBuild(
 		});
 	};
 
+	// authenticate build engine with container registry before building & pushing image
+	try {
+		await connectRegistry(registry);
+	} catch (e) {
+		if (options?.onError) options?.onError(`Unable to authenticate with "${registry.name}" registry: ${e}`);
+		sendLog({
+			SOCKET_ROOM,
+			message: chalk.green(`Unable to authenticate with "${registry.name}" registry: ${e}`),
+			type: "error",
+		});
+		await updateBuildStatus(newBuild, "failed");
+		return;
+	}
+
+	// initialize build engine
 	const buildEngineName = process.env.BUILDER || "podman";
 	const buildEngine = buildEngineName === "docker" ? builder.Docker : builder.Podman;
 

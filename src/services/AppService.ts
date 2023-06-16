@@ -5,7 +5,9 @@ import type { IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
 import type { DeployEnvironment, IQueryFilter, IQueryOptions, IQueryPagination, KubeDeployment } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
+import getDeploymentName from "@/modules/deploy/generate-deployment-name";
 import ClusterManager from "@/modules/k8s";
+import { makeSlug } from "@/plugins/slug";
 
 import BaseService from "./BaseService";
 
@@ -74,7 +76,14 @@ export default class AppService extends BaseService<IApp> {
 							return;
 						}
 
-						const deployOnCluster = clusterDeploys.find((deploy) => (deploy.metadata?.labels ?? {})["main-app"] === app.slug);
+						// find workloads base on "main-app" label
+						const mainAppName = getDeploymentName(app);
+						const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+						const deployOnCluster = clusterDeploys.find(
+							(deploy) =>
+								(deploy.metadata?.labels ?? {})["main-app"] === mainAppName ||
+								(deploy.metadata?.labels ?? {})["main-app"] === deprecatedMainAppName
+						);
 
 						if (!deployOnCluster) {
 							app.deployEnvironment[env].status = "undeployed";
