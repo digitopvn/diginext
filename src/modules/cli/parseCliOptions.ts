@@ -232,8 +232,8 @@ export async function parseCliOptions() {
 		.usage("$0 update <version>", "Update your CLI to specific version")
 		// command: new
 		.command("new", "Create new project & application", newProjectOptions)
-		// command: clone
-		.command("clone", "Clone repo from bitbucket to github", newProjectOptions)
+		// command: transfer
+		.command(["transfer", "tf"], "Tranfer repo from other provider", newProjectOptions)
 		// command: init
 		.command("init", "Initialize CLI in the current project directory")
 		// command: upgrade
@@ -446,8 +446,6 @@ export async function parseCliOptions() {
 		.wrap(yargs.terminalWidth())
 		// copyright
 		.epilog("Copyright by TOP GROUP VIETNAM © 2023").argv;
-
-	// log(`argv >>`, argv);
 
 	const options: InputOptions = {
 		// always attach current version to input options

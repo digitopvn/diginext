@@ -1,4 +1,5 @@
 import detectPrivateKey from "diginext-utils/dist/file/detectPrivateKey";
+import { log, logError } from "diginext-utils/dist/xconsole/log";
 
 import type { InputOptions } from "@/interfaces/InputOptions";
 
@@ -79,8 +80,8 @@ export async function pullingRepoToNewGitDir(options: InputOptions) {
 		//
 	} else {
 		//
-		console.log("FOUND PRIVATE KEY OR SECRET ENV, PLEASE IGNORE THEM BEFORE PUSH TO GIT");
-		console.log(result.list);
+		logError("FOUND PRIVATE KEY OR SECRET ENV, PLEASE IGNORE THEM BEFORE PUSH TO GIT!");
+		log(result.list);
 		return false;
 	}
 
