@@ -14,7 +14,8 @@ export async function execInitApp(options: InputOptions) {
 	const initProject = await createOrSelectProject(options);
 	const initApp = await createOrSelectApp(initProject.slug, options);
 
-	// ! The ONLY different with "createApp": Select the current working directory instead of create new one
+	// ! The ONLY different with "createApp":
+	// ! Select the current working directory instead of create new one
 	options.skipCreatingDirectory = true;
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
 

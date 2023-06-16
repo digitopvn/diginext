@@ -2,6 +2,7 @@ import inquirer from "inquirer";
 
 import type { InputOptions } from "@/interfaces";
 
+import createProjectByForm from "../project/create-project";
 import { searchProjects } from "./search-projects";
 //
 
@@ -9,7 +10,14 @@ export default async function selectProject(options?: InputOptions, canSkip: boo
 	//
 	const projects = await searchProjects({ canSkip });
 
-	// display list to select:
+	// if empty array -> create new
+	if (!projects || projects.length === 0) {
+		const newProject = await createProjectByForm(options);
+		options.project = newProject;
+		return options.project;
+	}
+
+	// else -> display list to select:
 	const { selectedProject } = await inquirer.prompt({
 		type: "list",
 		name: "selectedProject",
