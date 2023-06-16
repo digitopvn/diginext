@@ -23,8 +23,8 @@ export async function createOrSelectProject(options?: InputOptions) {
 
 		if (action === "select") {
 			// find/search projects
-			const projects = await selectProject(options);
-			options.project = projects;
+			const project = await selectProject(options);
+			options.project = project;
 		} else {
 			const newProject = await createProjectByForm(options);
 			options.project = newProject;
