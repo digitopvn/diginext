@@ -10,7 +10,7 @@ import execa from "execa";
 import * as fs from "fs";
 import * as afs from "fs/promises";
 import yaml from "js-yaml";
-import _, { isArray, isEmpty, isString, toNumber } from "lodash";
+import _, { isArray, isEmpty, isString, toInteger, toNumber } from "lodash";
 import * as m from "marked";
 import TerminalRenderer from "marked-terminal";
 import path from "path";
@@ -275,9 +275,20 @@ export async function getLatestCliVersion() {
 /**
  * Check if CLI version is latest or not, if not -> return FALSE
  */
-export async function checkForUpdate() {
+export async function shouldNotifyCliUpdate() {
+	const curVersion = currentVersion();
+	if (curVersion.indexOf("prerelease") > -1) return false;
+
 	const latestVersion = await getLatestCliVersion();
-	return latestVersion !== currentVersion();
+
+	let [lastestBreaking, lastestFeature, lastestPatch] = latestVersion.split(".").map((num) => toInteger(num));
+	let [curBreaking, curFeature, curPatch] = curVersion.split(".").map((num) => toInteger(num));
+
+	if (lastestBreaking > curBreaking) return false; // no need to notify when there is a new breaking change version
+	if (lastestBreaking === curBreaking && lastestFeature > curFeature) return true;
+	if (lastestBreaking === curBreaking && lastestFeature === curFeature && lastestPatch > curPatch) return true;
+
+	return false;
 }
 
 async function logBitbucketError(error: any, delay?: number, location?: string, shouldExit = false) {
