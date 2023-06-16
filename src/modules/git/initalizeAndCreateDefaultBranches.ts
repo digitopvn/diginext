@@ -1,4 +1,4 @@
-// import { log } from "diginext-utils/dist/console/log";
+// import { log } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import path from "path";
 import { simpleGit } from "simple-git";

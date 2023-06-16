@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { log } from "diginext-utils/dist/console/log";
 import { Response as ApiResponse } from "diginext-utils/dist/response";
+import { log } from "diginext-utils/dist/xconsole/log";
 import type { NextFunction, Response } from "express";
 import express from "express";
 import { isEmpty } from "lodash";

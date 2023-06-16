@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { logError, logWarn } from "diginext-utils/dist/console/log";
+import { logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import { existsSync, readFileSync } from "fs";
 import globby from "globby";
 import { last } from "lodash";

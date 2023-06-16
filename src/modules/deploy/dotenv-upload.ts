@@ -1,4 +1,4 @@
-import { log, logError } from "diginext-utils/dist/console/log";
+import { log, logError } from "diginext-utils/dist/xconsole/log";
 import { existsSync } from "fs";
 import path from "path";
 

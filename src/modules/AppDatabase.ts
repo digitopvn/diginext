@@ -1,6 +1,6 @@
 import "reflect-metadata";
 
-import { logError, logSuccess } from "diginext-utils/dist/console/log";
+import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import mongoose from "mongoose";
 
 import { Config } from "@/app.config";

@@ -1,4 +1,4 @@
-import { logSuccess } from "diginext-utils/dist/console/log";
+import { logSuccess } from "diginext-utils/dist/xconsole/log";
 
 import { logHelp } from "../../plugins/utils";
 import { disableCDN, enableCDN, loadVersionCacheCDNFromEnv, purgeProject, startUpload } from "./cdn.service";

@@ -1,4 +1,4 @@
-import { log } from "diginext-utils/dist/console/log";
+import { log } from "diginext-utils/dist/xconsole/log";
 import type execa from "execa";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { toNumber } from "lodash";

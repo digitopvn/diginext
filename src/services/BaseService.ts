@@ -1,6 +1,6 @@
-import { logError } from "diginext-utils/dist/console/log";
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
+import { logError } from "diginext-utils/dist/xconsole/log";
 import { cloneDeepWith } from "lodash";
 import type { Model, PipelineStage, Schema } from "mongoose";
 import { model } from "mongoose";
