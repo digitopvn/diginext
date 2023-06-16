@@ -7,6 +7,7 @@ import { DB } from "../api/DB";
 
 type SearchAppOptions = {
 	projectSlug?: string;
+	repoSSH?: string;
 	question?: string;
 	/**
 	 * @default true
@@ -15,7 +16,7 @@ type SearchAppOptions = {
 };
 
 export async function searchApps(options: SearchAppOptions) {
-	const { projectSlug, question, canSkip = true } = options;
+	const { projectSlug, repoSSH, question, canSkip = true } = options;
 
 	const { keyword } = await inquirer.prompt({
 		type: "input",
@@ -27,8 +28,9 @@ export async function searchApps(options: SearchAppOptions) {
 	const filter: any = {};
 	filter.name = keyword;
 	if (projectSlug) filter.projectSlug = projectSlug;
+	if (repoSSH) filter["git.repoSSH"] = repoSSH;
 
-	let apps = await DB.find<IApp>("app", filter, { search: true }, { limit: 10 });
+	let apps = await DB.find<IApp>("app", filter, { search: true }, { limit: 10, populate: ["project"] });
 
 	if (isEmpty(apps)) {
 		if (canSkip) {
