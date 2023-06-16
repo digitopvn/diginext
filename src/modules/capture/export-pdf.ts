@@ -94,7 +94,8 @@ const exportPdf = async (url: string, options: ExportPDFOptions = defaultExportP
 	const browser = await puppeteer.launch({
 		headless: "new",
 		defaultViewport: _options.viewport,
-		executablePath: process.env.CHROMIUM_PATH,
+		executablePath: "/usr/bin/chromium",
+		// executablePath: process.env.CHROMIUM_PATH,
 		args: ["--no-sandbox"],
 	});
 	const page = await browser.newPage();
