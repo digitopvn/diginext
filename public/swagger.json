@@ -13137,8 +13137,10 @@
 						}
 					}
 				},
-				"description": "Export a webpage to PDF",
-				"tags": ["Utility"],
+				"description": "Capture a webpage and export to PDF",
+				"tags": [
+					"Utility"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -13184,8 +13186,10 @@
 						}
 					}
 				},
-				"description": "Capture a webpage screenshot",
-				"tags": ["Utility"],
+				"description": "Capture a webpage and export to PDF",
+				"tags": [
+					"Utility"
+				],
 				"security": [
 					{
 						"api_key": []
