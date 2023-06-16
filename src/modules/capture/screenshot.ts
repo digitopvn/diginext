@@ -90,7 +90,8 @@ const screenshot = async (url: string, options: ScreenshotOptions = defaultExpor
 	const browser = await puppeteer.launch({
 		headless: "new",
 		defaultViewport: viewport,
-		executablePath: process.env.CHROMIUM_PATH,
+		// executablePath: process.env.CHROMIUM_PATH,
+		executablePath: "/usr/bin/chromium",
 		args: ["--no-sandbox"],
 	});
 	const page = await browser.newPage();
