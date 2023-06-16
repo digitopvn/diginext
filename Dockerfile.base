@@ -8,8 +8,13 @@ USER root
 RUN apt-get update && apt-get install -y curl wget git sed jq openssh-client
 
 # Upgrade Node.js to version 16.x
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
+
+# puppeteer install
+RUN apt-get update && apt-get install -y udev chromium fonts-liberation
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+ENV CHROMIUM_PATH /usr/bin/chromium-browser
 
 # Install GCLOUD CLI / SDK
 RUN apt-get install -y apt-transport-https ca-certificates gnupg lsb-release && \
@@ -53,10 +58,10 @@ RUN npm install -g pnpm
 
 # Copy docker buildx
 COPY --from=docker/buildx-bin /buildx /usr/local/bin/docker-buildx
-
 # Set permissions for the binary
 RUN chmod +x /usr/local/bin/docker-buildx
 
+# plugin to set environment variable
 COPY ./scripts/set_env /usr/bin/set_env
 RUN chmod +x /usr/bin/set_env
 

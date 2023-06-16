@@ -3,9 +3,13 @@ import dayjs from "dayjs";
 import humanizeDuration from "humanize-duration";
 
 import { Config } from "@/app.config";
+import type { IRelease } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
+import MediaService from "@/services/MediaService";
 
+import { DB } from "../api/DB";
+import screenshot from "../capture/screenshot";
 import type { DeployBuildOptions } from "../deploy/deploy-build";
 import { deployBuild } from "../deploy/deploy-build";
 import type { StartBuildParams } from "./build";
@@ -56,6 +60,26 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	const humanDuration = humanizeDuration(buildDuration, { round: true });
 
 	sendLog({ SOCKET_ROOM, message: chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanDuration} 🎉`), type: "success" });
+
+	// capture a screenshot:
+	try {
+		const result = await screenshot(env === "prod" ? prereleaseUrl : endpoint, { fullPage: false });
+		if (result) {
+			// success -> write to db
+			delete result.buffer;
+			const mediaSvc = new MediaService();
+			const media = await mediaSvc.create({ ...result, owner: deployParams.author._id, workspace: deployParams.workspace._id });
+			if (media) {
+				const updatedRelease = await DB.updateOne<IRelease>("release", { _id: releaseId }, { screenshot: media.url });
+				if (updatedRelease) sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Screenshot: ${media.url}` });
+			}
+		}
+	} catch (e) {
+		sendLog({
+			SOCKET_ROOM,
+			message: `[BUILD_AND_DEPLOY] Unable to capture the webpage screenshot (${env === "prod" ? prereleaseUrl : endpoint}): ${e}`,
+		});
+	}
 
 	if (env == "prod") {
 		const buildServerUrl = Config.BASE_URL;
