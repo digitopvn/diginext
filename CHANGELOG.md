@@ -1,3 +1,18 @@
+# [3.13.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.12.0...v3.13.0-prerelease.1) (2023-06-16)
+
+
+### Bug Fixes
+
+* **client:** change command name 'clone' to 'transfer' or 'tf' ([963a31b](https://github.com/digitopvn/diginext/commit/963a31bb5322b0476158a9d565ee5e44acd22120))
+
+
+### Features
+
+* **server:** add export pdf, capture screenshot webpage ([e44c64e](https://github.com/digitopvn/diginext/commit/e44c64e0cd4f25ae194e45a49ed5392d4ad7bad1))
+* **server:** add export pdf, capture screenshot webpage ([#225](https://github.com/digitopvn/diginext/issues/225)) ([2e6801a](https://github.com/digitopvn/diginext/commit/2e6801ab7019b875218df9d1229597738519c5f7))
+* **server:** capture screenshot when build and deploy ([353319a](https://github.com/digitopvn/diginext/commit/353319aa5dae77f556d5e5db3feb4dc26dc6b253))
+
+# [3.12.0](https://github.com/digitopvn/diginext/compare/v3.11.4...v3.12.0) (2023-06-15)
 # [3.12.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.11.4...v3.12.0-prerelease.1) (2023-06-15)
 
 
