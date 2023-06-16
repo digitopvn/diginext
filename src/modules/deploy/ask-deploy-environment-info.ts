@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty, isNaN } from "lodash";
 

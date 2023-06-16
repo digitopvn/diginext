@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import Configstore from "configstore";
-import { log, logError, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
@@ -222,7 +222,8 @@ export async function processCLI(options?: InputOptions) {
 			await freeUp();
 			return;
 
-		case "clone":
+		case "tf":
+		case "transfer":
 			await cliAuthenticate(options);
 
 			await cloneRepo(options);

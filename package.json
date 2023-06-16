@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.11.4",
+	"version": "3.13.0-prerelease.1",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"main": "dist/index.js",
 	"bin": {
@@ -172,7 +172,7 @@
 		"date-fns": "^2.29.3",
 		"dayjs": "^1.10.4",
 		"debug": "^4.3.4",
-		"diginext-utils": "2.0.26",
+		"diginext-utils": "3.0.2",
 		"dotenv": "^8.2.0",
 		"envfile": "6.14.0",
 		"esm": "^3.2.18",

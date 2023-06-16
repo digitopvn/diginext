@@ -1,5 +1,5 @@
-import { logError, logSuccess } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import execa from "execa";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
 import { isEmpty } from "lodash";

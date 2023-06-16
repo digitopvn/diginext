@@ -1,6 +1,6 @@
 import chalk from "chalk";
-import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import execa from "execa";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import globby from "globby";

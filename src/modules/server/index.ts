@@ -1,4 +1,4 @@
-import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import execa from "execa";
 import yargs from "yargs";
 

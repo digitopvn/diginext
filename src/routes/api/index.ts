@@ -1,8 +1,8 @@
 import { isJSON } from "class-validator";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import { logWarn } from "diginext-utils/dist/console/log";
 import { Response } from "diginext-utils/dist/response";
+import { logWarn } from "diginext-utils/dist/xconsole/log";
 import express from "express";
 
 import pkg from "@/../package.json";

@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import dayjs from "dayjs";
-import { log, logError, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import humanizeDuration from "humanize-duration";
 import { isEmpty } from "lodash";
 import PQueue from "p-queue";
