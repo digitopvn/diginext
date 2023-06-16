@@ -3059,6 +3059,10 @@
 					"buildStatus": {
 						"$ref": "#/components/schemas/BuildStatus"
 					},
+					"screenshot": {
+						"type": "string",
+						"description": "URL of the webpage screenshot"
+					},
 					"build": {
 						"anyOf": [
 							{
@@ -3978,6 +3982,10 @@
 					},
 					"buildStatus": {
 						"$ref": "#/components/schemas/BuildStatus"
+					},
+					"screenshot": {
+						"type": "string",
+						"description": "URL of the webpage screenshot"
 					}
 				},
 				"type": "object",
@@ -4389,6 +4397,187 @@
 			},
 			"UserDto": {
 				"$ref": "#/components/schemas/Omit_IUser.keyofHiddenBodyKeys_"
+			},
+			"ExportPDFOptions": {
+				"properties": {
+					"omitBackground": {
+						"type": "boolean",
+						"description": "Hides default white background and allows generating pdfs with transparency."
+					},
+					"displayHeaderFooter": {
+						"type": "boolean"
+					},
+					"margin": {
+						"properties": {
+							"right": {
+								"anyOf": [
+									{
+										"type": "string"
+									},
+									{
+										"type": "number",
+										"format": "double"
+									}
+								]
+							},
+							"left": {
+								"anyOf": [
+									{
+										"type": "string"
+									},
+									{
+										"type": "number",
+										"format": "double"
+									}
+								]
+							},
+							"bottom": {
+								"anyOf": [
+									{
+										"type": "string"
+									},
+									{
+										"type": "number",
+										"format": "double"
+									}
+								]
+							},
+							"top": {
+								"anyOf": [
+									{
+										"type": "string"
+									},
+									{
+										"type": "number",
+										"format": "double"
+									}
+								]
+							}
+						},
+						"type": "object"
+					},
+					"scale": {
+						"type": "number",
+						"format": "double"
+					},
+					"format": {
+						"type": "string",
+						"enum": ["letter", "legal", "tabloid", "ledger", "a0", "a1", "a2", "a3", "a4", "a5", "a6"]
+					},
+					"path": {
+						"type": "string"
+					},
+					"printBackground": {
+						"type": "boolean"
+					},
+					"viewport": {
+						"properties": {
+							"hasTouch": {
+								"type": "boolean",
+								"description": "Specify if the viewport supports touch events."
+							},
+							"isLandscape": {
+								"type": "boolean",
+								"description": "Specifies if the viewport is in landscape mode."
+							},
+							"isMobile": {
+								"type": "boolean",
+								"description": "Whether the `meta viewport` tag is taken into account."
+							},
+							"deviceScaleFactor": {
+								"type": "number",
+								"format": "double",
+								"description": "Specify device scale factor.\nSee {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio | devicePixelRatio} for more info."
+							},
+							"height": {
+								"type": "number",
+								"format": "double",
+								"description": "The page height in pixels."
+							},
+							"width": {
+								"type": "number",
+								"format": "double",
+								"description": "The page width in pixels."
+							}
+						},
+						"required": ["height", "width"],
+						"type": "object"
+					}
+				},
+				"type": "object"
+			},
+			"CaptureScreenshotOptions": {
+				"properties": {
+					"fromSurface": {
+						"type": "boolean",
+						"description": "Capture the screenshot from the surface, rather than the view.",
+						"default": "true"
+					},
+					"captureBeyondViewport": {
+						"type": "boolean",
+						"description": "Capture the screenshot beyond the viewport.",
+						"default": "true"
+					},
+					"encoding": {
+						"type": "string",
+						"enum": ["base64", "binary"],
+						"description": "Encoding of the image.",
+						"default": "binary"
+					},
+					"omitBackground": {
+						"type": "boolean",
+						"description": "Hides default white background and allows capturing screenshots with transparency.",
+						"default": "false"
+					},
+					"quality": {
+						"type": "number",
+						"format": "double",
+						"description": "Quality of the image, between 0-100. Not applicable to `png` images."
+					},
+					"clip": {
+						"properties": {
+							"scale": {
+								"type": "number",
+								"format": "double",
+								"default": "1"
+							},
+							"height": {
+								"type": "number",
+								"format": "double"
+							},
+							"width": {
+								"type": "number",
+								"format": "double"
+							},
+							"y": {
+								"type": "number",
+								"format": "double"
+							},
+							"x": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": ["height", "width", "y", "x"],
+						"type": "object",
+						"description": "An object which specifies the clipping region of the page."
+					},
+					"fullPage": {
+						"type": "boolean",
+						"description": "When `true`, takes a screenshot of the full page.",
+						"default": "false"
+					},
+					"path": {
+						"type": "string",
+						"description": "The file path to save the image to. The screenshot type will be inferred\nfrom file extension. If path is a relative path, then it is resolved\nrelative to current working directory. If no path is provided, the image\nwon't be saved to the disk."
+					},
+					"type": {
+						"type": "string",
+						"enum": ["png", "jpeg", "webp"],
+						"default": "png"
+					}
+				},
+				"type": "object"
 			},
 			"WorkspaceInputData": {
 				"properties": {
@@ -12114,6 +12303,100 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/JoinWorkspaceBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/utility/export-pdf": {
+			"post": {
+				"operationId": "ExportWebpagePDF",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "Capture a webpage and export to PDF",
+				"tags": ["Utility"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "url",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ExportPDFOptions"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/utility/capture-screenshot": {
+			"post": {
+				"operationId": "CaptureScreenshot",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "Capture a webpage and export to PDF",
+				"tags": ["Utility"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "url",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CaptureScreenshotOptions"
 							}
 						}
 					}
