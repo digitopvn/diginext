@@ -3,6 +3,7 @@ import { Body, Get, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 import type { ICluster } from "@/entities";
 import type { KubeNamespace, KubeService } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces";
+import type { KubeNode } from "@/interfaces/KubeNode";
 import { DB } from "@/modules/api/DB";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
@@ -12,6 +13,54 @@ import BaseController from "./BaseController";
 @Tags("Monitor")
 @Route("monitor")
 export default class MonitorController extends BaseController {
+	/**
+	 * List of nodes in a cluster
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/nodes")
+	async getNodes(@Queries() queryParams?: { clusterShortName: string }) {
+		let { clusterShortName } = this.filter;
+
+		let data: KubeNode[] = [];
+
+		if (!clusterShortName) {
+			const clusters = await DB.find<ICluster>("cluster", { workspace: this.workspace._id });
+			const ls = await Promise.all(
+				clusters.map(async (cluster) => {
+					const { contextName: context } = cluster;
+					if (!context) return [] as KubeNode[];
+					let nodeList = await ClusterManager.getAllNodes({ context });
+					nodeList = nodeList.map((ns) => {
+						ns.workspace = MongoDB.toString(this.workspace._id);
+						ns.clusterShortName = cluster.shortName;
+						ns.cluster = MongoDB.toString(cluster._id);
+						return ns;
+					});
+					return nodeList;
+				})
+			);
+			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
+		} else {
+			const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+
+			const { contextName: context } = cluster;
+			if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+
+			data = await ClusterManager.getAllNodes({ context });
+			data = data.map((ns) => {
+				ns.workspace = MongoDB.toString(this.workspace._id);
+				ns.clusterShortName = cluster.shortName;
+				ns.cluster = MongoDB.toString(cluster._id);
+				return ns;
+			});
+		}
+
+		// process
+		return respondSuccess({ data });
+	}
+
 	/**
 	 * List of namespaces in a cluster
 	 */
