@@ -53,4 +53,14 @@ export interface KubeDeployment {
 		availableReplicas?: number;
 		updatedReplicas?: number;
 	};
+	// extras
+	clusterShortName?: string;
+	/**
+	 * Cluster ID
+	 */
+	cluster?: string;
+	/**
+	 * Workspace ID
+	 */
+	workspace?: string;
 }
