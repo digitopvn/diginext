@@ -1,10 +1,11 @@
 import { Body, Get, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { ICluster } from "@/entities";
-import type { KubeService } from "@/interfaces";
+import type { KubeNamespace, KubeService } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import ClusterManager from "@/modules/k8s";
+import { MongoDB } from "@/plugins/mongodb";
 
 import BaseController from "./BaseController";
 
@@ -18,17 +19,42 @@ export default class MonitorController extends BaseController {
 	@Security("jwt")
 	@Get("/namespaces")
 	async getNamespaces(@Queries() queryParams?: { clusterShortName: string }) {
-		const { clusterShortName } = this.filter;
+		let { clusterShortName } = this.filter;
 
-		if (!clusterShortName) return respondFailure(`Param "clusterShortName" is required.`);
+		let data: KubeNamespace[] = [];
 
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
-		if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+		if (!clusterShortName) {
+			const clusters = await DB.find<ICluster>("cluster", { workspace: this.workspace._id });
+			const ls = await Promise.all(
+				clusters.map(async (cluster) => {
+					const { contextName: context } = cluster;
+					if (!context) return [] as KubeNamespace[];
+					let nsList = await ClusterManager.getAllNamespaces({ context });
+					nsList = nsList.map((ns) => {
+						ns.workspace = MongoDB.toString(this.workspace._id);
+						ns.clusterShortName = cluster.shortName;
+						ns.cluster = MongoDB.toString(cluster._id);
+						return ns;
+					});
+					return nsList;
+				})
+			);
+			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
+		} else {
+			const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
 
-		const { contextName: context } = cluster;
-		if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+			const { contextName: context } = cluster;
+			if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
 
-		const data = await ClusterManager.getAllNamespaces({ context });
+			data = await ClusterManager.getAllNamespaces({ context });
+			data = data.map((ns) => {
+				ns.workspace = MongoDB.toString(this.workspace._id);
+				ns.clusterShortName = cluster.shortName;
+				ns.cluster = MongoDB.toString(cluster._id);
+				return ns;
+			});
+		}
 
 		// process
 		return respondSuccess({ data });
@@ -67,6 +93,10 @@ export default class MonitorController extends BaseController {
 
 		const data = await ClusterManager.createNamespace(name, { context });
 
+		// data.workspace = MongoDB.toString(this.workspace._id);
+		// data.clusterShortName = clusterShortName;
+		// data.cluster = MongoDB.toString(cluster._id);
+
 		// process
 		return respondSuccess({ data });
 	}
@@ -88,10 +118,17 @@ export default class MonitorController extends BaseController {
 		const { contextName: context } = cluster;
 		if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
 
-		const services = namespace ? await ClusterManager.getServices(namespace, { context }) : await ClusterManager.getAllServices({ context });
+		const data = namespace ? await ClusterManager.getServices(namespace, { context }) : await ClusterManager.getAllServices({ context });
 
 		// process
-		return respondSuccess({ data: services });
+		return respondSuccess({
+			data: data.map((ns) => {
+				ns.workspace = MongoDB.toString(this.workspace._id);
+				ns.clusterShortName = clusterShortName;
+				ns.cluster = MongoDB.toString(cluster._id);
+				return ns;
+			}),
+		});
 	}
 
 	/**
@@ -163,10 +200,17 @@ export default class MonitorController extends BaseController {
 		const { contextName: context } = cluster;
 		if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
 
-		const ingresses = namespace ? await ClusterManager.getIngresses(namespace, { context }) : await ClusterManager.getAllIngresses({ context });
+		const data = namespace ? await ClusterManager.getIngresses(namespace, { context }) : await ClusterManager.getAllIngresses({ context });
 
 		// process
-		return respondSuccess({ data: ingresses });
+		return respondSuccess({
+			data: data.map((ns) => {
+				ns.workspace = MongoDB.toString(this.workspace._id);
+				ns.clusterShortName = clusterShortName;
+				ns.cluster = MongoDB.toString(cluster._id);
+				return ns;
+			}),
+		});
 	}
 
 	/**
@@ -186,10 +230,17 @@ export default class MonitorController extends BaseController {
 		const { contextName: context } = cluster;
 		if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
 
-		const list = namespace ? await ClusterManager.getDeploys(namespace, { context }) : await ClusterManager.getAllDeploys({ context });
+		const data = namespace ? await ClusterManager.getDeploys(namespace, { context }) : await ClusterManager.getAllDeploys({ context });
 
 		// process
-		return respondSuccess({ data: list });
+		return respondSuccess({
+			data: data.map((ns) => {
+				ns.workspace = MongoDB.toString(this.workspace._id);
+				ns.clusterShortName = clusterShortName;
+				ns.cluster = MongoDB.toString(cluster._id);
+				return ns;
+			}),
+		});
 	}
 
 	/**
@@ -209,10 +260,17 @@ export default class MonitorController extends BaseController {
 		const { contextName: context } = cluster;
 		if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
 
-		const list = namespace ? await ClusterManager.getPods(namespace, { context }) : await ClusterManager.getAllPods({ context });
+		const data = namespace ? await ClusterManager.getPods(namespace, { context }) : await ClusterManager.getAllPods({ context });
 
 		// process
-		return respondSuccess({ data: list });
+		return respondSuccess({
+			data: data.map((ns) => {
+				ns.workspace = MongoDB.toString(this.workspace._id);
+				ns.clusterShortName = clusterShortName;
+				ns.cluster = MongoDB.toString(cluster._id);
+				return ns;
+			}),
+		});
 	}
 
 	/**
@@ -232,9 +290,16 @@ export default class MonitorController extends BaseController {
 		const { contextName: context } = cluster;
 		if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
 
-		const list = namespace ? await ClusterManager.getSecrets(namespace, { context }) : await ClusterManager.getAllSecrets({ context });
+		const data = namespace ? await ClusterManager.getSecrets(namespace, { context }) : await ClusterManager.getAllSecrets({ context });
 
 		// process
-		return respondSuccess({ data: list });
+		return respondSuccess({
+			data: data.map((ns) => {
+				ns.workspace = MongoDB.toString(this.workspace._id);
+				ns.clusterShortName = clusterShortName;
+				ns.cluster = MongoDB.toString(cluster._id);
+				return ns;
+			}),
+		});
 	}
 }
