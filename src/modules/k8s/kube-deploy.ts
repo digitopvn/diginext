@@ -327,7 +327,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	// log(`3`, { appSlug, service, svcName, ingress, ingressName, deploymentName });
 
 	// create new service if it's not existed
-	const currentServices = await ClusterManager.getAllServices(namespace, `phase=live,main-app=${mainAppName}`, { context });
+	const currentServices = await ClusterManager.getServices(namespace, { context, filterLabel: `phase=live,main-app=${mainAppName}` });
 
 	// if (!isEmpty(currentServices)) {
 	// 	// The service is existed

@@ -154,7 +154,7 @@ export async function isNamespaceExisted(namespace: string, options: KubeCommand
 /**
  * Get all secrets of a namespace
  */
-export async function getAllSecrets(namespace: string = "default", options: KubeCommandOptions = {}) {
+export async function getSecrets(namespace: string = "default", options: KubeCommandOptions = {}) {
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const stdout = await execCmd(
@@ -168,10 +168,26 @@ export async function getAllSecrets(namespace: string = "default", options: Kube
 }
 
 /**
+ * Get all secrets of a cluster
+ */
+export async function getAllSecrets(options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+	try {
+		const stdout = await execCmd(
+			`kubectl ${context ? `--context=${context} ` : ""}get secret ${filterLabel ? `-l ${filterLabel} ` : ""}-A -o json`
+		);
+		return JSON.parse(stdout).items as KubeSecret[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllSecrets >`, e);
+		return [];
+	}
+}
+
+/**
  * Check whether this secret was existed in the namespace
  */
 export async function isSecretExisted(name: string, namespace: string = "default", options: KubeCommandOptions = {}) {
-	const allSecrets = await getAllSecrets(namespace, options);
+	const allSecrets = await getSecrets(namespace, options);
 	if (isEmpty(allSecrets)) return false;
 	return typeof allSecrets.find((ns) => ns.metadata.name === name) !== "undefined";
 }
@@ -214,6 +230,9 @@ export async function deleteSecretsByFilter(namespace = "default", options: Kube
 	}
 }
 
+/**
+ * Get all ingresses of a cluster
+ */
 export async function getAllIngresses(options: KubeGenericOptions = {}) {
 	const { context, skipOnError } = options;
 
@@ -261,10 +280,35 @@ export async function getIngress(name, namespace = "default", options: KubeGener
 		args.push("-o", "json");
 
 		const { stdout } = await execa("kubectl", args);
-		return JSON.parse(stdout);
+		return JSON.parse(stdout) as KubeIngress;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getIngress >`, e);
 		return;
+	}
+}
+
+/**
+ * Get ingress list of a namespace
+ * @param namespace
+ */
+export async function getIngresses(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "get", "ing");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout).items as KubeIngress[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getIngress >`, e);
+		return [];
 	}
 }
 
@@ -565,8 +609,8 @@ export async function getService(name, namespace = "default", options: KubeGener
  * @param namespace @default "default"
  * @param labelFilter Filter by labels @example "phase!=prerelease,app=abc-xyz"
  */
-export async function getAllServices(namespace = "default", labelFilter = "", options: KubeCommandOptions = {}) {
-	const { context, skipOnError } = options;
+export async function getServices(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
 
 	try {
 		const args = [];
@@ -574,8 +618,35 @@ export async function getAllServices(namespace = "default", labelFilter = "", op
 
 		args.push("-n", namespace, "get", "svc");
 
-		if (labelFilter) args.push("-l", labelFilter);
+		if (filterLabel) args.push("-l", filterLabel);
 
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		return items as KubeService[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllServices >`, e);
+		return [];
+	}
+}
+
+/**
+ * Get all services in a cluster
+ * @param labelFilter Filter by labels @example "phase!=prerelease,app=abc-xyz"
+ */
+export async function getAllServices(options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("get", "svc");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-A");
 		args.push("-o", "json");
 
 		const { stdout } = await execa("kubectl", args);
@@ -651,7 +722,7 @@ export async function getPod(name, namespace = "default", options: KubeGenericOp
  * Get pods in a namespace
  * @param namespace @default "default"
  */
-export async function getAllPods(namespace = "default", options: KubeCommandOptions = {}) {
+export async function getPods(namespace = "default", options: KubeCommandOptions = {}) {
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -667,12 +738,36 @@ export async function getAllPods(namespace = "default", options: KubeCommandOpti
 		const { items } = JSON.parse(stdout);
 		return items as KubePod[];
 	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getPods >`, e);
+		return [];
+	}
+}
+
+/**
+ * Get all pods in a cluster
+ */
+export async function getAllPods(options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("get", "pod");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-A", "-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		return items as KubePod[];
+	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
 		return [];
 	}
 }
 
-export const getPodsByFilter = getAllPods;
+export const getPodsByFilter = getPods;
 
 export async function logPod(
 	name,
