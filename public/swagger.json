@@ -690,6 +690,10 @@
 						"type": "number",
 						"format": "double",
 						"description": "Amount of ready instances"
+					},
+					"screenshot": {
+						"type": "string",
+						"description": "A screenshot URL from build success"
 					}
 				},
 				"required": [
@@ -5053,7 +5057,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "3.13.0-prerelease.4",
+		"version": "3.13.0-prerelease.5",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -9278,6 +9282,45 @@
 						"required": true,
 						"schema": {
 							"$ref": "#/components/schemas/GitProviderType"
+						}
+					}
+				]
+			}
+		},
+		"/monitor/nodes": {
+			"get": {
+				"operationId": "GetNodes",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "List of nodes in a cluster",
+				"tags": [
+					"Monitor"
+				],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "clusterShortName",
+						"required": true,
+						"schema": {
+							"type": "string"
 						}
 					}
 				]
