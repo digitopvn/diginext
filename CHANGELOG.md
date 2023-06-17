@@ -1,3 +1,18 @@
+# [3.13.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.4...v3.13.0-prerelease.5) (2023-06-17)
+
+
+### Bug Fixes
+
+* **server:** add finally to export pdf and screenshot for optimize ([3b76bbb](https://github.com/digitopvn/diginext/commit/3b76bbbd7936dd81f43359181b2fd82ca718fefa))
+* **server:** incorrect app deploy environment status ([7b056d4](https://github.com/digitopvn/diginext/commit/7b056d4b7083e994696cbee4f4d94c23fdad9c74))
+
+
+### Features
+
+* **server,api:** add namespace monitoring page ([a995e40](https://github.com/digitopvn/diginext/commit/a995e4063c9cd0937f3d72be5a225149cca0e7d7))
+* **server,api:** add namespace monitoring page ([#232](https://github.com/digitopvn/diginext/issues/232)) ([6e0707a](https://github.com/digitopvn/diginext/commit/6e0707ad233703e18c85701026b3bd1e084e1960))
+* **server,api:** monitor k8s cluster feature ([2bce8d4](https://github.com/digitopvn/diginext/commit/2bce8d4f73a9060c3ff7e936349f8b18e78ff29e))
+
 # [3.13.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.3...v3.13.0-prerelease.4) (2023-06-17)
 
 
