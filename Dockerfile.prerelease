@@ -9,6 +9,9 @@ ARG gid=1000
 RUN groupadd -g ${gid} ${group} && \
   useradd -u ${uid} -g ${group} -s /bin/sh -m ${user}
 
+# Puppeteer ENV configuration
+ENV CHROMIUM_PATH /usr/bin/chromium
+
 # Set working directory
 WORKDIR /usr/app
 
