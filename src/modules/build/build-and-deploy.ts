@@ -3,7 +3,8 @@ import dayjs from "dayjs";
 import humanizeDuration from "humanize-duration";
 
 import { Config } from "@/app.config";
-import type { IRelease } from "@/entities";
+import type { IApp } from "@/entities";
+import { type IRelease } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 import MediaService from "@/services/MediaService";
@@ -70,8 +71,13 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 			const mediaSvc = new MediaService();
 			const media = await mediaSvc.create({ ...result, owner: deployParams.author._id, workspace: deployParams.workspace._id });
 			if (media) {
+				// update screenshot to release
 				const updatedRelease = await DB.updateOne<IRelease>("release", { _id: releaseId }, { screenshot: media.url });
-				if (updatedRelease) sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Screenshot: ${media.url}` });
+				if (updatedRelease) sendLog({ SOCKET_ROOM, message: `Screenshot: ${media.url}` });
+
+				// update screenshot to app's deploy environment
+				const app = await DB.updateOne<IApp>("app", { slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
+				if (!app) sendLog({ SOCKET_ROOM, message: `Unable to update screenshot to app's deploy environment (${env})` });
 			}
 		}
 	} catch (e) {
