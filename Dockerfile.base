@@ -11,12 +11,6 @@ RUN apt-get update && apt-get install -y curl wget git sed jq openssh-client
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
 
-# puppeteer install (FAILED)
-# RUN apt-get update && apt-get install -y udev chromium fonts-liberation
-# ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
-# ENV PUPPETEER_SKIP_DOWNLOAD=true
-# ENV CHROMIUM_PATH /usr/bin/chromium-browser
-
 # Install GCLOUD CLI / SDK
 RUN apt-get install -y apt-transport-https ca-certificates gnupg lsb-release && \
     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
@@ -26,6 +20,8 @@ RUN apt-get install -y apt-transport-https ca-certificates gnupg lsb-release && 
 # Install Kubernetes Gcloud Authentication plugin
 RUN apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
+# Install "chromium" for Puppeteer
+ENV CHROMIUM_PATH /usr/bin/chromium
 RUN apt-get update && \
     apt-get install -y chromium && \
     rm -rf /var/lib/apt/lists/*

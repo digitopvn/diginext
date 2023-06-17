@@ -122,7 +122,7 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 				let logMsg = data.toString();
 				// just ignore cache import error
 				for (const skippedErr of skippedErrors) {
-					if (logMsg.indexOf(skippedErr) > -1) return;
+					if (logMsg.indexOf(skippedErr) > -1) logMsg = "";
 				}
 				if (onBuilding && logMsg) onBuilding(logMsg);
 			});
