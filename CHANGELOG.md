@@ -1,3 +1,32 @@
+# [3.13.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.3...v3.13.0-prerelease.4) (2023-06-17)
+
+
+### Bug Fixes
+
+* **docker base:** enable chromium env for puppeteer to work ([a449dea](https://github.com/digitopvn/diginext/commit/a449deaf863062a8130885f2c28b3f79b0420cd9))
+* **docker base:** enable chromium env for puppeteer to work ([#231](https://github.com/digitopvn/diginext/issues/231)) ([62871ba](https://github.com/digitopvn/diginext/commit/62871badbe472365f6808b0d617605533471519b))
+
+# [3.13.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.2...v3.13.0-prerelease.3) (2023-06-16)
+
+
+### Bug Fixes
+
+* **cli:** correct notify cli version update ([697eb8b](https://github.com/digitopvn/diginext/commit/697eb8bc8974d20a5a0f019dce2377c345672e59))
+
+# [3.13.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.1...v3.13.0-prerelease.2) (2023-06-16)
+
+
+### Bug Fixes
+
+* **cli:** empty arr of create select project,app when deploying ([d7a5088](https://github.com/digitopvn/diginext/commit/d7a50889ee44b3c978648715c7d1d337460f4ad7))
+* **server,cli:** skip select framework, build logs, auth registry on push ([4b0bcba](https://github.com/digitopvn/diginext/commit/4b0bcba2e40f683a4db7dba8ca1238a7a16ad080))
+* **server:** app service find workloads based on main-app label ([2e652b7](https://github.com/digitopvn/diginext/commit/2e652b7f1fa8bd2c288367a914312f16b61763b1))
+
+
+### Features
+
+* **server,cli:** webpage capture, init app, select project ([#227](https://github.com/digitopvn/diginext/issues/227)) ([afcaa9c](https://github.com/digitopvn/diginext/commit/afcaa9c9d71e2b1d9ca7c74232596f00d20b0843))
+
 # [3.13.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.12.0...v3.13.0-prerelease.1) (2023-06-16)
 
 
