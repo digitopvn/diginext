@@ -3264,6 +3264,17 @@
 							}
 						},
 						"type": "object"
+					},
+					"clusterShortName": {
+						"type": "string"
+					},
+					"cluster": {
+						"type": "string",
+						"description": "Cluster ID"
+					},
+					"workspace": {
+						"type": "string",
+						"description": "Workspace ID"
 					}
 				},
 				"type": "object",
@@ -3483,6 +3494,17 @@
 							}
 						},
 						"type": "object"
+					},
+					"clusterShortName": {
+						"type": "string"
+					},
+					"cluster": {
+						"type": "string",
+						"description": "Cluster ID"
+					},
+					"workspace": {
+						"type": "string",
+						"description": "Workspace ID"
 					}
 				},
 				"type": "object",
@@ -5031,7 +5053,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "3.13.0-prerelease.3",
+		"version": "3.13.0-prerelease.4",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -9277,7 +9299,9 @@
 					}
 				},
 				"description": "List of namespaces in a cluster",
-				"tags": ["Monitor"],
+				"tags": [
+					"Monitor"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -9311,8 +9335,10 @@
 						}
 					}
 				},
-				"description": "List of namespaces in a cluster",
-				"tags": ["Monitor"],
+				"description": "Create namespace in a cluster",
+				"tags": [
+					"Monitor"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -9342,7 +9368,9 @@
 										"description": "Namespace's name"
 									}
 								},
-								"required": ["name"],
+								"required": [
+									"name"
+								],
 								"type": "object"
 							}
 						}
@@ -9366,7 +9394,9 @@
 					}
 				},
 				"description": "List of K8S services",
-				"tags": ["Monitor"],
+				"tags": [
+					"Monitor"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -9393,6 +9423,108 @@
 						}
 					}
 				]
+			},
+			"post": {
+				"operationId": "CreateService",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "Create service in a namespace",
+				"tags": [
+					"Monitor"
+				],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "clusterShortName",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": false,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"spec": {
+										"properties": {
+											"selector": {
+												"properties": {
+													"app": {
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"ports": {
+												"items": {
+													"properties": {
+														"targetPort": {
+															"type": "number",
+															"format": "double"
+														},
+														"port": {
+															"type": "number",
+															"format": "double"
+														}
+													},
+													"type": "object"
+												},
+												"type": "array"
+											},
+											"type": {
+												"type": "string"
+											}
+										},
+										"type": "object",
+										"description": "Spec"
+									},
+									"labels": {
+										"properties": {},
+										"additionalProperties": {
+											"type": "string"
+										},
+										"type": "object",
+										"description": "Labels"
+									},
+									"namespace": {
+										"type": "string",
+										"default": "\"default\""
+									},
+									"name": {
+										"type": "string",
+										"description": "Namespace's name"
+									}
+								},
+								"required": [
+									"spec",
+									"name"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/monitor/ingresses": {
@@ -9411,7 +9543,9 @@
 					}
 				},
 				"description": "List of K8S Ingress",
-				"tags": ["Monitor"],
+				"tags": [
+					"Monitor"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -9456,7 +9590,9 @@
 					}
 				},
 				"description": "List of K8S Deployment",
-				"tags": ["Monitor"],
+				"tags": [
+					"Monitor"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -9501,7 +9637,9 @@
 					}
 				},
 				"description": "List of K8S Pod",
-				"tags": ["Monitor"],
+				"tags": [
+					"Monitor"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -9546,7 +9684,9 @@
 					}
 				},
 				"description": "List of K8S Secret",
-				"tags": ["Monitor"],
+				"tags": [
+					"Monitor"
+				],
 				"security": [
 					{
 						"api_key": []
@@ -13137,7 +13277,7 @@
 						}
 					}
 				},
-				"description": "Capture a webpage and export to PDF",
+				"description": "Export a webpage to PDF",
 				"tags": [
 					"Utility"
 				],
@@ -13186,7 +13326,7 @@
 						}
 					}
 				},
-				"description": "Capture a webpage and export to PDF",
+				"description": "Capture a webpage screenshot",
 				"tags": [
 					"Utility"
 				],
