@@ -96,23 +96,30 @@ const screenshot = async (url: string, options: ScreenshotOptions = defaultExpor
 	});
 	const page = await browser.newPage();
 
-	// disable cache...
-	await page.setCacheEnabled(false);
+	try {
+		// disable cache...
+		await page.setCacheEnabled(false);
 
-	await page.goto(url, {
-		waitUntil: "networkidle0",
-	});
+		await page.goto(url, {
+			waitUntil: "networkidle0",
+		});
 
-	const buffer = await page.screenshot(screenshotOptions);
+		const buffer = await page.screenshot(screenshotOptions);
 
-	await page.close();
-	await browser.close();
+		await page.close();
+		await browser.close();
 
-	if (!buffer) return;
+		if (!buffer) return;
 
-	// res.contentType("application/pdf");
-	// res.send(pdfBuffer);
-	return { name: fileName, url: fileUrl, path: filePath, buffer, mime: `image/${screenshotOptions.type}` };
+		// res.contentType("application/pdf");
+		// res.send(pdfBuffer);
+		return { name: fileName, url: fileUrl, path: filePath, buffer, mime: `image/${screenshotOptions.type}` };
+	} catch (e) {
+		throw new Error(`Unable to capture screenshot of "${url}": ${e}`);
+	} finally {
+		await page.close();
+		await browser.close();
+	}
 };
 
 export default screenshot;
