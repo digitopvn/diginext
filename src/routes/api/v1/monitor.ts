@@ -13,6 +13,7 @@ router
 	.use(authenticate, authorize)
 	.use(registerController(controller))
 	// namespaces, services, deployments,...
+	.get("/nodes", processApiRequest(controller.getNodes.bind(controller)))
 	.get("/namespaces", processApiRequest(controller.getNamespaces.bind(controller)))
 	.get("/services", processApiRequest(controller.getServices.bind(controller)))
 	.get("/ingresses", processApiRequest(controller.getIngresses.bind(controller)))
