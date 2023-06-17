@@ -82,7 +82,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const registrySlug = deployEnvironmentConfig.registry;
 
 	// let deploymentName = project + "-" + appSlug.toLowerCase();
-	let deploymentName = getDeploymentName(app);
+	let deploymentName = await getDeploymentName(app);
 
 	let nsName = deployEnvironmentConfig.namespace;
 	let ingName = deploymentName;
