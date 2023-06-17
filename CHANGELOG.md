@@ -1,3 +1,11 @@
+# [3.13.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.3...v3.13.0-prerelease.4) (2023-06-17)
+
+
+### Bug Fixes
+
+* **docker base:** enable chromium env for puppeteer to work ([a449dea](https://github.com/digitopvn/diginext/commit/a449deaf863062a8130885f2c28b3f79b0420cd9))
+* **docker base:** enable chromium env for puppeteer to work ([#231](https://github.com/digitopvn/diginext/issues/231)) ([62871ba](https://github.com/digitopvn/diginext/commit/62871badbe472365f6808b0d617605533471519b))
+
 # [3.13.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.2...v3.13.0-prerelease.3) (2023-06-16)
 
 
