@@ -62,7 +62,7 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	// Fallback support to the deprecated "main-app" name
 	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-	const mainAppName = getDeploymentName(app);
+	const mainAppName = await getDeploymentName(app);
 
 	// Clean up Prerelease YAML
 	const cleanUpCommands = [];
@@ -137,7 +137,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	const { slug: releaseSlug, cluster: clusterShortName, appSlug, projectSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
 
 	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
-	const mainAppName = getDeploymentName(app);
+	const mainAppName = await getDeploymentName(app);
 
 	log(`Preview the release: "${releaseSlug}" (${id})...`);
 	if (onUpdate) onUpdate(`Preview the release: "${releaseSlug}" (${id})...`);
@@ -235,7 +235,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	log(`Rolling out > app:`, app);
 
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-	const mainAppName = getDeploymentName(app);
+	const mainAppName = await getDeploymentName(app);
 	log(`Rolling out > mainAppName:`, mainAppName);
 
 	// authenticate cluster's provider & switch kubectl to that cluster:
