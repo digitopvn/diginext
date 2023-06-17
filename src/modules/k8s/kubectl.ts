@@ -2,7 +2,7 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import execa from "execa";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
-import { isEmpty } from "lodash";
+import { isEmpty, toInteger } from "lodash";
 import path from "path";
 
 import { CLI_DIR } from "@/config/const";
@@ -10,6 +10,7 @@ import type { ICluster } from "@/entities";
 import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { KubeIngressClass } from "@/interfaces/KubeIngressClass";
+import type { KubeNode } from "@/interfaces/KubeNode";
 import type { KubePod } from "@/interfaces/KubePod";
 import { execCmd } from "@/plugins";
 
@@ -75,6 +76,58 @@ export async function kubectlApplyContent(yamlContent: string, options: KubeComm
 	);
 	if (stdout) logSuccess(stdout);
 	return stdout;
+}
+
+/**
+ * Get all nodes of a cluster
+ */
+export async function getAllNodes(options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("get", "node");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		// get resource usage
+		const { stdout: usageStr } = execa.commandSync(`kubectl --context=${context} top node --no-headers=true`);
+		const usage = usageStr.split("\n").map((line) => {
+			const [name, cpu, cpuPercent, memory, memoryPercent] = line.trim().split(/\s+/);
+			const memoryCapacity = Math.round((toInteger(memory.replace(/Mi/, "")) / toInteger(memoryPercent.replace("%", ""))) * 100) + "Mi";
+			const cpuCapacity = Math.round((toInteger(cpu.replace(/m/, "")) / toInteger(cpuPercent.replace("%", ""))) * 100) + "m";
+			return {
+				name,
+				cpu,
+				cpuPercent,
+				cpuCapacity,
+				memory,
+				memoryPercent,
+				memoryCapacity,
+			};
+		});
+
+		const { stdout } = await execa("kubectl", args);
+		const nodes = (JSON.parse(stdout).items as KubeNode[]).map((node) => {
+			const nodeUsage = usage.find((n) => n.name === node.metadata.name);
+			if (nodeUsage) {
+				node.cpu = nodeUsage.cpu;
+				node.cpuPercent = nodeUsage.cpuPercent;
+				node.cpuCapacity = nodeUsage.cpuCapacity;
+				node.memory = nodeUsage.memory;
+				node.memoryPercent = nodeUsage.memoryPercent;
+				node.memoryCapacity = nodeUsage.memoryCapacity;
+			}
+			return node;
+		});
+		return nodes;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllNodes > Unable to get the list.`);
+		return [];
+	}
 }
 
 /**
