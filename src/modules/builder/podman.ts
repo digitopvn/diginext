@@ -123,9 +123,9 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 	stream.stdio.forEach((_stdio) => {
 		if (_stdio) {
 			_stdio.on("data", (data) => {
-				const logMsg: string = data.toString();
+				let logMsg: string = data.toString();
 				for (const skippedErr of skippedErrors) {
-					if (logMsg.indexOf(skippedErr) > -1) return;
+					if (logMsg.indexOf(skippedErr) > -1) logMsg = "";
 				}
 				if (onBuilding && logMsg) onBuilding(logMsg);
 			});
