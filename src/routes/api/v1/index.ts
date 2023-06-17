@@ -11,6 +11,7 @@ import deployRouter from "./deploy";
 import domainRouter from "./domain";
 import frameworkRouter from "./framework";
 import gitRouter from "./git";
+import monitorRouter from "./monitor";
 import projectRouter from "./project";
 import providerRouter from "./provider";
 import registryRouter from "./registry";
@@ -53,5 +54,6 @@ router.use("/deploy", deployRouter);
 router.use("/domain", domainRouter);
 router.use("/route", routeRouter);
 router.use("/utility", utilityRouter);
+router.use("/monitor", monitorRouter);
 
 export default router;

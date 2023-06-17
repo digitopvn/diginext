@@ -24,6 +24,5 @@ export const respondFailure = (params: { data?: any; msg?: string } | string | s
 
 export const respondSuccess = (params: { data?: any; msg?: string | string[] } & IResponsePagination) => {
 	const { msg = "Ok.", data, ...pagination } = params;
-
 	return { status: 1, data, messages: isArray(msg) ? msg : [msg], ...pagination } as ResponseData & IResponsePagination;
 };
