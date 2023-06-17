@@ -160,4 +160,14 @@ export interface KubePod {
 		qosClass?: string;
 		startTime?: string;
 	};
+	// extras
+	clusterShortName?: string;
+	/**
+	 * Cluster ID
+	 */
+	cluster?: string;
+	/**
+	 * Workspace ID
+	 */
+	workspace?: string;
 }

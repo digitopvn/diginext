@@ -15,4 +15,14 @@ export interface KubeNamespace {
 	status?: {
 		phase?: string;
 	};
+	// extras
+	clusterShortName?: string;
+	/**
+	 * Cluster ID
+	 */
+	cluster?: string;
+	/**
+	 * Workspace ID
+	 */
+	workspace?: string;
 }

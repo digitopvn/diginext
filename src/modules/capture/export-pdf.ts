@@ -100,31 +100,38 @@ const exportPdf = async (url: string, options: ExportPDFOptions = defaultExportP
 	});
 	const page = await browser.newPage();
 
-	// disable cache...
-	await page.setCacheEnabled(false);
+	try {
+		// disable cache...
+		await page.setCacheEnabled(false);
 
-	await page.goto(url, {
-		waitUntil: "networkidle0",
-	});
+		await page.goto(url, {
+			waitUntil: "networkidle0",
+		});
 
-	const pdfBuffer = await page.pdf({
-		printBackground: _options.printBackground,
-		path: _options.path,
-		format: _options.format,
-		scale: _options.scale,
-		margin: _options.margin,
-		displayHeaderFooter: _options.displayHeaderFooter,
-		omitBackground: _options.omitBackground,
-	});
+		const pdfBuffer = await page.pdf({
+			printBackground: _options.printBackground,
+			path: _options.path,
+			format: _options.format,
+			scale: _options.scale,
+			margin: _options.margin,
+			displayHeaderFooter: _options.displayHeaderFooter,
+			omitBackground: _options.omitBackground,
+		});
 
-	await page.close();
-	await browser.close();
+		await page.close();
+		await browser.close();
 
-	if (!pdfBuffer) return;
+		if (!pdfBuffer) return;
 
-	// res.contentType("application/pdf");
-	// res.send(pdfBuffer);
-	return { name: fileName, path: filePath, url: fileUrl, buffer: pdfBuffer, mime: "application/pdf" };
+		// res.contentType("application/pdf");
+		// res.send(pdfBuffer);
+		return { name: fileName, path: filePath, url: fileUrl, buffer: pdfBuffer, mime: "application/pdf" };
+	} catch (e) {
+		throw new Error(`Unable to export PDF of "${url}": ${e}`);
+	} finally {
+		await page.close();
+		await browser.close();
+	}
 };
 
 export default exportPdf;

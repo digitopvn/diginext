@@ -20,4 +20,14 @@ export interface KubeRegistrySecret {
 	data?: {
 		[".dockerconfigjson"]?: string;
 	};
+	// extras
+	clusterShortName?: string;
+	/**
+	 * Cluster ID
+	 */
+	cluster?: string;
+	/**
+	 * Workspace ID
+	 */
+	workspace?: string;
 }

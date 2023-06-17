@@ -11,7 +11,7 @@ import BaseController from "./BaseController";
 @Route("utility")
 export default class UtilityController extends BaseController {
 	/**
-	 * Capture a webpage and export to PDF
+	 * Export a webpage to PDF
 	 */
 	@Security("api_key")
 	@Security("jwt")
@@ -36,7 +36,7 @@ export default class UtilityController extends BaseController {
 	}
 
 	/**
-	 * Capture a webpage and export to PDF
+	 * Capture a webpage screenshot
 	 */
 	@Security("api_key")
 	@Security("jwt")
