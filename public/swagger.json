@@ -3509,6 +3509,28 @@
 					"workspace": {
 						"type": "string",
 						"description": "Workspace ID"
+					},
+					"cpuAvg": {
+						"type": "string",
+						"description": "Usage"
+					},
+					"cpuCapacity": {
+						"type": "string"
+					},
+					"cpuRecommend": {
+						"type": "string"
+					},
+					"memoryAvg": {
+						"type": "string"
+					},
+					"memoryCapacity": {
+						"type": "string"
+					},
+					"memoryRecommend": {
+						"type": "string"
+					},
+					"size": {
+						"$ref": "#/components/schemas/ResourceQuotaSize"
 					}
 				},
 				"type": "object",
@@ -5057,7 +5079,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "3.13.0-prerelease.6",
+		"version": "3.13.0-prerelease.7",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
