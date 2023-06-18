@@ -222,7 +222,8 @@ export async function processCLI(options?: InputOptions) {
 			await freeUp();
 			return;
 
-		case "clone":
+		case "tf":
+		case "transfer":
 			await cliAuthenticate(options);
 
 			await cloneRepo(options);

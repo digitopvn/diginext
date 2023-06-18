@@ -2,7 +2,7 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import execa from "execa";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
-import { isEmpty } from "lodash";
+import { isEmpty, round, toInteger } from "lodash";
 import path from "path";
 
 import { CLI_DIR } from "@/config/const";
@@ -10,6 +10,7 @@ import type { ICluster } from "@/entities";
 import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { KubeIngressClass } from "@/interfaces/KubeIngressClass";
+import type { KubeNode } from "@/interfaces/KubeNode";
 import type { KubePod } from "@/interfaces/KubePod";
 import { execCmd } from "@/plugins";
 
@@ -75,6 +76,69 @@ export async function kubectlApplyContent(yamlContent: string, options: KubeComm
 	);
 	if (stdout) logSuccess(stdout);
 	return stdout;
+}
+
+/**
+ * Get all nodes of a cluster
+ */
+export async function getAllNodes(options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("get", "node");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		// get resource usage
+		const { stdout: usageStr } = execa.commandSync(`kubectl --context=${context} top node --no-headers=true`);
+		const usage = usageStr.split("\n").map((line) => {
+			const [name, cpu, cpuPercent, memory, memoryPercent] = line.trim().split(/\s+/);
+			const memoryCapacity = Math.round((toInteger(memory.replace(/Mi/, "")) / toInteger(memoryPercent.replace("%", ""))) * 100) + "Mi";
+			const cpuCapacity = Math.round((toInteger(cpu.replace(/m/, "")) / toInteger(cpuPercent.replace("%", ""))) * 100) + "m";
+			return {
+				name,
+				cpu,
+				cpuPercent,
+				cpuCapacity,
+				memory,
+				memoryPercent,
+				memoryCapacity,
+			};
+		});
+
+		const { stdout } = await execa("kubectl", args);
+		const nodes = (JSON.parse(stdout).items as KubeNode[]).map((node) => {
+			// get pod count
+			try {
+				const { stdout: podRes } = execa.commandSync(
+					`kubectl --context=${context} get pods --field-selector spec.nodeName=${node.metadata.name} -A -o json`
+				);
+				const pods = JSON.parse(podRes).items;
+				node.podCount = pods.length;
+			} catch (e) {
+				node.podCount = 0;
+			}
+			// usage
+			const nodeUsage = usage.find((n) => n.name === node.metadata.name);
+			if (nodeUsage) {
+				node.cpu = nodeUsage.cpu;
+				node.cpuPercent = nodeUsage.cpuPercent;
+				node.cpuCapacity = nodeUsage.cpuCapacity;
+				node.memory = nodeUsage.memory;
+				node.memoryPercent = nodeUsage.memoryPercent;
+				node.memoryCapacity = nodeUsage.memoryCapacity;
+			}
+			return node;
+		});
+		return nodes;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllNodes > Unable to get the list.`);
+		return [];
+	}
 }
 
 /**
@@ -154,7 +218,7 @@ export async function isNamespaceExisted(namespace: string, options: KubeCommand
 /**
  * Get all secrets of a namespace
  */
-export async function getAllSecrets(namespace: string = "default", options: KubeCommandOptions = {}) {
+export async function getSecrets(namespace: string = "default", options: KubeCommandOptions = {}) {
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const stdout = await execCmd(
@@ -168,10 +232,26 @@ export async function getAllSecrets(namespace: string = "default", options: Kube
 }
 
 /**
+ * Get all secrets of a cluster
+ */
+export async function getAllSecrets(options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+	try {
+		const stdout = await execCmd(
+			`kubectl ${context ? `--context=${context} ` : ""}get secret ${filterLabel ? `-l ${filterLabel} ` : ""}-A -o json`
+		);
+		return JSON.parse(stdout).items as KubeSecret[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllSecrets >`, e);
+		return [];
+	}
+}
+
+/**
  * Check whether this secret was existed in the namespace
  */
 export async function isSecretExisted(name: string, namespace: string = "default", options: KubeCommandOptions = {}) {
-	const allSecrets = await getAllSecrets(namespace, options);
+	const allSecrets = await getSecrets(namespace, options);
 	if (isEmpty(allSecrets)) return false;
 	return typeof allSecrets.find((ns) => ns.metadata.name === name) !== "undefined";
 }
@@ -214,6 +294,9 @@ export async function deleteSecretsByFilter(namespace = "default", options: Kube
 	}
 }
 
+/**
+ * Get all ingresses of a cluster
+ */
 export async function getAllIngresses(options: KubeGenericOptions = {}) {
 	const { context, skipOnError } = options;
 
@@ -261,10 +344,35 @@ export async function getIngress(name, namespace = "default", options: KubeGener
 		args.push("-o", "json");
 
 		const { stdout } = await execa("kubectl", args);
-		return JSON.parse(stdout);
+		return JSON.parse(stdout) as KubeIngress;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getIngress >`, e);
 		return;
+	}
+}
+
+/**
+ * Get ingress list of a namespace
+ * @param namespace
+ */
+export async function getIngresses(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "get", "ing");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout).items as KubeIngress[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getIngress >`, e);
+		return [];
 	}
 }
 
@@ -507,7 +615,48 @@ export async function getDeploys(namespace = "default", options: KubeCommandOpti
 
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
-		return items as KubeDeployment[];
+		const deploys = items as KubeDeployment[];
+
+		// get pods usage
+		const { stdout: usageStr } = execa.commandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`);
+		const podUsages = usageStr.split("\n").map((line) => {
+			const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+			const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+			const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+			return { namespace: ns, name, cpu, memory, cpuInt, memInt };
+		});
+
+		return deploys.map((deploy) => {
+			// resource usage average
+			const cpuAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.cpuInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.cpuAvg = `${round(cpuAvg)}m`;
+
+			const memAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.memInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.memoryAvg = `${round(memAvg)}Mi`;
+
+			if (deploy.cpuAvg === "NaNm") deploy.cpuAvg = "";
+			if (deploy.memoryAvg === "NaNMi") deploy.memoryAvg = "";
+
+			// resource usage recommend
+			deploy.cpuRecommend = (deploy.cpuAvg ? toInteger(deploy.cpuAvg.replace("m", "")) : 0) * 1.5 + "m";
+			deploy.memoryRecommend = (deploy.memoryAvg ? toInteger(deploy.memoryAvg.replace("Mi", "")) : 0) * 1.5 + "Mi";
+
+			// resource usage capacity
+			deploy.cpuCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.cpu !== "undefined")?.resources?.limits?.cpu || "";
+
+			deploy.memoryCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.memory !== "undefined")?.resources?.limits
+					?.memory || "";
+
+			return deploy;
+		});
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getDeploys >`, e);
 		return [];
@@ -531,7 +680,47 @@ export async function getAllDeploys(options: KubeCommandOptions = {}) {
 
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
-		return items as KubeDeployment[];
+
+		// get pods usage
+		const { stdout: usageStr } = execa.commandSync(`kubectl --context=${context} top pod --no-headers=true -A`);
+		const podUsages = usageStr.split("\n").map((line) => {
+			const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+			const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+			const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+			return { namespace: ns, name, cpu, memory, cpuInt, memInt };
+		});
+
+		return (items as KubeDeployment[]).map((deploy) => {
+			// resource usage average
+			const cpuAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.cpuInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.cpuAvg = `${round(cpuAvg)}m`;
+
+			const memAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.memInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.memoryAvg = `${round(memAvg)}Mi`;
+
+			if (deploy.cpuAvg === "NaNm") deploy.cpuAvg = "";
+			if (deploy.memoryAvg === "NaNMi") deploy.memoryAvg = "";
+
+			// resource usage recommend
+			deploy.cpuRecommend = (deploy.cpuAvg ? toInteger(deploy.cpuAvg.replace("m", "")) : 0) * 1.5 + "m";
+			deploy.memoryRecommend = (deploy.memoryAvg ? toInteger(deploy.memoryAvg.replace("Mi", "")) : 0) * 1.5 + "Mi";
+
+			// resource usage capacity
+			deploy.cpuCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.cpu !== "undefined")?.resources?.limits?.cpu || "";
+
+			deploy.memoryCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.memory !== "undefined")?.resources?.limits
+					?.memory || "";
+
+			return deploy;
+		});
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllDeploys >`, e);
 		return [];
@@ -565,8 +754,8 @@ export async function getService(name, namespace = "default", options: KubeGener
  * @param namespace @default "default"
  * @param labelFilter Filter by labels @example "phase!=prerelease,app=abc-xyz"
  */
-export async function getAllServices(namespace = "default", labelFilter = "", options: KubeCommandOptions = {}) {
-	const { context, skipOnError } = options;
+export async function getServices(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
 
 	try {
 		const args = [];
@@ -574,8 +763,35 @@ export async function getAllServices(namespace = "default", labelFilter = "", op
 
 		args.push("-n", namespace, "get", "svc");
 
-		if (labelFilter) args.push("-l", labelFilter);
+		if (filterLabel) args.push("-l", filterLabel);
 
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		return items as KubeService[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllServices >`, e);
+		return [];
+	}
+}
+
+/**
+ * Get all services in a cluster
+ * @param labelFilter Filter by labels @example "phase!=prerelease,app=abc-xyz"
+ */
+export async function getAllServices(options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("get", "svc");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-A");
 		args.push("-o", "json");
 
 		const { stdout } = await execa("kubectl", args);
@@ -651,7 +867,7 @@ export async function getPod(name, namespace = "default", options: KubeGenericOp
  * Get pods in a namespace
  * @param namespace @default "default"
  */
-export async function getAllPods(namespace = "default", options: KubeCommandOptions = {}) {
+export async function getPods(namespace = "default", options: KubeCommandOptions = {}) {
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -665,14 +881,70 @@ export async function getAllPods(namespace = "default", options: KubeCommandOpti
 
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
-		return items as KubePod[];
+
+		// get resource usage
+		const { stdout: usageStr } = execa.commandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`);
+		const usage = usageStr.split("\n").map((line) => {
+			const [ns, name, cpu, memory] = line.trim().split(/\s+/);
+			return { namespace: ns, name, cpu, memory };
+		});
+
+		return (items as KubePod[]).map((item) => {
+			// usage
+			const _usage = usage.find((n) => n.name === item.metadata.name);
+			if (_usage) {
+				item.cpu = _usage.cpu;
+				item.memory = _usage.memory;
+			}
+			return item;
+		});
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getPods >`, e);
+		return [];
+	}
+}
+
+/**
+ * Get all pods in a cluster
+ */
+export async function getAllPods(options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("get", "pod");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-A", "-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+
+		// get resource usage
+		const { stdout: usageStr } = execa.commandSync(`kubectl --context=${context} top pod --no-headers=true -A`);
+		const usage = usageStr.split("\n").map((line) => {
+			const [ns, name, cpu, memory] = line.trim().split(/\s+/);
+			return { namespace: ns, name, cpu, memory };
+		});
+		// console.log("usage :>> ", usage);
+		return (items as KubePod[]).map((item) => {
+			// usage
+			const _usage = usage.find((n) => n.name === item.metadata.name);
+			if (_usage) {
+				item.cpu = _usage.cpu;
+				item.memory = _usage.memory;
+			}
+			return item;
+		});
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
 		return [];
 	}
 }
 
-export const getPodsByFilter = getAllPods;
+export const getPodsByFilter = getPods;
 
 export async function logPod(
 	name,

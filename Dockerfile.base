@@ -8,7 +8,7 @@ USER root
 RUN apt-get update && apt-get install -y curl wget git sed jq openssh-client
 
 # Upgrade Node.js to version 16.x
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
 
 # Install GCLOUD CLI / SDK
@@ -17,13 +17,31 @@ RUN apt-get install -y apt-transport-https ca-certificates gnupg lsb-release && 
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - && \
     apt-get update && apt-get install -y google-cloud-sdk
 
+# Install Kubernetes Gcloud Authentication plugin
+RUN apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
+
+# Install "chromium" for Puppeteer
+ENV CHROMIUM_PATH /usr/bin/chromium
+RUN apt-get update && \
+    apt-get install -y chromium && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
+# Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer
+# installs, work.
+# RUN apt-get update \
+#     && apt-get install -y wget gnupg \
+#     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+#     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+#     && apt-get update \
+#     && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
+#     --no-install-recommends \
+#     && rm -rf /var/lib/apt/lists/*
+
 # Install KUBECTL
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
     chmod +x kubectl && \
     mv ./kubectl /usr/bin/kubectl
-
-# Install Kubernetes Gcloud Authentication plugin
-RUN apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
 # Install Helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
@@ -53,10 +71,10 @@ RUN npm install -g pnpm
 
 # Copy docker buildx
 COPY --from=docker/buildx-bin /buildx /usr/local/bin/docker-buildx
-
 # Set permissions for the binary
 RUN chmod +x /usr/local/bin/docker-buildx
 
+# plugin to set environment variable
 COPY ./scripts/set_env /usr/bin/set_env
 RUN chmod +x /usr/bin/set_env
 

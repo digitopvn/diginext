@@ -409,7 +409,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		if (app.deployEnvironment)
@@ -689,7 +689,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
 		if (!deployEnvironmentData.buildNumber) respondFailure({ msg: `Build number (image's tag) is required.` });
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		const { buildNumber } = deployEnvironmentData;
@@ -1106,7 +1106,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// check if the environment is existed
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		const deployEnvironment = (app.deployEnvironment || {})[env.toString()];
@@ -1219,7 +1219,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne({ ...this.filter, slug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		const deployEnvironment = app.deployEnvironment[env];
@@ -1341,7 +1341,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		envVar = isJSON(envVar) ? (JSON.parse(envVar as unknown as string) as KubeEnvironmentVariable) : isArray(envVar) ? envVar : undefined;
@@ -1448,7 +1448,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (isEmpty(app.deployEnvironment[env]))
 			return { status: 0, messages: [`This deploy environment (${env}) of "${slug}" app doesn't have any environment variables.`] };
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 		const envVars = app.deployEnvironment[env].envVars;
 		const deployEnvironment = app.deployEnvironment[env];
@@ -1536,7 +1536,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		// validate domain
