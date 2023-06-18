@@ -2,7 +2,7 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import execa from "execa";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
-import { isEmpty, toInteger } from "lodash";
+import { isEmpty, round, toInteger } from "lodash";
 import path from "path";
 
 import { CLI_DIR } from "@/config/const";
@@ -615,7 +615,48 @@ export async function getDeploys(namespace = "default", options: KubeCommandOpti
 
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
-		return items as KubeDeployment[];
+		const deploys = items as KubeDeployment[];
+
+		// get pods usage
+		const { stdout: usageStr } = execa.commandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`);
+		const podUsages = usageStr.split("\n").map((line) => {
+			const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+			const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+			const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+			return { namespace: ns, name, cpu, memory, cpuInt, memInt };
+		});
+
+		return deploys.map((deploy) => {
+			// resource usage average
+			const cpuAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.cpuInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.cpuAvg = `${round(cpuAvg)}m`;
+
+			const memAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.memInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.memoryAvg = `${round(memAvg)}Mi`;
+
+			if (deploy.cpuAvg === "NaNm") deploy.cpuAvg = "";
+			if (deploy.memoryAvg === "NaNMi") deploy.memoryAvg = "";
+
+			// resource usage recommend
+			deploy.cpuRecommend = (deploy.cpuAvg ? toInteger(deploy.cpuAvg.replace("m", "")) : 0) * 1.5 + "m";
+			deploy.memoryRecommend = (deploy.memoryAvg ? toInteger(deploy.memoryAvg.replace("Mi", "")) : 0) * 1.5 + "Mi";
+
+			// resource usage capacity
+			deploy.cpuCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.cpu !== "undefined")?.resources?.limits?.cpu || "";
+
+			deploy.memoryCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.memory !== "undefined")?.resources?.limits
+					?.memory || "";
+
+			return deploy;
+		});
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getDeploys >`, e);
 		return [];
@@ -639,7 +680,47 @@ export async function getAllDeploys(options: KubeCommandOptions = {}) {
 
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
-		return items as KubeDeployment[];
+
+		// get pods usage
+		const { stdout: usageStr } = execa.commandSync(`kubectl --context=${context} top pod --no-headers=true -A`);
+		const podUsages = usageStr.split("\n").map((line) => {
+			const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+			const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+			const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+			return { namespace: ns, name, cpu, memory, cpuInt, memInt };
+		});
+
+		return (items as KubeDeployment[]).map((deploy) => {
+			// resource usage average
+			const cpuAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.cpuInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.cpuAvg = `${round(cpuAvg)}m`;
+
+			const memAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.memInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.memoryAvg = `${round(memAvg)}Mi`;
+
+			if (deploy.cpuAvg === "NaNm") deploy.cpuAvg = "";
+			if (deploy.memoryAvg === "NaNMi") deploy.memoryAvg = "";
+
+			// resource usage recommend
+			deploy.cpuRecommend = (deploy.cpuAvg ? toInteger(deploy.cpuAvg.replace("m", "")) : 0) * 1.5 + "m";
+			deploy.memoryRecommend = (deploy.memoryAvg ? toInteger(deploy.memoryAvg.replace("Mi", "")) : 0) * 1.5 + "Mi";
+
+			// resource usage capacity
+			deploy.cpuCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.cpu !== "undefined")?.resources?.limits?.cpu || "";
+
+			deploy.memoryCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.memory !== "undefined")?.resources?.limits
+					?.memory || "";
+
+			return deploy;
+		});
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllDeploys >`, e);
 		return [];
@@ -800,7 +881,23 @@ export async function getPods(namespace = "default", options: KubeCommandOptions
 
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
-		return items as KubePod[];
+
+		// get resource usage
+		const { stdout: usageStr } = execa.commandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`);
+		const usage = usageStr.split("\n").map((line) => {
+			const [ns, name, cpu, memory] = line.trim().split(/\s+/);
+			return { namespace: ns, name, cpu, memory };
+		});
+
+		return (items as KubePod[]).map((item) => {
+			// usage
+			const _usage = usage.find((n) => n.name === item.metadata.name);
+			if (_usage) {
+				item.cpu = _usage.cpu;
+				item.memory = _usage.memory;
+			}
+			return item;
+		});
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getPods >`, e);
 		return [];
@@ -824,7 +921,23 @@ export async function getAllPods(options: KubeCommandOptions = {}) {
 
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
-		return items as KubePod[];
+
+		// get resource usage
+		const { stdout: usageStr } = execa.commandSync(`kubectl --context=${context} top pod --no-headers=true -A`);
+		const usage = usageStr.split("\n").map((line) => {
+			const [ns, name, cpu, memory] = line.trim().split(/\s+/);
+			return { namespace: ns, name, cpu, memory };
+		});
+		// console.log("usage :>> ", usage);
+		return (items as KubePod[]).map((item) => {
+			// usage
+			const _usage = usage.find((n) => n.name === item.metadata.name);
+			if (_usage) {
+				item.cpu = _usage.cpu;
+				item.memory = _usage.memory;
+			}
+			return item;
+		});
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
 		return [];

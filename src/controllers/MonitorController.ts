@@ -377,15 +377,15 @@ export default class MonitorController extends BaseController {
 					const { contextName: context } = cluster;
 					if (!context) return [] as KubePod[];
 
-					let nsList = namespace ? await ClusterManager.getPods(namespace, { context }) : await ClusterManager.getAllPods({ context });
+					let list = namespace ? await ClusterManager.getPods(namespace, { context }) : await ClusterManager.getAllPods({ context });
 
-					nsList = nsList.map((ns) => {
+					list = list.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
 						ns.clusterShortName = cluster.shortName;
 						ns.cluster = MongoDB.toString(cluster._id);
 						return ns;
 					});
-					return nsList;
+					return list;
 				})
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
