@@ -1,3 +1,16 @@
+# [3.13.0-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.5...v3.13.0-prerelease.6) (2023-06-17)
+
+
+### Bug Fixes
+
+* **server,api:** show correct screenshot to deploy env ([addb386](https://github.com/digitopvn/diginext/commit/addb386b6179bb7781195c3f7b6d03a6a22aa5b0))
+
+
+### Features
+
+* **server,api:** list all nodes each cluster ([dcb5b2d](https://github.com/digitopvn/diginext/commit/dcb5b2d797c03c63775c0f50a3348687d2f1a97d))
+* **server,api:** list all nodes each cluster ([#233](https://github.com/digitopvn/diginext/issues/233)) ([76ee324](https://github.com/digitopvn/diginext/commit/76ee324321da310acc4179e49e81b87659b0a20e))
+
 # [3.13.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.4...v3.13.0-prerelease.5) (2023-06-17)
 
 
