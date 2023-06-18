@@ -1,3 +1,10 @@
+# [3.13.0-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.6...v3.13.0-prerelease.7) (2023-06-18)
+
+
+### Features
+
+* **server,api:** add ingress, deployment, pod, service monitoring ([6bfff68](https://github.com/digitopvn/diginext/commit/6bfff68e6005a8107c65c77482b8432f1a856fd4))
+
 # [3.13.0-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.5...v3.13.0-prerelease.6) (2023-06-17)
 
 
