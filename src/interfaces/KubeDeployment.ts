@@ -1,4 +1,5 @@
 import type { IResourceQuota } from "./IKube";
+import type { ResourceQuotaSize } from "./SystemTypes";
 
 export interface KubeDeployment {
 	apiVersion?: string;
@@ -63,4 +64,14 @@ export interface KubeDeployment {
 	 * Workspace ID
 	 */
 	workspace?: string;
+	/**
+	 * Usage
+	 */
+	cpuAvg?: string;
+	cpuCapacity?: string;
+	cpuRecommend?: string;
+	memoryAvg?: string;
+	memoryCapacity?: string;
+	memoryRecommend?: string;
+	size?: ResourceQuotaSize;
 }
