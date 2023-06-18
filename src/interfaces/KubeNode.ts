@@ -107,4 +107,5 @@ export interface KubeNode {
 	memory?: string;
 	memoryPercent?: string;
 	memoryCapacity?: string;
+	podCount?: number;
 }

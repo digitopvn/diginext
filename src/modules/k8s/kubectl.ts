@@ -112,6 +112,17 @@ export async function getAllNodes(options: KubeCommandOptions = {}) {
 
 		const { stdout } = await execa("kubectl", args);
 		const nodes = (JSON.parse(stdout).items as KubeNode[]).map((node) => {
+			// get pod count
+			try {
+				const { stdout: podRes } = execa.commandSync(
+					`kubectl --context=${context} get pods --field-selector spec.nodeName=${node.metadata.name} -A -o json`
+				);
+				const pods = JSON.parse(podRes).items;
+				node.podCount = pods.length;
+			} catch (e) {
+				node.podCount = 0;
+			}
+			// usage
 			const nodeUsage = usage.find((n) => n.name === node.metadata.name);
 			if (nodeUsage) {
 				node.cpu = nodeUsage.cpu;
