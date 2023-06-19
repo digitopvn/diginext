@@ -1,4 +1,4 @@
-import { logError, logSuccess } from "diginext-utils/dist/console/log";
+import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty, trimEnd } from "lodash";
 import open from "open";

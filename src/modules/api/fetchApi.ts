@@ -1,6 +1,6 @@
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
-import { logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/xconsole/log";
 const Agent = require("agentkeepalive");
 const HttpsAgent = require("agentkeepalive").HttpsAgent;
 

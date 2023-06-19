@@ -1,4 +1,4 @@
-import { log } from "diginext-utils/dist/console/log";
+import { log } from "diginext-utils/dist/xconsole/log";
 import yaml from "js-yaml";
 
 import { Config } from "@/app.config";

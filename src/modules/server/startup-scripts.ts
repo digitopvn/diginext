@@ -1,4 +1,4 @@
-import { log, logSuccess } from "diginext-utils/dist/console/log";
+import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import { isEmpty } from "lodash";
 import cronjob from "node-cron";
@@ -55,8 +55,8 @@ export async function startupScripts() {
 	if (!isDevMode) {
 		// <-- to make sure it won't override your GIT config when developing Diginext
 		execCmd(`git init`);
-		execCmd(`git config --location=global user.email server@diginext.site`);
-		execCmd(`git config --location=global --add user.name Diginext`);
+		execCmd(`git config --global user.email server@diginext.site`);
+		execCmd(`git config --global --add user.name Diginext`);
 	}
 
 	// seed system initial data: Cloud Providers

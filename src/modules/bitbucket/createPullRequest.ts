@@ -1,6 +1,6 @@
 import chalk from "chalk";
 // import { auth } from "./index.js";
-import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import type { SimpleGit } from "simple-git";
 import { simpleGit } from "simple-git";
 

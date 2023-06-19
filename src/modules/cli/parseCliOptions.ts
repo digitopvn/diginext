@@ -1,12 +1,12 @@
 import chalk from "chalk";
-import { log, logWarn } from "diginext-utils/dist/console/log";
+import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
 import type { IApp, IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType, ResourceQuotaSize } from "@/interfaces/SystemTypes";
-import { checkForUpdate, currentVersion, getLatestCliVersion } from "@/plugins";
+import { currentVersion, getLatestCliVersion, shouldNotifyCliUpdate } from "@/plugins";
 
 const cliHeader =
 	chalk.bold.underline.green(`Diginext CLI USAGE - VERSION ${pkg.version}`.toUpperCase()) +
@@ -188,7 +188,7 @@ const kubectlOptions = {
 
 export async function parseCliOptions() {
 	// check for new version
-	const shouldUpdateCLI = await checkForUpdate();
+	const shouldUpdateCLI = await shouldNotifyCliUpdate();
 
 	if (shouldUpdateCLI) {
 		const latestVersion = await getLatestCliVersion();
@@ -232,8 +232,8 @@ export async function parseCliOptions() {
 		.usage("$0 update <version>", "Update your CLI to specific version")
 		// command: new
 		.command("new", "Create new project & application", newProjectOptions)
-		// command: clone
-		.command("clone", "Clone repo from bitbucket to github", newProjectOptions)
+		// command: transfer
+		.command(["transfer", "tf"], "Tranfer repo from other provider", newProjectOptions)
 		// command: init
 		.command("init", "Initialize CLI in the current project directory")
 		// command: upgrade
@@ -446,8 +446,6 @@ export async function parseCliOptions() {
 		.wrap(yargs.terminalWidth())
 		// copyright
 		.epilog("Copyright by TOP GROUP VIETNAM © 2023").argv;
-
-	// log(`argv >>`, argv);
 
 	const options: InputOptions = {
 		// always attach current version to input options

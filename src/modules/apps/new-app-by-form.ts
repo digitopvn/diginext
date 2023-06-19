@@ -1,4 +1,4 @@
-import { log, logError } from "diginext-utils/dist/console/log";
+import { log, logError } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty, upperFirst } from "lodash";
 
@@ -16,9 +16,19 @@ import type { GitRepository, GitRepositoryDto } from "../git/git-provider-api";
 import { createOrSelectProject } from "./create-or-select-project";
 import { updateAppConfig } from "./update-config";
 
-export async function createAppByForm(options?: InputOptions) {
+export async function createAppByForm(
+	options?: InputOptions & {
+		/**
+		 * Skip selecting framework step
+		 * @default false
+		 */
+		skipFramework?: boolean;
+	}
+) {
 	if (!options.project) options.project = await createOrSelectProject(options);
 	// console.log("options.project :>> ", options.project);
+
+	const { skipFramework = false } = options;
 
 	if (!options.name) {
 		const { name } = await inquirer.prompt({
@@ -26,10 +36,10 @@ export async function createAppByForm(options?: InputOptions) {
 			name: "name",
 			message: "Enter your app name:",
 			validate: function (value) {
-				if (value.length > 3) {
+				if (value.length >= 3) {
 					return true;
 				} else {
-					return "App name is required & has more than 3 characters.";
+					return "App name is required & has at least 3 characters.";
 				}
 			},
 		});
@@ -42,6 +52,9 @@ export async function createAppByForm(options?: InputOptions) {
 
 	const noneFramework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
 	let curFramework = noneFramework;
+	// can skip selecting framework if wanted (eg. when deploy existing app)
+	if (skipFramework) options.framework = curFramework = noneFramework;
+
 	if (!options.framework) {
 		const frameworks = await DB.find<IFramework>("framework", {});
 

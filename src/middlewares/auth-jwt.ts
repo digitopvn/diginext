@@ -1,4 +1,4 @@
-// import { log } from "diginext-utils/dist/console/log";
+// import { log } from "diginext-utils/dist/xconsole/log";
 import { Response } from "diginext-utils/dist/response";
 import passport from "passport";
 

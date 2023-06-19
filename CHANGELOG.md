@@ -1,3 +1,141 @@
+## [3.13.1](https://github.com/digitopvn/diginext/compare/v3.13.0...v3.13.1) (2023-06-19)
+
+
+### Bug Fixes
+
+* **dashboard:** optimize responsive table for all pages ([e90cb00](https://github.com/digitopvn/diginext/commit/e90cb00ac4c7dfbbcd99d3119fbfbae763835518))
+
+# [3.13.0](https://github.com/digitopvn/diginext/compare/v3.12.0...v3.13.0) (2023-06-18)
+
+
+### Bug Fixes
+
+* **cli:** correct notify cli version update ([697eb8b](https://github.com/digitopvn/diginext/commit/697eb8bc8974d20a5a0f019dce2377c345672e59))
+* **cli:** empty arr of create select project,app when deploying ([d7a5088](https://github.com/digitopvn/diginext/commit/d7a50889ee44b3c978648715c7d1d337460f4ad7))
+* **client:** change command name 'clone' to 'transfer' or 'tf' ([963a31b](https://github.com/digitopvn/diginext/commit/963a31bb5322b0476158a9d565ee5e44acd22120))
+* **docker base:** enable chromium env for puppeteer to work ([a449dea](https://github.com/digitopvn/diginext/commit/a449deaf863062a8130885f2c28b3f79b0420cd9))
+* **docker base:** enable chromium env for puppeteer to work ([#231](https://github.com/digitopvn/diginext/issues/231)) ([62871ba](https://github.com/digitopvn/diginext/commit/62871badbe472365f6808b0d617605533471519b))
+* **server,api:** show correct screenshot to deploy env ([addb386](https://github.com/digitopvn/diginext/commit/addb386b6179bb7781195c3f7b6d03a6a22aa5b0))
+* **server,cli:** skip select framework, build logs, auth registry on push ([4b0bcba](https://github.com/digitopvn/diginext/commit/4b0bcba2e40f683a4db7dba8ca1238a7a16ad080))
+* **server:** add finally to export pdf and screenshot for optimize ([3b76bbb](https://github.com/digitopvn/diginext/commit/3b76bbbd7936dd81f43359181b2fd82ca718fefa))
+* **server:** app service find workloads based on main-app label ([2e652b7](https://github.com/digitopvn/diginext/commit/2e652b7f1fa8bd2c288367a914312f16b61763b1))
+* **server:** incorrect app deploy environment status ([7b056d4](https://github.com/digitopvn/diginext/commit/7b056d4b7083e994696cbee4f4d94c23fdad9c74))
+
+
+### Features
+
+* **server,api:** add ingress, deployment, pod, service monitoring ([6bfff68](https://github.com/digitopvn/diginext/commit/6bfff68e6005a8107c65c77482b8432f1a856fd4))
+* **server,api:** add namespace monitoring page ([a995e40](https://github.com/digitopvn/diginext/commit/a995e4063c9cd0937f3d72be5a225149cca0e7d7))
+* **server,api:** add namespace monitoring page ([#232](https://github.com/digitopvn/diginext/issues/232)) ([6e0707a](https://github.com/digitopvn/diginext/commit/6e0707ad233703e18c85701026b3bd1e084e1960))
+* **server,api:** list all nodes each cluster ([dcb5b2d](https://github.com/digitopvn/diginext/commit/dcb5b2d797c03c63775c0f50a3348687d2f1a97d))
+* **server,api:** list all nodes each cluster ([#233](https://github.com/digitopvn/diginext/issues/233)) ([76ee324](https://github.com/digitopvn/diginext/commit/76ee324321da310acc4179e49e81b87659b0a20e))
+* **server,api:** monitor k8s cluster feature ([2bce8d4](https://github.com/digitopvn/diginext/commit/2bce8d4f73a9060c3ff7e936349f8b18e78ff29e))
+* **server,cli:** webpage capture, init app, select project ([#227](https://github.com/digitopvn/diginext/issues/227)) ([afcaa9c](https://github.com/digitopvn/diginext/commit/afcaa9c9d71e2b1d9ca7c74232596f00d20b0843))
+* **server:** add export pdf, capture screenshot webpage ([e44c64e](https://github.com/digitopvn/diginext/commit/e44c64e0cd4f25ae194e45a49ed5392d4ad7bad1))
+* **server:** add export pdf, capture screenshot webpage ([#225](https://github.com/digitopvn/diginext/issues/225)) ([2e6801a](https://github.com/digitopvn/diginext/commit/2e6801ab7019b875218df9d1229597738519c5f7))
+* **server:** capture screenshot when build and deploy ([353319a](https://github.com/digitopvn/diginext/commit/353319aa5dae77f556d5e5db3feb4dc26dc6b253))
+
+
+### Performance Improvements
+
+* **server:** add resources to deployments, pods monitor page ([322457c](https://github.com/digitopvn/diginext/commit/322457cc21150a5fb0c1031f42f541d7b0b277a0))
+
+# [3.13.0-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.6...v3.13.0-prerelease.7) (2023-06-18)
+
+
+### Features
+
+* **server,api:** add ingress, deployment, pod, service monitoring ([6bfff68](https://github.com/digitopvn/diginext/commit/6bfff68e6005a8107c65c77482b8432f1a856fd4))
+
+# [3.13.0-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.5...v3.13.0-prerelease.6) (2023-06-17)
+
+
+### Bug Fixes
+
+* **server,api:** show correct screenshot to deploy env ([addb386](https://github.com/digitopvn/diginext/commit/addb386b6179bb7781195c3f7b6d03a6a22aa5b0))
+
+
+### Features
+
+* **server,api:** list all nodes each cluster ([dcb5b2d](https://github.com/digitopvn/diginext/commit/dcb5b2d797c03c63775c0f50a3348687d2f1a97d))
+* **server,api:** list all nodes each cluster ([#233](https://github.com/digitopvn/diginext/issues/233)) ([76ee324](https://github.com/digitopvn/diginext/commit/76ee324321da310acc4179e49e81b87659b0a20e))
+
+# [3.13.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.4...v3.13.0-prerelease.5) (2023-06-17)
+
+
+### Bug Fixes
+
+* **server:** add finally to export pdf and screenshot for optimize ([3b76bbb](https://github.com/digitopvn/diginext/commit/3b76bbbd7936dd81f43359181b2fd82ca718fefa))
+* **server:** incorrect app deploy environment status ([7b056d4](https://github.com/digitopvn/diginext/commit/7b056d4b7083e994696cbee4f4d94c23fdad9c74))
+
+
+### Features
+
+* **server,api:** add namespace monitoring page ([a995e40](https://github.com/digitopvn/diginext/commit/a995e4063c9cd0937f3d72be5a225149cca0e7d7))
+* **server,api:** add namespace monitoring page ([#232](https://github.com/digitopvn/diginext/issues/232)) ([6e0707a](https://github.com/digitopvn/diginext/commit/6e0707ad233703e18c85701026b3bd1e084e1960))
+* **server,api:** monitor k8s cluster feature ([2bce8d4](https://github.com/digitopvn/diginext/commit/2bce8d4f73a9060c3ff7e936349f8b18e78ff29e))
+
+# [3.13.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.3...v3.13.0-prerelease.4) (2023-06-17)
+
+
+### Bug Fixes
+
+* **docker base:** enable chromium env for puppeteer to work ([a449dea](https://github.com/digitopvn/diginext/commit/a449deaf863062a8130885f2c28b3f79b0420cd9))
+* **docker base:** enable chromium env for puppeteer to work ([#231](https://github.com/digitopvn/diginext/issues/231)) ([62871ba](https://github.com/digitopvn/diginext/commit/62871badbe472365f6808b0d617605533471519b))
+
+# [3.13.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.2...v3.13.0-prerelease.3) (2023-06-16)
+
+
+### Bug Fixes
+
+* **cli:** correct notify cli version update ([697eb8b](https://github.com/digitopvn/diginext/commit/697eb8bc8974d20a5a0f019dce2377c345672e59))
+
+# [3.13.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.13.0-prerelease.1...v3.13.0-prerelease.2) (2023-06-16)
+
+
+### Bug Fixes
+
+* **cli:** empty arr of create select project,app when deploying ([d7a5088](https://github.com/digitopvn/diginext/commit/d7a50889ee44b3c978648715c7d1d337460f4ad7))
+* **server,cli:** skip select framework, build logs, auth registry on push ([4b0bcba](https://github.com/digitopvn/diginext/commit/4b0bcba2e40f683a4db7dba8ca1238a7a16ad080))
+* **server:** app service find workloads based on main-app label ([2e652b7](https://github.com/digitopvn/diginext/commit/2e652b7f1fa8bd2c288367a914312f16b61763b1))
+
+
+### Features
+
+* **server,cli:** webpage capture, init app, select project ([#227](https://github.com/digitopvn/diginext/issues/227)) ([afcaa9c](https://github.com/digitopvn/diginext/commit/afcaa9c9d71e2b1d9ca7c74232596f00d20b0843))
+
+# [3.13.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.12.0...v3.13.0-prerelease.1) (2023-06-16)
+
+
+### Bug Fixes
+
+* **client:** change command name 'clone' to 'transfer' or 'tf' ([963a31b](https://github.com/digitopvn/diginext/commit/963a31bb5322b0476158a9d565ee5e44acd22120))
+
+
+### Features
+
+* **server:** add export pdf, capture screenshot webpage ([e44c64e](https://github.com/digitopvn/diginext/commit/e44c64e0cd4f25ae194e45a49ed5392d4ad7bad1))
+* **server:** add export pdf, capture screenshot webpage ([#225](https://github.com/digitopvn/diginext/issues/225)) ([2e6801a](https://github.com/digitopvn/diginext/commit/2e6801ab7019b875218df9d1229597738519c5f7))
+* **server:** capture screenshot when build and deploy ([353319a](https://github.com/digitopvn/diginext/commit/353319aa5dae77f556d5e5db3feb4dc26dc6b253))
+
+# [3.12.0](https://github.com/digitopvn/diginext/compare/v3.11.4...v3.12.0) (2023-06-15)
+# [3.12.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.11.4...v3.12.0-prerelease.1) (2023-06-15)
+
+
+### Features
+
+* **client:** update diginext-utils to 3.0.2 | [cloneRepo] checking private key or secret env ([223685c](https://github.com/digitopvn/diginext/commit/223685ce6f00d65353a10ba44fb79219f276ae17))
+* **server:** add export pdf, capture screenshot webpage ([e44c64e](https://github.com/digitopvn/diginext/commit/e44c64e0cd4f25ae194e45a49ed5392d4ad7bad1))
+* **server:** add export pdf, capture screenshot webpage ([#225](https://github.com/digitopvn/diginext/issues/225)) ([2e6801a](https://github.com/digitopvn/diginext/commit/2e6801ab7019b875218df9d1229597738519c5f7))
+* **server:** capture screenshot when build and deploy ([353319a](https://github.com/digitopvn/diginext/commit/353319aa5dae77f556d5e5db3feb4dc26dc6b253))
+
+## [3.11.4](https://github.com/digitopvn/diginext/compare/v3.11.3...v3.11.4) (2023-06-15)
+
+
+### Bug Fixes
+
+* **server:** issue of project name validation when add domain ([cd8b5c7](https://github.com/digitopvn/diginext/commit/cd8b5c75e4631ac60818f94d621bbca97a48bf9c))
+
 ## [3.11.3](https://github.com/digitopvn/diginext/compare/v3.11.2...v3.11.3) (2023-06-15)
 
 

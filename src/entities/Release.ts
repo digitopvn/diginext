@@ -53,6 +53,10 @@ export interface IRelease extends IBase {
 	buildStatus?: BuildStatus;
 	active?: boolean;
 	/**
+	 * URL of the webpage screenshot
+	 */
+	screenshot?: string;
+	/**
 	 * ID of the build
 	 *
 	 * @remarks This can be populated to {IBuild} data
@@ -107,6 +111,7 @@ export const releaseSchema = new Schema<IRelease>(
 		providerProjectId: { type: String },
 		buildStatus: { type: String },
 		active: { type: Boolean },
+		screenshot: { type: String },
 		build: { type: Schema.Types.ObjectId, ref: "builds" },
 		app: { type: Schema.Types.ObjectId, ref: "apps" },
 		owner: { type: Schema.Types.ObjectId, ref: "users" },

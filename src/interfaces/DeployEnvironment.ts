@@ -198,4 +198,9 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	 * Amount of ready instances
 	 */
 	readyCount?: number;
+
+	/**
+	 * A screenshot URL from build success
+	 */
+	screenshot?: string;
 }

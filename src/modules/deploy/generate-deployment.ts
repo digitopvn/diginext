@@ -1,5 +1,5 @@
-import { log, logWarn } from "diginext-utils/dist/console/log";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import yaml from "js-yaml";
 import _, { isEmpty, isObject, toNumber } from "lodash";
@@ -82,7 +82,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const registrySlug = deployEnvironmentConfig.registry;
 
 	// let deploymentName = project + "-" + appSlug.toLowerCase();
-	let deploymentName = getDeploymentName(app);
+	let deploymentName = await getDeploymentName(app);
 
 	let nsName = deployEnvironmentConfig.namespace;
 	let ingName = deploymentName;

@@ -1,4 +1,4 @@
-import { logError, logWarn } from "diginext-utils/dist/console/log";
+import { logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 

@@ -1,4 +1,4 @@
-import { logSuccess, logWarn } from "diginext-utils/dist/console/log";
+import { logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
 import type { ICluster } from "@/entities";

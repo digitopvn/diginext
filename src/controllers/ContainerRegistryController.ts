@@ -1,5 +1,5 @@
 import { isNotIn } from "class-validator";
-import { logError } from "diginext-utils/dist/console/log";
+import { logError } from "diginext-utils/dist/xconsole/log";
 import { unlink } from "fs";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
