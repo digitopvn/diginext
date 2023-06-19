@@ -1,3 +1,10 @@
+## [3.13.1](https://github.com/digitopvn/diginext/compare/v3.13.0...v3.13.1) (2023-06-19)
+
+
+### Bug Fixes
+
+* **dashboard:** optimize responsive table for all pages ([e90cb00](https://github.com/digitopvn/diginext/commit/e90cb00ac4c7dfbbcd99d3119fbfbae763835518))
+
 # [3.13.0](https://github.com/digitopvn/diginext/compare/v3.12.0...v3.13.0) (2023-06-18)
 
 
