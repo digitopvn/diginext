@@ -339,9 +339,16 @@ export async function parseCliOptions() {
 		// command: db
 		.command("db", "Manage your databases", (_yargs) =>
 			_yargs
-				.command("new", "Create new database")
-				.command("add-default-user", "Add default user to a database")
-				.command("add-user", "Add new user to a database")
+				.command("healthz", "Check connection status of a database")
+				.command("backup", "Backup a database to local directory", (__yargs) =>
+					__yargs.option("targetDir", { desc: "Local backup directory", alias: "dir" })
+				)
+				.command("restore", "Restore a local backup directory to a database", (__yargs) =>
+					__yargs.option("targetDir", { desc: "Local backup directory", alias: "dir" })
+				)
+				// .command("new", "Create new database")
+				// .command("add-default-user", "Add default user to a database")
+				// .command("add-user", "Add new user to a database")
 				.demandCommand(1)
 		)
 		// command: cluster

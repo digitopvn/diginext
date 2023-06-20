@@ -135,26 +135,6 @@ export class DB {
 		workspace,
 	};
 
-	// static transformFilter(filter: any) {
-	// 	const _filter = { ...filter };
-	// 	Object.entries(filter).forEach(([key, val]) => {
-	// 		if (key == "id" || key == "_id") {
-	// 			_filter._id = isValidObjectId(val) ? MongoDB.toString(val) : val;
-	// 			delete _filter.id;
-	// 		}
-	// 		if (val == null || val == undefined) {
-	// 			_filter[key] = null;
-	// 		} else if (isValidObjectId(val)) {
-	// 			_filter[key] = MongoDB.toString(toObjectId(val as string));
-	// 		} else if (isJSON(val)) {
-	// 			_filter[key] = JSON.parse(val as string);
-	// 		} else {
-	// 			_filter[key] = val;
-	// 		}
-	// 	});
-	// 	return _filter;
-	// }
-
 	static async count(collection: DBCollection, filter: any = {}, options?: DBQueryOptions, pagination?: IQueryPagination) {
 		let amount: number;
 		if (isServerMode) {

@@ -8,13 +8,14 @@ import { baseSchemaDefinitions } from "./Base";
 
 export interface ICloudDatabase extends IBase {
 	name?: string;
+	verified?: boolean;
 	type?: CloudDatabaseType;
 	provider?: string;
 	user?: string;
 	pass?: string;
 	host?: string;
 	port?: number;
-	connectionStr?: string;
+	url?: string;
 }
 export type CloudDatabaseDto = Omit<ICloudDatabase, keyof HiddenBodyKeys>;
 
@@ -22,13 +23,14 @@ export const cloudDatabaseSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
+		verified: Boolean,
 		type: { type: String, enum: ["mongodb", "mysql", "mariadb", "postgresql", "sqlserver", "sqlite", "redis", "dynamodb"] },
 		provider: { type: String },
 		user: { type: String },
 		pass: { type: String },
 		host: { type: String },
 		port: { type: Number },
-		connectionStr: { type: String },
+		url: { type: String },
 	},
 	{ collection: "cloud_databases", timestamps: true }
 );

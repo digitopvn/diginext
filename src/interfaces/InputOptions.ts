@@ -75,6 +75,11 @@ export type InputOptions = {
 	server?: string;
 
 	/**
+	 * Auth input name
+	 */
+	auth?: string;
+
+	/**
 	 * User input name
 	 */
 	name?: string;
