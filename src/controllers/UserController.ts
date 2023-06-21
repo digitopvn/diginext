@@ -4,8 +4,8 @@ import type { ObjectId } from "mongodb";
 
 import BaseController from "@/controllers/BaseController";
 import type { IRole, IUser } from "@/entities";
-import { UserDto } from "@/entities";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import * as entities from "@/entities";
+import * as interfaces from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
 import { addRoleToUser, filterRole, filterSensitiveInfo } from "@/plugins/user-utils";
@@ -38,7 +38,7 @@ export default class UserController extends BaseController<IUser> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	async read(@Queries() queryParams?: IGetQueryParams) {
+	async read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		const res = await super.read();
 
 		// console.log("[1] res.data :>> ", res.data);
@@ -56,21 +56,21 @@ export default class UserController extends BaseController<IUser> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/profile")
-	profile(@Queries() queryParams?: IGetQueryParams) {
+	profile(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return this.user;
 	}
 
 	@Security("api_key2")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: entities.UserDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: entities.UserDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		if (body.roles) {
 			const roleId = body.roles;
 			const oldRoles = this.user.roles.filter((role) => (role as IRole).workspace === this.workspace._id);
@@ -92,7 +92,7 @@ export default class UserController extends BaseController<IUser> {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		return super.delete();
 	}
 
@@ -100,8 +100,8 @@ export default class UserController extends BaseController<IUser> {
 	@Security("jwt")
 	@Patch("/assign-role")
 	async assignRole(@Body() data: { roleId: ObjectId }) {
-		if (!data.roleId) return respondFailure({ msg: `Role ID is required.` });
-		if (!this.user) return respondFailure({ msg: `User not found.` });
+		if (!data.roleId) return interfaces.respondFailure({ msg: `Role ID is required.` });
+		if (!this.user) return interfaces.respondFailure({ msg: `User not found.` });
 
 		const { roleId } = data;
 
@@ -114,7 +114,7 @@ export default class UserController extends BaseController<IUser> {
 		// filter roles & workspaces before returning
 		[updatedUser] = await filterRole(MongoDB.toString(this.workspace._id), [updatedUser]);
 
-		return respondSuccess({ data: updatedUser });
+		return interfaces.respondSuccess({ data: updatedUser });
 	}
 
 	@Security("api_key")
@@ -136,7 +136,7 @@ export default class UserController extends BaseController<IUser> {
 			// return undefined if can't convert to "ObjectId" -> it's a "slug" !!! (lol)
 			let workspaceSlug = !workspaceId ? workspaceIdOrSlug : undefined;
 
-			if (!workspaceId && !workspaceSlug) return respondFailure(`Param "workspace" (ID or SLUG) is invalid`);
+			if (!workspaceId && !workspaceSlug) return interfaces.respondFailure(`Param "workspace" (ID or SLUG) is invalid`);
 
 			const wsFilter: any = {};
 			if (workspaceId) wsFilter._id = workspaceId;
@@ -175,10 +175,10 @@ export default class UserController extends BaseController<IUser> {
 			// console.dir(user, { depth: 10 });
 
 			// return the updated user:
-			return respondSuccess({ data: user });
+			return interfaces.respondSuccess({ data: user });
 		} catch (e) {
 			console.log(e);
-			return respondFailure({ msg: "Failed to join a workspace." });
+			return interfaces.respondFailure({ msg: "Failed to join a workspace." });
 		}
 	}
 }

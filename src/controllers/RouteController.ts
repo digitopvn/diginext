@@ -4,7 +4,7 @@ import { Body, Get, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 import type { IRole } from "@/entities";
 import type { IRoute } from "@/entities/Route";
 import type { IRoutePermission } from "@/interfaces";
-import { IGetQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import * as interfaces from "@/interfaces";
 import type { DBCollection } from "@/modules/api/DB";
 import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
@@ -25,7 +25,7 @@ export default class RouteController extends BaseController<IRoute> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	async read(@Queries() queryParams?: IGetQueryParams) {
+	async read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		const res = await super.read();
 		// console.log("res :>> ", res);
 		return res;
@@ -38,12 +38,12 @@ export default class RouteController extends BaseController<IRoute> {
 	@Security("jwt")
 	@Post("/permission")
 	async checkPermissions(@Body() body: { action: IRoutePermission; route: string; itemId?: ObjectId }) {
-		if (!body.route) return respondFailure(`Param "route" is required.`);
-		if (!body.action) return respondFailure(`Param "action" is required.`);
+		if (!body.route) return interfaces.respondFailure(`Param "route" is required.`);
+		if (!body.action) return interfaces.respondFailure(`Param "action" is required.`);
 
 		let { route, action, itemId } = body;
 
-		if (route !== "*" && route.indexOf("/api/v1") < 0) return respondFailure(`Param "route" is invalid.`);
+		if (route !== "*" && route.indexOf("/api/v1") < 0) return interfaces.respondFailure(`Param "route" is invalid.`);
 
 		let item;
 		if (itemId && route.indexOf("/api/v1/") > -1) {
@@ -111,9 +111,9 @@ export default class RouteController extends BaseController<IRoute> {
 		if (item && allowScope === "own" && !isAllowed) explain = `You don't have permissions to ${action} this item.`;
 
 		if (allowScope !== "none") {
-			return respondSuccess({ data: { allowed: isAllowed, scope: allowScope, explain } });
+			return interfaces.respondSuccess({ data: { allowed: isAllowed, scope: allowScope, explain } });
 		} else {
-			return respondFailure({ data: { allowed: isAllowed, scope: allowScope, explain } });
+			return interfaces.respondFailure({ data: { allowed: isAllowed, scope: allowScope, explain } });
 		}
 	}
 }

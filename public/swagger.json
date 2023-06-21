@@ -32,10 +32,7 @@
 					},
 					"status": {
 						"type": "number",
-						"enum": [
-							0,
-							1
-						],
+						"enum": [0, 1],
 						"description": "1 = succeed | 0 = failed"
 					},
 					"data": {},
@@ -47,15 +44,11 @@
 						"description": "Error/warning messages"
 					}
 				},
-				"required": [
-					"status",
-					"data",
-					"messages"
-				],
+				"required": ["status", "data", "messages"],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"IGetQueryParams": {
+			"interfaces.IGetQueryParams": {
 				"properties": {
 					"populate": {
 						"type": "string",
@@ -112,10 +105,7 @@
 			},
 			"GitProviderType": {
 				"type": "string",
-				"enum": [
-					"bitbucket",
-					"github"
-				]
+				"enum": ["bitbucket", "github"]
 			},
 			"AppGitInfo": {
 				"properties": {
@@ -132,9 +122,7 @@
 						"description": "OPTIONAL\n---\nGit provider's type: `github`, `bitbucket`, `gitlab`"
 					}
 				},
-				"required": [
-					"repoSSH"
-				],
+				"required": ["repoSSH"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -205,9 +193,7 @@
 						"type": "string"
 					}
 				},
-				"required": [
-					"name"
-				],
+				"required": ["name"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -228,35 +214,17 @@
 						"type": "string"
 					}
 				},
-				"required": [
-					"access_token",
-					"expiredTimestamp",
-					"expiredDate",
-					"expiredDateGTM7"
-				],
+				"required": ["access_token", "expiredTimestamp", "expiredDate", "expiredDateGTM7"],
 				"type": "object",
 				"additionalProperties": false
 			},
 			"IRoutePermission": {
 				"type": "string",
-				"enum": [
-					"full",
-					"own",
-					"create",
-					"read",
-					"update",
-					"delete"
-				]
+				"enum": ["full", "own", "create", "read", "update", "delete"]
 			},
 			"IRouteScope": {
 				"type": "string",
-				"enum": [
-					"all",
-					"workspace",
-					"team",
-					"project",
-					"app"
-				]
+				"enum": ["all", "workspace", "team", "project", "app"]
 			},
 			"RoleRoute": {
 				"properties": {
@@ -276,10 +244,7 @@
 						"description": "(TBC)"
 					}
 				},
-				"required": [
-					"route",
-					"permissions"
-				],
+				"required": ["route", "permissions"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -305,10 +270,7 @@
 						"description": "One of:\n- undefined | \"custom\": custom role\n- \"admin\": default super admin role\n- \"member\": default member role\n- \"moderator\": default moderator role"
 					}
 				},
-				"required": [
-					"name",
-					"routes"
-				],
+				"required": ["name", "routes"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -321,9 +283,7 @@
 						"type": "string"
 					}
 				},
-				"required": [
-					"name"
-				],
+				"required": ["name"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -471,10 +431,7 @@
 						]
 					}
 				},
-				"required": [
-					"name",
-					"email"
-				],
+				"required": ["name", "email"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -487,10 +444,7 @@
 						"type": "string"
 					}
 				},
-				"required": [
-					"name",
-					"value"
-				],
+				"required": ["name", "value"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -500,39 +454,16 @@
 			},
 			"AppStatus": {
 				"type": "string",
-				"enum": [
-					"healthy",
-					"partial_healthy",
-					"undeployed",
-					"failed",
-					"crashed",
-					"unknown"
-				]
+				"enum": ["healthy", "partial_healthy", "undeployed", "failed", "crashed", "unknown"]
 			},
 			"ResourceQuotaSize": {
 				"type": "string",
-				"enum": [
-					"none",
-					"1x",
-					"2x",
-					"3x",
-					"4x",
-					"5x",
-					"6x",
-					"7x",
-					"8x",
-					"9x",
-					"10x"
-				],
+				"enum": ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"],
 				"description": "Container quota resources"
 			},
 			"SslType": {
 				"type": "string",
-				"enum": [
-					"none",
-					"letsencrypt",
-					"custom"
-				],
+				"enum": ["none", "letsencrypt", "custom"],
 				"default": "\"letsencrypt\""
 			},
 			"DeployEnvironment": {
@@ -696,9 +627,7 @@
 						"description": "A screenshot URL from build success"
 					}
 				},
-				"required": [
-					"buildNumber"
-				],
+				"required": ["buildNumber"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -986,10 +915,7 @@
 					},
 					"method": {
 						"type": "string",
-						"enum": [
-							"bearer",
-							"basic"
-						],
+						"enum": ["bearer", "basic"],
 						"description": "Authorization header method"
 					},
 					"access_token": {
@@ -1162,15 +1088,11 @@
 						"description": "OPTIONAL\n---\nFramework's ID or slug or {Framework} instance"
 					}
 				},
-				"required": [
-					"name",
-					"project",
-					"git"
-				],
+				"required": ["name", "project", "git"],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"IPostQueryParams": {
+			"interfaces.IPostQueryParams": {
 				"properties": {
 					"populate": {
 						"type": "string",
@@ -1297,10 +1219,10 @@
 				"$ref": "#/components/schemas/Pick_IApp.Exclude_keyofIApp.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"AppDto": {
+			"entities.AppDto": {
 				"$ref": "#/components/schemas/Omit_IApp.keyofHiddenBodyKeys_"
 			},
-			"IPatchQueryParams": {
+			"interfaces.IPatchQueryParams": {
 				"properties": {
 					"populate": {
 						"type": "string",
@@ -1330,7 +1252,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"IDeleteQueryParams": {
+			"interfaces.IDeleteQueryParams": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -1586,13 +1508,7 @@
 						"description": "OPTIONAL\n---\nUsername of the person who update the app"
 					}
 				},
-				"required": [
-					"registry",
-					"cluster",
-					"port",
-					"imageURL",
-					"buildNumber"
-				],
+				"required": ["registry", "cluster", "port", "imageURL", "buildNumber"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -1611,30 +1527,17 @@
 						"description": "Array of variables to be created on deploy environment in JSON format"
 					}
 				},
-				"required": [
-					"slug",
-					"env",
-					"envVars"
-				],
+				"required": ["slug", "env", "envVars"],
 				"type": "object",
 				"additionalProperties": false
 			},
 			"BuildStatus": {
 				"type": "string",
-				"enum": [
-					"failed",
-					"start",
-					"building",
-					"success"
-				]
+				"enum": ["failed", "start", "building", "success"]
 			},
 			"RegistryProviderType": {
 				"type": "string",
-				"enum": [
-					"gcloud",
-					"digitalocean",
-					"dockerhub"
-				]
+				"enum": ["gcloud", "digitalocean", "dockerhub"]
 			},
 			"IContainerRegistry": {
 				"properties": {
@@ -1883,7 +1786,7 @@
 				"$ref": "#/components/schemas/Pick_IBuild.Exclude_keyofIBuild.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"BuildDto": {
+			"entities.BuildDto": {
 				"$ref": "#/components/schemas/Omit_IBuild.keyofHiddenBodyKeys_"
 			},
 			"BuildPlatform": {
@@ -1902,7 +1805,7 @@
 					"linux/arm/v6"
 				]
 			},
-			"StartBuildParams": {
+			"buildModule.StartBuildParams": {
 				"properties": {
 					"args": {
 						"items": {
@@ -1914,10 +1817,7 @@
 									"type": "string"
 								}
 							},
-							"required": [
-								"value",
-								"name"
-							],
+							"required": ["value", "name"],
 							"type": "object"
 						},
 						"type": "array",
@@ -1976,21 +1876,12 @@
 						"description": "App's slug"
 					}
 				},
-				"required": [
-					"registrySlug",
-					"gitBranch",
-					"buildNumber",
-					"appSlug"
-				],
+				"required": ["registrySlug", "gitBranch", "buildNumber", "appSlug"],
 				"type": "object"
 			},
 			"CloudProviderType": {
 				"type": "string",
-				"enum": [
-					"custom",
-					"gcloud",
-					"digitalocean"
-				]
+				"enum": ["custom", "gcloud", "digitalocean"]
 			},
 			"ICloudProvider": {
 				"properties": {
@@ -2358,8 +2249,71 @@
 				"$ref": "#/components/schemas/Pick_ICluster.Exclude_keyofICluster.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ClusterDto": {
+			"entities.ClusterDto": {
 				"$ref": "#/components/schemas/Omit_ICluster.keyofHiddenBodyKeys_"
+			},
+			"CloudDatabaseType": {
+				"type": "string",
+				"enum": ["mongodb", "mysql", "mariadb", "postgresql", "sqlserver", "sqlite", "redis", "dynamodb"]
+			},
+			"Pick_CloudDatabase.Exclude_keyofCloudDatabase.keyofHiddenBodyKeys__": {
+				"properties": {
+					"project": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/Types.ObjectId"
+							},
+							{
+								"$ref": "#/components/schemas/IProject"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"description": "ID of the project"
+					},
+					"name": {
+						"type": "string"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Slug of an item, generated automatically by its \"name\""
+					},
+					"active": {
+						"type": "boolean"
+					},
+					"provider": {
+						"type": "string"
+					},
+					"user": {
+						"type": "string"
+					},
+					"host": {
+						"type": "string"
+					},
+					"verified": {
+						"type": "boolean"
+					},
+					"type": {
+						"$ref": "#/components/schemas/CloudDatabaseType"
+					},
+					"pass": {
+						"type": "string"
+					},
+					"port": {
+						"type": "number",
+						"format": "double"
+					},
+					"url": {
+						"type": "string"
+					}
+				},
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_CloudDatabase.keyofHiddenBodyKeys_": {
+				"$ref": "#/components/schemas/Pick_CloudDatabase.Exclude_keyofCloudDatabase.keyofHiddenBodyKeys__",
+				"description": "Construct a type with the properties of T except for those in type K."
 			},
 			"InputOptions": {
 				"properties": {
@@ -2634,11 +2588,7 @@
 							},
 							{
 								"type": "string",
-								"enum": [
-									"dev",
-									"prod",
-									"staging"
-								]
+								"enum": ["dev", "prod", "staging"]
 							}
 						],
 						"description": "Specify environment code:\n- One of: `dev, prod, staging,...`",
@@ -2757,6 +2707,10 @@
 						"type": "string",
 						"description": "User input name"
 					},
+					"auth": {
+						"type": "string",
+						"description": "Auth input name"
+					},
 					"server": {
 						"type": "string",
 						"description": "User input server"
@@ -2831,6 +2785,80 @@
 				"type": "object",
 				"description": "Các giá trị đầu vào của CLI"
 			},
+			"StartBuildParams": {
+				"properties": {
+					"args": {
+						"items": {
+							"properties": {
+								"value": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								}
+							},
+							"required": ["value", "name"],
+							"type": "object"
+						},
+						"type": "array",
+						"description": "Build arguments"
+					},
+					"platforms": {
+						"items": {
+							"$ref": "#/components/schemas/BuildPlatform"
+						},
+						"type": "array",
+						"description": "Targeted platform arch: linux/arm64, linux/amd64,..."
+					},
+					"isDebugging": {
+						"type": "boolean",
+						"default": "false"
+					},
+					"cliVersion": {
+						"type": "string",
+						"description": "Diginext CLI version of client user"
+					},
+					"buildWatch": {
+						"type": "boolean",
+						"description": "Enable async to watch the build process",
+						"default": "false"
+					},
+					"buildDir": {
+						"type": "string",
+						"description": "Path to the source code directory\n* [OPTIONAL] Only apply for CLI command, has no effects on API call"
+					},
+					"env": {
+						"type": "string",
+						"description": "Select the deploy environment to build image, in this case, this info is using for selecting \"Dockerfile\"\nof specific deploy environment only, for example: \"Dockerfile.dev\" or \"Dockerfile.prod\",\nif you don't specify \"env\", a default \"Dockerfile\" will be selected.\n- **[OPTIONAL] SHOULD NOT rely on this!**\n- A build should be able to used for any deploy environments."
+					},
+					"registrySlug": {
+						"type": "string",
+						"description": "Slug of the Container Registry"
+					},
+					"user": {
+						"$ref": "#/components/schemas/IUser",
+						"description": "{User} instance of the author\n- `If passing \"user\", no need to pass \"userId\" and vice versa.`"
+					},
+					"userId": {
+						"type": "string",
+						"description": "ID of the author\n- `If passing \"userId\", no need to pass \"user\" and vice versa.`"
+					},
+					"gitBranch": {
+						"type": "string",
+						"description": "Select a git branch to pull source code & build"
+					},
+					"buildNumber": {
+						"type": "string",
+						"description": "Build number is also an container image's tag"
+					},
+					"appSlug": {
+						"type": "string",
+						"description": "App's slug"
+					}
+				},
+				"required": ["registrySlug", "gitBranch", "buildNumber", "appSlug"],
+				"type": "object"
+			},
 			"DeployBuildParams": {
 				"properties": {
 					"skipReadyCheck": {
@@ -2857,9 +2885,7 @@
 						"description": "Deploy environment"
 					}
 				},
-				"required": [
-					"env"
-				],
+				"required": ["env"],
 				"type": "object"
 			},
 			"IBuild": {
@@ -3221,9 +3247,7 @@
 					},
 					"kind": {
 						"type": "string",
-						"enum": [
-							"Namespace"
-						],
+						"enum": ["Namespace"],
 						"nullable": false
 					},
 					"metadata": {
@@ -3245,9 +3269,7 @@
 								"type": "string"
 							}
 						},
-						"required": [
-							"labels"
-						],
+						"required": ["labels"],
 						"type": "object"
 					},
 					"spec": {
@@ -3336,9 +3358,7 @@
 								"type": "string"
 							}
 						},
-						"required": [
-							"labels"
-						],
+						"required": ["labels"],
 						"type": "object"
 					},
 					"spec": {
@@ -3584,7 +3604,7 @@
 				],
 				"type": "object"
 			},
-			"CreateDiginextDomainParams": {
+			"dxDomain.CreateDiginextDomainParams": {
 				"properties": {
 					"data": {
 						"type": "string"
@@ -3594,10 +3614,7 @@
 						"description": "Subdomain name"
 					}
 				},
-				"required": [
-					"data",
-					"name"
-				],
+				"required": ["data", "name"],
 				"type": "object"
 			},
 			"Pick_IFramework.Exclude_keyofIFramework.keyofHiddenBodyKeys__": {
@@ -3673,7 +3690,7 @@
 				"$ref": "#/components/schemas/Pick_IFramework.Exclude_keyofIFramework.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"FrameworkDto": {
+			"entities.FrameworkDto": {
 				"$ref": "#/components/schemas/Omit_IFramework.keyofHiddenBodyKeys_"
 			},
 			"Pick_IGitProvider.Exclude_keyofIGitProvider.keyofHiddenBodyKeys__": {
@@ -3707,6 +3724,14 @@
 						"type": "string",
 						"description": "The host of the Git provider."
 					},
+					"verified": {
+						"type": "boolean",
+						"description": "Verify status, `true` is successfully connected with the git workspace REST API."
+					},
+					"type": {
+						"$ref": "#/components/schemas/GitProviderType",
+						"description": "The type of the Git provider."
+					},
 					"gitWorkspace": {
 						"type": "string",
 						"description": "The Git workspace of the Git provider."
@@ -3725,10 +3750,6 @@
 						"type": "object",
 						"description": "The repository of the Git provider."
 					},
-					"type": {
-						"$ref": "#/components/schemas/GitProviderType",
-						"description": "The type of the Git provider."
-					},
 					"bitbucket_oauth": {
 						"$ref": "#/components/schemas/BitbucketOAuthOptions",
 						"description": "Bitbucket OAuth Information"
@@ -3739,10 +3760,7 @@
 					},
 					"method": {
 						"type": "string",
-						"enum": [
-							"bearer",
-							"basic"
-						],
+						"enum": ["bearer", "basic"],
 						"description": "Authorization header method"
 					},
 					"access_token": {
@@ -3752,10 +3770,6 @@
 					"refresh_token": {
 						"type": "string",
 						"description": "The API refresh token of the Git provider,\nto obtain new access token if it's expired"
-					},
-					"verified": {
-						"type": "boolean",
-						"description": "Verify status, `true` is successfully connected with the git workspace REST API."
 					}
 				},
 				"type": "object",
@@ -3765,10 +3779,10 @@
 				"$ref": "#/components/schemas/Pick_IGitProvider.Exclude_keyofIGitProvider.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"GitProviderDto": {
+			"entities.GitProviderDto": {
 				"$ref": "#/components/schemas/Omit_IGitProvider.keyofHiddenBodyKeys_"
 			},
-			"GitRepositoryDto": {
+			"gitProviderApi.GitRepositoryDto": {
 				"properties": {
 					"name": {
 						"type": "string"
@@ -3780,10 +3794,7 @@
 						"type": "boolean"
 					}
 				},
-				"required": [
-					"name",
-					"private"
-				],
+				"required": ["name", "private"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -3864,7 +3875,7 @@
 				"$ref": "#/components/schemas/Pick_IProject.Exclude_keyofIProject.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ProjectDto": {
+			"entities.ProjectDto": {
 				"$ref": "#/components/schemas/Omit_IProject.keyofHiddenBodyKeys_"
 			},
 			"Pick_ICloudProvider.Exclude_keyofICloudProvider.keyofHiddenBodyKeys__": {
@@ -3931,7 +3942,7 @@
 				"$ref": "#/components/schemas/Pick_ICloudProvider.Exclude_keyofICloudProvider.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"CloudProviderDto": {
+			"entities.CloudProviderDto": {
 				"$ref": "#/components/schemas/Omit_ICloudProvider.keyofHiddenBodyKeys_"
 			},
 			"Pick_IContainerRegistry.Exclude_keyofIContainerRegistry.keyofHiddenBodyKeys__": {
@@ -4023,7 +4034,7 @@
 				"$ref": "#/components/schemas/Pick_IContainerRegistry.Exclude_keyofIContainerRegistry.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ContainerRegistryDto": {
+			"entities.ContainerRegistryDto": {
 				"$ref": "#/components/schemas/Omit_IContainerRegistry.keyofHiddenBodyKeys_"
 			},
 			"Pick_IRelease.Exclude_keyofIRelease.keyofHiddenBodyKeys__": {
@@ -4173,7 +4184,7 @@
 				"$ref": "#/components/schemas/Pick_IRelease.Exclude_keyofIRelease.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ReleaseDto": {
+			"entities.ReleaseDto": {
 				"$ref": "#/components/schemas/Omit_IRelease.keyofHiddenBodyKeys_"
 			},
 			"Pick_IRole.Exclude_keyofIRole.keyofHiddenBodyKeys__": {
@@ -4219,10 +4230,7 @@
 						"type": "array"
 					}
 				},
-				"required": [
-					"name",
-					"routes"
-				],
+				"required": ["name", "routes"],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
@@ -4230,7 +4238,7 @@
 				"$ref": "#/components/schemas/Pick_IRole.Exclude_keyofIRole.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"RoleDto": {
+			"entities.RoleDto": {
 				"$ref": "#/components/schemas/Omit_IRole.keyofHiddenBodyKeys_"
 			},
 			"Pick_IServiceAccount.Exclude_keyofIServiceAccount.keyofHiddenBodyKeys__": {
@@ -4263,12 +4271,12 @@
 					"active": {
 						"type": "boolean"
 					},
-					"type": {
-						"type": "string"
-					},
 					"verified": {
 						"type": "boolean",
 						"description": "Is this user's email or phone verified?"
+					},
+					"type": {
+						"type": "string"
 					},
 					"username": {
 						"type": "string",
@@ -4368,10 +4376,7 @@
 						]
 					}
 				},
-				"required": [
-					"name",
-					"email"
-				],
+				"required": ["name", "email"],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
@@ -4379,7 +4384,7 @@
 				"$ref": "#/components/schemas/Pick_IServiceAccount.Exclude_keyofIServiceAccount.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ServiceAccountDto": {
+			"ServiceAccount.ServiceAccountDto": {
 				"$ref": "#/components/schemas/Omit_IServiceAccount.keyofHiddenBodyKeys_"
 			},
 			"JoinWorkspaceBody": {
@@ -4391,10 +4396,7 @@
 						"type": "string"
 					}
 				},
-				"required": [
-					"userId",
-					"workspace"
-				],
+				"required": ["userId", "workspace"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -4428,9 +4430,7 @@
 						"type": "boolean"
 					}
 				},
-				"required": [
-					"name"
-				],
+				"required": ["name"],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
@@ -4438,7 +4438,7 @@
 				"$ref": "#/components/schemas/Pick_ITeam.Exclude_keyofITeam.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"TeamDto": {
+			"entities.TeamDto": {
 				"$ref": "#/components/schemas/Omit_ITeam.keyofHiddenBodyKeys_"
 			},
 			"Pick_IUser.Exclude_keyofIUser.keyofHiddenBodyKeys__": {
@@ -4471,12 +4471,12 @@
 					"active": {
 						"type": "boolean"
 					},
-					"type": {
-						"type": "string"
-					},
 					"verified": {
 						"type": "boolean",
 						"description": "Is this user's email or phone verified?"
+					},
+					"type": {
+						"type": "string"
 					},
 					"username": {
 						"type": "string",
@@ -4576,10 +4576,7 @@
 						]
 					}
 				},
-				"required": [
-					"name",
-					"email"
-				],
+				"required": ["name", "email"],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
@@ -4587,10 +4584,10 @@
 				"$ref": "#/components/schemas/Pick_IUser.Exclude_keyofIUser.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"UserDto": {
+			"entities.UserDto": {
 				"$ref": "#/components/schemas/Omit_IUser.keyofHiddenBodyKeys_"
 			},
-			"ExportPDFOptions": {
+			"exportPdf_1.ExportPDFOptions": {
 				"properties": {
 					"omitBackground": {
 						"type": "boolean",
@@ -4654,19 +4651,7 @@
 					},
 					"format": {
 						"type": "string",
-						"enum": [
-							"letter",
-							"legal",
-							"tabloid",
-							"ledger",
-							"a0",
-							"a1",
-							"a2",
-							"a3",
-							"a4",
-							"a5",
-							"a6"
-						]
+						"enum": ["letter", "legal", "tabloid", "ledger", "a0", "a1", "a2", "a3", "a4", "a5", "a6"]
 					},
 					"path": {
 						"type": "string"
@@ -4704,16 +4689,13 @@
 								"description": "The page width in pixels."
 							}
 						},
-						"required": [
-							"height",
-							"width"
-						],
+						"required": ["height", "width"],
 						"type": "object"
 					}
 				},
 				"type": "object"
 			},
-			"CaptureScreenshotOptions": {
+			"screenshot_1.CaptureScreenshotOptions": {
 				"properties": {
 					"fromSurface": {
 						"type": "boolean",
@@ -4727,10 +4709,7 @@
 					},
 					"encoding": {
 						"type": "string",
-						"enum": [
-							"base64",
-							"binary"
-						],
+						"enum": ["base64", "binary"],
 						"description": "Encoding of the image.",
 						"default": "binary"
 					},
@@ -4768,12 +4747,7 @@
 								"format": "double"
 							}
 						},
-						"required": [
-							"height",
-							"width",
-							"y",
-							"x"
-						],
+						"required": ["height", "width", "y", "x"],
 						"type": "object",
 						"description": "An object which specifies the clipping region of the page."
 					},
@@ -4788,11 +4762,7 @@
 					},
 					"type": {
 						"type": "string",
-						"enum": [
-							"png",
-							"jpeg",
-							"webp"
-						],
+						"enum": ["png", "jpeg", "webp"],
 						"default": "png"
 					}
 				},
@@ -4818,10 +4788,7 @@
 						"description": "Diginext API Key"
 					}
 				},
-				"required": [
-					"name",
-					"dx_key"
-				],
+				"required": ["name", "dx_key"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -4837,10 +4804,7 @@
 						"$ref": "#/components/schemas/Types.ObjectId"
 					}
 				},
-				"required": [
-					"userId",
-					"workspaceId"
-				],
+				"required": ["userId", "workspaceId"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -4907,9 +4871,7 @@
 						"description": "Workspace ID or slug"
 					}
 				},
-				"required": [
-					"workspace"
-				],
+				"required": ["workspace"],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -4943,13 +4905,13 @@
 					"active": {
 						"type": "boolean"
 					},
-					"type": {
-						"type": "string",
-						"description": "Service Account is also a User with unexpired access token."
-					},
 					"verified": {
 						"type": "boolean",
 						"description": "Is this user's email or phone verified?"
+					},
+					"type": {
+						"type": "string",
+						"description": "Service Account is also a User with unexpired access token."
 					},
 					"username": {
 						"type": "string",
@@ -5049,10 +5011,7 @@
 						]
 					}
 				},
-				"required": [
-					"name",
-					"email"
-				],
+				"required": ["name", "email"],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
@@ -5060,7 +5019,7 @@
 				"$ref": "#/components/schemas/Pick_IApiKeyAccount.Exclude_keyofIApiKeyAccount.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ApiKeyAccountDto": {
+			"ApiKeyAccount.ApiKeyAccountDto": {
 				"$ref": "#/components/schemas/Omit_IApiKeyAccount.keyofHiddenBodyKeys_"
 			}
 		},
@@ -5079,7 +5038,7 @@
 	},
 	"info": {
 		"title": "@topgroup/diginext",
-		"version": "3.13.0",
+		"version": "3.13.1",
 		"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 		"license": {
 			"name": "GPL"
@@ -5108,9 +5067,7 @@
 					}
 				},
 				"description": "List of apps",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5245,9 +5202,7 @@
 						}
 					}
 				},
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5319,9 +5274,7 @@
 						}
 					}
 				},
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5391,7 +5344,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/AppDto"
+								"$ref": "#/components/schemas/entities.AppDto"
 							}
 						}
 					}
@@ -5411,9 +5364,7 @@
 						}
 					}
 				},
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5471,11 +5422,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"data",
-												"status"
-											],
+											"required": ["messages", "data", "status"],
 											"type": "object"
 										}
 									]
@@ -5484,9 +5431,7 @@
 						}
 					}
 				},
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5523,9 +5468,7 @@
 					}
 				},
 				"description": "Get new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5570,9 +5513,7 @@
 					}
 				},
 				"description": "Create new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5639,11 +5580,7 @@
 										"description": "`REQUIRES`\n---\nApp slug"
 									}
 								},
-								"required": [
-									"deployEnvironmentData",
-									"env",
-									"appSlug"
-								],
+								"required": ["deployEnvironmentData", "env", "appSlug"],
 								"type": "object"
 							}
 						}
@@ -5665,9 +5602,7 @@
 					}
 				},
 				"description": "Create new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5734,11 +5669,7 @@
 										"description": "`REQUIRES`\n---\nApp slug"
 									}
 								},
-								"required": [
-									"deployEnvironmentData",
-									"env",
-									"appSlug"
-								],
+								"required": ["deployEnvironmentData", "env", "appSlug"],
 								"type": "object"
 							}
 						}
@@ -5760,9 +5691,7 @@
 					}
 				},
 				"description": "Delete a deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5818,9 +5747,7 @@
 					}
 				},
 				"description": "[V2] Get new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5865,9 +5792,7 @@
 					}
 				},
 				"description": "[V2] Create new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5924,9 +5849,7 @@
 					}
 				},
 				"description": "[V2] Update new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -5983,9 +5906,7 @@
 					}
 				},
 				"description": "[V2] Update new deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6046,11 +5967,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"data",
-												"status"
-											],
+											"required": ["messages", "data", "status"],
 											"type": "object"
 										},
 										{
@@ -6066,10 +5983,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -6079,9 +5993,7 @@
 					}
 				},
 				"description": "Get list of variables on the deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6134,10 +6046,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -6147,9 +6056,7 @@
 					}
 				},
 				"description": "Create new variables on the deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6222,7 +6129,9 @@
 										{
 											"properties": {
 												"messages": {
-													"items": {},
+													"items": {
+														"type": "string"
+													},
 													"type": "array"
 												},
 												"data": {
@@ -6236,11 +6145,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"data",
-												"status"
-											],
+											"required": ["messages", "data", "status"],
 											"type": "object"
 										},
 										{
@@ -6256,10 +6161,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -6269,9 +6171,7 @@
 					}
 				},
 				"description": "Update a variable on the deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6337,11 +6237,7 @@
 										"description": "App slug"
 									}
 								},
-								"required": [
-									"envVar",
-									"env",
-									"slug"
-								],
+								"required": ["envVar", "env", "slug"],
 								"type": "object"
 							}
 						}
@@ -6363,7 +6259,9 @@
 										{
 											"properties": {
 												"messages": {
-													"items": {},
+													"items": {
+														"type": "string"
+													},
 													"type": "array"
 												},
 												"data": {
@@ -6377,11 +6275,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"data",
-												"status"
-											],
+											"required": ["messages", "data", "status"],
 											"type": "object"
 										},
 										{
@@ -6397,10 +6291,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -6410,9 +6301,7 @@
 					}
 				},
 				"description": "Delete variables on the deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6474,10 +6363,7 @@
 										"description": "App slug"
 									}
 								},
-								"required": [
-									"env",
-									"slug"
-								],
+								"required": ["env", "slug"],
 								"type": "object"
 							}
 						}
@@ -6511,10 +6397,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -6524,9 +6407,7 @@
 					}
 				},
 				"description": "Update a variable on the deploy environment of the application.",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6585,20 +6466,14 @@
 										},
 										"type": "array",
 										"description": "New domains to be added into this deploy environment",
-										"example": [
-											"example.com",
-											"www.example.com"
-										]
+										"example": ["example.com", "www.example.com"]
 									},
 									"env": {
 										"type": "string",
 										"description": "Deploy environment name"
 									}
 								},
-								"required": [
-									"domains",
-									"env"
-								],
+								"required": ["domains", "env"],
 								"type": "object"
 							}
 						}
@@ -6622,9 +6497,7 @@
 					}
 				},
 				"description": "View app's container logs",
-				"tags": [
-					"App"
-				],
+				"tags": ["App"],
 				"security": [
 					{
 						"api_key": []
@@ -6672,9 +6545,7 @@
 					}
 				},
 				"description": "List of builds",
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6809,9 +6680,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6863,7 +6732,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/BuildDto"
+								"$ref": "#/components/schemas/entities.BuildDto"
 							}
 						}
 					}
@@ -6883,9 +6752,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -6937,7 +6804,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/BuildDto"
+								"$ref": "#/components/schemas/entities.BuildDto"
 							}
 						}
 					}
@@ -6957,9 +6824,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -7009,9 +6874,7 @@
 													"type": "string"
 												}
 											},
-											"required": [
-												"data"
-											],
+											"required": ["data"],
 											"type": "object"
 										}
 									]
@@ -7020,9 +6883,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -7062,9 +6923,7 @@
 													"type": "string"
 												}
 											},
-											"required": [
-												"data"
-											],
+											"required": ["data"],
 											"type": "object"
 										}
 									]
@@ -7074,9 +6933,7 @@
 					}
 				},
 				"description": "Check status then build container image finish.",
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -7113,9 +6970,7 @@
 					}
 				},
 				"description": "Create a new {Build} instance, then start building container image.",
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -7130,7 +6985,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/StartBuildParams"
+								"$ref": "#/components/schemas/buildModule.StartBuildParams"
 							}
 						}
 					}
@@ -7152,9 +7007,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Build"
-				],
+				"tags": ["Build"],
 				"security": [
 					{
 						"api_key": []
@@ -7174,9 +7027,7 @@
 										"type": "string"
 									}
 								},
-								"required": [
-									"slug"
-								],
+								"required": ["slug"],
 								"type": "object"
 							}
 						}
@@ -7200,9 +7051,7 @@
 					}
 				},
 				"description": "List of K8S clusters",
-				"tags": [
-					"Cluster"
-				],
+				"tags": ["Cluster"],
 				"security": [
 					{
 						"api_key": []
@@ -7337,9 +7186,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cluster"
-				],
+				"tags": ["Cluster"],
 				"security": [
 					{
 						"api_key": []
@@ -7391,7 +7238,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ClusterDto"
+								"$ref": "#/components/schemas/entities.ClusterDto"
 							}
 						}
 					}
@@ -7411,9 +7258,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cluster"
-				],
+				"tags": ["Cluster"],
 				"security": [
 					{
 						"api_key": []
@@ -7465,7 +7310,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ClusterDto"
+								"$ref": "#/components/schemas/entities.ClusterDto"
 							}
 						}
 					}
@@ -7485,9 +7330,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cluster"
-				],
+				"tags": ["Cluster"],
 				"security": [
 					{
 						"api_key": []
@@ -7533,9 +7376,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cluster"
-				],
+				"tags": ["Cluster"],
 				"security": [
 					{
 						"api_key": []
@@ -7554,6 +7395,595 @@
 						}
 					}
 				]
+			}
+		},
+		"/database": {
+			"get": {
+				"operationId": "Read",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["CloudDatabase"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "size",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "skip",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Find one item by `{ObjectID}`",
+						"in": "query",
+						"name": "id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "_id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Mark this request as search (return the similar results based on the filter query params)",
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"default": "true",
+							"type": "boolean"
+						}
+					},
+					{
+						"description": "If `true`, return the excel binary file to download.",
+						"in": "query",
+						"name": "download",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["CloudDatabase"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Omit_CloudDatabase.keyofHiddenBodyKeys_"
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"operationId": "Update",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["CloudDatabase"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Omit_CloudDatabase.keyofHiddenBodyKeys_"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "Delete",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["CloudDatabase"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Delete one item by `{ObjectID}`",
+						"in": "query",
+						"name": "id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Delete one item by `{slug}`",
+						"in": "query",
+						"name": "slug",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/database/healthz": {
+			"get": {
+				"operationId": "CheckConnection",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["CloudDatabase"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "size",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "skip",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Find one item by `{ObjectID}`",
+						"in": "query",
+						"name": "id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "_id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Mark this request as search (return the similar results based on the filter query params)",
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"default": "true",
+							"type": "boolean"
+						}
+					},
+					{
+						"description": "If `true`, return the excel binary file to download.",
+						"in": "query",
+						"name": "download",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
+		"/database/backup": {
+			"post": {
+				"operationId": "Backup",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["CloudDatabase"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Cloud Database ID",
+						"in": "query",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"name": {
+										"type": "string",
+										"description": "`[OPTIONAL]`\nBackup name"
+									}
+								},
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/database/restore": {
+			"post": {
+				"operationId": "Restore",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["CloudDatabase"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Omit_CloudDatabase.keyofHiddenBodyKeys_"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/deploy": {
@@ -7582,10 +8012,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										}
 									]
@@ -7595,9 +8022,7 @@
 					}
 				},
 				"description": "### [DEPRECATED SOON]\n#### Use `buildAndDeploy()` instead.\nBuild container image first, then deploy that build to target deploy environment.",
-				"tags": [
-					"Deploy"
-				],
+				"tags": ["Deploy"],
 				"deprecated": true,
 				"security": [
 					{
@@ -7655,9 +8080,7 @@
 										"$ref": "#/components/schemas/InputOptions"
 									}
 								},
-								"required": [
-									"options"
-								],
+								"required": ["options"],
 								"type": "object"
 							}
 						}
@@ -7686,9 +8109,7 @@
 															"type": "string"
 														}
 													},
-													"required": [
-														"logURL"
-													],
+													"required": ["logURL"],
 													"type": "object"
 												},
 												"status": {
@@ -7702,11 +8123,7 @@
 													"type": "array"
 												}
 											},
-											"required": [
-												"data",
-												"status",
-												"messages"
-											],
+											"required": ["data", "status", "messages"],
 											"type": "object"
 										}
 									]
@@ -7716,9 +8133,7 @@
 					}
 				},
 				"description": "Build container image first, then deploy that build to target deploy environment.\n- `Alias of \"/api/v1/deploy/from-source\"`",
-				"tags": [
-					"Deploy"
-				],
+				"tags": ["Deploy"],
 				"security": [
 					{
 						"api_key": []
@@ -7778,10 +8193,7 @@
 										"$ref": "#/components/schemas/StartBuildParams"
 									}
 								},
-								"required": [
-									"deployParams",
-									"buildParams"
-								],
+								"required": ["deployParams", "buildParams"],
 								"type": "object"
 							}
 						}
@@ -7810,9 +8222,7 @@
 															"type": "string"
 														}
 													},
-													"required": [
-														"logURL"
-													],
+													"required": ["logURL"],
 													"type": "object"
 												},
 												"status": {
@@ -7826,11 +8236,7 @@
 													"type": "array"
 												}
 											},
-											"required": [
-												"data",
-												"status",
-												"messages"
-											],
+											"required": ["data", "status", "messages"],
 											"type": "object"
 										}
 									]
@@ -7840,9 +8246,7 @@
 					}
 				},
 				"description": "Build container image first, then deploy that build to target deploy environment.\n- `Alias of \"/api/v1/deploy/build-first\"`",
-				"tags": [
-					"Deploy"
-				],
+				"tags": ["Deploy"],
 				"security": [
 					{
 						"api_key": []
@@ -7902,10 +8306,7 @@
 										"$ref": "#/components/schemas/StartBuildParams"
 									}
 								},
-								"required": [
-									"deployParams",
-									"buildParams"
-								],
+								"required": ["deployParams", "buildParams"],
 								"type": "object"
 							}
 						}
@@ -7940,10 +8341,7 @@
 													"format": "double"
 												}
 											},
-											"required": [
-												"messages",
-												"status"
-											],
+											"required": ["messages", "status"],
 											"type": "object"
 										},
 										{
@@ -7957,9 +8355,7 @@
 																"build": {},
 																"error": {}
 															},
-															"required": [
-																"error"
-															],
+															"required": ["error"],
 															"type": "object"
 														},
 														{
@@ -7975,11 +8371,7 @@
 																	"$ref": "#/components/schemas/IBuild"
 																}
 															},
-															"required": [
-																"deployment",
-																"release",
-																"build"
-															],
+															"required": ["deployment", "release", "build"],
 															"type": "object"
 														}
 													]
@@ -7993,11 +8385,7 @@
 													"type": "array"
 												}
 											},
-											"required": [
-												"data",
-												"status",
-												"messages"
-											],
+											"required": ["data", "status", "messages"],
 											"type": "object"
 										}
 									]
@@ -8006,9 +8394,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Deploy"
-				],
+				"tags": ["Deploy"],
 				"security": [
 					{
 						"api_key": []
@@ -8068,9 +8454,7 @@
 												"description": "Build's slug"
 											}
 										},
-										"required": [
-											"buildSlug"
-										],
+										"required": ["buildSlug"],
 										"type": "object"
 									},
 									{
@@ -8099,9 +8483,7 @@
 					}
 				},
 				"description": "Create new Diginext domain",
-				"tags": [
-					"Domain"
-				],
+				"tags": ["Domain"],
 				"security": [
 					{
 						"api_key": []
@@ -8153,7 +8535,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CreateDiginextDomainParams"
+								"$ref": "#/components/schemas/dxDomain.CreateDiginextDomainParams"
 							}
 						}
 					}
@@ -8176,9 +8558,7 @@
 					}
 				},
 				"description": "List of frameworks",
-				"tags": [
-					"Framework"
-				],
+				"tags": ["Framework"],
 				"security": [
 					{
 						"api_key": []
@@ -8313,9 +8693,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Framework"
-				],
+				"tags": ["Framework"],
 				"security": [
 					{
 						"api_key": []
@@ -8367,7 +8745,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/FrameworkDto"
+								"$ref": "#/components/schemas/entities.FrameworkDto"
 							}
 						}
 					}
@@ -8387,9 +8765,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Framework"
-				],
+				"tags": ["Framework"],
 				"security": [
 					{
 						"api_key": []
@@ -8441,7 +8817,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/FrameworkDto"
+								"$ref": "#/components/schemas/entities.FrameworkDto"
 							}
 						}
 					}
@@ -8461,9 +8837,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Framework"
-				],
+				"tags": ["Framework"],
 				"security": [
 					{
 						"api_key": []
@@ -8510,9 +8884,7 @@
 					}
 				},
 				"description": "List of GIT providers",
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8647,9 +9019,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8701,7 +9071,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/GitProviderDto"
+								"$ref": "#/components/schemas/entities.GitProviderDto"
 							}
 						}
 					}
@@ -8721,9 +9091,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8775,7 +9143,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/GitProviderDto"
+								"$ref": "#/components/schemas/entities.GitProviderDto"
 							}
 						}
 					}
@@ -8795,9 +9163,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8843,9 +9209,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8909,9 +9273,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -8975,9 +9337,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9042,9 +9402,7 @@
 					}
 				},
 				"description": "List organization repositories",
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9107,9 +9465,7 @@
 					}
 				},
 				"description": "Create new repository in git provider organization",
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9143,7 +9499,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/GitRepositoryDto"
+								"$ref": "#/components/schemas/gitProviderApi.GitRepositoryDto"
 							}
 						}
 					}
@@ -9165,9 +9521,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9194,9 +9548,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9219,10 +9571,7 @@
 										"type": "string"
 									}
 								},
-								"required": [
-									"publicKey",
-									"privateKey"
-								],
+								"required": ["publicKey", "privateKey"],
 								"type": "object"
 							}
 						}
@@ -9257,9 +9606,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9286,9 +9633,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Git Provider"
-				],
+				"tags": ["Git Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -9325,9 +9670,7 @@
 					}
 				},
 				"description": "List of nodes in a cluster",
-				"tags": [
-					"Monitor"
-				],
+				"tags": ["Monitor"],
 				"security": [
 					{
 						"api_key": []
@@ -9364,9 +9707,7 @@
 					}
 				},
 				"description": "List of namespaces in a cluster",
-				"tags": [
-					"Monitor"
-				],
+				"tags": ["Monitor"],
 				"security": [
 					{
 						"api_key": []
@@ -9401,9 +9742,7 @@
 					}
 				},
 				"description": "Create namespace in a cluster",
-				"tags": [
-					"Monitor"
-				],
+				"tags": ["Monitor"],
 				"security": [
 					{
 						"api_key": []
@@ -9433,9 +9772,7 @@
 										"description": "Namespace's name"
 									}
 								},
-								"required": [
-									"name"
-								],
+								"required": ["name"],
 								"type": "object"
 							}
 						}
@@ -9459,9 +9796,7 @@
 					}
 				},
 				"description": "List of K8S services",
-				"tags": [
-					"Monitor"
-				],
+				"tags": ["Monitor"],
 				"security": [
 					{
 						"api_key": []
@@ -9504,9 +9839,7 @@
 					}
 				},
 				"description": "Create service in a namespace",
-				"tags": [
-					"Monitor"
-				],
+				"tags": ["Monitor"],
 				"security": [
 					{
 						"api_key": []
@@ -9581,10 +9914,7 @@
 										"description": "Namespace's name"
 									}
 								},
-								"required": [
-									"spec",
-									"name"
-								],
+								"required": ["spec", "name"],
 								"type": "object"
 							}
 						}
@@ -9608,9 +9938,7 @@
 					}
 				},
 				"description": "List of K8S Ingress",
-				"tags": [
-					"Monitor"
-				],
+				"tags": ["Monitor"],
 				"security": [
 					{
 						"api_key": []
@@ -9655,9 +9983,7 @@
 					}
 				},
 				"description": "List of K8S Deployment",
-				"tags": [
-					"Monitor"
-				],
+				"tags": ["Monitor"],
 				"security": [
 					{
 						"api_key": []
@@ -9702,9 +10028,7 @@
 					}
 				},
 				"description": "List of K8S Pod",
-				"tags": [
-					"Monitor"
-				],
+				"tags": ["Monitor"],
 				"security": [
 					{
 						"api_key": []
@@ -9749,9 +10073,7 @@
 					}
 				},
 				"description": "List of K8S Secret",
-				"tags": [
-					"Monitor"
-				],
+				"tags": ["Monitor"],
 				"security": [
 					{
 						"api_key": []
@@ -9796,9 +10118,7 @@
 					}
 				},
 				"description": "List of projects",
-				"tags": [
-					"Project"
-				],
+				"tags": ["Project"],
 				"security": [
 					{
 						"api_key": []
@@ -9933,9 +10253,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Project"
-				],
+				"tags": ["Project"],
 				"security": [
 					{
 						"api_key": []
@@ -9987,7 +10305,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ProjectDto"
+								"$ref": "#/components/schemas/entities.ProjectDto"
 							}
 						}
 					}
@@ -10007,9 +10325,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Project"
-				],
+				"tags": ["Project"],
 				"security": [
 					{
 						"api_key": []
@@ -10061,7 +10377,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ProjectDto"
+								"$ref": "#/components/schemas/entities.ProjectDto"
 							}
 						}
 					}
@@ -10081,9 +10397,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Project"
-				],
+				"tags": ["Project"],
 				"security": [
 					{
 						"api_key": []
@@ -10136,9 +10450,7 @@
 													"type": "array"
 												}
 											},
-											"required": [
-												"data"
-											],
+											"required": ["data"],
 											"type": "object"
 										}
 									]
@@ -10147,9 +10459,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Project"
-				],
+				"tags": ["Project"],
 				"security": [
 					{
 						"api_key": []
@@ -10286,9 +10596,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cloud Provider"
-				],
+				"tags": ["Cloud Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -10423,9 +10731,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cloud Provider"
-				],
+				"tags": ["Cloud Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -10477,7 +10783,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CloudProviderDto"
+								"$ref": "#/components/schemas/entities.CloudProviderDto"
 							}
 						}
 					}
@@ -10497,9 +10803,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cloud Provider"
-				],
+				"tags": ["Cloud Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -10551,7 +10855,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CloudProviderDto"
+								"$ref": "#/components/schemas/entities.CloudProviderDto"
 							}
 						}
 					}
@@ -10571,9 +10875,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Cloud Provider"
-				],
+				"tags": ["Cloud Provider"],
 				"security": [
 					{
 						"api_key": []
@@ -10620,9 +10922,7 @@
 					}
 				},
 				"description": "List of container registry",
-				"tags": [
-					"Container Registry"
-				],
+				"tags": ["Container Registry"],
 				"security": [
 					{
 						"api_key": []
@@ -10757,9 +11057,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Container Registry"
-				],
+				"tags": ["Container Registry"],
 				"security": [
 					{
 						"api_key": []
@@ -10811,7 +11109,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ContainerRegistryDto"
+								"$ref": "#/components/schemas/entities.ContainerRegistryDto"
 							}
 						}
 					}
@@ -10831,9 +11129,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Container Registry"
-				],
+				"tags": ["Container Registry"],
 				"security": [
 					{
 						"api_key": []
@@ -10885,7 +11181,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ContainerRegistryDto"
+								"$ref": "#/components/schemas/entities.ContainerRegistryDto"
 							}
 						}
 					}
@@ -10905,9 +11201,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Container Registry"
-				],
+				"tags": ["Container Registry"],
 				"security": [
 					{
 						"api_key": []
@@ -10960,20 +11254,14 @@
 											"format": "double"
 										}
 									},
-									"required": [
-										"data",
-										"messages",
-										"status"
-									],
+									"required": ["data", "messages", "status"],
 									"type": "object"
 								}
 							}
 						}
 					}
 				},
-				"tags": [
-					"Container Registry"
-				],
+				"tags": ["Container Registry"],
 				"security": [
 					{
 						"api_key": []
@@ -11010,9 +11298,7 @@
 					}
 				},
 				"description": "List of releases",
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -11147,9 +11433,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -11201,7 +11485,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ReleaseDto"
+								"$ref": "#/components/schemas/entities.ReleaseDto"
 							}
 						}
 					}
@@ -11221,9 +11505,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -11275,7 +11557,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ReleaseDto"
+								"$ref": "#/components/schemas/entities.ReleaseDto"
 							}
 						}
 					}
@@ -11295,9 +11577,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -11343,9 +11623,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -11374,11 +11652,7 @@
 										"description": "App's slug"
 									}
 								},
-								"required": [
-									"buildNumber",
-									"env",
-									"app"
-								],
+								"required": ["buildNumber", "env", "app"],
 								"type": "object"
 							}
 						}
@@ -11401,9 +11675,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -11428,10 +11700,7 @@
 										"description": "Build's ID"
 									}
 								},
-								"required": [
-									"env",
-									"build"
-								],
+								"required": ["env", "build"],
 								"type": "object"
 							}
 						}
@@ -11454,9 +11723,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -11476,9 +11743,7 @@
 										"type": "string"
 									}
 								},
-								"required": [
-									"id"
-								],
+								"required": ["id"],
 								"type": "object"
 							}
 						}
@@ -11501,9 +11766,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Release"
-				],
+				"tags": ["Release"],
 				"security": [
 					{
 						"api_key": []
@@ -11523,9 +11786,7 @@
 										"type": "string"
 									}
 								},
-								"required": [
-									"id"
-								],
+								"required": ["id"],
 								"type": "object"
 							}
 						}
@@ -11549,9 +11810,7 @@
 					}
 				},
 				"description": "List of roles",
-				"tags": [
-					"Role"
-				],
+				"tags": ["Role"],
 				"security": [
 					{
 						"api_key": []
@@ -11686,9 +11945,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Role"
-				],
+				"tags": ["Role"],
 				"security": [
 					{
 						"api_key": []
@@ -11740,7 +11997,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/RoleDto"
+								"$ref": "#/components/schemas/entities.RoleDto"
 							}
 						}
 					}
@@ -11760,9 +12017,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Role"
-				],
+				"tags": ["Role"],
 				"security": [
 					{
 						"api_key": []
@@ -11814,7 +12069,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/RoleDto"
+								"$ref": "#/components/schemas/entities.RoleDto"
 							}
 						}
 					}
@@ -11834,9 +12089,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Role"
-				],
+				"tags": ["Role"],
 				"security": [
 					{
 						"api_key": []
@@ -11883,9 +12136,7 @@
 					}
 				},
 				"description": "Get all routes",
-				"tags": [
-					"Route"
-				],
+				"tags": ["Route"],
 				"security": [
 					{
 						"api_key": []
@@ -12023,9 +12274,7 @@
 					}
 				},
 				"description": "Check access permissions",
-				"tags": [
-					"Route"
-				],
+				"tags": ["Route"],
 				"security": [
 					{
 						"api_key": []
@@ -12051,10 +12300,7 @@
 										"$ref": "#/components/schemas/IRoutePermission"
 									}
 								},
-								"required": [
-									"route",
-									"action"
-								],
+								"required": ["route", "action"],
 								"type": "object"
 							}
 						}
@@ -12077,9 +12323,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Service Account"
-				],
+				"tags": ["Service Account"],
 				"security": [
 					{
 						"api_key": []
@@ -12214,9 +12458,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Service Account"
-				],
+				"tags": ["Service Account"],
 				"security": [
 					{
 						"api_key": []
@@ -12268,7 +12510,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ServiceAccountDto"
+								"$ref": "#/components/schemas/ServiceAccount.ServiceAccountDto"
 							}
 						}
 					}
@@ -12288,9 +12530,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Service Account"
-				],
+				"tags": ["Service Account"],
 				"security": [
 					{
 						"api_key": []
@@ -12342,7 +12582,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ServiceAccountDto"
+								"$ref": "#/components/schemas/ServiceAccount.ServiceAccountDto"
 							}
 						}
 					}
@@ -12362,9 +12602,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Service Account"
-				],
+				"tags": ["Service Account"],
 				"security": [
 					{
 						"api_key": []
@@ -12410,9 +12648,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Service Account"
-				],
+				"tags": ["Service Account"],
 				"security": [
 					{
 						"api_key": []
@@ -12450,9 +12686,7 @@
 					}
 				},
 				"description": "List of teams",
-				"tags": [
-					"Team"
-				],
+				"tags": ["Team"],
 				"security": [
 					{
 						"api_key": []
@@ -12587,9 +12821,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Team"
-				],
+				"tags": ["Team"],
 				"security": [
 					{
 						"api_key": []
@@ -12641,7 +12873,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/TeamDto"
+								"$ref": "#/components/schemas/entities.TeamDto"
 							}
 						}
 					}
@@ -12661,9 +12893,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Team"
-				],
+				"tags": ["Team"],
 				"security": [
 					{
 						"api_key": []
@@ -12715,7 +12945,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/TeamDto"
+								"$ref": "#/components/schemas/entities.TeamDto"
 							}
 						}
 					}
@@ -12735,9 +12965,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Team"
-				],
+				"tags": ["Team"],
 				"security": [
 					{
 						"api_key": []
@@ -12784,9 +13012,7 @@
 					}
 				},
 				"description": "List of users",
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -12921,9 +13147,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key2": []
@@ -12975,7 +13199,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/UserDto"
+								"$ref": "#/components/schemas/entities.UserDto"
 							}
 						}
 					}
@@ -12995,9 +13219,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -13049,7 +13271,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/UserDto"
+								"$ref": "#/components/schemas/entities.UserDto"
 							}
 						}
 					}
@@ -13069,9 +13291,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -13117,9 +13337,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -13256,9 +13474,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -13278,9 +13494,7 @@
 										"$ref": "#/components/schemas/ObjectId"
 									}
 								},
-								"required": [
-									"roleId"
-								],
+								"required": ["roleId"],
 								"type": "object"
 							}
 						}
@@ -13303,9 +13517,7 @@
 						}
 					}
 				},
-				"tags": [
-					"User"
-				],
+				"tags": ["User"],
 				"security": [
 					{
 						"api_key": []
@@ -13343,9 +13555,7 @@
 					}
 				},
 				"description": "Export a webpage to PDF",
-				"tags": [
-					"Utility"
-				],
+				"tags": ["Utility"],
 				"security": [
 					{
 						"api_key": []
@@ -13369,7 +13579,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ExportPDFOptions"
+								"$ref": "#/components/schemas/exportPdf_1.ExportPDFOptions"
 							}
 						}
 					}
@@ -13392,9 +13602,7 @@
 					}
 				},
 				"description": "Capture a webpage screenshot",
-				"tags": [
-					"Utility"
-				],
+				"tags": ["Utility"],
 				"security": [
 					{
 						"api_key": []
@@ -13418,7 +13626,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CaptureScreenshotOptions"
+								"$ref": "#/components/schemas/screenshot_1.CaptureScreenshotOptions"
 							}
 						}
 					}
@@ -13441,9 +13649,7 @@
 					}
 				},
 				"description": "List of workspaces",
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -13578,9 +13784,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -13615,9 +13819,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -13689,9 +13891,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -13737,9 +13937,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -13762,9 +13960,7 @@
 										"type": "array"
 									}
 								},
-								"required": [
-									"emails"
-								],
+								"required": ["emails"],
 								"type": "object"
 							}
 						}
@@ -13787,9 +13983,7 @@
 						}
 					}
 				},
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -13827,9 +14021,7 @@
 					}
 				},
 				"description": "======================= SERVICE ACCOUNT ======================",
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -13974,9 +14166,7 @@
 					}
 				},
 				"description": "======================= API KEY USER ACCOUNT ======================",
-				"tags": [
-					"Workspace"
-				],
+				"tags": ["Workspace"],
 				"security": [
 					{
 						"api_key": []
@@ -14120,9 +14310,7 @@
 						}
 					}
 				},
-				"tags": [
-					"API Key"
-				],
+				"tags": ["API Key"],
 				"security": [
 					{
 						"api_key": []
@@ -14257,9 +14445,7 @@
 						}
 					}
 				},
-				"tags": [
-					"API Key"
-				],
+				"tags": ["API Key"],
 				"security": [
 					{
 						"api_key": []
@@ -14311,7 +14497,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ApiKeyAccountDto"
+								"$ref": "#/components/schemas/ApiKeyAccount.ApiKeyAccountDto"
 							}
 						}
 					}
@@ -14331,9 +14517,7 @@
 						}
 					}
 				},
-				"tags": [
-					"API Key"
-				],
+				"tags": ["API Key"],
 				"security": [
 					{
 						"api_key": []
@@ -14385,7 +14569,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ApiKeyAccountDto"
+								"$ref": "#/components/schemas/ApiKeyAccount.ApiKeyAccountDto"
 							}
 						}
 					}
@@ -14405,9 +14589,7 @@
 						}
 					}
 				},
-				"tags": [
-					"API Key"
-				],
+				"tags": ["API Key"],
 				"security": [
 					{
 						"api_key": []
@@ -14453,9 +14635,7 @@
 						}
 					}
 				},
-				"tags": [
-					"API Key"
-				],
+				"tags": ["API Key"],
 				"security": [
 					{
 						"api_key": []

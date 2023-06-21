@@ -1,5 +1,4 @@
 import Table from "cli-table";
-import execa from "execa";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_CONFIG_FILE, CLI_DIR } from "@/config/const";
@@ -7,6 +6,8 @@ import type { InputOptions } from "@/interfaces";
 import { getOS } from "@/plugins";
 
 export const showServerInfo = async (options: InputOptions) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	const { buildServerUrl } = getCliConfig();
 
 	const table = new Table();

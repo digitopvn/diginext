@@ -1,8 +1,159 @@
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
+import { existsSync, mkdirSync } from "fs";
 import generator from "generate-password";
 import { MongoClient } from "mongodb";
+import path from "path";
+
+import { CLI_DIR } from "@/config/const";
 
 let currentDB;
+
+export type MongoConnectionInfo = {
+	url?: string;
+	host?: string;
+	/**
+	 * @default 27017
+	 */
+	port?: string;
+	/**
+	 * @default root
+	 */
+	user?: string;
+	pass?: string;
+};
+
+// import { execaSync } from "execa";
+
+export const checkConnection = async (options: Partial<MongoConnectionInfo> & { isDebugging?: boolean }) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+	try {
+		if (options.url) {
+			const { stdout, stderr } = execaSync(`mongo`, [options.url, "--eval", "db.version()"]);
+			if (options.isDebugging) console.log("[MONGODB] Connected :>> ", stdout);
+		} else {
+			const { stdout, stderr } = execaSync(`mongo`, [
+				"--host",
+				`${options.host}:${options.port || 27017}`,
+				"--username",
+				options.user || "root",
+				"--password",
+				options.pass,
+				"--eval",
+				"db.version()",
+			]);
+			if (options.isDebugging) console.log("[MONGODB] Connected :>> ", stdout);
+		}
+		return true;
+	} catch (e) {
+		console.error("[MONGODB]", e);
+		return false;
+	}
+};
+
+export const backup = async (
+	options: Partial<MongoConnectionInfo> & {
+		/**
+		 * @default all
+		 */
+		dbName?: string;
+		/**
+		 * @default admin
+		 */
+		authDb?: string;
+		/**
+		 * Output directory
+		 */
+		outDir?: string;
+	} & { isDebugging?: boolean }
+) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
+	const bkName = `mongodb-backup-${makeDaySlug()}`;
+	const mongoBackupDir = path.resolve(CLI_DIR, `storage/mongodb`);
+	if (!options.outDir) options.outDir = path.resolve(mongoBackupDir, bkName);
+
+	if (!existsSync(options.outDir)) mkdirSync(options.outDir, { recursive: true });
+
+	console.log("[MONGODB] backup > options :>> ", options);
+
+	if (options.url) {
+		const { stdout, stderr } = execaSync(`mongodump`, ["--uri", options.url, "--out", options.outDir]);
+		if (options.isDebugging) console.log("[MONGODB] Backup successfully :>> ", stdout);
+	} else {
+		const { stdout, stderr } = execaSync(`mongodump`, [
+			"--host",
+			`${options.host}:${options.port || 27017}`,
+			"--username",
+			options.user || "root",
+			"--password",
+			options.pass,
+			"--authenticationDatabase",
+			options.authDb || "admin",
+			options.dbName ? `--db=${options.dbName}` : "",
+			"--out",
+			options.outDir,
+		]);
+		if (options.isDebugging) console.log("[MONGODB] Backup successfully :>> ", stdout);
+	}
+
+	const compressedBackupName = `${bkName}.tar.gz`;
+	const { stdout } = execaSync("tar", ["-czf", compressedBackupName, bkName], { cwd: mongoBackupDir });
+	if (options.isDebugging) console.log("Compressing backup directory :>> ", stdout);
+
+	return { name: bkName, path: path.join(mongoBackupDir, compressedBackupName) };
+};
+
+export const restore = async (
+	options: Partial<MongoConnectionInfo> & {
+		/**
+		 * Database name
+		 * @default all-databases
+		 */
+		dbName?: string;
+		/**
+		 * @default admin
+		 */
+		authDb?: string;
+		/**
+		 * From a directory
+		 */
+		dir?: string;
+	} & { isDebugging?: boolean }
+) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
+	if (!options.dir) {
+		options.dir = path.resolve(CLI_DIR, `storage/mongodb/mongodb-backup-${makeDaySlug()}`);
+	}
+
+	if (!existsSync(options.dir)) mkdirSync(options.dir, { recursive: true });
+
+	try {
+		if (options.url) {
+			const { stdout, stderr } = execaSync(`mongorestore`, ["--uri", options.url, options.dbName ? `--db=${options.dbName}` : ""]);
+			if (options.isDebugging) console.log("[MONGODB] Restore successfully :>> ", stdout);
+		} else {
+			const { stdout, stderr } = execaSync(`mongorestore`, [
+				"--host",
+				`${options.host}:${options.port || 27017}`,
+				"--username",
+				options.user || "root",
+				"--password",
+				options.pass,
+				"--authenticationDatabase",
+				options.authDb || "admin",
+				options.dbName ? `--db=${options.dbName}` : "",
+				"--out",
+				options.dir,
+			]);
+			if (options.isDebugging) console.log("[MONGODB] Restore successfully :>> ", stdout);
+		}
+		return true;
+	} catch (e) {
+		return false;
+	}
+};
 
 export const connect = async ({ dbName, env = "dev", provider = "digitalocean" }) => {
 	if (currentDB) return currentDB;
@@ -80,3 +231,7 @@ export const createNewDatabase = async ({ env = "dev", dbName = "cli-test-1", pr
 	logSuccess(`Connection string:`, `mongodb://${name}:${encodeURIComponent(pass)}@${host}/${dbName}?authSource=${dbName}`);
 	process.exit(1);
 };
+
+const MongoShell = { checkConnection, backup, restore };
+
+export default MongoShell;

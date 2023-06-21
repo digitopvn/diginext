@@ -14,7 +14,7 @@ import { DB } from "../api/DB";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppGitInfo } from "../apps/update-git-config";
 import { askForRegistry } from "../registry/ask-for-registry";
-import type { StartBuildParams } from ".";
+import type { StartBuildParams } from "./index";
 
 /**
  * Request the build server to start building & deploying

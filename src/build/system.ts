@@ -1,7 +1,7 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
 
+// import { execaCommand } from "execa";
 import { Config } from "@/app.config";
 
 import { Logger } from "../plugins/logger";
@@ -10,7 +10,8 @@ import { execCmd } from "../plugins/utils";
 export async function listImages() {
 	const logger = new Logger(`server-images-${makeDaySlug({ divider: "" })}`);
 
-	const { stdout } = await execa.command(`docker images`);
+	const { execaCommand } = await import("execa");
+	const { stdout } = await execaCommand(`docker images`);
 
 	log(`---> SERVER LIST IMAGES`);
 	log(`\n`, stdout);
@@ -19,7 +20,7 @@ export async function listImages() {
 
 	// convert to json:
 
-	const jsonList = await execa.command(`${Config.BUILDER} images --format "{{json .}}"`);
+	const jsonList = await execaCommand(`${Config.BUILDER} images --format "{{json .}}"`);
 	const imgArr = jsonList.stdout.split("\n").map((line) => JSON.parse(line));
 
 	return JSON.stringify(imgArr, null, 2);

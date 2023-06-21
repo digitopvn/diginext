@@ -1,5 +1,4 @@
 import { log, logError, logSuccess } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
 import yargs from "yargs";
 
 import { Config } from "@/app.config";
@@ -8,8 +7,10 @@ import { CLI_DIR } from "@/config/const";
 import type InputOptions from "@/interfaces/InputOptions";
 
 export const checkPackageDependency = async (pkg: string, cmd: string) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
 	try {
-		return await execa.command(pkg + " " + cmd, cliOpts);
+		const res = await execaCommand(pkg + " " + cmd, cliOpts);
+		return res;
 	} catch (e) {
 		logError(`Package "${pkg}" is required to be installed.`);
 		process.exit(1);
@@ -17,6 +18,8 @@ export const checkPackageDependency = async (pkg: string, cmd: string) => {
 };
 
 export const startBuildServer = async () => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	// Check package dependencies: gcloud, kubectl, doctl, git, docker
 	await checkPackageDependency("gcloud", "--version");
 	await checkPackageDependency("kubectl", "config view");
@@ -28,7 +31,7 @@ export const startBuildServer = async () => {
 	process.chdir(CLI_DIR);
 
 	try {
-		await execa.command(`yarn start`);
+		await execaCommand(`yarn start`);
 		logSuccess(`Build server is up at: ${process.env.BASE_URL}`);
 	} catch (e) {
 		logError(e);
@@ -36,11 +39,12 @@ export const startBuildServer = async () => {
 };
 
 export const stopBuildServer = async () => {
+	const { execa, execaCommand, execaSync } = await import("execa");
 	// switch working directory to CLI directory
 	process.chdir(CLI_DIR);
 
 	try {
-		await execa.command(`yarn stop`);
+		await execaCommand(`yarn stop`);
 		logSuccess(`Build server has been stopped.`);
 	} catch (e) {
 		logError(e);
@@ -48,17 +52,18 @@ export const stopBuildServer = async () => {
 };
 
 export const restartBuildServer = async () => {
+	const { execa, execaCommand, execaSync } = await import("execa");
 	// switch working directory to CLI directory
 	process.chdir(CLI_DIR);
 
 	try {
-		await execa.command(`yarn stop`);
+		await execaCommand(`yarn stop`);
 	} catch (e) {
 		log(`Build server has not started yet.`);
 		log(`Starting build server now...`);
 	}
 	try {
-		await execa.command(`yarn start`);
+		await execaCommand(`yarn start`);
 		return logSuccess(`Build server has been restarted.`);
 	} catch (e) {
 		return logError(e);

@@ -1,20 +1,21 @@
 import mongoose, { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
-import type { CloudDatabaseType } from "@/interfaces/SystemTypes";
+import { type CloudDatabaseType, cloudDatabaseList } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
 
 export interface ICloudDatabase extends IBase {
 	name?: string;
+	verified?: boolean;
 	type?: CloudDatabaseType;
 	provider?: string;
 	user?: string;
 	pass?: string;
 	host?: string;
 	port?: number;
-	connectionStr?: string;
+	url?: string;
 }
 export type CloudDatabaseDto = Omit<ICloudDatabase, keyof HiddenBodyKeys>;
 
@@ -22,13 +23,14 @@ export const cloudDatabaseSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
-		type: { type: String, enum: ["mongodb", "mysql", "mariadb", "postgresql", "sqlserver", "sqlite", "redis", "dynamodb"] },
+		verified: Boolean,
+		type: { type: String, enum: cloudDatabaseList },
 		provider: { type: String },
 		user: { type: String },
 		pass: { type: String },
 		host: { type: String },
 		port: { type: Number },
-		connectionStr: { type: String },
+		url: { type: String },
 	},
 	{ collection: "cloud_databases", timestamps: true }
 );

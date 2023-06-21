@@ -1,5 +1,4 @@
 // Imports the Google Analytics Admin API client library
-// const analyticsAdmin = require("@google-analytics/admin");
 import { AnalyticsAdminServiceClient, protos } from "@google-analytics/admin";
 import chalk from "chalk";
 import Table from "cli-table";

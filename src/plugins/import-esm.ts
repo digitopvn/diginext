@@ -1,7 +1,5 @@
-import path from "path";
-
-const Module = require("module");
-const { isAbsolute } = require("path");
+import Module from "module";
+import path, { isAbsolute } from "path";
 
 export async function importEsm(specifier, module) {
 	if (isAbsolute) {

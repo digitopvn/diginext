@@ -3,7 +3,7 @@ import inquirer from "inquirer";
 
 import type { ICluster } from "@/entities";
 
-import ClusterManager from ".";
+import ClusterManager from "./index";
 
 export const askForDeployment = async (cluster: ICluster, namespace: string = "default") => {
 	const { contextName: context } = cluster;
