@@ -1,8 +1,8 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { ICloudProvider } from "@/entities";
-import { CloudProviderDto } from "@/entities";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import * as entities from "@/entities";
+import * as interfaces from "@/interfaces";
 import CloudProviderService from "@/services/CloudProviderService";
 
 import BaseController from "./BaseController";
@@ -17,7 +17,7 @@ export default class CloudProviderController extends BaseController<ICloudProvid
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		if (this.filter && this.filter.owner) delete this.filter.owner;
 		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.read();
@@ -26,7 +26,7 @@ export default class CloudProviderController extends BaseController<ICloudProvid
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: CloudProviderDto, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: entities.CloudProviderDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		if (this.filter && this.filter.owner) delete this.filter.owner;
 		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.create(body);
@@ -35,7 +35,7 @@ export default class CloudProviderController extends BaseController<ICloudProvid
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: CloudProviderDto, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: entities.CloudProviderDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		if (this.filter && this.filter.owner) delete this.filter.owner;
 		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.update(body);
@@ -44,7 +44,7 @@ export default class CloudProviderController extends BaseController<ICloudProvid
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		if (this.filter && this.filter.owner) delete this.filter.owner;
 		if (this.filter && this.filter.workspace) delete this.filter.workspace;
 		return super.delete();

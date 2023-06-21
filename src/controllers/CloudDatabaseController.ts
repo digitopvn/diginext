@@ -2,7 +2,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import type { ICloudDatabase } from "@/entities";
 import type { HiddenBodyKeys } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure } from "@/interfaces";
+import * as interfaces from "@/interfaces";
 import type { CloudDatabase } from "@/services/CloudDatabaseService";
 import CloudDatabaseService from "@/services/CloudDatabaseService";
 
@@ -20,45 +20,46 @@ export default class CloudDatabaseController extends BaseController<ICloudDataba
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return super.read();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		try {
 			return await super.create(body);
 		} catch (e) {
-			return respondFailure(e.toString());
+			return interfaces.respondFailure(e.toString());
 		}
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.update(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		return super.delete();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/healthz")
-	async checkConnection(@Queries() queryParams?: IGetQueryParams) {
+	async checkConnection(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		try {
 			const db = await this.service.findOne(this.filter);
-			if (!db) return respondFailure(`Database not found.`);
-			return await this.service.checkHealth(db);
+			if (!db) return interfaces.respondFailure(`Database not found.`);
+			const success = await this.service.checkHealth(db);
+			return interfaces.respondSuccess({ data: { success } });
 		} catch (e) {
-			return respondFailure(e.toString());
+			return interfaces.respondFailure(e.toString());
 		}
 	}
 
@@ -74,26 +75,33 @@ export default class CloudDatabaseController extends BaseController<ICloudDataba
 			 */
 			name?: string;
 		},
-		@Queries() queryParams?: IPostQueryParams
+		@Queries()
+		queryParams?: {
+			/**
+			 * Cloud Database ID
+			 */
+			id: string;
+		}
 	) {
 		try {
 			const db = await this.service.findOne(this.filter);
-			if (!db) return respondFailure(`Database not found.`);
-			return await this.service.backup(db);
+			if (!db) return interfaces.respondFailure(`Database not found.`);
+			const res = await this.service.backup(db);
+			return interfaces.respondSuccess({ data: res });
 		} catch (e) {
-			return respondFailure(e.toString());
+			return interfaces.respondFailure(e.toString());
 		}
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/restore")
-	async restore(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: IPostQueryParams) {
+	async restore(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		try {
 			// restore...
-			return respondFailure(`This feature is under development.`);
+			return interfaces.respondFailure(`This feature is under development.`);
 		} catch (e) {
-			return respondFailure(e.toString());
+			return interfaces.respondFailure(e.toString());
 		}
 	}
 }

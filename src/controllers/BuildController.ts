@@ -2,11 +2,11 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import { Config } from "@/app.config";
 import type { IBuild } from "@/entities";
-import { BuildDto } from "@/entities";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import * as entities from "@/entities";
+import * as interfaces from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
-import { startBuild, StartBuildParams, stopBuild } from "@/modules/build";
+import * as buildModule from "@/modules/build";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { Logger } from "@/plugins";
 import BuildService from "@/services/BuildService";
@@ -28,7 +28,7 @@ export default class BuildController extends BaseController<IBuild> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		console.log("BuildController > this.filter :>> ", this.filter);
 		return super.read();
 	}
@@ -36,21 +36,21 @@ export default class BuildController extends BaseController<IBuild> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: BuildDto, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: entities.BuildDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: BuildDto, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: entities.BuildDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.update(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		return super.delete();
 	}
 
@@ -129,7 +129,7 @@ export default class BuildController extends BaseController<IBuild> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/start")
-	async startBuild(@Body() body: StartBuildParams) {
+	async startBuild(@Body() body: buildModule.StartBuildParams) {
 		// check dx quota
 		const quotaRes = await checkQuota(this.workspace);
 		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
@@ -146,7 +146,7 @@ export default class BuildController extends BaseController<IBuild> {
 		if (!gitBranch) return respondFailure({ msg: `Git branch is required.` });
 		if (!registrySlug) return respondFailure({ msg: `Container registry slug is required.` });
 		// start the build
-		const buildInfo = await startBuild(body);
+		const buildInfo = await buildModule.startBuild(body);
 
 		const buildServerUrl = Config.BASE_URL;
 		const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
@@ -168,7 +168,7 @@ export default class BuildController extends BaseController<IBuild> {
 		let build = await this.service.findOne({ slug });
 		if (!build) return respondFailure(`Build "${slug}" not found.`);
 
-		const stoppedBuild = await stopBuild(build.projectSlug, build.appSlug, slug.toString());
+		const stoppedBuild = await buildModule.stopBuild(build.projectSlug, build.appSlug, slug.toString());
 		if ((stoppedBuild as { error: string })?.error) return respondFailure((stoppedBuild as { error: string }).error);
 
 		build = await this.service.updateOne({ _id: build._id }, { status: "failed" });

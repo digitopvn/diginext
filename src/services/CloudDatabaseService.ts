@@ -1,7 +1,9 @@
+import { logError } from "diginext-utils/dist/xconsole/log";
 import { existsSync } from "fs";
 import { toString } from "lodash";
 import path from "path";
 
+import { Config } from "@/app.config";
 import type { CloudDatabaseDto, ICloudDatabase } from "@/entities/CloudDatabase";
 import { cloudDatabaseSchema } from "@/entities/CloudDatabase";
 import type { ICloudDatabaseBackup } from "@/entities/CloudDatabaseBackup";
@@ -12,6 +14,7 @@ import { DB } from "@/modules/api/DB";
 import MongoShell from "@/modules/db/mongo";
 import MySQL from "@/modules/db/mysql";
 import PostgreSQL from "@/modules/db/pg";
+import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
 import CloudDatabaseBackupService from "./CloudDatabaseBackupService";
@@ -70,13 +73,11 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		if (data.type !== "mongodb" && data.type !== "mariadb" && data.type !== "mysql" && data.type !== "postgresql")
 			throw new Error(`Database type "" is not supported at the moment.`);
 
-		if (data.type === "mongodb" && !data.host && !data.url) throw new Error(`Database "host" or "url" is required.`);
-
-		if (data.type !== "mongodb") {
+		if (data.type !== "mongodb" && data.type !== "postgresql" && !data.url) {
 			if (!data.host) throw new Error(`Database host is required.`);
 			if (!data.pass) throw new Error(`Password is required.`);
 		}
-		console.log("data :>> ", data);
+		// console.log("data :>> ", data);
 		// test connection
 		let verified: boolean = false;
 
@@ -126,8 +127,11 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		if (!db.type) throw new Error(`Database type is required, should be one of: ${cloudDatabaseList.join(",")}.`);
 		if (db.type !== "mongodb" && db.type !== "mariadb" && db.type !== "mysql" && db.type !== "postgresql")
 			throw new Error(`Database type "" is not supported at the moment.`);
-		if (!db.host) throw new Error(`Database host is required.`);
-		if (!db.pass) throw new Error(`Password is required.`);
+
+		if (db.type !== "mongodb" && db.type !== "postgresql" && !db.url) {
+			if (!db.host) throw new Error(`Database host is required.`);
+			if (!db.pass) throw new Error(`Password is required.`);
+		}
 
 		// test connection
 		let verified: boolean = false;
@@ -161,32 +165,67 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		return this.backup(db);
 	}
 
-	async backup(db: ICloudDatabase) {
+	async backup(db: ICloudDatabase, options?: { dbName?: string; authDb?: string }) {
 		// validate
 		if (!db.type) throw new Error(`Database type is required, should be one of: ${cloudDatabaseList.join(",")}.`);
 		if (db.type !== "mongodb" && db.type !== "mariadb" && db.type !== "mysql" && db.type !== "postgresql")
-			throw new Error(`Database type "" is not supported at the moment.`);
-		if (!db.host) throw new Error(`Database host is required.`);
-		if (!db.pass) throw new Error(`Password is required.`);
+			throw new Error(`Database type "${db.type}" is not supported at the moment.`);
 
-		// backup
-		let res: { name: string; path: string };
-		switch (db.type) {
-			case "mariadb":
-			case "mysql":
-				res = await MySQL.backup({ host: db.host, port: toString(db.port), user: db.user, pass: db.pass });
-				break;
-			case "mongodb":
-				res = await MongoShell.backup({ host: db.host, port: toString(db.port), user: db.user, pass: db.pass });
-				break;
-			case "postgresql":
-				res = await PostgreSQL.backup({ host: db.host, port: toString(db.port), user: db.user, pass: db.pass });
-				break;
-			default:
-				return respondFailure(`Database type "${db.type}" is not supported backing up at the moment.`);
+		if (db.type !== "mongodb" && db.type !== "postgresql" && !db.url) {
+			if (!db.host) throw new Error(`Database host is required.`);
+			if (!db.pass) throw new Error(`Password is required.`);
 		}
 
-		return res;
+		// backup
+		try {
+			let res: { name: string; path: string };
+			switch (db.type) {
+				case "mariadb":
+				case "mysql":
+					res = await MySQL.backup({ dbName: options.dbName, host: db.host, port: toString(db.port), user: db.user, pass: db.pass });
+					break;
+				case "mongodb":
+					res = await MongoShell.backup({
+						dbName: options.dbName,
+						authDb: options.authDb,
+						url: db.url,
+						host: db.host,
+						port: toString(db.port),
+						user: db.user,
+						pass: db.pass,
+					});
+					break;
+				case "postgresql":
+					res = await PostgreSQL.backup({
+						dbName: options.dbName,
+						url: db.url,
+						host: db.host,
+						port: toString(db.port),
+						user: db.user,
+						pass: db.pass,
+					});
+					break;
+				default:
+					return respondFailure(`Database type "${db.type}" is not supported backing up at the moment.`);
+			}
+
+			// insert backup to db
+			const bkSvc = new CloudDatabaseBackupService();
+			const url = `${Config.BASE_URL}/storage/${res.path.split("storage/")[1]}`;
+			const backup = await bkSvc.create({
+				database: MongoDB.toString(db._id),
+				name: res.name,
+				path: res.path,
+				url,
+				type: db.type,
+				dbSlug: db.slug,
+			});
+
+			return backup;
+		} catch (e) {
+			logError(e);
+			return;
+		}
 	}
 
 	async restoreFromBackupId(backupId: string, dbId: string) {
@@ -229,10 +268,18 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		switch (toDatabase.type) {
 			case "mariadb":
 			case "mysql":
-				res = await MySQL.backup({ host: toDatabase.host, port: toString(toDatabase.port), user: toDatabase.user, pass: toDatabase.pass });
+				res = await MySQL.backup({
+					dbName: options.dbName,
+					host: toDatabase.host,
+					port: toString(toDatabase.port),
+					user: toDatabase.user,
+					pass: toDatabase.pass,
+				});
 				break;
 			case "mongodb":
 				res = await MongoShell.backup({
+					dbName: options.dbName,
+					url: toDatabase.url,
 					host: toDatabase.host,
 					port: toString(toDatabase.port),
 					user: toDatabase.user,
@@ -241,6 +288,8 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 				break;
 			case "postgresql":
 				res = await PostgreSQL.backup({
+					dbName: options.dbName,
+					url: toDatabase.url,
 					host: toDatabase.host,
 					port: toString(toDatabase.port),
 					user: toDatabase.user,

@@ -1,5 +1,5 @@
 import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
+import type { ExecaReturnValue } from "execa";
 
 import { Config, isServerMode } from "@/app.config";
 import { saveCliConfig } from "@/config/config";
@@ -24,18 +24,20 @@ interface DockerRegistryConnectOptions {
 
 const DockerRegistry = {
 	connectDockerToRegistry: async (creds: DockerRegistryCredentials, options: DockerRegistryConnectOptions) => {
+		const { execaCommand, execaSync } = await import("execa");
+
 		const { workspaceId, registry: registrySlug } = options;
 
 		const { server = "https://index.docker.io/v2/", username, password, email } = creds;
 
 		try {
-			let connectRes: execa.ExecaReturnValue<string>;
+			let connectRes: ExecaReturnValue<string>;
 			if (Config.BUILDER === "docker") {
 				// connect DOCKER ENGINE to DOCKER REGISTRY
-				connectRes = await execa.command(`docker login -u ${username} -p ${password}`);
+				connectRes = await execaCommand(`docker login -u ${username} -p ${password}`);
 			} else {
 				// connect PODMAN to DOCKER REGISTRY
-				connectRes = await execa.command(`podman login docker.io -u ${username} -p ${password}`);
+				connectRes = await execaCommand(`podman login docker.io -u ${username} -p ${password}`);
 			}
 			if (options.isDebugging) log(`[DOCKER] connectDockerRegistry >`, { connectRes });
 		} catch (e) {
@@ -67,6 +69,8 @@ const DockerRegistry = {
 		return newRegistry;
 	},
 	createImagePullSecret: async (options: ContainerRegistrySecretOptions) => {
+		const { execa, execaCommand, execaSync } = await import("execa");
+
 		const { registrySlug, namespace = "default", clusterShortName } = options;
 
 		if (!clusterShortName) throw new Error(`Cluster's short name is required.`);

@@ -1,6 +1,5 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
 import { existsSync, mkdirSync } from "fs";
 import generator from "generate-password";
 import { MongoClient } from "mongodb";
@@ -24,13 +23,16 @@ export type MongoConnectionInfo = {
 	pass?: string;
 };
 
-export const checkConnection = (options: Partial<MongoConnectionInfo> & { isDebugging?: boolean }) => {
+// import { execaSync } from "execa";
+
+export const checkConnection = async (options: Partial<MongoConnectionInfo> & { isDebugging?: boolean }) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
 	try {
 		if (options.url) {
-			const { stdout, stderr } = execa.sync(`mongo`, [options.url, "--eval", "db.version()"]);
+			const { stdout, stderr } = execaSync(`mongo`, [options.url, "--eval", "db.version()"]);
 			if (options.isDebugging) console.log("[MONGODB] Connected :>> ", stdout);
 		} else {
-			const { stdout, stderr } = execa.sync(`mongo`, [
+			const { stdout, stderr } = execaSync(`mongo`, [
 				"--host",
 				`${options.host}:${options.port || 27017}`,
 				"--username",
@@ -49,7 +51,7 @@ export const checkConnection = (options: Partial<MongoConnectionInfo> & { isDebu
 	}
 };
 
-export const backup = (
+export const backup = async (
 	options: Partial<MongoConnectionInfo> & {
 		/**
 		 * @default all
@@ -65,16 +67,21 @@ export const backup = (
 		outDir?: string;
 	} & { isDebugging?: boolean }
 ) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	const bkName = `mongodb-backup-${makeDaySlug()}`;
-	if (!options.outDir) options.outDir = path.resolve(CLI_DIR, `storage/mongodb/${bkName}`);
+	const mongoBackupDir = path.resolve(CLI_DIR, `storage/mongodb`);
+	if (!options.outDir) options.outDir = path.resolve(mongoBackupDir, bkName);
 
 	if (!existsSync(options.outDir)) mkdirSync(options.outDir, { recursive: true });
 
+	console.log("[MONGODB] backup > options :>> ", options);
+
 	if (options.url) {
-		const { stdout, stderr } = execa.sync(`mongodump`, ["--uri", options.url, "--out", options.outDir]);
+		const { stdout, stderr } = execaSync(`mongodump`, ["--uri", options.url, "--out", options.outDir]);
 		if (options.isDebugging) console.log("[MONGODB] Backup successfully :>> ", stdout);
 	} else {
-		const { stdout, stderr } = execa.sync(`mongodump`, [
+		const { stdout, stderr } = execaSync(`mongodump`, [
 			"--host",
 			`${options.host}:${options.port || 27017}`,
 			"--username",
@@ -89,10 +96,15 @@ export const backup = (
 		]);
 		if (options.isDebugging) console.log("[MONGODB] Backup successfully :>> ", stdout);
 	}
-	return { name: bkName, path: options.outDir };
+
+	const compressedBackupName = `${bkName}.tar.gz`;
+	const { stdout } = execaSync("tar", ["-czf", compressedBackupName, bkName], { cwd: mongoBackupDir });
+	if (options.isDebugging) console.log("Compressing backup directory :>> ", stdout);
+
+	return { name: bkName, path: path.join(mongoBackupDir, compressedBackupName) };
 };
 
-export const restore = (
+export const restore = async (
 	options: Partial<MongoConnectionInfo> & {
 		/**
 		 * Database name
@@ -109,6 +121,8 @@ export const restore = (
 		dir?: string;
 	} & { isDebugging?: boolean }
 ) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	if (!options.dir) {
 		options.dir = path.resolve(CLI_DIR, `storage/mongodb/mongodb-backup-${makeDaySlug()}`);
 	}
@@ -117,10 +131,10 @@ export const restore = (
 
 	try {
 		if (options.url) {
-			const { stdout, stderr } = execa.sync(`mongorestore`, ["--uri", options.url, options.dbName ? `--db=${options.dbName}` : ""]);
+			const { stdout, stderr } = execaSync(`mongorestore`, ["--uri", options.url, options.dbName ? `--db=${options.dbName}` : ""]);
 			if (options.isDebugging) console.log("[MONGODB] Restore successfully :>> ", stdout);
 		} else {
-			const { stdout, stderr } = execa.sync(`mongorestore`, [
+			const { stdout, stderr } = execaSync(`mongorestore`, [
 				"--host",
 				`${options.host}:${options.port || 27017}`,
 				"--username",

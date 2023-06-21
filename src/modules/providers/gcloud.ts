@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
 import fs, { readFileSync } from "fs";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
@@ -68,6 +67,8 @@ export const authenticate = async (options?: InputOptions) => {
  * Connect Docker to Google Cloud Registry
  */
 export const connectDockerToRegistry = async (options?: InputOptions) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	const { host, filePath, userId, workspaceId, registry: registrySlug } = options;
 
 	// Validation
@@ -99,13 +100,13 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 		if (Config.BUILDER === "docker") {
 			// connect DOCKER to CONTAINER REGISTRY
 			if (host) {
-				connectRes = await execa.command(`gcloud auth configure-docker ${host} --quiet`);
+				connectRes = await execaCommand(`gcloud auth configure-docker ${host} --quiet`);
 			} else {
-				connectRes = await execa.command(`gcloud auth configure-docker --quiet`);
+				connectRes = await execaCommand(`gcloud auth configure-docker --quiet`);
 			}
 		} else {
 			// connect PODMAN to CONTAINER REGISTRY
-			connectRes = await execa.command(`gcloud auth print-access-token | podman login -u oauth2accesstoken --password-stdin ${host || ""}`, {
+			connectRes = await execaCommand(`gcloud auth print-access-token | podman login -u oauth2accesstoken --password-stdin ${host || ""}`, {
 				shell: "bash",
 			});
 		}
@@ -139,6 +140,8 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
  * Create Google Container Registry image pulling secret
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	const { registrySlug, namespace = "default", clusterShortName } = options;
 	// log(`providerShortName :>>`, providerShortName);
 
@@ -188,7 +191,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 	// Create new "imagePullSecret":
 	const svcAccContentCmd = isWin() ? `$(type ${serviceAccountPath})` : `$(cat ${serviceAccountPath})`;
-	const { stdout: newImagePullingSecret } = await execa.command(
+	const { stdout: newImagePullingSecret } = await execaCommand(
 		`kubectl ${
 			context ? `--context=${context} ` : ""
 		}-n ${namespace} create secret docker-registry ${secretName} --docker-server=${host} --docker-username=_json_key --docker-password="${svcAccContentCmd}" -o json`,

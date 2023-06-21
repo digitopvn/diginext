@@ -1,7 +1,7 @@
 import type { ICluster } from "@/entities";
 import { contains } from "@/plugins/string";
 
-import ClusterManager from ".";
+import ClusterManager from "./index";
 
 /**
  * Check the cluster has NGINX Ingress installed or not

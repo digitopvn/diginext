@@ -4,14 +4,14 @@ import { upperCase } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IGitProvider } from "@/entities";
-import { GitProviderDto } from "@/entities";
+import * as entities from "@/entities";
 import type { IQueryFilter } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import * as interfaces from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
-import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
+import GitProviderAPI, * as gitProviderApi from "@/modules/git/git-provider-api";
 import { makeSlug } from "@/plugins/slug";
 import GitProviderService from "@/services/GitProviderService";
 
@@ -30,14 +30,14 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return super.read();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: entities.GitProviderDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		// validation
 		const { type, name, bitbucket_oauth, github_oauth } = body;
 
@@ -124,7 +124,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: entities.GitProviderDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		let provider = await this.service.findOne(this.filter, this.options);
 		if (!provider) return respondFailure(`Git provider not found.`);
 		if (provider.type === "github" && provider.host !== "github.com") body.host = "github.com";
@@ -186,7 +186,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		return super.delete();
 	}
 
@@ -195,7 +195,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/verify")
-	async verify(@Queries() queryParams?: IPostQueryParams) {
+	async verify(@Queries() queryParams?: interfaces.IPostQueryParams) {
 		// validation
 		const { _id, slug } = this.filter;
 
@@ -216,7 +216,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/profile")
-	async getProfile(@Queries() queryParams?: IPostQueryParams) {
+	async getProfile(@Queries() queryParams?: interfaces.IPostQueryParams) {
 		// validation
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
@@ -237,7 +237,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/orgs")
-	async getListOrgs(@Queries() queryParams?: IPostQueryParams) {
+	async getListOrgs(@Queries() queryParams?: interfaces.IPostQueryParams) {
 		// validation
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
@@ -261,7 +261,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/orgs/repos")
-	async getListOrgRepos(@Queries() queryParams?: IPostQueryParams) {
+	async getListOrgRepos(@Queries() queryParams?: interfaces.IPostQueryParams) {
 		// validation
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
@@ -285,7 +285,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("jwt")
 	@Post("/orgs/repos")
 	async createOrgRepo(
-		@Body() body: GitRepositoryDto,
+		@Body() body: gitProviderApi.GitRepositoryDto,
 		@Queries()
 		queryParams?: {
 			/**
