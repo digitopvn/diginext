@@ -1,8 +1,8 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IProject } from "@/entities";
-import { ProjectDto } from "@/entities";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import * as entities from "@/entities";
+import * as interfaces from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { checkQuota } from "@/modules/workspace/check-quota";
@@ -27,14 +27,14 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return super.read();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: entities.ProjectDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		// check dx quota
 		const quotaRes = await checkQuota(this.workspace);
 		console.log("[ProjectController] quotaRes :>> ", quotaRes);
@@ -50,14 +50,14 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: ProjectDto, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: entities.ProjectDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.update(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	async softDelete(@Queries() queryParams?: IDeleteQueryParams) {
+	async softDelete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		// console.log("filter :>> ", this.filter);
 		const result = await this.service.softDelete(this.filter);
 		// console.log("result :>> ", result);
@@ -70,7 +70,7 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/with-apps")
-	async getProjectsAndApps(@Queries() queryParams?: IGetQueryParams) {
+	async getProjectsAndApps(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		let projects = await this.service.find(this.filter, this.options, this.pagination);
 
 		let result: ResponseData & { data: IProject[] } = { status: 1, data: [], messages: [] };

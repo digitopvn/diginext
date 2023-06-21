@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
-import type { CloudDatabaseType } from "@/interfaces/SystemTypes";
+import { type CloudDatabaseType, cloudDatabaseList } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
@@ -24,7 +24,7 @@ export const cloudDatabaseSchema = new Schema(
 		...baseSchemaDefinitions,
 		name: { type: String },
 		verified: Boolean,
-		type: { type: String, enum: ["mongodb", "mysql", "mariadb", "postgresql", "sqlserver", "sqlite", "redis", "dynamodb"] },
+		type: { type: String, enum: cloudDatabaseList },
 		provider: { type: String },
 		user: { type: String },
 		pass: { type: String },

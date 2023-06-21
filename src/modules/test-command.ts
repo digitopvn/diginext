@@ -1,33 +1,16 @@
-import simpleGit from "simple-git";
-
 import type { InputOptions } from "@/interfaces";
 
 export const testCommand = async (options?: InputOptions) => {
-	// 63b117e2387f529fc07d7673
-	// const testIds = ["63eb404227aea2b9b212ee4d", new ObjectId("63b117e2387f529fc07d7673"), "123", "testtesttesttest", "11111111111111111111111"];
-	// testIds.map((id) => console.log(`${id} :>> ${isValidObjectId(id)}`));
-
+	// ----- PULL or CLONE GIT REPO -----
 	// const git = simpleGit(process.cwd());
-	// console.log(await git.getRemotes(true));
-	// console.log(await git.listRemote());
+	// const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
+	// console.log("remotes :>> ", remotes);
+	// const originRemote = remotes[0] as any;
+	// if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
+	// console.log("originRemote :>> ", originRemote);
 
-	// const status = await git.status();
-	// const curBranch = status.current;
-	// console.log(`getCurrentGitBranch >`, { curBranch });
-
-	// await pullOrCloneGitRepo(
-	// 	"git@bitbucket.org:digitopvn/static-site-framework.git",
-	// 	path.resolve(process.cwd(), "cli-static-test"),
-	// 	"test/dx-deploy"
-	// );
-
-	const git = simpleGit(process.cwd());
-
-	const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
-	console.log("remotes :>> ", remotes);
-
-	const originRemote = remotes[0] as any;
-	if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
-
-	console.log("originRemote :>> ", originRemote);
+	// ---- GENERATE SSH KEY ----
+	const { execa, execaCommand } = await import("execa");
+	const privateIdRsaFile = "id_rsa";
+	await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", ""]);
 };

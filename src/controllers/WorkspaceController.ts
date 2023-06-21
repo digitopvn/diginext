@@ -5,8 +5,8 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 import { Config } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { IRole, IUser, IWorkspace } from "@/entities";
-import type { ResponseData } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import type { IGetQueryParams, ResponseData } from "@/interfaces";
+import * as interfaces from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import { sendDxEmail } from "@/modules/diginext/dx-email";
 import { createDxWorkspace } from "@/modules/diginext/dx-workspace";
@@ -64,7 +64,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return super.read();
 	}
 
@@ -74,13 +74,13 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	async create(@Body() body: WorkspaceInputData) {
 		const { owner = MongoDB.toString(this.user._id), name, dx_key } = body;
 
-		if (!name) return respondFailure({ msg: `Param "name" is required.` });
-		if (!owner) return respondFailure({ msg: `Param "owner" (UserID) is required.` });
-		if (!dx_key) return respondFailure(`Param "dx_key" is required.`);
+		if (!name) return interfaces.respondFailure({ msg: `Param "name" is required.` });
+		if (!owner) return interfaces.respondFailure({ msg: `Param "owner" (UserID) is required.` });
+		if (!dx_key) return interfaces.respondFailure(`Param "dx_key" is required.`);
 
 		// find owner
 		let ownerUser = await DB.findOne<IUser>("user", { _id: owner });
-		if (!ownerUser) return respondFailure("Workspace's owner not found.");
+		if (!ownerUser) return interfaces.respondFailure("Workspace's owner not found.");
 
 		// Assign some default values if it's missing
 		if (isUndefined(body.public)) body.public = true;
@@ -90,7 +90,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
 		const createWsRes = await createDxWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
 		console.log("createWsRes :>> ", createWsRes);
-		if (!createWsRes.status) return respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+		if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
 
 		// ----- END VERIFYING -----
 
@@ -98,7 +98,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		// console.log("createWorkspace > body :>> ", body);
 		const newWorkspace = await this.service.create(body);
 		// console.log("createWorkspace > newWorkspace :>> ", newWorkspace);
-		if (!newWorkspace) return respondFailure(`Failed to create new workspace.`);
+		if (!newWorkspace) return interfaces.respondFailure(`Failed to create new workspace.`);
 
 		/**
 		 * [2] SEED INITIAL DATA TO THIS WORKSPACE
@@ -119,20 +119,20 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		ownerUser = await makeWorkspaceActive(owner, MongoDB.toString(newWorkspace._id));
 		console.log(`Made workspace "${newWorkspace.name}" active for "${ownerUser.name}" user.`);
 
-		return respondSuccess({ data: newWorkspace });
+		return interfaces.respondSuccess({ data: newWorkspace });
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: WorkspaceInputData, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: WorkspaceInputData, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.update(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	async delete(@Queries() queryParams?: IDeleteQueryParams) {
+	async delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		// delete workspace in user:
 		const _user = await DB.findOne<IUser>("user", { workspaces: this.workspace._id });
 		const workspaces = _user.workspaces.filter((wsId) => MongoDB.toString(wsId) !== MongoDB.toString(this.workspace._id));
@@ -161,8 +161,8 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("jwt")
 	@Post("/invite")
 	async inviteMember(@Body() data: { emails: string[] }) {
-		if (!data.emails || data.emails.length === 0) return respondFailure({ msg: `List of email is required.` });
-		if (!this.user) return respondFailure({ msg: `Unauthenticated.` });
+		if (!data.emails || data.emails.length === 0) return interfaces.respondFailure({ msg: `List of email is required.` });
+		if (!this.user) return interfaces.respondFailure({ msg: `Unauthenticated.` });
 
 		const { emails } = data;
 
@@ -172,7 +172,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		// check if this user is admin of the workspace:
 		const activeRole = this.user.activeRole as IRole;
-		if (activeRole.type !== "admin" && activeRole.type !== "moderator") return respondFailure(`Unauthorized.`);
+		if (activeRole.type !== "admin" && activeRole.type !== "moderator") return interfaces.respondFailure(`Unauthorized.`);
 
 		const memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: wsId });
 
@@ -252,18 +252,18 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		queryParams?: ApiUserAndServiceAccountQueries
 	) {
 		const { workspace } = this.filter;
-		if (!workspace) return respondFailure({ msg: `Workspace ID or slug is required.` });
+		if (!workspace) return interfaces.respondFailure({ msg: `Workspace ID or slug is required.` });
 
 		let serviceAccounts: IUser[] = [];
 		if (isValidObjectId(workspace)) {
 			serviceAccounts = await DB.find<IUser>("service_account", { workspaces: { $in: [workspace] } });
 		} else {
 			const ws = await DB.findOne<IWorkspace>("workspace", { slug: workspace });
-			if (!ws) return respondFailure({ msg: `Workspace not found.` });
+			if (!ws) return interfaces.respondFailure({ msg: `Workspace not found.` });
 			serviceAccounts = await DB.find<IUser>("service_account", { workspaces: { $in: [ws._id] } });
 		}
 
-		return respondSuccess({ data: serviceAccounts });
+		return interfaces.respondSuccess({ data: serviceAccounts });
 	}
 
 	/**
@@ -281,17 +281,17 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		queryParams?: ApiUserAndServiceAccountQueries
 	) {
 		const { workspace } = this.filter;
-		if (!workspace) return respondFailure({ msg: `Workspace ID or slug is required.` });
+		if (!workspace) return interfaces.respondFailure({ msg: `Workspace ID or slug is required.` });
 
 		let list: IUser[] = [];
 		if (isValidObjectId(workspace)) {
 			list = await DB.find<IUser>("api_key_user", { workspaces: { $in: [workspace] } });
 		} else {
 			const ws = await DB.findOne<IWorkspace>("workspace", { slug: workspace });
-			if (!ws) return respondFailure({ msg: `Workspace not found.` });
+			if (!ws) return interfaces.respondFailure({ msg: `Workspace not found.` });
 			list = await DB.find<IUser>("api_key_user", { workspaces: { $in: [ws._id] } });
 		}
 
-		return respondSuccess({ data: list });
+		return interfaces.respondSuccess({ data: list });
 	}
 }

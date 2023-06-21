@@ -1,7 +1,6 @@
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
 import inquirer from "inquirer";
 import yaml from "js-yaml";
 import { isEmpty } from "lodash";
@@ -57,6 +56,7 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
  */
 export const authenticate = async (options?: InputOptions) => {
 	const provider = await DB.findOne<ICloudProvider>("provider", { shortName: "digitalocean" });
+	const { execa, execaCommand, execaSync } = await import("execa");
 
 	let API_ACCESS_TOKEN;
 
@@ -68,7 +68,7 @@ export const authenticate = async (options?: InputOptions) => {
 	// authenticate Docker with this container registry
 	let shouldRetry = false;
 	try {
-		await execa.command(`doctl auth init --access-token ${API_ACCESS_TOKEN}`);
+		await execaCommand(`doctl auth init --access-token ${API_ACCESS_TOKEN}`);
 		shouldRetry = false;
 	} catch (e) {
 		logWarn(`[DIGITAL_OCEAN]`, e);
@@ -79,7 +79,7 @@ export const authenticate = async (options?: InputOptions) => {
 		// wait 5s and retry (sometime the API on DO is unreachable)
 		await wait(5 * 1000);
 		try {
-			await execa.command(`doctl auth init --access-token ${API_ACCESS_TOKEN}`);
+			await execaCommand(`doctl auth init --access-token ${API_ACCESS_TOKEN}`);
 		} catch (e) {
 			logError(`[DIGITAL_OCEAN]`, e);
 			return false;
@@ -155,6 +155,7 @@ export const createRecordInDomain = async (input: DomainRecord) => {
  * Create DigitalOcean Container Registry image's pull secret
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
 	// Implement create "imagePullSecret" of Digital Ocean
 	const { registrySlug, clusterShortName, namespace = "default" } = options;
 
@@ -206,7 +207,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const applyCommand = `| kubectl apply -f -`;
 
 	// command: "doctl registry kubernetes-manifest"
-	const registryYaml = await execa.command(
+	const registryYaml = await execaCommand(
 		`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} --access-token ${API_ACCESS_TOKEN} ${applyCommand}`
 	);
 	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
@@ -234,20 +235,22 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
  * @param {InputOptions} options
  */
 export const connectDockerToRegistry = async (options?: InputOptions) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	const { host, key: API_ACCESS_TOKEN, userId, workspaceId, registry: registrySlug } = options;
 
 	try {
 		let connectRes;
 		// connect DOCKER to CONTAINER REGISTRY
 		if (API_ACCESS_TOKEN) {
-			connectRes = await execa.command(`doctl registry login --access-token ${API_ACCESS_TOKEN}`);
+			connectRes = await execaCommand(`doctl registry login --access-token ${API_ACCESS_TOKEN}`);
 		} else {
-			connectRes = await execa.command(`doctl registry login`);
+			connectRes = await execaCommand(`doctl registry login`);
 		}
 
 		if (Config.BUILDER === "podman") {
 			// connect PODMAN to CONTAINER REGISTRY
-			connectRes = await execa.command(`podman login`);
+			connectRes = await execaCommand(`podman login`);
 		}
 
 		if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { authRes: connectRes });

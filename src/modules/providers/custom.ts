@@ -1,5 +1,4 @@
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
 import fs from "fs";
 import yaml from "js-yaml";
 import { isEmpty } from "lodash";
@@ -19,6 +18,8 @@ import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegist
  * Authenticate custom Kubernetes cluster access
  */
 export const authenticate = async (options?: InputOptions) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	const kubeConfigPath = options.filePath;
 
 	if (!fs.existsSync(kubeConfigPath)) {
@@ -36,8 +37,8 @@ export const authenticate = async (options?: InputOptions) => {
 	let currentKubeConfigContent;
 	try {
 		/** FOR TEST */
-		// const { stdout } = await execa.command(`kubectl config --kubeconfig ${currentKubeConfigFile} view --flatten`);
-		const { stdout } = await execa.command(`kubectl config view --flatten`);
+		// const { stdout } = await execaCommand(`kubectl config --kubeconfig ${currentKubeConfigFile} view --flatten`);
+		const { stdout } = await execaCommand(`kubectl config view --flatten`);
 		currentKubeConfigContent = stdout;
 	} catch (e) {
 		logError(`[CUSTOM_PROVIDER_AUTH]`, e);

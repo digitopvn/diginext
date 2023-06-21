@@ -1,5 +1,4 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
-import execa from "execa";
 import { existsSync, mkdirSync } from "fs";
 import path from "path";
 
@@ -18,9 +17,11 @@ export type MysqlConnectionInfo = {
 	pass: string;
 };
 
-export const checkConnection = (options: MysqlConnectionInfo & { isDebugging?: boolean }) => {
+export const checkConnection = async (options: MysqlConnectionInfo & { isDebugging?: boolean }) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	try {
-		const { stdout, stderr } = execa.sync(`mysql`, [
+		const { stdout, stderr } = execaSync(`mysql`, [
 			"-h",
 			options.host,
 			"-P",
@@ -39,7 +40,7 @@ export const checkConnection = (options: MysqlConnectionInfo & { isDebugging?: b
 	}
 };
 
-export const backup = (
+export const backup = async (
 	options: Partial<MysqlConnectionInfo> & {
 		/**
 		 * @default all-databases
@@ -55,13 +56,15 @@ export const backup = (
 		outDir?: string;
 	} & { isDebugging?: boolean }
 ) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	const bkName = `mysql-backup-${makeDaySlug()}.sql`;
 	if (!options.outDir) options.outDir = path.resolve(CLI_DIR, `storage/mysql`);
 	if (!existsSync(options.outDir)) mkdirSync(options.outDir, { recursive: true });
 
 	const outPath = path.resolve(options.outDir, bkName);
 
-	const { stdout, stderr } = execa.sync(`mysqldump`, [
+	const { stdout, stderr } = execaSync(`mysqldump`, [
 		"-h",
 		options.host,
 		"-P",
@@ -69,15 +72,18 @@ export const backup = (
 		"-u",
 		options.user || "root",
 		`-p${options.pass}`,
-		options.dbName ? `--db=${options.dbName}` : "--all-databases",
-		">",
+		options.dbName ? options.dbName : "--all-databases",
+		"--no-create-db",
+		"--lock-tables=false",
+		"--column-statistics=false",
+		"--result-file",
 		outPath,
 	]);
 	if (options.isDebugging) console.log("[MYSQL] Backup successfully :>> ", stdout);
 	return { name: bkName, path: outPath };
 };
 
-export const restore = (
+export const restore = async (
 	options: Partial<MysqlConnectionInfo> & {
 		/**
 		 * Database name
@@ -93,12 +99,14 @@ export const restore = (
 		path?: string;
 	} & { isDebugging?: boolean }
 ) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
+
 	if (!options.path) throw new Error(`Input "dir" path to ".dump" file is required.`);
 	if (!options.dbName) throw new Error(`Database name "dbName" is required.`);
 
 	try {
 		if (!options.path.endsWith(".sql")) throw new Error(`Invalid backup path, must end with ".sql"`);
-		const { stdout, stderr } = execa.sync(`mysql`, [
+		const { stdout, stderr } = execaSync(`mysql`, [
 			"-h",
 			options.host,
 			"-P",
@@ -106,7 +114,7 @@ export const restore = (
 			"-u",
 			options.user || "root",
 			`-p${options.pass}`,
-			options.dbName,
+			`-D${options.dbName}`,
 			"<",
 			options.path,
 		]);

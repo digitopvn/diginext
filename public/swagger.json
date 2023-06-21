@@ -48,7 +48,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"IGetQueryParams": {
+			"interfaces.IGetQueryParams": {
 				"properties": {
 					"populate": {
 						"type": "string",
@@ -1092,7 +1092,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"IPostQueryParams": {
+			"interfaces.IPostQueryParams": {
 				"properties": {
 					"populate": {
 						"type": "string",
@@ -1219,10 +1219,10 @@
 				"$ref": "#/components/schemas/Pick_IApp.Exclude_keyofIApp.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"AppDto": {
+			"entities.AppDto": {
 				"$ref": "#/components/schemas/Omit_IApp.keyofHiddenBodyKeys_"
 			},
-			"IPatchQueryParams": {
+			"interfaces.IPatchQueryParams": {
 				"properties": {
 					"populate": {
 						"type": "string",
@@ -1252,7 +1252,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"IDeleteQueryParams": {
+			"interfaces.IDeleteQueryParams": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -1786,7 +1786,7 @@
 				"$ref": "#/components/schemas/Pick_IBuild.Exclude_keyofIBuild.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"BuildDto": {
+			"entities.BuildDto": {
 				"$ref": "#/components/schemas/Omit_IBuild.keyofHiddenBodyKeys_"
 			},
 			"BuildPlatform": {
@@ -1805,7 +1805,7 @@
 					"linux/arm/v6"
 				]
 			},
-			"StartBuildParams": {
+			"buildModule.StartBuildParams": {
 				"properties": {
 					"args": {
 						"items": {
@@ -2249,7 +2249,7 @@
 				"$ref": "#/components/schemas/Pick_ICluster.Exclude_keyofICluster.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ClusterDto": {
+			"entities.ClusterDto": {
 				"$ref": "#/components/schemas/Omit_ICluster.keyofHiddenBodyKeys_"
 			},
 			"CloudDatabaseType": {
@@ -2784,6 +2784,80 @@
 				},
 				"type": "object",
 				"description": "Các giá trị đầu vào của CLI"
+			},
+			"StartBuildParams": {
+				"properties": {
+					"args": {
+						"items": {
+							"properties": {
+								"value": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								}
+							},
+							"required": ["value", "name"],
+							"type": "object"
+						},
+						"type": "array",
+						"description": "Build arguments"
+					},
+					"platforms": {
+						"items": {
+							"$ref": "#/components/schemas/BuildPlatform"
+						},
+						"type": "array",
+						"description": "Targeted platform arch: linux/arm64, linux/amd64,..."
+					},
+					"isDebugging": {
+						"type": "boolean",
+						"default": "false"
+					},
+					"cliVersion": {
+						"type": "string",
+						"description": "Diginext CLI version of client user"
+					},
+					"buildWatch": {
+						"type": "boolean",
+						"description": "Enable async to watch the build process",
+						"default": "false"
+					},
+					"buildDir": {
+						"type": "string",
+						"description": "Path to the source code directory\n* [OPTIONAL] Only apply for CLI command, has no effects on API call"
+					},
+					"env": {
+						"type": "string",
+						"description": "Select the deploy environment to build image, in this case, this info is using for selecting \"Dockerfile\"\nof specific deploy environment only, for example: \"Dockerfile.dev\" or \"Dockerfile.prod\",\nif you don't specify \"env\", a default \"Dockerfile\" will be selected.\n- **[OPTIONAL] SHOULD NOT rely on this!**\n- A build should be able to used for any deploy environments."
+					},
+					"registrySlug": {
+						"type": "string",
+						"description": "Slug of the Container Registry"
+					},
+					"user": {
+						"$ref": "#/components/schemas/IUser",
+						"description": "{User} instance of the author\n- `If passing \"user\", no need to pass \"userId\" and vice versa.`"
+					},
+					"userId": {
+						"type": "string",
+						"description": "ID of the author\n- `If passing \"userId\", no need to pass \"user\" and vice versa.`"
+					},
+					"gitBranch": {
+						"type": "string",
+						"description": "Select a git branch to pull source code & build"
+					},
+					"buildNumber": {
+						"type": "string",
+						"description": "Build number is also an container image's tag"
+					},
+					"appSlug": {
+						"type": "string",
+						"description": "App's slug"
+					}
+				},
+				"required": ["registrySlug", "gitBranch", "buildNumber", "appSlug"],
+				"type": "object"
 			},
 			"DeployBuildParams": {
 				"properties": {
@@ -3530,7 +3604,7 @@
 				],
 				"type": "object"
 			},
-			"CreateDiginextDomainParams": {
+			"dxDomain.CreateDiginextDomainParams": {
 				"properties": {
 					"data": {
 						"type": "string"
@@ -3616,7 +3690,7 @@
 				"$ref": "#/components/schemas/Pick_IFramework.Exclude_keyofIFramework.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"FrameworkDto": {
+			"entities.FrameworkDto": {
 				"$ref": "#/components/schemas/Omit_IFramework.keyofHiddenBodyKeys_"
 			},
 			"Pick_IGitProvider.Exclude_keyofIGitProvider.keyofHiddenBodyKeys__": {
@@ -3705,10 +3779,10 @@
 				"$ref": "#/components/schemas/Pick_IGitProvider.Exclude_keyofIGitProvider.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"GitProviderDto": {
+			"entities.GitProviderDto": {
 				"$ref": "#/components/schemas/Omit_IGitProvider.keyofHiddenBodyKeys_"
 			},
-			"GitRepositoryDto": {
+			"gitProviderApi.GitRepositoryDto": {
 				"properties": {
 					"name": {
 						"type": "string"
@@ -3801,7 +3875,7 @@
 				"$ref": "#/components/schemas/Pick_IProject.Exclude_keyofIProject.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ProjectDto": {
+			"entities.ProjectDto": {
 				"$ref": "#/components/schemas/Omit_IProject.keyofHiddenBodyKeys_"
 			},
 			"Pick_ICloudProvider.Exclude_keyofICloudProvider.keyofHiddenBodyKeys__": {
@@ -3868,7 +3942,7 @@
 				"$ref": "#/components/schemas/Pick_ICloudProvider.Exclude_keyofICloudProvider.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"CloudProviderDto": {
+			"entities.CloudProviderDto": {
 				"$ref": "#/components/schemas/Omit_ICloudProvider.keyofHiddenBodyKeys_"
 			},
 			"Pick_IContainerRegistry.Exclude_keyofIContainerRegistry.keyofHiddenBodyKeys__": {
@@ -3960,7 +4034,7 @@
 				"$ref": "#/components/schemas/Pick_IContainerRegistry.Exclude_keyofIContainerRegistry.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ContainerRegistryDto": {
+			"entities.ContainerRegistryDto": {
 				"$ref": "#/components/schemas/Omit_IContainerRegistry.keyofHiddenBodyKeys_"
 			},
 			"Pick_IRelease.Exclude_keyofIRelease.keyofHiddenBodyKeys__": {
@@ -4110,7 +4184,7 @@
 				"$ref": "#/components/schemas/Pick_IRelease.Exclude_keyofIRelease.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ReleaseDto": {
+			"entities.ReleaseDto": {
 				"$ref": "#/components/schemas/Omit_IRelease.keyofHiddenBodyKeys_"
 			},
 			"Pick_IRole.Exclude_keyofIRole.keyofHiddenBodyKeys__": {
@@ -4164,7 +4238,7 @@
 				"$ref": "#/components/schemas/Pick_IRole.Exclude_keyofIRole.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"RoleDto": {
+			"entities.RoleDto": {
 				"$ref": "#/components/schemas/Omit_IRole.keyofHiddenBodyKeys_"
 			},
 			"Pick_IServiceAccount.Exclude_keyofIServiceAccount.keyofHiddenBodyKeys__": {
@@ -4310,7 +4384,7 @@
 				"$ref": "#/components/schemas/Pick_IServiceAccount.Exclude_keyofIServiceAccount.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ServiceAccountDto": {
+			"ServiceAccount.ServiceAccountDto": {
 				"$ref": "#/components/schemas/Omit_IServiceAccount.keyofHiddenBodyKeys_"
 			},
 			"JoinWorkspaceBody": {
@@ -4364,7 +4438,7 @@
 				"$ref": "#/components/schemas/Pick_ITeam.Exclude_keyofITeam.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"TeamDto": {
+			"entities.TeamDto": {
 				"$ref": "#/components/schemas/Omit_ITeam.keyofHiddenBodyKeys_"
 			},
 			"Pick_IUser.Exclude_keyofIUser.keyofHiddenBodyKeys__": {
@@ -4510,10 +4584,10 @@
 				"$ref": "#/components/schemas/Pick_IUser.Exclude_keyofIUser.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"UserDto": {
+			"entities.UserDto": {
 				"$ref": "#/components/schemas/Omit_IUser.keyofHiddenBodyKeys_"
 			},
-			"ExportPDFOptions": {
+			"exportPdf_1.ExportPDFOptions": {
 				"properties": {
 					"omitBackground": {
 						"type": "boolean",
@@ -4621,7 +4695,7 @@
 				},
 				"type": "object"
 			},
-			"CaptureScreenshotOptions": {
+			"screenshot_1.CaptureScreenshotOptions": {
 				"properties": {
 					"fromSurface": {
 						"type": "boolean",
@@ -4945,7 +5019,7 @@
 				"$ref": "#/components/schemas/Pick_IApiKeyAccount.Exclude_keyofIApiKeyAccount.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
 			},
-			"ApiKeyAccountDto": {
+			"ApiKeyAccount.ApiKeyAccountDto": {
 				"$ref": "#/components/schemas/Omit_IApiKeyAccount.keyofHiddenBodyKeys_"
 			}
 		},
@@ -5270,7 +5344,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/AppDto"
+								"$ref": "#/components/schemas/entities.AppDto"
 							}
 						}
 					}
@@ -6055,7 +6129,9 @@
 										{
 											"properties": {
 												"messages": {
-													"items": {},
+													"items": {
+														"type": "string"
+													},
 													"type": "array"
 												},
 												"data": {
@@ -6183,7 +6259,9 @@
 										{
 											"properties": {
 												"messages": {
-													"items": {},
+													"items": {
+														"type": "string"
+													},
 													"type": "array"
 												},
 												"data": {
@@ -6654,7 +6732,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/BuildDto"
+								"$ref": "#/components/schemas/entities.BuildDto"
 							}
 						}
 					}
@@ -6726,7 +6804,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/BuildDto"
+								"$ref": "#/components/schemas/entities.BuildDto"
 							}
 						}
 					}
@@ -6907,7 +6985,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/StartBuildParams"
+								"$ref": "#/components/schemas/buildModule.StartBuildParams"
 							}
 						}
 					}
@@ -7160,7 +7238,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ClusterDto"
+								"$ref": "#/components/schemas/entities.ClusterDto"
 							}
 						}
 					}
@@ -7232,7 +7310,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ClusterDto"
+								"$ref": "#/components/schemas/entities.ClusterDto"
 							}
 						}
 					}
@@ -7653,14 +7731,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"anyOf": [
-										{
-											"type": "boolean"
-										},
-										{
-											"$ref": "#/components/schemas/ResponseData"
-										}
-									]
+									"$ref": "#/components/schemas/ResponseData"
 								}
 							}
 						}
@@ -7797,23 +7868,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"anyOf": [
-										{
-											"$ref": "#/components/schemas/ResponseData"
-										},
-										{
-											"properties": {
-												"path": {
-													"type": "string"
-												},
-												"name": {
-													"type": "string"
-												}
-											},
-											"required": ["path", "name"],
-											"type": "object"
-										}
-									]
+									"$ref": "#/components/schemas/ResponseData"
 								}
 							}
 						}
@@ -7830,39 +7885,12 @@
 				],
 				"parameters": [
 					{
-						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"description": "Cloud Database ID",
 						"in": "query",
-						"name": "populate",
-						"required": false,
+						"name": "id",
+						"required": true,
 						"schema": {
 							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "select",
-						"required": false,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "order",
-						"required": false,
-						"schema": {
-							"type": "string"
-						},
-						"example": "-updatedAt,-createdAt"
-					},
-					{
-						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
-						"in": "query",
-						"name": "raw",
-						"required": false,
-						"schema": {
-							"default": "false",
-							"type": "boolean"
 						}
 					}
 				],
@@ -8507,7 +8535,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CreateDiginextDomainParams"
+								"$ref": "#/components/schemas/dxDomain.CreateDiginextDomainParams"
 							}
 						}
 					}
@@ -8717,7 +8745,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/FrameworkDto"
+								"$ref": "#/components/schemas/entities.FrameworkDto"
 							}
 						}
 					}
@@ -8789,7 +8817,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/FrameworkDto"
+								"$ref": "#/components/schemas/entities.FrameworkDto"
 							}
 						}
 					}
@@ -9043,7 +9071,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/GitProviderDto"
+								"$ref": "#/components/schemas/entities.GitProviderDto"
 							}
 						}
 					}
@@ -9115,7 +9143,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/GitProviderDto"
+								"$ref": "#/components/schemas/entities.GitProviderDto"
 							}
 						}
 					}
@@ -9471,7 +9499,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/GitRepositoryDto"
+								"$ref": "#/components/schemas/gitProviderApi.GitRepositoryDto"
 							}
 						}
 					}
@@ -10277,7 +10305,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ProjectDto"
+								"$ref": "#/components/schemas/entities.ProjectDto"
 							}
 						}
 					}
@@ -10349,7 +10377,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ProjectDto"
+								"$ref": "#/components/schemas/entities.ProjectDto"
 							}
 						}
 					}
@@ -10755,7 +10783,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CloudProviderDto"
+								"$ref": "#/components/schemas/entities.CloudProviderDto"
 							}
 						}
 					}
@@ -10827,7 +10855,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CloudProviderDto"
+								"$ref": "#/components/schemas/entities.CloudProviderDto"
 							}
 						}
 					}
@@ -11081,7 +11109,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ContainerRegistryDto"
+								"$ref": "#/components/schemas/entities.ContainerRegistryDto"
 							}
 						}
 					}
@@ -11153,7 +11181,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ContainerRegistryDto"
+								"$ref": "#/components/schemas/entities.ContainerRegistryDto"
 							}
 						}
 					}
@@ -11457,7 +11485,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ReleaseDto"
+								"$ref": "#/components/schemas/entities.ReleaseDto"
 							}
 						}
 					}
@@ -11529,7 +11557,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ReleaseDto"
+								"$ref": "#/components/schemas/entities.ReleaseDto"
 							}
 						}
 					}
@@ -11969,7 +11997,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/RoleDto"
+								"$ref": "#/components/schemas/entities.RoleDto"
 							}
 						}
 					}
@@ -12041,7 +12069,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/RoleDto"
+								"$ref": "#/components/schemas/entities.RoleDto"
 							}
 						}
 					}
@@ -12482,7 +12510,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ServiceAccountDto"
+								"$ref": "#/components/schemas/ServiceAccount.ServiceAccountDto"
 							}
 						}
 					}
@@ -12554,7 +12582,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ServiceAccountDto"
+								"$ref": "#/components/schemas/ServiceAccount.ServiceAccountDto"
 							}
 						}
 					}
@@ -12845,7 +12873,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/TeamDto"
+								"$ref": "#/components/schemas/entities.TeamDto"
 							}
 						}
 					}
@@ -12917,7 +12945,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/TeamDto"
+								"$ref": "#/components/schemas/entities.TeamDto"
 							}
 						}
 					}
@@ -13171,7 +13199,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/UserDto"
+								"$ref": "#/components/schemas/entities.UserDto"
 							}
 						}
 					}
@@ -13243,7 +13271,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/UserDto"
+								"$ref": "#/components/schemas/entities.UserDto"
 							}
 						}
 					}
@@ -13551,7 +13579,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ExportPDFOptions"
+								"$ref": "#/components/schemas/exportPdf_1.ExportPDFOptions"
 							}
 						}
 					}
@@ -13598,7 +13626,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CaptureScreenshotOptions"
+								"$ref": "#/components/schemas/screenshot_1.CaptureScreenshotOptions"
 							}
 						}
 					}
@@ -14469,7 +14497,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ApiKeyAccountDto"
+								"$ref": "#/components/schemas/ApiKeyAccount.ApiKeyAccountDto"
 							}
 						}
 					}
@@ -14541,7 +14569,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ApiKeyAccountDto"
+								"$ref": "#/components/schemas/ApiKeyAccount.ApiKeyAccountDto"
 							}
 						}
 					}

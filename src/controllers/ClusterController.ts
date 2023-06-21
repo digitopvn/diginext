@@ -2,8 +2,8 @@ import { logError } from "diginext-utils/dist/xconsole/log";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { ICloudProvider, ICluster } from "@/entities";
-import { ClusterDto } from "@/entities";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import * as entities from "@/entities";
+import * as interfaces from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
@@ -25,14 +25,14 @@ export default class ClusterController extends BaseController<ICluster> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return super.read();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: ClusterDto, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: entities.ClusterDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		// validation - round 1
 		let errors: string[] = [];
 		if (!body.provider) errors.push(`Cloud Provider ID is required.`);
@@ -90,7 +90,7 @@ export default class ClusterController extends BaseController<ICluster> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: ClusterDto, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: entities.ClusterDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		const cloudProviderSvc = new CloudProviderService();
 		let cloudProvider: ICloudProvider;
 
@@ -107,7 +107,7 @@ export default class ClusterController extends BaseController<ICluster> {
 		if (!cloudProvider) cloudProvider = await cloudProviderSvc.findOne({ _id: body.provider });
 		if (!cloudProvider) return { status: 0, messages: [`Cloud Provider is not valid.`] } as ResponseData;
 
-		const updateData = { ...body, provider: body.provider, providerShortName: cloudProvider.shortName } as ClusterDto;
+		const updateData = { ...body, provider: body.provider, providerShortName: cloudProvider.shortName } as entities.ClusterDto;
 		[cluster] = await this.service.update({ _id: cluster._id }, updateData);
 		// console.log("cluster :>> ", cluster);
 
@@ -152,7 +152,7 @@ export default class ClusterController extends BaseController<ICluster> {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		return super.delete();
 	}
 
