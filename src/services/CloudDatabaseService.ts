@@ -179,6 +179,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		// backup
 		try {
 			let res: { name: string; path: string };
+
 			switch (db.type) {
 				case "mariadb":
 				case "mysql":
@@ -210,15 +211,16 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 			}
 
 			// insert backup to db
-			const bkSvc = new CloudDatabaseBackupService();
 			const url = `${Config.BASE_URL}/storage/${res.path.split("storage/")[1]}`;
+			const bkSvc = new CloudDatabaseBackupService();
 			const backup = await bkSvc.create({
 				database: MongoDB.toString(db._id),
+				status: "success",
 				name: res.name,
 				path: res.path,
-				url,
 				type: db.type,
 				dbSlug: db.slug,
+				url,
 			});
 
 			return backup;
