@@ -63,6 +63,10 @@ export const gitProviderDomain = {
 export const buildStatusList = ["start", "building", "failed", "success"] as const;
 export type BuildStatus = typeof buildStatusList[number];
 
+// backup status
+export const backupStatusList = ["in_progress", "failed", "success"] as const;
+export type BackupStatus = typeof backupStatusList[number];
+
 /**
  * App status:
  * - `healthy`: App's containers are running well.
