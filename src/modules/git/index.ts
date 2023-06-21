@@ -284,7 +284,7 @@ export const generateSSH = async (options?: InputOptions) => {
 
 		try {
 			const { execa, execaCommand } = await import("execa");
-			await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", '""'], { shell: "bash" });
+			await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", ""]);
 		} catch (e) {
 			logError(`Can't generate SSH private & public key:`, e);
 			throw new Error(`Can't generate SSH private & public key: ${e}`);
@@ -408,8 +408,10 @@ export const verifySSH = async (options?: InputOptions) => {
 	const KNOWN_HOSTS_PATH = path.resolve(SSH_DIR, "known_hosts");
 	if (!existsSync(KNOWN_HOSTS_PATH)) await execCmd(`touch ${HOME_DIR}/.ssh/known_hosts`);
 
+	// only scan SSH key of git provider if it's not existed
+	const PUBLIC_IDRSA_CONTENT = readFileSync(publicIdRsaFile, "utf8");
 	const KNOWN_HOSTS_CONTENT = readFileSync(KNOWN_HOSTS_PATH, "utf8");
-	await execCmd(`ssh-keyscan ${gitDomain} >> ${HOME_DIR}/.ssh/known_hosts`);
+	if (KNOWN_HOSTS_CONTENT.indexOf(PUBLIC_IDRSA_CONTENT) === -1) await execCmd(`ssh-keyscan ${gitDomain} >> ${HOME_DIR}/.ssh/known_hosts`);
 
 	if (!isEmpty(privateIdRsaFiles)) {
 		await execCmd(`touch ${HOME_DIR}/.ssh/config`);
