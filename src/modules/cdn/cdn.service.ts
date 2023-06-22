@@ -1,10 +1,9 @@
-const fs = require("fs");
-const path = require("path");
-const cliProgress = require("cli-progress");
-
+import cliProgress from "cli-progress";
 import { firstElement } from "diginext-utils/dist/array";
 import { log, logError, logSuccess } from "diginext-utils/dist/xconsole/log";
+import fs from "fs";
 import globby from "globby";
+import path from "path";
 
 import { DIGITOP_CDN_URL } from "../../config/const";
 import type { InputOptions } from "../../interfaces/InputOptions";
@@ -130,7 +129,7 @@ export async function startUpload(options: InputOptions, onComplete?: UploadComp
 	}
 
 	const configStr = fs.readFileSync(configFile);
-	const config = JSON.parse(configStr);
+	const config = JSON.parse(configStr.toString());
 
 	projectName = config.projectSlug;
 	// shouldOptimize = options && options.optimize === true ? true : false;
@@ -240,7 +239,7 @@ export function enableCDN(options) {
 		return;
 	}
 
-	let cfg = JSON.parse(fs.readFileSync(configFile));
+	let cfg = JSON.parse(fs.readFileSync(configFile).toString());
 	cfg.cdn = cfg.cdn ? cfg.cdn : { dev: false, staging: false, prod: false };
 
 	cfg.cdn[env] = true;
@@ -257,7 +256,7 @@ export function disableCDN(options) {
 		return;
 	}
 
-	let cfg = JSON.parse(fs.readFileSync(configFile));
+	let cfg = JSON.parse(fs.readFileSync(configFile).toString());
 	cfg.cdn = cfg.cdn ? cfg.cdn : { dev: false, staging: false, prod: false };
 
 	cfg.cdn[env] = false;

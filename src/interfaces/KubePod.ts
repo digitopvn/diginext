@@ -170,4 +170,12 @@ export interface KubePod {
 	 * Workspace ID
 	 */
 	workspace?: string;
+	/**
+	 * CPU Usage
+	 */
+	cpu?: string;
+	/**
+	 * Memory Usage
+	 */
+	memory?: string;
 }

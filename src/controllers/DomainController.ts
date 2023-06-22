@@ -1,7 +1,7 @@
 import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { IPostQueryParams, respondFailure } from "@/interfaces";
-import { CreateDiginextDomainParams, createDxDomain } from "@/modules/diginext/dx-domain";
+import * as interfaces from "@/interfaces";
+import * as dxDomain from "@/modules/diginext/dx-domain";
 
 import BaseController from "./BaseController";
 
@@ -14,14 +14,14 @@ export default class DomainController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async createDiginextDomain(@Body() body: CreateDiginextDomainParams, @Queries() queryParams?: IPostQueryParams) {
+	async createDiginextDomain(@Body() body: dxDomain.CreateDiginextDomainParams, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		// validate
-		if (!body.name) return respondFailure({ msg: `Subdomain name is required.` });
-		if (!body.data) return respondFailure({ msg: `Value of A RECORD is required (usually the IP address).` });
+		if (!body.name) return interfaces.respondFailure({ msg: `Subdomain name is required.` });
+		if (!body.data) return interfaces.respondFailure({ msg: `Value of A RECORD is required (usually the IP address).` });
 
 		const dxKey = this.workspace.dx_key;
 		// process
-		const res = await createDxDomain(body, dxKey);
+		const res = await dxDomain.createDxDomain(body, dxKey);
 		return res;
 	}
 }

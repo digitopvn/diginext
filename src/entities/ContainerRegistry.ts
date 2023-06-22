@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
 import type { RegistryProviderType } from "@/interfaces/SystemTypes";
@@ -102,5 +102,3 @@ export const containerRegistrySchema = new Schema(
 	},
 	{ collection: "container_registries", timestamps: true }
 );
-
-export const ContainerRegistryModel = mongoose.model("ContainerRegistry", containerRegistrySchema, "container_registries");

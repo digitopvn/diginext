@@ -1,6 +1,7 @@
 export * from "./App";
 export * from "./Build";
 export * from "./CloudDatabase";
+export * from "./CloudDatabaseBackup";
 export * from "./CloudProvider";
 export * from "./Cluster";
 export * from "./ContainerRegistry";

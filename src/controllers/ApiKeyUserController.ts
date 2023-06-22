@@ -2,8 +2,8 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import BaseController from "@/controllers/BaseController";
 import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
-import { ApiKeyAccountDto } from "@/entities/ApiKeyAccount";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import * as ApiKeyAccount from "@/entities/ApiKeyAccount";
+import * as interfaces from "@/interfaces";
 import { ApiKeyUserService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
 
@@ -22,28 +22,28 @@ export default class ApiKeyUserController extends BaseController<IApiKeyAccount>
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return super.read();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: ApiKeyAccountDto, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: ApiKeyAccount.ApiKeyAccountDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: ApiKeyAccountDto, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: ApiKeyAccount.ApiKeyAccountDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.update(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		return super.delete();
 	}
 
@@ -94,9 +94,9 @@ export default class ApiKeyUserController extends BaseController<IApiKeyAccount>
 
 			// console.log("[2] updatedUser :>> ", updatedUser[0]);
 
-			return respondSuccess({ data: updatedUser });
+			return interfaces.respondSuccess({ data: updatedUser });
 		} catch (e) {
-			return respondFailure(e.message);
+			return interfaces.respondFailure(e.message);
 		}
 	}
 }

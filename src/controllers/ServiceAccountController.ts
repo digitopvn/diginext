@@ -2,9 +2,9 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import BaseController from "@/controllers/BaseController";
 import type { IServiceAccount } from "@/entities/ServiceAccount";
-import { ServiceAccountDto } from "@/entities/ServiceAccount";
+import * as ServiceAccount from "@/entities/ServiceAccount";
 import type { ResponseData } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import * as interfaces from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
 import { ServiceAccountService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
@@ -24,28 +24,28 @@ export default class ServiceAccountController extends BaseController<IServiceAcc
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return super.read();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: ServiceAccountDto, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: ServiceAccount.ServiceAccountDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: ServiceAccountDto, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: ServiceAccount.ServiceAccountDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.update(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		return super.delete();
 	}
 

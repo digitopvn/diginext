@@ -4,11 +4,11 @@ import yargs from "yargs";
 import type InputOptions from "@/interfaces/InputOptions";
 
 import { askForCluster } from "../cluster/ask-for-cluster";
-import ClusterManager from ".";
 import { askForDeployment } from "./ask-for-deployment";
 import { askForNamespace } from "./ask-for-namespace";
 import { askForNewValue } from "./ask-for-new-value";
 import { askForTargetProp } from "./ask-for-target-prop";
+import ClusterManager from "./index";
 
 const kubectlCommand = (resource: string) => {};
 

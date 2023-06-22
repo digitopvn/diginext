@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
 import { existsSync, mkdirSync } from "fs";
 import yaml from "js-yaml";
 import { isArray, isEmpty } from "lodash";
@@ -18,7 +17,7 @@ import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 import getDeploymentName from "../deploy/generate-deployment-name";
-import ClusterManager from ".";
+import ClusterManager from "./index";
 import { logPodByFilter } from "./kubectl";
 
 export interface RolloutOptions {
@@ -211,6 +210,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
  */
 export async function rollout(id: string, options: RolloutOptions = {}) {
 	const { onUpdate } = options;
+	const { execa, execaCommand, execaSync } = await import("execa");
 
 	const releaseData = await DB.findOne<IRelease>("release", { id });
 	if (isEmpty(releaseData)) return { error: `Release "${id}" not found.` };
@@ -586,7 +586,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		const resourcesStr = `--limits=cpu=${resourceQuota.limits.cpu},memory=${resourceQuota.limits.memory} --requests=cpu=${resourceQuota.requests.cpu},memory=${resourceQuota.requests.memory}`;
 		const resouceCommand = `kubectl set resources deployment/${deploymentName} ${resourcesStr} -n ${namespace}`;
 		try {
-			await execa.command(resouceCommand);
+			await execaCommand(resouceCommand);
 			if (onUpdate) onUpdate(`Applied resource quotas to ${deploymentName} successfully`);
 		} catch (e) {
 			if (onUpdate) onUpdate(`[WARNING] Command failed: ${resouceCommand}`);

@@ -1,17 +1,13 @@
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
+import fs from "fs";
 import inquirer from "inquirer";
+import jsonDiff from "json-diff";
 import _ from "lodash";
+import { ncp as copyFile } from "ncp";
 import ora from "ora";
 import path from "path";
-
-const { Bitbucket } = require("bitbucket");
-
-const copyFile = require("ncp").ncp;
-const fs = require("fs");
-const util = require("util");
-const jsonDiff = require("json-diff");
-var copy = require("recursive-copy");
+import copy from "recursive-copy";
+import util from "util";
 
 const mkdir = util.promisify(fs.mkdir);
 const writeFile = util.promisify(fs.writeFile);
@@ -32,19 +28,19 @@ export let auth = {
 	password: process.env.BITBUCKET_PASSWORD || "",
 };
 
-export const packageDiff = () => {
-	const curPackage = require(path.resolve("package.json"));
-	const newPackage = require(path.resolve("./.fw/package.json"));
+export const packageDiff = async () => {
+	const curPackage = await import(path.resolve("package.json"));
+	const newPackage = await import(path.resolve("./.fw/package.json"));
 	const diff = jsonDiff.diff(curPackage, newPackage);
 
 	return diff;
 };
 
-export const patchPackage = () => {
-	const diff = packageDiff();
-	const newPackage = require(path.resolve("./.fw/package.json"));
+export const patchPackage = async () => {
+	const diff = await packageDiff();
+	const newPackage = await import(path.resolve("./.fw/package.json"));
 
-	let curPackage = require(path.resolve("./package.json"));
+	let curPackage = await import(path.resolve("./package.json"));
 
 	curPackage.version = newPackage.version;
 
@@ -332,6 +328,8 @@ export const writeConfigFiles = async (diginextContent, packageContent) => {
 
 export const installPackages = async () => {
 	log(`Đang tiến hành cài đặt "package.json" mới...`);
+
+	const { execa, execaCommand } = await import("execa");
 
 	let areDependenciesInstalled = false;
 	// Install dependencies

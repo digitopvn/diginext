@@ -63,6 +63,15 @@ RUN cd ~ && \
     tar xf doctl-1.78.0-linux-amd64.tar.gz && \
     mv ~/doctl /usr/local/bin/doctl
 
+# Install MongoDB client tools
+RUN apt-get update && apt-get install -y mongodb-tools
+
+# Install MySQL client tools
+RUN apt-get update && apt-get install -y mysql-client
+
+# Install PostgreSQL client tools
+RUN apt-get update && apt-get install -y postgresql-client
+
 # Set working directory
 WORKDIR /usr/app
 
