@@ -73,7 +73,7 @@ RUN apt-get update \
     && apt-get install -y mongodb-org-tools
 
 # Install MySQL client tools
-RUN apt-get update && apt-get install -y mysql-client
+RUN apt-get update && apt-get install -y default-mysql-client
 
 # Install PostgreSQL client tools
 RUN apt-get update && apt-get install -y postgresql-client
