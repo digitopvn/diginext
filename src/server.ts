@@ -212,7 +212,7 @@ function initialize(db?: typeof mongoose) {
 }
 
 if (CLI_MODE === "server") {
-	log(`Connecting to database. Please wait...`);
+	// log(`Connecting to database. Please wait...`);
 	AppDatabase.connect(initialize);
 
 	/**

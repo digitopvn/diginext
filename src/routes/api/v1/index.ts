@@ -6,6 +6,7 @@ import apiKeyUserRouter from "./api_key";
 import appRouter from "./app";
 import buildRouter from "./build";
 import clusterRouter from "./cluster";
+import cronjobRouter from "./cronjob";
 import databaseRouter from "./database";
 import deployRouter from "./deploy";
 import domainRouter from "./domain";
@@ -55,5 +56,6 @@ router.use("/domain", domainRouter);
 router.use("/route", routeRouter);
 router.use("/utility", utilityRouter);
 router.use("/monitor", monitorRouter);
+router.use("/cronjob", cronjobRouter);
 
 export default router;

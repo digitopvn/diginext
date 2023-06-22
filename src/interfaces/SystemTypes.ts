@@ -67,6 +67,10 @@ export type BuildStatus = typeof buildStatusList[number];
 export const backupStatusList = ["in_progress", "failed", "success"] as const;
 export type BackupStatus = typeof backupStatusList[number];
 
+// cronjob status
+export const cronjobStatusList = ["failed", "success"] as const;
+export type CronjobStatus = typeof cronjobStatusList[number];
+
 /**
  * App status:
  * - `healthy`: App's containers are running well.
