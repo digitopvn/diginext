@@ -8,38 +8,38 @@ import { DB } from "../api/DB";
 import { calculateNextRunAt } from "./calculate-next-run-at";
 
 export const runCronjob = async (job: ICronjob) => {
-	try {
-		// if(job.method === "POST") job.body.owner = job.owner;
-		const { data: responseData, status: responseStatus } = await axios({
-			url: `${job.url}`,
-			params: job.params,
-			headers: job.headers,
-			data: job.body,
-			method: job.method || "GET",
+	// call api request of the cronjob:
+	axios({
+		url: `${job.url}`,
+		params: job.params,
+		headers: job.headers,
+		data: job.body || {},
+		method: job.method || "GET",
+	})
+		.then(async ({ data: responseData, status: responseStatus }) => {
+			logSuccess(`[CRONJOB] Job "${job.name}" (${job._id}) has been executed successfully:`, responseData);
+
+			// add to cronjob's history:
+			const cronjobHistory: CronjobHistory = {
+				runAt: new Date(),
+				status: "success",
+				responseStatus,
+				message: "Ok",
+			};
+			const updatedJob = await DB.updateOne<ICronjob>("cronjob", { _id: job._id }, { $push: { history: cronjobHistory } }, { raw: true });
+		})
+		.catch(async (e: any) => {
+			logError(`[CRONJOB] Job "${job.name}" (${job._id}) failed:`, e);
+
+			// add to cronjob's history:
+			const cronjobHistory: CronjobHistory = {
+				runAt: new Date(),
+				status: "failed",
+				responseStatus: e.data?.status || e.response?.status || e.status,
+				message: e.toString(),
+			};
+			const updatedJob = await DB.updateOne<ICronjob>("cronjob", { _id: job._id }, { $push: { history: cronjobHistory } }, { raw: true });
 		});
-
-		logSuccess(`[CRONJOB] Job "${job.name}" (${job._id}) has been executed successfully:`, responseData);
-
-		// add to cronjob's history:
-		const cronjobHistory: CronjobHistory = {
-			runAt: new Date(),
-			status: "success",
-			responseStatus,
-			message: "Ok",
-		};
-		const updatedJob = await DB.updateOne<ICronjob>("cronjob", { _id: job._id }, { $push: { history: cronjobHistory } }, { raw: true });
-	} catch (e: any) {
-		logError(`[CRONJOB] Job "${job.name}" (${job._id}) failed:`, e);
-
-		// add to cronjob's history:
-		const cronjobHistory: CronjobHistory = {
-			runAt: new Date(),
-			status: "failed",
-			responseStatus: e.data?.status || e.response?.status || e.status,
-			message: e.toString(),
-		};
-		const updatedJob = await DB.updateOne<ICronjob>("cronjob", { _id: job._id }, { $push: { history: cronjobHistory } }, { raw: true });
-	}
 
 	// schedule a next run:
 	const nextRunAt = calculateNextRunAt(job);
