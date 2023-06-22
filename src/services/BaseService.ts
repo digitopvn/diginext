@@ -110,6 +110,10 @@ export default class BaseService<T = any> {
 			let newItem = await createdDoc.save();
 			if (options.isDebugging) console.log(`BaseService > ""${this.model.collection.name}"" > create > newItem :>> `, newItem);
 
+			// strip unneccessary fields
+			delete newItem.__v;
+			newItem.id = newItem._id;
+
 			// convert all {ObjectId} to {string}:
 			return replaceObjectIdsToStrings(newItem) as T;
 		} catch (e) {

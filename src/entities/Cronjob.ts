@@ -10,15 +10,15 @@ import { baseSchemaDefinitions } from "./Base";
 export const weekDays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 export type WeekDay = typeof weekDays[number];
 
-export const cronjobRepeatUnitList = ["second", "minute", "hour", "day", "month", "year"] as const;
+export const cronjobRepeatUnitList = ["minute", "hour", "day", "month", "year"] as const;
 export type CronjobRepeatUnit = typeof cronjobRepeatUnitList[number];
 
 export type CronjobRequest = {
 	url?: string;
 	method?: RequestMethodType;
 	params?: Record<string, string>;
-	body?: Record<string, string>;
 	headers?: Record<string, string>;
+	body?: any;
 };
 
 export type CronjobRepeat = {
@@ -62,8 +62,8 @@ export interface ICronjob extends IBase {
 	url?: string;
 	method?: RequestMethodType;
 	params?: Record<string, string>;
-	body?: Record<string, string>;
 	headers?: Record<string, string>;
+	body?: any;
 	// schedule
 	nextRunAt?: Date;
 	repeat?: CronjobRepeat;

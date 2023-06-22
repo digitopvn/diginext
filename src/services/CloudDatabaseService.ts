@@ -4,13 +4,17 @@ import { toString } from "lodash";
 import path from "path";
 
 import { Config } from "@/app.config";
+import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import type { CloudDatabaseDto, ICloudDatabase } from "@/entities/CloudDatabase";
 import { cloudDatabaseSchema } from "@/entities/CloudDatabase";
 import type { ICloudDatabaseBackup } from "@/entities/CloudDatabaseBackup";
+import type { CronjobRepeat, CronjobRequest, CronjonRepeatCondition } from "@/entities/Cronjob";
+import { cronjobRepeatUnitList } from "@/entities/Cronjob";
 import { respondFailure } from "@/interfaces";
 import type { CloudDatabaseType } from "@/interfaces/SystemTypes";
 import { cloudDatabaseList } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
+import { createCronjobRepeat } from "@/modules/cronjob/schedule";
 import MongoShell from "@/modules/db/mongo";
 import MySQL from "@/modules/db/mysql";
 import PostgreSQL from "@/modules/db/pg";
@@ -183,12 +187,12 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 			switch (db.type) {
 				case "mariadb":
 				case "mysql":
-					res = await MySQL.backup({ dbName: options.dbName, host: db.host, port: toString(db.port), user: db.user, pass: db.pass });
+					res = await MySQL.backup({ dbName: options?.dbName, host: db.host, port: toString(db.port), user: db.user, pass: db.pass });
 					break;
 				case "mongodb":
 					res = await MongoShell.backup({
-						dbName: options.dbName,
-						authDb: options.authDb,
+						dbName: options?.dbName,
+						authDb: options?.authDb,
 						url: db.url,
 						host: db.host,
 						port: toString(db.port),
@@ -198,7 +202,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 					break;
 				case "postgresql":
 					res = await PostgreSQL.backup({
-						dbName: options.dbName,
+						dbName: options?.dbName,
 						url: db.url,
 						host: db.host,
 						port: toString(db.port),
@@ -303,6 +307,42 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		}
 
 		return res;
+	}
+
+	async scheduleAutoBackup(
+		id: string,
+		repeat: CronjobRepeat,
+		condition?: CronjonRepeatCondition,
+		ownership?: { owner: string; workspace: string }
+	) {
+		// validate
+		if (typeof repeat?.range === "undefined") throw new Error(`Recurrent range is required.`);
+		if (typeof repeat?.unit === "undefined") throw new Error(`Recurrent unit is required, one of: ${cronjobRepeatUnitList.join(", ")}.`);
+
+		const db = await this.findOne({ _id: id });
+		if (!db) throw new Error(`Database not found.`);
+
+		const apiKey = await DB.findOne<IApiKeyAccount>("api_key_user", { workspaces: db.workspace });
+
+		// create new cronjob
+		const request: CronjobRequest = {
+			url: `${Config.BASE_URL}/api/v1/database/backup`,
+			method: "POST",
+			params: { id: MongoDB.toString(db._id) },
+			headers: {
+				"X-API-Key": apiKey.token.access_token,
+			},
+		};
+		const cronjob = await createCronjobRepeat(`[SYSTEM] Backup database "${db.name}"`, request, repeat, condition, ownership);
+		if (!cronjob) throw new Error(`Unable to schedule auto-backup for "${db.name}" database.`);
+
+		// update cronjob ID to database:
+		const updatedDb = await DB.updateOne<ICloudDatabase>(
+			"database",
+			{ _id: id },
+			{ autoBackup: cronjob._id, owner: ownership?.owner, workspace: ownership?.workspace }
+		);
+		return updatedDb;
 	}
 }
 
