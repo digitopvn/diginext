@@ -2291,6 +2291,9 @@
 					"host": {
 						"type": "string"
 					},
+					"url": {
+						"type": "string"
+					},
 					"verified": {
 						"type": "boolean"
 					},
@@ -2303,9 +2306,6 @@
 					"port": {
 						"type": "number",
 						"format": "double"
-					},
-					"url": {
-						"type": "string"
 					}
 				},
 				"type": "object",
@@ -2314,6 +2314,99 @@
 			"Omit_CloudDatabase.keyofHiddenBodyKeys_": {
 				"$ref": "#/components/schemas/Pick_CloudDatabase.Exclude_keyofCloudDatabase.keyofHiddenBodyKeys__",
 				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"RequestMethodType": {
+				"type": "string",
+				"enum": ["POST", "GET", "DELETE", "PATCH"]
+			},
+			"Record_string.string_": {
+				"properties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"CronjobRequest": {
+				"properties": {
+					"headers": {
+						"$ref": "#/components/schemas/Record_string.string_"
+					},
+					"body": {
+						"$ref": "#/components/schemas/Record_string.string_"
+					},
+					"params": {
+						"$ref": "#/components/schemas/Record_string.string_"
+					},
+					"method": {
+						"$ref": "#/components/schemas/RequestMethodType"
+					},
+					"url": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"CronjobRepeatUnit": {
+				"type": "string",
+				"enum": ["second", "minute", "hour", "day", "month", "year"]
+			},
+			"CronjobRepeat": {
+				"properties": {
+					"unit": {
+						"$ref": "#/components/schemas/CronjobRepeatUnit"
+					},
+					"range": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"type": "object"
+			},
+			"WeekDay": {
+				"type": "string",
+				"enum": ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
+			},
+			"CronjonRepeatCondition": {
+				"properties": {
+					"atMonths": {
+						"items": {
+							"type": "number",
+							"format": "double"
+						},
+						"type": "array",
+						"description": "Array of days from 0 to 11"
+					},
+					"atDays": {
+						"items": {
+							"type": "number",
+							"format": "double"
+						},
+						"type": "array",
+						"description": "Array of days from 1 to 31"
+					},
+					"atWeekDays": {
+						"items": {
+							"$ref": "#/components/schemas/WeekDay"
+						},
+						"type": "array",
+						"description": "Array of weekdays"
+					},
+					"atMins": {
+						"items": {
+							"type": "number",
+							"format": "double"
+						},
+						"type": "array",
+						"description": "Array of minutes from 0 to 59"
+					},
+					"atHours": {
+						"items": {
+							"type": "number",
+							"format": "double"
+						},
+						"type": "array",
+						"description": "Array of hours from 0 to 23"
+					}
+				},
+				"type": "object"
 			},
 			"InputOptions": {
 				"properties": {
@@ -3724,6 +3817,11 @@
 						"type": "string",
 						"description": "The host of the Git provider."
 					},
+					"method": {
+						"type": "string",
+						"enum": ["bearer", "basic"],
+						"description": "Authorization header method"
+					},
 					"verified": {
 						"type": "boolean",
 						"description": "Verify status, `true` is successfully connected with the git workspace REST API."
@@ -3757,11 +3855,6 @@
 					"github_oauth": {
 						"$ref": "#/components/schemas/GithubOAuthOptions",
 						"description": "Github OAuth Information"
-					},
-					"method": {
-						"type": "string",
-						"enum": ["bearer", "basic"],
-						"description": "Authorization header method"
 					},
 					"access_token": {
 						"type": "string",
@@ -7395,6 +7488,564 @@
 						}
 					}
 				]
+			}
+		},
+		"/cronjob": {
+			"get": {
+				"operationId": "Read",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["Cronjob"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "size",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "skip",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Find one item by `{ObjectID}`",
+						"in": "query",
+						"name": "id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "_id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Mark this request as search (return the similar results based on the filter query params)",
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"default": "true",
+							"type": "boolean"
+						}
+					},
+					{
+						"description": "If `true`, return the excel binary file to download.",
+						"in": "query",
+						"name": "download",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["Cronjob"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Omit_CloudDatabase.keyofHiddenBodyKeys_"
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"operationId": "Update",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["Cronjob"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Omit_CloudDatabase.keyofHiddenBodyKeys_"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "Delete",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"tags": ["Cronjob"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Delete one item by `{ObjectID}`",
+						"in": "query",
+						"name": "id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Delete one item by `{slug}`",
+						"in": "query",
+						"name": "slug",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/cronjob/schedule-at": {
+			"post": {
+				"operationId": "ScheduleAt",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "Schedule a cronjob to be executed at a specific time",
+				"tags": ["Cronjob"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"time": {
+										"type": "string",
+										"format": "date-time",
+										"description": "Scheduled time of the cronjob"
+									},
+									"request": {
+										"$ref": "#/components/schemas/CronjobRequest",
+										"description": "HTTP Request information"
+									},
+									"name": {
+										"type": "string",
+										"description": "Name"
+									}
+								},
+								"required": ["time", "request", "name"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/cronjob/schedule-repeat": {
+			"post": {
+				"operationId": "ScheduleRepeat",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "Schedule a cronjob to be executed repeatedly",
+				"tags": ["Cronjob"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Fields to populate, seperated by commas, for example: `owner,workspace`",
+						"in": "query",
+						"name": "populate",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "select",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "order",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"example": "-updatedAt,-createdAt"
+					},
+					{
+						"description": "Disable the default `{$set: body}` of \"update\" query & update `{body}` directly to the items",
+						"in": "query",
+						"name": "raw",
+						"required": false,
+						"schema": {
+							"default": "false",
+							"type": "boolean"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"condition": {
+										"$ref": "#/components/schemas/CronjonRepeatCondition",
+										"description": "Recurrent job's conditions"
+									},
+									"repeat": {
+										"$ref": "#/components/schemas/CronjobRepeat",
+										"description": "Recurrent job configuration"
+									},
+									"request": {
+										"$ref": "#/components/schemas/CronjobRequest",
+										"description": "HTTP Request information"
+									},
+									"name": {
+										"type": "string",
+										"description": "Name"
+									}
+								},
+								"required": ["condition", "repeat", "request", "name"],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/cronjob/cancel": {
+			"delete": {
+				"operationId": "CancelCronjob",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseData"
+								}
+							}
+						}
+					}
+				},
+				"description": "Cancel a cronjob",
+				"tags": ["Cronjob"],
+				"security": [
+					{
+						"api_key": []
+					},
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {},
+								"type": "object"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/database": {

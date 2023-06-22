@@ -16,7 +16,6 @@ import PostgreSQL from "./pg";
  * @returns {InputOptions}
  */
 export async function execDatabase(options: InputOptions, env) {
-	logWarn(`This feature is under development.`);
 	const { secondAction, targetDirectory } = options;
 
 	let db: ICloudDatabase;
