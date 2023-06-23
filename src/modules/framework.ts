@@ -57,7 +57,6 @@ export async function pullingFramework(options: InputOptions) {
 		// 	options.frameworkVersion = await getLatestFrameworkVersion(options.framework);
 		// 	await pullingLatestFrameworkVersion(options, options.framework, options.frameworkVersion);
 		// }
-
 		await pullingLatestFrameworkVersion(options);
 
 		await copyAllResources(options.targetDirectory);
