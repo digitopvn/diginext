@@ -1,8 +1,8 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.14.1",
-	"description": "A Developer-Focused platform for centralized cloud resource management & app deployment.",
-	"main": "./index.js",
+	"version": "3.14.0-prerelease.2",
+	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
+	"exports": "./index.js",
 	"bin": {
 		"di": "./dist/index.js",
 		"dx": "./dist/index.js"
