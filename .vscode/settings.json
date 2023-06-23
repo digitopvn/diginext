@@ -1,5 +1,3 @@
 {
-	"editor.codeActionsOnSave": {
-		"source.fixAll": true
-	}
+	"editor.codeActionsOnSave": ["source.addMissingImports", "source.fixAll.eslint"]
 }

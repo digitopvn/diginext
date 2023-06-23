@@ -1,4 +1,4 @@
-# DIGINEXT CLI & BUILD SERVER
+# DIGINEXT
 
 ### **A Developer-Focused platform for centralized cloud resource management & app deployment.**. 
 
