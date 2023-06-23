@@ -1,3 +1,11 @@
+# [3.14.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.14.0-prerelease.1...v3.14.0-prerelease.2) (2023-06-23)
+
+
+### Bug Fixes
+
+* **dashboard:** correct database api url ([147e7e9](https://github.com/digitopvn/diginext/commit/147e7e92a25e692060f71e9d4cf2147cd0159592))
+* **dockerfile:** update base image 5 ([08d1eb6](https://github.com/digitopvn/diginext/commit/08d1eb6ae3b51e105ae36ffbedc5917ee346d9b3))
+
 # [3.14.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.13.1...v3.14.0-prerelease.1) (2023-06-22)
 
 
