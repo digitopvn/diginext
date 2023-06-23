@@ -1,6 +1,6 @@
 # DIGINEXT
 
-### **A Developer-Focused platform for centralized cloud resource management & app deployment.**. 
+### **A Developer-Focused platform for centralized cloud resource management & app deployment.**
 
 https://diginext.site
 
