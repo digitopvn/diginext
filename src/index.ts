@@ -8,8 +8,8 @@ import pkg from "@/../package.json";
 import { execConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
-import cloneRepo from "@/modules/apps/cloneRepo";
 import createApp from "@/modules/apps/new-app";
+import transferRepo from "@/modules/apps/transferRepo";
 import { execCDN } from "@/modules/cdn";
 import { cliAuthenticate, cliLogin, cliLogout, parseCliOptions } from "@/modules/cli";
 import { execDatabase } from "@/modules/db";
@@ -226,7 +226,7 @@ export async function processCLI(options?: InputOptions) {
 		case "transfer":
 			await cliAuthenticate(options);
 
-			await cloneRepo(options);
+			await transferRepo(options);
 			return;
 
 		default:
