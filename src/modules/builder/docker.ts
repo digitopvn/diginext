@@ -1,5 +1,4 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
 import { isEmpty } from "lodash";
 
 import { cliOpts } from "@/config/config";
@@ -113,15 +112,19 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 	// docker build command:
 	const buildCmd = `docker buildx build ${optionFlags}`;
 
-	const stream = execa.command(buildCmd, cliOpts);
+	const skippedErrors: string[] = ["importing cache manifest from", "failed to configure registry cache"];
+
+	const { execa, execaCommand, execaSync } = await import("execa");
+	const stream = execaCommand(buildCmd, cliOpts);
 	stream.stdio.forEach((_stdio) => {
 		if (_stdio) {
 			_stdio.on("data", (data) => {
-				let buildMessage = data.toString();
+				let logMsg = data.toString();
 				// just ignore cache import error
-				if (buildMessage.indexOf("importing cache manifest from") > -1) return;
-				if (buildMessage.indexOf("failed to configure registry cache") > -1) return;
-				if (onBuilding && buildMessage) onBuilding(buildMessage);
+				for (const skippedErr of skippedErrors) {
+					if (logMsg.indexOf(skippedErr) > -1) logMsg = "";
+				}
+				if (onBuilding && logMsg) onBuilding(logMsg);
 			});
 		}
 	});
@@ -135,10 +138,11 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
  * @returns Image URL of the build
  */
 export const stopBuild = async (builder: string) => {
+	const { execa, execaCommand, execaSync } = await import("execa");
 	try {
-		await execa.command(`docker buildx stop ${builder}`, cliOpts);
-		await execa.command(`docker buildx stop buildx_buildkit_${builder}`, cliOpts);
-		await execa.command(`docker buildx stop buildx_buildkit_${builder}0`, cliOpts);
+		await execaCommand(`docker buildx stop ${builder}`, cliOpts);
+		await execaCommand(`docker buildx stop buildx_buildkit_${builder}`, cliOpts);
+		await execaCommand(`docker buildx stop buildx_buildkit_${builder}0`, cliOpts);
 		await wait(500); // <-- just to be sure...
 	} catch (e) {
 		logError(`[BUILDER] Docker > stopBuild :>>`, e);
@@ -148,7 +152,8 @@ export const stopBuild = async (builder: string) => {
 };
 
 export const getAllImages = async () => {
-	const jsonList = await execa.command(`docker images --format "{{json .}}"`);
+	const { execa, execaCommand, execaSync } = await import("execa");
+	const jsonList = await execaCommand(`docker images --format "{{json .}}"`);
 	const imgArr = jsonList.stdout.split("\n").map((line) => JSON.parse(line));
 	return imgArr as DockerImageType[];
 };

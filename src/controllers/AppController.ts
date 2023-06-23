@@ -4,9 +4,9 @@ import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import { isArray, isBoolean, isEmpty, isNumber, isString, isUndefined } from "lodash";
 
 import type { AppGitInfo, IApp, IBuild, ICluster, IContainerRegistry, IFramework, IProject, IRelease } from "@/entities";
-import { AppDto } from "@/entities";
+import * as entities from "@/entities";
 import type { SslType } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
+import * as interfaces from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -247,7 +247,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	async read(@Queries() queryParams?: IGetQueryParams) {
+	async read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		let apps = await this.service.find(this.filter, this.options, this.pagination);
 		// console.log("apps :>> ", apps);
 		if (isEmpty(apps)) return respondSuccess({ data: [] });
@@ -286,7 +286,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: AppInputSchema, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: AppInputSchema, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		let project: IProject,
 			appDto: IApp = { ...(body as any) };
 
@@ -358,7 +358,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: AppDto, @Queries() queryParams?: IPatchQueryParams) {
+	async update(@Body() body: entities.AppDto, @Queries() queryParams?: interfaces.IPatchQueryParams) {
 		let project: IProject,
 			projectSvc = new ProjectService();
 
@@ -404,12 +404,12 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	async delete(@Queries() queryParams?: IDeleteQueryParams) {
+	async delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		const app = await this.service.findOne(this.filter, { populate: ["project"] });
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		if (app.deployEnvironment)
@@ -670,7 +670,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			deployEnvironmentData: DeployEnvironmentData;
 		},
-		@Queries() queryParams?: IPostQueryParams
+		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		// conversion if needed...
 		if (isJSON(body.deployEnvironmentData))
@@ -689,7 +689,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
 		if (!deployEnvironmentData.buildNumber) respondFailure({ msg: `Build number (image's tag) is required.` });
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		const { buildNumber } = deployEnvironmentData;
@@ -880,7 +880,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			deployEnvironmentData: DeployEnvironmentData;
 		},
-		@Queries() queryParams?: IPostQueryParams
+		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		//
 		const { appSlug, env, deployEnvironmentData } = body;
@@ -1106,7 +1106,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// check if the environment is existed
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		const deployEnvironment = (app.deployEnvironment || {})[env.toString()];
@@ -1206,7 +1206,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	async createEnvVarsOnDeployEnvironment(
 		@Body()
 		body: CreateEnvVarsDto,
-		@Queries() queryParams?: IPostQueryParams
+		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		console.log("createEnvVarsOnDeployEnvironment > body :>> ", body);
 		// return { status: 0 };
@@ -1219,7 +1219,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne({ ...this.filter, slug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		const deployEnvironment = app.deployEnvironment[env];
@@ -1329,7 +1329,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			envVar: KubeEnvironmentVariable;
 		},
-		@Queries() queryParams?: IPostQueryParams
+		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		let { slug, env, envVar } = body;
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
@@ -1341,7 +1341,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		envVar = isJSON(envVar) ? (JSON.parse(envVar as unknown as string) as KubeEnvironmentVariable) : isArray(envVar) ? envVar : undefined;
@@ -1436,7 +1436,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			env: string;
 		},
-		@Queries() queryParams?: IPostQueryParams
+		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		let { slug, env } = body;
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
@@ -1448,7 +1448,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (isEmpty(app.deployEnvironment[env]))
 			return { status: 0, messages: [`This deploy environment (${env}) of "${slug}" app doesn't have any environment variables.`] };
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 		const envVars = app.deployEnvironment[env].envVars;
 		const deployEnvironment = app.deployEnvironment[env];
@@ -1519,7 +1519,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			domains: string[];
 		},
-		@Queries() queryParams?: IPostQueryParams
+		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		// validate
 		let { env, domains } = body;
@@ -1536,7 +1536,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
-		const mainAppName = getDeploymentName(app);
+		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		// validate domain
@@ -1554,7 +1554,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (existedDomain) return respondFailure(`Domain "${existedDomain}" is existed.`);
 
 		// add new domains
-		const updateData: AppDto = {};
+		const updateData: entities.AppDto = {};
 		updateData[`deployEnvironment.${env}.domains`] = [...(app.deployEnvironment[env].domains || []), ...domains];
 
 		let updatedApp = await this.service.updateOne({ slug: app.slug }, updateData);

@@ -6,7 +6,7 @@ import pkg from "@/../package.json";
 import type { IApp, IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType, ResourceQuotaSize } from "@/interfaces/SystemTypes";
-import { checkForUpdate, currentVersion, getLatestCliVersion } from "@/plugins";
+import { currentVersion, getLatestCliVersion, shouldNotifyCliUpdate } from "@/plugins";
 
 const cliHeader =
 	chalk.bold.underline.green(`Diginext CLI USAGE - VERSION ${pkg.version}`.toUpperCase()) +
@@ -188,7 +188,7 @@ const kubectlOptions = {
 
 export async function parseCliOptions() {
 	// check for new version
-	const shouldUpdateCLI = await checkForUpdate();
+	const shouldUpdateCLI = await shouldNotifyCliUpdate();
 
 	if (shouldUpdateCLI) {
 		const latestVersion = await getLatestCliVersion();
@@ -339,9 +339,16 @@ export async function parseCliOptions() {
 		// command: db
 		.command("db", "Manage your databases", (_yargs) =>
 			_yargs
-				.command("new", "Create new database")
-				.command("add-default-user", "Add default user to a database")
-				.command("add-user", "Add new user to a database")
+				.command("healthz", "Check connection status of a database")
+				.command("backup", "Backup a database to local directory", (__yargs) =>
+					__yargs.option("targetDir", { desc: "Local backup directory", alias: "dir" })
+				)
+				.command("restore", "Restore a local backup directory to a database", (__yargs) =>
+					__yargs.option("targetDir", { desc: "Local backup directory", alias: "dir" })
+				)
+				// .command("new", "Create new database")
+				// .command("add-default-user", "Add default user to a database")
+				// .command("add-user", "Add new user to a database")
 				.demandCommand(1)
 		)
 		// command: cluster

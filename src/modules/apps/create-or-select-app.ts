@@ -38,10 +38,10 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 			});
 			app = selectedApp;
 		} else {
-			app = await createAppByForm(options);
+			app = await createAppByForm({ ...options, skipFramework: true });
 		}
 	} else {
-		app = await createAppByForm(options);
+		app = await createAppByForm({ ...options, skipFramework: true });
 	}
 
 	if (!app) return;

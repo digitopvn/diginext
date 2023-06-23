@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
 import { existsSync, mkdirSync } from "fs";
 import yaml from "js-yaml";
 import { isArray, isEmpty } from "lodash";
@@ -18,7 +17,7 @@ import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 import getDeploymentName from "../deploy/generate-deployment-name";
-import ClusterManager from ".";
+import ClusterManager from "./index";
 import { logPodByFilter } from "./kubectl";
 
 export interface RolloutOptions {
@@ -62,7 +61,7 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	// Fallback support to the deprecated "main-app" name
 	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-	const mainAppName = getDeploymentName(app);
+	const mainAppName = await getDeploymentName(app);
 
 	// Clean up Prerelease YAML
 	const cleanUpCommands = [];
@@ -137,7 +136,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	const { slug: releaseSlug, cluster: clusterShortName, appSlug, projectSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
 
 	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
-	const mainAppName = getDeploymentName(app);
+	const mainAppName = await getDeploymentName(app);
 
 	log(`Preview the release: "${releaseSlug}" (${id})...`);
 	if (onUpdate) onUpdate(`Preview the release: "${releaseSlug}" (${id})...`);
@@ -211,6 +210,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
  */
 export async function rollout(id: string, options: RolloutOptions = {}) {
 	const { onUpdate } = options;
+	const { execa, execaCommand, execaSync } = await import("execa");
 
 	const releaseData = await DB.findOne<IRelease>("release", { id });
 	if (isEmpty(releaseData)) return { error: `Release "${id}" not found.` };
@@ -235,7 +235,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	log(`Rolling out > app:`, app);
 
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-	const mainAppName = getDeploymentName(app);
+	const mainAppName = await getDeploymentName(app);
 	log(`Rolling out > mainAppName:`, mainAppName);
 
 	// authenticate cluster's provider & switch kubectl to that cluster:
@@ -327,7 +327,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	// log(`3`, { appSlug, service, svcName, ingress, ingressName, deploymentName });
 
 	// create new service if it's not existed
-	const currentServices = await ClusterManager.getAllServices(namespace, `phase=live,main-app=${mainAppName}`, { context });
+	const currentServices = await ClusterManager.getServices(namespace, { context, filterLabel: `phase=live,main-app=${mainAppName}` });
 
 	// if (!isEmpty(currentServices)) {
 	// 	// The service is existed
@@ -586,7 +586,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		const resourcesStr = `--limits=cpu=${resourceQuota.limits.cpu},memory=${resourceQuota.limits.memory} --requests=cpu=${resourceQuota.requests.cpu},memory=${resourceQuota.requests.memory}`;
 		const resouceCommand = `kubectl set resources deployment/${deploymentName} ${resourcesStr} -n ${namespace}`;
 		try {
-			await execa.command(resouceCommand);
+			await execaCommand(resouceCommand);
 			if (onUpdate) onUpdate(`Applied resource quotas to ${deploymentName} successfully`);
 		} catch (e) {
 			if (onUpdate) onUpdate(`[WARNING] Command failed: ${resouceCommand}`);

@@ -1,6 +1,8 @@
-# DIGINEXT CLI & BUILD SERVER
+# DIGINEXT
 
-**A BUILD SERVER** that run on your infrastructure and its **Command Line Interface (CLI)** with developer-friendly commands - a **must-have tool** of DevOps engineers. 
+### **A Developer-Focused platform for centralized cloud resource management & app deployment.**. 
+
+https://diginext.site
 
 ***Developers should not be frustrated by deploying their apps to the infrastructure, or bothering the DevOps engineers to help deploying it, they should fully focus on developing apps, they don't need to understand the servers, the domains, or infrastructure related stuffs. That's when `dx` come, `dx` is your DevOps assistant.***
 
@@ -12,13 +14,57 @@
   <img src="di-banner.png?raw=true" alt="Diginext Build Server & CLI">
 </p>
 
+## Features
+
+### For Developers
+
+- Fully focus on development
+- Deploy apps to any Kubernetes cluster (without understanding Kubernetes 🤯 ).
+- Enhance your daily basis workflows with additional helpful commands for `k8s`, `git` and `database`
+- Start new project quickly with a set of useful Frameworks.
+
+### For DevOps
+
+- If you’re managing multiple cluster, `dx` is definitely for you.
+- Enhance your daily basis tasks with helpful commands to manage clusters, namespaces, secrets, deployments, workloads, etc…
+- Monitoring your infrastructure with ease!
+    - Manage Kubernetes clusters
+    - Manage, backup & restore databases: MongoDB, MariaDB, PostgreSQL,…
+- Automations, CI/CD, cronjobs, notifications, alerts,…
+
+### Tech Leads
+
+- Manage & monitoring your projects easily.
+- Overview of your teams & cloud resources.
+- Faster diagnose, better logs, fewer stresses.
+
+### Managers, Company & Startups
+
+- Overview of your organization, your teams, your members, your projects, your apps and your investment in cloud resources.
+- Better understanding about what your team is doing.
+- Especially if you are poor, like us, but still want to adopt the mighty Kubernetes, `dx` is for you.
+
+Still not convinced?
+
+- [I turn my company’s PC into my own “Vercel-like” platform](https://dev.to/mrgoonie/i-turn-my-companys-pc-into-my-own-vercel-like-platform-351o)
+- [Kubernetes for the poor](https://dev.to/mrgoonie/kubernetes-for-the-poor-2ne)
+- [Developer-First Platforms - Overcoming K8S Complexity](https://dev.to/mrgoonie/developer-first-platforms-overcoming-k8s-complexity-1lf9)
+- [“GitDevSecOps”](https://dev.to/mrgoonie/gitdevsecops-49gp)
+
+## Roadmap
+
+- Check out [this link](https://topgroup.notion.site/Roadmap-6a8266c2929c48ad8d4c11c954e9d852?pvs=4).
+
 ---
 
 ## Getting Started
 
+- [Hobby Workspace](https://hobby.diginext.site)
 - [Getting started (Latest updates)](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4)
 
 ### If you are a developer and you just want to deploy your app immediately)
+
+- [Installation guide](https://topgroup.notion.site/Installation-6de7bda045224ed4b4ee5f4cc5681814?pvs=4)
 
 #### Required
 
@@ -36,7 +82,7 @@ npm i @topgroup/diginext --location=global
 Login to our build server:
 
 ```bash
-dx login https://app.diginext.site
+dx login https://hobby.diginext.site
 cd /path/to/your/app
 dx init
 dx deploy
@@ -49,7 +95,9 @@ That's it!
 Or login to your team's build server:
 
 ```bash
-dx login https://buildserverdomain.example
+dx login https://hobby.diginext.site
+# OR
+# dx login https://buildserverdomain.example
 cd /path/to/your/app
 dx init
 dx deploy
@@ -124,7 +172,7 @@ dx init
 dx deploy
 ```
 
-Read the [docs here](docs/docs.md).
+Read the [docs here](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4).
 
 ### Why PODMAN over DOCKER?
 
@@ -142,7 +190,7 @@ On the other hand, [Podman](https://podman.io/) is a daemonless container engine
 
 ## Documentation
 
-- Visit our [docs here](docs/docs.md)
+- Visit our [docs here](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4)
 
 ## Changelog
 
@@ -150,6 +198,7 @@ On the other hand, [Podman](https://podman.io/) is a daemonless container engine
 
 ## Admin UI
 
+- Hobby workspace: https://hobby.diginext.site
 - Visit our [source code here](https://github.com/digitopvn/diginext-admin)
 
 ## Contributing [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)

@@ -25,4 +25,14 @@ export interface KubeIngress {
 			};
 		}[];
 	};
+	// extras
+	clusterShortName?: string;
+	/**
+	 * Cluster ID
+	 */
+	cluster?: string;
+	/**
+	 * Workspace ID
+	 */
+	workspace?: string;
 }

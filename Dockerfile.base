@@ -11,24 +11,25 @@ RUN apt-get update && apt-get install -y curl wget git sed jq openssh-client
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
 
-# puppeteer install
-RUN apt-get update && apt-get install -y udev chromium fonts-liberation
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
-ENV CHROMIUM_PATH /usr/bin/chromium-browser
-
 # Install GCLOUD CLI / SDK
 RUN apt-get install -y apt-transport-https ca-certificates gnupg lsb-release && \
     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - && \
     apt-get update && apt-get install -y google-cloud-sdk
 
+# Install Kubernetes Gcloud Authentication plugin
+RUN apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
+
+# Install "chromium" for Puppeteer
+ENV CHROMIUM_PATH /usr/bin/chromium
+RUN apt-get update && \
+    apt-get install -y chromium && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install KUBECTL
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
     chmod +x kubectl && \
     mv ./kubectl /usr/bin/kubectl
-
-# Install Kubernetes Gcloud Authentication plugin
-RUN apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
 # Install Helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
@@ -49,6 +50,17 @@ RUN cd ~ && \
     wget https://github.com/digitalocean/doctl/releases/download/v1.78.0/doctl-1.78.0-linux-amd64.tar.gz && \
     tar xf doctl-1.78.0-linux-amd64.tar.gz && \
     mv ~/doctl /usr/local/bin/doctl
+
+# Install MongoDB client tools
+RUN curl -fsSL https://pgp.mongodb.com/server-6.0.asc | gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor \
+    && echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list \
+    && apt-get update && apt-get install -y mongodb-org
+
+# Install MySQL client tools
+RUN apt-get update && apt-get install -y default-mysql-client
+
+# Install PostgreSQL client tools
+RUN apt-get update && apt-get install -y postgresql-client
 
 # Set working directory
 WORKDIR /usr/app

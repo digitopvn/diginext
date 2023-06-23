@@ -7,7 +7,7 @@ import { Config } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IUser, IWorkspace } from "@/entities";
 import type { InputOptions, ResponseData } from "@/interfaces";
-import { IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import * as interfaces from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import type { StartBuildParams } from "@/modules/build";
 import { buildAndDeploy } from "@/modules/build/build-and-deploy";
@@ -61,7 +61,7 @@ export default class DeployController extends BaseController {
 	@Security("jwt")
 	@Post("/")
 	@Deprecated()
-	deployFromSource(@Body() body: { options: InputOptions }, @Queries() queryParams?: IPostQueryParams) {
+	deployFromSource(@Body() body: { options: InputOptions }, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		let { options: inputOptions } = body;
 
 		// console.log("deployFromSource :>> ", body);
@@ -95,7 +95,7 @@ export default class DeployController extends BaseController {
 		startBuildV1(inputOptions);
 
 		// start build in background:
-		return respondSuccess({ msg: `Building...` });
+		return interfaces.respondSuccess({ msg: `Building...` });
 	}
 
 	/**
@@ -107,7 +107,7 @@ export default class DeployController extends BaseController {
 	@Post("/build-first")
 	async buildAndDeploy(
 		@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildParams },
-		@Queries() queryParams?: IPostQueryParams
+		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		let { buildParams, deployParams } = body;
 
@@ -138,7 +138,7 @@ export default class DeployController extends BaseController {
 			const breakingChangeVersionServer = serverVersion.split(".")[0];
 
 			if (breakingChangeVersionCli != breakingChangeVersionServer) {
-				return respondFailure(
+				return interfaces.respondFailure(
 					`Your CLI version (${buildParams.cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please update your CLI with: "dx update"`
 				);
 			}
@@ -150,7 +150,7 @@ export default class DeployController extends BaseController {
 		try {
 			buildAndDeploy(buildParams, deployBuildOptions);
 		} catch (e) {
-			return respondFailure(`${e}`);
+			return interfaces.respondFailure(`${e}`);
 		}
 
 		const { appSlug, buildNumber } = buildParams;
@@ -171,7 +171,7 @@ export default class DeployController extends BaseController {
 	@Post("/from-source")
 	buildFromSourceAndDeploy(
 		@Body() body: { buildParams: StartBuildParams; deployParams: DeployBuildParams },
-		@Queries() queryParams?: IPostQueryParams
+		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		return this.buildAndDeploy(body);
 	}
@@ -187,7 +187,7 @@ export default class DeployController extends BaseController {
 			 */
 			buildSlug: string;
 		} & DeployBuildParams,
-		@Queries() queryParams?: IPostQueryParams
+		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		const { buildSlug } = body;
 		if (!buildSlug) return { status: 0, messages: [`Build "slug" is required`] };
@@ -196,7 +196,7 @@ export default class DeployController extends BaseController {
 		const workspace = await DB.findOne<IWorkspace>("workspace", { _id: build.workspace });
 		const author = this.user || (await DB.findOne<IUser>("user", { _id: body.author }));
 
-		if (!author) return respondFailure({ msg: `Author is required.` });
+		if (!author) return interfaces.respondFailure({ msg: `Author is required.` });
 
 		const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
 		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
@@ -221,7 +221,7 @@ export default class DeployController extends BaseController {
 
 			return { messages: [], status: 1, data: result };
 		} catch (e) {
-			return respondFailure(`${e}`);
+			return interfaces.respondFailure(`${e}`);
 		}
 	}
 }

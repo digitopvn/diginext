@@ -30,14 +30,18 @@ export default class BaseService<T = any> {
 		this.model = model<T>(collection, schema, collection);
 	}
 
-	async count(filter?: IQueryFilter) {
+	async count(filter?: IQueryFilter, options: IQueryOptions = {}) {
 		const parsedFilter = filter;
 		parsedFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
-		// console.log(`BaseService > COUNT "${this.model.collection.name}" collection > parsedFilter :>>`, parsedFilter);
-		return this.model.countDocuments(parsedFilter).exec();
+
+		if (options.isDebugging) console.log(`BaseService > COUNT "${this.model.collection.name}" collection > parsedFilter :>>`, parsedFilter);
+
+		const total = this.model.countDocuments(parsedFilter).exec();
+		if (options.isDebugging) console.log(`BaseService > COUNT "${this.model.collection.name}" collection > total :>>`, total);
+		return total;
 	}
 
-	async create(data: any): Promise<T> {
+	async create(data: any, options: IQueryOptions = {}): Promise<T> {
 		try {
 			// generate slug (if needed)
 			const scope = this;
@@ -74,6 +78,7 @@ export default class BaseService<T = any> {
 				"kubeConfig",
 				"serviceAccount",
 				"apiAccessToken",
+				"metadata",
 			];
 			for (const [key, value] of Object.entries(data)) {
 				if (!metadataExcludes.includes(key) && !isValidObjectId(value) && value)
@@ -99,9 +104,15 @@ export default class BaseService<T = any> {
 
 			// set created/updated date:
 			data.createdAt = data.updatedAt = new Date();
+			if (options.isDebugging) console.log(`BaseService > ""${this.model.collection.name}"" > create > data :>> `, data);
 
 			const createdDoc = new this.model(data);
 			let newItem = await createdDoc.save();
+			if (options.isDebugging) console.log(`BaseService > ""${this.model.collection.name}"" > create > newItem :>> `, newItem);
+
+			// strip unneccessary fields
+			delete newItem.__v;
+			newItem.id = newItem._id;
 
 			// convert all {ObjectId} to {string}:
 			return replaceObjectIdsToStrings(newItem) as T;
@@ -112,14 +123,14 @@ export default class BaseService<T = any> {
 	}
 
 	async find(filter: IQueryFilter = {}, options: IQueryOptions & IQueryPagination = {}, pagination?: IQueryPagination) {
-		// console.log(`BaseService > find in "${this.model.collection.name}" collection :>> filter:`, filter);
+		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find :>> filter:`, filter);
 
 		// where
 		let _filter = parseRequestFilter(filter);
 
 		const where = { ..._filter };
 		if (!options?.deleted) where.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
-		// console.log(`BaseService > collection "${this.model.collection.name}" > find > where :>>`, where);
+		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find > where :>>`, where);
 
 		const pipelines: PipelineStage[] = [
 			{
@@ -217,8 +228,14 @@ export default class BaseService<T = any> {
 		}
 
 		// convert all {ObjectId} to {string}:
-		results = replaceObjectIdsToStrings(results);
-		// console.log(`"${this.model.collection.name}" > json results >>`, results);
+		results = replaceObjectIdsToStrings(
+			results.map((item) => {
+				delete item.__v;
+				item.id = item._id;
+				return item;
+			})
+		);
+		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find > json results >>`, results);
 
 		return results as T[];
 	}
@@ -235,7 +252,6 @@ export default class BaseService<T = any> {
 		if (!options?.deleted) updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
 
 		// convert all valid "ObjectId" string to ObjectId()
-		// console.log("[1] data :>> ", data);
 		const convertedData = cloneDeepWith(data, function (val) {
 			if (isValidObjectId(val)) return MongoDB.toObjectId(val);
 		});
@@ -245,9 +261,11 @@ export default class BaseService<T = any> {
 
 		const updateData = options?.raw ? convertedData : { $set: convertedData };
 		// console.log("[2] updateData :>> ", updateData);
+		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateFilter :>> `, updateFilter);
+		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateData :>> `, updateData);
 
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
-		// console.log("[3] updateRes :>> ", updateRes);
+		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateRes :>> `, updateRes);
 
 		// MAGIC: when update slug of the items -> update the filter as well
 		if (data.slug) updateFilter.slug = data.slug;
@@ -262,16 +280,18 @@ export default class BaseService<T = any> {
 		return results && results.length > 0 ? results[0] : undefined;
 	}
 
-	async softDelete(filter?: IQueryFilter) {
+	async softDelete(filter?: IQueryFilter, options: IQueryOptions = {}) {
 		const data = { deletedAt: new Date() };
 		const deletedItems = await this.update(filter, data, { deleted: true });
-		// console.log("softDelete > deletedItems :>> ", deletedItems, deletedItems.length);
+		if (options.isDebugging)
+			console.log(`BaseService > "${this.model.collection.name}" > softDelete > deletedItems :>> `, deletedItems, deletedItems.length);
 		return { ok: deletedItems.length > 0, affected: deletedItems.length };
 	}
 
-	async delete(filter?: IQueryFilter) {
+	async delete(filter?: IQueryFilter, options: IQueryOptions = {}) {
 		const deleteFilter = filter;
 		const deleteRes = await this.model.deleteMany(deleteFilter).exec();
+		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > delete > deleteRes :>> `, deleteRes);
 		return { ok: deleteRes.deletedCount > 0, affected: deleteRes.deletedCount };
 	}
 

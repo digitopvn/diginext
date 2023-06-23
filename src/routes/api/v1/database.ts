@@ -17,6 +17,10 @@ router
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
+	.get("/healthz", processApiRequest(controller.checkConnection.bind(controller)))
+	.post("/backup", processApiRequest(controller.backup.bind(controller)))
+	.post("/restore", processApiRequest(controller.restore.bind(controller)))
+	.post("/auto-backup", processApiRequest(controller.scheduleAutoBackup.bind(controller)))
 	.delete("/empty", processApiRequest(controller.empty.bind(controller)));
 
 export default router;

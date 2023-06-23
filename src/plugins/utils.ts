@@ -1,3 +1,6 @@
+// import { execa } from "execa";
+import * as fs from "node:fs";
+
 import chalk from "chalk";
 import { randomUUID } from "crypto";
 // import { compareVersions } from "compare-versions";
@@ -6,11 +9,9 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import dns from "dns";
 import dotenv from "dotenv";
-import execa from "execa";
-import * as fs from "fs";
 import * as afs from "fs/promises";
 import yaml from "js-yaml";
-import _, { isArray, isEmpty, isString, toNumber } from "lodash";
+import _, { isArray, isEmpty, isString, toInteger, toNumber } from "lodash";
 import * as m from "marked";
 import TerminalRenderer from "marked-terminal";
 import path from "path";
@@ -32,7 +33,6 @@ import { MongoDB } from "./mongodb";
 import { checkMonorepo } from "./monorepo";
 import { isNumeric } from "./number";
 import { isWin } from "./os";
-// import cliMd from "@/plugins/cli-md";
 
 const { marked } = m;
 marked.setOptions({ renderer: new TerminalRenderer() });
@@ -224,7 +224,8 @@ type ErrorCallback = (e: string) => void;
 
 export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCallback = "") {
 	try {
-		let { stdout } = await execa.command(cmd, cliOpts);
+		const { execaCommand } = await import("execa");
+		let { stdout } = await execaCommand(cmd, cliOpts);
 		// console.log(`[execCmd]`, { stdout });
 		return stdout;
 	} catch (e) {
@@ -275,9 +276,20 @@ export async function getLatestCliVersion() {
 /**
  * Check if CLI version is latest or not, if not -> return FALSE
  */
-export async function checkForUpdate() {
+export async function shouldNotifyCliUpdate() {
+	const curVersion = currentVersion();
+	if (curVersion.indexOf("prerelease") > -1) return false;
+
 	const latestVersion = await getLatestCliVersion();
-	return latestVersion !== currentVersion();
+
+	let [lastestBreaking, lastestFeature, lastestPatch] = latestVersion.split(".").map((num) => toInteger(num));
+	let [curBreaking, curFeature, curPatch] = curVersion.split(".").map((num) => toInteger(num));
+
+	if (lastestBreaking > curBreaking) return false; // no need to notify when there is a new breaking change version
+	if (lastestBreaking === curBreaking && lastestFeature > curFeature) return true;
+	if (lastestBreaking === curBreaking && lastestFeature === curFeature && lastestPatch > curPatch) return true;
+
+	return false;
 }
 
 async function logBitbucketError(error: any, delay?: number, location?: string, shouldExit = false) {
@@ -637,11 +649,6 @@ export const isUsingExpressjsFramework = (options) => {
 	const frameworkConfigPath = path.resolve(appDirectory || process.cwd(), "package.json");
 	// TODO: check if using express js
 
-	// if (fs.existsSync(frameworkConfigPath)) {
-	// 	const frameworkConfig = require(frameworkConfigPath);
-	// 	val = frameworkConfig.repository && frameworkConfig.repository.indexOf(config.framework.expressjs) > -1;
-	// }
-
 	return val;
 };
 
@@ -653,16 +660,10 @@ export const isUsingNodejsFramework = (options) => {
 	// framework name
 	const frameworkConfigPath = path.resolve(appDirectory || process.cwd(), "package.json");
 
-	// TODO: check if using node js
-	// if (fs.existsSync(frameworkConfigPath)) {
-	// 	const frameworkConfig = require(frameworkConfigPath);
-	// 	val = frameworkConfig.repository && frameworkConfig.repository.indexOf(config.framework.nodejs) > -1;
-	// }
-
 	return val;
 };
 
-export const isUsingDiginextFramework = (options) => {
+export const isUsingDiginextFramework = async (options) => {
 	let val = false;
 	const { error, appDirectory } = checkMonorepo(options);
 	if (error) return val;
@@ -671,14 +672,14 @@ export const isUsingDiginextFramework = (options) => {
 	const frameworkConfigPath = path.resolve(appDirectory || process.cwd(), "package.json");
 
 	if (fs.existsSync(frameworkConfigPath)) {
-		const frameworkConfig = require(frameworkConfigPath);
+		const frameworkConfig = await import(frameworkConfigPath);
 		val = frameworkConfig.dependencies && frameworkConfig.dependencies.hasOwnProperty("next");
 	}
 
 	return val;
 };
 
-export const isUsingDiginestAPIFramework = (options) => {
+export const isUsingDiginestAPIFramework = async (options) => {
 	let val = false;
 	const { error, appDirectory } = checkMonorepo(options);
 	if (error) return val;
@@ -687,14 +688,14 @@ export const isUsingDiginestAPIFramework = (options) => {
 	const frameworkConfigPath = path.resolve(appDirectory || process.cwd(), "package.json");
 
 	if (fs.existsSync(frameworkConfigPath)) {
-		const frameworkConfig = require(frameworkConfigPath);
+		const frameworkConfig = await import(frameworkConfigPath);
 		val = frameworkConfig.dependencies && frameworkConfig.dependencies.hasOwnProperty("@nestjs/core");
 	}
 
 	return val;
 };
 
-export const isUsingStaticHtmlFramework = (options) => {
+export const isUsingStaticHtmlFramework = async (options) => {
 	let val = false;
 	const { error, appDirectory } = checkMonorepo(options);
 	if (error) return val;
@@ -702,7 +703,7 @@ export const isUsingStaticHtmlFramework = (options) => {
 	const frameworkConfigPath = path.resolve(appDirectory || process.cwd(), "dx.json");
 
 	if (fs.existsSync(frameworkConfigPath)) {
-		const frameworkConfig = require(frameworkConfigPath);
+		const frameworkConfig = await import(frameworkConfigPath);
 		val = typeof frameworkConfig.framework != "undefined" && frameworkConfig.framework == "static";
 	}
 
@@ -925,10 +926,12 @@ export const cliContainerExec = async (command, options) => {
 	// 	options.pipelineReady = true;
 	// }
 
+	const { execa, execaCommand } = await import("execa");
+
 	if (isWin()) {
-		getContainerName = await execa.command(`docker ps --format '{{.Names}}' | findstr diginext-cli`);
+		getContainerName = await execaCommand(`docker ps --format '{{.Names}}' | findstr diginext-cli`);
 	} else {
-		getContainerName = await execa.command(`docker ps --format '{{.Names}}' | grep diginext-cli`);
+		getContainerName = await execaCommand(`docker ps --format '{{.Names}}' | grep diginext-cli`);
 	}
 
 	cliContainerName = getContainerName.stdout;

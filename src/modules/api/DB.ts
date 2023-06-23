@@ -11,6 +11,7 @@ import {
 	CloudProviderService,
 	ClusterService,
 	ContainerRegistryService,
+	CronjobService,
 	FrameworkService,
 	GitProviderService,
 	ProjectService,
@@ -42,7 +43,8 @@ export type DBCollection =
 	| "user"
 	| "api_key_user"
 	| "service_account"
-	| "workspace";
+	| "workspace"
+	| "cronjob";
 
 export function queryFilterToUrlFilter(filter: any = {}) {
 	return new URLSearchParams(filter).toString();
@@ -99,6 +101,7 @@ const user = new UserService();
 const api_key_user = new ApiKeyUserService();
 const service_account = new ServiceAccountService();
 const workspace = new WorkspaceService();
+const cronjob = new CronjobService();
 
 export interface DBQueryOptions extends IQueryOptions {
 	filter?: any;
@@ -112,6 +115,12 @@ export interface DBQueryOptions extends IQueryOptions {
 	 * Similar to "subpath" but for service -> function name:
 	 */
 	func?: any;
+
+	/**
+	 * Debug
+	 * @default false
+	 */
+	isDebugging?: boolean;
 }
 
 export class DB {
@@ -133,27 +142,8 @@ export class DB {
 		api_key_user,
 		service_account,
 		workspace,
+		cronjob,
 	};
-
-	// static transformFilter(filter: any) {
-	// 	const _filter = { ...filter };
-	// 	Object.entries(filter).forEach(([key, val]) => {
-	// 		if (key == "id" || key == "_id") {
-	// 			_filter._id = isValidObjectId(val) ? MongoDB.toString(val) : val;
-	// 			delete _filter.id;
-	// 		}
-	// 		if (val == null || val == undefined) {
-	// 			_filter[key] = null;
-	// 		} else if (isValidObjectId(val)) {
-	// 			_filter[key] = MongoDB.toString(toObjectId(val as string));
-	// 		} else if (isJSON(val)) {
-	// 			_filter[key] = JSON.parse(val as string);
-	// 		} else {
-	// 			_filter[key] = val;
-	// 		}
-	// 	});
-	// 	return _filter;
-	// }
 
 	static async count(collection: DBCollection, filter: any = {}, options?: DBQueryOptions, pagination?: IQueryPagination) {
 		let amount: number;

@@ -1,5 +1,4 @@
 import inquirer from "inquirer";
-import { isEmpty } from "lodash";
 
 import type { IProject } from "@/entities/Project";
 
@@ -26,17 +25,18 @@ export async function searchProjects(options: SearchAppOptions = {}) {
 	const filter = keyword ? { name: keyword } : {};
 	let projects = await DB.find<IProject>("project", filter, { search: true, order: { updatedAt: -1, createdAt: -1 } }, { limit: 20 });
 
-	if (isEmpty(projects)) {
+	if (!projects || projects.length === 0) {
 		if (canSkip) {
-			const { shouldSkip } = await inquirer.prompt<{ shouldSkip: boolean }>({
-				name: "shouldSkip",
+			const { shouldCreateNew } = await inquirer.prompt<{ shouldCreateNew: boolean }>({
+				name: "shouldCreateNew",
 				type: "confirm",
 				message: `Do you want to create new project instead?`,
 				default: true,
 			});
-			if (shouldSkip) return [];
+
+			if (shouldCreateNew) return [];
 		}
-		// if don't skip -> keep searching...
+		// if don't create new -> keep searching...
 		projects = await searchProjects({ ...options, question: `No projects found. Try another keyword:` });
 		return projects;
 	} else {

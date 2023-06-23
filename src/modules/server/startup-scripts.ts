@@ -21,6 +21,8 @@ import { seedSystemInitialData } from "@/seeds/seed-system";
 import { setServerStatus } from "@/server";
 import { ClusterService, ContainerRegistryService, GitProviderService, WorkspaceService } from "@/services";
 
+import { findAndRunCronjob } from "../cronjob/find-and-run-job";
+
 /**
  * BUILD SERVER INITIAL START-UP SCRIPTS:
  * - Create config directory in {HOME_DIR}
@@ -35,6 +37,12 @@ export async function startupScripts() {
 
 	// config dir
 	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);
+
+	/**
+	 * System cronjob checking every minute...
+	 */
+	findAndRunCronjob();
+	setInterval(findAndRunCronjob, 15 * 1000);
 
 	// connect git providers
 	const isSSHKeysExisted = await sshKeysExisted();
@@ -55,8 +63,8 @@ export async function startupScripts() {
 	if (!isDevMode) {
 		// <-- to make sure it won't override your GIT config when developing Diginext
 		execCmd(`git init`);
-		execCmd(`git config --location=global user.email server@diginext.site`);
-		execCmd(`git config --location=global --add user.name Diginext`);
+		execCmd(`git config --global user.email server@diginext.site`);
+		execCmd(`git config --global --add user.name Diginext`);
 	}
 
 	// seed system initial data: Cloud Providers

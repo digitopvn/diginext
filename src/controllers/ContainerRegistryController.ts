@@ -4,9 +4,9 @@ import { unlink } from "fs";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IContainerRegistry } from "@/entities";
-import { ContainerRegistryDto } from "@/entities";
+import * as entities from "@/entities";
 import type { ResponseData } from "@/interfaces";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import * as interfaces from "@/interfaces";
 import { registryProviderList } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import digitalocean from "@/modules/providers/digitalocean";
@@ -31,14 +31,14 @@ export default class ContainerRegistryController extends BaseController<IContain
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return super.read();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: ContainerRegistryDto, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: entities.ContainerRegistryDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		let {
 			name,
 			organization,
@@ -66,19 +66,21 @@ export default class ContainerRegistryController extends BaseController<IContain
 
 		if (providerShortName === "gcloud") {
 			if (!host) host = "gcr.io";
-			if (!serviceAccount) return respondFailure({ msg: `Service Account (JSON) is required to authenticate Google Container Registry.` });
+			if (!serviceAccount)
+				return interfaces.respondFailure({ msg: `Service Account (JSON) is required to authenticate Google Container Registry.` });
 			organization = JSON.parse(serviceAccount).project_id;
 		}
 
 		if (providerShortName === "digitalocean") {
 			if (!host) host = "registry.digitalocean.com";
-			if (!apiAccessToken) return respondFailure({ msg: `API access token is required to authenticate DigitalOcean Container Registry.` });
+			if (!apiAccessToken)
+				return interfaces.respondFailure({ msg: `API access token is required to authenticate DigitalOcean Container Registry.` });
 			if (!organization) organization = this.workspace.slug;
 		}
 
 		if (providerShortName === "dockerhub") {
-			if (!dockerUsername) return respondFailure({ msg: `Docker username is required.` });
-			if (!dockerPassword) return respondFailure({ msg: `Docker password is required.` });
+			if (!dockerUsername) return interfaces.respondFailure({ msg: `Docker username is required.` });
+			if (!dockerPassword) return interfaces.respondFailure({ msg: `Docker password is required.` });
 			if (!dockerServer) dockerServer = "https://index.docker.io/v2/";
 			if (!host) host = "docker.io";
 			if (!organization) organization = dockerUsername;
@@ -102,7 +104,7 @@ export default class ContainerRegistryController extends BaseController<IContain
 			dockerServer,
 			dockerEmail,
 			isVerified: false,
-		} as ContainerRegistryDto;
+		} as entities.ContainerRegistryDto;
 
 		let newRegistry = await this.service.create(newRegistryData);
 
@@ -112,13 +114,13 @@ export default class ContainerRegistryController extends BaseController<IContain
 
 		// const newRegistry = await connectRegistry(newRegistryData, { userId: this.user?._id, workspaceId: this.workspace?._id });
 
-		return respondSuccess({ data: newRegistry });
+		return interfaces.respondSuccess({ data: newRegistry });
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: ContainerRegistryDto, @Queries() queryParams?: IPostQueryParams) {
+	async update(@Body() body: entities.ContainerRegistryDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		let {
 			organization,
 			serviceAccount,
@@ -131,26 +133,28 @@ export default class ContainerRegistryController extends BaseController<IContain
 			dockerServer,
 		} = body;
 
-		const updateData: ContainerRegistryDto = body;
+		const updateData: entities.ContainerRegistryDto = body;
 
 		if (providerShortName && isNotIn(providerShortName, registryProviderList))
-			return respondFailure({ msg: `Container registry provider should be one of [${registryProviderList.join(", ")}]` });
+			return interfaces.respondFailure({ msg: `Container registry provider should be one of [${registryProviderList.join(", ")}]` });
 
 		if (providerShortName === "gcloud") {
 			if (!host) host = "gcr.io";
-			if (!serviceAccount) return respondFailure({ msg: `Service Account (JSON) is required to authenticate Google Container Registry.` });
+			if (!serviceAccount)
+				return interfaces.respondFailure({ msg: `Service Account (JSON) is required to authenticate Google Container Registry.` });
 			if (!imageBaseURL) imageBaseURL = `${host}/${organization}`;
 		}
 
 		if (providerShortName === "digitalocean") {
 			if (!host) host = "registry.digitalocean.com";
-			if (!apiAccessToken) return respondFailure({ msg: `API access token is required to authenticate DigitalOcean Container Registry.` });
+			if (!apiAccessToken)
+				return interfaces.respondFailure({ msg: `API access token is required to authenticate DigitalOcean Container Registry.` });
 			if (!imageBaseURL) imageBaseURL = `${host}/${organization}`;
 		}
 
 		if (providerShortName === "dockerhub") {
-			if (!dockerUsername) return respondFailure({ msg: `Docker username is required.` });
-			if (!dockerPassword) return respondFailure({ msg: `Docker password is required.` });
+			if (!dockerUsername) return interfaces.respondFailure({ msg: `Docker username is required.` });
+			if (!dockerPassword) return interfaces.respondFailure({ msg: `Docker password is required.` });
 			if (!dockerServer) dockerServer = "https://index.docker.io/v2/";
 			if (!host) host = "docker.io";
 			if (!imageBaseURL) imageBaseURL = `${host}/${organization}`;
@@ -158,20 +162,20 @@ export default class ContainerRegistryController extends BaseController<IContain
 
 		// update db
 		let [updatedRegistry] = await DB.update<IContainerRegistry>("registry", this.filter, updateData);
-		if (!updatedRegistry) return respondFailure({ msg: `Failed to update.` });
+		if (!updatedRegistry) return interfaces.respondFailure({ msg: `Failed to update.` });
 
 		// verify container registry connection...
 		let verifiedRegistry: IContainerRegistry;
 		const authRes = await connectRegistry(updatedRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
 		[verifiedRegistry] = await DB.update<IContainerRegistry>("registry", { _id: updatedRegistry._id }, { isVerified: authRes ? true : false });
 
-		return respondSuccess({ data: updatedRegistry });
+		return interfaces.respondSuccess({ data: updatedRegistry });
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		return super.delete();
 	}
 

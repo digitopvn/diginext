@@ -10,7 +10,7 @@ import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { queue } from "../build";
 import { createReleaseFromBuild } from "../build/create-release-from-build";
 import ClusterManager from "../k8s";
-import { generateDeployment } from ".";
+import { generateDeployment } from "./index";
 
 export type DeployImageParams = {
 	/**

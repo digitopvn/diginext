@@ -1,8 +1,8 @@
 import { Body, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import { respondFailure, respondSuccess } from "@/interfaces";
-import exportPdf, { ExportPDFOptions } from "@/modules/capture/export-pdf";
-import screenshot, { CaptureScreenshotOptions } from "@/modules/capture/screenshot";
+import exportPdf, * as exportPdf_1 from "@/modules/capture/export-pdf";
+import screenshot, * as screenshot_1 from "@/modules/capture/screenshot";
 import MediaService from "@/services/MediaService";
 
 import BaseController from "./BaseController";
@@ -11,12 +11,12 @@ import BaseController from "./BaseController";
 @Route("utility")
 export default class UtilityController extends BaseController {
 	/**
-	 * Capture a webpage and export to PDF
+	 * Export a webpage to PDF
 	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/export-pdf")
-	async exportWebpagePDF(@Body() body: ExportPDFOptions, @Queries() queryParams?: { url: string }) {
+	async exportWebpagePDF(@Body() body: exportPdf_1.ExportPDFOptions, @Queries() queryParams?: { url: string }) {
 		if (!this.filter.url) return respondFailure(`Param "url" is required.`);
 
 		// process
@@ -36,12 +36,12 @@ export default class UtilityController extends BaseController {
 	}
 
 	/**
-	 * Capture a webpage and export to PDF
+	 * Capture a webpage screenshot
 	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/capture-screenshot")
-	async captureScreenshot(@Body() body: CaptureScreenshotOptions, @Queries() queryParams?: { url: string }) {
+	async captureScreenshot(@Body() body: screenshot_1.CaptureScreenshotOptions, @Queries() queryParams?: { url: string }) {
 		if (!this.filter.url) return respondFailure(`Param "url" is required.`);
 
 		// process

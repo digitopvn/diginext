@@ -2,8 +2,8 @@ import { logError } from "diginext-utils/dist/xconsole/log";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IApp, IRelease } from "@/entities";
-import { ReleaseDto } from "@/entities";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import * as entities from "@/entities";
+import * as interfaces from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { DB } from "@/modules/api/DB";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
@@ -28,14 +28,14 @@ export default class ReleaseController extends BaseController<IRelease> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: IGetQueryParams) {
+	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return super.read();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: ReleaseDto, @Queries() queryParams?: IPostQueryParams) {
+	create(@Body() body: entities.ReleaseDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		// TODO: validate body and check for required params
 		return super.create(body);
 	}
@@ -43,14 +43,14 @@ export default class ReleaseController extends BaseController<IRelease> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: ReleaseDto, @Queries() queryParams?: IPostQueryParams) {
+	update(@Body() body: entities.ReleaseDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.update(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: IDeleteQueryParams) {
+	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		return super.delete();
 	}
 

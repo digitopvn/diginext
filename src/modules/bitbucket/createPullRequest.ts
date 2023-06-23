@@ -7,7 +7,7 @@ import { simpleGit } from "simple-git";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
 import { parseRepoSlugFromUrl } from "../../plugins/utils";
-import { bitbucket } from ".";
+import { bitbucket } from "./index";
 
 let git: SimpleGit;
 let auth = { username: "" };
