@@ -1,3 +1,12 @@
+## [3.14.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.14.1...v3.14.2-prerelease.1) (2023-06-23)
+
+
+### Bug Fixes
+
+* **client:** change fn name clone -> transfer | fix duplicate git create ([2cfcf92](https://github.com/digitopvn/diginext/commit/2cfcf928e2aedc712b9fd7c8bc032ebcc5ba2877))
+
+## [3.14.1](https://github.com/digitopvn/diginext/compare/v3.14.0...v3.14.1) (2023-06-23)
+
 # [3.14.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.14.0-prerelease.1...v3.14.0-prerelease.2) (2023-06-23)
 
 
