@@ -4,7 +4,7 @@ import { isEmpty } from "lodash";
 
 import type { ICluster } from "@/entities";
 
-import ClusterManager from ".";
+import ClusterManager from "./index";
 
 export const askForNamespace = async (cluster: ICluster) => {
 	const { contextName: context } = cluster;

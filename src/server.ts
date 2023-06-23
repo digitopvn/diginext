@@ -2,7 +2,6 @@ import "reflect-metadata";
 
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import session from "cookie-session";
 import { log, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import type { Express, Request, Response } from "express";
@@ -22,6 +21,7 @@ import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
 import { Config, IsDev, IsProd } from "./app.config";
+import { CLI_DIR } from "./config/const";
 import type { AppRequest } from "./interfaces/SystemTypes";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
 import AppDatabase from "./modules/AppDatabase";
@@ -77,9 +77,10 @@ function initialize(db?: typeof mongoose) {
 	});
 
 	/**
-	 * SERVING STATIC FILES
+	 * SERVING STATIC & UPLOAD FILES
 	 */
-	app.use(express.static(path.resolve(process.cwd(), "public")));
+	app.use(express.static(path.resolve(CLI_DIR, "public")));
+	app.use("/storage", express.static(path.resolve(CLI_DIR, "storage")));
 
 	/**
 	 * TODO: Enable SWAGGER for API Docs
@@ -211,7 +212,7 @@ function initialize(db?: typeof mongoose) {
 }
 
 if (CLI_MODE === "server") {
-	log(`Connecting to database. Please wait...`);
+	// log(`Connecting to database. Please wait...`);
 	AppDatabase.connect(initialize);
 
 	/**

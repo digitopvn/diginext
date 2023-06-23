@@ -105,6 +105,11 @@ export interface IQueryOptions extends IQueryGeneral {
 	 * Should include deleted items
 	 */
 	deleted?: boolean;
+	/**
+	 * Debug
+	 * @default false
+	 */
+	isDebugging?: boolean;
 }
 
 export interface IQueryPagination extends IQueryGeneral {

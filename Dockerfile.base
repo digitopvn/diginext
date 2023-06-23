@@ -26,18 +26,6 @@ RUN apt-get update && \
     apt-get install -y chromium && \
     rm -rf /var/lib/apt/lists/*
 
-# Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
-# Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer
-# installs, work.
-# RUN apt-get update \
-#     && apt-get install -y wget gnupg \
-#     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-#     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-#     && apt-get update \
-#     && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
-#     --no-install-recommends \
-#     && rm -rf /var/lib/apt/lists/*
-
 # Install KUBECTL
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
     chmod +x kubectl && \
@@ -62,6 +50,17 @@ RUN cd ~ && \
     wget https://github.com/digitalocean/doctl/releases/download/v1.78.0/doctl-1.78.0-linux-amd64.tar.gz && \
     tar xf doctl-1.78.0-linux-amd64.tar.gz && \
     mv ~/doctl /usr/local/bin/doctl
+
+# Install MongoDB client tools
+RUN curl -fsSL https://pgp.mongodb.com/server-6.0.asc | gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor \
+    && echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list \
+    && apt-get update && apt-get install -y mongodb-org
+
+# Install MySQL client tools
+RUN apt-get update && apt-get install -y default-mysql-client
+
+# Install PostgreSQL client tools
+RUN apt-get update && apt-get install -y postgresql-client
 
 # Set working directory
 WORKDIR /usr/app

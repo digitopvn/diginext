@@ -1,3 +1,20 @@
+# [3.14.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.13.1...v3.14.0-prerelease.1) (2023-06-22)
+
+
+### Bug Fixes
+
+* **dashboard:** optimize responsive of drawers ([063caee](https://github.com/digitopvn/diginext/commit/063caee7d3f1e71bd43044184b9f358b67d4de5b))
+* **server,cli:** compress db backups, execa 6.1.1, insert database ([d4e4d9b](https://github.com/digitopvn/diginext/commit/d4e4d9bd236e953ef4ab60fc44a1824c7812f885))
+* **server,cli:** generate ssh key with no passwords ([c25ebab](https://github.com/digitopvn/diginext/commit/c25ebabb6efc32bb0b3fbf7482a7496aca4091fb))
+* **server:** add database backup status ([f9c6439](https://github.com/digitopvn/diginext/commit/f9c64398567386bed2a5fece1b637f075ae0d3c7))
+
+
+### Features
+
+* **dashboard:** manage cronjob, database, backup ([0f47dcf](https://github.com/digitopvn/diginext/commit/0f47dcf325ec757de76eec0b2fb9417e29bd3b72))
+* **server,api,cli:** add cloud database healthz, backup, restore ([d8453a8](https://github.com/digitopvn/diginext/commit/d8453a8802916171c9967c86aea940536468dfe4))
+* **server,api:** cronjob create, schedule at, schedule repeat, cancel job ([7108d26](https://github.com/digitopvn/diginext/commit/7108d26e433f4fef19479dfca42edf781c680f06))
+
 ## [3.13.1](https://github.com/digitopvn/diginext/compare/v3.13.0...v3.13.1) (2023-06-19)
 
 

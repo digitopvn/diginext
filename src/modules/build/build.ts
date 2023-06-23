@@ -96,9 +96,6 @@ export type StartBuildParams = {
 };
 
 export async function testBuild() {
-	// let spawn = require("child_process").spawn;
-	// let temp = spawn("docker", ["build", "-t", "digitop/test_image", "-f", "Dockerfile", "."]);
-	// temp.stdio.forEach((io) => io.on("data", (data) => log(data.toString())));
 	let socketServer = getIO();
 	log("socketServer:", socketServer);
 }

@@ -1,4 +1,3 @@
-import execa from "execa";
 import { existsSync } from "fs";
 import path from "path";
 
@@ -6,7 +5,7 @@ import { CLI_DIR } from "@/config/const";
 import type { ICluster } from "@/entities";
 import { waitUntil } from "@/plugins";
 
-import ClusterManager from ".";
+import ClusterManager from "./index";
 import { checkCertManagerInstalled, checkNginxIngressInstalled } from "./stack-check";
 
 export interface InstallStackOptions {
@@ -18,6 +17,7 @@ export interface InstallStackOptions {
  * @copyright https://kubernetes.github.io/ingress-nginx/
  */
 export const installNginxIngressStack = async (cluster: ICluster, options: InstallStackOptions = {}) => {
+	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { shortName, contextName: context, isVerified } = cluster;
 	const { onUpdate } = options;
 
@@ -31,7 +31,7 @@ export const installNginxIngressStack = async (cluster: ICluster, options: Insta
 	const namespace = "ingress-nginx";
 	const repoURL = "https://kubernetes.github.io/ingress-nginx";
 	const command = `helm upgrade --install ${name} ${name} --repo ${repoURL} --namespace ${namespace} --create-namespace`;
-	const stream = execa.command(command);
+	const stream = execaCommand(command);
 	stream.stdio.forEach((_stdio) => {
 		if (_stdio) {
 			_stdio.on("data", (data) => {
@@ -60,6 +60,7 @@ export const installNginxIngressStack = async (cluster: ICluster, options: Insta
  * @copyright https://cert-manager.io/
  */
 export const installCertManagerStack = async (cluster: ICluster, options: InstallStackOptions = {}) => {
+	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { shortName, contextName: context, isVerified } = cluster;
 	const { onUpdate } = options;
 
@@ -70,7 +71,7 @@ export const installCertManagerStack = async (cluster: ICluster, options: Instal
 	if (isStackInstalled) throw new Error(`Cluster already had "CertManager" Stack installed.`);
 
 	// add Helm repo
-	await execa.command(`helm repo add jetstack https://charts.jetstack.io && helm repo update`);
+	await execaCommand(`helm repo add jetstack https://charts.jetstack.io && helm repo update`);
 
 	// use Helm to install:
 	const name = "cert-manager";
@@ -78,7 +79,7 @@ export const installCertManagerStack = async (cluster: ICluster, options: Instal
 	const version = "v1.11.0";
 	const command = `helm install ${name} jetstack/cert-manager --namespace ${namespace} --create-namespace --version ${version} --set installCRDs=true`;
 
-	const stream = execa.command(command);
+	const stream = execaCommand(command);
 	stream.stdio.forEach((_stdio) => {
 		if (_stdio) {
 			_stdio.on("data", (data) => {

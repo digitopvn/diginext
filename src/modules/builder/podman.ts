@@ -1,5 +1,4 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
-import execa from "execa";
 import { isEmpty } from "lodash";
 
 import { cliOpts } from "@/config/config";
@@ -115,7 +114,8 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 	// docker build command:
 	const buildCmd = `podman build ${optionFlags}`;
 
-	let stream = execa.command(buildCmd, cliOpts);
+	const { execa, execaCommand, execaSync } = await import("execa");
+	let stream = execaCommand(buildCmd, cliOpts);
 	processes[builder] = stream;
 
 	const skippedErrors: string[] = ["User-selected graph driver"];
@@ -134,7 +134,7 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 	await stream;
 
 	if (shouldPush) {
-		stream = execa.command(`podman push ${imageURL}`, cliOpts);
+		stream = execaCommand(`podman push ${imageURL}`, cliOpts);
 		processes[builder] = stream;
 
 		stream.stdio.forEach((_stdio) => {
@@ -159,8 +159,8 @@ export const stopBuild = async (builder: string) => {
 			forceKillAfterTimeout: 2000,
 		});
 		delete processes[builder];
-		// await execa.command(`docker buildx stop ${builder}`, cliOpts);
-		// await execa.command(`docker buildx stop buildx_buildkit_${builder}`, cliOpts);
+		// await execaCommand(`docker buildx stop ${builder}`, cliOpts);
+		// await execaCommand(`docker buildx stop buildx_buildkit_${builder}`, cliOpts);
 		await wait(500); // <-- just to be sure...
 	} catch (e) {
 		logError(`[BUILDER] Podman > stopBuild :>>`, e);

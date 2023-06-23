@@ -1,6 +1,6 @@
 import "reflect-metadata";
 
-import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
+import { logError } from "diginext-utils/dist/xconsole/log";
 import mongoose from "mongoose";
 
 import { Config } from "@/app.config";
@@ -21,7 +21,7 @@ export async function connect(onConnected?: (_db?: typeof mongoose, connection?:
 		db = mongoDB;
 
 		// const dataSource = await appDataSource.initialize();
-		if (process.env.CLI_MODE == "server") logSuccess("[DATABASE] MongoDB is connected!");
+		// if (process.env.CLI_MODE == "server") logSuccess("[DATABASE] MongoDB is connected!");
 		if (typeof onConnected != "undefined") onConnected(db, mongoDB.connection);
 
 		return db;

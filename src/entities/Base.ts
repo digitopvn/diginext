@@ -1,7 +1,7 @@
 import type { Types } from "mongoose";
 import { Schema } from "mongoose";
 
-import type { IProject, IWorkspace } from ".";
+import type { IProject, IWorkspace } from "./index";
 import type { IUser } from "./User";
 
 export interface IBase {

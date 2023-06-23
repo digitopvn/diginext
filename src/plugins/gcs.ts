@@ -6,8 +6,8 @@ import pkg from "@/../package.json";
 
 const conf = new Configstore(pkg.name);
 
-const { Storage } = require("@google-cloud/storage");
-const path = require("path");
+import { Storage } from "@google-cloud/storage";
+import path from "path";
 
 const bucketName = "digitop-cdn-sg";
 
@@ -23,10 +23,11 @@ const credFile = path.resolve(__dirname, "../cred/TOP Group K8S-c08c41784317.jso
  * Installation: npm install googleapis --save
  *  */
 
-const storage = new Storage({
-	projectId: "top-group-k8s",
-	keyFilename: credFile,
-});
+// const storage = new Storage({
+// 	projectId: "top-group-k8s",
+// 	keyFilename: credFile,
+// });
+const storage = new Storage();
 
 export async function uploadFile(filename, destination) {
 	// Uploads a local file to the bucket
