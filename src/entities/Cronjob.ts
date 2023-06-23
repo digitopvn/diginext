@@ -66,6 +66,7 @@ export interface ICronjob extends IBase {
 	body?: any;
 	// schedule
 	nextRunAt?: Date;
+	endDate?: Date;
 	repeat?: CronjobRepeat;
 	repeatCondition?: CronjonRepeatCondition;
 	// history
@@ -85,6 +86,7 @@ export const cronjobSchema = new Schema<ICronjob>(
 		headers: Object,
 		// schedule
 		nextRunAt: Date,
+		endDate: Date,
 		repeat: {
 			range: Number,
 			unit: { type: String, enum: cronjobRepeatUnitList },

@@ -79,7 +79,9 @@ export const calculateNextRunAt = (job: ICronjob, options?: { isDebugging?: bool
 			}
 		}
 
-		nextRunAt = _nextDate.toDate();
+		// check end date
+
+		nextRunAt = job.endDate && _nextDate.diff(dayjs(job.endDate)) > 0 ? undefined : _nextDate.toDate();
 	}
 
 	if (options?.isDebugging) {
