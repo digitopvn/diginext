@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 import type { CronjobDto } from "@/entities/Cronjob";
 import { type ICronjob, cronjobRepeatUnitList, cronjobSchema, weekDays } from "@/entities/Cronjob";
 import type { IQueryOptions } from "@/interfaces";
@@ -21,11 +23,9 @@ class CronjobService extends BaseService<ICronjob> {
 		}
 
 		if (!data.repeatCondition) data.repeatCondition = {};
+
 		/**
-		 * WHY?
-		 * - Eg. you cannot run a task every 1 minute but only at minute 20, or every 2 hours at 5 o'clock, sounds confusing...
-		 * - But you can still run a task every hour at minute 20, even every hour at minute 20 and 35, right?
-		 * Other examples:
+		 * Examples:
 		 * ✓ Every month (monthly), at [weekdays: "mon", "tue", "fri"] ?
 		 * ✓ Every day (daily), at [weekdays: "mon", "tue", "fri"] ?
 		 * ✓ Every 5 minutes, at [hours: 13,14,18] ?
@@ -83,6 +83,9 @@ class CronjobService extends BaseService<ICronjob> {
 					return item;
 				})
 			);
+
+		// validate end date
+		if (data.endDate && dayjs(data.endDate).diff(dayjs()) < 0) throw new Error(`Value of "endDate" must be in the future.`);
 
 		// calculate next run schedule:
 		data.nextRunAt = calculateNextRunAt(data, { isDebugging: true });
