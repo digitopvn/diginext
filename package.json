@@ -2,7 +2,7 @@
 	"name": "@topgroup/diginext",
 	"version": "3.14.1",
 	"description": "A Developer-Focused platform for centralized cloud resource management & app deployment.",
-	"exports": "./index.js",
+	"main": "./index.js",
 	"bin": {
 		"di": "./dist/index.js",
 		"dx": "./dist/index.js"
