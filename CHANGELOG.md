@@ -1,3 +1,11 @@
+## [3.14.2](https://github.com/digitopvn/diginext/compare/v3.14.1...v3.14.2) (2023-06-24)
+
+
+### Bug Fixes
+
+* **client:** change fn name clone -> transfer | fix duplicate git create ([2cfcf92](https://github.com/digitopvn/diginext/commit/2cfcf928e2aedc712b9fd7c8bc032ebcc5ba2877))
+* **dashboard:** correct create database api ([274a7f8](https://github.com/digitopvn/diginext/commit/274a7f849524d7f304f8f16aff4fb20516629ee7))
+
 ## [3.14.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.14.1...v3.14.2-prerelease.1) (2023-06-23)
 
 
