@@ -30,7 +30,7 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 
 	// add git origin:
 	await git.addRemote("origin", options.remoteSSH);
-	await git.push("origin", "main");
+	await git.push(["-u", "origin", "main"]);
 
 	// create developer branches
 	const gitUsername = (await git.getConfig(`user.name`, "global")).value;
