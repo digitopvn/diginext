@@ -29,10 +29,10 @@ export const checkConnection = async (options: Partial<MongoConnectionInfo> & { 
 	const { execa, execaCommand, execaSync } = await import("execa");
 	try {
 		if (options.url) {
-			const { stdout, stderr } = execaSync(`mongo`, [options.url, "--eval", "db.version()"]);
+			const { stdout, stderr } = execaSync(`mongosh`, [options.url, "--eval", "db.version()"]);
 			if (options.isDebugging) console.log("[MONGODB] Connected :>> ", stdout);
 		} else {
-			const { stdout, stderr } = execaSync(`mongo`, [
+			const { stdout, stderr } = execaSync(`mongosh`, [
 				"--host",
 				`${options.host}:${options.port || 27017}`,
 				"--username",
