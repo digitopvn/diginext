@@ -7,6 +7,7 @@ import {
 	ApiKeyUserService,
 	AppService,
 	BuildService,
+	CloudDatabaseBackupService,
 	CloudDatabaseService,
 	CloudProviderService,
 	ClusterService,
@@ -30,6 +31,7 @@ export type DBCollection =
 	| "app"
 	| "build"
 	| "database"
+	| "db_backup"
 	| "provider"
 	| "cluster"
 	| "git"
@@ -87,6 +89,7 @@ export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPaginati
 const app = new AppService();
 const build = new BuildService();
 const database = new CloudDatabaseService();
+const db_backup = new CloudDatabaseBackupService();
 const provider = new CloudProviderService();
 const cluster = new ClusterService();
 const registry = new ContainerRegistryService();
@@ -128,7 +131,9 @@ export class DB {
 		app,
 		build,
 		database,
+		db_backup,
 		provider,
+		cronjob,
 		cluster,
 		registry,
 		framework,
@@ -142,7 +147,6 @@ export class DB {
 		api_key_user,
 		service_account,
 		workspace,
-		cronjob,
 	};
 
 	static async count(collection: DBCollection, filter: any = {}, options?: DBQueryOptions, pagination?: IQueryPagination) {
