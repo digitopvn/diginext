@@ -11,9 +11,11 @@ import {
 	AppService,
 	BuildService,
 	CloudDatabaseService,
+	CloudDatabaseBackupService,
 	CloudProviderService,
 	ClusterService,
 	ContainerRegistryService,
+	CronjobService,
 	FrameworkService,
 	GitProviderService,
 	ProjectService,
@@ -30,6 +32,7 @@ import BuildController from "../src/controllers/BuildController";
 import CloudDatabaseController from "../src/controllers/CloudDatabaseController";
 import CloudProviderController from "../src/controllers/CloudProviderController";
 import ClusterController from "../src/controllers/ClusterController";
+import CronjobController from "../src/controllers/CronjobController";
 import ContainerRegistryController from "../src/controllers/ContainerRegistryController";
 import FrameworkController from "../src/controllers/FrameworkController";
 import GitProviderController from "../src/controllers/GitProviderController";
@@ -55,8 +58,10 @@ const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
 export const appSvc = new AppService();
 export const buildSvc = new BuildService();
 export const databaseSvc = new CloudDatabaseService();
+export const databaseBackupSvc = new CloudDatabaseBackupService();
 export const providerSvc = new CloudProviderService();
 export const clusterSvc = new ClusterService();
+export const cronjobSvc = new CronjobService();
 export const registrySvc = new ContainerRegistryService();
 export const frameworkSvc = new FrameworkService();
 export const gitSvc = new GitProviderService();
@@ -75,6 +80,7 @@ export const buildCtl = new BuildController();
 export const databaseCtl = new CloudDatabaseController();
 export const providerCtl = new CloudProviderController();
 export const clusterCtl = new ClusterController();
+export const cronjobCtl = new CronjobController();
 export const registryCtl = new ContainerRegistryController();
 export const frameworkCtl = new FrameworkController();
 export const gitCtl = new GitProviderController();
