@@ -1,3 +1,10 @@
+## [3.14.3](https://github.com/digitopvn/diginext/compare/v3.14.2...v3.14.3) (2023-06-24)
+
+
+### Bug Fixes
+
+* **server,api:** switch to mongosh instead of mongo command ([bc1a5c5](https://github.com/digitopvn/diginext/commit/bc1a5c532b1e0129ada1e4a95a64d48a8ad01c9d))
+
 ## [3.14.2](https://github.com/digitopvn/diginext/compare/v3.14.1...v3.14.2) (2023-06-24)
 
 
