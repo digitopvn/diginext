@@ -1,5 +1,5 @@
 import { isJSON } from "class-validator";
-import type { NextFunction, Response } from "express";
+import type { NextFunction } from "express";
 
 import type { IWorkspace } from "@/entities";
 import type { IActivity } from "@/entities/Activity";
@@ -7,25 +7,6 @@ import type { IRoute } from "@/entities/Route";
 import type { AppRequest, AppResponse } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import ActivityService from "@/services/ActivityService";
-
-function logResponseBody(req: AppRequest, res: AppResponse, next: NextFunction) {
-	const oldEnd = res.end;
-	const chunks = [];
-
-	res.end = function (this: AppResponse, chunk?: any, encoding?: BufferEncoding | (() => void), cb?: () => void): Response {
-		if (chunk) {
-			chunks.push(chunk);
-		}
-
-		const body = Buffer.concat(chunks).toString("utf8");
-		this.body = body;
-		return oldEnd.call(this, chunk, encoding, cb);
-	};
-
-	next();
-}
-
-export default logResponseBody;
 
 export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: NextFunction) => {
 	// Only save log for POST, PATCH & DELETE

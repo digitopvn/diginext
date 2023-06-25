@@ -20,7 +20,7 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interface
  */
 const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 
-export default class BaseService<T> {
+export default class BaseService<T = any> {
 	readonly model: Model<T>;
 
 	req?: AppRequest;

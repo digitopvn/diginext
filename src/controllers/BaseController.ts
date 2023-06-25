@@ -6,6 +6,7 @@ import { cloneDeepWith, isBoolean, isDate, isEmpty, isNumber, isString, toNumber
 
 import { Config } from "@/app.config";
 import type { IUser, IWorkspace } from "@/entities";
+import type { IBase } from "@/entities/Base";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { isObjectId, isValidObjectId, MongoDB, toObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
@@ -17,8 +18,8 @@ import { respondFailure, respondSuccess } from "../interfaces/ResponseData";
 
 const DEFAULT_PAGE_SIZE = 100;
 
-export default class BaseController<T = any> {
-	service: BaseService<T>;
+export default class BaseController<T extends IBase = any, S extends BaseService<T> = BaseService> {
+	service: S;
 
 	user: IUser;
 
@@ -30,7 +31,7 @@ export default class BaseController<T = any> {
 
 	pagination: IResponsePagination;
 
-	constructor(service?: BaseService<T>) {
+	constructor(service?: S) {
 		if (service) this.service = service;
 	}
 
