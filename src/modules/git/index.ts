@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
+import { execaSync } from "execa";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import globby from "globby";
 import { isEmpty } from "lodash";
@@ -368,6 +369,18 @@ export const getPublicKey = async () => {
 	const publicKey = readFileSync(publicIdRsaFile, "utf8");
 
 	return { publicKey };
+};
+
+export const sshKeyContainPassphase = (options?: { sshFile: string }) => {
+	const idRsaFile = options?.sshFile || path.resolve(HOME_DIR, ".ssh/id_rsa");
+	try {
+		execaSync("ssh-keygen", ["-y", "-f", idRsaFile]);
+		logSuccess(`SSH verify "id_rsa" > Success: NO PASSPHASE`);
+		return false;
+	} catch (e) {
+		console.warn(`SSH verify "id_rsa" > Failed:`, e);
+		return true;
+	}
 };
 
 export const verifySSH = async (options?: InputOptions) => {
