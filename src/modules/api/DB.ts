@@ -186,7 +186,7 @@ export class DB {
 			const svc = DB.service[collection];
 			if (!svc) {
 				logError(`[DB] FIND :>> Service "${collection}" not found.`);
-				return;
+				return [];
 			}
 			try {
 				items = (await svc.find(filter, options, pagination)) || [];
