@@ -95,6 +95,26 @@ export const apiKeyCtl = new ApiKeyUserController();
 export const serviceAccountCtl = new ServiceAccountController();
 export const workspaceCtl = new WorkspaceController();
 
+export const controllers = [
+	appCtl,
+	buildCtl,
+	databaseCtl,
+	providerCtl,
+	clusterCtl,
+	cronjobCtl,
+	registryCtl,
+	frameworkCtl,
+	gitCtl,
+	projectCtl,
+	releaseCtl,
+	roleCtl,
+	teamCtl,
+	userCtl,
+	apiKeyCtl,
+	serviceAccountCtl,
+	workspaceCtl,
+];
+
 // current logged in user
 export let currentUser: IUser;
 export let currentWorkspace: IWorkspace;
@@ -166,7 +186,7 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 	const payload = jwt.decode(access_token, { json: true });
 	const tokenInfo = extractAccessTokenInfo(access_token, payload?.exp || 10000);
 
-	let user: IUser = await userSvc.findOne({ _id: userId }, { populate: ["roles"] });
+	let user: IUser = await userSvc.findOne({ _id: userId }, { populate: ["roles", "activeRole", "workspaces", "activeWorkspace"] });
 
 	const updateData = {} as any;
 	updateData.token = tokenInfo.token;
@@ -184,14 +204,19 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 			updateData.roles = [memberRole._id];
 			userRoles = [memberRole];
 		}
-		console.log("userRoles :>> ", userRoles);
 		updateData.activeRole = (userRoles[0] as IRole)._id;
 	}
 
 	// update token to db:
-	user = await userSvc.updateOne({ _id: userId }, updateData);
+	user = await userSvc.updateOne({ _id: userId }, updateData, { populate: ["roles", "activeRole", "workspaces", "activeWorkspace"] });
 
 	const workspace: IWorkspace = workspaceId ? await workspaceSvc.findOne({ _id: workspaceId }) : undefined;
+
+	// assign user & workspace to controllers:
+	controllers.map((ctl) => {
+		ctl.user = user;
+		ctl.workspace = workspace;
+	});
 
 	currentUser = user;
 	currentWorkspace = workspace;

@@ -87,11 +87,11 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		// ----- VERIFY DX KEY -----
 
-		console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
+		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
 		// skip checking DX key for unit test
 		if (!IsTest()) {
 			const createWsRes = await createDxWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
-			console.log("createWsRes :>> ", createWsRes);
+			// console.log("createWsRes :>> ", createWsRes);
 			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
 		}
 

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { logWarn } from "diginext-utils/dist/xconsole/log";
-import { upperFirst } from "lodash";
+import { trimEnd, upperFirst } from "lodash";
 
 import type { IGitProvider } from "@/entities";
 import type { GitProviderType, RequestMethodType } from "@/interfaces/SystemTypes";
@@ -18,6 +18,8 @@ const userOrgApiPath = (provider: GitProviderType, org?: string) =>
 	provider === "bitbucket" ? "/workspaces" : provider === "github" ? "/user/orgs" : undefined;
 const orgRepoApiPath = (provider: GitProviderType, org?: string, slug?: string) =>
 	provider === "bitbucket" ? `/repositories/${org}${slug ? `/${slug}` : ""}` : provider === "github" ? `/orgs/${org}/repos` : undefined;
+const repoDeleteApiPath = (provider: GitProviderType, org: string, slug: string) =>
+	provider === "bitbucket" ? `/repositories/${org}/${slug}` : `repos/${org}/${slug}`;
 /**
  * Only applicable for Bitbucket
  */
@@ -456,7 +458,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 
 	if (provider.type === "bitbucket") {
 		headers.Accept = "application/json";
-		headers.Authorization = `${upperFirst(provider.method)} ${provider.access_token}`;
+		headers.Authorization = trimEnd(`${upperFirst(provider.method)} ${provider.access_token}`, "\r\n");
 	}
 
 	const response = await axios({ url: `${baseURL}${path}`, headers, method, data });
@@ -704,11 +706,17 @@ const listOrgRepositories = async (provider: IGitProvider) => {
 	throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 };
 
+export const deleteOrgRepository = async (provider: IGitProvider, slug: string, org: string) => {
+	const apiPath = repoDeleteApiPath(provider.type, slug, org);
+	await api(provider, apiPath, { method: "DELETE" });
+};
+
 const GitProviderAPI = {
 	getProfile,
 	listOrgs,
-	createOrgRepository,
 	listOrgRepositories,
+	createOrgRepository,
+	deleteOrgRepository,
 };
 
 export default GitProviderAPI;

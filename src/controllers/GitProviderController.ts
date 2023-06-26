@@ -56,7 +56,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 				if (!bitbucket_oauth.app_password || !bitbucket_oauth.username)
 					return respondFailure(`Bitbucket username & app password are required.`);
 
-				access_token = Buffer.from(`${bitbucket_oauth.username}:${bitbucket_oauth.app_password}`).toString("base64");
+				access_token = Buffer.from(`${bitbucket_oauth.username}:${bitbucket_oauth.app_password}`, "utf8").toString("base64");
 				method = "basic";
 			} else if (!bitbucket_oauth.app_password) {
 				// check OAuth consumer
@@ -129,26 +129,22 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	async update(@Body() body: entities.GitProviderDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		let provider = await this.service.findOne(this.filter, this.options);
 		if (!provider) return respondFailure(`Git provider not found.`);
+
 		if (provider.type === "github" && provider.host !== "github.com") body.host = "github.com";
 		if (provider.type === "bitbucket" && provider.host !== "bitbucket.org") body.host = "bitbucket.org";
 
 		if (body.gitWorkspace && provider.type === "github") {
-			if (!provider.name) {
-				body.name = `${upperCase(body.gitWorkspace)} Github`;
-			}
-			body.repo = {
-				url: `https://github.com/${body.gitWorkspace}`,
-				sshPrefix: `git@github.com:${body.gitWorkspace}`,
-			};
+			if (!provider.name) body.name = `${upperCase(body.gitWorkspace)} Github`;
 		}
 
 		if (body.gitWorkspace && provider.type === "bitbucket") {
 			if (!provider.name) body.name = `${upperCase(body.gitWorkspace)} Bitbucket`;
-			body.repo = {
-				url: `https://bitbucket.org/${body.gitWorkspace}`,
-				sshPrefix: `git@bitbucket.org:${body.gitWorkspace}`,
-			};
 		}
+
+		body.repo = {
+			url: `https://bitbucket.org/${body.gitWorkspace}`,
+			sshPrefix: `git@bitbucket.org:${body.gitWorkspace}`,
+		};
 
 		// regenerate slug
 		if (body.name) {
