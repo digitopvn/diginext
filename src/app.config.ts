@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import Table from "cli-table";
 import xobject from "diginext-utils/dist/object";
 import dotenv from "dotenv";
@@ -37,7 +36,7 @@ appEnv.CLI_MODE = process.env.CLI_MODE;
 
 const table = new Table();
 if (process.env.CLI_MODE === "server") {
-	console.log(chalk.yellow(`------ process.env ------`));
+	// console.log(chalk.yellow(`------ process.env ------`));
 	Object.entries(process.env).forEach(([key, val]) => {
 		if (isNoEnvFile) {
 			const value = _.truncate(val.toString(), { length: 60, separator: " " });
@@ -49,7 +48,7 @@ if (process.env.CLI_MODE === "server") {
 			}
 		}
 	});
-	console.log(table.toString());
+	// console.log(table.toString());
 }
 
 export enum EnvName {
