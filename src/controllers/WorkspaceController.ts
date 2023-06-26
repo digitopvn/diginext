@@ -2,7 +2,7 @@ import { isUndefined } from "lodash";
 import type { Types } from "mongoose";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { Config } from "@/app.config";
+import { Config, IsTest } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { IGetQueryParams, ResponseData } from "@/interfaces";
@@ -88,9 +88,12 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		// ----- VERIFY DX KEY -----
 
 		console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
-		const createWsRes = await createDxWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
-		console.log("createWsRes :>> ", createWsRes);
-		if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+		// skip checking DX key for unit test
+		if (!IsTest()) {
+			const createWsRes = await createDxWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
+			console.log("createWsRes :>> ", createWsRes);
+			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+		}
 
 		// ----- END VERIFYING -----
 

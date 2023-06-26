@@ -23,7 +23,7 @@ export const addUserToWorkspace = async (userId: string, workspace: IWorkspace, 
 	if (!isUserInThisWorkspace) workspaces.push(workspace._id);
 
 	// update user data
-	[user] = await DB.update<IUser>("user", { _id: user._id }, { workspaces, roles });
+	user = await DB.updateOne<IUser>("user", { _id: user._id }, { workspaces, roles, activeRole: role._id });
 
 	return user;
 };
@@ -51,7 +51,7 @@ export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", 
 };
 
 export const makeWorkspaceActive = async (userId: string, workspaceId: string) => {
-	const [user] = await DB.update<IUser>("user", { _id: userId }, { activeWorkspace: workspaceId });
+	const user = await DB.updateOne<IUser>("user", { _id: userId }, { activeWorkspace: workspaceId });
 	return user;
 };
 
