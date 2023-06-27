@@ -1,4 +1,6 @@
 // import { log } from "diginext-utils/dist/xconsole/log";
+import Timer from "diginext-utils/dist/Timer";
+import { log } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import path from "path";
 import { simpleGit } from "simple-git";
@@ -24,12 +26,23 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 	await git.fetch(["--all"]);
 	await git.checkout(["-b", "main"]);
 
+	// add git origin:
+	await git.addRemote("origin", options.remoteSSH);
+
 	// stage all deployment files & commit it
 	await git.add(".");
 	await git.commit("feat(initial): initial commit");
 
-	// add git origin:
-	await git.addRemote("origin", options.remoteSSH);
+	{
+		//debug
+		const branch = await git.branch();
+		if (options.isDebugging) log("branch.current :>> ", branch?.current);
+
+		const remote = await git.remote(["-v"]);
+		if (options.isDebugging) log("remote :>> ", remote);
+	}
+
+	await Timer.wait(100);
 	await git.push(["-u", "origin", "main"]);
 
 	// create developer branches
