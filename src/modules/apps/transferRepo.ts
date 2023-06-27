@@ -23,6 +23,24 @@ export default async function transferRepo(options: InputOptions) {
 
 	console.log(chalk.yellow("Chọn git provider muốn clone đến (Đừng chọn bitbucket, chưa test! )"));
 
+	// console.log("options :>> ", options);
+	// {
+	// 	// Repo URL   : https://bitbucket.org/digitopvn/test-project-gaol-webapp
+	// 	// Remote SSH : git@bitbucket.org:digitopvn/test-project-gaol-webapp.git
+	// 	const [updatedApp] = await DB.update<IApp>(
+	// 		"app",
+	// 		{ slug: options.slug },
+	// 		{
+	// 			git: {
+	// 				//
+	// 				provider: "bitbucket",
+	// 				repoSSH: "git@bitbucket.org:digitopvn/test-project-gaol-webapp.git",
+	// 				repoURL: "https://bitbucket.org/digitopvn/test-project-gaol-webapp",
+	// 			},
+	// 		}
+	// 	);
+	// }
+	// return;
 	let gitProvider = await askForGitProvider();
 
 	options.targetDirectory = path.resolve(process.cwd(), options.repoSlug);
