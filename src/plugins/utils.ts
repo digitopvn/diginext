@@ -28,7 +28,7 @@ import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { generateRepoURL } from "@/modules/git";
 import { getCurrentGitBranch } from "@/modules/git/git-utils";
 
-import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
+import { CLI_DIR, DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
 import { MongoDB } from "./mongodb";
 import { checkMonorepo } from "./monorepo";
 import { isNumeric } from "./number";
@@ -36,8 +36,6 @@ import { isWin } from "./os";
 
 const { marked } = m;
 marked.setOptions({ renderer: new TerminalRenderer() });
-
-const CLI_DIR = path.resolve(__dirname, "../../");
 
 export function nowStr() {
 	return dayjs().format("YYYY-MM-DD HH:mm:ss");

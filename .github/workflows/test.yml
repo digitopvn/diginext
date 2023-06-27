@@ -77,6 +77,9 @@ jobs:
       #   run: npm ci
         run: pnpm install --no-frozen-lockfile
 
+      - name: Build
+        run: pnpm build
+
       - name: Run tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

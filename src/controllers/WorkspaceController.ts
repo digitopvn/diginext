@@ -116,11 +116,9 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		// [3] Ownership: add this workspace to the creator {User} if it's not existed:
 		ownerUser = await addUserToWorkspace(owner, newWorkspace, "admin");
-		console.log(`Added "${ownerUser.name}" user to workspace "${newWorkspace.name}".`);
 
 		// [4] Set this workspace as "activeWorkspace" for this creator:
 		ownerUser = await makeWorkspaceActive(owner, MongoDB.toString(newWorkspace._id));
-		console.log(`Made workspace "${newWorkspace.name}" active for "${ownerUser.name}" user.`);
 
 		return interfaces.respondSuccess({ data: newWorkspace });
 	}

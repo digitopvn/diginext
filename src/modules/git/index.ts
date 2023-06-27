@@ -18,7 +18,7 @@ import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { execCmd, getCurrentGitRepoData, isMac, wait } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
-import { conf } from "../..";
+// import { conf } from "../..";
 import Github from "./github";
 
 // git@github.com:digitopvn/fluffy-dollop.git
@@ -76,8 +76,8 @@ export const login = async (options?: InputOptions) => {
 
 export const logout = async () => {
 	// logout bitbucket account
-	conf.delete("username");
-	conf.delete("token");
+	// conf.delete("username");
+	// conf.delete("token");
 
 	// logout github account
 	await Github.logout();
@@ -335,7 +335,7 @@ export const sshKeysExisted = async () => {
 			return false;
 		}
 	} else {
-		logError(`[GIT] PUBLIC_KEY and PRIVATE_KEY are not existed.`);
+		logWarn(`[GIT] PUBLIC_KEY and PRIVATE_KEY are not existed.`);
 		return false;
 	}
 
@@ -375,10 +375,10 @@ export const sshKeyContainPassphase = (options?: { sshFile: string }) => {
 	const idRsaFile = options?.sshFile || path.resolve(HOME_DIR, ".ssh/id_rsa");
 	try {
 		execaSync("ssh-keygen", ["-y", "-f", idRsaFile]);
-		logSuccess(`SSH verify "id_rsa" > Success: NO PASSPHASE`);
+		// logSuccess(`SSH verify "id_rsa" > Success: NO PASSPHASE`);
 		return false;
 	} catch (e) {
-		console.warn(`SSH verify "id_rsa" > Failed:`, e);
+		// console.warn(`SSH verify "id_rsa" > Failed:`, e);
 		return true;
 	}
 };
@@ -407,7 +407,7 @@ export const verifySSH = async (options?: InputOptions) => {
 			await execCmd(`chmod -R 400 ${privateIdRsaFile}`, `Can't assign permission [400] to "id_rsa" private key.`);
 		}
 	} else {
-		logError(`[GIT] PUBLIC_KEY and PRIVATE_KEY are not existed.`);
+		logWarn(`[GIT] PUBLIC_KEY and PRIVATE_KEY are not existed.`);
 		return false;
 	}
 

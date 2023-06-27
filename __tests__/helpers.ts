@@ -1,6 +1,5 @@
 import { IUser, UserDto, IWorkspace, WorkspaceDto, IRole } from "../src/entities";
-import fetchApi from "../src/modules/api/fetchApi";
-import { wait, waitUntil } from "../src/plugins/utils";
+import { wait, waitUntil } from "@/plugins/utils";
 import AppDatabase from "../src/modules/AppDatabase";
 import { extractAccessTokenInfo, generateJWT } from "../src/modules/passports/jwtStrategy";
 import { isServerReady, server, socketIO } from "../src/server";

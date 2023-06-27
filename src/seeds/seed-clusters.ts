@@ -1,4 +1,3 @@
-import { log } from "diginext-utils/dist/xconsole/log";
 import yaml from "js-yaml";
 
 import { Config } from "@/app.config";
@@ -46,7 +45,6 @@ export const seedClusters = async (workspace: IWorkspace, owner: IUser) => {
 		workspace: workspace._id,
 	};
 	initialCluster = await DB.create<ICluster>("cluster", initialClusterDto);
-	log(`Workspace "${workspace.name}" > Seeded "${initialClusterDto.name}" as initial cluster.`);
 
 	// verfify cluster
 	await ClusterManager.authCluster(initialCluster.shortName);

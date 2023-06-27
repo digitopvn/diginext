@@ -16,8 +16,6 @@ describe("Diginext server", () => {
 	// 3. Flow 1: all core features
 	testFlow1();
 
-
-
 	// End
 	afterAll(async () => await setupEndTestEnvironment());
 });

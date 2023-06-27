@@ -16,6 +16,7 @@ import {
 } from "../helpers";
 import { IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import GitProviderAPI from "@/modules/git/git-provider-api";
+import { execaCommand, execaCommandSync } from "execa";
 
 export function testFlow1() {
 	let wsId: string;
@@ -135,7 +136,35 @@ export function testFlow1() {
 	});
 
 	it("Workspace #1: Git Provider - Github", async () => {
-		//...
+		// seed git provider: github
+		const createRes = await gitCtl.create({
+			name: "Github",
+			type: "github",
+			gitWorkspace: process.env.TEST_GITHUB_ORG,
+			repo: {
+				url: `https://github.com/${process.env.TEST_GITHUB_ORG}`,
+				sshPrefix: `git@github.com:${process.env.TEST_GITHUB_ORG}`,
+			},
+			github_oauth: {
+				personal_access_token: process.env.TEST_GITHUB_PAT,
+			},
+		});
+
+		// verify github api
+		let github = createRes.data as IGitProvider;
+		github = await gitSvc.verify(github);
+
+		// check...
+		expect(github.verified).toBe(true);
+		expect(github.host).toBe("github.com");
+
+		const profile = await GitProviderAPI.getProfile(github);
+		expect(profile).toBeDefined();
+	});
+
+	it("CLI: Check version", async () => {
+		const { stdout: cliVersion, stderr } = await execaCommand(`dx -v`, { env: { CLI_MODE: "client" } });
+		expect(cliVersion).toBeDefined();
 	});
 
 	it("Workspace #1: Add member", async () => {

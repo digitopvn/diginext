@@ -1,5 +1,3 @@
-import { log } from "diginext-utils/dist/xconsole/log";
-
 import type { FrameworkDto, IFramework, IUser, IWorkspace } from "@/entities";
 import { DB } from "@/modules/api/DB";
 
@@ -35,8 +33,6 @@ export const seedFrameworks = async (workspace: IWorkspace, owner: IUser) => {
 			})
 		)
 	).filter((res) => typeof res !== "undefined");
-
-	if (results.length > 0) log(`Workspace "${workspace.name}" > Seeded ${results.length} frameworks.`);
 
 	return results;
 };

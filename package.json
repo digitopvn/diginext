@@ -53,7 +53,7 @@
 		"node": ">=16.0.0"
 	},
 	"scripts": {
-		"build": "rimraf dist && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && npm run restruct && chmod -R +x dist && npm link && pnpm swagger",
+		"build": "rimraf dist && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && npm run restruct && rimraf dist/__tests__ && chmod -R +x dist && npm link && pnpm swagger",
 		"build:deploy": "git merge origin/main && pnpm build && skaffold run --platform=linux/amd64,linux/arm64",
 		"build:run": "pnpm build && skaffold run --platform=linux/amd64,linux/arm64",
 		"build:deploy-release": "pnpm build && skaffold run --platform=linux/amd64,linux/arm64 && pnpm release:nobuild",

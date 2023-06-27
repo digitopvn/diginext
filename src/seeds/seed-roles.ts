@@ -20,7 +20,6 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		adminRoleDto.maskedFields = adminMaskedFields;
 
 		adminRole = await DB.create<IRole>("role", adminRoleDto);
-		console.log(`Workspace "${workspace.name}" > Created default admin role :>> `, adminRoleDto.name);
 	} else {
 		if (adminRole.maskedFields?.join(",") !== adminMaskedFields.join(",")) {
 			adminRole = await DB.updateOne<IRole>("role", { _id: adminRole._id }, { maskedFields: adminMaskedFields });
@@ -40,7 +39,6 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		// update role ids
 		const roleIds = ownerRoles.map((role) => role._id);
 		const [user] = await DB.update<IUser>("user", { _id: owner._id }, { roles: roleIds });
-		// console.log(`Workspace "${workspace.name}" > User "${user.name}" is now an administrator.`);
 	}
 
 	// MEMBER
@@ -79,7 +77,6 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		memberRoleDto.maskedFields = memberRoleMaskedFields;
 
 		memberRole = await DB.create<IRole>("role", memberRoleDto);
-		console.log(`Workspace "${workspace.name}" > Created default member role :>> `, memberRoleDto.name);
 	} else {
 		// Update maskFields if it's not correct
 		if (memberRole.maskedFields?.join(",") !== memberRoleMaskedFields.join(",")) {
@@ -91,7 +88,6 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		const dbMemberRoleRoutes = memberRole.routes.map((r) => `${r.route}:${r.permissions?.join(",")}`).join("|");
 		if (defaultMemberRoleRoutes !== dbMemberRoleRoutes) {
 			[memberRole] = await DB.update<IRole>("role", { _id: memberRole._id }, { routes: memberRoleRoutes });
-			console.log(`Workspace "${workspace.name}" > Updated default member role!`);
 		}
 	}
 
@@ -108,7 +104,6 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		moderatorRoleDto.maskedFields = adminMaskedFields;
 
 		moderatorRole = await DB.create<IRole>("role", moderatorRoleDto);
-		console.log(`Workspace "${workspace.name}" > Created default moderator role :>> `, moderatorRole.name);
 	} else {
 		// Update maskedFields if it is incorrect
 		if (moderatorRole.maskedFields?.join(",") !== adminMaskedFields.join(",")) {
@@ -120,7 +115,6 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		const dbModRoleRoutes = moderatorRole.routes.map((r) => `${r.route}:${r.permissions?.join(",")}`).join("|");
 		if (defaultModRoleRoutes !== dbModRoleRoutes) {
 			[moderatorRole] = await DB.update<IRole>("role", { _id: moderatorRole._id }, { routes: moderatorRoleRoutes });
-			console.log(`Workspace "${workspace.name}" > Updated default moderator role!`);
 		}
 	}
 

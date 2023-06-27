@@ -1,4 +1,3 @@
-import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import { isEmpty } from "lodash";
 import cronjob from "node-cron";
@@ -33,7 +32,7 @@ import { findAndRunCronjob } from "../cronjob/find-and-run-job";
  * - Seed some initial data
  */
 export async function startupScripts() {
-	log(`-------------- Server is initializing -----------------`);
+	console.log(`[DIGINEXT] Server is initializing...`);
 
 	// config dir
 	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);
@@ -114,7 +113,7 @@ export async function startupScripts() {
 	if (!IsTest()) {
 		const repeatDays = 7; // every 7 days
 		const atHour = 2; // 2AM
-		logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
+		console.log(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
 		cronjob.schedule(`0 ${atHour} */${repeatDays} * *`, () => cleanUp());
 	}
 

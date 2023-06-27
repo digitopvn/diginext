@@ -37,7 +37,6 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 				if (moderatorRole) saDto.roles = [moderatorRole._id];
 
 				const saUser = await DB.create<IServiceAccount>("service_account", saDto);
-				if (saUser) log(`[MIGRATION] Workspace "${ws.name}" > Created "${saUser.name}" successfully.`);
 
 				affectedWs++;
 			}
@@ -63,7 +62,6 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 				if (moderatorRole) apiUserDto.roles = [moderatorRole._id];
 
 				const apiKeyUser = await DB.create<IApiKeyAccount>("api_key_user", apiUserDto);
-				if (apiKeyUser) log(`[MIGRATION] Workspace "${ws.name}" > Created "${apiKeyUser.name}" successfully.`);
 
 				affectedWs++;
 			}
