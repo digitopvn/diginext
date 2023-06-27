@@ -1,3 +1,10 @@
+## [3.14.2-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.14.2-prerelease.1...v3.14.2-prerelease.2) (2023-06-27)
+
+
+### Bug Fixes
+
+* flow git push to main ([85dc26b](https://github.com/digitopvn/diginext/commit/85dc26b254b55da3a152d6da842e23f92d1c482b))
+
 ## [3.14.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.14.1...v3.14.2-prerelease.1) (2023-06-23)
 
 
