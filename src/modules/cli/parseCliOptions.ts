@@ -3,10 +3,13 @@ import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
-import type { IApp, IProject } from "@/entities";
+import type { IGitProvider } from "@/entities";
+import { type IApp, type IFramework, type IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType, ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { currentVersion, getLatestCliVersion, shouldNotifyCliUpdate } from "@/plugins";
+
+import { DB } from "../api/DB";
 
 const cliHeader =
 	chalk.bold.underline.green(`Diginext CLI USAGE - VERSION ${pkg.version}`.toUpperCase()) +
@@ -55,9 +58,10 @@ const argvOptions = {
 	install: { describe: "Should install framework dependencies or not" },
 	projectName: { describe: "Specify project name", alias: "project-name" },
 	projectSlug: { describe: "Specify project slug", alias: "project-slug" },
-	framework: { describe: "Specify framework", alias: "fw" },
+	framework: { describe: "Specify framework slug", alias: "fw" },
 	targetDir: { describe: "Specify target project directory", alias: "dir" },
-	"git-provider": { describe: "Specify GIT provider", alias: "gp" },
+	git: { describe: "Specify GIT provider's slug" },
+	"git-provider": { describe: "Specify GIT provider type", alias: "gp" },
 	"git-workspace": { describe: "Specify GIT workspace slug", alias: "gw" },
 	provider: { describe: "Specify selected cloud provider", alias: "cp" },
 	custom: { describe: "Select a custom provider", alias: "custom" },
@@ -491,7 +495,6 @@ export async function parseCliOptions() {
 		projectName: argv.projectName as string,
 		projectSlug: argv.projectSlug as string,
 		targetDirectory: argv.targetDir as string,
-		framework: argv.framework as any,
 		isPublic: (argv.public as boolean) ?? false,
 		gitWorkspace: argv["git-workspace"] as string,
 
@@ -535,6 +538,23 @@ export async function parseCliOptions() {
 		ssl: argv.ssl as boolean, // [FLAG] --no-ssl
 		imageURL: argv.image as string,
 	};
+
+	if (typeof argv.git !== "undefined") {
+		options.git = await DB.findOne<IGitProvider>("git", { slug: argv.git });
+		if (!options.git) throw new Error(`Git provider "${argv.git}" not found.`);
+	}
+
+	console.log("argv.framework :>> ", argv.framework);
+	if (typeof argv.framework !== "undefined") {
+		if (argv.framework === "none") {
+			options.framework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
+		} else {
+			options.framework = await DB.findOne<IFramework>("framework", { slug: argv.framework });
+			if (!options.framework) throw new Error(`Framework "${argv.framework}" not found.`);
+			options.frameworkVersion = options.framework.mainBranch;
+		}
+	}
+	console.log("options.framework :>> ", options.framework);
 
 	if (argv.github === true && typeof options.gitProvider === "undefined") options.gitProvider = "github";
 	if (argv.bitbucket === true && typeof options.gitProvider === "undefined") options.gitProvider = "bitbucket";

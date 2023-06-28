@@ -1,19 +1,19 @@
 import type { FrameworkDto, IFramework, IUser, IWorkspace } from "@/entities";
 import { DB } from "@/modules/api/DB";
 
-const initialFrameworks: FrameworkDto[] = [
+export const initialFrameworks: FrameworkDto[] = [
 	{
-		name: "NextJS 13 Starter",
-		repoURL: "https://github.com/digitopvn/next13-starter",
-		repoSSH: "git@github.com:digitopvn/next13-starter.git",
+		name: "Static Site Starter with NGINX",
+		repoURL: "https://github.com/digitopvn/static-nginx-site",
+		repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
 		gitProvider: "github",
 		isPrivate: false,
 		mainBranch: "main",
 	},
 	{
-		name: "Static Site Starter with NGINX",
-		repoURL: "https://github.com/digitopvn/static-nginx-site",
-		repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
+		name: "NextJS 13 Starter",
+		repoURL: "https://github.com/digitopvn/next13-starter",
+		repoSSH: "git@github.com:digitopvn/next13-starter.git",
 		gitProvider: "github",
 		isPrivate: false,
 		mainBranch: "main",

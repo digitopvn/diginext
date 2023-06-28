@@ -1,13 +1,16 @@
 import { toNumber } from "lodash";
 
+import { IsTest } from "@/app.config";
 import type { IWorkspace } from "@/entities";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 
 import { DB } from "../api/DB";
-import type { CheckQuotaParams } from "../diginext/dx-subscription";
+import type { CheckQuotaParams, CheckQuotaResponse } from "../diginext/dx-subscription";
 import { checkDxQuota } from "../diginext/dx-subscription";
 
 export async function checkQuota(workspace: IWorkspace, options: { resourceSize?: ResourceQuotaSize } = {}) {
+	if (IsTest()) return { status: 1, data: { isExceed: false }, messages: ["Ok"] } as CheckQuotaResponse;
+
 	const { dx_key } = workspace;
 	const { resourceSize } = options;
 

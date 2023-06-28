@@ -28,7 +28,10 @@ export async function createAppByForm(
 	if (!options.project) options.project = await createOrSelectProject(options);
 	// console.log("options.project :>> ", options.project);
 
-	const { skipFramework = false } = options;
+	const { skipFramework } = options;
+
+	if (options.isDebugging) console.log("createAppByForm > options.framework :>> ", options.framework);
+	if (options.isDebugging) console.log("createAppByForm > skipFramework :>> ", skipFramework);
 
 	if (!options.name) {
 		const { name } = await inquirer.prompt({
@@ -50,8 +53,11 @@ export async function createAppByForm(
 	// git repo slug
 	options.repoSlug = `${options.project.slug}-${makeSlug(options.name)}`.toLowerCase();
 
-	const noneFramework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
-	let curFramework = noneFramework;
+	const noneFramework = { name: "None/unknown", slug: "none", version: "unknown", isPrivate: false } as IFramework;
+
+	// if "--framework" flag is defined...
+	let curFramework = options.framework && options.framework.slug !== "none" ? options.framework : noneFramework;
+
 	// can skip selecting framework if wanted (eg. when deploy existing app)
 	if (skipFramework) options.framework = curFramework = noneFramework;
 
@@ -106,13 +112,15 @@ export async function createAppByForm(
 		}
 
 		// Request select specific version
-		const { frameworkVersion } = await inquirer.prompt({
-			type: "input",
-			name: "frameworkVersion",
-			message: `Framework version:`,
-			default: curFramework?.mainBranch || "main",
-		});
-		options.frameworkVersion = frameworkVersion;
+		if (!options.frameworkVersion) {
+			const { frameworkVersion } = await inquirer.prompt({
+				type: "input",
+				name: "frameworkVersion",
+				message: `Framework version:`,
+				default: curFramework?.mainBranch || "main",
+			});
+			options.frameworkVersion = frameworkVersion;
+		}
 	} else {
 		options.frameworkVersion = "unknown";
 	}
@@ -125,13 +133,30 @@ export async function createAppByForm(
 		options.remoteSSH = currentGitData.remoteSSH;
 		options.remoteURL = currentGitData.remoteURL;
 	} else {
-		let gitProvider = await askForGitProvider();
+		let gitProvider = options.git || (await askForGitProvider());
 
 		// Create new repo:
 		const repoData: GitRepositoryDto = {
 			name: options.repoSlug,
 			private: !options.isPublic,
 		};
+
+		// ![DANGER] if "--force" was declared, try to delete if the repo was existed
+		if (options.overwrite) {
+			try {
+				await DB.delete(
+					"git",
+					{ slug: gitProvider.slug },
+					{ name: options.repoSlug },
+					{
+						subpath: "/orgs/repos",
+						// filter: { slug: gitProvider.slug },
+						ignorable: true,
+					}
+				);
+			} catch (e) {}
+		}
+
 		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > repoData :>> ", repoData);
 		const newRepo = await DB.create<GitRepository>("git", repoData, {
 			subpath: "/orgs/repos",

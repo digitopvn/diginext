@@ -21,6 +21,8 @@ import BaseController from "./BaseController";
 @Tags("Container Registry")
 @Route("registry")
 export default class ContainerRegistryController extends BaseController<IContainerRegistry> {
+	service: ContainerRegistryService;
+
 	constructor() {
 		super(new ContainerRegistryService());
 	}
@@ -107,10 +109,11 @@ export default class ContainerRegistryController extends BaseController<IContain
 		} as entities.ContainerRegistryDto;
 
 		let newRegistry = await this.service.create(newRegistryData);
-
+		// console.log("newRegistry :>> ", newRegistry);
+		// console.log("this.workspace :>> ", this.workspace);
 		// verify container registry connection...
 		const authRes = await connectRegistry(newRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
-		if (authRes) [newRegistry] = await DB.update<IContainerRegistry>("registry", { _id: newRegistry._id }, { isVerified: true });
+		if (authRes) newRegistry = await DB.updateOne<IContainerRegistry>("registry", { _id: newRegistry._id }, { isVerified: true });
 
 		// const newRegistry = await connectRegistry(newRegistryData, { userId: this.user?._id, workspaceId: this.workspace?._id });
 

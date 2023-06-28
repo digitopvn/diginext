@@ -51,6 +51,11 @@ import chalk from "chalk";
 import { Config } from "../src/app.config";
 import { randomInt } from "crypto";
 import { makeSlug } from "../src/plugins/slug";
+import { AppRequest } from "@/interfaces/SystemTypes";
+import { Options, execaCommand } from "execa";
+import { CLI_CONFIG_DIR } from "@/config/const";
+import path from "path";
+import { existsSync, mkdirSync } from "fs";
 
 const user1 = { name: "Test User 1", email: "user1@test.local" } as IUser;
 const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
@@ -160,7 +165,7 @@ export const getCurrentUser = async () => {
 export const createWorkspace = async (ownerId: string, name: string, isPublic = true) => {
 	workspaceCtl.user = currentUser;
 
-	const workspace = await workspaceCtl.create({
+	const workspaceRes = await workspaceCtl.create({
 		name,
 		owner: ownerId,
 		// hobby
@@ -170,10 +175,19 @@ export const createWorkspace = async (ownerId: string, name: string, isPublic = 
 		public: isPublic,
 	});
 
+	const workspace = workspaceRes.data as IWorkspace;
+
 	// reload current user
 	await getCurrentUser();
 
-	return workspace as IWorkspace;
+	// assign user & workspace to controllers:
+	controllers.map((ctl) => {
+		ctl.service.req = { user: currentUser } as AppRequest;
+		ctl.user = currentUser;
+		ctl.workspace = workspace;
+	});
+
+	return workspace;
 };
 
 export const loginUser = async (userId: string, workspaceId?: string) => {
@@ -213,6 +227,7 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 
 	// assign user & workspace to controllers:
 	controllers.map((ctl) => {
+		ctl.service.req = { user: currentUser } as AppRequest;
 		ctl.user = user;
 		ctl.workspace = workspace;
 	});
@@ -221,6 +236,26 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 	currentWorkspace = workspace;
 
 	return { user, workspace };
+};
+
+export type DxOptions = { onProgress: (msg: string) => void };
+
+export const CLI_TEST_DIR = path.resolve(CLI_CONFIG_DIR, "tests");
+if (!existsSync(CLI_TEST_DIR)) mkdirSync(CLI_TEST_DIR, { recursive: true });
+const dxCommandOptions: Options = { env: { CLI_MODE: "client" }, stdio: "inherit", cwd: CLI_TEST_DIR };
+
+export const dxCmd = async (command: string, options?: DxOptions) => {
+	const stream = execaCommand(command, dxCommandOptions);
+	if (options?.onProgress)
+		stream.stdio.forEach((_stdio) => {
+			if (_stdio) {
+				_stdio.on("data", (data) => {
+					let logMsg = data.toString();
+					if (options?.onProgress && logMsg) options?.onProgress(logMsg);
+				});
+			}
+		});
+	return await stream;
 };
 
 /**

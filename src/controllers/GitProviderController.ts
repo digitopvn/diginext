@@ -316,6 +316,47 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		}
 	}
 
+	/**
+	 * Create new repository in git provider organization
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/orgs/repos")
+	async deleteOrgRepo(
+		@Body() body: gitProviderApi.GitRepositoryDto,
+		@Queries()
+		queryParams?: {
+			/**
+			 * Git provider's ID
+			 */
+			_id?: string;
+			/**
+			 * Git repository's SLUG¸¸¸
+			 */
+			slug?: string;
+		}
+	) {
+		// validation
+		const { _id, slug } = this.filter;
+		if (!_id && !slug) return respondFailure(`Param git provider's "_id" or "slug" is required.`);
+		if (!body.name) return respondFailure(`Data git repo "name" (slug) is required.`);
+
+		const filter: IQueryFilter = {};
+		if (_id) filter._id = _id;
+		if (slug) filter.slug = slug;
+
+		let provider = await this.service.findOne(filter);
+		if (!provider) return respondFailure(`Git provider not found.`);
+
+		// process
+		try {
+			const repo = await GitProviderAPI.deleteOrgRepository(provider, provider.gitWorkspace, body.name);
+			return respondSuccess({ data: repo });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
+
 	// ------------ SSH KEYS ------------
 
 	@Security("api_key")

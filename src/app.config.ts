@@ -10,9 +10,11 @@ import { CLI_DIR } from "./config/const";
 let appEnv: any = {};
 let isNoEnvFile = false;
 
-if (fs.existsSync(path.resolve(CLI_DIR, ".env.dev"))) {
-	dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") });
-	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") }).parsed;
+const envFilePath = process.env.NODE_ENV === "test" ? path.resolve(CLI_DIR, `.env.test`) : path.resolve(CLI_DIR, `.env.dev`);
+
+if (fs.existsSync(envFilePath)) {
+	dotenv.config({ path: envFilePath });
+	appEnv = dotenv.config({ path: envFilePath }).parsed;
 } else if (fs.existsSync(path.resolve(CLI_DIR, ".env"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env") });
 	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env") }).parsed;
@@ -98,7 +100,7 @@ export class Config {
 	}
 
 	static get DB_NAME() {
-		return process.env.DB_NAME || (Config.ENV === EnvName.TEST ? `diginext-test` : `diginext`);
+		return process.env.DB_NAME || "diginext";
 	}
 
 	static get CLI_MODE() {
