@@ -1,3 +1,4 @@
+import { IsTest } from "@/app.config";
 import type { ResponseData } from "@/interfaces";
 
 import { dxApi } from "./dx-api";
@@ -16,5 +17,6 @@ export type SendDiginextEmailResponse = ResponseData & {
 };
 
 export async function sendDxEmail(params: SendEmailOptions, dxKey: string) {
+	if (IsTest()) return { status: 1, data: { succeed: 1, failure: 0 } } as SendDiginextEmailResponse;
 	return dxApi<SendDiginextEmailResponse>({ url: "/email/send", data: params, method: "POST", dxKey });
 }

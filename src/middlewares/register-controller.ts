@@ -8,11 +8,11 @@ import { DB } from "@/modules/api/DB";
 export const registerController = (controller: BaseController) => {
 	return async (req: AppRequest, res: Response, next: NextFunction) => {
 		try {
-			// assign express.Request to service
-			if (controller.service) controller.service.req = req;
-
 			// assign current user to the controller
 			controller.user = req.user;
+
+			// assign express.Request to service
+			if (controller.service) controller.service.req = req;
 
 			// get current workspace
 			if (controller.user?.activeWorkspace) {

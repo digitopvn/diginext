@@ -34,7 +34,7 @@ const jwt_auth = (req: AppRequest, res, next) =>
 			if (!user.activeWorkspace) {
 				const workspaces = user.workspaces as IWorkspace[];
 				if (workspaces.length === 1) {
-					[user] = await DB.update<IUser>(
+					user = await DB.updateOne<IUser>(
 						"user",
 						{ _id: user._id },
 						{ activeWorkspace: workspaces[0]._id },
@@ -50,12 +50,16 @@ const jwt_auth = (req: AppRequest, res, next) =>
 			const activeRole = roles.find(
 				(role) => MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id)
 			) as IRole;
-			// console.log("jwt_auth > roles :>> ", roles);
-			// console.log("jwt_auth > activeRole :>> ", activeRole);
-			// console.log("Unauthenticate :>> [2]");
-			// if (!activeRole) return respondFailure(`Unauthorized: no active role.`);
 
-			user.activeRole = activeRole;
+			if (user.activeRole !== activeRole._id) {
+				user = await DB.updateOne<IUser>(
+					"user",
+					{ _id: user._id },
+					{ activeRole: activeRole._id },
+					{ populate: ["roles", "workspaces", "activeRole", "activeWorkspace"] }
+				);
+				// user.activeRole = activeRole;
+			}
 			req.role = activeRole;
 
 			// user

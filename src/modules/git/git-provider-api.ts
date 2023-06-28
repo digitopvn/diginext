@@ -18,6 +18,8 @@ const userOrgApiPath = (provider: GitProviderType, org?: string) =>
 	provider === "bitbucket" ? "/workspaces" : provider === "github" ? "/user/orgs" : undefined;
 const orgRepoApiPath = (provider: GitProviderType, org?: string, slug?: string) =>
 	provider === "bitbucket" ? `/repositories/${org}${slug ? `/${slug}` : ""}` : provider === "github" ? `/orgs/${org}/repos` : undefined;
+const repoDeleteApiPath = (provider: GitProviderType, org: string, slug: string) =>
+	provider === "bitbucket" ? `/repositories/${org}/${slug}` : `/repos/${org}/${slug}`;
 /**
  * Only applicable for Bitbucket
  */
@@ -449,24 +451,20 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 	const baseURL = provider.type === "github" ? githubApiBaseURL : bitbucketApiBaseURL;
 	const func = `[${provider.type.toUpperCase()}_API_ERROR]`;
 
-	if (provider.type === "github") {
-		headers.Accept = "application/vnd.github+json";
-		headers.Authorization = `Bearer ${provider.access_token}`;
-	}
+	if (provider.type === "github") headers.Accept = "application/vnd.github+json";
+	if (provider.type === "bitbucket") headers.Accept = "application/json";
 
-	if (provider.type === "bitbucket") {
-		headers.Accept = "application/json";
-		headers.Authorization = `${upperFirst(provider.method)} ${provider.access_token}`;
-	}
+	headers.Authorization = `${upperFirst(provider.method)} ${provider.access_token}`;
 
-	const response = await axios({ url: `${baseURL}${path}`, headers, method, data });
+	const url = `${baseURL}${path}`;
+	const response = await axios({ url, headers, method, data });
 	const resData = response.data;
 
 	// catch errors
 	if (provider.type === "bitbucket" && resData.error) throw new Error(`${func} "${path}" > ${resData.error.message}`);
 	if (provider.type === "github" && resData.message) throw new Error(`${func} "${path}" > ${resData.message}`);
 
-	// if access_token is expired -> try to refresh it:
+	// [BITBUCKET ONLY] if access_token is expired -> try to refresh it:
 	if (provider.type === "bitbucket" && resData.error?.message?.indexOf("expired") > -1) {
 		const tokens = await bitbucketRefeshToken(provider);
 
@@ -704,11 +702,18 @@ const listOrgRepositories = async (provider: IGitProvider) => {
 	throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 };
 
+export const deleteOrgRepository = async (provider: IGitProvider, org: string, slug: string) => {
+	const apiPath = repoDeleteApiPath(provider.type, org, slug);
+	const res = await api(provider, apiPath, { method: "DELETE" });
+	return res;
+};
+
 const GitProviderAPI = {
 	getProfile,
 	listOrgs,
-	createOrgRepository,
 	listOrgRepositories,
+	createOrgRepository,
+	deleteOrgRepository,
 };
 
 export default GitProviderAPI;

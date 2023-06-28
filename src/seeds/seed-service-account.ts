@@ -1,7 +1,5 @@
 // import { Role } from "@/entities";
 
-import { log } from "diginext-utils/dist/xconsole/log";
-
 import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { IServiceAccount } from "@/entities/ServiceAccount";
@@ -24,7 +22,6 @@ export const seedServiceAccounts = async (workspace: IWorkspace, owner: IUser) =
 		token: getUnexpiredAccessToken(serviceAccountToken.value),
 	} as IServiceAccount;
 	const serviceAccount = await DB.create<IServiceAccount>("service_account", serviceAccountDto);
-	if (serviceAccount) log(`Workspace "${workspace.name}" > Created "${serviceAccount.name}" successfully.`);
 
 	return serviceAccount;
 };

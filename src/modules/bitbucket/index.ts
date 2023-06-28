@@ -1,4 +1,4 @@
-import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
+import { log, logError } from "diginext-utils/dist/xconsole/log";
 import fs from "fs";
 import inquirer from "inquirer";
 import jsonDiff from "json-diff";
@@ -6,19 +6,11 @@ import _ from "lodash";
 import { ncp as copyFile } from "ncp";
 import ora from "ora";
 import path from "path";
-import copy from "recursive-copy";
 import util from "util";
 
-const mkdir = util.promisify(fs.mkdir);
 const writeFile = util.promisify(fs.writeFile);
 
 import { simpleGit } from "simple-git";
-
-import { isServerMode } from "@/app.config";
-import type { InputOptions } from "@/interfaces/InputOptions";
-
-// import { conf } from "../cli/update-cli";
-import { cloneGitRepo, deleteFolderRecursive, pullOrCloneGitRepo } from "../../plugins";
 
 export let bitbucket, workspaceId;
 
@@ -94,27 +86,6 @@ export const patchPackage = async () => {
 	return curPackage;
 };
 
-export const copyAllResources = async (destDirectory: string) => {
-	let options = {
-		overwrite: true,
-		expand: true,
-		dot: true,
-		junk: true,
-		// filter: ["**/*", "!.git"],
-	};
-
-	let success = false;
-	try {
-		const tmpFrameworkDir = path.resolve(".fw");
-		await copy(tmpFrameworkDir, destDirectory, options);
-		success = true;
-	} catch (e) {
-		logError(e);
-	}
-
-	return success;
-};
-
 export const pullMasterToCurrentBranch = async () => {
 	const git = simpleGit("./", { binary: "git" });
 	const gitStatus = await git.status(["-s"]);
@@ -146,115 +117,6 @@ export const pullMasterToCurrentBranch = async () => {
 	}
 
 	return { currentBranch, currentBranchKebab };
-};
-
-interface GitStageOptions {
-	directory?: string;
-	message?: string;
-}
-
-/**
- *
- */
-export async function stageAllFiles(options: GitStageOptions) {
-	const { directory = "./", message = "build(prepare): commit all files & push to origin" } = options;
-	const git = simpleGit(directory, { binary: "git" });
-	const gitStatus = await git.status(["-s"]);
-	// log("[current branch]", gitStatus.current);
-
-	const currentBranch = gitStatus.current;
-	const currentBranchKebab = _.kebabCase(currentBranch);
-
-	// commit & push everything, then try to merge "master" to current branch
-	try {
-		await git.pull("origin", currentBranch, ["--no-ff"]);
-		await git.add("./*");
-		await git.commit(message);
-		await git.push("origin", currentBranch);
-	} catch (e) {
-		logError(e);
-	}
-
-	return { currentBranch, currentBranchKebab };
-}
-
-export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
-	// const repoSSH = `git@bitbucket.org:${config.workspace}/${config.framework[framework]}.git`;
-	const { frameworkVersion } = options;
-	const { name, repoSSH } = options.framework;
-
-	// create tmp dir
-	const tmpDir = path.resolve(".fw/");
-	try {
-		await deleteFolderRecursive(tmpDir);
-	} catch (e) {
-		logError(e);
-	}
-	await mkdir(tmpDir);
-
-	const spin = ora(`Pulling "${name}" framework... 0%`).start();
-
-	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
-		onUpdate: (msg, progress) => {
-			if (isServerMode) {
-				console.log(msg);
-			} else {
-				spin.text = `Pulling "${name}" framework... ${progress || 0}%`;
-			}
-		},
-	});
-
-	spin.stop();
-
-	// delete unneccessary files
-	if (fs.existsSync(".fw/dx.json")) await deleteFolderRecursive(".fw/dx.json");
-	if (fs.existsSync(".fw/.git")) await deleteFolderRecursive(".fw/.git");
-	if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
-	if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
-	if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
-	if (fs.existsSync(".fw/yarn.lock")) fs.unlinkSync(".fw/yarn.lock");
-	if (fs.existsSync(".fw/logo.png")) fs.unlinkSync(".fw/logo.png");
-
-	return true;
-};
-
-export const cloneGitFramework = async (options: InputOptions) => {
-	//
-	const { name, repoSSH } = options.framework;
-
-	// create tmp dir
-	const tmpDir = path.resolve(".fw/");
-	try {
-		await deleteFolderRecursive(tmpDir);
-	} catch (e) {
-		logError(e);
-	}
-	await mkdir(tmpDir);
-
-	const spin = ora(`Pulling "${name}"... 0%`).start();
-
-	await cloneGitRepo(repoSSH, tmpDir, {
-		onUpdate: (msg, progress) => {
-			if (isServerMode) {
-				console.log(msg);
-			} else {
-				spin.text = `Pulling "${name}"... ${progress || 0}%`;
-			}
-		},
-	});
-
-	spin.stop();
-
-	// delete unneccessary files
-	if (fs.existsSync(".fw/dx.json")) await deleteFolderRecursive(".fw/dx.json");
-	if (fs.existsSync(".fw/.git")) await deleteFolderRecursive(".fw/.git");
-	if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
-	if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
-	if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
-	if (fs.existsSync(".fw/yarn.lock")) fs.unlinkSync(".fw/yarn.lock");
-	if (fs.existsSync(".fw/logo.png")) fs.unlinkSync(".fw/logo.png");
-
-	return true;
 };
 
 /**
@@ -324,43 +186,4 @@ export const patchResources = async (all = true) => {
 export const writeConfigFiles = async (diginextContent, packageContent) => {
 	await writeFile(path.resolve("package.json"), JSON.stringify(packageContent, null, 2), "utf8");
 	await writeFile(path.resolve("dx.json"), JSON.stringify(diginextContent, null, 2), "utf8");
-};
-
-export const installPackages = async () => {
-	log(`Đang tiến hành cài đặt "package.json" mới...`);
-
-	const { execa, execaCommand } = await import("execa");
-
-	let areDependenciesInstalled = false;
-	// Install dependencies
-	try {
-		await execa("yarn", ["install"]);
-		// console.log(stdout);
-		areDependenciesInstalled = true;
-	} catch (e) {
-		logWarn("YARN not found, switch to `npm install` instead.");
-	}
-
-	if (!areDependenciesInstalled) {
-		let isOk;
-		try {
-			await execa("npm", ["install"]);
-			isOk = true;
-		} catch (e) {
-			logError("NPM not found -> ", e);
-			isOk = false;
-		}
-		return isOk;
-	} else {
-		return true;
-	}
-};
-
-export const cleanUp = async () => {
-	// clean up
-	try {
-		await deleteFolderRecursive("./.fw");
-	} catch (e) {
-		logError("CLEANUP", e);
-	}
 };

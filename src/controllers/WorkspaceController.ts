@@ -2,7 +2,7 @@ import { isUndefined } from "lodash";
 import type { Types } from "mongoose";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { Config } from "@/app.config";
+import { Config, IsTest } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { IGetQueryParams, ResponseData } from "@/interfaces";
@@ -87,10 +87,13 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		// ----- VERIFY DX KEY -----
 
-		console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
-		const createWsRes = await createDxWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
-		console.log("createWsRes :>> ", createWsRes);
-		if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
+		// skip checking DX key for unit test
+		if (!IsTest()) {
+			const createWsRes = await createDxWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
+			// console.log("createWsRes :>> ", createWsRes);
+			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+		}
 
 		// ----- END VERIFYING -----
 
@@ -113,11 +116,9 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		// [3] Ownership: add this workspace to the creator {User} if it's not existed:
 		ownerUser = await addUserToWorkspace(owner, newWorkspace, "admin");
-		console.log(`Added "${ownerUser.name}" user to workspace "${newWorkspace.name}".`);
 
 		// [4] Set this workspace as "activeWorkspace" for this creator:
 		ownerUser = await makeWorkspaceActive(owner, MongoDB.toString(newWorkspace._id));
-		console.log(`Made workspace "${newWorkspace.name}" active for "${ownerUser.name}" user.`);
 
 		return interfaces.respondSuccess({ data: newWorkspace });
 	}

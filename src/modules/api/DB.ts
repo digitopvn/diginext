@@ -7,6 +7,7 @@ import {
 	ApiKeyUserService,
 	AppService,
 	BuildService,
+	CloudDatabaseBackupService,
 	CloudDatabaseService,
 	CloudProviderService,
 	ClusterService,
@@ -30,6 +31,7 @@ export type DBCollection =
 	| "app"
 	| "build"
 	| "database"
+	| "db_backup"
 	| "provider"
 	| "cluster"
 	| "git"
@@ -87,6 +89,7 @@ export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPaginati
 const app = new AppService();
 const build = new BuildService();
 const database = new CloudDatabaseService();
+const db_backup = new CloudDatabaseBackupService();
 const provider = new CloudProviderService();
 const cluster = new ClusterService();
 const registry = new ContainerRegistryService();
@@ -121,6 +124,12 @@ export interface DBQueryOptions extends IQueryOptions {
 	 * @default false
 	 */
 	isDebugging?: boolean;
+
+	/**
+	 * If `true`, won't throw any errors
+	 * @default false
+	 */
+	ignorable?: boolean;
 }
 
 export class DB {
@@ -128,7 +137,9 @@ export class DB {
 		app,
 		build,
 		database,
+		db_backup,
 		provider,
+		cronjob,
 		cluster,
 		registry,
 		framework,
@@ -142,7 +153,6 @@ export class DB {
 		api_key_user,
 		service_account,
 		workspace,
-		cronjob,
 	};
 
 	static async count(collection: DBCollection, filter: any = {}, options?: DBQueryOptions, pagination?: IQueryPagination) {
@@ -150,13 +160,13 @@ export class DB {
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] COUNT :>> Service "${collection}" not found.`);
+				if (!options?.ignorable) logError(`[DB] COUNT :>> Service "${collection}" not found.`);
 				return;
 			}
 			try {
 				amount = (await svc.count(filter)) || 0;
 			} catch (e) {
-				logError(`[DB] COUNT > Service "${collection}" :>>`, e);
+				if (!options?.ignorable) logError(`[DB] COUNT > Service "${collection}" :>>`, e);
 			}
 		} else {
 			// extract "subpath", then delete it from "options"
@@ -169,7 +179,7 @@ export class DB {
 			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
 			const { data = [], status, messages = [""] } = await fetchApi({ url });
-			if (!status && messages[0]) logError(`[DB] COUNT - ${url} :>>`, messages);
+			if (!status && messages[0] && !options?.ignorable) logError(`[DB] COUNT - ${url} :>>`, messages);
 
 			amount = data;
 		}
@@ -181,13 +191,13 @@ export class DB {
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] FIND :>> Service "${collection}" not found.`);
-				return;
+				if (!options?.ignorable) logError(`[DB] FIND :>> Service "${collection}" not found.`);
+				return [];
 			}
 			try {
 				items = (await svc.find(filter, options, pagination)) || [];
 			} catch (e) {
-				logError(`[DB] FIND > Service "${collection}" :>>`, e);
+				if (!options?.ignorable) logError(`[DB] FIND > Service "${collection}" :>>`, e);
 				items = [];
 			}
 		} else {
@@ -201,7 +211,7 @@ export class DB {
 			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
 			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
-			if (!status && messages[0]) logError(`[DB] FIND MANY - ${url} :>>`, messages);
+			if (!status && messages[0] && !options?.ignorable) logError(`[DB] FIND MANY - ${url} :>>`, messages);
 
 			items = data;
 		}
@@ -216,24 +226,25 @@ export class DB {
 		delete options.func;
 
 		let item;
+
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] FIND ONE > Service "${collection}" not found.`);
+				if (!options?.ignorable) logError(`[DB] FIND ONE > Service "${collection}" not found.`);
 				return;
 			}
 			try {
 				item = await svc.findOne(filter, options);
 			} catch (e) {
-				logError(`[DB] FIND ONE > Service "${collection}" :>>`, e);
+				if (!options?.ignorable) logError(`[DB] FIND ONE > Service "${collection}" :>>`, e);
 			}
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
 			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
-
-			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
-			if (!status && messages[0]) logError(`[DB] FIND ONE - ${url} :>>`, messages);
+			const res = await fetchApi<T>({ url });
+			const { data = [], status, messages = [""] } = res;
+			if (!status && messages[0] && !options?.ignorable) logError(`[DB] FIND ONE - ${url} :>>`, messages);
 			item = data[0];
 		}
 		return item as T;
@@ -249,7 +260,7 @@ export class DB {
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] CREATE :>> Service "${collection}" not found.`);
+				if (!options?.ignorable) logError(`[DB] CREATE :>> Service "${collection}" not found.`);
 				return;
 			}
 			// if (func) {
@@ -258,7 +269,7 @@ export class DB {
 			try {
 				item = (await svc.create(data)) as T;
 			} catch (e) {
-				logError(`[DB] CREATE > Service "${collection}" :>>`, e);
+				if (!options?.ignorable) logError(`[DB] CREATE > Service "${collection}" :>>`, e);
 			}
 		} else {
 			/**
@@ -281,7 +292,7 @@ export class DB {
 				method: "POST",
 				data: newData,
 			});
-			if (!status && messages[0]) logError(`[DB] CREATE - ${url} :>>`, messages);
+			if (!status && messages[0] && !options?.ignorable) logError(`[DB] CREATE - ${url} :>>`, messages);
 			item = result as T;
 		}
 		return item;
@@ -292,14 +303,14 @@ export class DB {
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] UPDATE > Service "${collection}" :>> Service not found.`);
+				if (!options?.ignorable) logError(`[DB] UPDATE > Service "${collection}" :>> Service not found.`);
 				return;
 			}
 
 			try {
 				items = (await svc.update(filter, data, options)) || [];
 			} catch (e) {
-				logError(`[DB] UPDATE > Service "${collection}" :>>`, e);
+				if (!options?.ignorable) logError(`[DB] UPDATE > Service "${collection}" :>>`, e);
 				items = [];
 			}
 		} else {
@@ -327,7 +338,7 @@ export class DB {
 			});
 
 			// console.log("[DB] UPDATE > result :>> ", status, "-", result, "-", messages);
-			if (!status && messages[0]) logError(`[DB] UPDATE - ${url} :>>`, messages);
+			if (!status && messages[0] && !options?.ignorable) logError(`[DB] UPDATE - ${url} :>>`, messages);
 			items = result;
 		}
 		return items as T[];
@@ -339,18 +350,18 @@ export class DB {
 		return items[0] as T;
 	}
 
-	static async delete<T = any>(collection: DBCollection, filter: any, options: DBQueryOptions = {}) {
+	static async delete<T = any>(collection: DBCollection, filter: any, data: any = {}, options: DBQueryOptions = {}) {
 		let item: { ok: boolean; affected: number };
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
-				logError(`[DB] DELETE > Service "${collection}" :>> Service not found.`);
+				if (!options?.ignorable) logError(`[DB] DELETE > Service "${collection}" :>> Service not found.`);
 				return;
 			}
 			try {
 				item = await svc.softDelete(filter);
 			} catch (e) {
-				logError(`[DB] DELETE > Service "${collection}" :>>`, e);
+				if (!options?.ignorable) logError(`[DB] DELETE > Service "${collection}" :>>`, e);
 			}
 		} else {
 			const { subpath = "" } = options;
@@ -361,10 +372,11 @@ export class DB {
 				status,
 				messages = [""],
 			} = await fetchApi<T>({
-				url,
 				method: "DELETE",
+				url,
+				data,
 			});
-			if (!status && messages[0]) logError(`[DB] DELETE - ${url} :>>`, messages);
+			if (!status && messages[0] && !options?.ignorable) logError(`[DB] DELETE - ${url} :>>`, messages);
 			item = result as { ok: boolean; affected: number };
 		}
 		return item;
