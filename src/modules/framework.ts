@@ -4,18 +4,47 @@ import fs from "fs";
 import { mkdir } from "fs/promises";
 import ora from "ora";
 import path from "path";
+import copy from "recursive-copy";
 
 import { isServerMode } from "@/app.config";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { cloneGitRepo, copyAllResources, deleteFolderRecursive, pullOrCloneGitRepo } from "@/plugins";
+import { cloneGitRepo, deleteFolderRecursive, pullOrCloneGitRepo } from "@/plugins";
 
-export const cleanUp = async () => {
+/**
+ * Delete temporary directory of the framework
+ */
+export const cleanUpFramework = async () => {
 	// clean up
 	try {
 		await deleteFolderRecursive("./.fw");
 	} catch (e) {
 		logError("CLEANUP", e);
 	}
+};
+
+/**
+ * Copy all framework's files to application directory
+ * @param destDirectory - Destination application directory
+ */
+export const copyFrameworkResources = async (destDirectory: string) => {
+	let options = {
+		overwrite: true,
+		expand: true,
+		dot: true,
+		junk: true,
+		// filter: ["**/*", "!.git"],
+	};
+
+	let success = false;
+	try {
+		const tmpFrameworkDir = path.resolve(".fw");
+		await copy(tmpFrameworkDir, destDirectory, options);
+		success = true;
+	} catch (e) {
+		logError(e);
+	}
+
+	return success;
 };
 
 export const getLatestFrameworkVersion = async (framework = "diginext") => {
@@ -59,8 +88,10 @@ export const selectFrameworkVersion = async (framework = "diginext") => {
 
 export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	// const repoSSH = `git@bitbucket.org:${config.workspace}/${config.framework[framework]}.git`;
-	const { frameworkVersion } = options;
+	const { frameworkVersion, user } = options;
 	const { name, repoSSH } = options.framework;
+
+	const spin = ora(`Pulling "${name}" framework... 0%`).start();
 
 	// create tmp dir
 	const tmpDir = path.resolve(".fw/");
@@ -71,8 +102,7 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	}
 	await mkdir(tmpDir, { recursive: true });
 
-	const spin = ora(`Pulling "${name}" framework... 0%`).start();
-
+	// pull or clone git repo
 	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
@@ -85,14 +115,14 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 
 	spin.stop();
 
-	// delete unneccessary files
-	if (fs.existsSync(".fw/dx.json")) await deleteFolderRecursive(".fw/dx.json");
+	// delete framework git
 	if (fs.existsSync(".fw/.git")) await deleteFolderRecursive(".fw/.git");
-	if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
-	if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
-	if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
-	if (fs.existsSync(".fw/yarn.lock")) fs.unlinkSync(".fw/yarn.lock");
-	if (fs.existsSync(".fw/logo.png")) fs.unlinkSync(".fw/logo.png");
+
+	// delete unneccessary files
+	// if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
+	// if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
+	// if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
+	// if (fs.existsSync(".fw/yarn.lock")) fs.unlinkSync(".fw/yarn.lock");
 
 	return true;
 };
@@ -103,9 +133,9 @@ export async function pullingFramework(options: InputOptions) {
 
 		await pullingLatestFrameworkVersion(options);
 
-		await copyAllResources(options.targetDirectory);
+		await copyFrameworkResources(options.targetDirectory);
 
-		await cleanUp();
+		await cleanUpFramework();
 	}
 
 	return true;
@@ -153,9 +183,9 @@ export const cloneGitFramework = async (options: InputOptions) => {
 export async function pullingRepoToNewGitDir(options: InputOptions) {
 	await cloneGitFramework(options);
 
-	await copyAllResources(options.targetDirectory);
+	await copyFrameworkResources(options.targetDirectory);
 
-	await cleanUp();
+	await cleanUpFramework();
 
 	const result = detectPrivateKey(options.targetDirectory);
 	if (result.status) {

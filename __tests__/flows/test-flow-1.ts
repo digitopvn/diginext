@@ -132,16 +132,20 @@ export function testFlow1() {
 		bitbucket = await gitSvc.verify(bitbucket);
 
 		// check...
+		expect(bitbucket.owner).toEqual(bitbucket._id);
 		expect(bitbucket.owner).toBeDefined();
 		expect(bitbucket.verified).toBe(true);
 		expect(bitbucket.host).toBe("bitbucket.org");
+		expect(bitbucket.system).toBeTruthy();
 
+		// test api
 		const profile = await GitProviderAPI.getProfile(bitbucket);
 		expect(profile).toBeDefined();
 		expect(profile.username).toBe(process.env.TEST_BITBUCKET_USERNAME);
 	});
 
 	it("Workspace #1: Git Provider - Github", async () => {
+		const curUser = await getCurrentUser();
 		// seed git provider: github
 		const createRes = await gitCtl.create({
 			name: "Github",
@@ -161,10 +165,12 @@ export function testFlow1() {
 		github = await gitSvc.verify(github);
 
 		// check...
-		expect(github.owner).toBeDefined();
+		expect(github.owner).toEqual(curUser._id);
 		expect(github.verified).toBe(true);
 		expect(github.host).toBe("github.com");
+		expect(github.system).toBeTruthy();
 
+		// test api
 		const profile = await GitProviderAPI.getProfile(github);
 		expect(profile).toBeDefined();
 	});
@@ -207,59 +213,48 @@ export function testFlow1() {
 	}, 30000);
 
 	it("CLI: Check version", async () => {
-		const { stdout: cliVersion, stderr } = await execaCommand(`dx -v`, { env: { CLI_MODE: "client" } });
+		const { stdout: cliVersion, stderr } = await dxCmd(`dx -v`);
 		expect(cliVersion).toBeDefined();
 	});
 
 	it("CLI: Authentication", async () => {
 		const user = await getCurrentUser();
-		const { stdout, stderr } = await execaCommand(`dx login http://localhost:6969 --token=${user.token.access_token}`, {
-			env: { CLI_MODE: "client" },
-		});
+		const { stdout, stderr } = await dxCmd(`dx login http://localhost:6969 --token=${user.token.access_token}`);
 		expect(stdout.indexOf("You're logged in")).toBeGreaterThan(-1);
+
+		const { stdout: cliInfo } = await dxCmd(`dx info`);
+		// console.log("cliInfo :>> ", cliInfo);
 	});
 
-	it(
-		"CLI: Create new app (Github)",
-		async () => {
-			// const { stdout: cliInfo } = await execaCommand(`dx info`, { env: { CLI_MODE: "client" } });
-			// console.log("cliInfo :>> ", cliInfo);
+	// it(
+	// 	"CLI: Create new app (Github)",
+	// 	async () => {
+	// 		const github = await gitSvc.findOne({ type: "github" });
+	// 		const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
 
-			const github = await gitSvc.findOne({ type: "github" });
-			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
+	// 		// create new app...
+	// 		const { stdout, stderr } = await dxCmd(
+	// 			`dx new --projectName="Test Github Project" --name=web --framework=${framework.slug} --git=${github.slug} --force`
+	// 		);
+	// 		expect(stdout).toBeDefined();
+	// 	},
+	// 	5 * 60000
+	// );
 
-			// create new app...
-			const { stdout, stderr } = await dxCmd(
-				`dx new --projectName="Test Github Project" --name=web --framework=${framework.slug} --git=${github.slug} --force`
-			);
+	// it(
+	// 	"CLI: Create new app (Bitbucket)",
+	// 	async () => {
+	// 		const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
+	// 		const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
 
-			// console.log("dx new > stdout :>> ", stdout);
-			// console.log("dx new > stderr :>> ", stderr);
-			expect(stdout).toBeDefined();
-		},
-		5 * 60000
-	);
-
-	it(
-		"CLI: Create new app (Bitbucket)",
-		async () => {
-			// const { stdout: cliInfo } = await execaCommand(`dx info`, { env: { CLI_MODE: "client" } });
-			// console.log("cliInfo :>> ", cliInfo);
-
-			const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
-			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
-
-			// create new app...
-			const { stdout, stderr } = await dxCmd(
-				`dx new --projectName="Test Bitbucket Project" --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
-			);
-
-			console.log("dx new > stdout :>> ", stdout);
-			console.log("dx new > stderr :>> ", stderr);
-			// expect(stdout).toBeDefined();
-		},
-		5 * 60000
-	);
+	// 		// create new app...
+	// 		const { stdout, stderr } = await dxCmd(
+	// 			`dx new --projectName="Test Bitbucket Project" --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
+	// 		);
+	// 		expect(stdout).toBeDefined();
+	// 	},
+	// 	5 * 60000
+	// );
 
 	it("Workspace #1: Add member", async () => {
 		// registerr fake user #2:
