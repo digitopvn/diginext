@@ -8,7 +8,7 @@ import copy from "recursive-copy";
 
 import { isServerMode } from "@/app.config";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { cloneGitRepo, deleteFolderRecursive, pullOrCloneGitRepo } from "@/plugins";
+import { cloneGitRepo, deleteFolderRecursive, pullOrCloneGitRepo, wait } from "@/plugins";
 
 /**
  * Delete temporary directory of the framework
@@ -183,7 +183,11 @@ export const cloneGitFramework = async (options: InputOptions) => {
 export async function pullingRepoToNewGitDir(options: InputOptions) {
 	await cloneGitFramework(options);
 
+	await wait(500);
+
 	await copyFrameworkResources(options.targetDirectory);
+
+	await wait(500);
 
 	await cleanUpFramework();
 
