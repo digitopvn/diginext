@@ -65,7 +65,7 @@ export const login = async (options?: InputOptions) => {
 
 		case "github":
 			// logWarn(`This feature is under development.`);
-			await Github.login();
+			await Github.loginWithApp();
 			break;
 
 		default:

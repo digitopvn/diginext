@@ -15,7 +15,6 @@ import _, { isArray, isEmpty, isString, toInteger, toNumber } from "lodash";
 import * as m from "marked";
 import TerminalRenderer from "marked-terminal";
 import path from "path";
-import copy from "recursive-copy";
 import type { SimpleGit, SimpleGitProgressEvent } from "simple-git";
 import { simpleGit } from "simple-git";
 
@@ -520,6 +519,9 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
 };
 
+/**
+ * Process `npm install` or `yarn install` or `pnpm install` on current directory
+ */
 export const installPackages = async () => {
 	log(`Đang tiến hành cài đặt "package.json" mới...`);
 
@@ -550,30 +552,13 @@ export const installPackages = async () => {
 	}
 };
 
-export const copyAllResources = async (destDirectory: string) => {
-	let options = {
-		overwrite: true,
-		expand: true,
-		dot: true,
-		junk: true,
-		// filter: ["**/*", "!.git"],
-	};
-
-	let success = false;
-	try {
-		const tmpFrameworkDir = path.resolve(".fw");
-		await copy(tmpFrameworkDir, destDirectory, options);
-		success = true;
-	} catch (e) {
-		logError(e);
-	}
-
-	return success;
-};
-
 interface PullOrCloneGitRepoOptions {
-	onUpdate?: (msg: string, progress?: number) => void;
+	useAccessToken?: {
+		type: "Bearer" | "Basic";
+		value: string;
+	};
 	isDebugging?: boolean;
+	onUpdate?: (msg: string, progress?: number) => void;
 }
 
 export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOrCloneGitRepoOptions = {}) => {
@@ -638,9 +623,14 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 		if (onUpdate) onUpdate(message, progress);
 	};
 
+	const commandConfig: string[] = [];
+
+	if (options?.useAccessToken && options.useAccessToken.type && options.useAccessToken.value)
+		commandConfig.push(`http.extraHeader=Authorization: ${options.useAccessToken.type} ${options.useAccessToken.value}`);
+
 	if (fs.existsSync(dir)) {
 		try {
-			git = simpleGit(dir, { progress: onProgress });
+			git = simpleGit(dir, { progress: onProgress, config: commandConfig });
 			// -----------------------
 			// ! DO NOT SET TO "FALSE"
 			// -----------------------
@@ -659,7 +649,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 			await deleteFolderRecursive(dir);
 
 			// for CLI create new app from a framework
-			git = simpleGit({ progress: onProgress });
+			git = simpleGit({ progress: onProgress, config: commandConfig });
 
 			try {
 				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
@@ -670,7 +660,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	} else {
 		if (onUpdate) onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
 
-		git = simpleGit({ progress: onProgress });
+		git = simpleGit({ progress: onProgress, config: commandConfig });
 
 		try {
 			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);

@@ -119,6 +119,9 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		body.refresh_token = refresh_token;
 		body.method = method;
 
+		// mark as system or not
+		body.system = (this.user.activeRole as entities.IRole).type === "admin";
+
 		// process
 		return super.create(body);
 	}

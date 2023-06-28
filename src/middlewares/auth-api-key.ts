@@ -42,7 +42,13 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: Response, next
 				!(role as IRole).deletedAt
 		) as IRole;
 
-		apiKeyAccount.activeRole = activeRole;
+		if (apiKeyAccount.activeRole !== activeRole._id)
+			apiKeyAccount = await DB.updateOne<IApiKeyAccount>(
+				"api_key_user",
+				{ _id: apiKeyAccount._id },
+				{ activeRole: activeRole._id },
+				{ populate: ["roles", "workspaces", "activeWorkspace", "activeRole"] }
+			);
 		req.role = activeRole;
 
 		// user
