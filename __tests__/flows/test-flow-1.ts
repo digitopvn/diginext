@@ -220,20 +220,38 @@ export function testFlow1() {
 	});
 
 	it(
-		"CLI: Create new app",
+		"CLI: Create new app (Github)",
 		async () => {
-			const { stdout: cliInfo } = await execaCommand(`dx info`, { env: { CLI_MODE: "client" } });
+			// const { stdout: cliInfo } = await execaCommand(`dx info`, { env: { CLI_MODE: "client" } });
 			// console.log("cliInfo :>> ", cliInfo);
 
 			const github = await gitSvc.findOne({ type: "github" });
-			// console.log("github :>> ", github);
-
 			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
-			// console.log("framework :>> ", framework);
 
 			// create new app...
 			const { stdout, stderr } = await dxCmd(
-				`dx new --projectName="Test Project" --name=web --framework=${framework.slug} --git=${github.slug} --force --debug`
+				`dx new --projectName="Test Github Project" --name=web --framework=${framework.slug} --git=${github.slug} --force`
+			);
+
+			// console.log("dx new > stdout :>> ", stdout);
+			// console.log("dx new > stderr :>> ", stderr);
+			expect(stdout).toBeDefined();
+		},
+		5 * 60000
+	);
+
+	it(
+		"CLI: Create new app (Bitbucket)",
+		async () => {
+			// const { stdout: cliInfo } = await execaCommand(`dx info`, { env: { CLI_MODE: "client" } });
+			// console.log("cliInfo :>> ", cliInfo);
+
+			const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
+			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
+
+			// create new app...
+			const { stdout, stderr } = await dxCmd(
+				`dx new --projectName="Test Bitbucket Project" --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
 			);
 
 			console.log("dx new > stdout :>> ", stdout);

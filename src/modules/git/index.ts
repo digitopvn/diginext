@@ -375,10 +375,8 @@ export const sshKeyContainPassphase = (options?: { sshFile: string }) => {
 	const idRsaFile = options?.sshFile || path.resolve(HOME_DIR, ".ssh/id_rsa");
 	try {
 		execaSync("ssh-keygen", ["-y", "-f", idRsaFile]);
-		// logSuccess(`SSH verify "id_rsa" > Success: NO PASSPHASE`);
 		return false;
 	} catch (e) {
-		// console.warn(`SSH verify "id_rsa" > Failed:`, e);
 		return true;
 	}
 };
@@ -410,6 +408,8 @@ export const verifySSH = async (options?: InputOptions) => {
 		logWarn(`[GIT] PUBLIC_KEY and PRIVATE_KEY are not existed.`);
 		return false;
 	}
+	// const isSSHKeysExisted = sshKeysExisted();
+	// if (!isSSHKeysExisted) return false;
 
 	// log(`[GIT] privateIdRsaFiles:`, privateIdRsaFiles);
 

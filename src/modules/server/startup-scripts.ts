@@ -50,7 +50,8 @@ export async function startupScripts() {
 	const isSSHKeysExisted = await sshKeysExisted();
 	if (!isSSHKeysExisted) await generateSSH();
 	// verify if generated SSH key should not require passphase
-	sshKeyContainPassphase();
+	const keyHasPassphase = sshKeyContainPassphase();
+	if (keyHasPassphase) console.warn(`SSH key "id_rsa" should not contain passphase.`);
 
 	/**
 	 * Connect to git providers
