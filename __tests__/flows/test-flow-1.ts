@@ -26,6 +26,16 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 export function testFlow1() {
 	let wsId: string;
 
+	it("Builder: DOCKER", async () => {
+		const dockerVersion = await dxCmd(`docker version`);
+		console.log("dockerVersion :>> ", dockerVersion);
+	});
+
+	it("Builder: PODMAN", async () => {
+		const podmanVersion = await dxCmd(`podman version`);
+		console.log("podmanVersion :>> ", podmanVersion);
+	});
+
 	it("Authenticate fake user #1 (admin)", async () => {
 		// create user
 		await createFakeUser(1);
