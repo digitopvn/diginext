@@ -215,25 +215,25 @@ export function testFlow1() {
 	}, 30000);
 
 	it("CLI: Check version", async () => {
-		const { stdout: cliVersion, stderr } = await dxCmd(`dx -v`);
+		const cliVersion = await dxCmd(`dx -v`);
 		expect(cliVersion).toBeDefined();
-	});
+	}, 15000);
 
 	it("CLI: Authentication", async () => {
 		const user = await getCurrentUser();
-		const { stdout, stderr } = await dxCmd(`dx login http://localhost:6969 --token=${user.token.access_token}`);
+
+		const stdout = await dxCmd(`dx login http://localhost:6969 --token=${user.token.access_token}`);
 		expect(stdout.indexOf("You're logged in")).toBeGreaterThan(-1);
 
-		const { stdout: cliInfo } = await dxCmd(`dx info`);
+		const cliInfo = await dxCmd(`dx info`);
 		// console.log("cliInfo :>> ", cliInfo);
-	});
+	}, 15000);
 
 	// it(
 	// 	"CLI: Create new app (Github)",
 	// 	async () => {
 	// 		const github = await gitSvc.findOne({ type: "github" });
 	// 		const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
-
 	// 		// create new app...
 	// 		const { stdout, stderr } = await dxCmd(
 	// 			`dx new --projectName="Test Github Project" --name=web --framework=${framework.slug} --git=${github.slug} --force`
@@ -248,7 +248,6 @@ export function testFlow1() {
 	// 	async () => {
 	// 		const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
 	// 		const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
-
 	// 		// create new app...
 	// 		const { stdout, stderr } = await dxCmd(
 	// 			`dx new --projectName="Test Bitbucket Project" --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
