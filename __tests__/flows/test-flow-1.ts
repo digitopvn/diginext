@@ -22,6 +22,8 @@ import GitProviderAPI from "@/modules/git/git-provider-api";
 import { execaCommand, execaCommandSync } from "execa";
 import { initialFrameworks } from "@/seeds/seed-frameworks";
 import { CLI_CONFIG_DIR } from "@/config/const";
+import { Config } from "@/app.config";
+import { connectRegistry } from "@/modules/registry/connect-registry";
 
 export function testFlow1() {
 	let wsId: string;
@@ -188,6 +190,8 @@ export function testFlow1() {
 	});
 
 	it("Workspace #1: Container Registry - Google Artifact Registry", async () => {
+		const curUser = await getCurrentUser();
+
 		// seed Container Registry: GCR
 		const createRes = await registryCtl.create({
 			name: "Google Container Registry",
@@ -200,12 +204,22 @@ export function testFlow1() {
 		expect(gcr).toBeDefined();
 		expect(gcr.isVerified).toBe(true);
 
-		// pull private test image
-		const { stdout: pullRes, stderr } = await execaCommand(`docker pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
-		expect(pullRes.indexOf("asia.gcr.io/top-group-k8s/staticsite-web")).toBeGreaterThan(-1);
-	}, 30000);
+		// authenticate GCR with docker & podman
+		await connectRegistry(gcr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
+		await connectRegistry(gcr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
+
+		// podman: pull private test image
+		const podmanPullRes = await dxCmd(`podman pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
+		expect(podmanPullRes.indexOf("Storing signatures")).toBeGreaterThan(-1);
+
+		// docker: pull private test image
+		const dockerPullRes = await dxCmd(`docker pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
+		expect(dockerPullRes.indexOf("asia.gcr.io/top-group-k8s/staticsite-web")).toBeGreaterThan(-1);
+	}, 60000);
 
 	it("Workspace #1: Container Registry - Docker Hub Registry", async () => {
+		const curUser = await getCurrentUser();
+
 		// seed Container Registry: Docker Hub
 		const createRes = await registryCtl.create({
 			name: "Docker Hub Registry",
@@ -219,9 +233,17 @@ export function testFlow1() {
 		expect(dhr).toBeDefined();
 		expect(dhr.isVerified).toBe(true);
 
-		// pull private test image
-		const { stdout: pullRes, stderr } = await execaCommand(`docker pull digitop/static:latest`);
-		expect(pullRes.indexOf("digitop/static")).toBeGreaterThan(-1);
+		// authenticate GCR with docker & podman
+		await connectRegistry(dhr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
+		await connectRegistry(dhr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
+
+		// podman: pull private test image
+		const podmanPullRes = await dxCmd(`podman pull digitop/static:latest`);
+		expect(podmanPullRes.indexOf("Storing signatures")).toBeGreaterThan(-1);
+
+		// docker: pull private test image
+		const dockerPullRes = await dxCmd(`docker pull digitop/static:latest`);
+		expect(dockerPullRes.indexOf("digitop/static:latest")).toBeGreaterThan(-1);
 	}, 30000);
 
 	it("CLI: Check version", async () => {

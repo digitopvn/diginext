@@ -9,7 +9,10 @@ import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
 import DockerRegistry from "./docker-registry";
 
-export const connectRegistry = async (registry: IContainerRegistry, options?: { userId?: any; workspaceId?: any; insertDatabase?: boolean }) => {
+export const connectRegistry = async (
+	registry: IContainerRegistry,
+	options?: { userId?: any; workspaceId?: any; insertDatabase?: boolean; builder?: "docker" | "podman" }
+) => {
 	const { slug, provider, host } = registry;
 
 	let connectedRegistry: IContainerRegistry;
@@ -27,10 +30,14 @@ export const connectRegistry = async (registry: IContainerRegistry, options?: { 
 			connectedRegistry = await gcloud.connectDockerRegistry({ ...options, registry: slug, host });
 
 			if (connectedRegistry) {
-				logSuccess(`[CONTAINER REGISTRY] ✓ ${Config.BUILDER.toUpperCase()}: Connected to Container Registry "${registry.name}".`);
+				logSuccess(
+					`[CONTAINER REGISTRY] ✓ ${options?.builder || Config.BUILDER.toUpperCase()}: Connected to Container Registry "${registry.name}".`
+				);
 			} else {
 				throw new Error(
-					`[CONTAINER REGISTRY] ❌ ${Config.BUILDER.toUpperCase()}: Failed to connect to this container registry (${registry.name}).`
+					`[CONTAINER REGISTRY] ❌ ${options?.builder || Config.BUILDER.toUpperCase()}: Failed to connect to this container registry (${
+						registry.name
+					}).`
 				);
 			}
 
@@ -43,15 +50,19 @@ export const connectRegistry = async (registry: IContainerRegistry, options?: { 
 			const { apiAccessToken } = registry;
 
 			const doAuthResult = await digitalocean.authenticate({ ...options, key: apiAccessToken });
-			if (!doAuthResult) throw new Error(`${Config.BUILDER.toUpperCase()}: Can't authenticate with Digital Ocean using this API access token.`);
+			if (!doAuthResult) throw new Error(`Can't authenticate with Digital Ocean using this API access token.`);
 
 			connectedRegistry = await digitalocean.connectDockerRegistry({ ...options, key: apiAccessToken, registry: slug });
 
 			if (connectedRegistry) {
-				logSuccess(`[CONTAINER REGISTRY] ✓ ${Config.BUILDER.toUpperCase()}: Connected to Container Registry "${registry.name}".`);
+				logSuccess(
+					`[CONTAINER REGISTRY] ✓ ${options?.builder || Config.BUILDER.toUpperCase()}: Connected to Container Registry "${registry.name}".`
+				);
 			} else {
 				throw new Error(
-					`[CONTAINER REGISTRY] ❌ ${Config.BUILDER.toUpperCase()}: Failed to connect to this container registry (${registry.name}).`
+					`[CONTAINER REGISTRY] ❌ ${options?.builder || Config.BUILDER.toUpperCase()}: Failed to connect to this container registry (${
+						registry.name
+					}).`
 				);
 			}
 
@@ -66,10 +77,14 @@ export const connectRegistry = async (registry: IContainerRegistry, options?: { 
 			);
 
 			if (connectedRegistry) {
-				logSuccess(`[CONTAINER REGISTRY] ✓ ${Config.BUILDER.toUpperCase()}: Connected to Container Registry "${registry.name}".`);
+				logSuccess(
+					`[CONTAINER REGISTRY] ✓ ${options?.builder || Config.BUILDER.toUpperCase()}: Connected to Container Registry "${registry.name}".`
+				);
 			} else {
 				throw new Error(
-					`[CONTAINER REGISTRY] ❌ ${Config.BUILDER.toUpperCase()}: Failed to connect to this container registry (${registry.name}).`
+					`[CONTAINER REGISTRY] ❌ ${options?.builder || Config.BUILDER.toUpperCase()}: Failed to connect to this container registry (${
+						registry.name
+					}).`
 				);
 			}
 
@@ -77,7 +92,7 @@ export const connectRegistry = async (registry: IContainerRegistry, options?: { 
 
 		default:
 			throw new Error(
-				`[CONTAINER REGISTRY] ${Config.BUILDER.toUpperCase()}: This container registry is not supported (${provider}), only "gcloud" and "digitalocean" are supported.`
+				`[CONTAINER REGISTRY] This container registry is not supported (${provider}), only "dockerhub", "gcloud" and "digitalocean" are supported.`
 			);
 	}
 };
