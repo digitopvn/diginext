@@ -112,6 +112,8 @@ export function testFlow1() {
 	});
 
 	it("Workspace #1: Git Provider - Bitbucket", async () => {
+		const curUser = await getCurrentUser();
+
 		// seed git provider: bitbucket
 		const createRes = await gitCtl.create({
 			name: "Bitbucket",
@@ -132,7 +134,7 @@ export function testFlow1() {
 		bitbucket = await gitSvc.verify(bitbucket);
 
 		// check...
-		expect(bitbucket.owner).toEqual(bitbucket._id);
+		expect(bitbucket.owner).toEqual(curUser._id);
 		expect(bitbucket.owner).toBeDefined();
 		expect(bitbucket.verified).toBe(true);
 		expect(bitbucket.host).toBe("bitbucket.org");
