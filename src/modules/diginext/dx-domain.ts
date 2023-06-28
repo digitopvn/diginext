@@ -1,3 +1,5 @@
+import { IsTest } from "@/app.config";
+import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { ResponseData } from "@/interfaces";
 
 import { dxApi } from "./dx-api";
@@ -16,5 +18,6 @@ export type CreateDiginextDomainResponse = ResponseData & {
 };
 
 export async function createDxDomain(params: CreateDiginextDomainParams, dxKey: string) {
+	if (IsTest()) return { status: 1, data: { domain: `${params.name}.${DIGINEXT_DOMAIN}`, domain_record: "" } } as CreateDiginextDomainResponse;
 	return dxApi<CreateDiginextDomainResponse>({ url: "/domains/create", data: params, method: "POST", dxKey });
 }

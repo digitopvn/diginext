@@ -6,6 +6,7 @@ import path from "path";
 import { simpleGit } from "simple-git";
 
 import type InputOptions from "@/interfaces/InputOptions";
+import { wait } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
 export const initalizeAndCreateDefaultBranches = async (options: InputOptions) => {
@@ -22,9 +23,17 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 	});
 	await git.init();
 
+	// create main
+	await git.checkout(["-b", "main"]);
+
+	// make sure the remote git is ready...
+	await wait(1000);
+
+	// add git origin:
+	await git.addRemote("origin", options.remoteSSH);
+
 	// create default brand: "main"
 	await git.fetch(["--all"]);
-	await git.checkout(["-b", "main"]);
 
 	// add git origin:
 	await git.addRemote("origin", options.remoteSSH);

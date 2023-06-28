@@ -1,9 +1,22 @@
 import detectPrivateKey from "diginext-utils/dist/file/detectPrivateKey";
 import { log, logError } from "diginext-utils/dist/xconsole/log";
+import fs from "fs";
+import { mkdir } from "fs/promises";
+import ora from "ora";
+import path from "path";
 
+import { isServerMode } from "@/app.config";
 import type { InputOptions } from "@/interfaces/InputOptions";
+import { cloneGitRepo, copyAllResources, deleteFolderRecursive, pullOrCloneGitRepo } from "@/plugins";
 
-import { cleanUp, cloneGitFramework, copyAllResources, pullingLatestFrameworkVersion } from "./bitbucket";
+export const cleanUp = async () => {
+	// clean up
+	try {
+		await deleteFolderRecursive("./.fw");
+	} catch (e) {
+		logError("CLEANUP", e);
+	}
+};
 
 export const getLatestFrameworkVersion = async (framework = "diginext") => {
 	// let { data } = await bitbucket.repositories.listTags({
@@ -44,19 +57,50 @@ export const selectFrameworkVersion = async (framework = "diginext") => {
 	// return versionList;
 };
 
+export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
+	// const repoSSH = `git@bitbucket.org:${config.workspace}/${config.framework[framework]}.git`;
+	const { frameworkVersion } = options;
+	const { name, repoSSH } = options.framework;
+
+	// create tmp dir
+	const tmpDir = path.resolve(".fw/");
+	try {
+		await deleteFolderRecursive(tmpDir);
+	} catch (e) {
+		logError(e);
+	}
+	await mkdir(tmpDir, { recursive: true });
+
+	const spin = ora(`Pulling "${name}" framework... 0%`).start();
+
+	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
+		onUpdate: (msg, progress) => {
+			if (isServerMode) {
+				console.log(msg);
+			} else {
+				spin.text = `Pulling "${name}" framework... ${progress || 0}%`;
+			}
+		},
+	});
+
+	spin.stop();
+
+	// delete unneccessary files
+	if (fs.existsSync(".fw/dx.json")) await deleteFolderRecursive(".fw/dx.json");
+	if (fs.existsSync(".fw/.git")) await deleteFolderRecursive(".fw/.git");
+	if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
+	if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
+	if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
+	if (fs.existsSync(".fw/yarn.lock")) fs.unlinkSync(".fw/yarn.lock");
+	if (fs.existsSync(".fw/logo.png")) fs.unlinkSync(".fw/logo.png");
+
+	return true;
+};
+
 export async function pullingFramework(options: InputOptions) {
 	if (options.framework.name != "none") {
 		// TODO: Select specific branch as a version?
-		// if (options.framework.includes("/tools/")) {
-		// 	const fwName = options.framework.split("/")[0];
-		// 	options.frameworkVersion = options.framework.replace(new RegExp(`${fwName}/`), "") + "/master";
-		// 	options.framework = fwName;
 
-		// 	await pullingLatestFrameworkVersion(options, options.framework, options.frameworkVersion);
-		// } else {
-		// 	options.frameworkVersion = await getLatestFrameworkVersion(options.framework);
-		// 	await pullingLatestFrameworkVersion(options, options.framework, options.frameworkVersion);
-		// }
 		await pullingLatestFrameworkVersion(options);
 
 		await copyAllResources(options.targetDirectory);
@@ -66,6 +110,45 @@ export async function pullingFramework(options: InputOptions) {
 
 	return true;
 }
+
+export const cloneGitFramework = async (options: InputOptions) => {
+	//
+	const { name, repoSSH } = options.framework;
+
+	// create tmp dir
+	const tmpDir = path.resolve(".fw/");
+	try {
+		await deleteFolderRecursive(tmpDir);
+	} catch (e) {
+		logError(e);
+	}
+	await mkdir(tmpDir);
+
+	const spin = ora(`Pulling "${name}"... 0%`).start();
+
+	await cloneGitRepo(repoSSH, tmpDir, {
+		onUpdate: (msg, progress) => {
+			if (isServerMode) {
+				console.log(msg);
+			} else {
+				spin.text = `Pulling "${name}"... ${progress || 0}%`;
+			}
+		},
+	});
+
+	spin.stop();
+
+	// delete unneccessary files
+	if (fs.existsSync(".fw/dx.json")) await deleteFolderRecursive(".fw/dx.json");
+	if (fs.existsSync(".fw/.git")) await deleteFolderRecursive(".fw/.git");
+	if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
+	if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
+	if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
+	if (fs.existsSync(".fw/yarn.lock")) fs.unlinkSync(".fw/yarn.lock");
+	if (fs.existsSync(".fw/logo.png")) fs.unlinkSync(".fw/logo.png");
+
+	return true;
+};
 
 export async function pullingRepoToNewGitDir(options: InputOptions) {
 	await cloneGitFramework(options);

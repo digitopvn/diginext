@@ -1,4 +1,3 @@
-import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import { isEmpty } from "lodash";
 import cronjob from "node-cron";
@@ -12,7 +11,7 @@ import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
 import { migrateServiceAccountAndApiKey } from "@/migration/migrate-all-sa-and-api-key";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
-import { generateSSH, sshKeysExisted, verifySSH } from "@/modules/git";
+import { generateSSH, sshKeyContainPassphase, sshKeysExisted, verifySSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { execCmd, wait } from "@/plugins";
@@ -33,23 +32,30 @@ import { findAndRunCronjob } from "../cronjob/find-and-run-job";
  * - Seed some initial data
  */
 export async function startupScripts() {
-	log(`-------------- Server is initializing -----------------`);
+	console.log(`[DIGINEXT] Server is initializing...`);
 
 	// config dir
 	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);
 
 	/**
 	 * System cronjob checking every minute...
+	 * [Skip for unit tests]
 	 */
-	findAndRunCronjob();
-	setInterval(findAndRunCronjob, 15 * 1000);
+	if (!IsTest()) {
+		findAndRunCronjob();
+		setInterval(findAndRunCronjob, 15 * 1000);
+	}
 
-	// connect git providers
+	// Generate SSH keys
 	const isSSHKeysExisted = await sshKeysExisted();
 	if (!isSSHKeysExisted) await generateSSH();
+	// verify if generated SSH key should not require passphase
+	const keyHasPassphase = sshKeyContainPassphase();
+	if (keyHasPassphase) console.warn(`SSH key "id_rsa" should not contain passphase.`);
 
 	/**
-	 * No need to verify SSH for "test" environment?
+	 * Connect to git providers
+	 * (No need to verify SSH for "test" environment)
 	 */
 	if (!IsTest()) {
 		const gitSvc = new GitProviderService();
@@ -108,7 +114,7 @@ export async function startupScripts() {
 	if (!IsTest()) {
 		const repeatDays = 7; // every 7 days
 		const atHour = 2; // 2AM
-		logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
+		console.log(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
 		cronjob.schedule(`0 ${atHour} */${repeatDays} * *`, () => cleanUp());
 	}
 

@@ -15,6 +15,7 @@ import _, { isArray, isEmpty, isString, toInteger, toNumber } from "lodash";
 import * as m from "marked";
 import TerminalRenderer from "marked-terminal";
 import path from "path";
+import copy from "recursive-copy";
 import type { SimpleGit, SimpleGitProgressEvent } from "simple-git";
 import { simpleGit } from "simple-git";
 
@@ -28,7 +29,7 @@ import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { generateRepoURL } from "@/modules/git";
 import { getCurrentGitBranch } from "@/modules/git/git-utils";
 
-import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
+import { CLI_DIR, DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
 import { MongoDB } from "./mongodb";
 import { checkMonorepo } from "./monorepo";
 import { isNumeric } from "./number";
@@ -36,8 +37,6 @@ import { isWin } from "./os";
 
 const { marked } = m;
 marked.setOptions({ renderer: new TerminalRenderer() });
-
-const CLI_DIR = path.resolve(__dirname, "../../");
 
 export function nowStr() {
 	return dayjs().format("YYYY-MM-DD HH:mm:ss");
@@ -521,8 +520,60 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
 };
 
+export const installPackages = async () => {
+	log(`Đang tiến hành cài đặt "package.json" mới...`);
+
+	const { execa, execaCommand } = await import("execa");
+
+	let areDependenciesInstalled = false;
+	// Install dependencies
+	try {
+		await execa("yarn", ["install"]);
+		// console.log(stdout);
+		areDependenciesInstalled = true;
+	} catch (e) {
+		logWarn("YARN not found, switch to `npm install` instead.");
+	}
+
+	if (!areDependenciesInstalled) {
+		let isOk;
+		try {
+			await execa("npm", ["install"]);
+			isOk = true;
+		} catch (e) {
+			logError("NPM not found -> ", e);
+			isOk = false;
+		}
+		return isOk;
+	} else {
+		return true;
+	}
+};
+
+export const copyAllResources = async (destDirectory: string) => {
+	let options = {
+		overwrite: true,
+		expand: true,
+		dot: true,
+		junk: true,
+		// filter: ["**/*", "!.git"],
+	};
+
+	let success = false;
+	try {
+		const tmpFrameworkDir = path.resolve(".fw");
+		await copy(tmpFrameworkDir, destDirectory, options);
+		success = true;
+	} catch (e) {
+		logError(e);
+	}
+
+	return success;
+};
+
 interface PullOrCloneGitRepoOptions {
 	onUpdate?: (msg: string, progress?: number) => void;
+	isDebugging?: boolean;
 }
 
 export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOrCloneGitRepoOptions = {}) => {
@@ -547,6 +598,36 @@ export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOr
 };
 //
 
+interface GitStageOptions {
+	directory?: string;
+	message?: string;
+}
+
+/**
+ *
+ */
+export async function stageAllFiles(options: GitStageOptions) {
+	const { directory = "./", message = "build(prepare): commit all files & push to origin" } = options;
+	const git = simpleGit(directory, { binary: "git" });
+	const gitStatus = await git.status(["-s"]);
+	// log("[current branch]", gitStatus.current);
+
+	const currentBranch = gitStatus.current;
+	const currentBranchKebab = _.kebabCase(currentBranch);
+
+	// commit & push everything, then try to merge "master" to current branch
+	try {
+		await git.pull("origin", currentBranch, ["--no-ff"]);
+		await git.add("./*");
+		await git.commit(message);
+		await git.push("origin", currentBranch);
+	} catch (e) {
+		logError(e);
+	}
+
+	return { currentBranch, currentBranchKebab };
+}
+
 export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
 	let git: SimpleGit;
 
@@ -560,10 +641,13 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	if (fs.existsSync(dir)) {
 		try {
 			git = simpleGit(dir, { progress: onProgress });
+			// -----------------------
+			// ! DO NOT SET TO "FALSE"
+			// -----------------------
 			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
 			const originRemote = remotes[0] as any;
 			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
-			console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
+			if (options?.isDebugging) console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
 			if (originRemote?.refs?.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
 
 			const curBranch = await getCurrentGitBranch(dir);

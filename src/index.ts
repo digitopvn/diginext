@@ -1,10 +1,10 @@
 #! /usr/bin/env node
 
-import Configstore from "configstore";
+// import Configstore from "configstore";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
-import pkg from "@/../package.json";
+// import pkg from "@/../package.json";
 import { execConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
@@ -41,7 +41,7 @@ import { testCommand } from "./modules/test-command";
 /**
  * Initialize CONFIG STORE (in document directory of the local machine)
  */
-export const conf = new Configstore(pkg.name);
+// export const conf = new Configstore(pkg.name);
 
 export async function processCLI(options?: InputOptions) {
 	options.version = currentVersion();
@@ -235,17 +235,14 @@ export async function processCLI(options?: InputOptions) {
 	}
 }
 
-if (process.env.CLI_MODE == "test") {
-	//
-} else if (process.env.CLI_MODE == "server") {
-	import("@/server");
-} else {
-	// Execute CLI commands...
-	parseCliOptions().then((inputOptions) =>
-		!inputOptions.isDebugging
-			? processCLI(inputOptions)
-					.then(() => process.exit(0))
-					.catch((e) => logError(e.toString()))
-			: processCLI(inputOptions).then(() => process.exit(0))
-	);
-}
+// Only start a server mode when needed
+if (process.env.CLI_MODE == "server") import("@/server");
+
+// Otherwise, parse & execute CLI commands...
+parseCliOptions().then((inputOptions) =>
+	!inputOptions.isDebugging
+		? processCLI(inputOptions)
+				.then(() => process.exit(0))
+				.catch((e) => logError(e.toString()))
+		: processCLI(inputOptions).then(() => process.exit(0))
+);
