@@ -1,3 +1,10 @@
+# [3.15.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.15.0-prerelease.1...v3.15.0-prerelease.2) (2023-06-29)
+
+
+### Bug Fixes
+
+* **server,api:** gitprovider connect personal github account ([0aa156f](https://github.com/digitopvn/diginext/commit/0aa156f4b327ad593e76d54f333ea61ea52fcb31))
+
 # [3.15.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.14.3...v3.15.0-prerelease.1) (2023-06-28)
 
 
