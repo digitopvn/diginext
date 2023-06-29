@@ -150,7 +150,7 @@ export function testFlow1() {
 		expect(bitbucket.owner).toBeDefined();
 		expect(bitbucket.verified).toBe(true);
 		expect(bitbucket.host).toBe("bitbucket.org");
-		expect(bitbucket.system).toBeTruthy();
+		expect(bitbucket.isOrg).toBeTruthy();
 
 		// test api
 		const profile = await GitProviderAPI.getProfile(bitbucket);
@@ -182,7 +182,7 @@ export function testFlow1() {
 		expect(github.owner).toEqual(curUser._id);
 		expect(github.verified).toBe(true);
 		expect(github.host).toBe("github.com");
-		expect(github.system).toBeTruthy();
+		expect(github.isOrg).toBeTruthy();
 
 		// test api
 		const profile = await GitProviderAPI.getProfile(github);

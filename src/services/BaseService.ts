@@ -237,7 +237,7 @@ export default class BaseService<T = any> {
 			})
 		);
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find > json results >>`, results);
-
+		// console.log("isArray(results) :>> ", isArray(results));
 		return results as T[];
 	}
 

@@ -50,17 +50,19 @@ const jwt_auth = (req: AppRequest, res, next) =>
 			const activeRole = roles.find(
 				(role) => MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id)
 			) as IRole;
-
-			if (user.activeRole !== activeRole._id) {
+			// console.log("user.activeRole :>> ", user.activeRole);
+			// console.log("activeRole :>> ", activeRole);
+			if (activeRole && user.activeRole !== activeRole._id) {
 				user = await DB.updateOne<IUser>(
 					"user",
 					{ _id: user._id },
 					{ activeRole: activeRole._id },
 					{ populate: ["roles", "workspaces", "activeRole", "activeWorkspace"] }
 				);
+				// console.log("user.activeRole :>> ", user.activeRole);
 				// user.activeRole = activeRole;
 			}
-			req.role = activeRole;
+			req.role = user.activeRole = activeRole;
 
 			// user
 			req.user = user;
