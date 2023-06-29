@@ -242,20 +242,22 @@ export type DxOptions = { onProgress: (msg: string) => void };
 
 export const CLI_TEST_DIR = path.resolve(CLI_CONFIG_DIR, "tests");
 if (!existsSync(CLI_TEST_DIR)) mkdirSync(CLI_TEST_DIR, { recursive: true });
-const dxCommandOptions: Options = { env: { CLI_MODE: "client" }, stdio: "inherit", cwd: CLI_TEST_DIR };
+const dxCommandOptions: Options = { env: { CLI_MODE: "client" }, cwd: CLI_TEST_DIR };
 
 export const dxCmd = async (command: string, options?: DxOptions) => {
 	const stream = execaCommand(command, dxCommandOptions);
-	if (options?.onProgress)
-		stream.stdio.forEach((_stdio) => {
-			if (_stdio) {
-				_stdio.on("data", (data) => {
-					let logMsg = data.toString();
-					if (options?.onProgress && logMsg) options?.onProgress(logMsg);
-				});
-			}
-		});
-	return await stream;
+	let stdout: string = "";
+	stream.stdio.forEach((_stdio) => {
+		if (_stdio) {
+			_stdio.on("data", (data) => {
+				let logMsg = data.toString();
+				stdout += logMsg;
+				if (options?.onProgress && logMsg) options?.onProgress(logMsg);
+			});
+		}
+	});
+	const end = await stream;
+	return stdout || end.stdout;
 };
 
 /**
