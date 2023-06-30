@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
-import type { IRoutePermission, IRouteScope } from "@/interfaces/IPermission";
+import { type IRoutePermission, type IRouteScope, routePermissionList, routeScopeList } from "@/interfaces/IPermission";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
@@ -41,8 +41,8 @@ export type RoleDto = Omit<IRole, keyof HiddenBodyKeys>;
 
 const RoleRouteSchema = new Schema<RoleRoute>({
 	path: { type: String },
-	scope: [{ type: String, enum: ["all", "workspace", "team", "project", "app"] }],
-	permissions: [{ type: String, enum: ["full", "own", "create", "read", "update", "delete"] }],
+	scope: [{ type: String, enum: routeScopeList }],
+	permissions: [{ type: String, enum: routePermissionList }],
 });
 
 export const roleSchema = new Schema(

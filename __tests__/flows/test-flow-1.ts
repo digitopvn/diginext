@@ -99,6 +99,7 @@ export function testFlow1() {
 
 		// check 3 initial roles
 		const initialRoles = await roleSvc.find({ workspace: wsId });
+		console.log("initialRoles :>> ", initialRoles);
 		expect(initialRoles.length).toEqual(3);
 
 		const roleNames = initialRoles.map((role) => (role as IRole).name);
@@ -156,7 +157,7 @@ export function testFlow1() {
 		const profile = await GitProviderAPI.getProfile(bitbucket);
 		expect(profile).toBeDefined();
 		expect(profile.username).toBe(process.env.TEST_BITBUCKET_USERNAME);
-	});
+	}, 30000);
 
 	it("Workspace #1: Git Provider - Github", async () => {
 		const curUser = await getCurrentUser();
@@ -187,7 +188,7 @@ export function testFlow1() {
 		// test api
 		const profile = await GitProviderAPI.getProfile(github);
 		expect(profile).toBeDefined();
-	});
+	}, 30000);
 
 	it("Workspace #1: Container Registry - Google Artifact Registry", async () => {
 		const curUser = await getCurrentUser();

@@ -43,7 +43,7 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 
 	// MEMBER
 	let memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: workspace._id });
-
+	console.log("Seed role > memberRole :>> ", memberRole);
 	const memberRoleMaskedFields = ["email", ...credentialFields];
 
 	if (!memberRole) {
