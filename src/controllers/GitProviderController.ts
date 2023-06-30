@@ -32,8 +32,16 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
-		return super.read();
+	async read(@Queries() queryParams?: interfaces.IGetQueryParams) {
+		if (!this.filter) this.filter = {};
+
+		try {
+			this.options.isDebugging = true;
+			const data = await this.service.find(this.filter, this.options, this.pagination);
+			return respondSuccess({ data });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
 	}
 
 	@Security("api_key")
@@ -87,7 +95,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 			// auto generated fields
 			body.host = "bitbucket.org";
-			body.name = "Bitbucket";
+			if (!body.name) body.name = "Bitbucket";
 		} else if (type === "github") {
 			if (!github_oauth) return respondFailure(`Github OAuth information is required.`);
 
@@ -111,7 +119,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 			// auto generated fields
 			body.host = "github.com";
-			body.name = "Github";
+			if (!body.name) body.name = "Github";
 		} else {
 			return respondFailure(`Git "${type}" type is not supported yet.`);
 		}
@@ -122,7 +130,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		body.method = method;
 
 		// mark as organization git provider or not
-		body.isOrg = (this.user.activeRole as entities.IRole).type === "admin";
+		body.public = body.isOrg = (this.user.activeRole as entities.IRole).type === "admin";
 
 		try {
 			// verify

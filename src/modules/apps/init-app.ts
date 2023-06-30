@@ -1,12 +1,13 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 
-import type { IProject } from "@/entities";
+import type { IGitProvider, IProject } from "@/entities";
 import { type AppGitInfo, type IApp } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 import { getCurrentGitRepoData } from "@/plugins";
 
 import { DB } from "../api/DB";
+import { askForGitProvider } from "../git/ask-for-git-provider";
 import { printInformation } from "../project/printInformation";
 import { getAppConfigFromApp } from "./app-helper";
 import { createOrSelectApp } from "./create-or-select-app";
@@ -45,6 +46,14 @@ export async function execInitApp(options: InputOptions) {
 					logError(`Unable to select: app "${selectedApp.slug}" is corrupted.`);
 					return;
 				}
+				// git provider
+				options.git = selectedApp.gitProvider
+					? await DB.findOne<IGitProvider>("git", { _id: selectedApp.gitProvider })
+					: await askForGitProvider();
+				if (!selectedApp.gitProvider && options.git) {
+					await DB.updateOne<IApp>("app", { _id: selectedApp._id }, { gitProvider: options.git._id });
+				}
+				// app git info
 				options.remoteSSH = options.app.git.repoSSH;
 				options.remoteURL = options.app.git.repoURL;
 				options.gitProvider = options.app.git.provider;

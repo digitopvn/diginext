@@ -11,7 +11,7 @@ export interface RoleRoute {
 	 * Route path
 	 * @example /api/v1/healthz
 	 */
-	route: string;
+	path: string;
 	/**
 	 * @default ["full"]
 	 */
@@ -21,7 +21,7 @@ export interface RoleRoute {
 	 * @default all
 	 * @example all
 	 */
-	scope?: IRouteScope;
+	scope?: IRouteScope[];
 }
 
 export interface IRole extends IBase {
@@ -40,7 +40,7 @@ export interface IRole extends IBase {
 export type RoleDto = Omit<IRole, keyof HiddenBodyKeys>;
 
 const RoleRouteSchema = new Schema<RoleRoute>({
-	route: { type: String },
+	path: { type: String },
 	scope: [{ type: String, enum: ["all", "workspace", "team", "project", "app"] }],
 	permissions: [{ type: String, enum: ["full", "own", "create", "read", "update", "delete"] }],
 });

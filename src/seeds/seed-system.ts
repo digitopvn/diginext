@@ -1,6 +1,6 @@
 import type { ICloudProvider } from "@/entities";
-import { seedSystemRoutes } from "@/migration/seed-all-routes";
 import { DB } from "@/modules/api/DB";
+import { seedSystemRoutes } from "@/seeds/seed-all-routes";
 
 const initialCloudProviders = [
 	{

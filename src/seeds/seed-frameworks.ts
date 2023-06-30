@@ -7,7 +7,7 @@ export const initialFrameworks: FrameworkDto[] = [
 		repoURL: "https://github.com/digitopvn/static-nginx-site",
 		repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
 		gitProvider: "github",
-		isPrivate: false,
+		// isPrivate: false,
 		mainBranch: "main",
 	},
 	{
@@ -15,7 +15,7 @@ export const initialFrameworks: FrameworkDto[] = [
 		repoURL: "https://github.com/digitopvn/next13-starter",
 		repoSSH: "git@github.com:digitopvn/next13-starter.git",
 		gitProvider: "github",
-		isPrivate: false,
+		// isPrivate: false,
 		mainBranch: "main",
 	},
 ];

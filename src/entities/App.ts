@@ -1,3 +1,4 @@
+import type { Types } from "mongoose";
 import { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
@@ -6,6 +7,7 @@ import type { GitProviderType } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
+import type { IGitProvider } from "./GitProvider";
 
 export interface AppGitInfo {
 	/**
@@ -135,6 +137,11 @@ export interface IApp extends IBase {
 	 * @memberof IApp
 	 */
 	projectSlug?: string;
+
+	/**
+	 * Git Provider of this app
+	 */
+	gitProvider?: Types.ObjectId | IGitProvider | string;
 }
 
 export type AppDto = Omit<IApp, keyof HiddenBodyKeys>;
@@ -163,6 +170,7 @@ export const appSchema = new Schema(
 		deployEnvironment: { type: Map },
 		latestBuild: { type: String },
 		projectSlug: { type: String },
+		gitProvider: { type: Schema.Types.ObjectId, ref: "git_providers" },
 	},
 	{ collection: "apps", timestamps: true }
 );

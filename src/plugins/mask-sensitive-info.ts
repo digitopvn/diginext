@@ -32,7 +32,7 @@ export const maskSensitiveInfo = (data: any, user: IUser, role?: IRole) => {
 
 	// parse role
 	if (!role && (user.activeRole as IRole)?._id) role = user.activeRole as IRole;
-	if (!role) throw new Error(`Unable to mask data, "role" is undefined.`);
+	if (!role) return;
 
 	const maskedFields = role?.maskedFields || [];
 

@@ -4,12 +4,12 @@ import type { IServiceAccount } from "@/entities/ServiceAccount";
 import { DB } from "@/modules/api/DB";
 
 export const migrateServiceAccountAndApiKey = async () => {
-	const workspaces = (await DB.find<IWorkspace>("workspace", {})) || [];
+	const workspaces = (await DB.find<IWorkspace>("workspace", {}, { select: ["_id", "name"] })) || [];
 
 	// create default roles for each workspace: Admin, Moderator & Member
 	for (const ws of workspaces) {
 		// Moderator
-		const moderatorRole = await DB.findOne<IRole>("role", { type: "moderator", workspace: ws._id });
+		const moderatorRole = await DB.findOne<IRole>("role", { type: "moderator", workspace: ws._id }, { select: ["_id", "name"] });
 
 		// find all service accounts & API keys of this workspace and assign "moderator" role:
 		let sas = await DB.find<IServiceAccount>("service_account", { workspaces: ws._id, roles: { $nin: [moderatorRole._id] } });

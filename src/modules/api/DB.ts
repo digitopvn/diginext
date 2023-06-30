@@ -27,26 +27,28 @@ import {
 
 import fetchApi from "./fetchApi";
 
-export type DBCollection =
-	| "app"
-	| "build"
-	| "database"
-	| "db_backup"
-	| "provider"
-	| "cluster"
-	| "git"
-	| "registry"
-	| "framework"
-	| "project"
-	| "release"
-	| "role"
-	| "route"
-	| "team"
-	| "user"
-	| "api_key_user"
-	| "service_account"
-	| "workspace"
-	| "cronjob";
+export const dbCollections = [
+	"app",
+	"build",
+	"database",
+	"db_backup",
+	"provider",
+	"cluster",
+	"git",
+	"registry",
+	"framework",
+	"project",
+	"release",
+	"role",
+	"route",
+	"team",
+	"user",
+	"api_key_user",
+	"service_account",
+	"workspace",
+	"cronjob",
+] as const;
+export type DBCollection = typeof dbCollections[number];
 
 export function queryFilterToUrlFilter(filter: any = {}) {
 	return new URLSearchParams(filter).toString();

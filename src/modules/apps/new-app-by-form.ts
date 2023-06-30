@@ -125,6 +125,10 @@ export async function createAppByForm(
 		options.frameworkVersion = "unknown";
 	}
 
+	// select git provider for this app:
+	let gitProvider = options.git || (await askForGitProvider());
+	options.git = gitProvider;
+
 	const currentGitData = options.shouldCreate ? undefined : await getCurrentGitRepoData(options.targetDirectory);
 	if (options.isDebugging) log(`[CREATE APP BY FORM] current git data :>>`, currentGitData);
 
@@ -133,8 +137,6 @@ export async function createAppByForm(
 		options.remoteSSH = currentGitData.remoteSSH;
 		options.remoteURL = currentGitData.remoteURL;
 	} else {
-		let gitProvider = options.git || (await askForGitProvider());
-
 		// Create new repo:
 		const repoData: GitRepositoryDto = {
 			name: options.repoSlug,
@@ -150,7 +152,6 @@ export async function createAppByForm(
 					{ name: options.repoSlug },
 					{
 						subpath: "/orgs/repos",
-						// filter: { slug: gitProvider.slug },
 						ignorable: true,
 					}
 				);
@@ -172,6 +173,7 @@ export async function createAppByForm(
 	// Call API to create new app
 	const appData: AppDto = {
 		name: options.name,
+		public: options.git.public,
 		// createdBy: options.username,
 		// owner: options.userId,
 		// workspace: options.workspaceId,
@@ -188,6 +190,7 @@ export async function createAppByForm(
 			: ({} as AppGitInfo),
 		environment: {},
 		deployEnvironment: {},
+		gitProvider: options.git?._id,
 	};
 
 	// console.log("createAppByForm > appData :>> ", appData);

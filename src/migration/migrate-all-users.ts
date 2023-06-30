@@ -1,19 +1,30 @@
 import { log } from "diginext-utils/dist/xconsole/log";
-import { isEmpty } from "lodash";
 
 import type { IUser } from "@/entities";
+import { filterUniqueItemWithCondition } from "@/plugins/array";
 
 import { DB } from "../modules/api/DB";
 
 export const migrateAllUsers = async () => {
-	const users = await await DB.find<IUser>("user", { roles: undefined });
-	if (isEmpty(users)) return;
+	const users = await await DB.find<IUser>(
+		"user",
+		// { $or: [{ migratedAt: { $exists: false } }, { migratedAt: { $gte: dayjs().startOf("date"), $lte: dayjs().endOf("date") } }] },
+		{ migratedAt: { $exists: false } },
+		{ populate: ["roles"], select: ["_id", "roles"] }
+	);
+	if (users.length === 0) return;
 
-	log(`[MIGRATION] migrateAllUserTypes() > Found ${users.length} users need to assign default roles.`);
+	const results = await Promise.all(
+		users
+			.filter((user) => {
+				const fixedRoles = filterUniqueItemWithCondition(user.roles, "workspace", { field: "type", value: "admin" });
+				user.roles = fixedRoles.map((role) => role._id);
+				return user;
+			})
+			.map((user) => DB.updateOne("user", { _id: user._id }, { roles: user.roles, migratedAt: new Date() }, { select: ["_id"] }))
+	);
 
-	const results = await DB.update<IUser>("user", { type: undefined }, { type: "user" });
-
-	log(`[MIGRATION] migrateAllUserTypes() > FINISH MIGRATION >> Affected ${results.length} users.`);
+	log(`[MIGRATION] migrateAllUsers() > Affected ${results.length} users.`);
 
 	return results;
 };
