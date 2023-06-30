@@ -1,10 +1,11 @@
-import { IContainerRegistry, IGitProvider, IRole, IWorkspace } from "@/entities";
+import { IContainerRegistry, IFramework, IGitProvider, IRole, IWorkspace } from "@/entities";
 import { MongoDB } from "../../src/plugins/mongodb";
 import {
 	apiKeySvc,
 	createFakeUser,
 	createWorkspace,
 	dxCmd,
+	frameworkCtl,
 	frameworkSvc,
 	getCurrentUser,
 	gitCtl,
@@ -99,7 +100,7 @@ export function testFlow1() {
 
 		// check 3 initial roles
 		const initialRoles = await roleSvc.find({ workspace: wsId });
-		console.log("initialRoles :>> ", initialRoles);
+		// console.log("initialRoles :>> ", initialRoles);
 		expect(initialRoles.length).toEqual(3);
 
 		const roleNames = initialRoles.map((role) => (role as IRole).name);
@@ -189,6 +190,47 @@ export function testFlow1() {
 		const profile = await GitProviderAPI.getProfile(github);
 		expect(profile).toBeDefined();
 	}, 30000);
+
+	it('Workspace #1: Add "public" framework', async () => {
+		const curUser = await getCurrentUser();
+
+		// add new "public" framework
+		const createRes = await frameworkCtl.create({
+			name: "Static Site Starter with NGINX",
+			repoURL: "https://github.com/digitopvn/static-nginx-site",
+			repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
+			gitProvider: "github",
+			mainBranch: "main",
+		});
+
+		if (!createRes.status) console.log("FRAMEWORK > createRes :>> ", createRes);
+		expect(createRes.status).toBe(1);
+
+		// check...
+		const fw = createRes.data as IFramework;
+		expect(fw).toBeDefined();
+	}, 30000);
+
+	// it('Workspace #1: Add "private" framework', async () => {
+	// 	const curUser = await getCurrentUser();
+
+	// 	// add new "public" framework
+	// 	const createRes = await frameworkCtl.create({
+	// 		name: "Static Site Starter with NGINX",
+	// 		repoURL: "https://github.com/digitopvn/static-nginx-site",
+	// 		repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
+	// 		gitProvider: "github",
+	// 		mainBranch: "main",
+	// 	});
+
+	// 	if (!createRes.status) console.log("FRAMEWORK > createRes :>> ", createRes);
+	// 	expect(createRes.status).toBe(1);
+
+	// 	const fw = createRes.data as IFramework;
+
+	// 	// check...
+	// 	expect(fw).toBeDefined();
+	// }, 30000);
 
 	it("Workspace #1: Container Registry - Google Artifact Registry", async () => {
 		const curUser = await getCurrentUser();
