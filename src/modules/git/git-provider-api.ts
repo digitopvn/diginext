@@ -8,16 +8,38 @@ import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 
-type GitProviderApiOptions = { method?: RequestMethodType; data?: any; headers?: any };
+type GitProviderApiOptions = {
+	/**
+	 * Mark `TRUE` if this is a personal repo API
+	 * @default false
+	 */
+	isPersonalRepo?: boolean;
+	method?: RequestMethodType;
+	data?: any;
+	headers?: any;
+};
 
 const githubApiBaseURL = "https://api.github.com";
 const bitbucketApiBaseURL = "https://api.bitbucket.org/2.0";
 
 const userApiPath = (provider: GitProviderType, org?: string) => (provider === "bitbucket" ? "/user" : provider === "github" ? "/user" : undefined);
+
 const userOrgApiPath = (provider: GitProviderType, org?: string) =>
 	provider === "bitbucket" ? "/workspaces" : provider === "github" ? "/user/orgs" : undefined;
+
+const repoApiPath = (provider: GitProviderType, org?: string, slug?: string) =>
+	provider === "bitbucket" ? `/repositories/${org}${slug ? `/${slug}` : ""}` : provider === "github" ? `/repos/${org}/${slug}` : undefined;
+
+const userRepoApiPath = (provider: GitProviderType, username?: string, slug?: string) =>
+	provider === "bitbucket"
+		? `/repositories/${username}${slug ? `/${slug}` : ""}`
+		: provider === "github"
+		? `/users${username ? `/${username}` : ""}/repos`
+		: undefined;
+
 const orgRepoApiPath = (provider: GitProviderType, org?: string, slug?: string) =>
 	provider === "bitbucket" ? `/repositories/${org}${slug ? `/${slug}` : ""}` : provider === "github" ? `/orgs/${org}/repos` : undefined;
+
 const repoDeleteApiPath = (provider: GitProviderType, org: string, slug: string) =>
 	provider === "bitbucket" ? `/repositories/${org}/${slug}` : `/repos/${org}/${slug}`;
 /**
@@ -370,6 +392,10 @@ interface GitOrg {
 	name: string;
 	url: string;
 	description: string;
+	/**
+	 * `false` if this is a personal account
+	 */
+	is_org: boolean;
 }
 
 interface GitHubOrgRepository {
@@ -510,33 +536,45 @@ const getProfile = async (provider: IGitProvider) => {
 const listOrgs = async (provider: IGitProvider) => {
 	if (provider.type === "bitbucket") {
 		const bitbucketOrgsRes = (await api(provider, userOrgApiPath(provider.type))) as BitbucketOrgListResponse;
-		console.log("bitbucketOrgsRes :>> ", bitbucketOrgsRes);
+		// console.log("bitbucketOrgsRes :>> ", bitbucketOrgsRes);
 		return bitbucketOrgsRes.values.map((org) => {
 			return {
 				id: org.uuid,
 				name: org.slug,
 				description: "",
 				url: org.links.html.href,
+				is_org: true,
 			} as GitOrg;
 		});
 	}
 
 	if (provider.type === "github") {
 		const githubOrgs = (await api(provider, userOrgApiPath(provider.type))) as GitHubOrg[];
-		return githubOrgs.map((org) => {
+		const profile = await getProfile(provider);
+		const orgList = githubOrgs.map((org) => {
 			return {
 				id: org.id.toString(),
 				name: org.login,
 				description: org.description,
 				url: org.url,
+				is_org: true,
 			} as GitOrg;
 		});
+		// push personal git provider
+		orgList.push({
+			id: profile.id,
+			name: profile.username,
+			description: `Personal Github account.`,
+			url: profile.url,
+			is_org: false,
+		});
+		return orgList;
 	}
 
 	throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 };
 
-const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDto) => {
+const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDto) => {
 	// validation
 	if (!data.name) data.name = makeSlug(data.name).toLocaleLowerCase();
 
@@ -610,14 +648,18 @@ const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDt
 	}
 
 	if (provider.type === "github") {
-		const newGithubRepo = (await api(provider, orgRepoApiPath(provider.type, provider.gitWorkspace), {
-			data: {
-				...data,
-				has_issues: true,
-				has_wiki: true,
-			},
-			method: "POST",
-		})) as GitHubOrgRepository & GithubFailureResponse;
+		const newGithubRepo = (await api(
+			provider,
+			provider.isOrg ? orgRepoApiPath(provider.type, provider.gitWorkspace) : userRepoApiPath(provider.type),
+			{
+				data: {
+					...data,
+					has_issues: true,
+					has_wiki: true,
+				},
+				method: "POST",
+			}
+		)) as GitHubOrgRepository & GithubFailureResponse;
 
 		if (newGithubRepo.message) throw new Error(`[GITHUB_API_ERROR] ${newGithubRepo.message}`);
 
@@ -645,7 +687,7 @@ const createOrgRepository = async (provider: IGitProvider, data: GitRepositoryDt
 	throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 };
 
-const listOrgRepositories = async (provider: IGitProvider) => {
+const listGitRepositories = async (provider: IGitProvider) => {
 	if (provider.type === "bitbucket") {
 		const { values: bitbucketRepos } = (await api(
 			provider,
@@ -675,7 +717,10 @@ const listOrgRepositories = async (provider: IGitProvider) => {
 	}
 
 	if (provider.type === "github") {
-		const githubRepos = (await api(provider, orgRepoApiPath(provider.type, provider.gitWorkspace))) as GitHubOrgRepository[];
+		const apiUrl = provider.isOrg ? orgRepoApiPath(provider.type, provider.gitWorkspace) : userRepoApiPath(provider.type, provider.gitWorkspace);
+		// console.log("apiUrl :>> ", apiUrl);
+		const githubRepos = (await api(provider, apiUrl)) as GitHubOrgRepository[];
+		// console.log("githubRepos :>> ", githubRepos);
 
 		return githubRepos.map((repo) => {
 			return {
@@ -711,8 +756,8 @@ export const deleteOrgRepository = async (provider: IGitProvider, org: string, s
 const GitProviderAPI = {
 	getProfile,
 	listOrgs,
-	listOrgRepositories,
-	createOrgRepository,
+	listOrgRepositories: listGitRepositories,
+	createOrgRepository: createGitRepository,
 	deleteOrgRepository,
 };
 

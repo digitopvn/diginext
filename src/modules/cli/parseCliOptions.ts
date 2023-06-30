@@ -544,7 +544,6 @@ export async function parseCliOptions() {
 		if (!options.git) throw new Error(`Git provider "${argv.git}" not found.`);
 	}
 
-	console.log("argv.framework :>> ", argv.framework);
 	if (typeof argv.framework !== "undefined") {
 		if (argv.framework === "none") {
 			options.framework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
@@ -554,7 +553,6 @@ export async function parseCliOptions() {
 			options.frameworkVersion = options.framework.mainBranch;
 		}
 	}
-	console.log("options.framework :>> ", options.framework);
 
 	if (argv.github === true && typeof options.gitProvider === "undefined") options.gitProvider = "github";
 	if (argv.bitbucket === true && typeof options.gitProvider === "undefined") options.gitProvider = "bitbucket";

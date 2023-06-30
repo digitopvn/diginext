@@ -87,6 +87,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 			// auto generated fields
 			body.host = "bitbucket.org";
+			body.name = "Bitbucket";
 		} else if (type === "github") {
 			if (!github_oauth) return respondFailure(`Github OAuth information is required.`);
 
@@ -110,6 +111,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 			// auto generated fields
 			body.host = "github.com";
+			body.name = "Github";
 		} else {
 			return respondFailure(`Git "${type}" type is not supported yet.`);
 		}
@@ -119,11 +121,18 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		body.refresh_token = refresh_token;
 		body.method = method;
 
-		// mark as system or not
-		body.system = (this.user.activeRole as entities.IRole).type === "admin";
+		// mark as organization git provider or not
+		body.isOrg = (this.user.activeRole as entities.IRole).type === "admin";
 
-		// process
-		return super.create(body);
+		try {
+			// verify
+			await GitProviderAPI.getProfile(body);
+			// save
+			return await super.create(body);
+		} catch (e) {
+			// error
+			return respondFailure(e.toString());
+		}
 	}
 
 	@Security("api_key")
@@ -145,8 +154,8 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		}
 
 		body.repo = {
-			url: `https://bitbucket.org/${body.gitWorkspace}`,
-			sshPrefix: `git@bitbucket.org:${body.gitWorkspace}`,
+			url: `https://${provider.host}/${body.gitWorkspace}`,
+			sshPrefix: `git@${provider.host}:${body.gitWorkspace}`,
 		};
 
 		// regenerate slug
@@ -262,7 +271,19 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/orgs/repos")
-	async getListOrgRepos(@Queries() queryParams?: interfaces.IPostQueryParams) {
+	async getListOrgRepos(
+		@Queries()
+		queryParams?: {
+			/**
+			 * Git provider's ID
+			 */
+			_id?: string;
+			/**
+			 * Git provider's SLUG¸¸¸
+			 */
+			slug?: string;
+		}
+	) {
 		// validation
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
