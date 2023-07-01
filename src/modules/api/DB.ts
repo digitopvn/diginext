@@ -2,6 +2,7 @@ import { logError } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
 import { isServerMode } from "@/app.config";
+import type { IUser, IWorkspace } from "@/entities";
 import type { IQueryOptions, IQueryPagination } from "@/interfaces";
 import {
 	ApiKeyUserService,
@@ -132,6 +133,9 @@ export interface DBQueryOptions extends IQueryOptions {
 	 * @default false
 	 */
 	ignorable?: boolean;
+
+	user?: IUser;
+	workspace?: IWorkspace;
 }
 
 export class DB {
@@ -274,10 +278,6 @@ export class DB {
 				if (!options?.ignorable) logError(`[DB] CREATE > Service "${collection}" :>>`, e);
 			}
 		} else {
-			/**
-			 * ___Notes___: use the same flatten method with UPDATE for convenience!
-			 */
-			// let newData = flattenObjectPaths(data);
 			let newData = data;
 
 			const filterStr = queryFilterToUrlFilter(filter);

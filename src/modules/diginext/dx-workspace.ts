@@ -15,7 +15,7 @@ export type CreateWorkspaceResponse = ResponseData & {
 	data: { name: string; slug: string; domain: string; subscriptionId: string; createdAt: string; updatedAt: string };
 };
 
-export async function createDxWorkspace(params: CreateWorkspaceParams, dxKey: string) {
+export async function dxCreateWorkspace(params: CreateWorkspaceParams, dxKey: string) {
 	if (IsTest())
 		return {
 			status: 1,

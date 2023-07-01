@@ -130,7 +130,7 @@ export default class BaseService<T = any> {
 		let _filter = parseRequestFilter(filter);
 
 		const where = { ..._filter };
-		if (!options?.deleted) where.deleteAt = { $exists: false };
+		if (!options?.deleted) where.deletedAt = { $exists: false };
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find > where :>>`, where);
 
 		const pipelines: PipelineStage[] = [
