@@ -296,19 +296,19 @@ export function testFlow1() {
 		// console.log("cliInfo :>> ", cliInfo);
 	}, 15000);
 
-	// it(
-	// 	"CLI: Create new app (Github)",
-	// 	async () => {
-	// 		const github = await gitSvc.findOne({ type: "github" });
-	// 		const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
-	// 		// create new app...
-	// 		const { stdout, stderr } = await dxCmd(
-	// 			`dx new --projectName="Test Github Project" --name=web --framework=${framework.slug} --git=${github.slug} --force`
-	// 		);
-	// 		expect(stdout).toBeDefined();
-	// 	},
-	// 	5 * 60000
-	// );
+	it(
+		"CLI: Create new app (Github)",
+		async () => {
+			const github = await gitSvc.findOne({ type: "github" });
+			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
+			// create new app...
+			const res = await dxCmd(
+				`dx new --projectName="Test Github Project" --name=web --framework=${framework.slug} --git=${github.slug} --force --debug`
+			);
+			expect(res).toBeDefined();
+		},
+		5 * 60000
+	);
 
 	// it(
 	// 	"CLI: Create new app (Bitbucket)",
