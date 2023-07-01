@@ -1,9 +1,10 @@
 import type express from "express";
 
-import type { IRole, IUser, IWorkspace } from "@/entities";
+import type { IRole, IUser, IWorkspace, RoleRoute } from "@/entities";
 
 // express.js
 export interface AppRequest extends express.Request {
+	query: any;
 	user?: IUser;
 	role?: IRole;
 	workspace?: IWorkspace;
@@ -136,3 +137,31 @@ export const credentialFields: string[] = [
 	"metadata.dockerPassword",
 	"metadata.kubeConfig",
 ];
+
+/**
+ * ROLES & PERMISSIONS: API Routes
+ */
+export const memberRoleRoutes: RoleRoute[] = [
+	{ path: "*", permissions: ["own", "read"], scope: [] },
+	{ path: "/api/v1/deploy", permissions: ["read", "create", "update"], scope: [] },
+	{ path: "/api/v1/domain", permissions: ["read", "create", "update"], scope: [] },
+	{ path: "/api/v1/project", permissions: ["own", "read", "create", "update"], scope: [] },
+	{ path: "/api/v1/app", permissions: ["own", "read", "create", "update"], scope: [] },
+	{ path: "/api/v1/app/environment", permissions: ["full"], scope: [] },
+	{ path: "/api/v1/app/environment/variables", permissions: ["full"], scope: [] },
+	{ path: "/api/v1/build/start", permissions: ["full"], scope: [] },
+	{ path: "/api/v1/build/stop", permissions: ["full"], scope: [] },
+	{ path: "/api/v1/release", permissions: ["own", "read", "create", "update"], scope: [] },
+	{ path: "/api/v1/release/from-build", permissions: ["own", "read", "create", "update"], scope: [] },
+	{ path: "/api/v1/release/preview", permissions: ["own", "read", "create", "update"], scope: [] },
+	{ path: "/api/v1/git", permissions: ["own", "public"], scope: [] },
+	{ path: "/api/v1/git/public-key", permissions: [], scope: [] },
+	{ path: "/api/v1/git/ssh/create", permissions: [], scope: [] },
+	{ path: "/api/v1/git/ssh/generate", permissions: [], scope: [] },
+	{ path: "/api/v1/git/ssh/verify", permissions: [], scope: [] },
+	{ path: "/api/v1/user/join-workspace", permissions: ["update"], scope: [] },
+	{ path: "/api/v1/role", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/api_key", permissions: [], scope: [] },
+	{ path: "/api/v1/service_account", permissions: ["own", "public"], scope: [] },
+];
+export const moderatorRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["own", "read", "create", "update"], scope: [] }];

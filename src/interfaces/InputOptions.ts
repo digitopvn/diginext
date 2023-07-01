@@ -1,4 +1,4 @@
-import type { IApp, IFramework, IProject, IWorkspace } from "@/entities";
+import type { IApp, IFramework, IGitProvider, IProject, IWorkspace } from "@/entities";
 
 import type { GitProviderType, ResourceQuotaSize } from "./SystemTypes";
 
@@ -534,6 +534,11 @@ export type InputOptions = {
 	 * Container Registry's slug
 	 */
 	registry?: string;
+
+	/**
+	 * Git provider
+	 */
+	git?: IGitProvider;
 
 	/**
 	 * Git provider type

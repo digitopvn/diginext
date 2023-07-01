@@ -7,8 +7,7 @@ import { getCliConfig } from "@/config/config";
 import type { AppGitInfo, IApp, IContainerRegistry, IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 import { fetchApi } from "@/modules/api/fetchApi";
-import { stageAllFiles } from "@/modules/bitbucket";
-import { getCurrentGitRepoData, resolveDockerfilePath } from "@/plugins";
+import { getCurrentGitRepoData, resolveDockerfilePath, stageAllFiles } from "@/plugins";
 
 import { DB } from "../api/DB";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";

@@ -1,6 +1,5 @@
 import { IUser, UserDto, IWorkspace, WorkspaceDto, IRole } from "../src/entities";
-import fetchApi from "../src/modules/api/fetchApi";
-import { wait, waitUntil } from "../src/plugins/utils";
+import { wait, waitUntil } from "@/plugins/utils";
 import AppDatabase from "../src/modules/AppDatabase";
 import { extractAccessTokenInfo, generateJWT } from "../src/modules/passports/jwtStrategy";
 import { isServerReady, server, socketIO } from "../src/server";
@@ -11,9 +10,11 @@ import {
 	AppService,
 	BuildService,
 	CloudDatabaseService,
+	CloudDatabaseBackupService,
 	CloudProviderService,
 	ClusterService,
 	ContainerRegistryService,
+	CronjobService,
 	FrameworkService,
 	GitProviderService,
 	ProjectService,
@@ -30,6 +31,7 @@ import BuildController from "../src/controllers/BuildController";
 import CloudDatabaseController from "../src/controllers/CloudDatabaseController";
 import CloudProviderController from "../src/controllers/CloudProviderController";
 import ClusterController from "../src/controllers/ClusterController";
+import CronjobController from "../src/controllers/CronjobController";
 import ContainerRegistryController from "../src/controllers/ContainerRegistryController";
 import FrameworkController from "../src/controllers/FrameworkController";
 import GitProviderController from "../src/controllers/GitProviderController";
@@ -47,6 +49,13 @@ import { MongoDB } from "../src/plugins/mongodb";
 import mongoose from "mongoose";
 import chalk from "chalk";
 import { Config } from "../src/app.config";
+import { randomInt } from "crypto";
+import { makeSlug } from "../src/plugins/slug";
+import { AppRequest } from "@/interfaces/SystemTypes";
+import { Options, execaCommand } from "execa";
+import { CLI_CONFIG_DIR } from "@/config/const";
+import path from "path";
+import { existsSync, mkdirSync } from "fs";
 
 const user1 = { name: "Test User 1", email: "user1@test.local" } as IUser;
 const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
@@ -55,8 +64,10 @@ const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
 export const appSvc = new AppService();
 export const buildSvc = new BuildService();
 export const databaseSvc = new CloudDatabaseService();
+export const databaseBackupSvc = new CloudDatabaseBackupService();
 export const providerSvc = new CloudProviderService();
 export const clusterSvc = new ClusterService();
+export const cronjobSvc = new CronjobService();
 export const registrySvc = new ContainerRegistryService();
 export const frameworkSvc = new FrameworkService();
 export const gitSvc = new GitProviderService();
@@ -75,6 +86,7 @@ export const buildCtl = new BuildController();
 export const databaseCtl = new CloudDatabaseController();
 export const providerCtl = new CloudProviderController();
 export const clusterCtl = new ClusterController();
+export const cronjobCtl = new CronjobController();
 export const registryCtl = new ContainerRegistryController();
 export const frameworkCtl = new FrameworkController();
 export const gitCtl = new GitProviderController();
@@ -86,6 +98,26 @@ export const userCtl = new UserController();
 export const apiKeyCtl = new ApiKeyUserController();
 export const serviceAccountCtl = new ServiceAccountController();
 export const workspaceCtl = new WorkspaceController();
+
+export const controllers = [
+	appCtl,
+	buildCtl,
+	databaseCtl,
+	providerCtl,
+	clusterCtl,
+	cronjobCtl,
+	registryCtl,
+	frameworkCtl,
+	gitCtl,
+	projectCtl,
+	releaseCtl,
+	roleCtl,
+	teamCtl,
+	userCtl,
+	apiKeyCtl,
+	serviceAccountCtl,
+	workspaceCtl,
+];
 
 // current logged in user
 export let currentUser: IUser;
@@ -115,27 +147,50 @@ export const createUser = async (data: UserDto) => {
 	return user as IUser;
 };
 
-export const createWorkspace = async (name: string) => {
-	if (!currentUser) throw new Error(`Unauthenticated.`);
-	const ownerId = MongoDB.toString(currentUser._id);
+export const createFakeUser = async (id: number = randomInt(100)) => {
+	const name = `Fake User ${id}`;
+	const userDto: UserDto = {
+		name,
+		email: `${makeSlug(name)}@test.user`,
+	};
+	return createUser(userDto);
+};
 
-	if (!ownerId) throw new Error(`createWorkspace > "ownerId" is not defined.`);
+export const getCurrentUser = async () => {
+	// reload user data
+	if (currentUser) currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "roles", "activeRole"] });
+	return currentUser as IUser & { activeWorkspace: IWorkspace & { _id: string } };
+};
 
-	const workspace = await workspaceCtl.create({
+export const createWorkspace = async (ownerId: string, name: string, isPublic = true) => {
+	workspaceCtl.user = currentUser;
+
+	const workspaceRes = await workspaceCtl.create({
 		name,
 		owner: ownerId,
 		// hobby
 		// dx_key: "0fc5c0bac0647eabb70f955f7ec03332c13b0170d1ce0984184700a85c0e2007",
 		// self-hosted
 		dx_key: "0e84fbcad09d9a4b7e0ec3af75607c4a9a400e84b1f4004dcc8d8807032a0320",
+		public: isPublic,
 	});
 
-	currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "workspaces", "roles"] });
+	const workspace = workspaceRes.data as IWorkspace;
 
-	return workspace as IWorkspace;
+	// reload current user
+	const user = await getCurrentUser();
+
+	// assign user & workspace to controllers:
+	controllers.map((ctl) => {
+		ctl.service.req = { user, workspace } as AppRequest;
+		ctl.user = currentUser;
+		ctl.workspace = workspace;
+	});
+
+	return workspace;
 };
 
-export const loginUser = async (userId: string, workspaceId: string) => {
+export const loginUser = async (userId: string, workspaceId?: string) => {
 	const access_token = generateJWT(userId, {
 		expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
 		workspaceId: workspaceId,
@@ -144,7 +199,7 @@ export const loginUser = async (userId: string, workspaceId: string) => {
 	const payload = jwt.decode(access_token, { json: true });
 	const tokenInfo = extractAccessTokenInfo(access_token, payload?.exp || 10000);
 
-	let user: IUser = await userSvc.findOne({ _id: userId }, { populate: ["roles"] });
+	let user: IUser = await userSvc.findOne({ _id: userId }, { populate: ["roles", "activeRole", "workspaces", "activeWorkspace"] });
 
 	const updateData = {} as any;
 	updateData.token = tokenInfo.token;
@@ -152,23 +207,57 @@ export const loginUser = async (userId: string, workspaceId: string) => {
 
 	// set active workspace to this user:
 	const userWorkspaces = user.workspaces ? user.workspaces : [];
-	if (!userWorkspaces.includes(workspaceId)) updateData.workspaces = [...userWorkspaces, workspaceId];
+	if (workspaceId && !userWorkspaces.includes(workspaceId)) updateData.workspaces = [...userWorkspaces, workspaceId];
 
 	// set default roles if this user doesn't have one
-	const userRoles = (user.roles || []).filter((role) => MongoDB.toString((role as IRole).workspace) === workspaceId);
-	if (isEmpty(userRoles)) {
-		const memberRole = await roleSvc.findOne({ name: "Member", workspace: workspaceId });
-		updateData.roles = [memberRole._id];
+	if (workspaceId) {
+		let userRoles = user.roles.filter((role) => MongoDB.toString((role as IRole).workspace) === workspaceId);
+		if (workspaceId && isEmpty(userRoles)) {
+			const memberRole = await roleSvc.findOne({ type: "member", workspace: workspaceId });
+			updateData.roles = [memberRole._id];
+			userRoles = [memberRole];
+		}
+		updateData.activeRole = (userRoles[0] as IRole)._id;
 	}
 
-	[user] = await userSvc.update({ _id: userId }, updateData);
+	// update token to db:
+	user = await userSvc.updateOne({ _id: userId }, updateData, { populate: ["roles", "activeRole", "workspaces", "activeWorkspace"] });
 
-	const workspace: IWorkspace = await workspaceSvc.findOne({ _id: workspaceId });
+	const workspace: IWorkspace = workspaceId ? await workspaceSvc.findOne({ _id: workspaceId }) : undefined;
+
+	// assign user & workspace to controllers:
+	controllers.map((ctl) => {
+		ctl.service.req = { user, workspace } as AppRequest;
+		ctl.user = user;
+		ctl.workspace = workspace;
+	});
 
 	currentUser = user;
 	currentWorkspace = workspace;
 
 	return { user, workspace };
+};
+
+export type DxOptions = { onProgress: (msg: string) => void };
+
+export const CLI_TEST_DIR = path.resolve(CLI_CONFIG_DIR, "tests");
+if (!existsSync(CLI_TEST_DIR)) mkdirSync(CLI_TEST_DIR, { recursive: true });
+const dxCommandOptions: Options = { env: { CLI_MODE: "client" }, cwd: CLI_TEST_DIR };
+
+export const dxCmd = async (command: string, options?: DxOptions) => {
+	const stream = execaCommand(command, dxCommandOptions);
+	let stdout: string = "";
+	stream.stdio.forEach((_stdio) => {
+		if (_stdio) {
+			_stdio.on("data", (data) => {
+				let logMsg = data.toString();
+				stdout += logMsg;
+				if (options?.onProgress && logMsg) options?.onProgress(logMsg);
+			});
+		}
+	});
+	const end = await stream;
+	return stdout || end.stdout;
 };
 
 /**

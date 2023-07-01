@@ -150,6 +150,12 @@ export interface IGitProvider extends IBase {
 	};
 
 	/**
+	 * - `TRUE` if the git provider which connected by "Administrator"
+	 * - `FALSE` if it was connected by workspace's members and won't be displayed on the dashboard.
+	 */
+	isOrg?: boolean;
+
+	/**
 	 * The type of the Git provider.
 	 *
 	 * @type {GitProviderType}
@@ -211,6 +217,7 @@ export const gitProviderSchema = new Schema<IGitProvider>(
 			url: { type: String },
 			sshPrefix: { type: String },
 		},
+		isOrg: { type: Boolean, default: false },
 		type: { type: String, enum: availableGitProviders },
 		github_oauth: {
 			consumer_key: { type: String },

@@ -1,11 +1,12 @@
 import ApiKeyUserService from "./ApiKeyUserService";
 import AppService from "./AppService";
+import CloudDatabaseBackupService from "./CloudDatabaseBackupService";
 import CloudDatabaseService from "./CloudDatabaseService";
 import CronjobService from "./CronjobService";
 import ServiceAccountService from "./ServiceAccountService";
 import UserService from "./UserService";
 
-export { ApiKeyUserService, AppService, CloudDatabaseService, CronjobService, ServiceAccountService, UserService };
+export { ApiKeyUserService, AppService, CloudDatabaseBackupService, CloudDatabaseService, CronjobService, ServiceAccountService, UserService };
 
 export * from "./BaseService";
 export * from "./BuildService";

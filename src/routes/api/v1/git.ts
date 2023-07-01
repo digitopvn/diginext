@@ -24,6 +24,7 @@ router
 	.get("/orgs", processApiRequest(controller.getListOrgs.bind(controller)))
 	.get("/orgs/repos", processApiRequest(controller.getListOrgRepos.bind(controller)))
 	.post("/orgs/repos", processApiRequest(controller.createOrgRepo.bind(controller)))
+	.delete("/orgs/repos", processApiRequest(controller.deleteOrgRepo.bind(controller)))
 	// ssh keys
 	.get("/public-key", processApiRequest(controller.getPublicKey.bind(controller)))
 	.post("/ssh/create", processApiRequest(controller.createKeysSSH.bind(controller)))

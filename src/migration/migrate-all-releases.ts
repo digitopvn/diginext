@@ -7,7 +7,11 @@ import type { IRelease } from "@/entities";
 import { DB } from "../modules/api/DB";
 
 export const migrateAllReleases = async () => {
-	const releases = await DB.find<IRelease>("release", { appConfig: undefined }, { populate: ["app"] });
+	const releases = await DB.find<IRelease>(
+		"release",
+		{ appConfig: undefined },
+		{ populate: ["app"], select: ["app", "_id", "diginext", "envVars"] }
+	);
 	if (isEmpty(releases)) return;
 
 	log(`[MIGRATION] migrateAllReleases > Found ${releases.length} releases need migration.`);

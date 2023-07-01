@@ -66,10 +66,10 @@ export const authenticate = async (options?: InputOptions) => {
 /**
  * Connect Docker to Google Cloud Registry
  */
-export const connectDockerToRegistry = async (options?: InputOptions) => {
+export const connectDockerToRegistry = async (options?: InputOptions & { builder?: "docker" | "podman" }) => {
 	const { execa, execaCommand, execaSync } = await import("execa");
 
-	const { host, filePath, userId, workspaceId, registry: registrySlug } = options;
+	const { host, filePath, userId, workspaceId, registry: registrySlug, builder = Config.BUILDER } = options;
 
 	// Validation
 	if (!host) {
@@ -97,7 +97,7 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 	//
 	try {
 		let connectRes;
-		if (Config.BUILDER === "docker") {
+		if (builder === "docker") {
 			// connect DOCKER to CONTAINER REGISTRY
 			if (host) {
 				connectRes = await execaCommand(`gcloud auth configure-docker ${host} --quiet`);

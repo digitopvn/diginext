@@ -1,4 +1,3 @@
-import { log } from "diginext-utils/dist/xconsole/log";
 import listEndpoints from "express-list-endpoints";
 import { isEmpty, upperFirst } from "lodash";
 
@@ -28,13 +27,13 @@ export const seedSystemRoutes = async () => {
 		});
 
 	if (!isEmpty(missingRoutes)) {
-		log(`[MIGRATION] migrateAllRoutes > Found ${missingRoutes.length} missing routes.`);
+		// log(`[MIGRATION] migrateAllRoutes > Found ${missingRoutes.length} missing routes.`);
 
 		const results = (await Promise.all(missingRoutes.map(async (route) => DB.create<IRoute>("route", route)))).filter(
 			(item) => typeof item !== "undefined"
 		);
 
-		log(`[MIGRATION] migrateAllRoutes > FINISH MIGRATION >> Created ${results.length} missing routes.`);
+		// log(`[MIGRATION] migrateAllRoutes > FINISH MIGRATION >> Created ${results.length} missing routes.`);
 	}
 
 	// compare methods of database routes with methods of Express routes
@@ -47,21 +46,21 @@ export const seedSystemRoutes = async () => {
 			const routeMethods = _route.methods.join(",").toUpperCase();
 			const expRouteMethods = exr.methods.join(",").toUpperCase();
 			if (routeMethods !== expRouteMethods)
-				log(`[MIGRATION] migrateAllRoutes > Update "${_route.path}" route's methods from [${routeMethods}] to [${expRouteMethods}]`);
+				// log(`[MIGRATION] migrateAllRoutes > Update "${_route.path}" route's methods from [${routeMethods}] to [${expRouteMethods}]`);
 
-			return routeMethods !== expRouteMethods;
+				return routeMethods !== expRouteMethods;
 		})
 		.map((exr) => {
 			return { path: exr.path, methods: exr.methods as RequestMethodType[] } as RouteDto;
 		});
 
 	if (!isEmpty(updateRoutes)) {
-		log(`[MIGRATION] migrateAllRoutes > Found ${updateRoutes.length} routes that need to update methods.`);
+		// log(`[MIGRATION] migrateAllRoutes > Found ${updateRoutes.length} routes that need to update methods.`);
 
 		const results = (
 			await Promise.all(updateRoutes.map(async (updateData) => DB.update<IRoute>("route", { path: updateData.path }, updateData)))
 		).filter((items) => typeof items !== "undefined" && !isEmpty(items));
 
-		log(`[MIGRATION] migrateAllRoutes > Update methods of ${results.length} routes.`);
+		// log(`[MIGRATION] migrateAllRoutes > Update methods of ${results.length} routes.`);
 	}
 };

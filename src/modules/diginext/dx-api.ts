@@ -5,7 +5,7 @@ import { isEmpty } from "lodash";
 import { Config } from "@/app.config";
 import type { ResponseData } from "@/interfaces";
 
-export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dxKey: string }) {
+export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dxKey?: string }) {
 	const { method, dxKey } = options;
 
 	if (isEmpty(options.headers)) options.headers = {};

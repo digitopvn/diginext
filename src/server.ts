@@ -3,7 +3,7 @@ import "reflect-metadata";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import session from "cookie-session";
-import { log, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
+import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import type { Express, Request, Response } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";
@@ -20,7 +20,7 @@ import swaggerUi from "swagger-ui-express";
 import { googleStrategy } from "@/modules/passports/googleStrategy";
 import { jwtStrategy } from "@/modules/passports/jwtStrategy";
 
-import { Config, IsDev, IsProd } from "./app.config";
+import { Config, IsDev, IsProd, IsTest } from "./app.config";
 import { CLI_DIR } from "./config/const";
 import type { AppRequest } from "./interfaces/SystemTypes";
 import { failSafeHandler } from "./middlewares/failSafeHandler";
@@ -150,7 +150,8 @@ function initialize(db?: typeof mongoose) {
 		skip: (req) => req.method.toUpperCase() === "OPTIONS",
 		// stream: logger,
 	} as unknown as morgan.Options<Request, Response>;
-	app.use(morgan(morganMessage, morganOptions));
+
+	if (!IsTest()) app.use(morgan(morganMessage, morganOptions));
 
 	// Public paths for HEALTHCHECK & Rest APIs:
 	app.use(`/${BASE_PATH}`, routes);
@@ -196,7 +197,7 @@ function initialize(db?: typeof mongoose) {
 	 * SERVER HANDLING
 	 */
 	function onConnect() {
-		logSuccess(`Server is UP & listening at port ${PORT}...`);
+		console.log(`Server is UP & listening at port ${PORT}...`);
 	}
 
 	server.on("error", (e: any) => log(`ERROR:`, e));

@@ -12,7 +12,8 @@ export const processApiRequest =
 			let result = await executor(req.body);
 
 			// mask sensitive information before responding:
-			result.data = maskSensitiveInfo(result.data, req.role);
+			// only for data which the current user doesn't own
+			result.data = maskSensitiveInfo(result.data, req.user, req.role);
 
 			res.body = JSON.stringify(result, null, 2);
 

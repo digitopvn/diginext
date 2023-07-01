@@ -2,14 +2,17 @@ import { isUndefined } from "lodash";
 import type { Types } from "mongoose";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { Config } from "@/app.config";
+import { Config, IsTest } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { IGetQueryParams, ResponseData } from "@/interfaces";
 import * as interfaces from "@/interfaces";
 import { DB } from "@/modules/api/DB";
-import { sendDxEmail } from "@/modules/diginext/dx-email";
-import { createDxWorkspace } from "@/modules/diginext/dx-workspace";
+import { dxSendEmail } from "@/modules/diginext/dx-email";
+import type { DxPackage } from "@/modules/diginext/dx-package";
+import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
+import type { DxSubsription } from "@/modules/diginext/dx-subscription";
+import { dxCreateWorkspace } from "@/modules/diginext/dx-workspace";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
@@ -72,14 +75,38 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: WorkspaceInputData) {
-		const { owner = MongoDB.toString(this.user._id), name, dx_key } = body;
+		const { owner = MongoDB.toString(this.user._id), name } = body;
 
 		if (!name) return interfaces.respondFailure({ msg: `Param "name" is required.` });
 		if (!owner) return interfaces.respondFailure({ msg: `Param "owner" (UserID) is required.` });
-		if (!dx_key) return interfaces.respondFailure(`Param "dx_key" is required.`);
+
+		let dx_key: string = body.dx_key;
+
+		// if no "dx_key" provided, subscribe to a DX package & obtain DX key
+		if (!dx_key) {
+			const pkgRes = await dxGetPackages();
+			if (!pkgRes || !pkgRes.status)
+				return interfaces.respondFailure(pkgRes.messages?.join(", ") || `Unable to get the list of Diginext package plans.`);
+
+			const dxPackages = pkgRes.data as DxPackage[];
+			const pkg = dxPackages.find((p) => (Config.SERVER_TYPE === "hobby" ? "hobby" : "self_hosted"));
+			if (!pkg) return interfaces.respondFailure(`Diginext package plans not found.`);
+
+			const subscribeRes = await dxSubscribe({ userEmail: this.user.email, packageId: pkg.id });
+			if (!subscribeRes || !subscribeRes.status)
+				return interfaces.respondFailure(
+					subscribeRes.messages?.join(", ") || `Unable to subscribe a Diginext package "${pkg.name}" (${pkg.id}).`
+				);
+
+			const dxSubscription = subscribeRes.data as DxSubsription;
+			dx_key = dxSubscription.key;
+			if (!dx_key) return interfaces.respondFailure(`Unable to obtain "dx_key" from Diginext Package Subscribe API.`);
+
+			body.dx_key = dx_key;
+		}
 
 		// find owner
-		let ownerUser = await DB.findOne<IUser>("user", { _id: owner });
+		let ownerUser = this.user;
 		if (!ownerUser) return interfaces.respondFailure("Workspace's owner not found.");
 
 		// Assign some default values if it's missing
@@ -87,17 +114,21 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		// ----- VERIFY DX KEY -----
 
-		console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
-		const createWsRes = await createDxWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
-		console.log("createWsRes :>> ", createWsRes);
-		if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
+		// skip checking DX key for unit test
+		if (!IsTest()) {
+			const createWsRes = await dxCreateWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
+			// console.log("createWsRes :>> ", createWsRes);
+			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+		}
 
 		// ----- END VERIFYING -----
 
 		// [1] Create new workspace:
-		// console.log("createWorkspace > body :>> ", body);
+		console.log("WorkspaceController > CREATE > body :>> ", body);
 		const newWorkspace = await this.service.create(body);
-		// console.log("createWorkspace > newWorkspace :>> ", newWorkspace);
+		console.log("WorkspaceController > CREATE > ownerUser :>> ", ownerUser);
+		console.log("WorkspaceController > CREATE > newWorkspace :>> ", newWorkspace);
 		if (!newWorkspace) return interfaces.respondFailure(`Failed to create new workspace.`);
 
 		/**
@@ -113,11 +144,9 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		// [3] Ownership: add this workspace to the creator {User} if it's not existed:
 		ownerUser = await addUserToWorkspace(owner, newWorkspace, "admin");
-		console.log(`Added "${ownerUser.name}" user to workspace "${newWorkspace.name}".`);
 
 		// [4] Set this workspace as "activeWorkspace" for this creator:
 		ownerUser = await makeWorkspaceActive(owner, MongoDB.toString(newWorkspace._id));
-		console.log(`Made workspace "${newWorkspace.name}" active for "${ownerUser.name}" user.`);
 
 		return interfaces.respondSuccess({ data: newWorkspace });
 	}
@@ -187,7 +216,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		const mailContent = `Dear,<br/><br/>You've been invited to <strong>"${workspace.name}"</strong> workspace, please <a href="${Config.BASE_URL}" target="_blank">click here</a> to login.<br/><br/>Cheers,<br/>Diginext System`;
 
 		// send invitation email to those users:
-		const result = await sendDxEmail(
+		const result = await dxSendEmail(
 			{
 				recipients: invitedMembers.map((member) => {
 					return { email: member.email };

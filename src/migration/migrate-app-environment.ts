@@ -72,7 +72,7 @@ export const migrateAppEnvironmentVariables = async (app: IApp) => {
 };
 
 export const migrateAllAppEnvironment = async () => {
-	const apps = await DB.find<IApp>("app", { deployEnvironment: undefined });
+	const apps = await DB.find<IApp>("app", { deployEnvironment: undefined }, { select: ["_id", "deployEnvironment"] });
 	if (isEmpty(apps)) return;
 
 	// log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need environment migration.`);

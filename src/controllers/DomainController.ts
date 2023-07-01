@@ -21,7 +21,7 @@ export default class DomainController extends BaseController {
 
 		const dxKey = this.workspace.dx_key;
 		// process
-		const res = await dxDomain.createDxDomain(body, dxKey);
+		const res = await dxDomain.dxCreateDomain(body, dxKey);
 		return res;
 	}
 }

@@ -28,7 +28,7 @@ import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { generateRepoURL } from "@/modules/git";
 import { getCurrentGitBranch } from "@/modules/git/git-utils";
 
-import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
+import { CLI_DIR, DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
 import { MongoDB } from "./mongodb";
 import { checkMonorepo } from "./monorepo";
 import { isNumeric } from "./number";
@@ -36,8 +36,6 @@ import { isWin } from "./os";
 
 const { marked } = m;
 marked.setOptions({ renderer: new TerminalRenderer() });
-
-const CLI_DIR = path.resolve(__dirname, "../../");
 
 export function nowStr() {
 	return dayjs().format("YYYY-MM-DD HH:mm:ss");
@@ -521,7 +519,45 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
 };
 
+/**
+ * Process `npm install` or `yarn install` or `pnpm install` on current directory
+ */
+export const installPackages = async () => {
+	log(`Đang tiến hành cài đặt "package.json" mới...`);
+
+	const { execa, execaCommand } = await import("execa");
+
+	let areDependenciesInstalled = false;
+	// Install dependencies
+	try {
+		await execa("yarn", ["install"]);
+		// console.log(stdout);
+		areDependenciesInstalled = true;
+	} catch (e) {
+		logWarn("YARN not found, switch to `npm install` instead.");
+	}
+
+	if (!areDependenciesInstalled) {
+		let isOk;
+		try {
+			await execa("npm", ["install"]);
+			isOk = true;
+		} catch (e) {
+			logError("NPM not found -> ", e);
+			isOk = false;
+		}
+		return isOk;
+	} else {
+		return true;
+	}
+};
+
 interface PullOrCloneGitRepoOptions {
+	useAccessToken?: {
+		type: "Bearer" | "Basic";
+		value: string;
+	};
+	isDebugging?: boolean;
 	onUpdate?: (msg: string, progress?: number) => void;
 }
 
@@ -547,8 +583,39 @@ export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOr
 };
 //
 
+interface GitStageOptions {
+	directory?: string;
+	message?: string;
+}
+
+/**
+ *
+ */
+export async function stageAllFiles(options: GitStageOptions) {
+	const { directory = "./", message = "build(prepare): commit all files & push to origin" } = options;
+	const git = simpleGit(directory, { binary: "git" });
+	const gitStatus = await git.status(["-s"]);
+	// log("[current branch]", gitStatus.current);
+
+	const currentBranch = gitStatus.current;
+	const currentBranchKebab = _.kebabCase(currentBranch);
+
+	// commit & push everything, then try to merge "master" to current branch
+	try {
+		await git.pull("origin", currentBranch, ["--no-ff"]);
+		await git.add("./*");
+		await git.commit(message);
+		await git.push("origin", currentBranch);
+	} catch (e) {
+		logError(e);
+	}
+
+	return { currentBranch, currentBranchKebab };
+}
+
 export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
 	let git: SimpleGit;
+	let success: boolean = false;
 
 	const { onUpdate } = options;
 
@@ -557,17 +624,27 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 		if (onUpdate) onUpdate(message, progress);
 	};
 
+	const commandConfig: string[] = [];
+
+	if (options?.useAccessToken && options.useAccessToken.type && options.useAccessToken.value)
+		commandConfig.push(`http.extraHeader=Authorization: ${options.useAccessToken.type} ${options.useAccessToken.value}`);
+
 	if (fs.existsSync(dir)) {
 		try {
-			git = simpleGit(dir, { progress: onProgress });
+			git = simpleGit(dir, { progress: onProgress, config: commandConfig });
+			// -----------------------
+			// ! DO NOT SET TO "FALSE"
+			// -----------------------
 			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
 			const originRemote = remotes[0] as any;
 			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
-			console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
+			if (options?.isDebugging) console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
 			if (originRemote?.refs?.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
 
 			const curBranch = await getCurrentGitBranch(dir);
 			await git.pull("origin", curBranch, ["--no-ff"]);
+
+			success = true;
 		} catch (e) {
 			if (onUpdate) onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
 
@@ -575,10 +652,11 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 			await deleteFolderRecursive(dir);
 
 			// for CLI create new app from a framework
-			git = simpleGit({ progress: onProgress });
+			git = simpleGit({ progress: onProgress, config: commandConfig });
 
 			try {
 				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+				success = true;
 			} catch (e2) {
 				if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
 			}
@@ -586,14 +664,17 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	} else {
 		if (onUpdate) onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
 
-		git = simpleGit({ progress: onProgress });
+		git = simpleGit({ progress: onProgress, config: commandConfig });
 
 		try {
 			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+			success = true;
 		} catch (e) {
 			if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
 		}
 	}
+
+	return success;
 };
 
 /**
