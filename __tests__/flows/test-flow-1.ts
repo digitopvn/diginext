@@ -1,6 +1,7 @@
 import { IContainerRegistry, IFramework, IGitProvider, IRole, IWorkspace } from "@/entities";
 import { MongoDB } from "../../src/plugins/mongodb";
 import {
+	CLI_TEST_DIR,
 	apiKeySvc,
 	createFakeUser,
 	createWorkspace,
@@ -25,6 +26,7 @@ import { initialFrameworks } from "@/seeds/seed-frameworks";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import { Config } from "@/app.config";
 import { connectRegistry } from "@/modules/registry/connect-registry";
+import { readdirSync } from "fs";
 
 export function testFlow1() {
 	let wsId: string;
@@ -301,28 +303,37 @@ export function testFlow1() {
 		async () => {
 			const github = await gitSvc.findOne({ type: "github" });
 			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
+
 			// create new app...
-			const res = await dxCmd(
-				`dx new --projectName="Test Github Project" --name=web --framework=${framework.slug} --git=${github.slug} --force --debug`
-			);
+			const res = await dxCmd(`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force`);
+			console.log("res :>> ", res);
 			expect(res).toBeDefined();
+
+			const files = readdirSync(CLI_TEST_DIR);
+			console.log("files :>> ", files);
+			expect(files.join(",").indexOf(`testgithubproject`)).toBeGreaterThan(-1);
 		},
 		5 * 60000
 	);
 
-	// it(
-	// 	"CLI: Create new app (Bitbucket)",
-	// 	async () => {
-	// 		const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
-	// 		const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
-	// 		// create new app...
-	// 		const { stdout, stderr } = await dxCmd(
-	// 			`dx new --projectName="Test Bitbucket Project" --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
-	// 		);
-	// 		expect(stdout).toBeDefined();
-	// 	},
-	// 	5 * 60000
-	// );
+	it(
+		"CLI: Create new app (Bitbucket)",
+		async () => {
+			const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
+			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
+
+			// create new app...
+			const res = await dxCmd(
+				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
+			);
+			expect(res).toBeDefined();
+
+			const files = readdirSync(CLI_TEST_DIR);
+			console.log("files :>> ", files);
+			expect(files.join(",").indexOf(`testbitbucketproject`)).toBeGreaterThan(-1);
+		},
+		5 * 60000
+	);
 
 	it("Workspace #1: Add member", async () => {
 		// registerr fake user #2:
