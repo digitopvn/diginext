@@ -427,7 +427,16 @@ export async function parseCliOptions() {
 		// command: run
 		.command("run", "Build your project locally & deploy on the cluster.", deployOptions)
 		// command: deploy
-		.command("deploy", "Request BUILD SERVER to build your project & deploy it", deployOptions)
+		// .command("deploy", "Request BUILD SERVER to build your project & deploy it", deployOptions)
+		.command({
+			command: "up",
+			aliases: ["dep", "deploy"],
+			describe: "Request BUILD SERVER to build & deploy your app.",
+			builder: (_argv) => _argv.option(deployOptions),
+			handler: (_argv) => {},
+		})
+		// command: down
+		.command("down", "Take down your deployment", deployOptions)
 		// command: dotenv
 		.command("dotenv", "Download/upload DOTENV files from/to deploy environment", (_yargs) =>
 			_yargs
@@ -436,8 +445,6 @@ export async function parseCliOptions() {
 		)
 		// command: release
 		.command("rollout", "Roll out your PRE-RELEASE deployment", deployOptions)
-		// command: down
-		.command("down", "Take down your deployment project", deployOptions)
 		// command: analytics
 		.command("analytics", "Manage your Google Analytics")
 		// command: free
