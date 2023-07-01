@@ -615,6 +615,7 @@ export async function stageAllFiles(options: GitStageOptions) {
 
 export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
 	let git: SimpleGit;
+	let success: boolean = false;
 
 	const { onUpdate } = options;
 
@@ -642,6 +643,8 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			const curBranch = await getCurrentGitBranch(dir);
 			await git.pull("origin", curBranch, ["--no-ff"]);
+
+			success = true;
 		} catch (e) {
 			if (onUpdate) onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
 
@@ -653,6 +656,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			try {
 				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+				success = true;
 			} catch (e2) {
 				if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
 			}
@@ -664,10 +668,13 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 		try {
 			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+			success = true;
 		} catch (e) {
 			if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
 		}
 	}
+
+	return success;
 };
 
 /**

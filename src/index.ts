@@ -191,6 +191,7 @@ export async function processCLI(options?: InputOptions) {
 			await execDotenvCommand(options);
 			return;
 
+		case "up":
 		case "deploy":
 			await cliAuthenticate(options);
 			if (options.secondAction) {

@@ -17,6 +17,7 @@ type GitProviderApiOptions = {
 	method?: RequestMethodType;
 	data?: any;
 	headers?: any;
+	isDebugging?: boolean;
 };
 
 const githubApiBaseURL = "https://api.github.com";
@@ -34,7 +35,7 @@ const userRepoApiPath = (provider: GitProviderType, username?: string, slug?: st
 	provider === "bitbucket"
 		? `/repositories/${username}${slug ? `/${slug}` : ""}`
 		: provider === "github"
-		? `/users${username ? `/${username}` : ""}/repos`
+		? `/user${username ? `/${username}` : ""}/repos`
 		: undefined;
 
 const orgRepoApiPath = (provider: GitProviderType, org?: string, slug?: string) =>
@@ -387,7 +388,7 @@ interface GitHubOrg {
 	description: string;
 }
 
-interface GitOrg {
+export interface GitOrg {
 	id: string;
 	name: string;
 	url: string;
@@ -481,30 +482,39 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 	if (provider.type === "bitbucket") headers.Accept = "application/json";
 
 	headers.Authorization = `${upperFirst(provider.method)} ${provider.access_token}`;
+	if (options?.isDebugging) console.log("Git Provider API > headers :>> ", headers);
 
 	const url = `${baseURL}${path}`;
-	const response = await axios({ url, headers, method, data });
-	const resData = response.data;
+	if (options?.isDebugging) console.log(`Git Provider API > [${method}] :>> `, url);
+	if (options?.isDebugging) console.log(`Git Provider API > data :>> `, data);
 
-	// catch errors
-	if (provider.type === "bitbucket" && resData.error) throw new Error(`${func} "${path}" > ${resData.error.message}`);
-	if (provider.type === "github" && resData.message) throw new Error(`${func} "${path}" > ${resData.message}`);
+	try {
+		const response = await axios({ url, headers, method, data });
+		if (options?.isDebugging) console.log("Git Provider API > response :>> ", response);
+		const resData = response.data;
 
-	// [BITBUCKET ONLY] if access_token is expired -> try to refresh it:
-	if (provider.type === "bitbucket" && resData.error?.message?.indexOf("expired") > -1) {
-		const tokens = await bitbucketRefeshToken(provider);
+		// catch errors
+		if (provider.type === "bitbucket" && resData.error) throw new Error(`${func} "${path}" > ${resData.error.message}`);
+		if (provider.type === "github" && resData.message) throw new Error(`${func} "${path}" > ${resData.message}`);
 
-		// save new tokens to database
-		const [updatedProvider] = await DB.update<IGitProvider>("git", { _id: provider._id }, tokens);
+		// [BITBUCKET ONLY] if access_token is expired -> try to refresh it:
+		if (provider.type === "bitbucket" && resData.error?.message?.indexOf("expired") > -1) {
+			const tokens = await bitbucketRefeshToken(provider);
 
-		if (!updatedProvider)
-			throw new Error(`[${provider.type.toUpperCase()}_API_ERROR] "${path}" > Can't update tokens to "${provider.name}" git provider.`);
+			// save new tokens to database
+			const [updatedProvider] = await DB.update<IGitProvider>("git", { _id: provider._id }, tokens);
 
-		// fetch api again
-		return api(updatedProvider, path, options);
+			if (!updatedProvider)
+				throw new Error(`[${provider.type.toUpperCase()}_API_ERROR] "${path}" > Can't update tokens to "${provider.name}" git provider.`);
+
+			// fetch api again
+			return api(updatedProvider, path, options);
+		}
+
+		return resData;
+	} catch (e) {
+		throw new Error(e);
 	}
-
-	return resData;
 };
 
 const getProfile = async (provider: IGitProvider) => {
@@ -574,7 +584,7 @@ const listOrgs = async (provider: IGitProvider) => {
 	throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 };
 
-const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDto) => {
+const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDto, options?: { isDebugging?: boolean }) => {
 	// validation
 	if (!data.name) data.name = makeSlug(data.name).toLocaleLowerCase();
 
@@ -648,18 +658,16 @@ const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDt
 	}
 
 	if (provider.type === "github") {
-		const newGithubRepo = (await api(
-			provider,
-			provider.isOrg ? orgRepoApiPath(provider.type, provider.gitWorkspace) : userRepoApiPath(provider.type),
-			{
-				data: {
-					...data,
-					has_issues: true,
-					has_wiki: true,
-				},
-				method: "POST",
-			}
-		)) as GitHubOrgRepository & GithubFailureResponse;
+		const url = provider.isOrg ? orgRepoApiPath(provider.type, provider.gitWorkspace) : userRepoApiPath(provider.type);
+		const newGithubRepo = (await api(provider, url, {
+			data: {
+				...data,
+				has_issues: true,
+				has_wiki: true,
+			},
+			method: "POST",
+			isDebugging: options.isDebugging,
+		})) as GitHubOrgRepository & GithubFailureResponse;
 
 		if (newGithubRepo.message) throw new Error(`[GITHUB_API_ERROR] ${newGithubRepo.message}`);
 

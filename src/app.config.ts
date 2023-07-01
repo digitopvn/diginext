@@ -111,6 +111,10 @@ export class Config {
 		return (process.env.SERVER_TYPE || "default") as "default" | "hobby";
 	}
 
+	static get DEFAULT_DX_SERVER_URL() {
+		return "https://hobby.diginext.site";
+	}
+
 	static get DX_SITE_URL() {
 		return process.env.DX_SITE_URL ? process.env.DX_SITE_URL : "https://diginext.vn";
 	}

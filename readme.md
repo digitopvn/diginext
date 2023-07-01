@@ -82,10 +82,12 @@ npm i @topgroup/diginext --location=global
 Login to our build server:
 
 ```bash
-dx login https://hobby.diginext.site
+dx login 
+# is similar with:
+# dx login https://hobby.diginext.site
 cd /path/to/your/app
 dx init
-dx deploy
+dx up
 ```
 
 That's it!
@@ -95,12 +97,12 @@ That's it!
 Or login to your team's build server:
 
 ```bash
-dx login https://hobby.diginext.site
+dx login https://localhost:6969
 # OR
 # dx login https://buildserverdomain.example
 cd /path/to/your/app
 dx init
-dx deploy
+dx up
 ```
 
 ---
@@ -132,7 +134,7 @@ Then spin up the build server with: `docker compose up`, it will be available at
 
 Access the admin (`http://localhost:6969`) to configure your new workspace, add some cluster access information.
 
-On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx deploy`.
+On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx up` (or `dx deploy`).
 
 Read the [docs here](docs/docs.md).
 
@@ -160,7 +162,7 @@ The build server will be available at: http://localhost:6969
 
 Access the admin to configure your new workspace, add some cluster access information.
 
-On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx deploy`.
+On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx up` (or )`dx deploy`).
 
 For example, to deploy your project:
 
@@ -169,7 +171,7 @@ cd /path/to/your/project
 # initialize your application (register it with the build server)
 dx init
 # complete the form, then use the command below to deploy:
-dx deploy
+dx up
 ```
 
 Read the [docs here](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4).

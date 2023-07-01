@@ -58,7 +58,7 @@ export default class RouteController extends BaseController<IRoute> {
 		const activeRole = this.user.activeRole as IRole;
 
 		// check wildcard route first...
-		let routeRole = activeRole.routes.find((_route) => _route.route === "*");
+		let routeRole = activeRole.routes.find((_route) => _route.path === "*");
 		if (routeRole) {
 			if (routeRole.permissions.includes(action)) {
 				allowScope = "full";
@@ -80,7 +80,7 @@ export default class RouteController extends BaseController<IRoute> {
 		}
 
 		// ...then check the exact route
-		routeRole = activeRole.routes.find((_route) => _route.route === route);
+		routeRole = activeRole.routes.find((_route) => _route.path === route);
 		if (routeRole) {
 			if (routeRole.permissions.includes(action)) {
 				allowScope = "full";

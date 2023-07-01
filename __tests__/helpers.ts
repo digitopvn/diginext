@@ -178,11 +178,11 @@ export const createWorkspace = async (ownerId: string, name: string, isPublic = 
 	const workspace = workspaceRes.data as IWorkspace;
 
 	// reload current user
-	await getCurrentUser();
+	const user = await getCurrentUser();
 
 	// assign user & workspace to controllers:
 	controllers.map((ctl) => {
-		ctl.service.req = { user: currentUser } as AppRequest;
+		ctl.service.req = { user, workspace } as AppRequest;
 		ctl.user = currentUser;
 		ctl.workspace = workspace;
 	});
@@ -227,7 +227,7 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 
 	// assign user & workspace to controllers:
 	controllers.map((ctl) => {
-		ctl.service.req = { user: currentUser } as AppRequest;
+		ctl.service.req = { user, workspace } as AppRequest;
 		ctl.user = user;
 		ctl.workspace = workspace;
 	});

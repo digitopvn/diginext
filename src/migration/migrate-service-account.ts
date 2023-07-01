@@ -9,16 +9,16 @@ import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plug
 import { DB } from "../modules/api/DB";
 
 export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
-	const workspaces = await DB.find<IWorkspace>("workspace", {});
+	const workspaces = await DB.find<IWorkspace>("workspace", {}, { select: ["_id", "slug", "name"] });
 
 	let affectedWs = 0;
 	const results = await Promise.all(
 		workspaces.map(async (ws) => {
 			// find default Service Account of this workspace:
-			const serviceAccounts = await DB.find<IServiceAccount>("service_account", { workspaces: ws._id });
+			const totalServiceAccounts = await DB.count("service_account", { workspaces: ws._id });
 			// console.log("serviceAccounts :>> ", serviceAccounts);
-			const moderatorRole = await DB.findOne<IRole>("role", { type: "moderator" });
-			if (!serviceAccounts || serviceAccounts.length === 0) {
+			const moderatorRole = await DB.findOne<IRole>("role", { type: "moderator" }, { select: ["_id", "name"] });
+			if (totalServiceAccounts === 0) {
 				log(`[MIGRATION] migrateDefaultServiceAccount() > Found "${ws.name}" workspace doesn't have any Service Account.`);
 
 				const newToken = generateWorkspaceApiAccessToken();
@@ -42,8 +42,8 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 			}
 
 			// find default API_KEY user of this workspace
-			const apiKeyUsers = await DB.find<IApiKeyAccount>("api_key_user", { workspaces: ws._id });
-			if (!apiKeyUsers || apiKeyUsers.length === 0) {
+			const totalApiKeyUsers = await DB.count("api_key_user", { workspaces: ws._id });
+			if (totalApiKeyUsers === 0) {
 				log(`[MIGRATION] migrateDefaultServiceAccount() > Found "${ws.name}" workspace doesn't have any default API_KEY user.`);
 
 				const newToken = generateWorkspaceApiAccessToken();

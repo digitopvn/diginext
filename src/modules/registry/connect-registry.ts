@@ -16,6 +16,8 @@ export const connectRegistry = async (
 	const { slug, provider, host } = registry;
 
 	let connectedRegistry: IContainerRegistry;
+	const builderName = options?.builder?.toUpperCase() || Config.BUILDER.toUpperCase();
+
 	switch (provider) {
 		case "gcloud":
 			const { serviceAccount } = registry;
@@ -30,15 +32,9 @@ export const connectRegistry = async (
 			connectedRegistry = await gcloud.connectDockerRegistry({ ...options, registry: slug, host });
 
 			if (connectedRegistry) {
-				logSuccess(
-					`[CONTAINER REGISTRY] ✓ ${options?.builder || Config.BUILDER.toUpperCase()}: Connected to Container Registry "${registry.name}".`
-				);
+				logSuccess(`[CONTAINER REGISTRY] ✓ ${builderName}: Connected to Container Registry "${registry.name}".`);
 			} else {
-				throw new Error(
-					`[CONTAINER REGISTRY] ❌ ${options?.builder || Config.BUILDER.toUpperCase()}: Failed to connect to this container registry (${
-						registry.name
-					}).`
-				);
+				throw new Error(`[CONTAINER REGISTRY] ❌ ${builderName}: Failed to connect to this container registry (${registry.name}).`);
 			}
 
 			// delete temporary service account
@@ -55,15 +51,9 @@ export const connectRegistry = async (
 			connectedRegistry = await digitalocean.connectDockerRegistry({ ...options, key: apiAccessToken, registry: slug });
 
 			if (connectedRegistry) {
-				logSuccess(
-					`[CONTAINER REGISTRY] ✓ ${options?.builder || Config.BUILDER.toUpperCase()}: Connected to Container Registry "${registry.name}".`
-				);
+				logSuccess(`[CONTAINER REGISTRY] ✓ ${builderName}: Connected to Container Registry "${registry.name}".`);
 			} else {
-				throw new Error(
-					`[CONTAINER REGISTRY] ❌ ${options?.builder || Config.BUILDER.toUpperCase()}: Failed to connect to this container registry (${
-						registry.name
-					}).`
-				);
+				throw new Error(`[CONTAINER REGISTRY] ❌ ${builderName}: Failed to connect to this container registry (${registry.name}).`);
 			}
 
 			return connectedRegistry;
@@ -77,15 +67,9 @@ export const connectRegistry = async (
 			);
 
 			if (connectedRegistry) {
-				logSuccess(
-					`[CONTAINER REGISTRY] ✓ ${options?.builder || Config.BUILDER.toUpperCase()}: Connected to Container Registry "${registry.name}".`
-				);
+				logSuccess(`[CONTAINER REGISTRY] ✓ ${builderName}: Connected to Container Registry "${registry.name}".`);
 			} else {
-				throw new Error(
-					`[CONTAINER REGISTRY] ❌ ${options?.builder || Config.BUILDER.toUpperCase()}: Failed to connect to this container registry (${
-						registry.name
-					}).`
-				);
+				throw new Error(`[CONTAINER REGISTRY] ❌ ${builderName}: Failed to connect to this container registry (${registry.name}).`);
 			}
 
 			return connectedRegistry;

@@ -8,7 +8,10 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
 import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
+import { migrateAllRecords } from "@/migration/migrate-all-records";
+import { migrateAllRoles } from "@/migration/migrate-all-roles";
 import { migrateServiceAccountAndApiKey } from "@/migration/migrate-all-sa-and-api-key";
+import { migrateAllUsers } from "@/migration/migrate-all-users";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
 import { generateSSH, sshKeyContainPassphase, sshKeysExisted, verifySSH } from "@/modules/git";
@@ -121,6 +124,9 @@ export async function startupScripts() {
 	/**
 	 * Database migration
 	 */
+	await migrateAllRecords();
+	await migrateAllRoles();
+	await migrateAllUsers();
 	await migrateAllAppEnvironment();
 	await migrateAllFrameworks();
 	await migrateAllGitProviders();

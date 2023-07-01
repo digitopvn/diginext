@@ -6,7 +6,7 @@ import type { IUser } from "@/entities";
 import { DB } from "../modules/api/DB";
 
 export const migrateAllUserTypes = async () => {
-	const users = await (await DB.find<IUser>("user", {})).filter((user) => user.type === undefined);
+	const users = await (await DB.find<IUser>("user", {}, { select: ["_id", "name", "type"] })).filter((user) => user.type === undefined);
 	if (isEmpty(users)) return;
 
 	log(`[MIGRATION] migrateAllUserTypes() > Found ${users.length} users need migration.`);

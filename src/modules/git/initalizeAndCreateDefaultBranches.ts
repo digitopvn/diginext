@@ -36,9 +36,6 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		// create default brand: "main"
 		await git.fetch(["--all"]);
 
-		// add git origin:
-		await git.addRemote("origin", options.remoteSSH);
-
 		// stage all deployment files & commit it
 		await git.add(".");
 		await git.commit("feat(initial): initial commit");

@@ -7,7 +7,7 @@ import type { ICluster, IWorkspace } from "@/entities";
 import { fetchApi } from "../api";
 import { DB } from "../api/DB";
 import type { CreateDiginextDomainParams } from "../diginext/dx-domain";
-import { createDxDomain } from "../diginext/dx-domain";
+import { dxCreateDomain } from "../diginext/dx-domain";
 
 export interface GenerateDomainOptions {
 	/**
@@ -68,7 +68,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 
 	// create new subdomain:
 	const domainData: CreateDiginextDomainParams = { name: subdomainName, data: targetIP };
-	let res = isServerMode ? await createDxDomain(domainData, dxKey) : await fetchApi({ url: `/api/v1/domain`, method: "POST", data: domainData });
+	let res = isServerMode ? await dxCreateDomain(domainData, dxKey) : await fetchApi({ url: `/api/v1/domain`, method: "POST", data: domainData });
 
 	// console.log("generateDomain > res :>> ", res);
 	let { status, messages } = res;
@@ -81,7 +81,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 			domain = `${subdomainName}.${primaryDomain}`;
 
 			// create new domain again if domain was existed
-			res = await createDxDomain({ name: subdomainName, data: targetIP }, dxKey);
+			res = await dxCreateDomain({ name: subdomainName, data: targetIP }, dxKey);
 
 			messages = res.messages;
 			status = res.status;

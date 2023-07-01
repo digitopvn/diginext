@@ -46,8 +46,52 @@ export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", 
 	roles.push(role._id);
 
 	// update database
-	[user] = await DB.update<IUser>("user", { _id: user._id }, { roles });
-	return user;
+	user = await DB.updateOne<IUser>("user", { _id: user._id }, { roles });
+	return { user, role };
+};
+
+export const getActiveRole = async (user: IUser, workspace: IWorkspace, options?: { makeActive?: boolean }) => {
+	const userId = MongoDB.toString(user._id);
+	const wsId = MongoDB.toString(workspace._id);
+	let activeRole: IRole;
+
+	if (!user.roles) user.roles = [];
+
+	// check if "roles" has not been populated:
+	let roles: IRole[] = [];
+	user.roles.map((r) => {
+		if ((r as any)._id) roles.push(r as IRole);
+	});
+
+	// populate user's roles if needed
+	if (roles.length === 0) {
+		user = await DB.findOne<IUser>("user", { _id: userId }, { populate: ["roles"] });
+		user.roles.map((r) => {
+			if ((r as any)._id) roles.push(r as IRole);
+		});
+	}
+
+	// check again if this user have no roles -> assign member role
+	if (roles.length === 0) {
+		const addRoleRes = await addRoleToUser("member", userId, workspace);
+		roles.push(addRoleRes.role);
+	}
+
+	// get active role
+	activeRole = roles.find((_role) => _role.workspace === wsId);
+
+	// update database
+	if (options?.makeActive) user = await DB.updateOne<IUser>("user", { _id: user._id }, { activeRole: activeRole._id });
+
+	return activeRole;
+};
+
+export const getActiveRoleByUserId = async (userId: string, workspace: IWorkspace) => {
+	// find user
+	let user = await DB.findOne<IUser>("user", { id: userId }, { populate: ["roles"] });
+	if (!user) throw new Error(`User not found.`);
+
+	return getActiveRole(user, workspace);
 };
 
 export const makeWorkspaceActive = async (userId: string, workspaceId: string) => {
@@ -69,7 +113,7 @@ export function filterSensitiveInfo(list: IUser[] = []) {
 	});
 }
 
-export async function filterRole(workspaceId: string, list: IUser[] = []) {
+export async function filterUsersByWorkspaceRole(workspaceId: string, list: IUser[] = []) {
 	const wsId = workspaceId;
 	const roleSvc = new RoleService();
 	const wsRoles = await roleSvc.find({ workspace: workspaceId });
@@ -77,11 +121,11 @@ export async function filterRole(workspaceId: string, list: IUser[] = []) {
 
 	return list.map((item) => {
 		if (item.roles && item.roles.length > 0) {
-			item.roles = item.roles.filter((roldId) => {
-				if (isObjectId(roldId)) {
-					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString(roldId));
-				} else if ((roldId as IRole)._id) {
-					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString((roldId as IRole)._id));
+			item.roles = item.roles.filter((roleId) => {
+				if (isObjectId(roleId)) {
+					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString(roleId));
+				} else if ((roleId as IRole)._id) {
+					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString((roleId as IRole)._id));
 				} else {
 					return false;
 				}

@@ -1,10 +1,12 @@
-import { IContainerRegistry, IGitProvider, IRole, IWorkspace } from "@/entities";
+import { IContainerRegistry, IFramework, IGitProvider, IRole, IWorkspace } from "@/entities";
 import { MongoDB } from "../../src/plugins/mongodb";
 import {
+	CLI_TEST_DIR,
 	apiKeySvc,
 	createFakeUser,
 	createWorkspace,
 	dxCmd,
+	frameworkCtl,
 	frameworkSvc,
 	getCurrentUser,
 	gitCtl,
@@ -24,6 +26,7 @@ import { initialFrameworks } from "@/seeds/seed-frameworks";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import { Config } from "@/app.config";
 import { connectRegistry } from "@/modules/registry/connect-registry";
+import { readdirSync } from "fs";
 
 export function testFlow1() {
 	let wsId: string;
@@ -99,6 +102,7 @@ export function testFlow1() {
 
 		// check 3 initial roles
 		const initialRoles = await roleSvc.find({ workspace: wsId });
+		// console.log("initialRoles :>> ", initialRoles);
 		expect(initialRoles.length).toEqual(3);
 
 		const roleNames = initialRoles.map((role) => (role as IRole).name);
@@ -131,10 +135,6 @@ export function testFlow1() {
 			name: "Bitbucket",
 			type: "bitbucket",
 			gitWorkspace: process.env.TEST_BITBUCKET_ORG,
-			repo: {
-				url: `https://bitbucket.org/${process.env.TEST_BITBUCKET_ORG}`,
-				sshPrefix: `git@bitbucket.org:${process.env.TEST_BITBUCKET_ORG}`,
-			},
 			bitbucket_oauth: {
 				username: process.env.TEST_BITBUCKET_USERNAME,
 				app_password: process.env.TEST_BITBUCKET_APP_PASS,
@@ -156,7 +156,7 @@ export function testFlow1() {
 		const profile = await GitProviderAPI.getProfile(bitbucket);
 		expect(profile).toBeDefined();
 		expect(profile.username).toBe(process.env.TEST_BITBUCKET_USERNAME);
-	});
+	}, 30000);
 
 	it("Workspace #1: Git Provider - Github", async () => {
 		const curUser = await getCurrentUser();
@@ -165,10 +165,6 @@ export function testFlow1() {
 			name: "Github",
 			type: "github",
 			gitWorkspace: process.env.TEST_GITHUB_ORG,
-			repo: {
-				url: `https://github.com/${process.env.TEST_GITHUB_ORG}`,
-				sshPrefix: `git@github.com:${process.env.TEST_GITHUB_ORG}`,
-			},
 			github_oauth: {
 				personal_access_token: process.env.TEST_GITHUB_PAT,
 			},
@@ -187,7 +183,48 @@ export function testFlow1() {
 		// test api
 		const profile = await GitProviderAPI.getProfile(github);
 		expect(profile).toBeDefined();
-	});
+	}, 30000);
+
+	it('Workspace #1: Add "public" framework', async () => {
+		const curUser = await getCurrentUser();
+
+		// add new "public" framework
+		const createRes = await frameworkCtl.create({
+			name: "Static Site Starter with NGINX",
+			repoURL: "https://github.com/digitopvn/static-nginx-site",
+			repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
+			gitProvider: "github",
+			mainBranch: "main",
+		});
+
+		if (!createRes.status) console.log("FRAMEWORK > createRes :>> ", createRes);
+		expect(createRes.status).toBe(1);
+
+		// check...
+		const fw = createRes.data as IFramework;
+		expect(fw).toBeDefined();
+	}, 30000);
+
+	// it('Workspace #1: Add "private" framework', async () => {
+	// 	const curUser = await getCurrentUser();
+
+	// 	// add new "public" framework
+	// 	const createRes = await frameworkCtl.create({
+	// 		name: "Static Site Starter with NGINX",
+	// 		repoURL: "https://github.com/digitopvn/static-nginx-site",
+	// 		repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
+	// 		gitProvider: "github",
+	// 		mainBranch: "main",
+	// 	});
+
+	// 	if (!createRes.status) console.log("FRAMEWORK > createRes :>> ", createRes);
+	// 	expect(createRes.status).toBe(1);
+
+	// 	const fw = createRes.data as IFramework;
+
+	// 	// check...
+	// 	expect(fw).toBeDefined();
+	// }, 30000);
 
 	it("Workspace #1: Container Registry - Google Artifact Registry", async () => {
 		const curUser = await getCurrentUser();
@@ -261,33 +298,42 @@ export function testFlow1() {
 		// console.log("cliInfo :>> ", cliInfo);
 	}, 15000);
 
-	// it(
-	// 	"CLI: Create new app (Github)",
-	// 	async () => {
-	// 		const github = await gitSvc.findOne({ type: "github" });
-	// 		const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
-	// 		// create new app...
-	// 		const { stdout, stderr } = await dxCmd(
-	// 			`dx new --projectName="Test Github Project" --name=web --framework=${framework.slug} --git=${github.slug} --force`
-	// 		);
-	// 		expect(stdout).toBeDefined();
-	// 	},
-	// 	5 * 60000
-	// );
+	it(
+		"CLI: Create new app (Github)",
+		async () => {
+			const github = await gitSvc.findOne({ type: "github" });
+			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
 
-	// it(
-	// 	"CLI: Create new app (Bitbucket)",
-	// 	async () => {
-	// 		const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
-	// 		const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
-	// 		// create new app...
-	// 		const { stdout, stderr } = await dxCmd(
-	// 			`dx new --projectName="Test Bitbucket Project" --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
-	// 		);
-	// 		expect(stdout).toBeDefined();
-	// 	},
-	// 	5 * 60000
-	// );
+			// create new app...
+			const res = await dxCmd(`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force`);
+			console.log("res :>> ", res);
+			expect(res).toBeDefined();
+
+			const files = readdirSync(CLI_TEST_DIR);
+			console.log("files :>> ", files);
+			expect(files.join(",").indexOf(`testgithubproject`)).toBeGreaterThan(-1);
+		},
+		5 * 60000
+	);
+
+	it(
+		"CLI: Create new app (Bitbucket)",
+		async () => {
+			const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
+			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
+
+			// create new app...
+			const res = await dxCmd(
+				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
+			);
+			expect(res).toBeDefined();
+
+			const files = readdirSync(CLI_TEST_DIR);
+			console.log("files :>> ", files);
+			expect(files.join(",").indexOf(`testbitbucketproject`)).toBeGreaterThan(-1);
+		},
+		5 * 60000
+	);
 
 	it("Workspace #1: Add member", async () => {
 		// registerr fake user #2:

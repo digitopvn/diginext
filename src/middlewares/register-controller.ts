@@ -11,9 +11,6 @@ export const registerController = (controller: BaseController) => {
 			// assign current user to the controller
 			controller.user = req.user;
 
-			// assign express.Request to service
-			if (controller.service) controller.service.req = req;
-
 			// get current workspace
 			if (controller.user?.activeWorkspace) {
 				const wsId = (controller.user?.activeWorkspace as IWorkspace)._id || (controller.user?.activeWorkspace as any);
@@ -22,7 +19,13 @@ export const registerController = (controller: BaseController) => {
 						? (controller.user?.activeWorkspace as IWorkspace)
 						: await DB.findOne<IWorkspace>("workspace", { _id: wsId });
 			}
-			// console.log("Register controller > controller.workspace :>> ", controller.workspace);
+			req.workspace = controller.workspace;
+
+			// assign express.Request to service
+			if (controller.service) {
+				controller.service.req = req;
+				controller.service.req.workspace = controller.workspace;
+			}
 
 			// parse filter, body and pagination data:
 			await controller.parsePagination(req);

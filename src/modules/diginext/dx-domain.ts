@@ -17,7 +17,7 @@ export type CreateDiginextDomainResponse = ResponseData & {
 	data: { domain: string; domain_record: string };
 };
 
-export async function createDxDomain(params: CreateDiginextDomainParams, dxKey: string) {
+export async function dxCreateDomain(params: CreateDiginextDomainParams, dxKey: string) {
 	if (IsTest()) return { status: 1, data: { domain: `${params.name}.${DIGINEXT_DOMAIN}`, domain_record: "" } } as CreateDiginextDomainResponse;
 	return dxApi<CreateDiginextDomainResponse>({ url: "/domains/create", data: params, method: "POST", dxKey });
 }

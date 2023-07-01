@@ -3,7 +3,7 @@ import yargs from "yargs";
 
 import type InputOptions from "@/interfaces/InputOptions";
 
-import { createDxDomain } from "../diginext/dx-domain";
+import { dxCreateDomain } from "../diginext/dx-domain";
 
 const logTitle = `[EXEC_DOMAIN]`;
 
@@ -26,7 +26,7 @@ export const execDomain = async (options?: InputOptions) => {
 				logError(`Missing "DX Key" in this workspace.`);
 				return;
 			}
-			const { status, messages, data } = await createDxDomain({ name, data: input }, options.workspace.dx_key);
+			const { status, messages, data } = await dxCreateDomain({ name, data: input }, options.workspace.dx_key);
 			if (status === 0) {
 				logError(logTitle, messages.join(". "));
 				return;

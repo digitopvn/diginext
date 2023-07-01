@@ -7,7 +7,7 @@ export const initialFrameworks: FrameworkDto[] = [
 		repoURL: "https://github.com/digitopvn/static-nginx-site",
 		repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
 		gitProvider: "github",
-		isPrivate: false,
+		// isPrivate: false,
 		mainBranch: "main",
 	},
 	{
@@ -15,7 +15,7 @@ export const initialFrameworks: FrameworkDto[] = [
 		repoURL: "https://github.com/digitopvn/next13-starter",
 		repoSSH: "git@github.com:digitopvn/next13-starter.git",
 		gitProvider: "github",
-		isPrivate: false,
+		// isPrivate: false,
 		mainBranch: "main",
 	},
 ];
@@ -26,7 +26,11 @@ export const seedFrameworks = async (workspace: IWorkspace, owner: IUser) => {
 			initialFrameworks.map(async (fw) => {
 				const framework = await DB.findOne<IFramework>("framework", { repoURL: fw.repoURL, workspace: workspace._id });
 				if (!framework) {
-					const seedFw = await DB.create<IFramework>("framework", { ...fw, owner: owner._id, workspace: workspace._id });
+					const seedFw = await DB.create<IFramework>(
+						"framework",
+						{ ...fw, owner: owner._id, workspace: workspace._id },
+						{ isDebugging: true }
+					);
 					return seedFw;
 				}
 				return framework;
