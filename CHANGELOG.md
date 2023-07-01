@@ -1,3 +1,10 @@
+# [3.15.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.15.0-prerelease.3...v3.15.0-prerelease.4) (2023-07-01)
+
+
+### Bug Fixes
+
+* **server,cli:** public field,db module,refactor roles,authorization,migration ([1cdb4e0](https://github.com/digitopvn/diginext/commit/1cdb4e0d3912668f80f2bff901499f3170473306))
+
 # [3.15.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.15.0-prerelease.2...v3.15.0-prerelease.3) (2023-06-30)
 
 
