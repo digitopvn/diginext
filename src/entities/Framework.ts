@@ -26,6 +26,7 @@ export interface IFramework extends IBase {
 	gitProvider?: GitProviderType;
 	/**
 	 * Git repository access privacy
+	 * @deprecated
 	 */
 	isPrivate?: boolean;
 	/**

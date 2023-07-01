@@ -91,6 +91,7 @@ export default class BaseService<T = any> {
 				const userId = user?._id;
 				data.owner = userId;
 
+				if (options.isDebugging) console.log(`${this.model.collection.name} :>> `, user.activeWorkspace);
 				if (this.model.collection.name !== "workspaces" && user.activeWorkspace) {
 					const workspaceId = (user.activeWorkspace as any)._id ? (user.activeWorkspace as any)._id : (user.activeWorkspace as any);
 					data.workspace = workspaceId;
@@ -129,7 +130,7 @@ export default class BaseService<T = any> {
 		let _filter = parseRequestFilter(filter);
 
 		const where = { ..._filter };
-		if (!options?.deleted) where.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
+		if (!options?.deleted) where.deletedAt = { $exists: false };
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find > where :>>`, where);
 
 		const pipelines: PipelineStage[] = [
@@ -236,7 +237,7 @@ export default class BaseService<T = any> {
 			})
 		);
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find > json results >>`, results);
-
+		// console.log("isArray(results) :>> ", isArray(results));
 		return results as T[];
 	}
 
@@ -264,15 +265,16 @@ export default class BaseService<T = any> {
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateFilter :>> `, updateFilter);
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateData :>> `, updateData);
 
+		const affectedIds = (await this.find(updateFilter, { ...options, select: ["_id"] })).map((item) => (item as any)._id);
+		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > affectedIds :>> `, affectedIds);
+
 		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateRes :>> `, updateRes);
 
-		// MAGIC: when update slug of the items -> update the filter as well
-		if (data.slug) updateFilter.slug = data.slug;
-
 		// response > results
-		const results = await this.find(updateFilter, options);
-		return updateRes.acknowledged ? results : [];
+		const affectedItems = await this.find({ _id: { $in: affectedIds } }, options);
+		if (options?.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > affectedItems :>> `, affectedItems);
+		return updateRes.acknowledged ? affectedItems : [];
 	}
 
 	async updateOne(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {

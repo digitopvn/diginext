@@ -8,7 +8,7 @@ import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
-import { addRoleToUser, filterRole, filterSensitiveInfo } from "@/plugins/user-utils";
+import { addRoleToUser, filterSensitiveInfo, filterUsersByWorkspaceRole, getActiveRole } from "@/plugins/user-utils";
 import UserService from "@/services/UserService";
 import WorkspaceService from "@/services/WorkspaceService";
 
@@ -43,10 +43,10 @@ export default class UserController extends BaseController<IUser> {
 
 		// console.log("[1] res.data :>> ", res.data);
 		if (isArray(res.data)) {
-			res.data = await filterRole(MongoDB.toString(this.workspace._id), res.data);
+			res.data = await filterUsersByWorkspaceRole(MongoDB.toString(this.workspace._id), res.data);
 			res.data = filterSensitiveInfo(res.data);
 		} else {
-			res.data = await filterRole(MongoDB.toString(this.workspace._id), [res.data]);
+			res.data = await filterUsersByWorkspaceRole(MongoDB.toString(this.workspace._id), [res.data]);
 			res.data = filterSensitiveInfo([res.data]);
 		}
 		// console.log("[2] res.data :>> ", res.data);
@@ -109,10 +109,10 @@ export default class UserController extends BaseController<IUser> {
 		const roleType = newRole.type as "admin" | "moderator" | "member";
 
 		// add role to user
-		let updatedUser = await addRoleToUser(roleType, MongoDB.toObjectId(this.user._id), this.workspace);
+		let { user: updatedUser } = await addRoleToUser(roleType, MongoDB.toObjectId(this.user._id), this.workspace);
 
 		// filter roles & workspaces before returning
-		[updatedUser] = await filterRole(MongoDB.toString(this.workspace._id), [updatedUser]);
+		[updatedUser] = await filterUsersByWorkspaceRole(MongoDB.toString(this.workspace._id), [updatedUser]);
 
 		return interfaces.respondSuccess({ data: updatedUser });
 	}
@@ -152,7 +152,7 @@ export default class UserController extends BaseController<IUser> {
 			workspaceId = MongoDB.toString(workspace._id);
 
 			// find the user
-			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId });
+			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId }, { populate: ["roles"] });
 			if (!user) throw new Error(`User not found.`);
 			// console.dir(user, { depth: 10 });
 
@@ -171,8 +171,10 @@ export default class UserController extends BaseController<IUser> {
 
 			// set active workspace of this user -> this workspace
 			[user] = await this.service.update({ _id: userId }, { activeWorkspace: workspaceId, workspaces: workspaceIds }, this.options);
-			// console.log("user :>> ");
-			// console.dir(user, { depth: 10 });
+
+			// set active role
+			const activeRole = await getActiveRole(user, workspace, { makeActive: true });
+			user.activeRole = activeRole;
 
 			// return the updated user:
 			return interfaces.respondSuccess({ data: user });

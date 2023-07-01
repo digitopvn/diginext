@@ -8,8 +8,7 @@ import type { DeployBuildParams } from "@/controllers/DeployController";
 import type { IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
-import { stageAllFiles } from "@/modules/bitbucket";
-import { currentVersion, resolveDockerfilePath } from "@/plugins";
+import { currentVersion, resolveDockerfilePath, stageAllFiles } from "@/plugins";
 
 import { DB } from "../api/DB";
 import type { StartBuildParams } from "../build";

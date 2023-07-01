@@ -1,7 +1,5 @@
 // import { Role } from "@/entities";
 
-import { log } from "diginext-utils/dist/xconsole/log";
-
 import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
@@ -25,7 +23,6 @@ export const seedApiKeys = async (workspace: IWorkspace, owner: IUser) => {
 	apiKeyDto.token = getUnexpiredAccessToken(apiKeyToken.value);
 
 	const apiKey = await DB.create<IApiKeyAccount>("api_key_user", apiKeyDto);
-	if (apiKey) log(`[WORKSPACE_CONTROLLER] Created "${apiKey.name}" successfully.`);
 
 	return apiKey;
 };

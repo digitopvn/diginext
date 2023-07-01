@@ -1,11 +1,19 @@
 import inquirer from "inquirer";
 
+import type { IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 import selectProject from "@/modules/apps/selectProject";
 
+import { DB } from "../api/DB";
 import createProjectByForm from "../project/create-project";
 
 export async function createOrSelectProject(options?: InputOptions) {
+	// if the user provide project name -> create new project immediately
+	if (options.projectName) {
+		const newProject = await DB.create<IProject>("project", { name: options.projectName });
+		options.project = newProject;
+	}
+
 	if (!options.project) {
 		const { projectSlug } = options;
 

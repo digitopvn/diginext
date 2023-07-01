@@ -15,6 +15,7 @@ import { askForGitProvider } from "@/modules/git/ask-for-git-provider";
 import type { GitRepository, GitRepositoryDto } from "@/modules/git/git-provider-api";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { printInformation } from "@/modules/project/printInformation";
+import { wait } from "@/plugins";
 
 //
 export default async function transferRepo(options: InputOptions) {
@@ -23,6 +24,32 @@ export default async function transferRepo(options: InputOptions) {
 
 	console.log(chalk.yellow("Chọn git provider muốn clone đến (Đừng chọn bitbucket, chưa test! )"));
 
+	const oldData = {
+		provider: options.app.git.provider,
+		repoSSH: options.app.git.repoSSH,
+		repoURL: options.app.git.repoURL,
+	};
+	// console.log("oldData :>> ", oldData);
+	// console.log("options :>> ", options);
+	// {
+	// 	// Repo URL   : https://bitbucket.org/digitopvn/test-project-gaol-webapp
+	// 	// Remote SSH : git@bitbucket.org:digitopvn/test-project-gaol-webapp.git
+	// 	const [updatedApp] = await DB.update<IApp>(
+	// 		"app",
+	// 		{ slug: options.slug },
+	// 		{
+	// 			git: {
+	// 				//
+	// 				provider: "bitbucket",
+	// 				repoSSH: "git@bitbucket.org:digitopvn/test-project-gaol-webapp.git",
+	// 				repoURL: "https://bitbucket.org/digitopvn/test-project-gaol-webapp",
+	// 			},
+	// 		}
+	// 	);
+
+	// 	console.log("updatedApp :>> ", updatedApp);
+	// }
+	// return;
 	let gitProvider = await askForGitProvider();
 
 	options.targetDirectory = path.resolve(process.cwd(), options.repoSlug);
@@ -51,6 +78,7 @@ export default async function transferRepo(options: InputOptions) {
 	const success = await pullingRepoToNewGitDir(__option);
 	if (!success) return;
 
+	await wait(500);
 	// //create git in github
 
 	// Create new repo:
@@ -95,8 +123,30 @@ export default async function transferRepo(options: InputOptions) {
 		options.remoteURL = options.app.git.repoURL;
 	}
 
+	options.app.git = {
+		provider: options.gitProvider,
+		repoSSH: options.remoteSSH,
+		repoURL: options.remoteURL,
+	};
+
+	// return;
 	// // first commit & create default branches (main, dev/*)
-	await initalizeAndCreateDefaultBranches(options);
+	const error = await initalizeAndCreateDefaultBranches(options);
+	if (error) {
+		// update git info to database
+		const [updatedApp] = await DB.update<IApp>(
+			"app",
+			{ slug: options.slug },
+			{
+				git: {
+					...oldData,
+				},
+			}
+		);
+		return;
+
+		// error
+	}
 
 	// print project information:
 	const finalConfig = getAppConfigFromApp(options.app);

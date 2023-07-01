@@ -285,7 +285,10 @@ export async function startBuild(
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Pulling latest source code from "${repoSSH}" at "${gitBranch}" branch...` });
 
 	try {
-		await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, { onUpdate: (message) => sendLog({ SOCKET_ROOM, message }) });
+		await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, {
+			// useAccessToken: {},
+			onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
+		});
 	} catch (e) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `Failed to pull "${repoSSH}": ${e}` });
 		if (options?.onError) options?.onError(`Failed to pull "${repoSSH}": ${e}`);

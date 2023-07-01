@@ -1,6 +1,8 @@
 import _, { isArray } from "lodash";
 
-import type { IRole } from "@/entities";
+import type { IRole, IUser } from "@/entities";
+
+import { isOwned } from "./is-own";
 
 export interface MaskOptions {
 	/**
@@ -25,22 +27,30 @@ export const mask = (str: string, leftUnmaskLength = 0, rightUnmaskLength?: numb
 	return `${unmaskedFirst}${maskedStr}${unmaskedLast}`;
 };
 
-export const maskSensitiveInfo = (data: any, role: IRole) => {
+export const maskSensitiveInfo = (data: any, user: IUser, role?: IRole) => {
 	if (typeof data === "boolean" || typeof data === "number" || typeof data === "string") return data;
+
+	// parse role
+	if (!role && (user.activeRole as IRole)?._id) role = user.activeRole as IRole;
+	if (!role) return;
 
 	const maskedFields = role?.maskedFields || [];
 
+	// mask fields
 	if (isArray(data)) {
 		data = data.map((item) => {
-			maskedFields.map((maskedField) => {
-				if (_.has(item, maskedField)) item = _.set(item, maskedField, "");
-			});
+			if (!isOwned(item, user)) {
+				maskedFields.map((maskedField) => {
+					if (_.has(item, maskedField)) item = _.set(item, maskedField, "");
+				});
+			}
 			return item;
 		});
 	} else {
-		maskedFields.map((maskedField) => {
-			if (_.has(data, maskedField)) data = _.set(data, maskedField, "");
-		});
+		if (!isOwned(data, user))
+			maskedFields.map((maskedField) => {
+				if (_.has(data, maskedField)) data = _.set(data, maskedField, "");
+			});
 	}
 
 	return data;

@@ -51,10 +51,11 @@ export default async function createApp(options: InputOptions) {
 		if (!fs.existsSync(options.targetDirectory)) fs.mkdirSync(options.targetDirectory);
 	}
 
-	if (options.shouldInstallPackage) await pullingFramework(options);
+	// pull/clone framework...
+	if (options.framework && options.framework.slug !== "none") await pullingFramework(options);
 
 	// update git info to database
-	const [updatedApp] = await DB.update<IApp>(
+	const updatedApp = await DB.updateOne<IApp>(
 		"app",
 		{ slug: options.slug },
 		{ git: { provider: options.gitProvider, repoSSH: options.remoteSSH, repoURL: options.remoteURL } }
@@ -64,7 +65,7 @@ export default async function createApp(options: InputOptions) {
 		return;
 	}
 
-	// // first commit & create default branches (main, dev/*)
+	// setup git remote & create initial commits, branches
 	await initalizeAndCreateDefaultBranches(options);
 
 	// print project information:

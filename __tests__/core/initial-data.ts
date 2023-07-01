@@ -1,7 +1,7 @@
 import { providerSvc } from "../helpers";
 
 export function checkInitialData() {
-	it("Default cloud providers", async () => {
+	it("Default 3 cloud providers", async () => {
 		const providers = await providerSvc.find({});
 		expect(providers.length).toBe(3);
 

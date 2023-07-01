@@ -16,6 +16,7 @@ export type GithubApiRequestOptions = {
 	method?: RequestMethodType;
 	data?: any;
 	headers?: any;
+	token?: string;
 };
 
 export type GithubApiFailResponse = {
@@ -70,7 +71,17 @@ export type GithubProfile = {
 };
 
 const Github = {
-	login: async () => {
+	loginWithPAT: async (personalAccessToken: string) => {
+		// get github profile
+		try {
+			const profile = await Github.profile(personalAccessToken);
+			saveCliConfig({ github_access_token: personalAccessToken });
+			logSuccess(`Congrats, ${profile.name}! Your github has been integrated to Diginext CLI successfully.`);
+		} catch (e) {
+			logError(e.message);
+		}
+	},
+	loginWithApp: async () => {
 		const authCallbackURL = `${Config.DX_SITE_URL}/github/callback`;
 
 		open(`https://github.com/login/oauth/authorize?client_id=${DIGINEXT_GITHUB_CLIENT_ID}&redirect_uri=${authCallbackURL}`);
@@ -80,20 +91,14 @@ const Github = {
 			name: "access_token",
 			message: `Github OAuth access token:`,
 			validate: function (value) {
-				if (value.length) {
-					return true;
-				} else {
-					return "Github access token is required.";
-				}
+				return value.length ? true : "Github access token is required.";
 			},
 		});
-		// console.log("access_token :>> ", access_token);
-
-		saveCliConfig({ github_access_token: access_token });
 
 		// get github profile
 		try {
-			const profile = await Github.profile();
+			const profile = await Github.profile(access_token);
+			saveCliConfig({ github_access_token: access_token });
 			logSuccess(`Congrats, ${profile.name}! Your github has been integrated to Diginext CLI successfully.`);
 		} catch (e) {
 			logError(e.message);
@@ -103,14 +108,14 @@ const Github = {
 		saveCliConfig({ github_access_token: "" });
 		logSuccess(`Logged out from Github account successfully.`);
 	},
-	profile: async () => {
-		const profile = (await Github.fetchApi({ url: "https://api.github.com/user" })) as GithubProfile & GithubApiFailResponse;
+	profile: async (token?: string) => {
+		const profile = (await Github.fetchApi({ url: "https://api.github.com/user", token })) as GithubProfile & GithubApiFailResponse;
 		if (profile.message) throw new Error(`${profile.message}: ${profile.documentation_url}`);
 		return profile;
 	},
 	fetchApi: async (options: GithubApiRequestOptions) => {
 		const { url, method = "GET", headers: inputHeaders = {}, data = {} } = options;
-		const { github_access_token = "" } = getCliConfig();
+		const { github_access_token = options.token || "" } = getCliConfig();
 
 		// headers
 		const headers = { Accept: "application/vnd.github+json", ...inputHeaders } as any;

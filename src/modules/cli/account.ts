@@ -3,6 +3,7 @@ import inquirer from "inquirer";
 import { isEmpty, trimEnd } from "lodash";
 import open from "open";
 
+import { Config } from "@/app.config";
 import { getCliConfig, saveCliConfig } from "@/config/config";
 import type { AccessTokenInfo, IUser } from "@/entities/User";
 import type { IWorkspace } from "@/entities/Workspace";
@@ -34,7 +35,7 @@ export const cliLogin = async (options: CliLoginOptions) => {
 
 	let access_token = accessToken;
 
-	let buildServerUrl = url ?? secondAction ?? currentServerUrl;
+	let buildServerUrl = url ?? secondAction ?? currentServerUrl ?? Config.DEFAULT_DX_SERVER_URL;
 	if (!buildServerUrl) {
 		logError(`Please provide your build server URL: "dx login <workspace_url>" or "dx login --help". Eg. https://build.example.com`);
 		return;

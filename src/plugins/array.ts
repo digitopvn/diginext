@@ -16,3 +16,20 @@ export const sortedDaysOfWeek = (daysOfWeek) =>
 		const dayOrder = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 		return dayOrder.indexOf(a) - dayOrder.indexOf(b);
 	});
+
+export function filterUniqueItemWithCondition(array: any[], uniqueField: string, priorityCondition: { field: string; value: string }) {
+	const uniqueMap = new Map();
+
+	array.forEach((item) => {
+		const fieldValue = item[uniqueField];
+		const existingItem = uniqueMap.get(fieldValue);
+
+		if (!existingItem) {
+			uniqueMap.set(fieldValue, item);
+		} else if (existingItem[priorityCondition.field] !== priorityCondition.value && item[priorityCondition.field] === priorityCondition.value) {
+			uniqueMap.set(fieldValue, item);
+		}
+	});
+
+	return Array.from(uniqueMap.values());
+}

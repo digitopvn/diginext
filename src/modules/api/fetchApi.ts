@@ -64,15 +64,11 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 	} else {
 		options.headers = { ...options.headers };
 	}
+	// console.log("options.headers :>> ", options.headers);
 
-	if (["POST", "PATCH"].includes(method?.toUpperCase())) {
-		// if (!options.headers["content-type"]) options.headers["content-type"] = "application/x-www-form-urlencoded";
-		if (!options.headers["content-type"]) options.headers["content-type"] = "application/json";
-	}
+	if (!options.headers["content-type"]) options.headers["content-type"] = "application/json";
 
 	if (options.data) options.data = JSON.stringify(options.data);
-	// if (options.data) options.data = new URLSearchParams(options.data);
-	// console.log("options.data :>> ", options.data);
 
 	try {
 		const { data: responseData } = await axios(options);

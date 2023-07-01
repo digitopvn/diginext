@@ -5,6 +5,7 @@ import type { HiddenBodyKeys } from "@/interfaces";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
+import type { BitbucketOAuthOptions, GithubOAuthOptions } from "./GitProvider";
 import type { IRole } from "./Role";
 import type { ITeam } from "./Team";
 import type { IWorkspace } from "./Workspace";
@@ -55,6 +56,14 @@ export interface IUser extends IBase {
 	 */
 	password?: string;
 	/**
+	 * Github credentials
+	 */
+	github?: GithubOAuthOptions;
+	/**
+	 * Bitbucket credentials
+	 */
+	bitbucket?: BitbucketOAuthOptions;
+	/**
 	 * User token
 	 */
 	token?: AccessTokenInfo;
@@ -96,6 +105,20 @@ export const userSchema = new Schema<IUser>(
 		},
 		password: {
 			type: String,
+		},
+		github: {
+			consumer_key: { type: String },
+			consumer_secret: { type: String },
+			username: { type: String },
+			app_password: { type: String },
+			verified: { type: Boolean },
+		},
+		bitbucket: {
+			client_id: { type: String },
+			client_secret: { type: String },
+			username: { type: String },
+			personal_access_token: { type: String },
+			verified: { type: Boolean },
 		},
 		token: {
 			type: Object,
