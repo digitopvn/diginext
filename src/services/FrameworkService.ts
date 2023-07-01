@@ -28,11 +28,9 @@ export default class FrameworkService extends BaseService<IFramework> {
 
 		// check if workspace is able to pull
 		const availableGitProviders = await DB.find<IGitProvider>("git", { type: data.gitProvider });
-		// console.log("FRAMEWORK > CREATE > availableGitProviders :>> ", availableGitProviders);
 
 		const slug = makeSlug(data.name);
 		const frameworkDir = path.resolve(CLI_CONFIG_DIR, `${this.req.workspace.slug}/frameworks/${slug}/${data.mainBranch}`);
-		// console.log("FRAMEWORK > CREATE > frameworkDir :>> ", frameworkDir);
 
 		try {
 			for (const gitProvider of availableGitProviders) {

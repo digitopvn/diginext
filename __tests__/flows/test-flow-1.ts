@@ -133,10 +133,6 @@ export function testFlow1() {
 			name: "Bitbucket",
 			type: "bitbucket",
 			gitWorkspace: process.env.TEST_BITBUCKET_ORG,
-			repo: {
-				url: `https://bitbucket.org/${process.env.TEST_BITBUCKET_ORG}`,
-				sshPrefix: `git@bitbucket.org:${process.env.TEST_BITBUCKET_ORG}`,
-			},
 			bitbucket_oauth: {
 				username: process.env.TEST_BITBUCKET_USERNAME,
 				app_password: process.env.TEST_BITBUCKET_APP_PASS,
@@ -167,10 +163,6 @@ export function testFlow1() {
 			name: "Github",
 			type: "github",
 			gitWorkspace: process.env.TEST_GITHUB_ORG,
-			repo: {
-				url: `https://github.com/${process.env.TEST_GITHUB_ORG}`,
-				sshPrefix: `git@github.com:${process.env.TEST_GITHUB_ORG}`,
-			},
 			github_oauth: {
 				personal_access_token: process.env.TEST_GITHUB_PAT,
 			},

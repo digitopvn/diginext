@@ -9,7 +9,7 @@ import type { IQueryFilter } from "@/interfaces";
 import * as interfaces from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
-import type { GitProviderType } from "@/interfaces/SystemTypes";
+import { type GitProviderType, gitProviderDomain } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
 import GitProviderAPI, * as gitProviderApi from "@/modules/git/git-provider-api";
 import { makeSlug } from "@/plugins/slug";
@@ -92,9 +92,6 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 			} else {
 				return respondFailure(`Bitbucket OAuth information (OAuth consumer or app password) is required.`);
 			}
-
-			// auto generated fields
-			body.host = "bitbucket.org";
 			if (!body.name) body.name = "Bitbucket";
 		} else if (type === "github") {
 			if (!github_oauth) return respondFailure(`Github OAuth information is required.`);
@@ -118,11 +115,17 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 			}
 
 			// auto generated fields
-			body.host = "github.com";
 			if (!body.name) body.name = "Github";
 		} else {
 			return respondFailure(`Git "${type}" type is not supported yet.`);
 		}
+
+		// generate repo info
+		body.host = gitProviderDomain[body.type];
+		// body.repo = {
+		// 	url: `https://${body.host}/${body.gitWorkspace}`,
+		// 	sshPrefix: `git@${body.host}:${body.gitWorkspace}`,
+		// };
 
 		// grab data to create:
 		body.access_token = access_token;
@@ -191,14 +194,9 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		// console.log("GitProviderController > provider :>> ", provider);
 
 		// verify
-		let msg = "";
-		// try {
 		provider = await this.service.verify(provider);
-		// } catch (e) {
-		// 	msg = e.toString();
-		// }
 
-		return respondSuccess({ data: provider, msg });
+		return respondSuccess({ data: provider });
 	}
 
 	@Security("api_key")
@@ -255,7 +253,19 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/orgs")
-	async getListOrgs(@Queries() queryParams?: interfaces.IPostQueryParams) {
+	async getListOrgs(
+		@Queries()
+		queryParams?: {
+			/**
+			 * Git provider's ID
+			 */
+			_id?: string;
+			/**
+			 * Git provider's SLUG¸¸¸
+			 */
+			slug?: string;
+		}
+	) {
 		// validation
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
@@ -266,7 +276,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		// process
 		try {
 			const orgs = await GitProviderAPI.listOrgs(provider);
-			console.log("orgs :>> ", orgs);
+			// console.log("orgs :>> ", orgs);
 			return respondSuccess({ data: orgs });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -341,7 +351,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 		// process
 		try {
-			const repo = await GitProviderAPI.createOrgRepository(provider, body);
+			const repo = await GitProviderAPI.createOrgRepository(provider, body, { isDebugging: true });
 			return respondSuccess({ data: repo });
 		} catch (e) {
 			return respondFailure(e.toString());

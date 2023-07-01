@@ -74,7 +74,7 @@ export async function createAppByForm(
 			message: "Select starting framework:",
 			default: selectFrameworks[0],
 			choices: selectFrameworks.map((fw) => {
-				return { name: fw.name, value: fw };
+				return { name: `${fw.name} ${fw.gitProvider ? `(${fw.gitProvider})` : ""}`, value: fw };
 			}),
 		});
 
@@ -174,9 +174,6 @@ export async function createAppByForm(
 	const appData: AppDto = {
 		name: options.name,
 		public: options.git.public,
-		// createdBy: options.username,
-		// owner: options.userId,
-		// workspace: options.workspaceId,
 		project: options.project._id,
 		framework: {
 			name: options.framework.name,
@@ -193,14 +190,12 @@ export async function createAppByForm(
 		gitProvider: options.git?._id,
 	};
 
-	// console.log("createAppByForm > appData :>> ", appData);
-
 	appData.git.provider = options.gitProvider;
 	if (options.remoteSSH) appData.git.repoSSH = options.remoteSSH;
 	if (options.remoteURL) appData.git.repoURL = options.remoteURL;
 
 	if (options.isDebugging) log(`Create new app with data:`, appData);
-	const newApp = await DB.create<IApp>("app", appData);
+	const newApp = await DB.create<IApp>("app", appData, { isDebugging: options.isDebugging });
 	if (options.isDebugging) log({ newApp });
 
 	if (isEmpty(newApp) || (newApp as any).error) {
