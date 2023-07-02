@@ -165,3 +165,4 @@ export const memberRoleRoutes: RoleRoute[] = [
 	{ path: "/api/v1/service_account", permissions: ["own", "public"], scope: [] },
 ];
 export const moderatorRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["own", "read", "create", "update"], scope: [] }];
+export const adminRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["full"], scope: [] }];
