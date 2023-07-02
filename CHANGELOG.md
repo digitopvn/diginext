@@ -1,3 +1,11 @@
+## [3.15.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.15.0...v3.15.1-prerelease.1) (2023-07-02)
+
+
+### Bug Fixes
+
+* **dashboard login:** unable to login and select workspace on mobile ([d2031dc](https://github.com/digitopvn/diginext/commit/d2031dce35a2d38bb633d696c58d4bec6781bc01))
+* **migration:** missing admin roles route to path ([f2d56ea](https://github.com/digitopvn/diginext/commit/f2d56ea9b4d255d0f4ab20a2fa3da1d6c52f2848))
+
 # [3.15.0](https://github.com/digitopvn/diginext/compare/v3.14.3...v3.15.0) (2023-07-01)
 
 
