@@ -1,3 +1,10 @@
+# [3.16.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.15.1...v3.16.0-prerelease.1) (2023-07-03)
+
+
+### Features
+
+* **client:** new command [np | newpage]: generate new pages nextjs ([e7ec0d3](https://github.com/digitopvn/diginext/commit/e7ec0d37ba2044e8d911c796806ab0aab1f14d61))
+
 ## [3.15.1](https://github.com/digitopvn/diginext/compare/v3.15.0...v3.15.1) (2023-07-03)
 
 
