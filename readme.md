@@ -32,22 +32,20 @@ https://diginext.site
     - Manage, backup & restore databases: MongoDB, MariaDB, PostgreSQL,…
 - Automations, CI/CD, cronjobs, notifications, alerts,…
 
-### Tech Leads
+### Tech Leads, Managers, Company & Startups
 
 - Manage & monitoring your projects easily.
 - Overview of your teams & cloud resources.
 - Faster diagnose, better logs, fewer stresses.
-
-### Managers, Company & Startups
-
 - Overview of your organization, your teams, your members, your projects, your apps and your investment in cloud resources.
 - Better understanding about what your team is doing.
 - Especially if you are poor, like us, but still want to adopt the mighty Kubernetes, `dx` is for you.
 
-Still not convinced?
+**Still not convinced?**
 
 - [I turn my company’s PC into my own “Vercel-like” platform](https://dev.to/mrgoonie/i-turn-my-companys-pc-into-my-own-vercel-like-platform-351o)
 - [Kubernetes for the poor](https://dev.to/mrgoonie/kubernetes-for-the-poor-2ne)
+- [Speed test building Next.js T3 App with Github Actions, Circle CI, Vercel & Diginext](https://dev.to/mrgoonie/speed-test-building-nextjs-t3-app-with-github-actions-circle-ci-vercel-diginext-473i)
 - [Developer-First Platforms - Overcoming K8S Complexity](https://dev.to/mrgoonie/developer-first-platforms-overcoming-k8s-complexity-1lf9)
 - [“GitDevSecOps”](https://dev.to/mrgoonie/gitdevsecops-49gp)
 
@@ -59,6 +57,7 @@ Still not convinced?
 
 ## Getting Started
 
+- [Diginext website](https://diginext.site)
 - [Hobby Workspace](https://hobby.diginext.site)
 - [Getting started (Latest updates)](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4)
 
