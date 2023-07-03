@@ -118,8 +118,8 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=digitop/diginext-base:cache
+          cache-to: type=registry,ref=digitop/diginext-base:cache,mode=max
 
   docker-release-main:
     name: Release Docker Image (MAIN)
@@ -172,8 +172,8 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=digitop/diginext:cache
+          cache-to: type=registry,ref=digitop/diginext:cache,mode=max
   
   docker-release-beta:
     name: Release Docker Image (BETA)
@@ -224,8 +224,8 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=digitop/diginext:cache-beta
+          cache-to: type=registry,ref=digitop/diginext:cache-beta,mode=max
 
   deploy-topgroup:
     name: Deploy to [topgroup.diginext.site]

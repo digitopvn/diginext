@@ -1,14 +1,14 @@
 # DIGINEXT
 
-### **A Developer-Focused platform for centralized cloud resource management & app deployment.**
+### **A developer-focused platform for app deployment & centralized cloud resource management.**
 
 https://diginext.site
 
-***Developers should not be frustrated by deploying their apps to the infrastructure, or bothering the DevOps engineers to help deploying it, they should fully focus on developing apps, they don't need to understand the servers, the domains, or infrastructure related stuffs. That's when `dx` come, `dx` is your DevOps assistant.***
+***Developers should not be frustrated by deploying apps to the infrastructure, or bothering the DevOps engineers to help deploying it, they should fully focus on developing apps, they don't need to understand the servers, the domains, or infrastructure related stuffs.***
 
-| *Build faster. Deploy easier. More flexible.*
+| *Focus on building your apps, shipping fast, and shinning, and leave your cloud infrastructure to Diginext.*
 
-| `dx` also means **Developer Experience**, and this is our number one goal - create the best experience for developers.
+| `dx` also means **Developer Experience**, and this is my number one goal - create the best experience for developers - let's make coding great again.
 
 <p align="center">
   <img src="di-banner.png?raw=true" alt="Diginext Build Server & CLI">
@@ -32,22 +32,20 @@ https://diginext.site
     - Manage, backup & restore databases: MongoDB, MariaDB, PostgreSQL,…
 - Automations, CI/CD, cronjobs, notifications, alerts,…
 
-### Tech Leads
+### Tech Leads, Managers, Company & Startups
 
 - Manage & monitoring your projects easily.
 - Overview of your teams & cloud resources.
 - Faster diagnose, better logs, fewer stresses.
-
-### Managers, Company & Startups
-
 - Overview of your organization, your teams, your members, your projects, your apps and your investment in cloud resources.
 - Better understanding about what your team is doing.
 - Especially if you are poor, like us, but still want to adopt the mighty Kubernetes, `dx` is for you.
 
-Still not convinced?
+**Still not convinced?**
 
 - [I turn my company’s PC into my own “Vercel-like” platform](https://dev.to/mrgoonie/i-turn-my-companys-pc-into-my-own-vercel-like-platform-351o)
 - [Kubernetes for the poor](https://dev.to/mrgoonie/kubernetes-for-the-poor-2ne)
+- [Speed test building Next.js T3 App with Github Actions, Circle CI, Vercel & Diginext](https://dev.to/mrgoonie/speed-test-building-nextjs-t3-app-with-github-actions-circle-ci-vercel-diginext-473i)
 - [Developer-First Platforms - Overcoming K8S Complexity](https://dev.to/mrgoonie/developer-first-platforms-overcoming-k8s-complexity-1lf9)
 - [“GitDevSecOps”](https://dev.to/mrgoonie/gitdevsecops-49gp)
 
@@ -59,6 +57,7 @@ Still not convinced?
 
 ## Getting Started
 
+- [Diginext website](https://diginext.site)
 - [Hobby Workspace](https://hobby.diginext.site)
 - [Getting started (Latest updates)](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4)
 
