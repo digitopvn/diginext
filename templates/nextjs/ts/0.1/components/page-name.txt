@@ -1,0 +1,51 @@
+import type { ReactNode } from "react";
+import React, { useEffect, useState } from "react";
+
+import { useListener } from "@/components/context/ListenerProvider";
+
+interface IPage@@PAGE_FILE_NAME {
+\tchildren?: ReactNode;
+}
+
+const Page@@PAGE_FILE_NAME = (props: IPage@@PAGE_FILE_NAME) => {
+\tconst listener = useListener();
+
+\tconst onListen = (e: any) => {
+\t\tconst { type } = e;
+\t\tswitch (type) {
+\t\t\tcase "":
+\t\t\t\tbreak;
+
+\t\t\tdefault:
+\t\t\t\tbreak;
+\t\t}
+\t};
+
+\tif (listener) {
+\t\tlistener.useSubscription((e: any) => {
+\t\t\tonListen(e);
+\t\t});
+\t}
+
+\tconst init = async () => {
+\t\t//
+\t};
+
+\tuseEffect(() => {
+\t\t// effect
+\t\treturn () => {
+\t\t\t// cleanup
+\t\t};
+\t}, []);
+
+\treturn (
+\t\t<>
+\t\t\t{/*  */}
+\t\t\t{props.children}
+\t\t</>
+\t);
+};
+
+Page@@PAGE_FILE_NAME.propTypes = {};
+
+export default Page@@PAGE_FILE_NAME;

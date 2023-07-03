@@ -238,6 +238,8 @@ export async function parseCliOptions() {
 		.command("new", "Create new project & application", newProjectOptions)
 		// command: transfer
 		.command(["transfer", "tf"], "Tranfer repo from other provider", newProjectOptions)
+		// command: newpage
+		.command(["newpage", "np"], "Generate new page in nextjs", newProjectOptions)
 		// command: init
 		.command("init", "Initialize CLI in the current project directory")
 		// command: upgrade
@@ -466,6 +468,8 @@ export async function parseCliOptions() {
 		.epilog("Copyright by TOP GROUP VIETNAM © 2023").argv;
 
 	const options: InputOptions = {
+		...argv,
+
 		// always attach current version to input options
 		version: currentVersion(),
 

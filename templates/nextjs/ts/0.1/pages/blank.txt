@@ -1,0 +1,23 @@
+import dynamic from "next/dynamic";
+
+import MasterPage from "@/components/layouts/MasterPage";
+
+const Page@@PAGE_FILE_NAME = dynamic(() => import("@@PATH_COMPONENT"), { ssr: false });
+
+// @@URL
+const @@PAGE_FILE_NAME = () => {
+\treturn (
+\t\t<>
+\t\t\t<style global jsx>{``}</style>
+\t\t\t<MasterPage
+\t\t\t\tmeta={{
+\t\t\t\t\tpageName: "@@PAGE_NAME",
+\t\t\t\t}}
+\t\t\t>
+\t\t\t\t<Page@@PAGE_FILE_NAME />
+\t\t\t</MasterPage>
+\t\t</>
+\t);
+};
+
+export default @@PAGE_FILE_NAME;
