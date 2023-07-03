@@ -1,3 +1,20 @@
+# [3.16.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.1...v3.16.0-prerelease.2) (2023-07-03)
+
+
+### Bug Fixes
+
+* **server,api:** active workspace should not return empty array ([b6b20ca](https://github.com/digitopvn/diginext/commit/b6b20ca1f96eac71a73eff4fd252a8ef78291f56))
+* **server,login,logout:** correct redirect url when login on mobile ([3fecf44](https://github.com/digitopvn/diginext/commit/3fecf4472e61bb5ccdd2bde6d2f6884fc3f19105))
+* **server,login,logout:** correct redirect url when login on mobile ([#259](https://github.com/digitopvn/diginext/issues/259)) ([f4f9a2a](https://github.com/digitopvn/diginext/commit/f4f9a2a8ab363cb321b55517317cb39416acf407))
+* **server:** unset active role and active workspace on logout ([ac1b6c8](https://github.com/digitopvn/diginext/commit/ac1b6c8a32a1a0c7772bb68c36f54dbeae6f5bc7))
+
+# [3.16.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.15.1...v3.16.0-prerelease.1) (2023-07-03)
+
+
+### Features
+
+* **client:** new command [np | newpage]: generate new pages nextjs ([e7ec0d3](https://github.com/digitopvn/diginext/commit/e7ec0d37ba2044e8d911c796806ab0aab1f14d61))
+
 ## [3.15.1](https://github.com/digitopvn/diginext/compare/v3.15.0...v3.15.1) (2023-07-03)
 
 
