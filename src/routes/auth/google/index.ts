@@ -45,7 +45,7 @@ router
 			"google",
 			{
 				session: false,
-				successReturnToOrRedirect: req.query.state || (req.query.redirect_url as string),
+				successReturnToOrRedirect: req.query.redirect_url as string,
 				failureRedirect: Config.getBasePath("/login?type=failed"),
 			},
 			// callback function
