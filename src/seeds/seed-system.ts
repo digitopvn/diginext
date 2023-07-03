@@ -1,8 +1,6 @@
-import { log } from "diginext-utils/dist/xconsole/log";
-
 import type { ICloudProvider } from "@/entities";
-import { seedSystemRoutes } from "@/migration/seed-all-routes";
 import { DB } from "@/modules/api/DB";
+import { seedSystemRoutes } from "@/seeds/seed-all-routes";
 
 const initialCloudProviders = [
 	{
@@ -32,7 +30,7 @@ export const seedDefaultCloudProviders = async () => {
 		)
 	).filter((res) => typeof res !== "undefined");
 
-	if (results.length > 0) log(`[SEEDING] Seeded ${results.length} cloud providers.`);
+	return results;
 };
 
 export const seedSystemInitialData = async () => {

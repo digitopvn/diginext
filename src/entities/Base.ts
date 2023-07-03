@@ -11,6 +11,12 @@ export interface IBase {
 	 */
 	slug?: string;
 	active?: boolean;
+	/**
+	 * `TRUE` -> any members can read
+	 * `FALSE` -> only admins can read
+	 * @default true
+	 */
+	public?: boolean;
 	metadata?: any;
 	/**
 	 * Owner ID of the app
@@ -33,6 +39,7 @@ export interface IBase {
 	createdAt?: Date;
 	deletedAt?: Date;
 	updatedAt?: Date;
+	migratedAt?: Date;
 }
 
 export interface EntityConstructor {
@@ -42,6 +49,7 @@ export interface EntityConstructor {
 export const baseSchemaDefinitions = {
 	slug: { type: String },
 	active: { type: Boolean, default: true },
+	public: { type: Boolean, default: true },
 	metadata: { type: Object },
 	owner: {
 		type: Schema.Types.ObjectId,
@@ -58,4 +66,5 @@ export const baseSchemaDefinitions = {
 	createdAt: { type: Date, default: Date.now },
 	updatedAt: { type: Date, default: Date.now },
 	deletedAt: { type: Date },
+	migratedAt: { type: Date },
 };

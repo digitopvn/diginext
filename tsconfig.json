@@ -31,7 +31,7 @@
 			"libs/*": ["./libs/*"]
 		}
 	},
-	"include": ["./src/*", "./src/**/*", "node_modules/execa/index.d.ts"],
+	"include": ["./src/*", "./src/**/*", "node_modules/execa/index.d.ts", "./__tests__/**/*"],
 	"exclude": ["dist", "build", "node_modules", "storage", "./storage"],
 	"ts-node": {
 		"require": ["tsconfig-paths/register"]

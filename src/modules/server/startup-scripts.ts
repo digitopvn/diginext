@@ -1,4 +1,3 @@
-import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import { isEmpty } from "lodash";
 import cronjob from "node-cron";
@@ -9,7 +8,10 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
 import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
+import { migrateAllRecords } from "@/migration/migrate-all-records";
+import { migrateAllRoles } from "@/migration/migrate-all-roles";
 import { migrateServiceAccountAndApiKey } from "@/migration/migrate-all-sa-and-api-key";
+import { migrateAllUsers } from "@/migration/migrate-all-users";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
 import { generateSSH, sshKeyContainPassphase, sshKeysExisted, verifySSH } from "@/modules/git";
@@ -33,7 +35,7 @@ import { findAndRunCronjob } from "../cronjob/find-and-run-job";
  * - Seed some initial data
  */
 export async function startupScripts() {
-	log(`-------------- Server is initializing -----------------`);
+	console.log(`[DIGINEXT] Server is initializing...`);
 
 	// config dir
 	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);
@@ -51,7 +53,8 @@ export async function startupScripts() {
 	const isSSHKeysExisted = await sshKeysExisted();
 	if (!isSSHKeysExisted) await generateSSH();
 	// verify if generated SSH key should not require passphase
-	sshKeyContainPassphase();
+	const keyHasPassphase = sshKeyContainPassphase();
+	if (keyHasPassphase) console.warn(`SSH key "id_rsa" should not contain passphase.`);
 
 	/**
 	 * Connect to git providers
@@ -114,13 +117,16 @@ export async function startupScripts() {
 	if (!IsTest()) {
 		const repeatDays = 7; // every 7 days
 		const atHour = 2; // 2AM
-		logSuccess(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
+		console.log(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
 		cronjob.schedule(`0 ${atHour} */${repeatDays} * *`, () => cleanUp());
 	}
 
 	/**
 	 * Database migration
 	 */
+	await migrateAllRecords();
+	await migrateAllRoles();
+	await migrateAllUsers();
 	await migrateAllAppEnvironment();
 	await migrateAllFrameworks();
 	await migrateAllGitProviders();

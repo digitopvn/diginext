@@ -37,7 +37,6 @@ export default class ProjectController extends BaseController<IProject> {
 	async create(@Body() body: entities.ProjectDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		// check dx quota
 		const quotaRes = await checkQuota(this.workspace);
-		console.log("[ProjectController] quotaRes :>> ", quotaRes);
 		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
 		if (quotaRes.data && quotaRes.data.isExceed)
 			return respondFailure(
@@ -71,7 +70,7 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("jwt")
 	@Get("/with-apps")
 	async getProjectsAndApps(@Queries() queryParams?: interfaces.IGetQueryParams) {
-		let projects = await this.service.find(this.filter, this.options, this.pagination);
+		let projects = await this.service.find(this.filter, { ...this.options }, this.pagination);
 
 		let result: ResponseData & { data: IProject[] } = { status: 1, data: [], messages: [] };
 		if (this.pagination) result = { ...result, ...this.pagination };
@@ -79,7 +78,7 @@ export default class ProjectController extends BaseController<IProject> {
 		// populate apps
 		const projectIDs = projects.map((pro) => pro._id);
 		const appSvc = new AppService();
-		let apps = await appSvc.find({ project: { $in: projectIDs } }, { status: true });
+		let apps = await appSvc.find({ project: { $in: projectIDs }, deletedAt: { $exists: false } }, { status: true });
 		// console.log("apps :>> ", apps);
 
 		result.data = projects.map((project) => {

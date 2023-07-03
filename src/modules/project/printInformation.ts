@@ -18,8 +18,8 @@ export function printInformation(finalConfig: AppConfig) {
 
 	// Deploy instruction:
 	console.log(chalk.yellow("-----------------------------------------------------------"));
-	console.log(chalk.green.bold("To deploy DEV  : ") + chalk.cyan(`dx deploy`));
-	console.log(chalk.green.bold("To deploy PROD : ") + chalk.cyan(`dx deploy --prod`));
+	console.log(chalk.green.bold("To deploy DEV  : ") + chalk.cyan(`dx up`));
+	console.log(chalk.green.bold("To deploy PROD : ") + chalk.cyan(`dx up --prod`));
 	console.log(chalk.green("  - Use flag " + chalk.cyan("--debug") + " if you want to see the build progress"));
 	console.log(chalk.green("  - Preview & roll out the deployment at: ") + chalk.cyan(buildServerUrl));
 	console.log(chalk.yellow("-----------------------------------------------------------"));

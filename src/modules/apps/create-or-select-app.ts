@@ -1,11 +1,13 @@
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type { IApp } from "@/entities";
+import type { IApp, IGitProvider } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 import { getCurrentGitRepoData } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
+import { DB } from "../api/DB";
+import { askForGitProvider } from "../git/ask-for-git-provider";
 import { createAppByForm } from "./new-app-by-form";
 import { searchApps } from "./search-apps";
 import { updateAppGitInfo } from "./update-git-config";
@@ -36,6 +38,20 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 					return { name: `[${i + 1}] ${_app.name} (${_app.slug})`, value: _app };
 				}),
 			});
+
+			// [backward compatible <3.15.X] apps have no git provider id -> update one!
+			options.git = selectedApp.gitProvider
+				? await DB.findOne<IGitProvider>("git", { _id: selectedApp.gitProvider })
+				: await askForGitProvider();
+			if (!selectedApp.gitProvider && options.git) await DB.updateOne<IApp>("app", { _id: selectedApp._id }, { gitProvider: options.git._id });
+
+			// [backward compatible <3.15.X] apps have no "public" field -> update them follows their gitProvider's "public" field
+			if (selectedApp.public !== options.git.public) {
+				selectedApp.public = options.git.public;
+				await DB.updateOne("app", { _id: selectedApp._id }, { public: selectedApp.public });
+			}
+
+			// select this app!
 			app = selectedApp;
 		} else {
 			app = await createAppByForm({ ...options, skipFramework: true });

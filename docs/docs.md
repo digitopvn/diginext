@@ -1,5 +1,27 @@
 # CLI Documentation
 
+## General
+
+- Authenticate your CLI with your workspace:
+
+    ```bash
+    dx login
+    # is similar with
+    dx login https://hobby.diginext.site
+    ```
+
+- Authenticate your CLI with your **self-hosted** workspace:
+
+    ```bash
+    dx login https://your-self-hosted.workspace
+    ```
+
+- Sign out from your workspace:
+
+    ```bash
+    dx logout
+    ```
+
 ## Project & App Helper
 
 -   Create new project:
@@ -71,24 +93,28 @@
 -   Deploy your web app to **DEV environment**:
 
     ```bash
+    dx up
+    # is similar with
+    dx up --dev
+    # is similar with
     dx deploy
-    # is equalivent with
+    # is similar with
     dx deploy --dev
     ```
 
 -   Deploy to **DEV environment** at any K8S clusters:
 
     ```bash
-    dx deploy --dev --select-cluster
+    dx up --dev --select-cluster
     ```
 
 -   Deploy to **PRODUCTION environment**:
 
     ```bash
-    dx deploy --prod
+    dx up --prod
 
     # to any other clusters
-    dx deploy --prod --select-cluster
+    dx up --prod --select-cluster
     ```
 
     **New deployment of PROD environment will not be rolled out immediately like other environments.**
@@ -98,7 +124,7 @@
 -   Deploy to **custom enviroments**:
 
     ```bash
-    dx deploy --env=canary
+    dx up --env=canary
     ```
 
 ## Build

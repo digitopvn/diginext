@@ -2,9 +2,10 @@ import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
 
 import type { IRole, IWorkspace } from "@/entities";
+import type { IRoutePermission } from "@/interfaces";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { MongoDB } from "@/plugins/mongodb";
-import { filterRole } from "@/plugins/user-utils";
+import { filterUsersByWorkspaceRole } from "@/plugins/user-utils";
 
 export async function authorize(req: AppRequest, res: Response, next: NextFunction) {
 	let { user } = req;
@@ -16,11 +17,11 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	const wsId = (user.activeWorkspace as IWorkspace)?._id
 		? MongoDB.toString((user.activeWorkspace as IWorkspace)._id)
 		: MongoDB.toString(user.activeWorkspace);
-	[user] = await filterRole(wsId, [user]);
+	[user] = await filterUsersByWorkspaceRole(wsId, [user]);
 	// console.log("authorize > user :>> ", user);
 
 	// request permission:
-	let requestPermission;
+	let requestPermission: IRoutePermission;
 	switch (method.toLowerCase()) {
 		case "post":
 			requestPermission = "create";
@@ -47,9 +48,9 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	// const { activeRole } = user;
 	const activeRole = user.activeRole as IRole;
 	// console.log("activeRole :>> ", activeRole);
-
+	const userId = MongoDB.toString(user._id);
 	// If wildcard "*" route is specified:
-	let routeRole = activeRole.routes.find((routeInfo) => routeInfo.route === "*");
+	let routeRole = activeRole.routes.find((routeInfo) => routeInfo.path === "*");
 
 	if (routeRole) {
 		if (!routeRole.permissions) routeRole.permissions = [];
@@ -58,9 +59,16 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 		} else {
 			// if permisions have "own" -> only have access to items which "owner" is "userID":
 			if (routeRole.permissions.includes("full")) {
+				// YOU ARE THE KING!
+				isAllowed = true;
+			} else if (routeRole.permissions.includes("public") && routeRole.permissions.includes("own")) {
+				req.query.$or = [{ public: "true" }, { owner: userId }];
+				isAllowed = true;
+			} else if (routeRole.permissions.includes("public")) {
+				req.query.public = "true";
 				isAllowed = true;
 			} else if (routeRole.permissions.includes("own")) {
-				req.query.owner = MongoDB.toString(user._id);
+				req.query.owner = userId;
 				isAllowed = true;
 			} else {
 				isAllowed = false;
@@ -69,7 +77,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	}
 
 	// Check again if a specific route is specified:
-	routeRole = activeRole.routes.find((routeInfo) => routeInfo.route === route);
+	routeRole = activeRole.routes.find((routeInfo) => routeInfo.path === route);
 
 	if (routeRole) {
 		if (!routeRole.permissions) routeRole.permissions = [];
@@ -80,6 +88,12 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 			// if permisions have "own" -> only have access to items which "owner" is "userID":
 			if (routeRole.permissions.includes("full")) {
 				delete req.query.owner;
+				isAllowed = true;
+			} else if (routeRole.permissions.includes("public") && routeRole.permissions.includes("own")) {
+				req.query.$or = [{ public: true }, { owner: userId }];
+				isAllowed = true;
+			} else if (routeRole.permissions.includes("public")) {
+				req.query.public = true;
 				isAllowed = true;
 			} else if (routeRole.permissions.includes("own")) {
 				req.query.owner = MongoDB.toString(user._id);
@@ -92,10 +106,8 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 
 	// print the debug info
 	console.log(
-		`authorize > [${requestPermission}] ${route} > role :>> [${activeRole.workspace}] ${activeRole.name}:`,
-		// `${activeRole.routes
-		// 	.map((r) => `· ${r.route} - ${r.permissions.join(",") || "none"}`)
-		// 	.join("\n")}`,
+		`authorize > [${requestPermission}] ${route} > role :>> [WS: ${activeRole.workspace}] ${activeRole.name}:`,
+		`${activeRole.routes.map((r) => `· ${r.path} - ${r.permissions.join(",") || "none"}`).join("\n")}`,
 		`>> ALLOW:`,
 		isAllowed
 	);

@@ -10,6 +10,8 @@ import BaseController from "./BaseController";
 @Tags("Framework")
 @Route("framework")
 export default class FrameworkController extends BaseController<IFramework> {
+	service: FrameworkService;
+
 	constructor() {
 		super(new FrameworkService());
 	}
@@ -27,8 +29,16 @@ export default class FrameworkController extends BaseController<IFramework> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: entities.FrameworkDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
-		return super.create(body);
+	async create(@Body() body: entities.FrameworkDto) {
+		try {
+			const data = await this.service.create(body, {
+				...this.options,
+				// isDebugging: true,
+			});
+			return interfaces.respondSuccess({ data });
+		} catch (e) {
+			return interfaces.respondFailure(e.toString());
+		}
 	}
 
 	@Security("api_key")

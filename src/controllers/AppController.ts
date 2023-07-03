@@ -20,7 +20,7 @@ import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import type { GenerateDeploymentResult } from "@/modules/deploy";
 import { fetchDeploymentFromContent, generateDeployment } from "@/modules/deploy";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
-import { createDxDomain } from "@/modules/diginext/dx-domain";
+import { dxCreateDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
@@ -744,7 +744,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 				status,
 				messages,
 				data: { domain },
-			} = await createDxDomain({ name: subdomain, data: cluster.primaryIP }, this.workspace.dx_key);
+			} = await dxCreateDomain({ name: subdomain, data: cluster.primaryIP }, this.workspace.dx_key);
 			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
 			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
 		}
@@ -894,6 +894,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
 
+		const currentDeployEnvData = app.deployEnvironment[env];
+
 		// build number
 		if (!deployEnvironmentData.buildNumber) deployEnvironmentData.buildNumber = app.deployEnvironment[env].buildNumber;
 
@@ -936,17 +938,17 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// cluster
 		let cluster: ICluster | undefined;
-		if (deployEnvironmentData.cluster) {
-			cluster = await DB.findOne<ICluster>("cluster", { shortName: deployEnvironmentData.cluster });
-		}
+		if (deployEnvironmentData.cluster) cluster = await DB.findOne<ICluster>("cluster", { shortName: deployEnvironmentData.cluster });
+		if (!cluster && currentDeployEnvData.cluster) cluster = await DB.findOne<ICluster>("cluster", { shortName: currentDeployEnvData.cluster });
 
 		// namespace
-		if (deployEnvironmentData.namespace) {
+		const namespace = deployEnvironmentData.namespace;
+		if (cluster && namespace) {
 			// Check if namespace is existed...
-			const isNamespaceExisted = await ClusterManager.isNamespaceExisted(deployEnvironmentData.namespace, { context: cluster.contextName });
+			const isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context: cluster.contextName });
 			if (isNamespaceExisted)
 				return respondFailure({
-					msg: `Namespace "${deployEnvironmentData.namespace}" was existed in "${deployEnvironmentData.cluster}" cluster, please choose different name or leave empty to use generated namespace name.`,
+					msg: `Namespace "${namespace}" was existed in "${cluster.name}" cluster, please choose different name or leave empty to use generated namespace name.`,
 				});
 		}
 
@@ -966,7 +968,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 				status,
 				messages,
 				data: { domain },
-			} = await createDxDomain({ name: subdomain, data: cluster.primaryIP }, this.workspace.dx_key);
+			} = await dxCreateDomain({ name: subdomain, data: cluster.primaryIP }, this.workspace.dx_key);
+
 			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
 			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
 		}
@@ -1042,15 +1045,34 @@ export default class AppController extends BaseController<IApp, AppService> {
 		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
-		// create new release and roll out
-		const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
-			author: this.user,
-			cliVersion: currentVersion(),
-			workspace: this.workspace,
-		});
-		const result = await ClusterManager.rollout(release._id.toString());
+		if (!cluster) return respondSuccess({ data: updatedApp.deployEnvironment[env] });
 
-		if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
+		// get workloads on cluster
+		const mainAppName = await getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+		let workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
+			context: cluster.contextName,
+			filterLabel: `main-app=${mainAppName}`,
+		});
+		// Fallback support for deprecated mainAppName
+		if (!workloads || workloads.length === 0) {
+			workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${deprecatedMainAppName}`,
+			});
+		}
+
+		if (workloads && workloads.length > 0) {
+			// create new release and roll out
+			const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+				author: this.user,
+				cliVersion: currentVersion(),
+				workspace: this.workspace,
+			});
+			const result = await ClusterManager.rollout(release._id.toString());
+
+			if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
+		}
 
 		return respondSuccess({ data: updatedApp.deployEnvironment[env] });
 	}

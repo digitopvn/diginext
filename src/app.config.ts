@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import Table from "cli-table";
 import xobject from "diginext-utils/dist/object";
 import dotenv from "dotenv";
@@ -11,9 +10,11 @@ import { CLI_DIR } from "./config/const";
 let appEnv: any = {};
 let isNoEnvFile = false;
 
-if (fs.existsSync(path.resolve(CLI_DIR, ".env.dev"))) {
-	dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") });
-	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env.dev") }).parsed;
+const envFilePath = process.env.NODE_ENV === "test" ? path.resolve(CLI_DIR, `.env.test`) : path.resolve(CLI_DIR, `.env.dev`);
+
+if (fs.existsSync(envFilePath)) {
+	dotenv.config({ path: envFilePath });
+	appEnv = dotenv.config({ path: envFilePath }).parsed;
 } else if (fs.existsSync(path.resolve(CLI_DIR, ".env"))) {
 	dotenv.config({ path: path.resolve(CLI_DIR, ".env") });
 	appEnv = dotenv.config({ path: path.resolve(CLI_DIR, ".env") }).parsed;
@@ -37,7 +38,7 @@ appEnv.CLI_MODE = process.env.CLI_MODE;
 
 const table = new Table();
 if (process.env.CLI_MODE === "server") {
-	console.log(chalk.yellow(`------ process.env ------`));
+	// console.log(chalk.yellow(`------ process.env ------`));
 	Object.entries(process.env).forEach(([key, val]) => {
 		if (isNoEnvFile) {
 			const value = _.truncate(val.toString(), { length: 60, separator: " " });
@@ -49,7 +50,7 @@ if (process.env.CLI_MODE === "server") {
 			}
 		}
 	});
-	console.log(table.toString());
+	// console.log(table.toString());
 }
 
 export enum EnvName {
@@ -99,7 +100,7 @@ export class Config {
 	}
 
 	static get DB_NAME() {
-		return process.env.DB_NAME || (Config.ENV === EnvName.TEST ? `diginext-test` : `diginext`);
+		return process.env.DB_NAME || "diginext";
 	}
 
 	static get CLI_MODE() {
@@ -108,6 +109,10 @@ export class Config {
 
 	static get SERVER_TYPE() {
 		return (process.env.SERVER_TYPE || "default") as "default" | "hobby";
+	}
+
+	static get DEFAULT_DX_SERVER_URL() {
+		return "https://hobby.diginext.site";
 	}
 
 	static get DX_SITE_URL() {

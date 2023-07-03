@@ -1,6 +1,7 @@
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import { existsSync, unlink } from "fs";
 
+import { Config } from "@/app.config";
 import type { IContainerRegistry } from "@/entities";
 import { createTmpFile } from "@/plugins";
 
@@ -8,10 +9,15 @@ import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
 import DockerRegistry from "./docker-registry";
 
-export const connectRegistry = async (registry: IContainerRegistry, options?: { userId?: any; workspaceId?: any; insertDatabase?: boolean }) => {
+export const connectRegistry = async (
+	registry: IContainerRegistry,
+	options?: { userId?: any; workspaceId?: any; insertDatabase?: boolean; builder?: "docker" | "podman" }
+) => {
 	const { slug, provider, host } = registry;
 
 	let connectedRegistry: IContainerRegistry;
+	const builderName = options?.builder?.toUpperCase() || Config.BUILDER.toUpperCase();
+
 	switch (provider) {
 		case "gcloud":
 			const { serviceAccount } = registry;
@@ -26,9 +32,9 @@ export const connectRegistry = async (registry: IContainerRegistry, options?: { 
 			connectedRegistry = await gcloud.connectDockerRegistry({ ...options, registry: slug, host });
 
 			if (connectedRegistry) {
-				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}".`);
+				logSuccess(`[CONTAINER REGISTRY] ✓ ${builderName}: Connected to Container Registry "${registry.name}".`);
 			} else {
-				throw new Error(`[CONTAINER REGISTRY] ❌ Failed to connect to this container registry (${registry.name}).`);
+				throw new Error(`[CONTAINER REGISTRY] ❌ ${builderName}: Failed to connect to this container registry (${registry.name}).`);
 			}
 
 			// delete temporary service account
@@ -45,9 +51,9 @@ export const connectRegistry = async (registry: IContainerRegistry, options?: { 
 			connectedRegistry = await digitalocean.connectDockerRegistry({ ...options, key: apiAccessToken, registry: slug });
 
 			if (connectedRegistry) {
-				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}".`);
+				logSuccess(`[CONTAINER REGISTRY] ✓ ${builderName}: Connected to Container Registry "${registry.name}".`);
 			} else {
-				throw new Error(`[CONTAINER REGISTRY] ❌ Failed to connect to this container registry (${registry.name}).`);
+				throw new Error(`[CONTAINER REGISTRY] ❌ ${builderName}: Failed to connect to this container registry (${registry.name}).`);
 			}
 
 			return connectedRegistry;
@@ -61,16 +67,16 @@ export const connectRegistry = async (registry: IContainerRegistry, options?: { 
 			);
 
 			if (connectedRegistry) {
-				logSuccess(`[CONTAINER REGISTRY] ✓ Connected to Container Registry "${registry.name}".`);
+				logSuccess(`[CONTAINER REGISTRY] ✓ ${builderName}: Connected to Container Registry "${registry.name}".`);
 			} else {
-				throw new Error(`[CONTAINER REGISTRY] ❌ Failed to connect to this container registry (${registry.name}).`);
+				throw new Error(`[CONTAINER REGISTRY] ❌ ${builderName}: Failed to connect to this container registry (${registry.name}).`);
 			}
 
 			return connectedRegistry;
 
 		default:
 			throw new Error(
-				`[CONTAINER REGISTRY] This container registry is not supported (${provider}), only "gcloud" and "digitalocean" are supported.`
+				`[CONTAINER REGISTRY] This container registry is not supported (${provider}), only "dockerhub", "gcloud" and "digitalocean" are supported.`
 			);
 	}
 };

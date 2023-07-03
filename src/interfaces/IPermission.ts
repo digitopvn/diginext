@@ -1,8 +1,5 @@
-export type IRouteScope = "all" | "workspace" | "team" | "project" | "app";
+export const routeScopeList = ["all", "workspace", "team", "project", "app"] as const;
+export type IRouteScope = typeof routeScopeList[number];
 
-export type IRoutePermission = "full" | "own" | "create" | "read" | "update" | "delete";
-
-export interface IRouteRole {
-	scope: IRouteScope;
-	permissions: IRoutePermission[];
-}
+export const routePermissionList = ["full", "own", "public", "create", "read", "update", "delete"] as const;
+export type IRoutePermission = typeof routePermissionList[number];

@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
-import type { IRoutePermission, IRouteScope } from "@/interfaces/IPermission";
+import { type IRoutePermission, type IRouteScope, routePermissionList, routeScopeList } from "@/interfaces/IPermission";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
@@ -11,7 +11,7 @@ export interface RoleRoute {
 	 * Route path
 	 * @example /api/v1/healthz
 	 */
-	route: string;
+	path: string;
 	/**
 	 * @default ["full"]
 	 */
@@ -21,7 +21,7 @@ export interface RoleRoute {
 	 * @default all
 	 * @example all
 	 */
-	scope?: IRouteScope;
+	scope?: IRouteScope[];
 }
 
 export interface IRole extends IBase {
@@ -40,9 +40,9 @@ export interface IRole extends IBase {
 export type RoleDto = Omit<IRole, keyof HiddenBodyKeys>;
 
 const RoleRouteSchema = new Schema<RoleRoute>({
-	route: { type: String },
-	scope: [{ type: String, enum: ["all", "workspace", "team", "project", "app"] }],
-	permissions: [{ type: String, enum: ["full", "own", "create", "read", "update", "delete"] }],
+	path: { type: String },
+	scope: [{ type: String, enum: routeScopeList }],
+	permissions: [{ type: String, enum: routePermissionList }],
 });
 
 export const roleSchema = new Schema(
