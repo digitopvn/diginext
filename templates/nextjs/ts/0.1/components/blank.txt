@@ -1,0 +1,19 @@
+import type { ReactNode } from "react";
+import React from "react";
+
+interface IPage@@PAGE_FILE_NAME {
+\tchildren?: ReactNode;
+}
+
+const Page@@PAGE_FILE_NAME = (props: IPage@@PAGE_FILE_NAME) => {
+\treturn (
+\t\t<>
+\t\t\t{/*  */}
+\t\t\t{props.children}
+\t\t</>
+\t);
+};
+
+Page@@PAGE_FILE_NAME.propTypes = {};
+
+export default Page@@PAGE_FILE_NAME;

@@ -16,6 +16,7 @@ import { execDatabase } from "@/modules/db";
 import * as deploy from "@/modules/deploy";
 import { execDomain } from "@/modules/domains/execDomain";
 import { execGit, generateSSH } from "@/modules/git";
+import createNewPage from "@/modules/nextjs/createNewPage";
 import { execPipeline } from "@/modules/pipeline";
 import CustomProvider, { execCustomProvider } from "@/modules/providers/custom";
 import DigitalOcean, { execDigitalOcean } from "@/modules/providers/digitalocean";
@@ -228,6 +229,11 @@ export async function processCLI(options?: InputOptions) {
 			await cliAuthenticate(options);
 
 			await transferRepo(options);
+			return;
+
+		case "np":
+		case "newpage":
+			await createNewPage(options as any);
 			return;
 
 		default:
