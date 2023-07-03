@@ -1,5 +1,6 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
+import { isEmpty } from "lodash";
 
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
@@ -51,11 +52,14 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: Response, next
 			);
 		req.role = apiKeyAccount.activeRole = activeRole;
 
+		if (isEmpty(apiKeyAccount.activeWorkspace)) delete apiKeyAccount.activeWorkspace;
+		if (isEmpty(apiKeyAccount.activeRole)) delete apiKeyAccount.activeRole;
+
 		// user
 		req.user = apiKeyAccount;
 		res.locals.user = apiKeyAccount;
 
-		next();
+		return next();
 	} else {
 		return ApiResponse.rejected(res, "API access token is invalid.");
 	}

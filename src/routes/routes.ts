@@ -9,6 +9,7 @@ dayjs.extend(timezone);
 import apiV1 from "@/routes/api/v1";
 
 import googleAuth from "./auth/google";
+import authLogout from "./auth/logout";
 import authProfileApi from "./auth/profile";
 
 const router = express.Router();
@@ -18,6 +19,7 @@ const router = express.Router();
  */
 router.use(Config.getBasePath(`/auth/profile`), authProfileApi);
 router.use(Config.getBasePath(`/auth/google`), googleAuth);
+router.use(Config.getBasePath(`/auth/logout`), authLogout);
 
 if (apiV1) router.use(Config.getBasePath(`/api/v1`), apiV1);
 
