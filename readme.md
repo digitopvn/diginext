@@ -1,14 +1,14 @@
 # DIGINEXT
 
-### **A Developer-Focused platform for centralized cloud resource management & app deployment.**
+### **A developer-focused platform for app deployment & centralized cloud resource management.**
 
 https://diginext.site
 
-***Developers should not be frustrated by deploying their apps to the infrastructure, or bothering the DevOps engineers to help deploying it, they should fully focus on developing apps, they don't need to understand the servers, the domains, or infrastructure related stuffs. That's when `dx` come, `dx` is your DevOps assistant.***
+***Developers should not be frustrated by deploying apps to the infrastructure, or bothering the DevOps engineers to help deploying it, they should fully focus on developing apps, they don't need to understand the servers, the domains, or infrastructure related stuffs.***
 
-| *Build faster. Deploy easier. More flexible.*
+| *Focus on building your apps, shipping fast, and shinning, and leave your cloud infrastructure to Diginext.*
 
-| `dx` also means **Developer Experience**, and this is our number one goal - create the best experience for developers.
+| `dx` also means **Developer Experience**, and this is my number one goal - create the best experience for developers - let's make coding great again.
 
 <p align="center">
   <img src="di-banner.png?raw=true" alt="Diginext Build Server & CLI">
