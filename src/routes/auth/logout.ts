@@ -14,7 +14,7 @@ const router = express.Router();
 router.get("/", authenticate, async (req: AppRequest, res: Response, next: NextFunction) => {
 	if (req.user) {
 		try {
-			await DB.updateOne("user", { _id: req.user._id }, { $unset: { activeRole: true, activeWorkspace: true } }, { raw: true });
+			await DB.updateOne("user", { _id: req.user._id }, { $unset: { activeRole: "", activeWorkspace: "" } }, { raw: true });
 		} catch (e) {
 			return respondFailure(`Unable to logout: ${e}`);
 		}
