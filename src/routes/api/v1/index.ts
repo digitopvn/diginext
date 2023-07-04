@@ -20,6 +20,7 @@ import releaseRouter from "./release";
 import roleRouter from "./role";
 import routeRouter from "./route";
 import serviceAccountRouter from "./service_account";
+import statsRouter from "./stats";
 import teamRouter from "./team";
 import userRouter from "./user";
 import utilityRouter from "./utility";
@@ -57,5 +58,6 @@ router.use("/route", routeRouter);
 router.use("/utility", utilityRouter);
 router.use("/monitor", monitorRouter);
 router.use("/cronjob", cronjobRouter);
+router.use("/stats", statsRouter);
 
 export default router;
