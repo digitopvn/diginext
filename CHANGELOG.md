@@ -1,3 +1,11 @@
+## [3.16.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.16.1...v3.16.2-prerelease.1) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,auth:** still unable to login on ios ([13afbfa](https://github.com/digitopvn/diginext/commit/13afbfacd8b39b4f268d6ccffde2f8ec16df9882))
+* **server,auth:** trim hashtag at the end of access token ([#264](https://github.com/digitopvn/diginext/issues/264)) ([e5277a6](https://github.com/digitopvn/diginext/commit/e5277a6595334b53655bda98a3bf8a36203774fe))
+
 ## [3.16.1](https://github.com/digitopvn/diginext/compare/v3.16.0...v3.16.1) (2023-07-04)
 
 
