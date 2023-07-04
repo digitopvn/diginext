@@ -6,9 +6,9 @@ https://diginext.site
 
 ***Developers should not be frustrated by deploying apps to the infrastructure, or bothering the DevOps engineers to help deploying it, they should fully focus on developing apps, they don't need to understand the servers, the domains, or infrastructure related stuffs.***
 
-| *Focus on building your apps, shipping fast, and shinning, and leave your cloud infrastructure to Diginext.*
+> *Focus on building your apps, shipping fast, and shinning, and leave your cloud infrastructure to Diginext.*
 
-| `dx` also means **Developer Experience**, and this is my number one goal - create the best experience for developers - let's make coding great again.
+> `dx` also means **Developer Experience**, and this is my number one goal - create the best experience for developers - let's make coding great again.
 
 <p align="center">
   <img src="di-banner.png?raw=true" alt="Diginext Build Server & CLI">
