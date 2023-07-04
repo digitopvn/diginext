@@ -77,18 +77,9 @@ https://diginext.site
 
 - [Diginext website](https://diginext.site)
 - [Hobby Workspace](https://hobby.diginext.site)
-- [Getting started (Latest updates)](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4)
+- [Documentation](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4)
 
-### If you are a developer and you just want to deploy your app immediately)
-
-- [Installation guide](https://topgroup.notion.site/Installation-6de7bda045224ed4b4ee5f4cc5681814?pvs=4)
-
-#### Required
-
--   Install [Docker](https://docs.docker.com/engine/install/) or [Podman](https://podman.io/getting-started/installation#podman-installation-instructions) on your computer.
--   __**NOTES:**__: By default the build server will use Podman as container image builder ([WHY?](readme.md#why-podman-over-docker)), if you want to use Docker as your builder, remember to specify the environment variable `BUILDER=docker`.
-
-#### Installation
+#### CLI Installation
 
 Install the package globally:
 
@@ -96,7 +87,13 @@ Install the package globally:
 npm i @topgroup/diginext --location=global
 ```
 
-Login to our build server:
+#### CLI Update
+
+- To update your CLI to the latest version: `dx update` or `npm update @topgroup/diginext --location=global`.
+
+---
+
+Login to your Diginext workspace:
 
 ```bash
 dx login 
@@ -111,36 +108,38 @@ That's it!
 
 ---
 
-Or login to your team's build server:
-
-```bash
-dx login https://localhost:6969
-# OR
-# dx login https://buildserverdomain.example
-cd /path/to/your/app
-dx init
-dx up
-```
-
----
-
-Start a new app from scratch:
+Start developing a new app from boilerplate frameworks:
 
 ```bash
 dx new
 ```
 
-## Build server
+Available frameworks:
+✓ Next.js
+✓ Static website with NGINX
+
+## Running Diginext platform on your own infrastructure
+
+**Requirements:**
+- A server: any computers with Ubuntu, Debian or CentOS
+
+### 1. With installation script
+
+Access into your server (directly or via SSH), then run this script:
+
+```bash
+curl -sfL https://diginext.site/install/microk8s | sh -
+```
+
+👉 [Detailed instruction](https://dev.to/mrgoonie/i-turn-my-companys-pc-into-my-own-vercel-like-platform-351o)
+
+### 2. With Docker Engine
 
 -   **Diginext** requires a MongoDB database to run the build server.
 
-### If you want to run a build server for your own / team / organization
+For fastest installation, I recommend to use our `docker-compose.yaml`, you will need to fill in some environment variables:
 
-#### Run your server with Docker Compose (Recommended)
-
-For fastest installation, we recommend to use our `docker-compose.yaml`, you will need to fill in some environment variables:
-
-```bash
+```yaml
 ...
   # Add your credentials so you can use Google Sign-in to authenticate with your workspace later on:
   - GOOGLE_CLIENT_ID=
@@ -149,67 +148,17 @@ For fastest installation, we recommend to use our `docker-compose.yaml`, you wil
 
 Then spin up the build server with: `docker compose up`, it will be available at: `http://localhost:6969`
 
-Access the admin (`http://localhost:6969`) to configure your new workspace, add some cluster access information.
+Access the admin (`http://localhost:6969`) to configure your new workspace.
 
 On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx up` (or `dx deploy`).
 
-Read the [docs here](docs/docs.md).
+👉 Read the [docs here](docs/docs.md).
 
-#### Manual installation
+### Other installation guides
 
--   Install `kubectl`: [https://kubernetes.io/docs/tasks/tools/](https://kubernetes.io/docs/tasks/tools/)
--   Install `MongoDB`: https://www.mongodb.com/docs/manual/installation/
--   Install `gcloud`: https://cloud.google.com/sdk/docs/install#installation_instructions
--   Install `doctl`: https://docs.digitalocean.com/reference/doctl/
-
-Install the package globally:
-
-```bash
-npm i @topgroup/diginext --location=global
-```
-
-After installing, you can use the CLI command `dx` and spin up a build server with:
-
-```bash
-export DB_URI=<YOUR_DB_URI>
-dx server up
-```
-
-The build server will be available at: http://localhost:6969
-
-Access the admin to configure your new workspace, add some cluster access information.
-
-On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx up` (or )`dx deploy`).
-
-For example, to deploy your project:
-
-```bash
-cd /path/to/your/project
-# initialize your application (register it with the build server)
-dx init
-# complete the form, then use the command below to deploy:
-dx up
-```
-
-Read the [docs here](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4).
-
-### Why PODMAN over DOCKER?
-
-For simple installation, we usually like to spin up the Diginext build server with Docker / Docker Compose or Kubernetes, this is the concept of [Docker-in-Docker](https://www.docker.com/blog/docker-can-now-run-within-docker/), Docker Engine requires deamonset to build your image, therefor you need to run the container as `root` user with `privileged` mode & also mount `docker.sock` volume. Running a container in `privileged` mode is a bad practice since it would lead to security issue (if you don't know this, [read here](https://www.trendmicro.com/en_us/research/19/l/why-running-a-privileged-container-in-docker-is-a-bad-idea.html)).
-
-On the other hand, [Podman](https://podman.io/) is a daemonless container engine for developing, managing, and running OCI Containers. Containers can either be run as `root` or in `rootless` mode. Podman also has similar commands with Docker, so it would be simpler to implement into **Diginext**.
-
-**__Notes:__** there is a bit of tradeoff when using Podman instead of Docker as a builder - build speed. You will notice a slightly increase build time when using Podman, however, I would make it as an acceptance rather facing any potential risks in the future.
+- [Installation guide](https://topgroup.notion.site/Installation-6de7bda045224ed4b4ee5f4cc5681814?pvs=4)
 
 ---
-
-## Update
-
-- To update your CLI to the latest version: `dx update` or `npm update @topgroup/diginext --location=global`.
-
-## Documentation
-
-- Visit our [docs here](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4)
 
 ## Changelog
 
