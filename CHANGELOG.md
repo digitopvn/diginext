@@ -1,3 +1,10 @@
+## [3.16.2-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.2...v3.16.2-prerelease.3) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auith:** redirect login ([1c7ab60](https://github.com/digitopvn/diginext/commit/1c7ab60daadec62786d096951ee24efdb3eeffde))
+
 ## [3.16.2-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.1...v3.16.2-prerelease.2) (2023-07-04)
 
 
