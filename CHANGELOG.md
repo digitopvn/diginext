@@ -1,3 +1,11 @@
+## [3.16.2-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.5...v3.16.2-prerelease.6) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auth:** check cookie ([3a4e74a](https://github.com/digitopvn/diginext/commit/3a4e74a1c171bf84ba8ba516804a8c8cbb25dfdd))
+* **auth:** check cookie ([#273](https://github.com/digitopvn/diginext/issues/273)) ([beb5eaa](https://github.com/digitopvn/diginext/commit/beb5eaa831e46caf3ebfab7916cd893d49395f2e))
+
 ## [3.16.2-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.4...v3.16.2-prerelease.5) (2023-07-04)
 
 
