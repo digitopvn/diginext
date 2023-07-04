@@ -149,7 +149,9 @@ export async function cliAuthenticate(options: InputOptions) {
 	});
 	user = userData as IUser;
 
-	if (!status || isEmpty(user)) {
+	if (options.isDebugging) console.log("[ACCOUNT] user :>> ", user);
+
+	if (!status || isEmpty(user) || isEmpty(user?.activeWorkspace)) {
 		// don't give up, keep trying...
 		if (buildServerUrl) user = await continueToLoginStep(buildServerUrl);
 	}
