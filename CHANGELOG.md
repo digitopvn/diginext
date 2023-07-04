@@ -1,3 +1,11 @@
+## [3.16.2-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.4...v3.16.2-prerelease.5) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auth:** remove hashtag when redirect ([18de516](https://github.com/digitopvn/diginext/commit/18de51603da3d402b739f367601df736cbf6943b))
+* **auth:** remove hashtag when redirect ([#272](https://github.com/digitopvn/diginext/issues/272)) ([e35834b](https://github.com/digitopvn/diginext/commit/e35834b2c9e3a9405c93c8631b8dfeed7726bdf7))
+
 ## [3.16.2-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.3...v3.16.2-prerelease.4) (2023-07-04)
 
 
