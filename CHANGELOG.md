@@ -1,3 +1,12 @@
+## [3.16.1](https://github.com/digitopvn/diginext/compare/v3.16.0...v3.16.1) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,auth:** trim hashtag at the end of access token ([fb325e7](https://github.com/digitopvn/diginext/commit/fb325e7ba9b77fa071764f5f3e31f09fb467289a))
+* **server,login ios:** try the best to get access_token ([b00024f](https://github.com/digitopvn/diginext/commit/b00024f522467449b5e5309f0714435637739e9a))
+* **server,login ios:** try the best to get access_token ([#263](https://github.com/digitopvn/diginext/issues/263)) ([c2383d3](https://github.com/digitopvn/diginext/commit/c2383d38a4e8e2e5d8e8d31d782b21c920c9ac3e))
+
 # [3.16.0](https://github.com/digitopvn/diginext/compare/v3.15.1...v3.16.0) (2023-07-03)
 
 
