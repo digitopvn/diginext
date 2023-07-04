@@ -1,3 +1,30 @@
+# [3.17.0](https://github.com/digitopvn/diginext/compare/v3.16.1...v3.17.0) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auith:** redirect login ([1c7ab60](https://github.com/digitopvn/diginext/commit/1c7ab60daadec62786d096951ee24efdb3eeffde))
+* **auth:** check cookie ([3a4e74a](https://github.com/digitopvn/diginext/commit/3a4e74a1c171bf84ba8ba516804a8c8cbb25dfdd))
+* **auth:** check cookie ([#273](https://github.com/digitopvn/diginext/issues/273)) ([beb5eaa](https://github.com/digitopvn/diginext/commit/beb5eaa831e46caf3ebfab7916cd893d49395f2e))
+* **auth:** console log ([2077e74](https://github.com/digitopvn/diginext/commit/2077e74c77f943aa979b75fc74e5e64ab5b80997))
+* **auth:** console log ([#274](https://github.com/digitopvn/diginext/issues/274)) ([3ecc609](https://github.com/digitopvn/diginext/commit/3ecc609cedb5ae8d70c115559325373813a4d514))
+* **auth:** refect stale profile ([fc969e2](https://github.com/digitopvn/diginext/commit/fc969e243722594e4a650b5d5f6ec062b85f86be))
+* **auth:** remove hashtag when redirect ([18de516](https://github.com/digitopvn/diginext/commit/18de51603da3d402b739f367601df736cbf6943b))
+* **auth:** remove hashtag when redirect ([#272](https://github.com/digitopvn/diginext/issues/272)) ([e35834b](https://github.com/digitopvn/diginext/commit/e35834b2c9e3a9405c93c8631b8dfeed7726bdf7))
+* **database:** create backup with status ([fc0e697](https://github.com/digitopvn/diginext/commit/fc0e697239ca3129d57498fcc17f94ab5af091d1))
+* **server,auth:** rm alert token ([6529a30](https://github.com/digitopvn/diginext/commit/6529a3054fa1f2c344cce22bc0c36c46883f646f))
+* **server,auth:** rm alert token ([#269](https://github.com/digitopvn/diginext/issues/269)) ([24a8fb0](https://github.com/digitopvn/diginext/commit/24a8fb02f9702180f689114def96d1695e45365d))
+* **server,auth:** still unable to login on ios ([13afbfa](https://github.com/digitopvn/diginext/commit/13afbfacd8b39b4f268d6ccffde2f8ec16df9882))
+* **server,auth:** trim hashtag at the end of access token ([#264](https://github.com/digitopvn/diginext/issues/264)) ([e5277a6](https://github.com/digitopvn/diginext/commit/e5277a6595334b53655bda98a3bf8a36203774fe))
+* **server,auth:** try another way to redirect login ([da675c0](https://github.com/digitopvn/diginext/commit/da675c0b84f7791576ba1cd8fc9b1301c861f1ff))
+* **server,auth:** try another way to redirect login ([#271](https://github.com/digitopvn/diginext/issues/271)) ([bd68adb](https://github.com/digitopvn/diginext/commit/bd68adb655875d3147f04b9e32245bfa97c3d9e6))
+
+
+### Features
+
+* **server,api:** dashboard, stats, fix swagger.json ([6362d24](https://github.com/digitopvn/diginext/commit/6362d2421ec4d3ee9cede6929c7466a381610890))
+* **server,api:** dashboard, stats, fix swagger.json ([#276](https://github.com/digitopvn/diginext/issues/276)) ([44f10c5](https://github.com/digitopvn/diginext/commit/44f10c5e48b4d8c6489b8bf69fa4666c395aad27))
+
 # [3.17.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.8...v3.17.0-prerelease.1) (2023-07-04)
 
 
