@@ -1,3 +1,11 @@
+## [3.16.2-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.3...v3.16.2-prerelease.4) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,auth:** try another way to redirect login ([da675c0](https://github.com/digitopvn/diginext/commit/da675c0b84f7791576ba1cd8fc9b1301c861f1ff))
+* **server,auth:** try another way to redirect login ([#271](https://github.com/digitopvn/diginext/issues/271)) ([bd68adb](https://github.com/digitopvn/diginext/commit/bd68adb655875d3147f04b9e32245bfa97c3d9e6))
+
 ## [3.16.2-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.2...v3.16.2-prerelease.3) (2023-07-04)
 
 
