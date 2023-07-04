@@ -1,3 +1,11 @@
+# [3.17.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.8...v3.17.0-prerelease.1) (2023-07-04)
+
+
+### Features
+
+* **server,api:** dashboard, stats, fix swagger.json ([6362d24](https://github.com/digitopvn/diginext/commit/6362d2421ec4d3ee9cede6929c7466a381610890))
+* **server,api:** dashboard, stats, fix swagger.json ([#276](https://github.com/digitopvn/diginext/issues/276)) ([44f10c5](https://github.com/digitopvn/diginext/commit/44f10c5e48b4d8c6489b8bf69fa4666c395aad27))
+
 ## [3.16.2-prerelease.8](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.7...v3.16.2-prerelease.8) (2023-07-04)
 
 
