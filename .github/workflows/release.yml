@@ -80,6 +80,11 @@ jobs:
         with:
           name: dist-artifact
           path: dist
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: swagger-artifact
+          path: public/swagger.json
       
       - name: Show current branch
         run: echo "${{ env.BRANCH_NAME }}"
@@ -144,8 +149,14 @@ jobs:
           name: dist-artifact
           path: dist
 
-      - name: Display structure of downloaded files
-        run: ls -R
+      - name: Download swagger.json
+        uses: actions/download-artifact@v3
+        with:
+          name: swagger-artifact
+          path: public
+
+      # - name: Display structure of downloaded files
+      #   run: ls -R
 
       - name: Checkout latest release tag
         run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
