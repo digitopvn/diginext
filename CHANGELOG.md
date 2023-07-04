@@ -1,3 +1,11 @@
+## [3.16.2-prerelease.8](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.7...v3.16.2-prerelease.8) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auth:** refect stale profile ([fc969e2](https://github.com/digitopvn/diginext/commit/fc969e243722594e4a650b5d5f6ec062b85f86be))
+* **database:** create backup with status ([fc0e697](https://github.com/digitopvn/diginext/commit/fc0e697239ca3129d57498fcc17f94ab5af091d1))
+
 ## [3.16.2-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.6...v3.16.2-prerelease.7) (2023-07-04)
 
 
