@@ -1,3 +1,11 @@
+# [3.16.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.3...v3.16.0-prerelease.4) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,auth:** trim hashtag at the end of access token ([fb325e7](https://github.com/digitopvn/diginext/commit/fb325e7ba9b77fa071764f5f3e31f09fb467289a))
+* **server,auth:** trim hashtag at the end of access token ([#264](https://github.com/digitopvn/diginext/issues/264)) ([e5277a6](https://github.com/digitopvn/diginext/commit/e5277a6595334b53655bda98a3bf8a36203774fe))
+
 # [3.16.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.2...v3.16.0-prerelease.3) (2023-07-04)
 
 
