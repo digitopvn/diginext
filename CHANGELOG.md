@@ -1,3 +1,11 @@
+# [3.16.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.2...v3.16.0-prerelease.3) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,login ios:** try the best to get access_token ([b00024f](https://github.com/digitopvn/diginext/commit/b00024f522467449b5e5309f0714435637739e9a))
+* **server,login ios:** try the best to get access_token ([#263](https://github.com/digitopvn/diginext/issues/263)) ([c2383d3](https://github.com/digitopvn/diginext/commit/c2383d38a4e8e2e5d8e8d31d782b21c920c9ac3e))
+
 # [3.16.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.1...v3.16.0-prerelease.2) (2023-07-03)
 
 
