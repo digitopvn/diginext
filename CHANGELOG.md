@@ -1,3 +1,11 @@
+## [3.16.2-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.6...v3.16.2-prerelease.7) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auth:** console log ([2077e74](https://github.com/digitopvn/diginext/commit/2077e74c77f943aa979b75fc74e5e64ab5b80997))
+* **auth:** console log ([#274](https://github.com/digitopvn/diginext/issues/274)) ([3ecc609](https://github.com/digitopvn/diginext/commit/3ecc609cedb5ae8d70c115559325373813a4d514))
+
 ## [3.16.2-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.5...v3.16.2-prerelease.6) (2023-07-04)
 
 
