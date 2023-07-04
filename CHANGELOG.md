@@ -1,3 +1,10 @@
+# [3.16.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.4...v3.16.0-prerelease.5) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,auth:** still unable to login on ios ([13afbfa](https://github.com/digitopvn/diginext/commit/13afbfacd8b39b4f268d6ccffde2f8ec16df9882))
+
 # [3.16.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.3...v3.16.0-prerelease.4) (2023-07-04)
 
 
