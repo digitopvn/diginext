@@ -143,9 +143,10 @@ function initialize(db?: typeof mongoose) {
 	 * Enable when running on server
 	 */
 	morgan.token("user", (req: AppRequest) => (req.user ? `[${req.user.slug}]` : "[unauthenticated]"));
+	morgan.token("req-headers", (req: AppRequest) => JSON.stringify(req.headers));
 	const morganMessage = IsDev()
 		? "[REQUEST :date[clf]] :method - :user - :url :status :response-time ms - :res[content-length]"
-		: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;
+		: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent" :req-headers`;
 	const morganOptions = {
 		skip: (req) => req.method.toUpperCase() === "OPTIONS",
 		// stream: logger,
