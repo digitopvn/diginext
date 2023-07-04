@@ -1,19 +1,13 @@
-# [3.16.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.4...v3.16.0-prerelease.5) (2023-07-04)
-
-
-### Bug Fixes
-
-* **server,auth:** still unable to login on ios ([13afbfa](https://github.com/digitopvn/diginext/commit/13afbfacd8b39b4f268d6ccffde2f8ec16df9882))
-
-# [3.16.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.3...v3.16.0-prerelease.4) (2023-07-04)
+## [3.16.1](https://github.com/digitopvn/diginext/compare/v3.16.0...v3.16.1) (2023-07-04)
 
 
 ### Bug Fixes
 
 * **server,auth:** trim hashtag at the end of access token ([fb325e7](https://github.com/digitopvn/diginext/commit/fb325e7ba9b77fa071764f5f3e31f09fb467289a))
-* **server,auth:** trim hashtag at the end of access token ([#264](https://github.com/digitopvn/diginext/issues/264)) ([e5277a6](https://github.com/digitopvn/diginext/commit/e5277a6595334b53655bda98a3bf8a36203774fe))
+* **server,login ios:** try the best to get access_token ([b00024f](https://github.com/digitopvn/diginext/commit/b00024f522467449b5e5309f0714435637739e9a))
+* **server,login ios:** try the best to get access_token ([#263](https://github.com/digitopvn/diginext/issues/263)) ([c2383d3](https://github.com/digitopvn/diginext/commit/c2383d38a4e8e2e5d8e8d31d782b21c920c9ac3e))
 
-# [3.16.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.2...v3.16.0-prerelease.3) (2023-07-04)
+# [3.16.0](https://github.com/digitopvn/diginext/compare/v3.15.1...v3.16.0) (2023-07-03)
 
 
 ### Bug Fixes
