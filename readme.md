@@ -16,6 +16,24 @@ https://diginext.site
 
 ## Features
 
+- One-click deploy to any Kubernetes clusters of any cloud providers
+    - ✅ GCP
+    - ✅ DigitalOcean
+    - ✅ Metal K8S cluster
+    - 🔜 AWS
+    - 🔜 Azure
+- Simple deploy of any public or private Docker image
+- Application rollback to previously deployed versions
+- Overcoming Kubernetes complexity by stripping Kubernetes away
+- Start developing new applications with frameworks or boilerplates
+- Manage, auto-backup & restore databases:
+    - Postgres
+    - MySQL
+    - MongoDB
+- Zero-downtime deploy and health checks
+- Monitor CPU, RAM, and Network usage per deployment, per node & per cluster
+- Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)
+
 ### For Developers
 
 - Fully focus on development
