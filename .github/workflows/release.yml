@@ -228,7 +228,7 @@ jobs:
           cache-to: type=registry,ref=digitop/diginext:cache-beta,mode=max
 
   deploy-topgroup:
-    name: Deploy to [topgroup.diginext.site]
+    name: Deploy to [hobby.diginext.site]
     runs-on: ubuntu-latest
     needs: [docker-release-main]
     if: always() && !cancelled() && !failure() && contains(github.ref, 'main')
