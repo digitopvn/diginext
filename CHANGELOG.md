@@ -1,3 +1,11 @@
+## [3.16.2-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.1...v3.16.2-prerelease.2) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,auth:** rm alert token ([6529a30](https://github.com/digitopvn/diginext/commit/6529a3054fa1f2c344cce22bc0c36c46883f646f))
+* **server,auth:** rm alert token ([#269](https://github.com/digitopvn/diginext/issues/269)) ([24a8fb0](https://github.com/digitopvn/diginext/commit/24a8fb02f9702180f689114def96d1695e45365d))
+
 ## [3.16.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.16.1...v3.16.2-prerelease.1) (2023-07-04)
 
 
