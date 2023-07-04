@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
+import { endsWith } from "lodash";
 import passport from "passport";
 
 import { Config } from "@/app.config";
@@ -26,9 +27,9 @@ export const signAndRedirect = (res: Response, data: { userId: string; workspace
 	const params = new URLSearchParams(url.search);
 	params.set("access_token", access_token);
 
-	const finalUrl = url.origin + url.pathname + "?" + params.toString();
+	const finalUrl = url.origin + "/workspace/select?access_token=" + access_token;
 	console.log("[2] signAndRedirect > finalUrl", finalUrl);
-	return res.redirect(finalUrl);
+	return res.redirect(endsWith(finalUrl, "%23") ? finalUrl.substring(0, finalUrl.length - 3) : finalUrl);
 };
 
 router

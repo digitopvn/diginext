@@ -1,3 +1,4 @@
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError } from "diginext-utils/dist/xconsole/log";
 import { existsSync } from "fs";
 import { toString } from "lodash";
@@ -184,6 +185,22 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		try {
 			let res: { name: string; path: string };
 
+			const bkSvc = new CloudDatabaseBackupService();
+
+			// check if this process has been done by other pods, if yes, ignore this.
+			const bkName = `${db.type}-backup-${makeDaySlug()}`;
+			let backup = await bkSvc.findOne({ name: bkName });
+			if (backup) return;
+
+			// create backup in db
+			backup = await bkSvc.create({
+				database: MongoDB.toString(db._id),
+				status: "start",
+				name: bkName,
+				type: db.type,
+				dbSlug: db.slug,
+			});
+
 			switch (db.type) {
 				case "mariadb":
 				case "mysql":
@@ -214,18 +231,9 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 					return respondFailure(`Database type "${db.type}" is not supported backing up at the moment.`);
 			}
 
-			// insert backup to db
+			// update status
 			const url = `${Config.BASE_URL}/storage/${res.path.split("storage/")[1]}`;
-			const bkSvc = new CloudDatabaseBackupService();
-			const backup = await bkSvc.create({
-				database: MongoDB.toString(db._id),
-				status: "success",
-				name: res.name,
-				path: res.path,
-				type: db.type,
-				dbSlug: db.slug,
-				url,
-			});
+			backup = await bkSvc.updateOne({ name: bkName }, { status: "success", path: res.path, url });
 
 			return backup;
 		} catch (e) {

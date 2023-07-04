@@ -30,7 +30,7 @@ export const getConnectionString = (options: Partial<PostgresConnectionInfo>) =>
 	if (options.url) return options.url;
 	if (!options.host) throw new Error(`Param "host" is required.`);
 	if (!options.pass) throw new Error(`Param "pass" is required.`);
-	return `postgresql://${options.user || "root"}:${options.pass}@${options.host}:${options.port}/${options.dbName || "admin"}`;
+	return `postgresql://${options.user || "root"}:${options.pass}@${options.host}:${options.port}/${options.dbName || ""}`;
 };
 
 export const checkConnection = async (options: PostgresConnectionInfo & { isDebugging?: boolean }) => {
