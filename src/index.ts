@@ -4,7 +4,6 @@
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
-// import pkg from "@/../package.json";
 import { execConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
