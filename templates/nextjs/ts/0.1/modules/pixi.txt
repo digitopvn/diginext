@@ -1,0 +1,35 @@
+import { Event } from 'diginext-pixi';
+import type * as PIXI from 'pixi.js';
+import { Container } from 'pixi.js';
+
+export default class @@PAGE_FILE_NAMEScene extends Container {
+\tconstructor(props?: any) {
+\t\tsuper();
+\t\tthis.props = { ...this.props, props };
+
+\t\tthis.#awake();
+\t}
+
+\tprops: any;
+
+\t#awake() {
+\t\t//
+\t\tconst app = (window as any).uData?.app as any;
+\t\tif (!app) return;
+
+\t\tconst stage = app.stage as PIXI.Container;
+\t\tif (!stage) return;
+
+\t\tstage.on(Event.RESIZE as any, this.resize.bind(this));
+
+\t\t// app.ticker.add(this.update.bind(this));
+\t}
+
+\tresize({ data }: any) {
+\t\tconst { width, height } = data;
+\t}
+
+\tupdate() {
+\t\t//
+\t}
+}

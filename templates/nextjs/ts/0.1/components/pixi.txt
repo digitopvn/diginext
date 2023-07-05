@@ -1,0 +1,73 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+import { BasicApp, Event } from "diginext-pixi/dist";
+import type * as PIXI from "pixi.js";
+import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
+
+import { useListener } from "@/components/context/ListenerProvider";
+import @@PAGE_FILE_NAMEScene from "@/modules/pixi/scenes/@@PAGE_FILE_NAMEScene";
+
+interface IPage@@PAGE_FILE_NAME {
+\tchildren?: ReactNode;
+}
+
+const Page@@PAGE_FILE_NAME = (props: IPage@@PAGE_FILE_NAME) => {
+\tconst [main, setMain] = useState(<> </>);
+
+\tconst listener = useListener();
+
+\tconst onListen = (e: any) => {
+\t\tconst { type } = e;
+\t\tswitch (type) {
+\t\t\tcase Event.LOADED_BASIC_COMP:
+\t\t\t\t{
+\t\t\t\t\tinit();
+\t\t\t\t}
+\t\t\t\tbreak;
+
+\t\t\tdefault:
+\t\t\t\tbreak;
+\t\t}
+\t};
+
+\tif (listener) {
+\t\tlistener.useSubscription((e: any) => {
+\t\t\tonListen(e);
+\t\t});
+\t}
+
+\tconst init = async () => {
+\t\t//
+\t\tconst app = (window as any).uData?.app as any;
+\t\tif (!app) return;
+
+\t\tconst stage = app.stage as PIXI.Container;
+\t\tif (!stage) return;
+
+\t\tconst scene = new @@PAGE_FILE_NAMEScene();
+\t\tstage.addChild(scene);
+\t};
+
+\tuseEffect(() => {
+\t\t// effect
+\t\tsetMain(
+\t\t\t<>
+\t\t\t\t<BasicApp listener={listener} />
+\t\t\t\t{/* {IsLocal() ? <ButtonDebug listener={listener} /> : <></>} */}
+\t\t\t</>
+\t\t);
+\t\treturn () => {
+\t\t\t// cleanup
+\t\t};
+\t}, []);
+
+\treturn (
+\t\t<>
+\t\t\t{/* <div className="holder absolute h-[730px] w-[530px] resize overflow-auto ">{main}</div> */}
+\t\t\t<div className="holder absolute h-full w-full overflow-hidden ">{main}</div>
+\t\t\t{props.children}
+\t\t</>
+\t);
+};
+
+export default Page@@PAGE_FILE_NAME;
