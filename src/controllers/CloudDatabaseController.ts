@@ -1,6 +1,7 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { ICloudDatabase } from "@/entities";
+import { CloudDatabaseBackupDto } from "@/entities";
 import type { CronjobRepeat, CronjonRepeatCondition } from "@/entities/Cronjob";
 import type { HiddenBodyKeys } from "@/interfaces";
 import * as interfaces from "@/interfaces";
@@ -98,7 +99,16 @@ export default class CloudDatabaseController extends BaseController<ICloudDataba
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/restore")
-	async restore(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async restore(
+		@Body() body: CloudDatabaseBackupDto,
+		@Queries()
+		queryParams?: {
+			/**
+			 * Cloud Database Backup ID
+			 */
+			id: string;
+		}
+	) {
 		try {
 			// restore...
 			return interfaces.respondFailure(`This feature is under development.`);

@@ -183,8 +183,6 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 
 		// backup
 		try {
-			let res: { name: string; path: string };
-
 			const bkSvc = new CloudDatabaseBackupService();
 
 			// check if this process has been done by other pods, if yes, ignore this.
@@ -199,15 +197,20 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 				name: bkName,
 				type: db.type,
 				dbSlug: db.slug,
+				// ownerships
+				workspace: this.req.workspace._id as string,
+				owner: this.req.user._id as string,
 			});
 
 			switch (db.type) {
 				case "mariadb":
 				case "mysql":
-					res = await MySQL.backup({ dbName: options?.dbName, host: db.host, port: toString(db.port), user: db.user, pass: db.pass });
+					MySQL.backup({ dbName: options?.dbName, host: db.host, port: toString(db.port), user: db.user, pass: db.pass })
+						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
+						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
 					break;
 				case "mongodb":
-					res = await MongoShell.backup({
+					MongoShell.backup({
 						dbName: options?.dbName,
 						authDb: options?.authDb,
 						url: db.url,
@@ -215,25 +218,25 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						port: toString(db.port),
 						user: db.user,
 						pass: db.pass,
-					});
+					})
+						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
+						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
 					break;
 				case "postgresql":
-					res = await PostgreSQL.backup({
+					PostgreSQL.backup({
 						dbName: options?.dbName,
 						url: db.url,
 						host: db.host,
 						port: toString(db.port),
 						user: db.user,
 						pass: db.pass,
-					});
+					})
+						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
+						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
 					break;
 				default:
-					return respondFailure(`Database type "${db.type}" is not supported backing up at the moment.`);
+					throw new Error(`Database type "${db.type}" is not supported backing up at the moment.`);
 			}
-
-			// update status
-			const url = `${Config.BASE_URL}/storage/${res.path.split("storage/")[1]}`;
-			backup = await bkSvc.updateOne({ name: bkName }, { status: "success", path: res.path, url });
 
 			return backup;
 		} catch (e) {

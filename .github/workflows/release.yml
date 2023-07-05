@@ -212,6 +212,12 @@ jobs:
           name: dist-artifact
           path: dist
 
+      - name: Download swagger.json
+        uses: actions/download-artifact@v3
+        with:
+          name: swagger-artifact
+          path: public
+
       - name: Display structure of downloaded files
         run: ls -R
 
