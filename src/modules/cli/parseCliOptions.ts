@@ -238,8 +238,8 @@ export async function parseCliOptions() {
 		.command("new", "Create new project & application", newProjectOptions)
 		// command: transfer
 		.command(["transfer", "tf"], "Tranfer repo from other provider", newProjectOptions)
-		// command: newpage
-		.command(["newpage", "np"], "Generate new page in nextjs", newProjectOptions)
+		// command: snippets
+		.command(["snippets", "snpt"], "Generate snippets", newProjectOptions)
 		// command: init
 		.command("init", "Initialize CLI in the current project directory")
 		// command: upgrade

@@ -208,7 +208,7 @@ export type InputOptions = {
 		| "down"
 		| "free"
 		| "transfer"
-		| "newpage"
+		| "snippets"
 		| string;
 
 	/**
