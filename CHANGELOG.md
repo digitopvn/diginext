@@ -1,3 +1,10 @@
+# [3.17.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.17.0-prerelease.1...v3.17.0-prerelease.2) (2023-07-05)
+
+
+### Features
+
+* **server:** revert scroll dir build logs, db backup list ([1e8ec81](https://github.com/digitopvn/diginext/commit/1e8ec81da6afcf0cc92aa1ad36dc8b62a64fa947))
+
 # [3.17.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.8...v3.17.0-prerelease.1) (2023-07-04)
 
 
