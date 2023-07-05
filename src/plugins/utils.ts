@@ -575,7 +575,7 @@ export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOr
 	if (fs.existsSync(dir)) {
 		try {
 			git = simpleGit(dir, { progress: onProgress });
-			await git.clone(repoSSH, dir);
+			await git.clone(repoSSH, dir, ["--depth", "1"]);
 
 			console.log("\ndone");
 		} catch (e) {}
