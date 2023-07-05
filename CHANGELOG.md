@@ -1,3 +1,15 @@
+# [3.18.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.17.0...v3.18.0-prerelease.1) (2023-07-05)
+
+
+### Bug Fixes
+
+* **cli:** templates/nextjs/ts/0.1/components/three.txt ([38b639a](https://github.com/digitopvn/diginext/commit/38b639a0c3f90b260b17eed1dae5791e729cfcfc))
+
+
+### Features
+
+* **server:** revert scroll dir build logs, db backup list ([1e8ec81](https://github.com/digitopvn/diginext/commit/1e8ec81da6afcf0cc92aa1ad36dc8b62a64fa947))
+
 # [3.17.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.17.0-prerelease.1...v3.17.0-prerelease.2) (2023-07-05)
 
 
