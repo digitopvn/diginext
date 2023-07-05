@@ -1,5 +1,6 @@
 // import { log } from "diginext-utils/dist/xconsole/log";
 import { Response } from "diginext-utils/dist/response";
+import { isEmpty } from "lodash";
 import passport from "passport";
 
 import type { IRole, IUser, IWorkspace } from "@/entities";
@@ -47,11 +48,12 @@ const jwt_auth = (req: AppRequest, res, next) =>
 
 			// role
 			const { roles = [] } = user;
-			const activeRole = roles.find(
-				(role) => MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id)
-			) as IRole;
-			// console.log("user.activeRole :>> ", user.activeRole);
-			// console.log("activeRole :>> ", activeRole);
+			const activeRole = isEmpty(user.activeWorkspace)
+				? undefined
+				: (roles.find(
+						(role) => MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id)
+				  ) as IRole);
+
 			if (activeRole && user.activeRole !== activeRole._id) {
 				user = await DB.updateOne<IUser>(
 					"user",
@@ -59,9 +61,11 @@ const jwt_auth = (req: AppRequest, res, next) =>
 					{ activeRole: activeRole._id },
 					{ populate: ["roles", "workspaces", "activeRole", "activeWorkspace"] }
 				);
-				// console.log("user.activeRole :>> ", user.activeRole);
-				// user.activeRole = activeRole;
 			}
+
+			if (isEmpty(user.activeWorkspace)) delete user.activeWorkspace;
+			if (isEmpty(user.activeRole)) delete user.activeRole;
+
 			req.role = user.activeRole = activeRole;
 
 			// user

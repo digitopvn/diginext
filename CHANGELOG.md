@@ -1,3 +1,115 @@
+# [3.17.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.8...v3.17.0-prerelease.1) (2023-07-04)
+
+
+### Features
+
+* **server,api:** dashboard, stats, fix swagger.json ([6362d24](https://github.com/digitopvn/diginext/commit/6362d2421ec4d3ee9cede6929c7466a381610890))
+* **server,api:** dashboard, stats, fix swagger.json ([#276](https://github.com/digitopvn/diginext/issues/276)) ([44f10c5](https://github.com/digitopvn/diginext/commit/44f10c5e48b4d8c6489b8bf69fa4666c395aad27))
+
+## [3.16.2-prerelease.8](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.7...v3.16.2-prerelease.8) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auth:** refect stale profile ([fc969e2](https://github.com/digitopvn/diginext/commit/fc969e243722594e4a650b5d5f6ec062b85f86be))
+* **database:** create backup with status ([fc0e697](https://github.com/digitopvn/diginext/commit/fc0e697239ca3129d57498fcc17f94ab5af091d1))
+
+## [3.16.2-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.6...v3.16.2-prerelease.7) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auth:** console log ([2077e74](https://github.com/digitopvn/diginext/commit/2077e74c77f943aa979b75fc74e5e64ab5b80997))
+* **auth:** console log ([#274](https://github.com/digitopvn/diginext/issues/274)) ([3ecc609](https://github.com/digitopvn/diginext/commit/3ecc609cedb5ae8d70c115559325373813a4d514))
+
+## [3.16.2-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.5...v3.16.2-prerelease.6) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auth:** check cookie ([3a4e74a](https://github.com/digitopvn/diginext/commit/3a4e74a1c171bf84ba8ba516804a8c8cbb25dfdd))
+* **auth:** check cookie ([#273](https://github.com/digitopvn/diginext/issues/273)) ([beb5eaa](https://github.com/digitopvn/diginext/commit/beb5eaa831e46caf3ebfab7916cd893d49395f2e))
+
+## [3.16.2-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.4...v3.16.2-prerelease.5) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auth:** remove hashtag when redirect ([18de516](https://github.com/digitopvn/diginext/commit/18de51603da3d402b739f367601df736cbf6943b))
+* **auth:** remove hashtag when redirect ([#272](https://github.com/digitopvn/diginext/issues/272)) ([e35834b](https://github.com/digitopvn/diginext/commit/e35834b2c9e3a9405c93c8631b8dfeed7726bdf7))
+
+## [3.16.2-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.3...v3.16.2-prerelease.4) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,auth:** try another way to redirect login ([da675c0](https://github.com/digitopvn/diginext/commit/da675c0b84f7791576ba1cd8fc9b1301c861f1ff))
+* **server,auth:** try another way to redirect login ([#271](https://github.com/digitopvn/diginext/issues/271)) ([bd68adb](https://github.com/digitopvn/diginext/commit/bd68adb655875d3147f04b9e32245bfa97c3d9e6))
+
+## [3.16.2-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.2...v3.16.2-prerelease.3) (2023-07-04)
+
+
+### Bug Fixes
+
+* **auith:** redirect login ([1c7ab60](https://github.com/digitopvn/diginext/commit/1c7ab60daadec62786d096951ee24efdb3eeffde))
+
+## [3.16.2-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.16.2-prerelease.1...v3.16.2-prerelease.2) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,auth:** rm alert token ([6529a30](https://github.com/digitopvn/diginext/commit/6529a3054fa1f2c344cce22bc0c36c46883f646f))
+* **server,auth:** rm alert token ([#269](https://github.com/digitopvn/diginext/issues/269)) ([24a8fb0](https://github.com/digitopvn/diginext/commit/24a8fb02f9702180f689114def96d1695e45365d))
+
+## [3.16.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.16.1...v3.16.2-prerelease.1) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,auth:** still unable to login on ios ([13afbfa](https://github.com/digitopvn/diginext/commit/13afbfacd8b39b4f268d6ccffde2f8ec16df9882))
+* **server,auth:** trim hashtag at the end of access token ([#264](https://github.com/digitopvn/diginext/issues/264)) ([e5277a6](https://github.com/digitopvn/diginext/commit/e5277a6595334b53655bda98a3bf8a36203774fe))
+
+## [3.16.1](https://github.com/digitopvn/diginext/compare/v3.16.0...v3.16.1) (2023-07-04)
+
+
+### Bug Fixes
+
+* **server,auth:** trim hashtag at the end of access token ([fb325e7](https://github.com/digitopvn/diginext/commit/fb325e7ba9b77fa071764f5f3e31f09fb467289a))
+* **server,login ios:** try the best to get access_token ([b00024f](https://github.com/digitopvn/diginext/commit/b00024f522467449b5e5309f0714435637739e9a))
+* **server,login ios:** try the best to get access_token ([#263](https://github.com/digitopvn/diginext/issues/263)) ([c2383d3](https://github.com/digitopvn/diginext/commit/c2383d38a4e8e2e5d8e8d31d782b21c920c9ac3e))
+
+# [3.16.0](https://github.com/digitopvn/diginext/compare/v3.15.1...v3.16.0) (2023-07-03)
+
+
+### Bug Fixes
+
+* **server,api:** active workspace should not return empty array ([b6b20ca](https://github.com/digitopvn/diginext/commit/b6b20ca1f96eac71a73eff4fd252a8ef78291f56))
+* **server,login,logout:** correct redirect url when login on mobile ([3fecf44](https://github.com/digitopvn/diginext/commit/3fecf4472e61bb5ccdd2bde6d2f6884fc3f19105))
+* **server,login,logout:** correct redirect url when login on mobile ([#259](https://github.com/digitopvn/diginext/issues/259)) ([f4f9a2a](https://github.com/digitopvn/diginext/commit/f4f9a2a8ab363cb321b55517317cb39416acf407))
+* **server:** unset active role and active workspace on logout ([ac1b6c8](https://github.com/digitopvn/diginext/commit/ac1b6c8a32a1a0c7772bb68c36f54dbeae6f5bc7))
+
+
+### Features
+
+* **client:** new command [np | newpage]: generate new pages nextjs ([e7ec0d3](https://github.com/digitopvn/diginext/commit/e7ec0d37ba2044e8d911c796806ab0aab1f14d61))
+
+# [3.16.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.16.0-prerelease.1...v3.16.0-prerelease.2) (2023-07-03)
+
+
+### Bug Fixes
+
+* **server,api:** active workspace should not return empty array ([b6b20ca](https://github.com/digitopvn/diginext/commit/b6b20ca1f96eac71a73eff4fd252a8ef78291f56))
+* **server,login,logout:** correct redirect url when login on mobile ([3fecf44](https://github.com/digitopvn/diginext/commit/3fecf4472e61bb5ccdd2bde6d2f6884fc3f19105))
+* **server,login,logout:** correct redirect url when login on mobile ([#259](https://github.com/digitopvn/diginext/issues/259)) ([f4f9a2a](https://github.com/digitopvn/diginext/commit/f4f9a2a8ab363cb321b55517317cb39416acf407))
+* **server:** unset active role and active workspace on logout ([ac1b6c8](https://github.com/digitopvn/diginext/commit/ac1b6c8a32a1a0c7772bb68c36f54dbeae6f5bc7))
+
+# [3.16.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.15.1...v3.16.0-prerelease.1) (2023-07-03)
+
+
+### Features
+
+* **client:** new command [np | newpage]: generate new pages nextjs ([e7ec0d3](https://github.com/digitopvn/diginext/commit/e7ec0d37ba2044e8d911c796806ab0aab1f14d61))
+
 ## [3.15.1](https://github.com/digitopvn/diginext/compare/v3.15.0...v3.15.1) (2023-07-03)
 
 

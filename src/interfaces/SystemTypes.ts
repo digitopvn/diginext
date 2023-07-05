@@ -65,7 +65,7 @@ export const buildStatusList = ["start", "building", "failed", "success"] as con
 export type BuildStatus = typeof buildStatusList[number];
 
 // backup status
-export const backupStatusList = ["in_progress", "failed", "success"] as const;
+export const backupStatusList = ["start", "in_progress", "failed", "success"] as const;
 export type BackupStatus = typeof backupStatusList[number];
 
 // cronjob status
