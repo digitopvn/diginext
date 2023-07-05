@@ -19,7 +19,7 @@ const Page@@PAGE_FILE_NAME = (props: IPage@@PAGE_FILE_NAME) => {
 \tconst onListen = (e: any) => {
 \t\tconst { type } = e;
 \t\tswitch (type) {
-\t\t\tcase AppEvent.LOADED_BASIC_COMP:
+\t\t\tcase AppEvent.LOADED_APP_THREE:
 \t\t\t\t{
 \t\t\t\t\tinit();
 \t\t\t\t}
