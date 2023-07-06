@@ -6,11 +6,11 @@ import type { InputOptions } from "@/interfaces";
 export default async function updateBranchProtection(options: InputOptions) {
 	//
 
-	switch (options.git.type) {
+	switch (options.git?.type) {
 		case "github":
 			{
-				const token = options.git.access_token;
-				const owner = options.git.owner;
+				const token = options.git?.access_token;
+				const owner = options.git?.owner;
 				const repo = options.repoSlug;
 				const branch = "main";
 
