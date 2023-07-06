@@ -19,6 +19,8 @@ import { respondFailure, respondSuccess } from "../interfaces/ResponseData";
 const DEFAULT_PAGE_SIZE = 100;
 
 export default class BaseController<T extends IBase = any, S extends BaseService<T> = BaseService> {
+	req: AppRequest;
+
 	service: S;
 
 	user: IUser;
@@ -32,7 +34,10 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 	pagination: IResponsePagination;
 
 	constructor(service?: S) {
-		if (service) this.service = service;
+		if (service) {
+			this.service = service;
+			this.req = service.req;
+		}
 	}
 
 	async read() {

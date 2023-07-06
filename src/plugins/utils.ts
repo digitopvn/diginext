@@ -503,7 +503,11 @@ export const savePackageConfig = (_config, options: SaveOpts) => {
 
 export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 	// git@bitbucket.org:<namespace>/<git-repo-slug>.git
-	let namespace: string, fullSlug: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+	let namespace: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+	/**
+	 * @example org-slug/repo-slug
+	 */
+	let fullSlug: string;
 
 	try {
 		namespace = repoSSH.split(":")[1].split("/")[0];

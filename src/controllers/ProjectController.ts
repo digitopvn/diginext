@@ -69,7 +69,19 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/with-apps")
-	async getProjectsAndApps(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	async getProjectsAndApps(
+		@Queries()
+		queryParams?: interfaces.IGetQueryParams & {
+			/**
+			 * Should check for item's status
+			 * @default false
+			 */
+			status: boolean;
+		}
+	) {
+		const shouldGetAppStatus = this.filter.status;
+		delete this.filter.status;
+
 		let projects = await this.service.find(this.filter, { ...this.options }, this.pagination);
 
 		let result: ResponseData & { data: IProject[] } = { status: 1, data: [], messages: [] };
@@ -78,7 +90,7 @@ export default class ProjectController extends BaseController<IProject> {
 		// populate apps
 		const projectIDs = projects.map((pro) => pro._id);
 		const appSvc = new AppService();
-		let apps = await appSvc.find({ project: { $in: projectIDs }, deletedAt: { $exists: false } }, { status: true });
+		let apps = await appSvc.find({ project: { $in: projectIDs }, deletedAt: { $exists: false } }, { status: shouldGetAppStatus });
 		// console.log("apps :>> ", apps);
 
 		result.data = projects.map((project) => {
