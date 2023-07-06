@@ -1,5 +1,6 @@
 import type { NextFunction } from "express";
 
+import { Config } from "@/app.config";
 import type { ResponseData } from "@/interfaces";
 import type { AppRequest, AppResponse } from "@/interfaces/SystemTypes";
 import { maskSensitiveInfo } from "@/plugins/mask-sensitive-info";
@@ -13,9 +14,9 @@ export const processApiRequest =
 
 			// mask sensitive information before responding:
 			// only for data which the current user doesn't own
-			result.data = maskSensitiveInfo(result.data, req.user, req.role);
-
-			res.body = JSON.stringify(result, null, 2);
+			if (!Config.SHARE_RESOURCE_CREDENTIAL) {
+				result.data = maskSensitiveInfo(result.data, req.user, req.role);
+			}
 
 			// save activity log here...
 			saveActivityLog(req, res, next);

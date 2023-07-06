@@ -63,8 +63,8 @@ export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
 		// compare routes & permissions, if it doesn't match -> update!
 		const defaultMemberRoleRoutes = memberRoleRoutes.map((r) => `${r.path}:${r.permissions?.join(",")}`).join("|");
 		const dbMemberRoleRoutes = memberRole.routes.map((r) => `${r.path}:${r.permissions?.join(",")}`).join("|");
-		console.log("defaultMemberRoleRoutes :>> ", defaultMemberRoleRoutes);
-		console.log("dbMemberRoleRoutes :>> ", dbMemberRoleRoutes);
+		// console.log("defaultMemberRoleRoutes :>> ", defaultMemberRoleRoutes);
+		// console.log("dbMemberRoleRoutes :>> ", dbMemberRoleRoutes);
 		if (defaultMemberRoleRoutes !== dbMemberRoleRoutes) {
 			[memberRole] = await DB.update<IRole>("role", { _id: memberRole._id }, { routes: memberRoleRoutes });
 		}

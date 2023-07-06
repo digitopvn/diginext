@@ -1,13 +1,13 @@
-import { execCmd } from "../../plugins";
+import { progressCmd } from "../../plugins";
 
 /**
  * Update current CLI version
  */
 export const updateCli = async (version = "latest") => {
 	if (version) {
-		await execCmd(`npm i @topgroup/diginext@${version} --location=global`);
+		await progressCmd(`npm i @topgroup/diginext@${version} --location=global`, { isDebugging: true });
 	} else {
-		await execCmd(`npm update @topgroup/diginext --location=global`);
+		await progressCmd(`npm update @topgroup/diginext --location=global`, { isDebugging: true });
 	}
 	return true;
 };
