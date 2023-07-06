@@ -68,24 +68,19 @@ export default class BaseService<T = any> {
 			const slugRange = "zxcvbnmasdfghjklqwertyuiop1234567890";
 			async function generateUniqueSlug(input, attempt = 1) {
 				let slug = makeSlug(input, { delimiter: "" });
-				const slugFilter: any = { slug };
-				// slugs are only unique within a workspace
-				// if (scope.req?.workspace) slugFilter.workspace = scope.req?.workspace._id;
 
-				let count = await scope.count(slugFilter);
+				let count = await scope.count({ slug });
 				if (count > 0) slug = slug + "-" + randomStringByLength(attempt, slugRange).toLowerCase();
 
 				// check unique again
-				count = await scope.count(slugFilter);
+				count = await scope.count({ slug });
 				if (count > 0) return generateUniqueSlug(input, attempt + 1);
 
 				return slug;
 			}
 
 			if (data.slug) {
-				const slugFilter: any = { slug: data.slug };
-				// if (scope.req?.workspace) slugFilter.workspace = scope.req?.workspace._id;
-				let count = await scope.count(slugFilter);
+				let count = await scope.count({ slug: data.slug });
 				if (count > 0) data.slug = await generateUniqueSlug(data.slug, 1);
 			} else {
 				data.slug = await generateUniqueSlug(data.name || "item", 1);
