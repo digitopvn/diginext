@@ -41,7 +41,7 @@ export default class UtilityController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/capture-screenshot")
-	async captureScreenshot(@Body() body: screenshot_1.CaptureScreenshotOptions, @Queries() queryParams?: { url: string }) {
+	async captureScreenshot(@Body() body: screenshot_1.CaptureScreenshotOptions = {}, @Queries() queryParams?: { url: string }) {
 		if (!this.filter.url) return respondFailure(`Param "url" is required.`);
 
 		// process

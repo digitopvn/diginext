@@ -66,6 +66,10 @@ COPY ./templates ./templates
 RUN chown -R ${uid}:${gid} /usr/app && \
   chmod -R ug+rwx /usr/app
 
+# Puppeteer
+ENV CHROMIUM_PATH /usr/bin/chromium
+RUN chmod +x /usr/bin/chromium
+
 # Set user
 ENV USER=${user}
 USER ${uid}:${gid}
