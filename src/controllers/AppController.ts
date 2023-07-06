@@ -423,7 +423,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 						const { contextName: context } = cluster;
 
 						// switch to the cluster of this environment
-						await ClusterManager.authCluster(clusterShortName);
+						await ClusterManager.authCluster(cluster);
 
 						try {
 							/**
@@ -1151,7 +1151,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			const { contextName: context } = cluster;
 
 			// switch to the cluster of this environment
-			await ClusterManager.authCluster(clusterShortName);
+			await ClusterManager.authCluster(cluster);
 
 			try {
 				/**

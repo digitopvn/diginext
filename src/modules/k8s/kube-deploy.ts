@@ -51,7 +51,7 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		cluster = await ClusterManager.authCluster(clusterShortName);
+		cluster = await ClusterManager.authClusterByShortName(clusterShortName);
 	} catch (e) {
 		logError(`[KUBE_DEPLOY] Clean up > `, e);
 		return { error: e.message };
@@ -144,7 +144,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		cluster = await ClusterManager.authCluster(clusterShortName);
+		cluster = await ClusterManager.authClusterByShortName(clusterShortName);
 	} catch (e) {
 		logError(`[PREVIEW_PRERELEASE]`, e);
 		return { error: e.message };
@@ -240,7 +240,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		await ClusterManager.authCluster(clusterShortName);
+		await ClusterManager.authClusterByShortName(clusterShortName);
 		log(`Rolling out > Checked connectivity of "${clusterShortName}" cluster.`);
 	} catch (e) {
 		logError(`[ROLL_OUT]`, e);

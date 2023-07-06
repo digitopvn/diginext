@@ -104,7 +104,7 @@ export async function startupScripts() {
 	const clusters = await clusterSvc.find({});
 	if (clusters.length > 0) {
 		for (const cluster of clusters) {
-			await ClusterManager.authCluster(cluster.shortName, { shouldSwitchContextToThisCluster: false });
+			await ClusterManager.authCluster(cluster, { shouldSwitchContextToThisCluster: false });
 		}
 	}
 

@@ -47,7 +47,7 @@ export const seedClusters = async (workspace: IWorkspace, owner: IUser) => {
 	initialCluster = await DB.create<ICluster>("cluster", initialClusterDto);
 
 	// verfify cluster
-	await ClusterManager.authCluster(initialCluster.shortName);
+	await ClusterManager.authCluster(initialCluster);
 
 	// done
 	return [initialCluster];
