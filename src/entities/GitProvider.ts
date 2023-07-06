@@ -109,6 +109,11 @@ export interface IGitProvider extends IBase {
 	name?: string;
 
 	/**
+	 * Is this a default git provider
+	 */
+	isDefault?: boolean;
+
+	/**
 	 * The host of the Git provider.
 	 *
 	 * @type {string}
@@ -211,6 +216,7 @@ export const gitProviderSchema = new Schema<IGitProvider>(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
+		isDefault: { type: Boolean, default: false },
 		host: { type: String },
 		gitWorkspace: { type: String },
 		repo: {

@@ -339,14 +339,25 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 * Git provider ID to host the new repo of this app
 			 */
 			gitProviderID: string;
+			/**
+			 * Select git branch to pull
+			 */
+			gitBranch?: string;
+			/**
+			 * `DANGER`
+			 * ---
+			 * Delete app and git repo if they were existed.
+			 * @default false
+			 */
+			force?: boolean;
 		}
 	) {
-		try {
-			const newApp = await this.service.createWithGitURL(body.sshUrl, body.gitProviderID);
-			return respondSuccess({ data: newApp });
-		} catch (e) {
-			return respondFailure(e.toString());
-		}
+		const newApp = await this.service.createWithGitURL(body.sshUrl, body.gitProviderID, {
+			force: body.force,
+			gitBranch: body.gitBranch,
+			isDebugging: false,
+		});
+		return respondSuccess({ data: newApp });
 	}
 
 	@Security("api_key")

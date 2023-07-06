@@ -19,6 +19,7 @@ import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { execCmd, wait } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
+import { seedDefaultProjects } from "@/seeds/seed-projects";
 import { seedSystemInitialData } from "@/seeds/seed-system";
 import { setServerStatus } from "@/server";
 import { ClusterService, ContainerRegistryService, GitProviderService, WorkspaceService } from "@/services";
@@ -79,12 +80,14 @@ export async function startupScripts() {
 	// seed system initial data: Cloud Providers
 	await seedSystemInitialData();
 
-	// seed default roles to workspace if missing:
 	const wsSvc = new WorkspaceService();
 	let workspaces = await wsSvc.find({}, { populate: ["owner"] });
 
 	if (workspaces.length > 0) {
+		// seed default roles to workspace if missing:
 		await Promise.all(workspaces.map((ws) => seedDefaultRoles(ws, ws.owner as IUser)));
+		// seed default projects to workspace if missing:
+		await Promise.all(workspaces.map((ws) => seedDefaultProjects(ws, ws.owner as IUser)));
 	}
 
 	// connect container registries

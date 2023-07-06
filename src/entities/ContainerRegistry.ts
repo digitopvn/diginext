@@ -11,6 +11,10 @@ export interface IContainerRegistry extends IBase {
 	name?: string;
 	slug?: string;
 	isVerified?: boolean;
+	/**
+	 * Is this a default git provider
+	 */
+	isDefault?: boolean;
 
 	/**
 	 * The host (domain) of your container registry which you are using.
@@ -79,12 +83,12 @@ export interface IContainerRegistry extends IBase {
 }
 export type ContainerRegistryDto = Omit<IContainerRegistry, keyof HiddenBodyKeys>;
 
-export const containerRegistrySchema = new Schema(
+export const containerRegistrySchema = new Schema<IContainerRegistry>(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
-		slug: { type: String },
 		isVerified: { type: Boolean },
+		isDefault: { type: Boolean, default: false },
 		host: { type: String },
 		organization: { type: String },
 		imageBaseURL: { type: String },

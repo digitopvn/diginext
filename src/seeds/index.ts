@@ -3,7 +3,7 @@ import type { IUser, IWorkspace } from "@/entities";
 import { seedApiKeys } from "./seed-api-key";
 import { seedClusters } from "./seed-clusters";
 import { seedFrameworks } from "./seed-frameworks";
-import { seedProjects } from "./seed-projects";
+import { seedDefaultProjects } from "./seed-projects";
 import { seedDefaultRoles } from "./seed-roles";
 import { seedServiceAccounts } from "./seed-service-account";
 
@@ -21,7 +21,7 @@ const seedWorkspaceInitialData = async (workspace: IWorkspace, owner: IUser) => 
 	const results = await Promise.all([
 		seedServiceAccounts(workspace, owner),
 		seedApiKeys(workspace, owner),
-		seedProjects(workspace, owner),
+		seedDefaultProjects(workspace, owner),
 		seedFrameworks(workspace, owner),
 		seedClusters(workspace, owner),
 	]);

@@ -11,7 +11,7 @@ https://diginext.site
 > `dx` also means **Developer Experience**, and this is my number one goal - create the best experience for developers - let's make coding great again.
 
 <p align="center">
-  <img src="di-banner.png?raw=true" alt="Diginext Build Server & CLI">
+  <img src="dx-banner.png?raw=true" alt="Diginext Build Server & CLI">
 </p>
 
 ## Features
