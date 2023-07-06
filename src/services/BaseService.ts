@@ -5,6 +5,8 @@ import { cloneDeepWith } from "lodash";
 import type { Model, PipelineStage, Schema } from "mongoose";
 import { model } from "mongoose";
 
+import type { IRole, IUser, IWorkspace } from "@/entities";
+import { roleSchema, workspaceSchema } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
@@ -28,6 +30,24 @@ export default class BaseService<T = any> {
 	constructor(schema: Schema) {
 		const collection = schema.get("collection");
 		this.model = model<T>(collection, schema, collection);
+	}
+
+	async getActiveWorkspace(user: IUser) {
+		let workspace = (user.activeWorkspace as any)._id ? (user.activeWorkspace as IWorkspace) : undefined;
+		if (!workspace && MongoDB.isValidObjectId(user.activeWorkspace)) {
+			const wsModel = model<IWorkspace>("workspaces", workspaceSchema, "workspaces");
+			workspace = await wsModel.findOne({ _id: user.activeWorkspace });
+		}
+		return workspace;
+	}
+
+	async getActiveRole(user: IUser) {
+		let role = (user.activeRole as any)._id ? (user.activeRole as IRole) : undefined;
+		if (!role && MongoDB.isValidObjectId(user.activeRole)) {
+			const Model = model<IRole>("roles", roleSchema, "roles");
+			role = await Model.findOne({ _id: user.activeRole });
+		}
+		return role;
 	}
 
 	async count(filter?: IQueryFilter, options: IQueryOptions = {}) {
@@ -92,9 +112,13 @@ export default class BaseService<T = any> {
 				data.owner = userId;
 
 				if (options.isDebugging) console.log(`${this.model.collection.name} :>> `, user.activeWorkspace);
+
 				if (this.model.collection.name !== "workspaces" && user.activeWorkspace) {
-					const workspaceId = (user.activeWorkspace as any)._id ? (user.activeWorkspace as any)._id : (user.activeWorkspace as any);
-					data.workspace = workspaceId;
+					const workspace = await this.getActiveWorkspace(user);
+					if (workspace) {
+						data.workspace = workspace._id;
+						data.workspaceSlug = workspace.slug;
+					}
 				}
 			}
 

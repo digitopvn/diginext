@@ -75,6 +75,7 @@ export const apiKeyAccountSchema = new Schema<IApiKeyAccount>(
 			type: Schema.Types.ObjectId,
 			ref: "users",
 		},
+		ownerSlug: String,
 	},
 	{
 		collection: "api_key",

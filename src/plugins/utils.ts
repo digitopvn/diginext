@@ -9,6 +9,7 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import dns from "dns";
 import dotenv from "dotenv";
+import { execa, execaCommand } from "execa";
 import * as afs from "fs/promises";
 import yaml from "js-yaml";
 import _, { isArray, isEmpty, isString, toInteger, toNumber } from "lodash";
@@ -220,9 +221,27 @@ export function logVersion() {
 
 type ErrorCallback = (e: string) => void;
 
+export type CmdOptions = { isDebugging?: boolean; onProgress?: (msg: string) => void };
+export const progressCmd = async (command: string, options?: CmdOptions) => {
+	if (options?.isDebugging) console.log("Processing command :>> ", command);
+	const stream = execaCommand(command);
+	let stdout: string = "";
+	stream.stdio.forEach((_stdio) => {
+		if (_stdio) {
+			_stdio.on("data", (data) => {
+				let logMsg = data.toString();
+				stdout += logMsg;
+				if (options?.isDebugging && logMsg) console.log(logMsg);
+				if (options?.onProgress && logMsg) options?.onProgress(logMsg);
+			});
+		}
+	});
+	const end = await stream;
+	return stdout || end.stdout;
+};
+
 export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCallback = "") {
 	try {
-		const { execaCommand } = await import("execa");
 		let { stdout } = await execaCommand(cmd, cliOpts);
 		// console.log(`[execCmd]`, { stdout });
 		return stdout;
@@ -524,8 +543,6 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
  */
 export const installPackages = async () => {
 	log(`Đang tiến hành cài đặt "package.json" mới...`);
-
-	const { execa, execaCommand } = await import("execa");
 
 	let areDependenciesInstalled = false;
 	// Install dependencies
@@ -1006,8 +1023,6 @@ export const cliContainerExec = async (command, options) => {
 	// 	await wait(2000);
 	// 	options.pipelineReady = true;
 	// }
-
-	const { execa, execaCommand } = await import("execa");
 
 	if (isWin()) {
 		getContainerName = await execaCommand(`docker ps --format '{{.Names}}' | findstr diginext-cli`);

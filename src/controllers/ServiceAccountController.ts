@@ -1,10 +1,6 @@
-import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
-
 import BaseController from "@/controllers/BaseController";
-import type { IServiceAccount } from "@/entities/ServiceAccount";
-import * as ServiceAccount from "@/entities/ServiceAccount";
-import type { ResponseData } from "@/interfaces";
-import * as interfaces from "@/interfaces";
+import type { IServiceAccount, ServiceAccountDto } from "@/entities/ServiceAccount";
+import type { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, ResponseData } from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
 import { ServiceAccountService } from "@/services";
 import WorkspaceService from "@/services/WorkspaceService";
@@ -14,45 +10,28 @@ interface JoinWorkspaceBody {
 	workspace: string;
 }
 
-@Tags("Service Account")
-@Route("service_account")
 export default class ServiceAccountController extends BaseController<IServiceAccount> {
 	constructor() {
 		super(new ServiceAccountService());
 	}
 
-	@Security("api_key")
-	@Security("jwt")
-	@Get("/")
-	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	read(queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
-	@Security("api_key")
-	@Security("jwt")
-	@Post("/")
-	create(@Body() body: ServiceAccount.ServiceAccountDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	create(body: ServiceAccountDto, queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
-	@Security("api_key")
-	@Security("jwt")
-	@Patch("/")
-	update(@Body() body: ServiceAccount.ServiceAccountDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	update(body: ServiceAccountDto, queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
-	@Security("api_key")
-	@Security("jwt")
-	@Delete("/")
-	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
+	delete(queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
-	@Security("api_key")
-	@Security("jwt")
-	@Patch("/join-workspace")
-	async joinWorkspace(@Body() data: JoinWorkspaceBody) {
+	async joinWorkspace(data: JoinWorkspaceBody) {
 		const { userId, workspace: workspaceSlug } = data;
 		const result: ResponseData = { status: 1, messages: [], data: {} };
 		// console.log("{ userId, workspace } :>> ", { userId, workspace });

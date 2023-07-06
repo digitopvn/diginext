@@ -1,3 +1,25 @@
+# [3.18.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.1...v3.18.0-prerelease.2) (2023-07-06)
+
+
+### Bug Fixes
+
+* **server,api:** capture screenshot of release ([d8ba8a7](https://github.com/digitopvn/diginext/commit/d8ba8a7ee26ff4094a929ccbfe647c632be39161))
+* **server,api:** only mask info when share credential is off ([1da3a55](https://github.com/digitopvn/diginext/commit/1da3a5577cd9b51b3b31bd4afb3a9dba20489054))
+* **server,cli:** role update restriction, cluster cli connect ([54b0aae](https://github.com/digitopvn/diginext/commit/54b0aae418254d961d25a5725d2ddde1bf9098a6))
+* **server,cli:** role update restriction, cluster cli connect ([#281](https://github.com/digitopvn/diginext/issues/281)) ([ef42a3f](https://github.com/digitopvn/diginext/commit/ef42a3fa1b05b71dd5810b0754f58969738e372e))
+
+# [3.18.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.17.0...v3.18.0-prerelease.1) (2023-07-05)
+
+
+### Bug Fixes
+
+* **cli:** templates/nextjs/ts/0.1/components/three.txt ([38b639a](https://github.com/digitopvn/diginext/commit/38b639a0c3f90b260b17eed1dae5791e729cfcfc))
+
+
+### Features
+
+* **server:** revert scroll dir build logs, db backup list ([1e8ec81](https://github.com/digitopvn/diginext/commit/1e8ec81da6afcf0cc92aa1ad36dc8b62a64fa947))
+
 # [3.17.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.17.0-prerelease.1...v3.17.0-prerelease.2) (2023-07-05)
 
 

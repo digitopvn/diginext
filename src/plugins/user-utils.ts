@@ -1,4 +1,4 @@
-import type { IRole, IUser, IWorkspace } from "@/entities";
+import type { IRole, IUser, IWorkspace, UserDto } from "@/entities";
 import { DB } from "@/modules/api/DB";
 import { RoleService } from "@/services";
 
@@ -50,7 +50,7 @@ export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", 
 	return { user, role };
 };
 
-export const getActiveRole = async (user: IUser, workspace: IWorkspace, options?: { makeActive?: boolean }) => {
+export const getActiveRole = async (user: IUser, workspace: IWorkspace, options?: { makeActive?: boolean; assignMember?: boolean }) => {
 	const userId = MongoDB.toString(user._id);
 	const wsId = MongoDB.toString(workspace._id);
 	let activeRole: IRole;
@@ -80,8 +80,27 @@ export const getActiveRole = async (user: IUser, workspace: IWorkspace, options?
 	// get active role
 	activeRole = roles.find((_role) => _role.workspace === wsId);
 
+	// if this user doesn't have any role in this workspace
+	if (!activeRole) {
+		if (!options?.assignMember) throw new Error(`Permissions denied.`);
+
+		// assign "member" role if needed:
+		const memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: wsId });
+		roles.push(memberRole);
+		activeRole = memberRole;
+
+		user = await DB.updateOne<IUser>(
+			"user",
+			{ _id: user._id },
+			{
+				roles: roles.map((role) => role._id),
+				activeRole: activeRole._id,
+			}
+		);
+	}
+
 	// update database
-	if (options?.makeActive) user = await DB.updateOne<IUser>("user", { _id: user._id }, { activeRole: activeRole._id });
+	if (!user.activeRole && options?.makeActive) user = await DB.updateOne<IUser>("user", { _id: user._id }, { activeRole: activeRole._id });
 
 	return activeRole;
 };
@@ -93,6 +112,68 @@ export const getActiveRoleByUserId = async (userId: string, workspace: IWorkspac
 
 	return getActiveRole(user, workspace);
 };
+
+export async function getActiveWorkspace(user: IUser) {
+	let workspace = (user.activeWorkspace as any)._id ? (user.activeWorkspace as IWorkspace) : undefined;
+	if (!workspace && MongoDB.isValidObjectId(user.activeWorkspace)) {
+		workspace = await DB.findOne("workspace", { _id: user.activeWorkspace });
+	}
+	return workspace;
+}
+
+export async function assignRole(role: IRole, user: IUser, options?: { makeActive?: boolean }) {
+	// validate
+	if (!user.activeRole || !user.activeWorkspace) throw new Error(`Permissions denied.`);
+
+	const activeWorkspace = await getActiveWorkspace(user);
+	if (!activeWorkspace) throw new Error(`Permissions denied.`);
+
+	const activeRole = await getActiveRole(user, activeWorkspace);
+	if (!activeRole || activeRole.type === "member") throw new Error(`Permissions denied.`);
+	if (!activeRole || (activeRole.type === "moderator" && role.type === "admin")) throw new Error(`Permissions denied.`);
+
+	// remove old roles
+	const roles = (user.roles || [])
+		.filter((_role) => MongoDB.toString((_role as IRole).workspace) !== MongoDB.toString(activeWorkspace._id))
+		.map((_role) => (_role as IRole)._id);
+
+	// push a new role
+	roles.push(role._id);
+
+	// update database
+	const updateData: Partial<UserDto> = { roles };
+	if (options?.makeActive) updateData.activeRole = role;
+	user = await DB.updateOne("user", { _id: user._id }, { roles });
+
+	// return
+	return { user, role };
+}
+
+export async function assignRoleByRoleID(roleId: any, user: IUser, options?: { makeActive?: boolean }) {
+	const roleSvc = new RoleService();
+	const role = await roleSvc.findOne({ _id: roleId });
+	if (!role) throw new Error(`Role not found.`);
+
+	return assignRole(role, user, options);
+}
+
+export async function assignRoleByUserID(role: IRole, userId: any, options?: { makeActive?: boolean }) {
+	const user = await this.findOne({ _id: userId });
+	if (!user) throw new Error(`User not found.`);
+
+	return assignRole(role, user, options);
+}
+
+export async function assignRoleByID(roleId: any, userId: any, options?: { makeActive?: boolean }) {
+	const roleSvc = new RoleService();
+	const role = await roleSvc.findOne({ _id: roleId });
+	if (!role) throw new Error(`Role not found.`);
+
+	const user = await this.findOne({ _id: userId });
+	if (!user) throw new Error(`User not found.`);
+
+	return assignRole(role, user, options);
+}
 
 export const makeWorkspaceActive = async (userId: string, workspaceId: string) => {
 	const user = await DB.updateOne<IUser>("user", { _id: userId }, { activeWorkspace: workspaceId });
