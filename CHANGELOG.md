@@ -1,3 +1,17 @@
+# [3.18.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.2...v3.18.0-prerelease.3) (2023-07-06)
+
+
+### Bug Fixes
+
+* **cli:** src/plugins/utils.ts cloneGitRepo depth=1 ([917417b](https://github.com/digitopvn/diginext/commit/917417b9f54c3d55c5c99b2c488bb84a42049d88))
+* **cli:** updateBranchProtection ([6c91a1e](https://github.com/digitopvn/diginext/commit/6c91a1eda89d91495146b8547a9612a8a000bc49))
+* **cli:** updateBranchProtection ([20c600b](https://github.com/digitopvn/diginext/commit/20c600bc11cc2f3e8d2aaca3c6a0b4f92f94b9c0))
+
+
+### Features
+
+* **cli:** initalizeAndCreateDefaultBranches > Update main branch protection ([7e01852](https://github.com/digitopvn/diginext/commit/7e01852805c0b9d0bbd249e9c7353f484b0ccf78))
+
 # [3.18.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.1...v3.18.0-prerelease.2) (2023-07-06)
 
 
