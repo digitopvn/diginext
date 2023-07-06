@@ -5,6 +5,7 @@ import path from "path";
 import { simpleGit } from "simple-git";
 
 import type InputOptions from "@/interfaces/InputOptions";
+import updateBranchProtection from "@/modules/git/updateBranchProtection";
 import { wait } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
@@ -50,6 +51,9 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		}
 
 		await git.push(["--set-upstream", "origin", "main"]);
+
+		// Update main branch protection
+		await updateBranchProtection(options);
 
 		// create developer branches
 		const gitUsername = (await git.getConfig(`user.name`, "global")).value;

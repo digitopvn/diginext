@@ -1,3 +1,27 @@
+# [3.18.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.2...v3.18.0-prerelease.3) (2023-07-06)
+
+
+### Bug Fixes
+
+* **cli:** src/plugins/utils.ts cloneGitRepo depth=1 ([917417b](https://github.com/digitopvn/diginext/commit/917417b9f54c3d55c5c99b2c488bb84a42049d88))
+* **cli:** updateBranchProtection ([6c91a1e](https://github.com/digitopvn/diginext/commit/6c91a1eda89d91495146b8547a9612a8a000bc49))
+* **cli:** updateBranchProtection ([20c600b](https://github.com/digitopvn/diginext/commit/20c600bc11cc2f3e8d2aaca3c6a0b4f92f94b9c0))
+
+
+### Features
+
+* **cli:** initalizeAndCreateDefaultBranches > Update main branch protection ([7e01852](https://github.com/digitopvn/diginext/commit/7e01852805c0b9d0bbd249e9c7353f484b0ccf78))
+
+# [3.18.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.1...v3.18.0-prerelease.2) (2023-07-06)
+
+
+### Bug Fixes
+
+* **server,api:** capture screenshot of release ([d8ba8a7](https://github.com/digitopvn/diginext/commit/d8ba8a7ee26ff4094a929ccbfe647c632be39161))
+* **server,api:** only mask info when share credential is off ([1da3a55](https://github.com/digitopvn/diginext/commit/1da3a5577cd9b51b3b31bd4afb3a9dba20489054))
+* **server,cli:** role update restriction, cluster cli connect ([54b0aae](https://github.com/digitopvn/diginext/commit/54b0aae418254d961d25a5725d2ddde1bf9098a6))
+* **server,cli:** role update restriction, cluster cli connect ([#281](https://github.com/digitopvn/diginext/issues/281)) ([ef42a3f](https://github.com/digitopvn/diginext/commit/ef42a3fa1b05b71dd5810b0754f58969738e372e))
+
 # [3.18.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.17.0...v3.18.0-prerelease.1) (2023-07-05)
 
 
