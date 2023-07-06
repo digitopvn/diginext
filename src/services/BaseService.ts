@@ -110,6 +110,7 @@ export default class BaseService<T = any> {
 				const { user } = this.req;
 				const userId = user?._id;
 				data.owner = userId;
+				data.ownerSlug = user?.slug;
 
 				if (options.isDebugging) console.log(`${this.model.collection.name} :>> `, user.activeWorkspace);
 

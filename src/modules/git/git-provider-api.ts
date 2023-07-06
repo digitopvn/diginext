@@ -666,7 +666,7 @@ const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDt
 				has_wiki: true,
 			},
 			method: "POST",
-			isDebugging: options.isDebugging,
+			isDebugging: options?.isDebugging,
 		})) as GitHubOrgRepository & GithubFailureResponse;
 
 		if (newGithubRepo.message) throw new Error(`[GITHUB_API_ERROR] ${newGithubRepo.message}`);

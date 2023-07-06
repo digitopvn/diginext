@@ -2,7 +2,9 @@ import { isJSON } from "class-validator";
 import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { isBoolean, isEmpty, isString, isUndefined } from "lodash";
 import type { Types } from "mongoose";
+import path from "path";
 
+import { CLI_CONFIG_DIR } from "@/config/const";
 import type { DeployEnvironmentData } from "@/controllers/AppController";
 import type { ICluster, IContainerRegistry, IFramework, IProject } from "@/entities";
 import type { AppDto, IApp } from "@/entities/App";
@@ -20,9 +22,10 @@ import getDeploymentName from "@/modules/deploy/generate-deployment-name";
 import { dxCreateDomain } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import GitProviderAPI from "@/modules/git/git-provider-api";
+import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
-import { currentVersion, parseGitRepoDataFromRepoSSH } from "@/plugins";
+import { currentVersion, deleteFolderRecursive, parseGitRepoDataFromRepoSSH, pullOrCloneGitRepo } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
@@ -116,52 +119,108 @@ export default class AppService extends BaseService<IApp> {
 		return newApp;
 	}
 
-	async createWithGitURL(repoSSH: string, gitProviderID: string, options?: { isDebugging: boolean }) {
+	async createWithGitURL(
+		repoSSH: string,
+		gitProviderID: string,
+		options?: {
+			/**
+			 * `DANGER`
+			 * ---
+			 * Delete app and git repo if they were existed.
+			 * @default false
+			 */
+			force?: boolean;
+			gitBranch?: string;
+			isDebugging?: boolean;
+		}
+	) {
 		const appDto: Partial<IApp> = {};
 		const workspace = this.req.workspace;
 		const owner = this.req.user;
+		if (options?.isDebugging) console.log("createWithGitURL() > ownership :>> ", { workspace, owner });
 
-		// check app is existed
-		const existingApp = await this.findOne({ ["git.repoSSH"]: repoSSH, workspace: workspace._id });
-		if (existingApp) throw new Error(`Unable to import: app was existed with name "${existingApp.slug}".`);
+		// parse git data
+		const repoData = parseGitRepoDataFromRepoSSH(repoSSH);
+		if (options?.isDebugging) console.log("createWithGitURL() > repoData :>> ", repoData);
+
+		if (!repoData) throw new Error(`Unable to read git repo SSH.`);
+		const { repoSlug } = repoData;
 
 		// default project
 		const projectSvc = new ProjectService();
-		let project = await projectSvc.findOne({ isDefault: true, workspace: workspace._id });
+		let project = await projectSvc.findOne({ isDefault: true, workspace: workspace._id }, options);
 		if (!project) project = await projectSvc.create({ name: "Default", isDefault: true, workspace: workspace._id, owner: owner._id });
 
 		// git provider
 		const gitSvc = new GitProviderService();
 		const gitProvider = await gitSvc.findOne({ _id: gitProviderID });
+		if (options?.isDebugging) console.log("createWithGitURL() > gitProvider :>> ", gitProvider);
 		if (!gitProvider) throw new Error(`Git provider not found.`);
 
-		// parse git data
-		const repoData = parseGitRepoDataFromRepoSSH(repoSSH);
-		if (!repoData) throw new Error(`Unable to read git repo SSH.`);
-		const { namespace, repoSlug, fullSlug, gitDomain } = repoData;
+		// new repo slug
+		const newRepoSlug = `${project.slug}-${makeSlug(repoSlug)}`.toLowerCase();
+		const newRepoSSH = `git@${gitProvider.host}:${gitProvider.gitWorkspace}/${newRepoSlug}.git`;
+
+		if (options?.force) {
+			// delete existing app
+			await this.softDelete({ "git.repoSSH": newRepoSSH, workspace: workspace._id });
+		} else {
+			// check app is existed
+			const existingApp = await this.findOne({ "git.repoSSH": newRepoSSH, workspace: workspace._id }, options);
+			if (options?.isDebugging) console.log("createWithGitURL() > existingApp :>> ", existingApp);
+			if (existingApp) throw new Error(`Unable to import: app was existed with name "${existingApp.slug}".`);
+		}
+
+		// clone/pull that repo url
+		const branch = options?.gitBranch || "main";
+		const SOURCE_CODE_DIR = `cache/${project.slug}/${newRepoSlug}/${branch}`;
+		const APP_DIR = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
+		await pullOrCloneGitRepo(repoSSH, APP_DIR, branch, {
+			isDebugging: options?.isDebugging,
+			useAccessToken: { type: gitProvider.method === "bearer" ? "Bearer" : "Basic", value: gitProvider.access_token },
+		});
+
+		// delete current git
+		await deleteFolderRecursive(path.join(APP_DIR, ".git"));
+
+		try {
+			await GitProviderAPI.deleteGitRepository(gitProvider, gitProvider.gitWorkspace, newRepoSlug);
+		} catch (e) {}
 
 		// create git repo
-		const newRepoSlug = `${project.slug}-${makeSlug(repoSlug)}`.toLowerCase();
 		const gitRepo = await GitProviderAPI.createGitRepository(
 			gitProvider,
 			{
 				name: newRepoSlug,
 				private: true,
-				description: `Fork from "${repoSSH}".`,
+				description: `Forked from ${repoSSH}`,
 			},
 			options
 		);
 
+		// setup initial repo: default branches, locked,...
+		await initalizeAndCreateDefaultBranches({
+			targetDirectory: APP_DIR,
+			remoteSSH: newRepoSSH,
+			git: gitProvider,
+			username: owner.slug,
+			isDebugging: options?.isDebugging,
+		});
+
 		// prepare app data
+		appDto.name = repoSlug;
 		appDto.owner = owner._id;
+		appDto.ownerSlug = owner.slug;
 		appDto.workspace = workspace._id;
+		appDto.workspaceSlug = workspace.slug;
 		appDto.project = project._id;
 		appDto.projectSlug = project.slug;
+		appDto.gitProvider = gitProvider._id;
 		appDto.git = { provider: gitProvider.type, repoSSH: gitRepo.ssh_url, repoURL: gitRepo.repo_url };
 		appDto.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" } as IFramework;
 
 		// save to database
-		const newApp = await this.create(appDto);
+		const newApp = await this.create(appDto, options);
 
 		// add app & app slug to project
 		await projectSvc.updateOne({ _id: project._id }, { $push: { apps: newApp._id, appSlugs: newApp.slug } }, { raw: true });

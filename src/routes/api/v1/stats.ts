@@ -16,7 +16,8 @@ const router = express.Router();
 router
 	.use(authenticate, authorize)
 	.use(registerController(controller))
-	// export pdf, capture screenshot,...
+	// version, export pdf, capture screenshot,...
+	.get("/version", processApiRequest(controller.version.bind(controller)))
 	.get("/summary", processApiRequest(controller.summary.bind(controller)))
 	.get("/projects", processApiRequest(controller.projects.bind(controller)))
 	.get("/apps", processApiRequest(controller.apps.bind(controller)))

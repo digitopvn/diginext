@@ -8,7 +8,7 @@ export const initialProjects: ProjectDto[] = [
 	},
 ];
 
-export const seedProjects = async (workspace: IWorkspace, owner: IUser) => {
+export const seedDefaultProjects = async (workspace: IWorkspace, owner: IUser) => {
 	const results = (
 		await Promise.all(
 			initialProjects.map(async (proj) => {

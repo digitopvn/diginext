@@ -3,12 +3,23 @@ import { Get, Route, Security, Tags } from "tsoa/dist";
 
 import { respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
+import { currentVersion } from "@/plugins";
 
 import BaseController from "./BaseController";
 
 @Tags("Stats")
 @Route("stats")
 export default class StatsController extends BaseController {
+	/**
+	 * Current version
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/version")
+	async version() {
+		return respondSuccess({ data: { version: currentVersion() } });
+	}
+
 	/**
 	 * General stats
 	 */
