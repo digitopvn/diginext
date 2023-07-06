@@ -70,7 +70,7 @@ export default class BaseService<T = any> {
 				let slug = makeSlug(input, { delimiter: "" });
 				const slugFilter: any = { slug };
 				// slugs are only unique within a workspace
-				if (scope.req?.workspace) slugFilter.workspace = scope.req?.workspace._id;
+				// if (scope.req?.workspace) slugFilter.workspace = scope.req?.workspace._id;
 
 				let count = await scope.count(slugFilter);
 				if (count > 0) slug = slug + "-" + randomStringByLength(attempt, slugRange).toLowerCase();
@@ -84,7 +84,7 @@ export default class BaseService<T = any> {
 
 			if (data.slug) {
 				const slugFilter: any = { slug: data.slug };
-				if (scope.req?.workspace) slugFilter.workspace = scope.req?.workspace._id;
+				// if (scope.req?.workspace) slugFilter.workspace = scope.req?.workspace._id;
 				let count = await scope.count(slugFilter);
 				if (count > 0) data.slug = await generateUniqueSlug(data.slug, 1);
 			} else {
