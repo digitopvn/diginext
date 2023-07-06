@@ -12,6 +12,31 @@ import ProjectService from "@/services/ProjectService";
 
 import BaseController from "./BaseController";
 
+interface IQueryProjectsAndApps {
+	/**
+	 * Should check for item's status
+	 * @default false
+	 */
+	status?: boolean;
+	/**
+	 * Find one item by `{ObjectID}`
+	 */
+	id?: string;
+	_id?: string;
+	/**
+	 * Mark this request as search (return the similar results based on the filter query params)
+	 * @default true
+	 */
+	search?: boolean;
+	/**
+	 * Pagination
+	 */
+	page?: number;
+	size?: number;
+	limit?: number;
+	skip?: number;
+}
+
 @Tags("Project")
 @Route("project")
 export default class ProjectController extends BaseController<IProject> {
@@ -69,16 +94,7 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/with-apps")
-	async getProjectsAndApps(
-		@Queries()
-		queryParams?: interfaces.IGetQueryParams & {
-			/**
-			 * Should check for item's status
-			 * @default false
-			 */
-			status: boolean;
-		}
-	) {
+	async getProjectsAndApps(@Queries() queryParams?: IQueryProjectsAndApps) {
 		const shouldGetAppStatus = this.filter.status;
 		delete this.filter.status;
 
