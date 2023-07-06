@@ -7,15 +7,15 @@ import { askForCluster } from "../cluster/ask-for-cluster";
 import { authCluster } from "../k8s/cluster-auth";
 
 export const execCluster = async (options?: InputOptions) => {
-	const { secondAction: action, thirdAction: resource } = options;
+	const { secondAction: action, thirdAction: resource, isDebugging } = options;
 
 	switch (action) {
 		case "connect":
 			const cluster = await askForCluster();
 			if (!cluster) return;
-			const { shortName } = cluster;
+			if (options.isDebugging) console.log("[COMMAND] cluster > connect > cluster :>> ", cluster);
 			try {
-				await authCluster(shortName, { shouldSwitchContextToThisCluster: true });
+				await authCluster(cluster, { shouldSwitchContextToThisCluster: true, isDebugging });
 			} catch (e) {
 				logError(`[CLUSTER]`, e);
 			}

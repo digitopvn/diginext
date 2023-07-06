@@ -19,6 +19,10 @@ export interface IBase {
 	public?: boolean;
 	metadata?: any;
 	/**
+	 * Owner's username
+	 */
+	ownerSlug?: string;
+	/**
 	 * Owner ID of the app
 	 *
 	 * @remarks This can be populated to {IUser} data
@@ -36,10 +40,30 @@ export interface IBase {
 	 * @remarks This can be populated to {IWorkspace} data
 	 */
 	workspace?: Types.ObjectId | IWorkspace | string;
+	/**
+	 * SLUG of the workspace
+	 *
+	 * @remarks This can be populated to {IWorkspace} data
+	 */
+	workspaceSlug?: string;
+	/**
+	 * Created date
+	 */
 	createdAt?: Date;
+	/**
+	 * Deleted date
+	 */
 	deletedAt?: Date;
+	/**
+	 * Updated date
+	 */
 	updatedAt?: Date;
+	/**
+	 * Migrated date
+	 */
 	migratedAt?: Date;
+	updatedBy?: Types.ObjectId | IUser | string;
+	deletedBy?: Types.ObjectId | IUser | string;
 }
 
 export interface EntityConstructor {
@@ -51,6 +75,7 @@ export const baseSchemaDefinitions = {
 	active: { type: Boolean, default: true },
 	public: { type: Boolean, default: true },
 	metadata: { type: Object },
+	ownerSlug: { type: String },
 	owner: {
 		type: Schema.Types.ObjectId,
 		ref: "users",
@@ -62,6 +87,15 @@ export const baseSchemaDefinitions = {
 	workspace: {
 		type: Schema.Types.ObjectId,
 		ref: "workspaces",
+	},
+	workspaceSlug: { type: String },
+	updatedBy: {
+		type: Schema.Types.ObjectId,
+		ref: "users",
+	},
+	deletedBy: {
+		type: Schema.Types.ObjectId,
+		ref: "users",
 	},
 	createdAt: { type: Date, default: Date.now },
 	updatedAt: { type: Date, default: Date.now },

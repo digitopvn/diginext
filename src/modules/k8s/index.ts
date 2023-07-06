@@ -1,4 +1,4 @@
-import authCluster from "./cluster-auth";
+import authCluster, { authClusterByShortName } from "./cluster-auth";
 import { createImagePullSecretsInNamespace } from "./image-pull-secret";
 import { currentCluster, currentContext, getKubeConfig, getKubeContextByCluster, getKubeContextByClusterShortName } from "./kube-config";
 import { previewPrerelease, rollout } from "./kube-deploy";
@@ -56,6 +56,7 @@ import { installCertManagerStack, installNginxIngressStack } from "./stack-insta
 const ClusterManager = {
 	// cluster-helpers
 	authCluster,
+	authClusterByShortName,
 	createImagePullSecretsInNamespace,
 	currentContext,
 	currentCluster,
