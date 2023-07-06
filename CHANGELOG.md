@@ -1,3 +1,18 @@
+# [3.18.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.3...v3.18.0-prerelease.4) (2023-07-06)
+
+
+### Bug Fixes
+
+* **cli,git:** add debug select git provider ([8266c42](https://github.com/digitopvn/diginext/commit/8266c4221246636db2624b14fcd550873ef317fa))
+* **cli:** add debug mode to utils current git ([bdc713c](https://github.com/digitopvn/diginext/commit/bdc713c5b4a0d3f8ddd1b4c2f8deecd25402ead9))
+* **cli:** create app, add debug git providerr ([859a576](https://github.com/digitopvn/diginext/commit/859a576e6c314da524e7783a07c0e44bd029a7f0))
+* **server,api:** issue of generating swagger json ([f2124c3](https://github.com/digitopvn/diginext/commit/f2124c3c605dbd0498d4c2c26a05e1d2acc83b20))
+
+
+### Features
+
+* **server,api:** import app from git, deploy from git ([d1a3d5e](https://github.com/digitopvn/diginext/commit/d1a3d5e84a34c9eb0d78bbe8718c272ee30e0b39))
+
 # [3.18.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.2...v3.18.0-prerelease.3) (2023-07-06)
 
 
