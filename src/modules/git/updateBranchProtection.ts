@@ -25,6 +25,7 @@ export default async function updateBranchProtection(options: InputOptions) {
 						data: {
 							required_status_checks: {
 								strict: true,
+								// @teexiii chỗ này nên là "gitguardian/security "gì đó chứ?
 								contexts: ["continuous-integration/travis-ci"],
 							},
 							enforce_admins: true,

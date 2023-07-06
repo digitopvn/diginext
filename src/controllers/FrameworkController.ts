@@ -31,6 +31,7 @@ export default class FrameworkController extends BaseController<IFramework> {
 	@Post("/")
 	async create(@Body() body: entities.FrameworkDto) {
 		try {
+			this.service.req = this.req;
 			const data = await this.service.create(body, {
 				...this.options,
 				// isDebugging: true,

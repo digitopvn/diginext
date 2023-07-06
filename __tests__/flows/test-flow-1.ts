@@ -189,6 +189,9 @@ export function testFlow1() {
 		const curUser = await getCurrentUser();
 
 		// add new "public" framework
+		frameworkCtl.user = curUser;
+		frameworkCtl.workspace = curUser.activeWorkspace;
+
 		const createRes = await frameworkCtl.create({
 			name: "Static Site Starter with NGINX",
 			repoURL: "https://github.com/digitopvn/static-nginx-site",
@@ -196,8 +199,8 @@ export function testFlow1() {
 			gitProvider: "github",
 			mainBranch: "main",
 		});
-
-		if (!createRes.status) console.log("FRAMEWORK > createRes :>> ", createRes);
+		console.log('Add "public" framework > createRes :>> ', createRes);
+		if (!createRes.status) throw new Error(createRes.messages.join("."));
 		expect(createRes.status).toBe(1);
 
 		// check...
