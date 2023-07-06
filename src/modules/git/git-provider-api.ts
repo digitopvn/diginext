@@ -755,7 +755,7 @@ const listGitRepositories = async (provider: IGitProvider) => {
 	throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 };
 
-export const deleteOrgRepository = async (provider: IGitProvider, org: string, slug: string) => {
+export const deleteGitRepository = async (provider: IGitProvider, org: string, slug: string) => {
 	const apiPath = repoDeleteApiPath(provider.type, org, slug);
 	const res = await api(provider, apiPath, { method: "DELETE" });
 	return res;
@@ -764,9 +764,9 @@ export const deleteOrgRepository = async (provider: IGitProvider, org: string, s
 const GitProviderAPI = {
 	getProfile,
 	listOrgs,
-	listOrgRepositories: listGitRepositories,
-	createOrgRepository: createGitRepository,
-	deleteOrgRepository,
+	listGitRepositories,
+	createGitRepository,
+	deleteGitRepository,
 };
 
 export default GitProviderAPI;

@@ -142,7 +142,7 @@ export default class AppService extends BaseService<IApp> {
 
 		// create git repo
 		const newRepoSlug = `${project.slug}-${makeSlug(repoSlug)}`.toLowerCase();
-		const gitRepo = await GitProviderAPI.createOrgRepository(
+		const gitRepo = await GitProviderAPI.createGitRepository(
 			gitProvider,
 			{
 				name: newRepoSlug,
