@@ -198,7 +198,8 @@ export function testFlow1() {
 			repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
 			gitProvider: "github",
 			mainBranch: "main",
-		});
+			workspace: curUser.activeWorkspace._id,
+		} as any);
 		console.log('Add "public" framework > createRes :>> ', createRes);
 		if (!createRes.status) throw new Error(createRes.messages.join("."));
 		expect(createRes.status).toBe(1);
