@@ -1,11 +1,11 @@
 // import { log } from "diginext-utils/dist/xconsole/log";
-import axios from "axios";
 import { log } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import path from "path";
 import { simpleGit } from "simple-git";
 
 import type InputOptions from "@/interfaces/InputOptions";
+import updateBranchProtection from "@/modules/git/updateBranchProtection";
 import { wait } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
@@ -53,36 +53,7 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		await git.push(["--set-upstream", "origin", "main"]);
 
 		// Update main branch protection
-		{
-			const token = options.git.access_token;
-			const owner = options.git.owner;
-			const repo = options.repoSlug;
-			const branch = "main";
-
-			try {
-				const res = await axios({
-					method: "put",
-					url: `https://api.github.com/repos/${owner}/${repo}/branches/${branch}/protection`,
-					headers: {
-						Accept: "application/vnd.github.v3+json",
-						Authorization: `token ${token}`,
-					},
-					data: {
-						required_status_checks: {
-							strict: true,
-							contexts: ["continuous-integration/travis-ci"],
-						},
-						enforce_admins: true,
-						required_pull_request_reviews: null,
-						restrictions: null,
-					},
-				});
-				// if (options.isDebugging)
-				log("res Update main branch protection :>> ", res);
-			} catch (error) {
-				console.error(`Update main branch protection error`, error);
-			}
-		}
+		await updateBranchProtection(options);
 
 		// create developer branches
 		const gitUsername = (await git.getConfig(`user.name`, "global")).value;
