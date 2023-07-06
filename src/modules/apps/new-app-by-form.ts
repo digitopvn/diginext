@@ -128,6 +128,8 @@ export async function createAppByForm(
 	// select git provider for this app:
 	let gitProvider = options.git || (await askForGitProvider());
 	options.git = gitProvider;
+	options.gitProvider = gitProvider.type;
+	if (options.isDebugging) log(`[CREATE APP BY FORM] git provider :>>`, gitProvider);
 
 	const currentGitData = options.shouldCreate ? undefined : await getCurrentGitRepoData(options.targetDirectory);
 	if (options.isDebugging) log(`[CREATE APP BY FORM] current git data :>>`, currentGitData);

@@ -503,7 +503,11 @@ export const savePackageConfig = (_config, options: SaveOpts) => {
 
 export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 	// git@bitbucket.org:<namespace>/<git-repo-slug>.git
-	let namespace: string, fullSlug: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+	let namespace: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+	/**
+	 * @example org-slug/repo-slug
+	 */
+	let fullSlug: string;
 
 	try {
 		namespace = repoSSH.split(":")[1].split("/")[0];
@@ -697,7 +701,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 /**
  * Get current remote SSH & URL
  */
-export const getCurrentGitRepoData = async (dir = process.cwd()) => {
+export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isDebugging: boolean }) => {
 	try {
 		const git = simpleGit(dir, {
 			baseDir: `${dir}`,
@@ -707,6 +711,10 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 		// ! DO NOT SET TO "FALSE"
 		// -----------------------
 		const remotes = await git.getRemotes(true);
+		if (options?.isDebugging) {
+			console.log("[CURRENT DIR] Current git > remotes :>>");
+			console.dir(remotes, { depth: 10 });
+		}
 
 		const remoteSSH = (remotes[0] as any)?.refs?.fetch;
 		if (!remoteSSH) return;

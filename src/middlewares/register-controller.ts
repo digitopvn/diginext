@@ -8,6 +8,9 @@ import { DB } from "@/modules/api/DB";
 export const registerController = (controller: BaseController) => {
 	return async (req: AppRequest, res: Response, next: NextFunction) => {
 		try {
+			// assign Express request
+			controller.req = req;
+
 			// assign current user to the controller
 			controller.user = req.user;
 

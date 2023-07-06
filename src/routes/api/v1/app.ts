@@ -16,6 +16,8 @@ router
 	.get("/", processApiRequest(controller.read.bind(controller)))
 	.get("/config", processApiRequest(controller.getAppConfig.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))
+	.post("/ssh-url", processApiRequest(controller.createFromSshURL.bind(controller)))
+	.post("/import-git", processApiRequest(controller.importFromGitSshURL.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
 	.delete("/empty", processApiRequest(controller.empty.bind(controller)))

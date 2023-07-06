@@ -36,6 +36,7 @@ export const seedClusters = async (workspace: IWorkspace, owner: IUser) => {
 	const initialClusterDto: ICluster = {
 		name: Config.grab("INITIAL_CLUSTER_NAME") || "Default Cluster",
 		kubeConfig: initialClusterKubeConfig,
+		isDefault: true,
 		active: true,
 		shortName: clusterShortName,
 		provider: customCloudProvider._id,
