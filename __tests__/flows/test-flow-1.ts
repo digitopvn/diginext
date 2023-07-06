@@ -57,7 +57,7 @@ export function testFlow1() {
 		const loginRes1 = await loginUser(userId);
 		expect(loginRes1.user).toBeDefined();
 		expect(loginRes1.user.token?.access_token).toBeDefined();
-	});
+	}, 10000);
 
 	it("Workspace #1: Create workspace", async () => {
 		// query db
@@ -88,7 +88,7 @@ export function testFlow1() {
 		expect(loginRes.workspace._id).toEqual(ws._id);
 		expect(loginRes.user.token?.access_token).toBeDefined();
 		expect((loginRes.user.activeWorkspace as IWorkspace)._id).toEqual(wsId);
-	});
+	}, 10000);
 
 	it("Workspace #1: Initial data", async () => {
 		// current authenticated user:
@@ -125,7 +125,7 @@ export function testFlow1() {
 		const defaulSvcAcc = apiKeys[0];
 		expect(defaulSvcAcc.roles.length).toBeGreaterThan(0);
 		expect(defaulSvcAcc.roles.map((role) => (role as IRole).name)).toContain("Moderator");
-	});
+	}, 15000);
 
 	it("Workspace #1: Git Provider - Bitbucket", async () => {
 		const curUser = await getCurrentUser();

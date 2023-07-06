@@ -4,7 +4,6 @@ import { DB } from "@/modules/api/DB";
 export const initialProjects: ProjectDto[] = [
 	{
 		name: "Default",
-		slug: "dx",
 		isDefault: true,
 	},
 ];
