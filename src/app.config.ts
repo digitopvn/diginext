@@ -116,11 +116,11 @@ export class Config {
 	}
 
 	static get DX_SITE_URL() {
-		return process.env.DX_SITE_URL ? process.env.DX_SITE_URL : "https://diginext.vn";
+		return process.env.DX_SITE_URL ? process.env.DX_SITE_URL : "https://diginext.site";
 	}
 
 	static get DX_API_URL() {
-		return process.env.DX_API_URL ? process.env.DX_API_URL : "https://diginext.vn/api";
+		return process.env.DX_API_URL ? process.env.DX_API_URL : "https://diginext.site/api";
 	}
 
 	static get BUILDER() {
