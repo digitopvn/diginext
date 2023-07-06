@@ -343,7 +343,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
 
 		// search for git provider [ORGANIZATION + PUBLIC] within this workspace
-		const filter: IQueryFilter = { workspace: this.workspace._id, isOrg: true, public: true };
+		const filter: IQueryFilter = { workspace: this.workspace._id, public: true };
 		if (_id) filter._id = _id;
 		if (slug) filter.slug = slug;
 
