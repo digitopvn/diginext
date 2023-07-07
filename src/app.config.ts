@@ -1,5 +1,6 @@
 import Table from "cli-table";
-import xobject from "diginext-utils/dist/object";
+import xobject, { toBool } from "diginext-utils/dist/object";
+import trimNull from "diginext-utils/dist/string/trimNull";
 import dotenv from "dotenv";
 import fs from "fs";
 import _ from "lodash";
@@ -10,7 +11,7 @@ import { CLI_DIR } from "./config/const";
 let appEnv: any = {};
 let isNoEnvFile = false;
 
-const envFilePath = process.env.NODE_ENV === "test" ? path.resolve(CLI_DIR, `.env.test`) : path.resolve(CLI_DIR, `.env.dev`);
+const envFilePath = trimNull(process.env.NODE_ENV) === "test" ? path.resolve(CLI_DIR, `.env.test`) : path.resolve(CLI_DIR, `.env.dev`);
 
 if (fs.existsSync(envFilePath)) {
 	dotenv.config({ path: envFilePath });
@@ -24,20 +25,13 @@ if (fs.existsSync(envFilePath)) {
 }
 
 // dev mode?
-export const isDevMode =
-	process.env.DEV_MODE ||
-	process.env.DEV_MODE === "true" ||
-	(typeof process.env.DEV_MODE === "number" && process.env.DEV_MODE === 1) ||
-	process.env.DEV_MODE === "1";
+export const isDevMode = toBool(process.env.DEV_MODE);
 
-export const isServerMode = process.env.CLI_MODE === "server";
-appEnv.CLI_MODE = process.env.CLI_MODE;
-
-// console.log("env :>> ", env);
-// console.log("process.env.CLI_MODE :>> ", process.env.CLI_MODE);
+export const isServerMode = trimNull(process.env.CLI_MODE) === "server";
+appEnv.CLI_MODE = trimNull(process.env.CLI_MODE);
 
 const table = new Table();
-if (process.env.CLI_MODE === "server") {
+if (trimNull(process.env.CLI_MODE) === "server") {
 	// console.log(chalk.yellow(`------ process.env ------`));
 	Object.entries(process.env).forEach(([key, val]) => {
 		if (isNoEnvFile) {
@@ -66,20 +60,16 @@ function toInt(obj: any, valueDefault: number) {
 	return typeof obj !== "undefined" ? xobject.toInt(obj) : valueDefault;
 }
 
-function toBool(obj: any, valueDefault: boolean) {
-	return typeof obj !== "undefined" ? xobject.toBool(obj) : valueDefault;
-}
-
 // Main config
 export class Config {
-	static grab = (key: string, defaultValue: any = "") => process.env[key] ?? defaultValue;
+	static grab = (key: string, defaultValue: any = "") => process.env[key] ?? appEnv[key] ?? defaultValue;
 
 	static get ENV() {
 		return EnvName[this.grab("NODE_ENV", "development").toUpperCase()] ?? EnvName.DEVELOPMENT;
 	}
 
 	static get BASE_PATH() {
-		return process.env.BASE_PATH || "";
+		return trimNull(process.env.BASE_PATH) || "";
 	}
 
 	static getBasePath(extendedPath = "") {
@@ -88,23 +78,23 @@ export class Config {
 	}
 
 	static get BASE_URL() {
-		return process.env.BASE_URL || `http://localhost:${process.env.PORT}`;
+		return trimNull(process.env.BASE_URL) || `http://localhost:${process.env.PORT}`;
 	}
 
 	static get PORT() {
-		return process.env.PORT || 4000;
+		return trimNull(process.env.PORT) || 4000;
 	}
 
 	static get DB_URI() {
-		return process.env.DB_URI || process.env.MONGODB_URI;
+		return trimNull(process.env.DB_URI) || trimNull(process.env.MONGODB_URI);
 	}
 
 	static get DB_NAME() {
-		return process.env.DB_NAME || "diginext";
+		return trimNull(process.env.DB_NAME) || "diginext";
 	}
 
 	static get CLI_MODE() {
-		return process.env.CLI_MODE || "client";
+		return trimNull(process.env.CLI_MODE) || "client";
 	}
 
 	static get SERVER_TYPE() {
@@ -116,15 +106,15 @@ export class Config {
 	}
 
 	static get DX_SITE_URL() {
-		return process.env.DX_SITE_URL ? process.env.DX_SITE_URL : "https://diginext.site";
+		return trimNull(process.env.DX_SITE_URL) ? trimNull(process.env.DX_SITE_URL) : "https://diginext.site";
 	}
 
 	static get DX_API_URL() {
-		return process.env.DX_API_URL ? process.env.DX_API_URL : "https://diginext.site/api";
+		return trimNull(process.env.DX_API_URL) ? trimNull(process.env.DX_API_URL) : "https://diginext.site/api";
 	}
 
 	static get BUILDER() {
-		return process.env.BUILDER || "podman";
+		return trimNull(process.env.BUILDER) || "podman";
 	}
 
 	/**
@@ -134,15 +124,15 @@ export class Config {
 	 * @default true
 	 */
 	static get SHARE_RESOURCE_CREDENTIAL() {
-		return typeof process.env.SHARE_RESOURCE_CREDENTIAL === "undefined"
+		return typeof trimNull(process.env.SHARE_RESOURCE_CREDENTIAL) === "undefined"
 			? true
-			: process.env.SHARE_RESOURCE_CREDENTIAL === "true" ||
+			: trimNull(process.env.SHARE_RESOURCE_CREDENTIAL) === "true" ||
 					process.env.SHARE_RESOURCE_CREDENTIAL === "TRUE" ||
 					process.env.SHARE_RESOURCE_CREDENTIAL === "1";
 	}
 
 	static get DISABLE_INPECT_MEMORY() {
-		return toBool(process.env.DISABLE_INPECT_MEMORY, false);
+		return toBool(process.env.DISABLE_INPECT_MEMORY);
 	}
 
 	static get SECONDS_INPECT_MEMORY() {
@@ -150,15 +140,17 @@ export class Config {
 	}
 
 	static get REDIS_HOST() {
-		return process.env.REDIS_HOST || "";
+		return trimNull(process.env.REDIS_HOST) || "";
 	}
 
 	static get REDIS_PASS() {
-		return process.env.REDIS_PASS || "";
+		return trimNull(process.env.REDIS_PASS) || "";
 	}
 
 	static get CORS_WHITELIST() {
-		return process.env.CORS_WHITELIST ? process.env.CORS_WHITELIST.split(";") : ["localhost", "192.168", "127.0", "digitop.vn"];
+		return trimNull(process.env.CORS_WHITELIST)
+			? trimNull(process.env.CORS_WHITELIST).split(";")
+			: ["localhost", "192.168", "127.0", "digitop.vn"];
 	}
 }
 
