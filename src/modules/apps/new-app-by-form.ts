@@ -135,8 +135,8 @@ export async function createAppByForm(
 
 	if (currentGitData) {
 		options.gitProvider = currentGitData.provider;
-		options.remoteSSH = currentGitData.remoteSSH;
-		options.remoteURL = currentGitData.remoteURL;
+		options.repoSSH = currentGitData.repoSSH;
+		options.repoURL = currentGitData.repoURL;
 	} else {
 		// Create new repo:
 		const repoData: GitRepositoryDto = {
@@ -167,8 +167,8 @@ export async function createAppByForm(
 		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > newRepo :>> ", newRepo);
 
 		options.gitProvider = newRepo.provider;
-		options.remoteSSH = newRepo.ssh_url;
-		options.remoteURL = newRepo.repo_url;
+		options.repoSSH = newRepo.ssh_url;
+		options.repoURL = newRepo.repo_url;
 	}
 
 	// Call API to create new app
@@ -184,7 +184,7 @@ export async function createAppByForm(
 			version: options.frameworkVersion,
 		},
 		git: currentGitData
-			? ({ repoSSH: currentGitData.remoteSSH, provider: currentGitData.provider, repoURL: currentGitData.remoteURL } as AppGitInfo)
+			? ({ repoSSH: currentGitData.repoSSH, provider: currentGitData.provider, repoURL: currentGitData.repoURL } as AppGitInfo)
 			: ({} as AppGitInfo),
 		environment: {},
 		deployEnvironment: {},
@@ -192,8 +192,8 @@ export async function createAppByForm(
 	};
 
 	appData.git.provider = options.gitProvider;
-	if (options.remoteSSH) appData.git.repoSSH = options.remoteSSH;
-	if (options.remoteURL) appData.git.repoURL = options.remoteURL;
+	if (options.repoSSH) appData.git.repoSSH = options.repoSSH;
+	if (options.repoURL) appData.git.repoURL = options.repoURL;
 
 	if (options.isDebugging) log(`Create new app with data:`, appData);
 	const newApp = await DB.create<IApp>("app", appData, { isDebugging: options.isDebugging });

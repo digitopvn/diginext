@@ -18,8 +18,8 @@ export async function execInitApp(options: InputOptions) {
 	const gitInfo = await getCurrentGitRepoData(options.targetDirectory);
 	if (options.isDebugging) console.log("[INIT APP] gitInfo :>> ", gitInfo);
 
-	if (gitInfo?.remoteSSH) {
-		const foundApps = await searchApps({ repoSSH: gitInfo?.remoteSSH });
+	if (gitInfo?.repoSSH) {
+		const foundApps = await searchApps({ repoSSH: gitInfo?.repoSSH });
 		if (foundApps && foundApps.length > 0) {
 			// display list to select:
 			foundApps.unshift({ name: "Create new", slug: "new", projectSlug: "" });
@@ -54,10 +54,10 @@ export async function execInitApp(options: InputOptions) {
 					await DB.updateOne<IApp>("app", { _id: selectedApp._id }, { gitProvider: options.git._id });
 				}
 				// app git info
-				options.remoteSSH = options.app.git.repoSSH;
-				options.remoteURL = options.app.git.repoURL;
+				options.repoSSH = options.app.git.repoSSH;
+				options.repoURL = options.app.git.repoURL;
 				options.gitProvider = options.app.git.provider;
-				options.repoURL = options.remoteURL;
+				options.repoURL = options.repoURL;
 				// print project information:
 				const finalConfig = getAppConfigFromApp(selectedApp);
 				printInformation(finalConfig);
@@ -80,8 +80,8 @@ export async function execInitApp(options: InputOptions) {
 	if (options.framework) updateData.framework = options.framework;
 	updateData.git = {} as AppGitInfo;
 	updateData.git.provider = gitInfo.provider;
-	updateData.git.repoURL = gitInfo.remoteURL;
-	updateData.git.repoSSH = gitInfo.remoteSSH;
+	updateData.git.repoURL = gitInfo.repoURL;
+	updateData.git.repoSSH = gitInfo.repoSSH;
 
 	if (options.isDebugging) console.log("[INIT APP] updateData :>> ", updateData);
 	const [updatedApp] = await DB.update<IApp>("app", { slug: initApp.slug }, updateData);

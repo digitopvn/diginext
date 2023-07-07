@@ -283,10 +283,11 @@ export default class BaseService<T = any> {
 		});
 
 		// set updated date
-		convertedData.updatedAt = new Date();
+		if (convertedData.$set) convertedData.$set.updatedAt = new Date();
+		else convertedData.updatedAt = new Date();
 
-		const updateData = options?.raw ? convertedData : { $set: convertedData };
-		// console.log("[2] updateData :>> ", updateData);
+		// Notes: keep the square brackets in [updateData] -> it's the pipelines for update query
+		const updateData = options?.raw ? convertedData : [{ $set: convertedData }];
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateFilter :>> `, updateFilter);
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateData :>> `, updateData);
 

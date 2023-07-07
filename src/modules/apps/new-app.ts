@@ -58,7 +58,7 @@ export default async function createApp(options: InputOptions) {
 	const updatedApp = await DB.updateOne<IApp>(
 		"app",
 		{ slug: options.slug },
-		{ git: { provider: options.gitProvider, repoSSH: options.remoteSSH, repoURL: options.remoteURL } }
+		{ git: { provider: options.gitProvider, repoSSH: options.repoSSH, repoURL: options.repoURL } }
 	);
 	if (!updatedApp) {
 		logError("Can't create new app due to network issue while updating git repo info.");

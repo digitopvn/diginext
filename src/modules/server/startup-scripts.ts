@@ -65,8 +65,14 @@ export async function startupScripts() {
 		const gitSvc = new GitProviderService();
 		const gitProviders = await gitSvc.find({});
 		if (!isEmpty(gitProviders)) {
-			for (const gitProvider of gitProviders) verifySSH({ gitProvider: gitProvider.type });
+			for (const gitProvider of gitProviders) {
+				verifySSH({ gitProvider: gitProvider.type });
+			}
 		}
+		// migrate all git provider's db field: "gitWorkspace" -> "org"
+		gitSvc
+			.update({ org: { $exists: false } }, { org: "$gitWorkspace" }, { isDebugging: true })
+			.then((res) => console.log(`[MIGRATION] Migrated "gitWorkspace" to "org" of ${res.length} git providers.`));
 	}
 
 	// set global identity

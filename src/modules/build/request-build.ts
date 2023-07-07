@@ -51,7 +51,7 @@ export async function requestBuild(options: InputOptions) {
 
 	const gitBranch = gitInfo.branch;
 	if (!app.git || !app.git.provider || !app.git.repoSSH || !app.git.repoURL) {
-		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.remoteSSH, repoURL: gitInfo.remoteURL };
+		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.repoSSH, repoURL: gitInfo.repoURL };
 		if (options.isDebugging) console.log("askForDeployEnvironmentInfo > updateGitInfo :>> ", updateGitInfo);
 
 		app = await updateAppGitInfo(app, updateGitInfo);

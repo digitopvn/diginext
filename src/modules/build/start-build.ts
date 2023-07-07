@@ -106,7 +106,7 @@ export async function startBuildV1(
 	options.buildDir = buildDir;
 
 	// detect "gitProvider":
-	const gitProvider = getGitProviderFromRepoSSH(options.remoteSSH);
+	const gitProvider = getGitProviderFromRepoSSH(options.repoSSH);
 
 	// create new build on build server:
 	const buildData = {
@@ -144,9 +144,9 @@ export async function startBuildV1(
 	}
 
 	// Git SSH verified -> start pulling now...
-	sendLog({ SOCKET_ROOM, message: `Pulling latest source code from "${options.remoteSSH}" at "${gitBranch}" branch...` });
+	sendLog({ SOCKET_ROOM, message: `Pulling latest source code from "${options.repoSSH}" at "${gitBranch}" branch...` });
 
-	await pullOrCloneGitRepo(options.remoteSSH, buildDir, gitBranch, { onUpdate: (message) => sendLog({ SOCKET_ROOM, message }) });
+	await pullOrCloneGitRepo(options.repoSSH, buildDir, gitBranch, { onUpdate: (message) => sendLog({ SOCKET_ROOM, message }) });
 
 	// emit socket message to "digirelease" app:
 	sendLog({ SOCKET_ROOM, message: `Finished pulling latest files of "${gitBranch}"...` });

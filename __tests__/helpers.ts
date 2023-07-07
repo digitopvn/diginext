@@ -158,7 +158,7 @@ export const createFakeUser = async (id: number = randomInt(100)) => {
 
 export const getCurrentUser = async () => {
 	// reload user data
-	if (currentUser) currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "roles", "activeRole"] });
+	if (currentUser) currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "activeRole", "roles"] });
 	return currentUser as IUser & { activeWorkspace: IWorkspace & { _id: string } };
 };
 

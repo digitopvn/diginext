@@ -159,7 +159,7 @@ export default class AppService extends BaseService<IApp> {
 
 		// new repo slug
 		const newRepoSlug = `${project.slug}-${makeSlug(repoSlug)}`.toLowerCase();
-		const newRepoSSH = `git@${gitProvider.host}:${gitProvider.gitWorkspace}/${newRepoSlug}.git`;
+		const newRepoSSH = `git@${gitProvider.host}:${gitProvider.org}/${newRepoSlug}.git`;
 
 		if (options?.force) {
 			// delete existing app
@@ -184,7 +184,7 @@ export default class AppService extends BaseService<IApp> {
 		await deleteFolderRecursive(path.join(APP_DIR, ".git"));
 
 		try {
-			await GitProviderAPI.deleteGitRepository(gitProvider, gitProvider.gitWorkspace, newRepoSlug);
+			await GitProviderAPI.deleteGitRepository(gitProvider, gitProvider.org, newRepoSlug);
 		} catch (e) {}
 
 		// create git repo
@@ -201,7 +201,7 @@ export default class AppService extends BaseService<IApp> {
 		// setup initial repo: default branches, locked,...
 		await initalizeAndCreateDefaultBranches({
 			targetDirectory: APP_DIR,
-			remoteSSH: newRepoSSH,
+			repoSSH: newRepoSSH,
 			git: gitProvider,
 			username: owner.slug,
 			isDebugging: options?.isDebugging,

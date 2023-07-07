@@ -99,19 +99,19 @@ export default async function transferRepo(options: InputOptions) {
 
 		if (newRepo) {
 			options.gitProvider = newRepo.provider;
-			options.remoteSSH = newRepo.ssh_url;
-			options.remoteURL = newRepo.repo_url;
+			options.repoSSH = newRepo.ssh_url;
+			options.repoURL = newRepo.repo_url;
 		} else {
 			options.gitProvider = gitProvider.type;
-			options.remoteSSH = `git@github.com:digitopvn/${options.repoSlug}.git`;
-			options.remoteURL = `https://github.com/digitopvn/${options.repoSlug}.git`;
+			options.repoSSH = `git@github.com:digitopvn/${options.repoSlug}.git`;
+			options.repoURL = `https://github.com/digitopvn/${options.repoSlug}.git`;
 		}
 
 		// update git info to database
 		const [updatedApp] = await DB.update<IApp>(
 			"app",
 			{ slug: options.slug },
-			{ git: { provider: options.gitProvider, repoSSH: options.remoteSSH, repoURL: options.remoteURL } }
+			{ git: { provider: options.gitProvider, repoSSH: options.repoSSH, repoURL: options.repoURL } }
 		);
 		if (!updatedApp) {
 			logError("Can't create new app due to network issue while updating git repo info.");
@@ -119,14 +119,14 @@ export default async function transferRepo(options: InputOptions) {
 		}
 	} else {
 		options.gitProvider = options.app.git.provider;
-		options.remoteSSH = options.app.git.repoSSH;
-		options.remoteURL = options.app.git.repoURL;
+		options.repoSSH = options.app.git.repoSSH;
+		options.repoURL = options.app.git.repoURL;
 	}
 
 	options.app.git = {
 		provider: options.gitProvider,
-		repoSSH: options.remoteSSH,
-		repoURL: options.remoteURL,
+		repoSSH: options.repoSSH,
+		repoURL: options.repoURL,
 	};
 
 	// return;

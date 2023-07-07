@@ -33,7 +33,7 @@ const argvOptions = {
 	input: { describe: "Input string", alias: "i" },
 	type: { describe: "Input type as string" },
 	data: { describe: "Input data", alias: "d" },
-	value: { describe: "Input value" },
+	value: { describe: "Input value", alias: "val" },
 	file: { describe: "Input file path", alias: "f" },
 	key: { describe: "Input key in string", alias: "token" },
 	url: { describe: "Input URL address with http" },
@@ -62,13 +62,13 @@ const argvOptions = {
 	targetDir: { describe: "Specify target project directory", alias: "dir" },
 	git: { describe: "Specify GIT provider's slug" },
 	"git-provider": { describe: "Specify GIT provider type", alias: "gp" },
-	"git-workspace": { describe: "Specify GIT workspace slug", alias: "gw" },
-	provider: { describe: "Specify selected cloud provider", alias: "cp" },
+	"git-org": { describe: "Specify GIT workspace slug", alias: "org" },
+	provider: { describe: "Specify selected cloud provider", alias: "pro" },
 	custom: { describe: "Select a custom provider", alias: "custom" },
 	do: { describe: "Select Digital Ocean as a provider", alias: "digitalocean" },
 	gcloud: { describe: "Select Google Cloud as a provider", alias: "gcp" },
-	cluster: { describe: "Specify selected cluster" },
-	registry: { describe: "Specify container registry's slug", alias: "reg" },
+	cluster: { describe: "Specify selected cluster", alias: "c" },
+	registry: { describe: "Specify container registry's slug", alias: "r" },
 	project: { describe: "Specify selected project id (for Google Cloud)", alias: "pro" },
 	zone: { describe: "Specify selected zone (for Google Cloud)" },
 	region: { describe: "Specify selected region (for Google Cloud)" },
@@ -111,7 +111,7 @@ const newProjectOptions = {
 	name: argvOptions.name,
 	slug: argvOptions.slug,
 	public: argvOptions.public,
-	"git-workspace": argvOptions["git-workspace"],
+	"git-org": argvOptions["git-org"],
 };
 
 const userInputOptions = {
@@ -507,7 +507,7 @@ export async function parseCliOptions() {
 		projectSlug: argv.projectSlug as string,
 		targetDirectory: argv.targetDir as string,
 		isPublic: (argv.public as boolean) ?? false,
-		gitWorkspace: argv["git-workspace"] as string,
+		gitOrg: argv["git-org"] as string,
 
 		// environment
 		env: (argv.env as string) ?? "dev",

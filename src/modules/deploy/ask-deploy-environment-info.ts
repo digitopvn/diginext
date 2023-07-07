@@ -59,7 +59,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 
 		if (!gitInfo) throw new Error(`This app's directory doesn't have any git remote integrated.`);
 
-		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.remoteSSH, repoURL: gitInfo.remoteURL };
+		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.repoSSH, repoURL: gitInfo.repoURL };
 		if (options.isDebugging) console.log("askForDeployEnvironmentInfo > updateGitInfo :>> ", updateGitInfo);
 
 		app = await updateAppGitInfo(app, updateGitInfo);

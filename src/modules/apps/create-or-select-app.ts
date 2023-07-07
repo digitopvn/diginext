@@ -76,17 +76,17 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 
 		app = await updateAppGitInfo(app, {
 			provider: gitInfo.provider,
-			repoURL: gitInfo.remoteURL,
-			repoSSH: gitInfo.remoteSSH,
+			repoURL: gitInfo.repoURL,
+			repoSSH: gitInfo.repoSSH,
 		});
 
 		if (!app) throw new Error(`[CREATE_OR_SELECT_APP] Failed to update new git info to this app (${options.slug} / ${projectSlug}).`);
 	}
 
-	options.remoteSSH = app.git.repoSSH;
-	options.remoteURL = app.git.repoURL;
+	options.repoSSH = app.git.repoSSH;
+	options.repoURL = app.git.repoURL;
 	options.gitProvider = app.git.provider;
-	options.repoURL = options.remoteURL;
+	options.repoURL = options.repoURL;
 
 	return app;
 }

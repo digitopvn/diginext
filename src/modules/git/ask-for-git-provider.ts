@@ -26,7 +26,7 @@ export async function askForGitOrg(gitProvider: IGitProvider) {
 		"git",
 		{ _id: gitProvider._id },
 		{
-			gitWorkspace: org.name,
+			org: org.name,
 			public: org.is_org,
 			isOrg: org.is_org,
 			verified: true,
