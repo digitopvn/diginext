@@ -110,13 +110,9 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install package dependencies
-      #   run: npm ci
         run: pnpm install --no-frozen-lockfile
-
-      - name: Build
-        run: pnpm build
 
       - name: Run tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm test
+        run: pnpm test:build
