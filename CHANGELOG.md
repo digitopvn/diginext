@@ -1,3 +1,10 @@
+# [3.18.0-prerelease.8](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.7...v3.18.0-prerelease.8) (2023-07-07)
+
+
+### Bug Fixes
+
+* **app:** trim null process.env ([1de8d3a](https://github.com/digitopvn/diginext/commit/1de8d3a035c950d4e74c0ef6fe832bdcc99b59ef))
+
 # [3.18.0-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.6...v3.18.0-prerelease.7) (2023-07-07)
 
 
