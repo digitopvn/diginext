@@ -1,3 +1,12 @@
+# [3.18.0-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.5...v3.18.0-prerelease.6) (2023-07-07)
+
+
+### Bug Fixes
+
+* **server:** are only unique within a workspace ([c4b52c8](https://github.com/digitopvn/diginext/commit/c4b52c8eeefadebb31900e141375fc7433e55749))
+* **server:** are only unique within a workspace ([#286](https://github.com/digitopvn/diginext/issues/286)) ([5d64a6f](https://github.com/digitopvn/diginext/commit/5d64a6ffe17db3cd115e311288e4b69b2109ab95))
+* **server:** base service issue of generate slug ([be3b53f](https://github.com/digitopvn/diginext/commit/be3b53f86489850b37ace97d0da6957aaaa015cf))
+
 # [3.18.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.4...v3.18.0-prerelease.5) (2023-07-07)
 
 
