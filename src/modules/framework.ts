@@ -1,5 +1,5 @@
 import detectPrivateKey from "diginext-utils/dist/file/detectPrivateKey";
-import { log, logError } from "diginext-utils/dist/xconsole/log";
+import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import fs from "fs";
 import { mkdir } from "fs/promises";
 import ora from "ora";
@@ -128,6 +128,25 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 	return true;
 };
 
+export const changePackageName = async (options: InputOptions) => {
+	//
+	const { targetDirectory, repoSlug } = options;
+
+	if (!path.resolve(targetDirectory, "package.json")) {
+		logWarn("NOT FOUND package.json");
+		return;
+	}
+	try {
+		const json = fs.readFileSync(path.resolve(targetDirectory, "package.json"), "utf-8");
+
+		const data = JSON.parse(json);
+		data.name = repoSlug;
+		fs.writeFileSync(path.resolve(targetDirectory, "package.json"), JSON.stringify(data, undefined, 4));
+	} catch (error) {
+		console.error(`changePackageName error`, error);
+	}
+};
+
 export async function pullingFramework(options: InputOptions) {
 	if (options.framework.name != "none") {
 		// TODO: Select specific branch as a version?
@@ -135,6 +154,8 @@ export async function pullingFramework(options: InputOptions) {
 		await pullFrameworkVersion(options);
 
 		await copyFrameworkResources(options.targetDirectory);
+
+		await changePackageName(options);
 
 		await cleanUpFramework();
 	}
@@ -144,6 +165,7 @@ export async function pullingFramework(options: InputOptions) {
 
 export const cloneGitFramework = async (options: InputOptions) => {
 	//
+
 	const { name, repoSSH } = options.framework;
 
 	// create tmp dir
