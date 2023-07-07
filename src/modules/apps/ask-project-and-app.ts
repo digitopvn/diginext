@@ -16,7 +16,7 @@ export const askForProjectAndApp = async (dir: string, options?: InputOptions) =
 
 	if (options?.isDebugging) console.log("askForProjectAndApp() > currentGitData :>> ", currentGitData);
 
-	let apps = await DB.find<IApp>("app", { "git.repoSSH": currentGitData.remoteSSH }, { populate: ["project", "owner", "workspace"] });
+	let apps = await DB.find("app", { "git.repoSSH": currentGitData.repoSSH }, { populate: ["project", "owner", "workspace"] });
 	let app: IApp;
 	let project: IProject;
 
@@ -25,9 +25,9 @@ export const askForProjectAndApp = async (dir: string, options?: InputOptions) =
 		// try to find apps with deprecated "dx.json" file:
 		const oldAppConfig = getAppConfig();
 		if (oldAppConfig) {
-			app = await DB.findOne<IApp>("app", { slug: oldAppConfig.slug }, { populate: ["project", "owner", "workspace"] });
+			app = await DB.findOne("app", { slug: oldAppConfig.slug }, { populate: ["project", "owner", "workspace"] });
 			if (app) {
-				project = await DB.findOne<IProject>("project", { slug: oldAppConfig.project });
+				project = await DB.findOne("project", { slug: oldAppConfig.project });
 				return { project, app };
 			}
 		}

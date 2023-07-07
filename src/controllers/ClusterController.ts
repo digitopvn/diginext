@@ -14,7 +14,7 @@ import BaseController from "./BaseController";
 
 @Tags("Cluster")
 @Route("cluster")
-export default class ClusterController extends BaseController<ICluster> {
+export default class ClusterController extends BaseController {
 	constructor() {
 		super(new ClusterService());
 	}

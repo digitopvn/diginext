@@ -7,7 +7,7 @@ import type { IApp } from "@/entities";
 import { DB } from "../modules/api/DB";
 
 export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) => {
-	const apps = await DB.find<IApp>("app", { ...filter, deployEnvironment: undefined });
+	const apps = await DB.find("app", { ...filter, deployEnvironment: undefined });
 	if (isEmpty(apps)) return;
 
 	// log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need to migrate deploy environments.`);
@@ -25,9 +25,7 @@ export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) =
 		return updatedApp;
 	});
 
-	const results = await Promise.all(
-		updatedApps.map((app) => DB.update<IApp>("app", { _id: app._id }, { deployEnvironment: app.deployEnvironment }))
-	);
+	const results = await Promise.all(updatedApps.map((app) => DB.update("app", { _id: app._id }, { deployEnvironment: app.deployEnvironment })));
 
 	log(`[MIGRATION] ✓ migrateAppEnvironment > FINISH >> Affected ${results.length} apps.`);
 
@@ -65,14 +63,14 @@ export const migrateAppEnvironmentVariables = async (app: IApp) => {
 
 	if (isEmpty(updateData)) return;
 
-	const [updatedApp] = await DB.update<IApp>("app", { _id: app._id }, updateData);
+	const [updatedApp] = await DB.update("app", { _id: app._id }, updateData);
 	if (!updatedApp) return;
 
 	return updatedApp;
 };
 
 export const migrateAllAppEnvironment = async () => {
-	const apps = await DB.find<IApp>("app", { deployEnvironment: undefined }, { select: ["_id", "deployEnvironment"] });
+	const apps = await DB.find("app", { deployEnvironment: undefined }, { select: ["_id", "deployEnvironment"] });
 	if (isEmpty(apps)) return;
 
 	// log(`[MIGRATION] migrateAppEnvironment > Found ${apps.length} apps need environment migration.`);

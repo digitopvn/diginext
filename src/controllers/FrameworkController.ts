@@ -1,6 +1,5 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IFramework } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
 import FrameworkService from "@/services/FrameworkService";
@@ -9,7 +8,7 @@ import BaseController from "./BaseController";
 
 @Tags("Framework")
 @Route("framework")
-export default class FrameworkController extends BaseController<IFramework> {
+export default class FrameworkController extends BaseController {
 	service: FrameworkService;
 
 	constructor() {

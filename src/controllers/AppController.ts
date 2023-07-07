@@ -3,7 +3,7 @@ import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import { isArray, isBoolean, isEmpty, isNumber, isUndefined } from "lodash";
 
-import type { AppGitInfo, IApp, IBuild, ICluster, IContainerRegistry, IFramework, IProject, IRelease } from "@/entities";
+import type { AppGitInfo, IApp, IBuild, ICluster, IFramework, IProject } from "@/entities";
 import * as entities from "@/entities";
 import type { SslType } from "@/interfaces";
 import * as interfaces from "@/interfaces";
@@ -421,7 +421,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
 				if (!isEmpty(deployEnvironment)) {
 					const { cluster: clusterShortName, namespace } = deployEnvironment;
-					const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+					const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 					let errorMsg;
 
 					if (cluster) {
@@ -719,7 +719,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
 
 		// get app data:
-		const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+		const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
@@ -733,11 +733,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 			const releaseFilter = { appSlug: app.slug, buildStatus: "success", env, active: true };
 			console.log("updateDeployEnvironment() > releaseFilter :>> ", releaseFilter);
 
-			let latestRelease = await DB.findOne<IRelease>("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
+			let latestRelease = await DB.findOne("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
 			// "sometime" there are no "active" release, so just get the "success" release instead :)
 			if (!latestRelease) {
 				delete releaseFilter.active;
-				latestRelease = await DB.findOne<IRelease>("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
+				latestRelease = await DB.findOne("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
 			}
 			if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Release not found (app: "${app.slug}" - env: "${env}")`);
 
@@ -768,8 +768,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// cluster
 		let cluster: ICluster | undefined;
-		if (deployEnvironmentData.cluster) cluster = await DB.findOne<ICluster>("cluster", { shortName: deployEnvironmentData.cluster });
-		if (!cluster && currentDeployEnvData.cluster) cluster = await DB.findOne<ICluster>("cluster", { shortName: currentDeployEnvData.cluster });
+		if (deployEnvironmentData.cluster) cluster = await DB.findOne("cluster", { shortName: deployEnvironmentData.cluster });
+		if (!cluster && currentDeployEnvData.cluster) cluster = await DB.findOne("cluster", { shortName: currentDeployEnvData.cluster });
 
 		// namespace
 		const namespace = deployEnvironmentData.namespace;
@@ -784,7 +784,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// container registry
 		if (deployEnvironmentData.registry) {
-			const registry = await DB.findOne<IContainerRegistry>("registry", { slug: deployEnvironmentData.registry });
+			const registry = await DB.findOne("registry", { slug: deployEnvironmentData.registry });
 			if (!registry) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
 		}
 
@@ -872,7 +872,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		updatedAppData.lastUpdatedBy = this.user.username;
 		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		if (!cluster) return respondSuccess({ data: updatedApp.deployEnvironment[env] });
@@ -974,7 +974,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!clusterShortName) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Cluster "${clusterShortName}" not found.`);
 		if (!namespace) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Namespace "${namespace}" not found.`);
 
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		let errorMsg;
 
 		if (cluster) {
@@ -1080,7 +1080,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
 
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
 		const newEnvVars = isJSON(envVars)
@@ -1125,7 +1125,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			updatedAppData.lastUpdatedBy = this.user.username;
 			updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-			updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+			updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
 			if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 		}
 
@@ -1208,7 +1208,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
 
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
 		// check if deployment is existed in the cluster / namespace
@@ -1311,7 +1311,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
 
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
 		// check if deployment is existed in the cluster / namespace
@@ -1385,7 +1385,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
 
 		const clusterShortName = app.deployEnvironment[env].cluster;
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
 		const mainAppName = await getDeploymentName(app);
@@ -1442,7 +1442,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		updatedAppData.lastUpdatedBy = this.user.username;
 		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		let workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {

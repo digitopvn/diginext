@@ -3,7 +3,6 @@ import fs from "fs";
 // import Listr from "listr";
 import path from "path";
 
-import type { IApp } from "@/entities/App";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { pullingFramework } from "@/modules/framework";
@@ -55,10 +54,10 @@ export default async function createApp(options: InputOptions) {
 	if (options.framework && options.framework.slug !== "none") await pullingFramework(options);
 
 	// update git info to database
-	const updatedApp = await DB.updateOne<IApp>(
+	const updatedApp = await DB.updateOne(
 		"app",
 		{ slug: options.slug },
-		{ git: { provider: options.gitProvider, repoSSH: options.remoteSSH, repoURL: options.remoteURL } }
+		{ git: { provider: options.gitProvider, repoSSH: options.repoSSH, repoURL: options.repoURL } }
 	);
 	if (!updatedApp) {
 		logError("Can't create new app due to network issue while updating git repo info.");

@@ -48,15 +48,15 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		return;
 	}
 
-	const { remoteSSH, remoteURL, provider: gitProvider, branch } = gitRepoData;
+	const { repoSSH, repoURL, provider: gitProvider, branch } = gitRepoData;
 
 	if (!appConfig.git) appConfig.git = {};
 	appConfig.git.provider = gitProvider;
-	appConfig.git.repoSSH = remoteSSH;
-	appConfig.git.repoURL = remoteURL;
+	appConfig.git.repoSSH = repoSSH;
+	appConfig.git.repoURL = repoURL;
 
-	options.remoteSSH = remoteSSH;
-	options.remoteURL = remoteURL;
+	options.repoSSH = repoSSH;
+	options.repoURL = repoURL;
 	options.gitProvider = gitProvider;
 	options.gitBranch = branch;
 

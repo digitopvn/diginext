@@ -7,7 +7,7 @@ import type { ICloudDatabase } from "@/entities";
 import { DB } from "../api/DB";
 
 export async function askForDatabase() {
-	const dbs = await DB.find<ICloudDatabase>("database", {});
+	const dbs = await DB.find("database", {});
 
 	if (isEmpty(dbs)) {
 		logError(`No cloud databases found.`);

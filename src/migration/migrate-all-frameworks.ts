@@ -7,8 +7,16 @@ export const migrateAllFrameworks = async () => {
 	const items = await DB.update(
 		"framework",
 		filter,
-		{ $unset: { isPrivate: 1 }, $set: { migratedAt: new Date() } },
-		{ raw: true, select: ["_id"] }
+		[
+			// delete "isPrivate" field
+			{ $unset: "isPrivate" },
+			// set "migratedAt" field to avoid multiple migrations
+			{ $set: { migratedAt: new Date() } },
+		],
+		{
+			raw: true,
+			select: ["_id"],
+		}
 	);
 	if (items.length > 0) log(`✓ [MIGRATION] migrateAllGitProviders > Affected ${items.length} frameworks.`);
 	return items;

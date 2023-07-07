@@ -1,7 +1,7 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IApp, IRelease } from "@/entities";
+import type { IRelease } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -81,7 +81,7 @@ export default class ReleaseController extends BaseController<IRelease> {
 
 		const { app: appSlug, buildNumber } = body;
 
-		const app = await DB.findOne<IApp>("app", { slug: appSlug });
+		const app = await DB.findOne("app", { slug: appSlug });
 		if (!app) return respondFailure(`App "${appSlug}" not found.`);
 
 		const newRelease = await createReleaseFromApp(app, body.env, buildNumber, { author: this.user, workspace: this.workspace });

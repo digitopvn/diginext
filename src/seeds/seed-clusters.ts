@@ -1,17 +1,17 @@
 import yaml from "js-yaml";
 
 import { Config } from "@/app.config";
-import type { ICloudProvider, ICluster, IUser, IWorkspace } from "@/entities";
+import type { ICluster, IUser, IWorkspace } from "@/entities";
 import type { KubeConfig } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import ClusterManager from "@/modules/k8s";
 
-export const seedClusters = async (workspace: IWorkspace, owner: IUser) => {
-	const initialClusterKubeConfig = Config.grab("INITIAL_CLUSTER_KUBECONFIG");
+export const addBareMetalCluster = async (kubeConfig: string, workspace: IWorkspace, owner: IUser) => {
+	const initialClusterKubeConfig = kubeConfig;
 	if (!initialClusterKubeConfig) return;
 
 	// skip if it's existed
-	let initialCluster = await DB.findOne<ICluster>("cluster", { kubeConfig: initialClusterKubeConfig, workspace: workspace._id });
+	let initialCluster = await DB.findOne("cluster", { kubeConfig: initialClusterKubeConfig, workspace: workspace._id });
 	if (initialCluster) return;
 
 	// validate YAML
@@ -30,7 +30,7 @@ export const seedClusters = async (workspace: IWorkspace, owner: IUser) => {
 	console.log("clusterIP :>> ", clusterIP);
 
 	// get custom provider
-	const customCloudProvider = await DB.findOne<ICloudProvider>("provider", { shortName: "custom" });
+	const customCloudProvider = await DB.findOne("provider", { shortName: "custom" });
 
 	// insert new cluster
 	const initialClusterDto: ICluster = {
@@ -45,11 +45,18 @@ export const seedClusters = async (workspace: IWorkspace, owner: IUser) => {
 		owner: owner._id,
 		workspace: workspace._id,
 	};
-	initialCluster = await DB.create<ICluster>("cluster", initialClusterDto);
+	initialCluster = await DB.create("cluster", initialClusterDto);
 
 	// verfify cluster
-	await ClusterManager.authCluster(initialCluster);
+	initialCluster = await ClusterManager.authCluster(initialCluster);
 
 	// done
-	return [initialCluster];
+	return initialCluster;
+};
+
+export const seedClusters = async (workspace: IWorkspace, owner: IUser) => {
+	const initialClusterKubeConfig = Config.grab("INITIAL_CLUSTER_KUBECONFIG");
+	if (!initialClusterKubeConfig) return;
+
+	return addBareMetalCluster(initialClusterKubeConfig, workspace, owner);
 };

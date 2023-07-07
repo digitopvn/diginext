@@ -59,4 +59,4 @@ export const roleSchema = new Schema(
 	{ collection: "roles", timestamps: true }
 );
 
-export const RoleModel = model<IRole>("Role", roleSchema, "roles");
+export const RoleModel = model("Role", roleSchema, "roles");

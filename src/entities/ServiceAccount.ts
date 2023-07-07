@@ -10,7 +10,7 @@ export interface IServiceAccount extends IUser {
 }
 export type ServiceAccountDto = Omit<IServiceAccount, keyof HiddenBodyKeys>;
 
-export const serviceAccountSchema = new Schema<IServiceAccount>(
+export const serviceAccountSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: {

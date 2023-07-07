@@ -31,7 +31,7 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		await wait(1000);
 
 		// add git origin:
-		await git.addRemote("origin", options.remoteSSH);
+		await git.addRemote("origin", options.repoSSH);
 
 		// create default brand: "main"
 		await git.fetch(["--all"]);

@@ -12,12 +12,12 @@ export default class UserService extends BaseService<IUser> {
 		super(userSchema);
 	}
 
-	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination) {
+	async find(filter?: IQueryFilter<IUser>, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination) {
 		// if (filter) filter.type = { $nin: ["service_account", "api_key"] };
 		return super.find(filter, options, pagination);
 	}
 
-	async findOne(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination) {
+	async findOne(filter?: IQueryFilter<IUser>, options?: IQueryOptions & IQueryPagination) {
 		// if (filter) filter.type = { $nin: ["service_account", "api_key"] };
 		return super.findOne(filter, options);
 	}
@@ -27,7 +27,7 @@ export default class UserService extends BaseService<IUser> {
 		return super.create(data);
 	}
 
-	async update(filter: IQueryFilter, data: IUser | any, options?: IQueryOptions) {
+	async update(filter: IQueryFilter<IUser>, data: IUser | any, options?: IQueryOptions) {
 		if (data.username) data.slug = data.username;
 		if (data.slug) data.username = data.slug;
 		return super.update(filter, data, options);

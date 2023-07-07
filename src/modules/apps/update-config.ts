@@ -24,7 +24,7 @@ export const updateAppConfig = async (app: IApp, env?: string, serverDeployEnvir
 		});
 	}
 
-	const updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updateAppData);
+	const updatedApp = await DB.updateOne("app", { slug: app.slug }, updateAppData);
 
 	if (!updatedApp) {
 		logError(`App not found (probably deleted?)`);

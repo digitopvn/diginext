@@ -35,7 +35,7 @@ export const switchContextToCluster = async (clusterShortName: string, providerS
 		const ctx = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
 		context = ctx.name;
 	} else {
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		if (!cluster) {
 			logError(`Can't switch to cluster "${clusterShortName}".`);
 			return;
@@ -79,6 +79,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 	// Check if Kubernetes context of the cluster is existed in KUBE_CONFIG -> skip cluster authentication
 	context = await getKubeContextByCluster(cluster);
 	if (context && cluster.isVerified) {
+		if (shouldSwitchContextToThisCluster) await switchContext(context.name);
 		logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 		return cluster;
 	}
@@ -110,7 +111,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			context = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
 
 			if (context) {
-				[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { contextName: context.name });
+				[cluster] = await DB.update("cluster", { shortName: clusterShortName }, { contextName: context.name });
 			} else {
 				throw new Error(`Context of "${clusterShortName}" cluster not found.`);
 			}
@@ -118,7 +119,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			if (shouldSwitchContextToThisCluster) switchContext(context.name);
 
 			// mark this cluster verified
-			[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
+			[cluster] = await DB.update("cluster", { shortName: clusterShortName }, { isVerified: true });
 
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 
@@ -142,7 +143,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			context = await getKubeContextByClusterShortName(clusterShortName, providerShortName);
 
 			if (context) {
-				[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { contextName: context.name });
+				[cluster] = await DB.update("cluster", { shortName: clusterShortName }, { contextName: context.name });
 			} else {
 				throw new Error(`Context of "${clusterShortName}" cluster not found.`);
 			}
@@ -150,7 +151,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			if (shouldSwitchContextToThisCluster) switchContext(context.name);
 
 			// mark this cluster verified
-			[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
+			[cluster] = await DB.update("cluster", { shortName: clusterShortName }, { isVerified: true });
 
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 
@@ -168,7 +169,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			const contextName = await custom.authenticate({ filePath });
 
 			if (contextName) {
-				[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { contextName: contextName });
+				[cluster] = await DB.update("cluster", { shortName: clusterShortName }, { contextName: contextName });
 			} else {
 				throw new Error(`Context of "${clusterShortName}" cluster not found.`);
 			}
@@ -179,7 +180,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			if (shouldSwitchContextToThisCluster) switchContext(contextName);
 
 			// mark this cluster verified
-			[cluster] = await DB.update<ICluster>("cluster", { shortName: clusterShortName }, { isVerified: true });
+			[cluster] = await DB.update("cluster", { shortName: clusterShortName }, { isVerified: true });
 
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterShortName}" cluster.`);
 
@@ -198,7 +199,7 @@ export const authClusterByShortName = async (clusterShortName: string, options: 
 	if (!clusterShortName) throw new Error(`Param "clusterShortName" is required.`);
 
 	// find the cluster in the database:
-	let cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+	let cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 
 	if (!cluster) {
 		throw new Error(

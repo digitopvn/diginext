@@ -24,7 +24,7 @@ export function generateAppConfig(options: InputOptions) {
 	appConfig.git = {
 		provider: options.gitProvider,
 		repoURL: options.repoURL,
-		repoSSH: options.remoteSSH,
+		repoSSH: options.repoSSH,
 	};
 
 	// framework

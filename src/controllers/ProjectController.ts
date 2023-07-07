@@ -39,7 +39,7 @@ interface IQueryProjectsAndApps {
 
 @Tags("Project")
 @Route("project")
-export default class ProjectController extends BaseController<IProject> {
+export default class ProjectController extends BaseController {
 	service: ProjectService;
 
 	constructor() {

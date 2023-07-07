@@ -10,7 +10,7 @@ import type { GitOrg } from "./git-provider-api";
 
 export async function askForGitOrg(gitProvider: IGitProvider) {
 	// select git org (namespace)
-	const orgs = await DB.find<GitOrg>("git", { _id: gitProvider._id }, { subpath: "/orgs", filter: { slug: gitProvider.slug } });
+	const orgs = await DB.find("git", { _id: gitProvider._id }, { subpath: "/orgs", filter: { slug: gitProvider.slug } });
 	if (!orgs || orgs.length === 0) throw new Error(`This account doesn't have any git workspaces.`);
 
 	const { org } = await inquirer.prompt<{ org: GitOrg }>({
@@ -22,11 +22,11 @@ export async function askForGitOrg(gitProvider: IGitProvider) {
 	});
 
 	// update "gitWorkspace" as selected "org"
-	const provider = await DB.updateOne<IGitProvider>(
+	const provider = await DB.updateOne(
 		"git",
 		{ _id: gitProvider._id },
 		{
-			gitWorkspace: org.name,
+			org: org.name,
 			public: org.is_org,
 			isOrg: org.is_org,
 			verified: true,
@@ -37,7 +37,7 @@ export async function askForGitOrg(gitProvider: IGitProvider) {
 }
 
 export async function askForGitProvider() {
-	const gitProviders = await DB.find<IGitProvider>("git", {});
+	const gitProviders = await DB.find("git", {});
 
 	if (isEmpty(gitProviders)) {
 		// logError(`This workspace doesn't have any git providers integrated.`);
@@ -78,7 +78,7 @@ export async function askForGitProvider() {
 		}
 
 		// start authentication...
-		let gitProvider = await DB.create<IGitProvider>("git", gitProviderData);
+		let gitProvider = await DB.create("git", gitProviderData);
 		if (!gitProvider) throw new Error(`Unable to authenticate this git provider.`);
 
 		// select org

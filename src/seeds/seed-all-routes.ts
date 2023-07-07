@@ -9,7 +9,7 @@ import { DB } from "../modules/api/DB";
 
 export const seedSystemRoutes = async () => {
 	// get routes from the database
-	let dbRoutes = await DB.find<IRoute>("route", {});
+	let dbRoutes = await DB.find("route", {});
 	// console.log("dbRoutes >>", dbRoutes.length);
 
 	// get all routes of Express
@@ -29,7 +29,7 @@ export const seedSystemRoutes = async () => {
 	if (!isEmpty(missingRoutes)) {
 		// log(`[MIGRATION] migrateAllRoutes > Found ${missingRoutes.length} missing routes.`);
 
-		const results = (await Promise.all(missingRoutes.map(async (route) => DB.create<IRoute>("route", route)))).filter(
+		const results = (await Promise.all(missingRoutes.map(async (route) => DB.create("route", route)))).filter(
 			(item) => typeof item !== "undefined"
 		);
 
@@ -37,7 +37,7 @@ export const seedSystemRoutes = async () => {
 	}
 
 	// compare methods of database routes with methods of Express routes
-	dbRoutes = await DB.find<IRoute>("route", {}); // <-- fetch database routes again to get latest ones
+	dbRoutes = await DB.find("route", {}); // <-- fetch database routes again to get latest ones
 	const updateRoutes = expressRoutes
 		.filter((exr) => {
 			const _route = dbRoutes.find((route) => route.path === exr.path);
@@ -57,9 +57,9 @@ export const seedSystemRoutes = async () => {
 	if (!isEmpty(updateRoutes)) {
 		// log(`[MIGRATION] migrateAllRoutes > Found ${updateRoutes.length} routes that need to update methods.`);
 
-		const results = (
-			await Promise.all(updateRoutes.map(async (updateData) => DB.update<IRoute>("route", { path: updateData.path }, updateData)))
-		).filter((items) => typeof items !== "undefined" && !isEmpty(items));
+		const results = (await Promise.all(updateRoutes.map(async (updateData) => DB.update("route", { path: updateData.path }, updateData)))).filter(
+			(items) => typeof items !== "undefined" && !isEmpty(items)
+		);
 
 		// log(`[MIGRATION] migrateAllRoutes > Update methods of ${results.length} routes.`);
 	}

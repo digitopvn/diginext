@@ -1,8 +1,6 @@
 import { log, logError } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
-import type { IApp, IContainerRegistry } from "@/entities";
-
 import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import digitalocean from "../providers/digitalocean";
@@ -20,7 +18,7 @@ import DockerRegistry from "../registry/docker-registry";
 export async function createImagePullSecretsInNamespace(appSlug: string, env: string, clusterShortName: string, namespace: string = "default") {
 	let message = "";
 
-	let app = await DB.findOne<IApp>("app", { slug: appSlug });
+	let app = await DB.findOne("app", { slug: appSlug });
 
 	if (!app) throw new Error(`App "${appSlug}" not found.`);
 
@@ -30,7 +28,7 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 	}
 
 	const { registry: regSlug } = deployEnvironment;
-	let registry = await DB.findOne<IContainerRegistry>("registry", { slug: regSlug });
+	let registry = await DB.findOne("registry", { slug: regSlug });
 
 	if (!registry) throw new Error(`Container Registry (${regSlug}) of "${appSlug}" app not found.`);
 
@@ -66,7 +64,7 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 
 		if (imagePullSecret && imagePullSecret.name) {
 			// update image pull secret name into container registry
-			const [updatedRegistry] = await DB.update<IContainerRegistry>("registry", { slug: regSlug }, { imagePullSecret });
+			const [updatedRegistry] = await DB.update("registry", { slug: regSlug }, { imagePullSecret });
 			if (!updatedRegistry) logError(`[IMAGE PULL SECRET] Can't update "imagePullSecrets" to "${regSlug}" registry`);
 
 			// print success
