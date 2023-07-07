@@ -1,3 +1,11 @@
+# [3.18.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.4...v3.18.0-prerelease.5) (2023-07-07)
+
+
+### Bug Fixes
+
+* **server,api:** import git create app, seed default projects ([32ef04d](https://github.com/digitopvn/diginext/commit/32ef04db36e7000bf5684f35c305656ff4d701d4))
+* **server,cli:** git provider api should use correct org name ([1c5435d](https://github.com/digitopvn/diginext/commit/1c5435d62bc7e25a980ecc8cfc86b7e9153926c4))
+
 # [3.18.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.3...v3.18.0-prerelease.4) (2023-07-06)
 
 
