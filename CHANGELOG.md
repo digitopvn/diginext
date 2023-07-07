@@ -1,3 +1,16 @@
+# [3.18.0-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.6...v3.18.0-prerelease.7) (2023-07-07)
+
+
+### Bug Fixes
+
+* update test ([127f81a](https://github.com/digitopvn/diginext/commit/127f81a83d7c1d0a02851c9a9e8322856ab36c76))
+* update test ([57c185d](https://github.com/digitopvn/diginext/commit/57c185d4ff7d009326e499f685e696f82d61ff06))
+
+
+### Features
+
+* **cli:** changePackageName when create new app ([12c6d06](https://github.com/digitopvn/diginext/commit/12c6d06bb2b1b7289ccc2f20ff445c229248b4b0))
+
 # [3.18.0-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.5...v3.18.0-prerelease.6) (2023-07-07)
 
 
