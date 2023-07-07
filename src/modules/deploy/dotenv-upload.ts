@@ -40,7 +40,7 @@ export const uploadDotenvFileByApp = async (envFile: string, app: IApp, env: str
 	const url = `/api/v1/app/environment/variables`;
 	// const updateData = flattenObjectPaths(updateAppData);
 
-	const { status, data, messages } = await fetchApi<IApp>({
+	const { status, data, messages } = await fetchApi({
 		url,
 		method: "POST",
 		data: updateAppData,
@@ -59,7 +59,7 @@ export const uploadDotenvFileByApp = async (envFile: string, app: IApp, env: str
 };
 
 export const uploadDotenvFileByAppSlug = async (envFile: string, appSlug: string, env: string = "dev") => {
-	const app = await DB.findOne<IApp>("app", { slug: appSlug });
+	const app = await DB.findOne("app", { slug: appSlug });
 	if (!app) throw new Error(`Can't upload dotenv variables to "${env}" deploy environment due to "${appSlug}" app not found.`);
 
 	return uploadDotenvFileByApp(envFile, app, env);

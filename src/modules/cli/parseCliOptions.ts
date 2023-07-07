@@ -3,7 +3,6 @@ import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
-import type { IGitProvider } from "@/entities";
 import { type IApp, type IFramework, type IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType, ResourceQuotaSize } from "@/interfaces/SystemTypes";
@@ -85,6 +84,7 @@ const argvOptions = {
 	compress: { describe: "Should compress static files or not", alias: "zip" },
 	redirect: { describe: "Should redirect all alternative domains to the primary or not" },
 	generate: { describe: "Should generate config file or not", alias: "G" },
+	ci: { describe: "Should enable CI related actions or not" },
 	pipeline: { describe: "Should generate Bitbucket pipeline YAML or not" },
 	template: { describe: "Should replace current deployment with the templates or not", alias: "tpl" },
 	fresh: { describe: "Should do a fresh deploy [WARN - this will wipe out the current namespace]", alias: "fr" },
@@ -517,6 +517,7 @@ export async function parseCliOptions() {
 		isProd: (argv.prod as boolean) ?? argv.env === "prod" ?? false,
 
 		// helper
+		ci: (argv.ci as boolean) ?? false,
 		shouldShowInputOptions: (argv["show-options"] as boolean) ?? false,
 		shouldInstallPackage: (argv.install as boolean) ?? true,
 		shouldShowHelp: (argv.help as boolean) ?? false,
@@ -551,7 +552,7 @@ export async function parseCliOptions() {
 	};
 
 	if (typeof argv.git !== "undefined") {
-		options.git = await DB.findOne<IGitProvider>("git", { slug: argv.git });
+		options.git = await DB.findOne("git", { slug: argv.git });
 		if (!options.git) throw new Error(`Git provider "${argv.git}" not found.`);
 	}
 
@@ -559,7 +560,7 @@ export async function parseCliOptions() {
 		if (argv.framework === "none") {
 			options.framework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
 		} else {
-			options.framework = await DB.findOne<IFramework>("framework", { slug: argv.framework });
+			options.framework = await DB.findOne("framework", { slug: argv.framework });
 			if (!options.framework) throw new Error(`Framework "${argv.framework}" not found.`);
 			options.frameworkVersion = options.framework.mainBranch;
 		}

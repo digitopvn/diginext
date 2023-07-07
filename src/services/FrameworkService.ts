@@ -1,8 +1,6 @@
 import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IWorkspace } from "@/entities";
-import { type IGitProvider } from "@/entities";
 import type { FrameworkDto, IFramework } from "@/entities/Framework";
 import { frameworkSchema } from "@/entities/Framework";
 import { type IQueryOptions } from "@/interfaces";
@@ -17,7 +15,7 @@ export default class FrameworkService extends BaseService<IFramework> {
 		super(frameworkSchema);
 	}
 
-	async create(data: FrameworkDto, options?: IQueryOptions): Promise<IFramework> {
+	async create(data: FrameworkDto, options?: IQueryOptions) {
 		console.log("data :>> ", data);
 		// validate
 		const requiredFields: string[] = [];
@@ -29,11 +27,11 @@ export default class FrameworkService extends BaseService<IFramework> {
 		if (requiredFields.length > 0) throw new Error(`Required params: ${requiredFields.join(", ")}.`);
 
 		// check if workspace is able to pull
-		const availableGitProviders = await DB.find<IGitProvider>("git", { type: data.gitProvider });
+		const availableGitProviders = await DB.find("git", { type: data.gitProvider });
 		const slug = makeSlug(data.name);
 
 		let workspace = this.req?.workspace;
-		if (!workspace && (data as any).workspace) workspace = await DB.findOne<IWorkspace>("workspace", { _id: (data as any).workspace });
+		if (!workspace && (data as any).workspace) workspace = await DB.findOne("workspace", { _id: (data as any).workspace });
 		if (!workspace) throw new Error(`Workspace not found.`);
 
 		const frameworkDir = path.resolve(CLI_CONFIG_DIR, `${workspace.slug}/frameworks/${slug}/${data.mainBranch}`);

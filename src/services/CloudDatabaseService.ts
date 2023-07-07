@@ -5,7 +5,6 @@ import { toString } from "lodash";
 import path from "path";
 
 import { Config } from "@/app.config";
-import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import type { CloudDatabaseDto, ICloudDatabase } from "@/entities/CloudDatabase";
 import { cloudDatabaseSchema } from "@/entities/CloudDatabase";
 import type { ICloudDatabaseBackup } from "@/entities/CloudDatabaseBackup";
@@ -333,7 +332,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		const db = await this.findOne({ _id: id });
 		if (!db) throw new Error(`Database not found.`);
 
-		const apiKey = await DB.findOne<IApiKeyAccount>("api_key_user", { workspaces: db.workspace });
+		const apiKey = await DB.findOne("api_key_user", { workspaces: db.workspace });
 
 		// create new cronjob
 		const request: CronjobRequest = {
@@ -348,7 +347,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		if (!cronjob) throw new Error(`Unable to schedule auto-backup for "${db.name}" database.`);
 
 		// update cronjob ID to database:
-		const updatedDb = await DB.updateOne<ICloudDatabase>(
+		const updatedDb = await DB.updateOne(
 			"database",
 			{ _id: id },
 			{ autoBackup: cronjob._id, owner: ownership?.owner, workspace: ownership?.workspace }

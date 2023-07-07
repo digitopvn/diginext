@@ -8,7 +8,7 @@ import path from "path";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IApp, IBuild, ICluster, IProject, IRelease, IUser, IWorkspace } from "@/entities";
+import type { IApp, IBuild, IRelease, IWorkspace } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath, wait } from "@/plugins";
@@ -71,10 +71,10 @@ export async function startBuildV1(
 
 	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, namespace } = options;
 
-	const latestBuild = await DB.findOne<IBuild>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
-	const project = await DB.findOne<IProject>("project", { slug: projectSlug });
-	const author = await DB.findOne<IUser>("user", { _id: options.userId });
+	const latestBuild = await DB.findOne("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
+	const project = await DB.findOne("project", { slug: projectSlug });
+	const author = await DB.findOne("user", { _id: options.userId });
 	const workspace = app.workspace as IWorkspace;
 
 	// socket & logs
@@ -127,7 +127,7 @@ export async function startBuildV1(
 		workspace: workspace._id,
 	} as IBuild;
 
-	const newBuild = await DB.create<IBuild>("build", buildData);
+	const newBuild = await DB.create("build", buildData);
 	if (!newBuild) {
 		console.log("buildData :>> ", buildData);
 		sendLog({ SOCKET_ROOM, message: "Failed to create new build on server." });
@@ -205,7 +205,7 @@ export async function startBuildV1(
 	 * Create namespace & imagePullScrets here!
 	 * Because it will generate the name of secret to put into deployment yaml
 	 */
-	const cluster = await DB.findOne<ICluster>("cluster", { shortName: serverDeployEnvironment.cluster });
+	const cluster = await DB.findOne("cluster", { shortName: serverDeployEnvironment.cluster });
 
 	if (!cluster) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `Cluster "${serverDeployEnvironment.cluster}" not found` });
@@ -277,7 +277,7 @@ export async function startBuildV1(
 	updatedAppData.lastUpdatedBy = username;
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-	const [updatedApp] = await DB.update<IApp>("app", { slug: appSlug }, updatedAppData);
+	const [updatedApp] = await DB.update("app", { slug: appSlug }, updatedAppData);
 
 	sendLog({ SOCKET_ROOM, message: `Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);

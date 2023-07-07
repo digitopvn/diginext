@@ -7,7 +7,7 @@ import { Body, Deprecated, Post, Queries, Route, Security, Tags } from "tsoa/dis
 import pkg from "@/../package.json";
 import { Config } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IApp, IBuild, IUser, IWorkspace } from "@/entities";
+import type { IWorkspace } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces";
 import { type InputOptions, type ResponseData, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
@@ -134,8 +134,8 @@ export default class DeployController extends BaseController {
 		if (!buildParams) return { status: 0, messages: [`Build "params" is required.`] } as ResponseData;
 		if (!deployParams) return { status: 0, messages: [`Deploy "params" is required.`] } as ResponseData;
 
-		const app = await DB.findOne<IApp>("app", { slug: buildParams.appSlug });
-		const author = this.user || (await DB.findOne<IUser>("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] }));
+		const app = await DB.findOne("app", { slug: buildParams.appSlug });
+		const author = this.user || (await DB.findOne("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] }));
 		const workspace = author.activeWorkspace as IWorkspace;
 		const SOURCE_CODE_DIR = `cache/${app.projectSlug}/${app.slug}/${buildParams.gitBranch}`;
 		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
@@ -359,9 +359,9 @@ export default class DeployController extends BaseController {
 		const { buildSlug } = body;
 		if (!buildSlug) return { status: 0, messages: [`Build "slug" is required`] };
 
-		const build = await DB.findOne<IBuild>("build", { slug: buildSlug });
-		const workspace = await DB.findOne<IWorkspace>("workspace", { _id: build.workspace });
-		const author = this.user || (await DB.findOne<IUser>("user", { _id: body.author }));
+		const build = await DB.findOne("build", { slug: buildSlug });
+		const workspace = await DB.findOne("workspace", { _id: build.workspace });
+		const author = this.user || (await DB.findOne("user", { _id: body.author }));
 
 		if (!author) return respondFailure({ msg: `Author is required.` });
 

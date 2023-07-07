@@ -4,7 +4,6 @@ import { logError } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import path from "path";
 
-import type { IApp } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
@@ -12,7 +11,7 @@ import selectApp from "@/modules/apps/selectApp";
 import selectProject from "@/modules/apps/selectProject";
 import { pullingRepoToNewGitDir } from "@/modules/framework";
 import { askForGitProvider } from "@/modules/git/ask-for-git-provider";
-import type { GitRepository, GitRepositoryDto } from "@/modules/git/git-provider-api";
+import type { GitRepositoryDto } from "@/modules/git/git-provider-api";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { printInformation } from "@/modules/project/printInformation";
 import { wait } from "@/plugins";
@@ -34,7 +33,7 @@ export default async function transferRepo(options: InputOptions) {
 	// {
 	// 	// Repo URL   : https://bitbucket.org/digitopvn/test-project-gaol-webapp
 	// 	// Remote SSH : git@bitbucket.org:digitopvn/test-project-gaol-webapp.git
-	// 	const [updatedApp] = await DB.update<IApp>(
+	// 	const [updatedApp] = await DB.update(
 	// 		"app",
 	// 		{ slug: options.slug },
 	// 		{
@@ -91,7 +90,7 @@ export default async function transferRepo(options: InputOptions) {
 	if (options.app.git.provider != gitProvider.type) {
 		//
 
-		const newRepo = await DB.create<GitRepository>("git", repoData, {
+		const newRepo = await DB.create("git_repo", repoData, {
 			subpath: "/orgs/repos",
 			filter: { slug: gitProvider.slug },
 		});
@@ -108,7 +107,7 @@ export default async function transferRepo(options: InputOptions) {
 		}
 
 		// update git info to database
-		const [updatedApp] = await DB.update<IApp>(
+		const [updatedApp] = await DB.update(
 			"app",
 			{ slug: options.slug },
 			{ git: { provider: options.gitProvider, repoSSH: options.repoSSH, repoURL: options.repoURL } }
@@ -134,7 +133,7 @@ export default async function transferRepo(options: InputOptions) {
 	const error = await initalizeAndCreateDefaultBranches(options);
 	if (error) {
 		// update git info to database
-		const [updatedApp] = await DB.update<IApp>(
+		const [updatedApp] = await DB.update(
 			"app",
 			{ slug: options.slug },
 			{

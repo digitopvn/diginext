@@ -3,7 +3,7 @@ import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { upperCase } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IGitProvider, IRole } from "@/entities";
+import type { IRole } from "@/entities";
 import { GitProviderDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
@@ -18,7 +18,7 @@ import BaseController from "./BaseController";
 
 @Tags("Git Provider")
 @Route("git")
-export default class GitProviderController extends BaseController<IGitProvider> {
+export default class GitProviderController extends BaseController {
 	service: GitProviderService;
 
 	constructor() {

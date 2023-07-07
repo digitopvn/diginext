@@ -65,7 +65,7 @@ export interface IUser extends IBase {
 	activeWorkspace?: IWorkspace | Types.ObjectId | string;
 }
 
-export const userSchema = new Schema<IUser>(
+export const userSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: {

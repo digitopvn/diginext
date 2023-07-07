@@ -14,7 +14,7 @@ export interface IRoute extends IBase {
 }
 export type RouteDto = Omit<IRoute, keyof HiddenBodyKeys>;
 
-export const routeSchema = new Schema<IRoute>(
+export const routeSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
@@ -27,4 +27,4 @@ export const routeSchema = new Schema<IRoute>(
 	{ collection: "routes", timestamps: true }
 );
 
-export const RouteModel = mongoose.model<IRoute>("Route", routeSchema);
+export const RouteModel = mongoose.model("Route", routeSchema);

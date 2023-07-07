@@ -1,4 +1,4 @@
-import { type CronjobDto, type CronjobRepeat, type CronjobRequest, type CronjonRepeatCondition, type ICronjob } from "@/entities/Cronjob";
+import { type CronjobDto, type CronjobRepeat, type CronjobRequest, type CronjonRepeatCondition } from "@/entities/Cronjob";
 
 import { DB } from "../api/DB";
 
@@ -8,7 +8,7 @@ export async function createCronjobAtTime(name: string, request: CronjobRequest,
 		...request,
 		nextRunAt: time,
 	};
-	const job = await DB.create<ICronjob>("cronjob", { ...jobData, ...ownership });
+	const job = await DB.create("cronjob", { ...jobData, ...ownership });
 	return job;
 }
 
@@ -29,6 +29,6 @@ export async function createCronjobRepeat(
 	};
 
 	// insert to database
-	const job = await DB.create<ICronjob>("cronjob", { ...jobData, ...ownership });
+	const job = await DB.create("cronjob", { ...jobData, ...ownership });
 	return job;
 }

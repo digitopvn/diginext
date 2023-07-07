@@ -3,7 +3,7 @@ import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty, isNaN } from "lodash";
 
-import type { AppGitInfo, IApp, ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
+import type { AppGitInfo, ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
@@ -113,7 +113,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 
 	// request cluster
 	if (!serverDeployEnvironment.cluster) {
-		const clusters = await DB.find<ICluster>("cluster", {}, { populate: ["provider"] }, { limit: 20 });
+		const clusters = await DB.find("cluster", {}, { populate: ["provider"] }, { limit: 20 });
 		if (isEmpty(clusters)) {
 			logError(`No clusters found in this workspace. Please add one to deploy on.`);
 			return;
@@ -130,7 +130,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		serverDeployEnvironment.cluster = cluster.shortName;
 		serverDeployEnvironment.provider = (cluster.provider as ICloudProvider).shortName;
 	} else {
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: serverDeployEnvironment.cluster });
+		const cluster = await DB.findOne("cluster", { shortName: serverDeployEnvironment.cluster });
 		if (!cluster) {
 			logError(`Cluster "${serverDeployEnvironment.cluster}" not found.`);
 			return;
@@ -270,7 +270,7 @@ To expose this app to the internet later, you can add your own domain to deploy 
 	if (options.isDebugging) log(`[ASK DEPLOY INFO] serverDeployEnvironment :>>`, serverDeployEnvironment);
 
 	// fetched latest app on server
-	app = await DB.findOne<IApp>("app", { slug: app.slug }, { populate: ["project", "owner", "workspace"] });
+	app = await DB.findOne("app", { slug: app.slug }, { populate: ["project", "owner", "workspace"] });
 	if (options.isDebugging) log(`[ASK DEPLOY INFO] updated app :>>`, app);
 
 	/**

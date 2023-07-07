@@ -3,8 +3,11 @@ import { MongoDB } from "../../src/plugins/mongodb";
 import {
 	CLI_TEST_DIR,
 	apiKeySvc,
+	clusterCtl,
+	clusterSvc,
 	createFakeUser,
 	createWorkspace,
+	currentWorkspace,
 	dxCmd,
 	frameworkCtl,
 	frameworkSvc,
@@ -27,6 +30,7 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import { Config } from "@/app.config";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { readdirSync } from "fs";
+import { addBareMetalCluster } from "@/seeds/seed-clusters";
 
 export function testFlow1() {
 	let wsId: string;
@@ -208,6 +212,7 @@ export function testFlow1() {
 			mainBranch: "main",
 			workspace: curUser.activeWorkspace._id,
 		} as any);
+
 		console.log('Add "public" framework > createRes :>> ', createRes);
 		if (!createRes.status) throw new Error(createRes.messages.join("."));
 		expect(createRes.status).toBe(1);
@@ -295,6 +300,18 @@ export function testFlow1() {
 		expect(dockerPullRes.indexOf("digitop/static:latest")).toBeGreaterThan(-1);
 	}, 30000);
 
+	it("Workspace #1: Add Bare-metal K8S cluster", async () => {
+		const curUser = await getCurrentUser();
+
+		// seed cluster: Bare-metal
+		const cluster = await addBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG, currentWorkspace, curUser);
+		console.log("cluster :>> ", cluster);
+
+		// verify cluster connection
+		expect(cluster).toBeDefined();
+		expect(cluster.isVerified).toBe(true);
+	}, 30000);
+
 	it("CLI: Check version", async () => {
 		const cliVersion = await dxCmd(`dx -v`);
 		expect(cliVersion).toBeDefined();
@@ -346,6 +363,17 @@ export function testFlow1() {
 		},
 		5 * 60000
 	);
+
+	it("CLI: Cluster management (BARE-METAL)", async () => {
+		// get bare-metal cluster (default)
+		const cluster = await clusterSvc.findOne({ providerShortName: "custom" });
+		expect(cluster.contextName).toBeDefined();
+		expect(cluster.isVerified).toBeTruthy();
+
+		// switch context to this cluster
+		const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${cluster.shortName}`, { isDebugging: true });
+		console.log("switchCtxRes :>> ", switchCtxRes);
+	}, 60000);
 
 	it("Workspace #1: Add member", async () => {
 		// registerr fake user #2:

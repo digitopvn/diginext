@@ -490,7 +490,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 
 	try {
 		const response = await axios({ url, headers, method, data });
-		if (options?.isDebugging) console.log("Git Provider API > response :>> ", response);
+		// if (options?.isDebugging) console.log("Git Provider API > response :>> ", response);
 		const resData = response.data;
 
 		// catch errors
@@ -502,7 +502,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 			const tokens = await bitbucketRefeshToken(provider);
 
 			// save new tokens to database
-			const [updatedProvider] = await DB.update<IGitProvider>("git", { _id: provider._id }, tokens);
+			const [updatedProvider] = await DB.update("git", { _id: provider._id }, tokens);
 
 			if (!updatedProvider)
 				throw new Error(`[${provider.type.toUpperCase()}_API_ERROR] "${path}" > Can't update tokens to "${provider.name}" git provider.`);

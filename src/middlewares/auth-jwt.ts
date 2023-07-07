@@ -35,7 +35,7 @@ const jwt_auth = (req: AppRequest, res, next) =>
 			if (!user.activeWorkspace) {
 				const workspaces = user.workspaces as IWorkspace[];
 				if (workspaces.length === 1) {
-					user = await DB.updateOne<IUser>(
+					user = await DB.updateOne(
 						"user",
 						{ _id: user._id },
 						{ activeWorkspace: workspaces[0]._id },
@@ -55,7 +55,7 @@ const jwt_auth = (req: AppRequest, res, next) =>
 				  ) as IRole);
 
 			if (activeRole && user.activeRole !== activeRole._id) {
-				user = await DB.updateOne<IUser>(
+				user = await DB.updateOne(
 					"user",
 					{ _id: user._id },
 					{ activeRole: activeRole._id },

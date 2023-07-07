@@ -1,7 +1,7 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 
-import type { IGitProvider, IProject } from "@/entities";
+import type { IProject } from "@/entities";
 import { type AppGitInfo, type IApp } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 import { getCurrentGitRepoData } from "@/plugins";
@@ -47,11 +47,9 @@ export async function execInitApp(options: InputOptions) {
 					return;
 				}
 				// git provider
-				options.git = selectedApp.gitProvider
-					? await DB.findOne<IGitProvider>("git", { _id: selectedApp.gitProvider })
-					: await askForGitProvider();
+				options.git = selectedApp.gitProvider ? await DB.findOne("git", { _id: selectedApp.gitProvider }) : await askForGitProvider();
 				if (!selectedApp.gitProvider && options.git) {
-					await DB.updateOne<IApp>("app", { _id: selectedApp._id }, { gitProvider: options.git._id });
+					await DB.updateOne("app", { _id: selectedApp._id }, { gitProvider: options.git._id });
 				}
 				// app git info
 				options.repoSSH = options.app.git.repoSSH;
@@ -84,7 +82,7 @@ export async function execInitApp(options: InputOptions) {
 	updateData.git.repoSSH = gitInfo.repoSSH;
 
 	if (options.isDebugging) console.log("[INIT APP] updateData :>> ", updateData);
-	const [updatedApp] = await DB.update<IApp>("app", { slug: initApp.slug }, updateData);
+	const [updatedApp] = await DB.update("app", { slug: initApp.slug }, updateData);
 	if (options.isDebugging) console.log("[INIT APP] updatedApp :>> ", updatedApp);
 
 	if (!updatedApp) logError(`[INIT APP] Can't initialize app due to network issue.`);

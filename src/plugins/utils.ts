@@ -640,12 +640,27 @@ export const installPackages = async () => {
 	}
 };
 
-interface PullOrCloneGitRepoOptions {
+interface PullOrCloneGitRepoOptions extends Pick<InputOptions, "ci" | "isDebugging"> {
+	/**
+	 * Should remove ".git" directory after finished pull/clone repo
+	 * @default false
+	 */
+	removeGitOnFinish?: boolean;
+	/**
+	 * Should remove ".github" directory after finished pull/clone repo
+	 * @default false
+	 */
+	removeCIOnFinish?: boolean;
+	/**
+	 * Use git provider's access_token to authenticate before pulling/cloneing repo
+	 */
 	useAccessToken?: {
 		type: "Bearer" | "Basic";
 		value: string;
 	};
-	isDebugging?: boolean;
+	/**
+	 * Callback for in progressing events
+	 */
 	onUpdate?: (msg: string, progress?: number) => void;
 }
 
@@ -732,6 +747,10 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 			const curBranch = await getCurrentGitBranch(dir);
 			await git.pull("origin", curBranch, ["--no-ff"]);
 
+			// remove git on finish
+			if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
+			if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
+
 			success = true;
 		} catch (e) {
 			if (onUpdate) onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
@@ -744,6 +763,11 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			try {
 				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+
+				// remove git on finish
+				if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
+				if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
+
 				success = true;
 			} catch (e2) {
 				if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
@@ -756,6 +780,11 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 		try {
 			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+
+			// remove git on finish
+			if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
+			if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
+
 			success = true;
 		} catch (e) {
 			if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);

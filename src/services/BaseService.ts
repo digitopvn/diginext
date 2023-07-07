@@ -35,7 +35,7 @@ export default class BaseService<T = any> {
 	async getActiveWorkspace(user: IUser) {
 		let workspace = (user.activeWorkspace as any)._id ? (user.activeWorkspace as IWorkspace) : undefined;
 		if (!workspace && MongoDB.isValidObjectId(user.activeWorkspace)) {
-			const wsModel = model<IWorkspace>("workspaces", workspaceSchema, "workspaces");
+			const wsModel = model("workspaces", workspaceSchema, "workspaces");
 			workspace = await wsModel.findOne({ _id: user.activeWorkspace });
 		}
 		return workspace;
@@ -44,13 +44,13 @@ export default class BaseService<T = any> {
 	async getActiveRole(user: IUser) {
 		let role = (user.activeRole as any)._id ? (user.activeRole as IRole) : undefined;
 		if (!role && MongoDB.isValidObjectId(user.activeRole)) {
-			const Model = model<IRole>("roles", roleSchema, "roles");
+			const Model = model("roles", roleSchema, "roles");
 			role = await Model.findOne({ _id: user.activeRole });
 		}
 		return role;
 	}
 
-	async count(filter?: IQueryFilter, options: IQueryOptions = {}) {
+	async count(filter?: IQueryFilter<T>, options: IQueryOptions = {}) {
 		const parsedFilter = filter;
 		parsedFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
 
@@ -148,7 +148,7 @@ export default class BaseService<T = any> {
 		}
 	}
 
-	async find(filter: IQueryFilter = {}, options: IQueryOptions & IQueryPagination = {}, pagination?: IQueryPagination) {
+	async find(filter: IQueryFilter<T> = {}, options: IQueryOptions & IQueryPagination = {}, pagination?: IQueryPagination) {
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find :>> filter:`, filter);
 
 		// where
@@ -266,14 +266,14 @@ export default class BaseService<T = any> {
 		return results as T[];
 	}
 
-	async findOne(filter?: IQueryFilter, options: IQueryOptions = {}) {
+	async findOne(filter?: IQueryFilter<T>, options: IQueryOptions = {}) {
 		// console.log(`findOne > filter :>>`, filter);
 		// console.log(`findOne > options :>>`, options);
 		const result = await this.find(filter, { ...options, limit: 1 });
 		return result[0] as T;
 	}
 
-	async update(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
+	async update(filter: IQueryFilter<T>, data: any, options: IQueryOptions = {}) {
 		const updateFilter = { ...filter };
 		if (!options?.deleted) updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
 
@@ -303,12 +303,12 @@ export default class BaseService<T = any> {
 		return updateRes.acknowledged ? affectedItems : [];
 	}
 
-	async updateOne(filter: IQueryFilter, data: any, options: IQueryOptions = {}) {
+	async updateOne(filter: IQueryFilter<T>, data: any, options: IQueryOptions = {}) {
 		const results = await this.update(filter, data, { ...options, limit: 1 });
 		return results && results.length > 0 ? results[0] : undefined;
 	}
 
-	async softDelete(filter?: IQueryFilter, options: IQueryOptions = {}) {
+	async softDelete(filter?: IQueryFilter<T>, options: IQueryOptions = {}) {
 		const data = { deletedAt: new Date() };
 		const deletedItems = await this.update(filter, data, { deleted: true });
 		if (options.isDebugging)
@@ -316,14 +316,14 @@ export default class BaseService<T = any> {
 		return { ok: deletedItems.length > 0, affected: deletedItems.length };
 	}
 
-	async delete(filter?: IQueryFilter, options: IQueryOptions = {}) {
+	async delete(filter?: IQueryFilter<T>, options: IQueryOptions = {}) {
 		const deleteFilter = filter;
 		const deleteRes = await this.model.deleteMany(deleteFilter).exec();
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > delete > deleteRes :>> `, deleteRes);
 		return { ok: deleteRes.deletedCount > 0, affected: deleteRes.deletedCount };
 	}
 
-	async empty(filter?: IQueryFilter) {
+	async empty(filter?: IQueryFilter<T>) {
 		if (filter?.pass != EMPTY_PASS_PHRASE) return { ok: 0, n: 0, error: "[DANGER] You need a password to process this, buddy!" };
 		const deleteRes = await this.model.deleteMany({}).exec();
 		return { ...deleteRes, error: null };

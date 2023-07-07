@@ -1,9 +1,30 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
+import type { UpdateQuery, UpdateWithAggregationPipeline } from "mongoose";
 
 import { isServerMode } from "@/app.config";
-import type { IUser, IWorkspace } from "@/entities";
-import type { IQueryOptions, IQueryPagination } from "@/interfaces";
+import type {
+	IApp,
+	IBuild,
+	ICloudDatabase,
+	ICloudDatabaseBackup,
+	ICloudProvider,
+	ICluster,
+	IContainerRegistry,
+	IFramework,
+	IGitProvider,
+	IProject,
+	IRelease,
+	IRole,
+	ITeam,
+	IUser,
+	IWorkspace,
+} from "@/entities";
+import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
+import type { ICronjob } from "@/entities/Cronjob";
+import type { IRoute } from "@/entities/Route";
+import type { IServiceAccount } from "@/entities/ServiceAccount";
+import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 import {
 	ApiKeyUserService,
 	AppService,
@@ -26,6 +47,7 @@ import {
 	WorkspaceService,
 } from "@/services";
 
+import type { GitRepository } from "../git/git-provider-api";
 import fetchApi from "./fetchApi";
 
 export const dbCollections = [
@@ -36,6 +58,7 @@ export const dbCollections = [
 	"provider",
 	"cluster",
 	"git",
+	"git_repo",
 	"registry",
 	"framework",
 	"project",
@@ -109,6 +132,48 @@ const service_account = new ServiceAccountService();
 const workspace = new WorkspaceService();
 const cronjob = new CronjobService();
 
+export type TypeByCollection<T extends DBCollection> = T extends "api_key_user"
+	? IApiKeyAccount
+	: T extends "app"
+	? IApp
+	: T extends "build"
+	? IBuild
+	: T extends "cluster"
+	? ICluster
+	: T extends "cronjob"
+	? ICronjob
+	: T extends "database"
+	? ICloudDatabase
+	: T extends "db_backup"
+	? ICloudDatabaseBackup
+	: T extends "framework"
+	? IFramework
+	: T extends "git"
+	? IGitProvider
+	: T extends "git_repo"
+	? GitRepository
+	: T extends "project"
+	? IProject
+	: T extends "provider"
+	? ICloudProvider
+	: T extends "registry"
+	? IContainerRegistry
+	: T extends "release"
+	? IRelease
+	: T extends "role"
+	? IRole
+	: T extends "route"
+	? IRoute
+	: T extends "service_account"
+	? IServiceAccount
+	: T extends "team"
+	? ITeam
+	: T extends "user"
+	? IUser
+	: T extends "workspace"
+	? IWorkspace
+	: never;
+
 export interface DBQueryOptions extends IQueryOptions {
 	filter?: any;
 
@@ -150,6 +215,7 @@ export class DB {
 		registry,
 		framework,
 		git,
+		git_repo: git,
 		project,
 		release,
 		role,
@@ -161,7 +227,7 @@ export class DB {
 		workspace,
 	};
 
-	static async count(collection: DBCollection, filter: any = {}, options?: DBQueryOptions, pagination?: IQueryPagination) {
+	static async count<T = any>(collection: DBCollection, filter: IQueryFilter<T> = {}, options?: DBQueryOptions, pagination?: IQueryPagination) {
 		let amount: number;
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -192,7 +258,12 @@ export class DB {
 		return amount;
 	}
 
-	static async find<T = any>(collection: DBCollection, filter: any = {}, options: IQueryOptions = {}, pagination?: IQueryPagination) {
+	static async find<I extends any, T extends DBCollection>(
+		collection: T,
+		filter: IQueryFilter<TypeByCollection<T>> = {},
+		options: IQueryOptions = {},
+		pagination?: IQueryPagination
+	): Promise<TypeByCollection<T>[]> {
 		let items;
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -201,7 +272,7 @@ export class DB {
 				return [];
 			}
 			try {
-				items = (await svc.find(filter, options, pagination)) || [];
+				items = (await svc.find(filter, options, pagination)) || ([] as any[]);
 			} catch (e) {
 				if (!options?.ignorable) logError(`[DB] FIND > Service "${collection}" :>>`, e);
 				items = [];
@@ -221,10 +292,14 @@ export class DB {
 
 			items = data;
 		}
-		return items as T[];
+		return items as TypeByCollection<T>[];
 	}
 
-	static async findOne<T = any>(collection: DBCollection, filter: any = {}, options: DBQueryOptions = {}) {
+	static async findOne<T extends DBCollection>(
+		collection: T,
+		filter: IQueryFilter<TypeByCollection<T>> = {},
+		options: DBQueryOptions = {}
+	): Promise<TypeByCollection<T>> {
 		// extract "subpath", then delete it from "options"
 		const { subpath = "", func } = options;
 		delete options.subpath;
@@ -253,16 +328,16 @@ export class DB {
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] FIND ONE - ${url} :>>`, messages);
 			item = data[0];
 		}
-		return item as T;
+		return item;
 	}
 
-	static async create<T = any>(collection: DBCollection, data: any, options: DBQueryOptions = {}) {
+	static async create<T extends DBCollection>(collection: T, data: any, options: DBQueryOptions = {}): Promise<TypeByCollection<T>> {
 		const { subpath = "", filter, func } = options;
 		delete options.subpath;
 		delete options.filter;
 		delete options.func;
 
-		let item: T;
+		let item;
 		if (isServerMode) {
 			const svc = DB.service[collection];
 			if (!svc) {
@@ -273,7 +348,7 @@ export class DB {
 			// 	return svc[func]();
 			// }
 			try {
-				item = (await svc.create(data)) as T;
+				item = await svc.create(data);
 			} catch (e) {
 				if (!options?.ignorable) logError(`[DB] CREATE > Service "${collection}" :>>`, e);
 			}
@@ -295,12 +370,17 @@ export class DB {
 				data: newData,
 			});
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] CREATE - ${url} :>>`, messages);
-			item = result as T;
+			item = result;
 		}
 		return item;
 	}
 
-	static async update<T = any>(collection: DBCollection, filter: any, data: any, options: DBQueryOptions = {}) {
+	static async update<T extends DBCollection>(
+		collection: T,
+		filter: IQueryFilter<TypeByCollection<T>>,
+		data: UpdateQuery<TypeByCollection<T>> | UpdateWithAggregationPipeline,
+		options: DBQueryOptions = {}
+	): Promise<TypeByCollection<T>[]> {
 		let items;
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -333,7 +413,7 @@ export class DB {
 				status,
 				data: result = [],
 				messages = [""],
-			} = await fetchApi<T>({
+			} = await fetchApi({
 				url,
 				method: "PATCH",
 				data: updateData,
@@ -343,16 +423,21 @@ export class DB {
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] UPDATE - ${url} :>>`, messages);
 			items = result;
 		}
-		return items as T[];
+		return items;
 	}
 
-	static async updateOne<T = any>(collection: DBCollection, filter: any, data: any, options: DBQueryOptions = {}) {
+	static async updateOne<T extends DBCollection>(
+		collection: T,
+		filter: IQueryFilter<TypeByCollection<T>>,
+		data: UpdateQuery<TypeByCollection<T>> | UpdateWithAggregationPipeline,
+		options: DBQueryOptions = {}
+	): Promise<TypeByCollection<T>> {
 		let items = await this.update(collection, filter, data, options);
 		if (!items || items.length === 0) return;
-		return items[0] as T;
+		return items[0];
 	}
 
-	static async delete<T = any>(collection: DBCollection, filter: any, data: any = {}, options: DBQueryOptions = {}) {
+	static async delete<I = any>(collection: DBCollection, filter: IQueryFilter<I>, data: any = {}, options: DBQueryOptions = {}) {
 		let item: { ok: boolean; affected: number };
 		if (isServerMode) {
 			const svc = DB.service[collection];
@@ -373,7 +458,7 @@ export class DB {
 				data: result,
 				status,
 				messages = [""],
-			} = await fetchApi<T>({
+			} = await fetchApi({
 				method: "DELETE",
 				url,
 				data,

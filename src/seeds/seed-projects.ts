@@ -1,4 +1,4 @@
-import type { IProject, IUser, IWorkspace, ProjectDto } from "@/entities";
+import type { IUser, IWorkspace, ProjectDto } from "@/entities";
 import { DB } from "@/modules/api/DB";
 
 export const initialProjects: ProjectDto[] = [
@@ -12,13 +12,9 @@ export const seedDefaultProjects = async (workspace: IWorkspace, owner: IUser) =
 	const results = (
 		await Promise.all(
 			initialProjects.map(async (proj) => {
-				const project = await DB.findOne<IProject>("project", { isDefault: true, workspace: workspace._id });
+				const project = await DB.findOne("project", { isDefault: true, workspace: workspace._id });
 				if (!project) {
-					const seedProj = await DB.create<IProject>(
-						"project",
-						{ ...proj, owner: owner._id, workspace: workspace._id },
-						{ isDebugging: true }
-					);
+					const seedProj = await DB.create("project", { ...proj, owner: owner._id, workspace: workspace._id }, { isDebugging: true });
 					return seedProj;
 				}
 				return project;

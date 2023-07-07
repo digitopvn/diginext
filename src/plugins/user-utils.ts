@@ -5,11 +5,11 @@ import { RoleService } from "@/services";
 import { isObjectId, MongoDB } from "./mongodb";
 
 export const addUserToWorkspace = async (userId: string, workspace: IWorkspace, roleType: "admin" | "moderator" | "member" = "member") => {
-	let user = await DB.findOne<IUser>("user", { id: userId });
+	let user = await DB.findOne("user", { id: userId });
 	if (!user) throw new Error(`User not found.`);
 
 	// find role (default: "member")
-	let role: IRole = await DB.findOne<IRole>("role", { type: roleType, workspace: workspace._id });
+	let role: IRole = await DB.findOne("role", { type: roleType, workspace: workspace._id });
 	if (!role) throw new Error(`Role "${roleType}" not found.`);
 
 	// assign role
@@ -23,18 +23,18 @@ export const addUserToWorkspace = async (userId: string, workspace: IWorkspace, 
 	if (!isUserInThisWorkspace) workspaces.push(workspace._id);
 
 	// update user data
-	user = await DB.updateOne<IUser>("user", { _id: user._id }, { workspaces, roles, activeRole: role._id });
+	user = await DB.updateOne("user", { _id: user._id }, { workspaces, roles, activeRole: role._id });
 
 	return user;
 };
 
 export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", userId: string, workspace: IWorkspace) => {
 	// find user
-	let user = await DB.findOne<IUser>("user", { id: userId }, { populate: ["roles"] });
+	let user = await DB.findOne("user", { id: userId }, { populate: ["roles"] });
 	if (!user) throw new Error(`User not found.`);
 
 	// find role
-	const role = await DB.findOne<IRole>("role", { type: roleType, workspace: workspace._id });
+	const role = await DB.findOne("role", { type: roleType, workspace: workspace._id });
 	if (!role) throw new Error(`Role "${roleType}" not found.`);
 
 	// remove old roles
@@ -46,7 +46,7 @@ export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", 
 	roles.push(role._id);
 
 	// update database
-	user = await DB.updateOne<IUser>("user", { _id: user._id }, { roles });
+	user = await DB.updateOne("user", { _id: user._id }, { roles });
 	return { user, role };
 };
 
@@ -65,7 +65,7 @@ export const getActiveRole = async (user: IUser, workspace: IWorkspace, options?
 
 	// populate user's roles if needed
 	if (roles.length === 0) {
-		user = await DB.findOne<IUser>("user", { _id: userId }, { populate: ["roles"] });
+		user = await DB.findOne("user", { _id: userId }, { populate: ["roles"] });
 		user.roles.map((r) => {
 			if ((r as any)._id) roles.push(r as IRole);
 		});
@@ -85,11 +85,11 @@ export const getActiveRole = async (user: IUser, workspace: IWorkspace, options?
 		if (!options?.assignMember) throw new Error(`Permissions denied.`);
 
 		// assign "member" role if needed:
-		const memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: wsId });
+		const memberRole = await DB.findOne("role", { type: "member", workspace: wsId });
 		roles.push(memberRole);
 		activeRole = memberRole;
 
-		user = await DB.updateOne<IUser>(
+		user = await DB.updateOne(
 			"user",
 			{ _id: user._id },
 			{
@@ -100,14 +100,14 @@ export const getActiveRole = async (user: IUser, workspace: IWorkspace, options?
 	}
 
 	// update database
-	if (!user.activeRole && options?.makeActive) user = await DB.updateOne<IUser>("user", { _id: user._id }, { activeRole: activeRole._id });
+	if (!user.activeRole && options?.makeActive) user = await DB.updateOne("user", { _id: user._id }, { activeRole: activeRole._id });
 
 	return activeRole;
 };
 
 export const getActiveRoleByUserId = async (userId: string, workspace: IWorkspace) => {
 	// find user
-	let user = await DB.findOne<IUser>("user", { id: userId }, { populate: ["roles"] });
+	let user = await DB.findOne("user", { id: userId }, { populate: ["roles"] });
 	if (!user) throw new Error(`User not found.`);
 
 	return getActiveRole(user, workspace);
@@ -176,7 +176,7 @@ export async function assignRoleByID(roleId: any, userId: any, options?: { makeA
 }
 
 export const makeWorkspaceActive = async (userId: string, workspaceId: string) => {
-	const user = await DB.updateOne<IUser>("user", { _id: userId }, { activeWorkspace: workspaceId });
+	const user = await DB.updateOne("user", { _id: userId }, { activeWorkspace: workspaceId });
 	return user;
 };
 

@@ -21,9 +21,9 @@ export const seedDefaultCloudProviders = async () => {
 	const results = (
 		await Promise.all(
 			initialCloudProviders.map(async (providerData) => {
-				const provider = await DB.findOne<ICloudProvider>("provider", { shortName: providerData.shortName });
+				const provider = await DB.findOne("provider", { shortName: providerData.shortName });
 				if (!provider) {
-					const newProvider = await DB.create<ICloudProvider>("provider", providerData);
+					const newProvider = await DB.create("provider", providerData);
 					return newProvider;
 				}
 			})

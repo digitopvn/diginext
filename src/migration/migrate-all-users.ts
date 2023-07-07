@@ -1,12 +1,11 @@
 import { log } from "diginext-utils/dist/xconsole/log";
 
-import type { IUser } from "@/entities";
 import { filterUniqueItemWithCondition } from "@/plugins/array";
 
 import { DB } from "../modules/api/DB";
 
 export const migrateAllUsers = async () => {
-	const users = await await DB.find<IUser>(
+	const users = await await DB.find(
 		"user",
 		// { $or: [{ migratedAt: { $exists: false } }, { migratedAt: { $gte: dayjs().startOf("date"), $lte: dayjs().endOf("date") } }] },
 		{ migratedAt: { $exists: false } },

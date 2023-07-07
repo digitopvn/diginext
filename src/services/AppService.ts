@@ -1,12 +1,12 @@
 import { isJSON } from "class-validator";
 import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { isBoolean, isEmpty, isString, isUndefined } from "lodash";
-import type { Types } from "mongoose";
+import type { QuerySelector, Types } from "mongoose";
 import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { DeployEnvironmentData } from "@/controllers/AppController";
-import type { ICluster, IContainerRegistry, IFramework, IProject } from "@/entities";
+import type { ICluster, IFramework, IProject } from "@/entities";
 import type { AppDto, IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
 import type { DeployEnvironment, IQueryFilter, IQueryOptions, IQueryPagination, KubeDeployment } from "@/interfaces";
@@ -25,7 +25,7 @@ import GitProviderAPI from "@/modules/git/git-provider-api";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
-import { currentVersion, deleteFolderRecursive, parseGitRepoDataFromRepoSSH, pullOrCloneGitRepo } from "@/plugins";
+import { currentVersion, parseGitRepoDataFromRepoSSH, pullOrCloneGitRepo } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
@@ -66,9 +66,9 @@ export default class AppService extends BaseService<IApp> {
 
 		// find parent project of this app
 		if (MongoDB.isValidObjectId(data.project)) {
-			project = await DB.findOne<IProject>("project", { _id: data.project });
+			project = await DB.findOne("project", { _id: data.project });
 		} else if (isString(data.project)) {
-			project = await DB.findOne<IProject>("project", { slug: data.project });
+			project = await DB.findOne("project", { slug: data.project });
 		} else {
 			throw new Error(`"project" is not a valid ID or slug.`);
 		}
@@ -113,7 +113,7 @@ export default class AppService extends BaseService<IApp> {
 		// add this new app to the project info
 		if (project) {
 			const projectApps = [...(project.apps || []), newAppId];
-			[project] = await DB.update<IProject>("project", { _id: project._id }, { apps: projectApps });
+			[project] = await DB.update("project", { _id: project._id }, { apps: projectApps });
 		}
 
 		return newApp;
@@ -131,6 +131,7 @@ export default class AppService extends BaseService<IApp> {
 			 */
 			force?: boolean;
 			gitBranch?: string;
+			removeCI?: boolean;
 			isDebugging?: boolean;
 		}
 	) {
@@ -178,10 +179,12 @@ export default class AppService extends BaseService<IApp> {
 		await pullOrCloneGitRepo(repoSSH, APP_DIR, branch, {
 			isDebugging: options?.isDebugging,
 			useAccessToken: { type: gitProvider.method === "bearer" ? "Bearer" : "Basic", value: gitProvider.access_token },
+			removeGitOnFinish: true,
+			removeCIOnFinish: options.removeCI,
 		});
 
 		// delete current git
-		await deleteFolderRecursive(path.join(APP_DIR, ".git"));
+		// await deleteFolderRecursive(path.join(APP_DIR, ".git"));
 
 		try {
 			await GitProviderAPI.deleteGitRepository(gitProvider, gitProvider.org, newRepoSlug);
@@ -243,7 +246,7 @@ export default class AppService extends BaseService<IApp> {
 
 		const clusterFilter: any = {};
 		if (filter?.workspace) clusterFilter.workspace = filter.workspace;
-		const clusters = await DB.find<ICluster>("cluster", clusterFilter);
+		const clusters = await DB.find("cluster", clusterFilter);
 
 		// check app deploy environment's status in clusters
 		const appsWithStatus = await Promise.all(
@@ -364,7 +367,7 @@ export default class AppService extends BaseService<IApp> {
 		if (!deployEnvironmentData) throw new Error(`Deploy environment configuration is required.`);
 
 		// get app data:
-		const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+		const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 		if (!app)
 			if (ownership?.owner) throw new Error(`Unauthorized.`);
 			else throw new Error(`App not found.`);
@@ -398,7 +401,7 @@ export default class AppService extends BaseService<IApp> {
 
 		// cluster
 		if (!deployEnvironmentData.cluster) throw new Error(`Param "cluster" (Cluster's short name) is required.`);
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: deployEnvironmentData.cluster });
+		const cluster = await DB.findOne("cluster", { shortName: deployEnvironmentData.cluster });
 		if (!cluster) throw new Error(`Cluster "${deployEnvironmentData.cluster}" is not valid`);
 
 		// namespace
@@ -406,7 +409,7 @@ export default class AppService extends BaseService<IApp> {
 
 		// container registry
 		if (!deployEnvironmentData.registry) throw new Error(`Param "registry" (Container Registry's slug) is required.`);
-		const registry = await DB.findOne<IContainerRegistry>("registry", { slug: deployEnvironmentData.registry });
+		const registry = await DB.findOne("registry", { slug: deployEnvironmentData.registry });
 		if (!registry) throw new Error(`Container Registry "${deployEnvironmentData.registry}" is not existed.`);
 
 		// Domains & SSL certificate...
@@ -488,11 +491,11 @@ export default class AppService extends BaseService<IApp> {
 		serverDeployEnvironment.lastUpdatedBy = this.req.user.username;
 
 		// Update {user}, {project}, {environment} to database before rolling out
-		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
+		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as QuerySelector<IApp> & IApp;
 		updatedAppData.lastUpdatedBy = this.req.user.username;
 		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
 		if (!updatedApp) throw new Error("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// ----- SHOULD ROLL OUT NEW RELEASE OR NOT ----
@@ -528,7 +531,7 @@ export default class AppService extends BaseService<IApp> {
 		const deployEnvironment = app.deployEnvironment[env];
 
 		const clusterShortName = deployEnvironment.cluster;
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: app.workspace });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: app.workspace });
 		if (!cluster) return;
 
 		const { contextName: context } = cluster;

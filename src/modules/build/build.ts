@@ -8,7 +8,7 @@ import path from "path";
 
 import { isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IApp, IBuild, IContainerRegistry, IProject, IUser, IWorkspace } from "@/entities";
+import type { IApp, IBuild, IProject, IUser, IWorkspace } from "@/entities";
 import type { BuildPlatform } from "@/interfaces/SystemTypes";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
 import { getIO, socketIO } from "@/server";
@@ -105,7 +105,7 @@ export async function testBuild() {
  */
 export async function saveLogs(buildSlug: string, logs: string) {
 	if (!buildSlug) throw new Error(`Build's slug is required, it's empty now.`);
-	const [build] = await DB.update<IBuild>("build", { slug: buildSlug }, { logs });
+	const [build] = await DB.update("build", { slug: buildSlug }, { logs });
 	return build;
 }
 
@@ -160,10 +160,10 @@ export async function startBuild(
 		cliVersion,
 	} = params;
 
-	const author = user || (await DB.findOne<IUser>("user", { _id: userId }, { populate: ["workspaces", "activeWorkspaces"] }));
+	const author = user || (await DB.findOne("user", { _id: userId }, { populate: ["workspaces", "activeWorkspaces"] }));
 	console.log("author :>> ", author);
 
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	// get workspace
 	const { activeWorkspace, slug: username } = author;
 	const workspace = activeWorkspace as IWorkspace;
@@ -183,7 +183,7 @@ export async function startBuild(
 	}
 
 	// the container registry to store this build image
-	const registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+	const registry = await DB.findOne("registry", { slug: registrySlug });
 
 	if (isEmpty(registry)) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
@@ -212,7 +212,7 @@ export async function startBuild(
 	if (params.isDebugging) console.log("startBuild > imageURL :>> ", imageURL);
 
 	// get latest build of this app to utilize the cache for this build process
-	const latestBuild = await DB.findOne<IBuild>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
+	const latestBuild = await DB.findOne("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
 
 	// get app's repository data:
 	const {
@@ -236,7 +236,7 @@ export async function startBuild(
 	const gitProvider = getGitProviderFromRepoSSH(repoSSH);
 
 	// check if build tag is existed:
-	// const build = await DB.findOne<IBuild>("build", { image: buildImage, tag: buildNumber });
+	// const build = await DB.findOne("build", { image: buildImage, tag: buildNumber });
 	// if (build) {
 	// 	sendLog({ SOCKET_ROOM, message: `Build "${buildImage}" existed, please choose a different tag name.` });
 	// 	if (options?.onError) options?.onError(`Build "${buildImage}" existed, please choose a different tag name.`);
@@ -263,7 +263,7 @@ export async function startBuild(
 		workspace: workspace._id,
 	} as IBuild;
 
-	const newBuild = await DB.create<IBuild>("build", buildData);
+	const newBuild = await DB.create("build", buildData);
 	if (!newBuild) {
 		console.log("buildData :>> ", buildData);
 		sendLog({ SOCKET_ROOM, message: "[START BUILD] Failed to create new build on server." });
@@ -319,7 +319,7 @@ export async function startBuild(
 	const updatedAppData = { lastUpdatedBy: username } as IApp;
 	let updatedApp: IApp;
 	try {
-		updatedApp = await DB.updateOne<IApp>("app", { slug: appSlug, image: imageURL }, updatedAppData);
+		updatedApp = await DB.updateOne("app", { slug: appSlug, image: imageURL }, updatedAppData);
 	} catch (e) {
 		if (options?.onError) options?.onError(`Server network error, unable to perform data updating.`);
 		sendLog({

@@ -12,7 +12,7 @@ export default async function getDeploymentName(app: IApp) {
 	if (!app.project) throw new Error(`This app doesn't integrate with any projects.`);
 
 	let project = app.project as IProject;
-	if (!project.name) project = await DB.findOne<IProject>("project", { _id: app.project });
+	if (!project.name) project = await DB.findOne("project", { _id: app.project });
 
 	if (!project) throw new Error(`This app doesn't integrate with any projects.`);
 	if (!app.name) throw new Error(`Invalid app: app must have name.`);

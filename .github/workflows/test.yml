@@ -53,6 +53,21 @@ jobs:
       
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.8.0
+      
+      - name: Setup Kubernetes Tools
+        uses: yokawasa/action-setup-kube-tools@v0.9.3
+        with:
+          kubectl: '1.24.10'
+
+      - name: 'Set up Google Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+        with:
+          version: '>= 363.0.0'
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.TEST_DO_API_TOKEN }}
 
       - name: Docker login to Docker Hub
         uses: docker/login-action@v2

@@ -1,6 +1,6 @@
 import { log } from "diginext-utils/dist/xconsole/log";
 
-import type { IRole, RoleRoute } from "@/entities";
+import type { RoleRoute } from "@/entities";
 import { adminRoleRoutes, memberRoleRoutes, moderatorRoleRoutes } from "@/interfaces/SystemTypes";
 import { MongoDB } from "@/plugins/mongodb";
 
@@ -14,7 +14,7 @@ const toAllRoutesStr = (routes: RoleRoute[]) =>
 		.join("|");
 
 export const migrateAllRoles = async () => {
-	let roles = await await DB.find<IRole>(
+	let roles = await await DB.find(
 		"role",
 		{ type: { $in: ["admin", "moderator", "member"] } },
 		{ select: ["_id", "routes", "maskedFields", "type"] }
@@ -63,9 +63,9 @@ export const migrateAllRoles = async () => {
 	// start migrating...
 	const roleTypes = ["moderator", "member"];
 	const results = await Promise.all([
-		DB.update<IRole>("role", { _id: { $in: affectedAdministratorIds } }, { routes: adminRoleRoutes }),
-		DB.update<IRole>("role", { _id: { $in: affectedModeratorIds } }, { routes: moderatorRoleRoutes }),
-		DB.update<IRole>("role", { _id: { $in: affectedMemberIds } }, { routes: memberRoleRoutes }),
+		DB.update("role", { _id: { $in: affectedAdministratorIds } }, { routes: adminRoleRoutes }),
+		DB.update("role", { _id: { $in: affectedModeratorIds } }, { routes: moderatorRoleRoutes }),
+		DB.update("role", { _id: { $in: affectedMemberIds } }, { routes: memberRoleRoutes }),
 	]);
 
 	// notify migration results...

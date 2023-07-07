@@ -40,7 +40,7 @@ export interface IProject extends IBase {
 }
 export type ProjectDto = Omit<IProject, keyof HiddenBodyKeys>;
 
-export const projectSchema = new Schema<IProject>(
+export const projectSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },

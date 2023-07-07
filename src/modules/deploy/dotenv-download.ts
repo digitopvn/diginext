@@ -71,7 +71,7 @@ export const downloadDotenvByApp = async (app: IApp, env: string = "dev", option
 };
 
 export const downloadDotenvByAppSlug = async (appSlug: string, env: string = "dev", options: DownloadDotenvOptions = {}) => {
-	const app = await DB.findOne<IApp>("app", { slug: appSlug });
+	const app = await DB.findOne("app", { slug: appSlug });
 	if (!app) throw new Error(`Can't download dotenv variables to ".env.${env}" locally due to "${appSlug}" app not existed.`);
 
 	return downloadDotenvByApp(app, env, options);

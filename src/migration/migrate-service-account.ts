@@ -1,7 +1,6 @@
 import { log } from "diginext-utils/dist/xconsole/log";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { IRole, IWorkspace } from "@/entities";
 import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import type { IServiceAccount } from "@/entities/ServiceAccount";
 import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
@@ -9,7 +8,7 @@ import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plug
 import { DB } from "../modules/api/DB";
 
 export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
-	const workspaces = await DB.find<IWorkspace>("workspace", {}, { select: ["_id", "slug", "name"] });
+	const workspaces = await DB.find("workspace", {}, { select: ["_id", "slug", "name"] });
 
 	let affectedWs = 0;
 	const results = await Promise.all(
@@ -17,7 +16,7 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 			// find default Service Account of this workspace:
 			const totalServiceAccounts = await DB.count("service_account", { workspaces: ws._id });
 			// console.log("serviceAccounts :>> ", serviceAccounts);
-			const moderatorRole = await DB.findOne<IRole>("role", { type: "moderator" }, { select: ["_id", "name"] });
+			const moderatorRole = await DB.findOne("role", { type: "moderator" }, { select: ["_id", "name"] });
 			if (totalServiceAccounts === 0) {
 				log(`[MIGRATION] migrateDefaultServiceAccount() > Found "${ws.name}" workspace doesn't have any Service Account.`);
 
@@ -36,7 +35,7 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 				// assign "moderator" role to service account:
 				if (moderatorRole) saDto.roles = [moderatorRole._id];
 
-				const saUser = await DB.create<IServiceAccount>("service_account", saDto);
+				const saUser = await DB.create("service_account", saDto);
 
 				affectedWs++;
 			}
@@ -61,7 +60,7 @@ export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
 				// assign "moderator" role to API_KEY:
 				if (moderatorRole) apiUserDto.roles = [moderatorRole._id];
 
-				const apiKeyUser = await DB.create<IApiKeyAccount>("api_key_user", apiUserDto);
+				const apiKeyUser = await DB.create("api_key_user", apiUserDto);
 
 				affectedWs++;
 			}

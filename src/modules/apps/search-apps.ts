@@ -1,8 +1,6 @@
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type { IApp } from "@/entities";
-
 import { DB } from "../api/DB";
 
 type SearchAppOptions = {
@@ -30,7 +28,7 @@ export async function searchApps(options: SearchAppOptions) {
 	if (projectSlug) filter.projectSlug = projectSlug;
 	if (repoSSH) filter["git.repoSSH"] = repoSSH;
 
-	let apps = await DB.find<IApp>("app", filter, { search: true }, { limit: 10, populate: ["project"] });
+	let apps = await DB.find("app", filter, { search: true }, { limit: 10, populate: ["project"] });
 
 	if (isEmpty(apps)) {
 		if (canSkip) {

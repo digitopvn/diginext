@@ -31,6 +31,14 @@ export type InputOptions = {
 	};
 
 	/**
+	 * Continuous integration (CI) flag
+	 * - Flag: `--ci`
+	 * - Revert: `--no-ci`
+	 * @default false
+	 */
+	ci?: boolean;
+
+	/**
 	 * Define if the command was executed on local machine or server machine
 	 */
 	isLocal?: boolean;

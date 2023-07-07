@@ -2,7 +2,7 @@ import { log, logError } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type { AppDto, AppGitInfo, IApp } from "@/entities";
+import type { AppDto, AppGitInfo } from "@/entities";
 import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
@@ -11,7 +11,7 @@ import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
 import { askForGitProvider } from "../git/ask-for-git-provider";
-import type { GitRepository, GitRepositoryDto } from "../git/git-provider-api";
+import type { GitRepositoryDto } from "../git/git-provider-api";
 import { createOrSelectProject } from "./create-or-select-project";
 import { updateAppConfig } from "./update-config";
 
@@ -61,7 +61,7 @@ export async function createAppByForm(
 	if (skipFramework) options.framework = curFramework = noneFramework;
 
 	if (!options.framework) {
-		const frameworks = await DB.find<IFramework>("framework", {});
+		const frameworks = await DB.find("framework", {});
 
 		const selectFrameworks = [noneFramework];
 		if (!isEmpty(frameworks)) selectFrameworks.push(...frameworks);
@@ -148,7 +148,7 @@ export async function createAppByForm(
 		if (options.overwrite) {
 			try {
 				await DB.delete(
-					"git",
+					"git_repo",
 					{ slug: gitProvider.slug },
 					{ name: options.repoSlug },
 					{
@@ -160,7 +160,7 @@ export async function createAppByForm(
 		}
 
 		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > repoData :>> ", repoData);
-		const newRepo = await DB.create<GitRepository>("git", repoData, {
+		const newRepo = await DB.create("git_repo", repoData, {
 			subpath: "/orgs/repos",
 			filter: { slug: gitProvider.slug },
 		});
@@ -196,7 +196,7 @@ export async function createAppByForm(
 	if (options.repoURL) appData.git.repoURL = options.repoURL;
 
 	if (options.isDebugging) log(`Create new app with data:`, appData);
-	const newApp = await DB.create<IApp>("app", appData, { isDebugging: options.isDebugging });
+	const newApp = await DB.create("app", appData, { isDebugging: options.isDebugging });
 	if (options.isDebugging) log({ newApp });
 
 	if (isEmpty(newApp) || (newApp as any).error) {
