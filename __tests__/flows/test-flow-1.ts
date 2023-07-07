@@ -134,6 +134,7 @@ export function testFlow1() {
 		const createRes = await gitCtl.create({
 			name: "Bitbucket",
 			type: "bitbucket",
+   isOrg: true,
 			gitWorkspace: process.env.TEST_BITBUCKET_ORG,
 			bitbucket_oauth: {
 				username: process.env.TEST_BITBUCKET_USERNAME,
@@ -151,6 +152,7 @@ export function testFlow1() {
 		expect(bitbucket.verified).toBe(true);
 		expect(bitbucket.host).toBe("bitbucket.org");
 		expect(bitbucket.isOrg).toBeTruthy();
+  expect(bitbucket.gitWorkspace).toBeDefined();
 
 		// test api
 		const profile = await GitProviderAPI.getProfile(bitbucket);
@@ -164,6 +166,7 @@ export function testFlow1() {
 		const createRes = await gitCtl.create({
 			name: "Github",
 			type: "github",
+   isOrg: true,
 			gitWorkspace: process.env.TEST_GITHUB_ORG,
 			github_oauth: {
 				personal_access_token: process.env.TEST_GITHUB_PAT,
@@ -179,6 +182,7 @@ export function testFlow1() {
 		expect(github.verified).toBe(true);
 		expect(github.host).toBe("github.com");
 		expect(github.isOrg).toBeTruthy();
+  expect(github.gitWorkspace).toBeDefined();
 
 		// test api
 		const profile = await GitProviderAPI.getProfile(github);
