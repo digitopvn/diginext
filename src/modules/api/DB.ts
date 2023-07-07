@@ -248,7 +248,9 @@ export class DB {
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
+			// special case
+			const path = collection === "git_repo" ? "git" : collection;
+			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
 			const { data = [], status, messages = [""] } = await fetchApi({ url });
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] COUNT - ${url} :>>`, messages);
@@ -285,7 +287,10 @@ export class DB {
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
+
+			// special case
+			const path = collection === "git_repo" ? "git" : collection;
+			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
 			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] FIND MANY - ${url} :>>`, messages);
@@ -322,7 +327,10 @@ export class DB {
 		} else {
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
+			// special case
+			const path = collection === "git_repo" ? "git" : collection;
+			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
+
 			const res = await fetchApi<T>({ url });
 			const { data = [], status, messages = [""] } = res;
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] FIND ONE - ${url} :>>`, messages);
@@ -357,7 +365,9 @@ export class DB {
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
+			// special case
+			const path = collection === "git_repo" ? "git" : collection;
+			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
 			// console.log("newData :>> ", newData);
 			const {
@@ -401,7 +411,9 @@ export class DB {
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
-			const url = `/api/v1/${collection}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
+			// special case
+			const path = collection === "git_repo" ? "git" : collection;
+			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 			// console.log("[DB] UPDATE > url :>> ", url);
 
 			// const updateData = flattenObjectPaths(data);
@@ -453,7 +465,9 @@ export class DB {
 		} else {
 			const { subpath = "" } = options;
 			const filterStr = queryFilterToUrlFilter(filter);
-			const url = `/api/v1/${collection}${subpath}?${filterStr.toString()}`;
+			// special case
+			const path = collection === "git_repo" ? "git" : collection;
+			const url = `/api/v1/${path}${subpath}?${filterStr}`;
 			const {
 				data: result,
 				status,
