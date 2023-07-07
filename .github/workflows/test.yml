@@ -40,6 +40,12 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     if: startsWith(github.event.head_commit.message, 'ci(') == false
+    
+    # Add "id-token" with the intended permissions.
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
