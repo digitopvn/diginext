@@ -66,6 +66,9 @@ jobs:
           channel: 'latest/stable'
           addons: '["dns", "rbac", "registry", "dashboard", "dns", "ingress", "metrics-server", "helm", "helm3", "cert-manager", "hostpath-storage", "prometheus"]'
       
+      - run: sudo usermod -a -G microk8s runner
+      - run: sudo chown -R runner ~/.kube
+      - run: newgrp microk8s
       - run: mkdir -p $HOME/.kube
       - run: microk8s config > $HOME/.kube/config
       - run: cat $HOME/.kube/config
