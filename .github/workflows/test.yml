@@ -69,9 +69,11 @@ jobs:
       - run: sudo usermod -a -G microk8s runner
       - run: sudo chown -R runner ~/.kube
       - run: newgrp microk8s
-      - run: mkdir -p $HOME/.kube
-      - run: microk8s config > $HOME/.kube/config
-      - run: cat $HOME/.kube/config
+      - run: mkdir -p ~/.kube
+      - run: microk8s config
+      - run: microk8s config > ~/kubeconfig
+      # - run: microk8s config > ~/.kube/config
+      # - run: cat ~/.kube/config
       
       - name: Setup Kubernetes Tools
         uses: yokawasa/action-setup-kube-tools@v0.9.3
