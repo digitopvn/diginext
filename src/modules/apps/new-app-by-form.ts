@@ -1,6 +1,6 @@
 import { log, logError } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
-import { isEmpty, upperFirst } from "lodash";
+import { isEmpty } from "lodash";
 
 import type { AppDto, AppGitInfo, IApp } from "@/entities";
 import type { IFramework } from "@/entities/Framework";
@@ -10,7 +10,6 @@ import { getCurrentGitRepoData, parseGitRepoDataFromRepoSSH } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
 import { DB } from "../api/DB";
-import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
 import { askForGitProvider } from "../git/ask-for-git-provider";
 import type { GitRepository, GitRepositoryDto } from "../git/git-provider-api";
 import { createOrSelectProject } from "./create-or-select-project";
@@ -97,19 +96,19 @@ export async function createAppByForm(
 		frameworkGitProvider = gitProvider;
 
 		const { namespace } = parseGitRepoDataFromRepoSSH(fwRepoSSH);
-		if (!isFwPrivate) {
-			const canAccessPublicRepo = await checkGitProviderAccess(frameworkGitProvider);
-			if (!canAccessPublicRepo) {
-				logError(`You need to authenticate ${upperFirst(frameworkGitProvider)} first to be able to pull this framework.`);
-				return;
-			}
-		} else {
-			const canAccessPrivateRepo = await checkGitRepoAccess(fwRepoSSH);
-			if (!canAccessPrivateRepo) {
-				logError(`You may not have access to this private repository or ${namespace} organization, please authenticate first.`);
-				return;
-			}
-		}
+		// if (!isFwPrivate) {
+		// 	const canAccessPublicRepo = await checkGitProviderAccess(frameworkGitProvider);
+		// 	if (!canAccessPublicRepo) {
+		// 		logError(`You need to authenticate ${upperFirst(frameworkGitProvider)} first to be able to pull this framework.`);
+		// 		return;
+		// 	}
+		// } else {
+		// 	const canAccessPrivateRepo = await checkGitRepoAccess(fwRepoSSH);
+		// 	if (!canAccessPrivateRepo) {
+		// 		logError(`You may not have access to this private repository or ${namespace} organization, please authenticate first.`);
+		// 		return;
+		// 	}
+		// }
 
 		// Request select specific version
 		if (!options.frameworkVersion) {

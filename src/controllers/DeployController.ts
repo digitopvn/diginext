@@ -289,7 +289,7 @@ export default class DeployController extends BaseController {
 			if (!gitProvider) throw new Error(`Unable to deploy: no git providers (${gitData.gitProvider.toUpperCase()}) in this workspace.`);
 
 			// create a new app
-			app = await this.appSvc.createWithGitURL(body.sshUrl, MongoDB.toString(gitProvider._id));
+			app = await this.appSvc.createWithGitURL(body.sshUrl, MongoDB.toString(gitProvider._id), { gitBranch: body.gitBranch });
 
 			// get random registry in this workspace
 			const registry = await this.regSvc.findOne({ workspace: this.workspace._id });
