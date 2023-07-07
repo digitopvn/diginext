@@ -1,8 +1,6 @@
 import { logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
-import type { ICluster } from "@/entities";
-import type { IProject } from "@/entities/Project";
 import { projectSchema } from "@/entities/Project";
 import type { IQueryFilter } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
@@ -11,7 +9,7 @@ import ClusterManager from "@/modules/k8s";
 import AppService from "./AppService";
 import BaseService from "./BaseService";
 
-export default class ProjectService extends BaseService<IProject> {
+export default class ProjectService extends BaseService {
 	constructor() {
 		super(projectSchema);
 	}
@@ -33,7 +31,7 @@ export default class ProjectService extends BaseService<IProject> {
 				for (const [env, deployEnvironment] of Object.entries(app.deployEnvironment)) {
 					if (!isEmpty(deployEnvironment)) {
 						const { cluster: clusterShortName, namespace } = deployEnvironment;
-						const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+						const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 
 						if (cluster) {
 							const { contextName: context } = cluster;

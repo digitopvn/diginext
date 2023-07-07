@@ -25,7 +25,7 @@ export const startBuildAndRun = async (options: InputOptions) => {
 		const gitInfo = await getCurrentGitRepoData(options.targetDirectory);
 		if (!gitInfo) throw new Error(`This app's directory doesn't have any git remote integrated.`);
 
-		app = await updateAppGitInfo(app, { provider: gitInfo.provider, repoSSH: gitInfo.remoteSSH, repoURL: gitInfo.remoteURL });
+		app = await updateAppGitInfo(app, { provider: gitInfo.provider, repoSSH: gitInfo.repoSSH, repoURL: gitInfo.repoURL });
 	}
 
 	let appConfig = getAppConfigFromApp(app);

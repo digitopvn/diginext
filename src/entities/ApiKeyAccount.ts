@@ -13,7 +13,7 @@ export interface IApiKeyAccount extends IUser {
 }
 export type ApiKeyAccountDto = Omit<IApiKeyAccount, keyof HiddenBodyKeys>;
 
-export const apiKeyAccountSchema = new Schema<IApiKeyAccount>(
+export const apiKeyAccountSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: {

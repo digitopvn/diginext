@@ -25,7 +25,7 @@ export interface ICloudDatabase extends IBase {
 }
 export type CloudDatabaseDto = Omit<ICloudDatabase, keyof HiddenBodyKeys>;
 
-export const cloudDatabaseSchema = new Schema<ICloudDatabase>(
+export const cloudDatabaseSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },

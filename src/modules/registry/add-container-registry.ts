@@ -1,7 +1,7 @@
 import { logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 
-import type { ContainerRegistryDto, IContainerRegistry } from "@/entities";
+import type { ContainerRegistryDto } from "@/entities";
 import type { RegistryProviderType } from "@/interfaces/SystemTypes";
 import { registryProviderList } from "@/interfaces/SystemTypes";
 
@@ -123,7 +123,7 @@ export const addContainerRegistry = async (
 			return logError(`Container registry provider "${data.provider}" is not valid.`);
 	}
 
-	const registry = await DB.create<IContainerRegistry>("registry", data);
+	const registry = await DB.create("registry", data);
 
 	if (registry) {
 		await connectRegistry(registry, { userId: options.ownerId, workspaceId: options.workspaceId });

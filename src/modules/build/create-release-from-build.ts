@@ -1,7 +1,6 @@
 import { isEmpty } from "lodash";
 
-import type { IApp, IBuild, IProject, IRelease, IUser, IWorkspace } from "@/entities";
-import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
+import type { IBuild, IRelease, IUser, IWorkspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 
 import { DB } from "../api/DB";
@@ -16,10 +15,10 @@ type OwnershipParams = {
 
 export const createReleaseFromBuild = async (build: IBuild, env?: string, ownership?: OwnershipParams) => {
 	// get app data
-	const app = await DB.findOne<IApp>("app", { id: build.app }, { populate: ["owner", "workspace"] });
+	const app = await DB.findOne("app", { id: build.app }, { populate: ["owner", "workspace"] });
 	if (!app) throw new Error(`App "${build.appSlug}" not found.`);
 
-	const project = await DB.findOne<IProject>("project", { id: build.project });
+	const project = await DB.findOne("project", { id: build.project });
 	if (!project) throw new Error(`Project "${build.projectSlug}" not found.`);
 	// console.log("project :>> ", project);
 
@@ -45,7 +44,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 	const { IMAGE_NAME } = deploymentData;
 
 	let defaultAuthor = owner as IUser;
-	if (!defaultAuthor) defaultAuthor = await DB.findOne<IApiKeyAccount>("api_key_user", { workspaces: workspaceId });
+	if (!defaultAuthor) defaultAuthor = await DB.findOne("api_key_user", { workspaces: workspaceId });
 
 	// declare AppConfig
 	const appConfig = {
@@ -100,7 +99,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 	}
 
 	// create new release in the database
-	const newRelease = DB.create<IRelease>("release", data);
+	const newRelease = DB.create("release", data);
 
 	// log("Created new Release successfully:", newRelease);
 

@@ -3,7 +3,6 @@ import type { NextFunction } from "express";
 
 import type { IWorkspace } from "@/entities";
 import type { IActivity } from "@/entities/Activity";
-import type { IRoute } from "@/entities/Route";
 import type { AppRequest, AppResponse } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 import ActivityService from "@/services/ActivityService";
@@ -29,7 +28,7 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 		activityDto.httpStatus = req.statusCode;
 		// activityDto.response = res.body;
 
-		const route = await DB.findOne<IRoute>("route", { path: req.originalUrl });
+		const route = await DB.findOne("route", { path: req.originalUrl });
 		activityDto.url = req.originalUrl;
 		activityDto.route = req.path;
 		activityDto.routeName = route?.name;

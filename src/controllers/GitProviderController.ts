@@ -3,7 +3,7 @@ import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { upperCase } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IGitProvider, IRole } from "@/entities";
+import type { IRole } from "@/entities";
 import { GitProviderDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
@@ -18,7 +18,7 @@ import BaseController from "./BaseController";
 
 @Tags("Git Provider")
 @Route("git")
-export default class GitProviderController extends BaseController<IGitProvider> {
+export default class GitProviderController extends BaseController {
 	service: GitProviderService;
 
 	constructor() {
@@ -119,12 +119,12 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 			return respondFailure(`Git "${type}" type is not supported yet.`);
 		}
 
+		// Fallback support "gitWorkspace" === "org" -> will be removed soon
+		if (body.org) body.gitWorkspace = body.org;
+		if (body.gitWorkspace) body.org = body.gitWorkspace;
+
 		// generate repo info
 		body.host = gitProviderDomain[body.type];
-		// body.repo = {
-		// 	url: `https://${body.host}/${body.gitWorkspace}`,
-		// 	sshPrefix: `git@${body.host}:${body.gitWorkspace}`,
-		// };
 
 		// grab data to create:
 		body.access_token = access_token;
@@ -155,17 +155,17 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		if (provider.type === "github" && provider.host !== "github.com") body.host = "github.com";
 		if (provider.type === "bitbucket" && provider.host !== "bitbucket.org") body.host = "bitbucket.org";
 
-		if (body.gitWorkspace && provider.type === "github") {
-			if (!provider.name) body.name = `${upperCase(body.gitWorkspace)} Github`;
+		if (body.org && provider.type === "github") {
+			if (!provider.name) body.name = `${upperCase(body.org)} Github`;
 		}
 
-		if (body.gitWorkspace && provider.type === "bitbucket") {
-			if (!provider.name) body.name = `${upperCase(body.gitWorkspace)} Bitbucket`;
+		if (body.org && provider.type === "bitbucket") {
+			if (!provider.name) body.name = `${upperCase(body.org)} Bitbucket`;
 		}
 
 		body.repo = {
-			url: `https://${provider.host}/${body.gitWorkspace}`,
-			sshPrefix: `git@${provider.host}:${body.gitWorkspace}`,
+			url: `https://${provider.host}/${body.org}`,
+			sshPrefix: `git@${provider.host}:${body.org}`,
 		};
 
 		// regenerate slug
@@ -382,7 +382,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 		// process
 		try {
-			const repo = await GitProviderAPI.deleteGitRepository(provider, provider.gitWorkspace, body.name);
+			const repo = await GitProviderAPI.deleteGitRepository(provider, provider.org, body.name);
 			return respondSuccess({ data: repo });
 		} catch (e) {
 			return respondFailure(e.toString());

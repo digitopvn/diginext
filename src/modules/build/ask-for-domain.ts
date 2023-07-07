@@ -4,7 +4,7 @@ import { logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { IApp, IWorkspace } from "@/entities";
+import type { IWorkspace } from "@/entities";
 import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
 import { DB } from "../api/DB";
@@ -22,7 +22,7 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 	}
 	const clusterShortName = deployEnvironment.cluster;
 
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["workspace"] });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["workspace"] });
 	if (!app) throw new Error(`[ASK_FOR_DOMAIN] App "${appSlug}" not found.`);
 	// console.log("app.workspace :>> ", app.workspace);
 

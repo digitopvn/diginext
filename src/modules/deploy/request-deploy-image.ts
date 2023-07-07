@@ -3,7 +3,6 @@ import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 
@@ -86,7 +85,7 @@ export async function requestDeployImage(imageURL: string, options: InputOptions
 
 	// update the project so it can be sorted on top
 	try {
-		await DB.update<IProject>("project", { slug: projectSlug }, { lastUpdatedBy: options.username });
+		await DB.update("project", { slug: projectSlug }, { lastUpdatedBy: options.username });
 	} catch (e) {
 		logWarn(e);
 	}

@@ -7,7 +7,7 @@ import { isEmpty } from "lodash";
 import yargs from "yargs";
 
 import { Config } from "@/app.config";
-import type { ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
+import type { IContainerRegistry } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
 import { wait } from "@/plugins";
@@ -55,7 +55,7 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
  * @param {InputOptions} options
  */
 export const authenticate = async (options?: InputOptions) => {
-	const provider = await DB.findOne<ICloudProvider>("provider", { shortName: "digitalocean" });
+	const provider = await DB.findOne("provider", { shortName: "digitalocean" });
 	const { execa, execaCommand, execaSync } = await import("execa");
 
 	let API_ACCESS_TOKEN;
@@ -170,7 +170,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	}
 
 	// get Container Registry data:
-	const registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+	const registry = await DB.findOne("registry", { slug: registrySlug });
 
 	if (!registry) {
 		logError(`[DIGITAL_OCEAN] Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
@@ -181,7 +181,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const { host, serviceAccount, provider: providerShortName } = registry;
 
 	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
-	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 	if (!cluster) {
 		logError(`[DIGITAL_OCEAN] Cluster "${clusterShortName}" not found.`);
 		return;
@@ -223,7 +223,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 		value: registrySecretData.data[".dockerconfigjson"],
 	};
 
-	const [updatedRegistry] = await DB.update<IContainerRegistry>("registry", { slug: registrySlug }, { imagePullSecret });
+	const [updatedRegistry] = await DB.update("registry", { slug: registrySlug }, { imagePullSecret });
 	if (!updatedRegistry) logError(`[DIGITAL_OCEAN] Can't update container registry of Digital Ocean.`);
 	// log(`DigitalOcean.createImagePullingSecret() :>>`, { updatedRegistry });
 
@@ -259,7 +259,7 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 		return;
 	}
 
-	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+	const existingRegistry = await DB.findOne("registry", { slug: registrySlug });
 	if (options.isDebugging) log(`[DIGITAL OCEAN] connectDockerRegistry >`, { existingRegistry });
 
 	if (existingRegistry) return existingRegistry;
@@ -267,7 +267,7 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 	// IF NOT EXISTED -> Save this container registry to database!
 	const registryHost = host || "registry.digitalocean.com";
 	const imageBaseURL = `${registryHost}/${options.workspace?.slug || "diginext"}`;
-	let newRegistry = await DB.create<IContainerRegistry>("registry", {
+	let newRegistry = await DB.create("registry", {
 		name: "Digital Ocean Container Registry",
 		provider: "digitalocean",
 		host: registryHost,
@@ -310,7 +310,7 @@ export const execDigitalOcean = async (options?: InputOptions) => {
 			break;
 
 		case "create-image-pull-secret":
-			const registries = await DB.find<IContainerRegistry>("registry", {});
+			const registries = await DB.find("registry", {});
 			if (isEmpty(registries)) {
 				logError(`[DIGITAL_OCEAN] This workspace doesn't have any registered Container Registries.`);
 				return;

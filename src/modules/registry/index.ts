@@ -46,7 +46,7 @@ export const execRegistry = async (options: InputOptions) => {
 		case "create-secret":
 			let registry: IContainerRegistry;
 			if (registrySlug) {
-				registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+				registry = await DB.findOne("registry", { slug: registrySlug });
 			} else {
 				registry = await askForRegistry();
 				registrySlug = registry.slug;
@@ -55,7 +55,7 @@ export const execRegistry = async (options: InputOptions) => {
 
 			let cluster: ICluster;
 			if (options.cluster) {
-				cluster = await DB.findOne<ICluster>("cluster", { shortName: options.cluster });
+				cluster = await DB.findOne("cluster", { shortName: options.cluster });
 				if (!cluster) return logError(`Cluster named "${options.cluster}" not found.`);
 			} else {
 				cluster = await askForCluster();

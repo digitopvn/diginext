@@ -51,7 +51,7 @@ export async function requestBuild(options: InputOptions) {
 
 	const gitBranch = gitInfo.branch;
 	if (!app.git || !app.git.provider || !app.git.repoSSH || !app.git.repoURL) {
-		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.remoteSSH, repoURL: gitInfo.remoteURL };
+		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.repoSSH, repoURL: gitInfo.repoURL };
 		if (options.isDebugging) console.log("askForDeployEnvironmentInfo > updateGitInfo :>> ", updateGitInfo);
 
 		app = await updateAppGitInfo(app, updateGitInfo);
@@ -64,7 +64,7 @@ export async function requestBuild(options: InputOptions) {
 		registry = await askForRegistry();
 		options.registry = registry.slug;
 	} else {
-		registry = await DB.findOne<IContainerRegistry>("registry", { slug: options.registry });
+		registry = await DB.findOne("registry", { slug: options.registry });
 	}
 
 	if (!registry) {
@@ -142,7 +142,7 @@ export async function requestBuild(options: InputOptions) {
 
 	// update the project so it can be sorted on top
 	try {
-		await DB.update<IProject>("project", { slug: app.projectSlug }, { lastUpdatedBy: options.username });
+		await DB.update("project", { slug: app.projectSlug }, { lastUpdatedBy: options.username });
 	} catch (e) {
 		logWarn(e);
 	}
