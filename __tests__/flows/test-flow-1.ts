@@ -31,6 +31,7 @@ import { Config } from "@/app.config";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { readdirSync } from "fs";
 import { addBareMetalCluster } from "@/seeds/seed-clusters";
+import ClusterManager from "@/modules/k8s";
 
 export function testFlow1() {
 	let wsId: string;
@@ -370,9 +371,27 @@ export function testFlow1() {
 		expect(cluster.contextName).toBeDefined();
 		expect(cluster.isVerified).toBeTruthy();
 
+		const { contextName: context } = cluster;
+
 		// switch context to this cluster
 		const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${cluster.shortName}`, { isDebugging: true });
 		console.log("switchCtxRes :>> ", switchCtxRes);
+		expect(switchCtxRes.indexOf("Connected")).toBeGreaterThan(-1);
+
+		// check test namespace exists
+		const testNamespace = "diginext-test";
+		let isNamespaceExisted = await ClusterManager.isNamespaceExisted(testNamespace, { context });
+		if (isNamespaceExisted) await ClusterManager.deleteNamespace(testNamespace, { context });
+
+		// check again
+		isNamespaceExisted = await ClusterManager.isNamespaceExisted(testNamespace, { context });
+		expect(isNamespaceExisted).toBeTruthy();
+
+		// create imagePullSecrets
+		// const createIPS = await dxCmd(`dx cluster allow --cluster=${cluster.shortName} -n ${testNamespace}`);
+
+		// clean up test namespace
+		await ClusterManager.deleteNamespace(testNamespace, { context });
 	}, 60000);
 
 	it("Workspace #1: Add member", async () => {
