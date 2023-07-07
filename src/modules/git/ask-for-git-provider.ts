@@ -91,7 +91,7 @@ export async function askForGitProvider() {
 	const gitProviderChoices = gitProviders.map((gp) => {
 		return { name: gp.name, value: gp };
 	});
-	console.log("gitProviderChoices :>> ", gitProviderChoices);
+	// console.log("gitProviderChoices :>> ", gitProviderChoices);
 
 	let { gitProvider: selectedGitProvider } = await inquirer.prompt<{ gitProvider: IGitProvider }>({
 		type: "list",
@@ -100,7 +100,7 @@ export async function askForGitProvider() {
 		default: gitProviderChoices[0],
 		choices: gitProviderChoices,
 	});
-	console.log("selectedGitProvider :>> ", selectedGitProvider);
+	// console.log("selectedGitProvider :>> ", selectedGitProvider);
 
 	if (!selectedGitProvider.verified) {
 		// select org
