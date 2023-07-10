@@ -31,6 +31,8 @@ import { Config } from "@/app.config";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { readdirSync } from "fs";
 import { addBareMetalCluster } from "@/seeds/seed-clusters";
+import ClusterManager from "@/modules/k8s";
+import { DB } from "@/modules/api/DB";
 
 export function testFlow1() {
 	let wsId: string;
@@ -370,9 +372,36 @@ export function testFlow1() {
 		expect(cluster.contextName).toBeDefined();
 		expect(cluster.isVerified).toBeTruthy();
 
+		const { contextName: context } = cluster;
+
 		// switch context to this cluster
 		const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${cluster.shortName}`, { isDebugging: true });
 		console.log("switchCtxRes :>> ", switchCtxRes);
+		expect(switchCtxRes.indexOf("Connected")).toBeGreaterThan(-1);
+
+		// check test namespace exists
+		const namespace = "diginext-test";
+		let isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+		if (isNamespaceExisted) await ClusterManager.deleteNamespace(namespace, { context });
+		await ClusterManager.createNamespace(namespace, { context });
+		// check again
+		isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+		expect(isNamespaceExisted).toBeTruthy();
+
+		// create imagePullSecrets
+		const dockerhub = await DB.findOne("registry", { provider: "dockerhub" });
+		console.log("dockerhub :>> ", dockerhub);
+
+		// const createIPS = await dxCmd(`dx registry allow --registry=${dockerhub.slug} --cluster=${cluster.shortName} --namespace=${namespace}`);
+		// console.log("createIPS :>> ", createIPS);
+
+		// const secrets = await dxCmd(`kubectl get secret -n ${namespace}`);
+		// console.log("secrets :>> ", secrets);
+
+		// expect(secrets).toContain("docker-registry-key");
+
+		// clean up test namespace
+		await ClusterManager.deleteNamespace(namespace, { context });
 	}, 60000);
 
 	it("Workspace #1: Add member", async () => {

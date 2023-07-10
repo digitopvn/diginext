@@ -97,32 +97,6 @@ export async function requestDeploy(options: InputOptions) {
 	options.slug = appConfig.slug;
 
 	// Make an API to request server to build:
-	// const deployOptions = JSON.stringify(options);
-
-	// if (options.isDebugging) {
-	// 	console.log("Request deploy data :>> ");
-	// 	console.dir(options, { depth: 10 });
-	// }
-
-	// try {
-	// 	const requestResult = await fetchApi({
-	// 		url: DEPLOY_API_PATH,
-	// 		method: "POST",
-	// 		data: { options: deployOptions },
-	// 	});
-
-	// 	if (options.isDebugging) {
-	// 		console.log("Request deploy result :>> ");
-	// 		console.dir(requestResult, { depth: 10 });
-	// 	}
-
-	// 	if (!requestResult.status) logError(requestResult.messages[0] || `Unable to call Request Deploy API.`);
-	// } catch (e) {
-	// 	logError(`Unable to call Request Deploy API:`, e);
-	// 	return;
-	// }
-
-	// const deployOptions = JSON.stringify(options);
 	const requestDeployData: { buildParams: StartBuildParams; deployParams: DeployBuildParams } = {
 		buildParams: {
 			env,

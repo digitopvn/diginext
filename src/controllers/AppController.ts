@@ -314,7 +314,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		}
 	) {
 		try {
-			const newApp = await this.service.createWithGitURL(body.sshUrl, body.gitProviderID);
+			const newApp = await this.service.createWithGitURL(body.sshUrl, body.gitProviderID, { workspace: this.workspace, owner: this.user });
 			return respondSuccess({ data: newApp });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -352,11 +352,16 @@ export default class AppController extends BaseController<IApp, AppService> {
 			force?: boolean;
 		}
 	) {
-		const newApp = await this.service.createWithGitURL(body.sshUrl, body.gitProviderID, {
-			force: body.force,
-			gitBranch: body.gitBranch,
-			isDebugging: false,
-		});
+		const newApp = await this.service.createWithGitURL(
+			body.sshUrl,
+			body.gitProviderID,
+			{ workspace: this.workspace, owner: this.user },
+			{
+				force: body.force,
+				gitBranch: body.gitBranch,
+				isDebugging: false,
+			}
+		);
 		return respondSuccess({ data: newApp });
 	}
 
@@ -677,7 +682,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		},
 		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
-		const app = await this.service.createDeployEnvironment(body.appSlug, body, { owner: this.user._id });
+		const app = await this.service.createDeployEnvironment(body.appSlug, body, { owner: this.user, workspace: this.workspace });
 		return respondSuccess({ data: app });
 	}
 

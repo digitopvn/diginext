@@ -4,7 +4,7 @@ import GitProviderAPI from "@/modules/git/git-provider-api";
 
 import BaseService from "./BaseService";
 
-export default class GitProviderService extends BaseService {
+export default class GitProviderService extends BaseService<IGitProvider> {
 	constructor() {
 		super(gitProviderSchema);
 	}

@@ -1,13 +1,13 @@
 import { isJSON } from "class-validator";
 import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { isBoolean, isEmpty, isString, isUndefined } from "lodash";
-import type { QuerySelector, Types } from "mongoose";
+import type { QuerySelector } from "mongoose";
 import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { DeployEnvironmentData } from "@/controllers/AppController";
-import type { ICluster, IFramework, IProject } from "@/entities";
-import type { AppDto, IApp } from "@/entities/App";
+import type { ICluster, IFramework, IProject, IUser, IWorkspace } from "@/entities";
+import type { IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
 import type { DeployEnvironment, IQueryFilter, IQueryOptions, IQueryPagination, KubeDeployment } from "@/interfaces";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
@@ -48,13 +48,19 @@ export default class AppService extends BaseService<IApp> {
 		super(appSchema);
 	}
 
-	async create(data: AppDto, options?: IQueryOptions & IQueryPagination) {
+	async create(data: Partial<IApp>, options?: IQueryOptions & IQueryPagination) {
 		// validate
 		let project: IProject;
 		let appDto = { ...data };
 
+		// ownership
+		if (!data.owner && !MongoDB.isValidObjectId(data.owner)) throw new Error(`[ObjectID] "owner" is required.`);
+		if (!data.workspace && !MongoDB.isValidObjectId(data.workspace)) throw new Error(`[ObjectID] "workspace" is required.`);
+		const workspace = await DB.findOne("workspace", { _id: data.workspace });
+		if (!workspace) throw new Error(`Invalid workspace.`);
+
 		// check dx quota
-		const quotaRes = await checkQuota(this.req.workspace);
+		const quotaRes = await checkQuota(workspace);
 		if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
 		if (quotaRes.data && quotaRes.data.isExceed)
 			throw new Error(`You've exceeded the limit amount of apps (${quotaRes.data.type} / Max. ${quotaRes.data.limits.apps} apps).`);
@@ -98,7 +104,7 @@ export default class AppService extends BaseService<IApp> {
 		let newApp: IApp;
 
 		try {
-			newApp = await super.create(appDto);
+			newApp = await super.create(appDto, options);
 			if (!newApp) throw new Error(`Unable to create new app: "${appDto.name}".`);
 		} catch (e) {
 			throw new Error(e.toString());
@@ -122,6 +128,10 @@ export default class AppService extends BaseService<IApp> {
 	async createWithGitURL(
 		repoSSH: string,
 		gitProviderID: string,
+		ownership: {
+			workspace: IWorkspace;
+			owner: IUser;
+		},
 		options?: {
 			/**
 			 * `DANGER`
@@ -130,14 +140,25 @@ export default class AppService extends BaseService<IApp> {
 			 * @default false
 			 */
 			force?: boolean;
+			/**
+			 * If `TRUE`, return the existing app instead of throwing errors.
+			 * @default false;
+			 */
+			returnExisting?: boolean;
+			/**
+			 * @default main
+			 */
 			gitBranch?: string;
+			/**
+			 * If `TRUE`: remove `.github/*` directory after pulling/cloning the repo.
+			 */
 			removeCI?: boolean;
 			isDebugging?: boolean;
 		}
 	) {
 		const appDto: Partial<IApp> = {};
-		const workspace = this.req.workspace;
-		const owner = this.req.user;
+		const workspace = ownership.workspace;
+		const owner = ownership.owner;
 		if (options?.isDebugging) console.log("createWithGitURL() > ownership :>> ", { workspace, owner });
 
 		// parse git data
@@ -162,14 +183,17 @@ export default class AppService extends BaseService<IApp> {
 		const newRepoSlug = `${project.slug}-${makeSlug(repoSlug)}`.toLowerCase();
 		const newRepoSSH = `git@${gitProvider.host}:${gitProvider.org}/${newRepoSlug}.git`;
 
-		if (options?.force) {
-			// delete existing app
-			await this.softDelete({ "git.repoSSH": newRepoSSH, workspace: workspace._id });
-		} else {
-			// check app is existed
-			const existingApp = await this.findOne({ "git.repoSSH": newRepoSSH, workspace: workspace._id }, options);
-			if (options?.isDebugging) console.log("createWithGitURL() > existingApp :>> ", existingApp);
-			if (existingApp) throw new Error(`Unable to import: app was existed with name "${existingApp.slug}".`);
+		// check app is existed
+		const existingApp = await this.findOne({ "git.repoSSH": newRepoSSH, workspace: workspace._id }, options);
+		if (options?.isDebugging) console.log("createWithGitURL() > existingApp :>> ", existingApp);
+		if (existingApp) {
+			// [DANGEROUS] delete existing app when `--force` is specified:
+			if (options?.force) {
+				await this.softDelete({ "git.repoSSH": newRepoSSH, workspace: workspace._id });
+			} else {
+				if (options?.returnExisting) return existingApp;
+				throw new Error(`Unable to import: app was existed with name "${existingApp.slug}" (Project: "${project.name}").`);
+			}
 		}
 
 		// clone/pull that repo url
@@ -221,6 +245,11 @@ export default class AppService extends BaseService<IApp> {
 		appDto.gitProvider = gitProvider._id;
 		appDto.git = { provider: gitProvider.type, repoSSH: gitRepo.ssh_url, repoURL: gitRepo.repo_url };
 		appDto.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" } as IFramework;
+		// ownership
+		appDto.workspace = workspace._id;
+		appDto.workspaceSlug = workspace.slug;
+		appDto.owner = owner._id;
+		appDto.ownerSlug = owner.slug;
 
 		// save to database
 		const newApp = await this.create(appDto, options);
@@ -354,7 +383,7 @@ export default class AppService extends BaseService<IApp> {
 			 */
 			deployEnvironmentData: DeployEnvironmentData;
 		},
-		ownership?: { owner?: string | Types.ObjectId; workspace?: string | Types.ObjectId }
+		ownership?: { owner?: IUser; workspace?: IWorkspace }
 	) {
 		// conversion if needed...
 		if (isJSON(params.deployEnvironmentData))

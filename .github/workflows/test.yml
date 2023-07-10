@@ -59,11 +59,28 @@ jobs:
       
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.8.0
+
+      # - name: Install MicroK8S
+      #   uses: balchua/microk8s-actions@v0.3.2
+      #   with:
+      #     channel: 'latest/stable'
+      #     addons: '["dns", "rbac", "registry", "dashboard", "dns", "ingress", "metrics-server", "helm", "helm3", "cert-manager", "hostpath-storage", "prometheus"]'
+      
+      # - run: sudo usermod -a -G microk8s runner
+      # - run: sudo chown -R runner ~/.kube
+      # - run: newgrp microk8s
+      # - run: mkdir -p ~/.kube
+      # - run: microk8s config
+      # - run: microk8s config > ~/kubeconfig
+      # # - run: microk8s config > ~/.kube/config
+      # # - run: cat ~/.kube/config
       
       - name: Setup Kubernetes Tools
         uses: yokawasa/action-setup-kube-tools@v0.9.3
         with:
           kubectl: '1.24.10'
+        
+      # - run: kubectl get namespace
 
       - name: 'Set up Google Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v1'

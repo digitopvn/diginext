@@ -1,6 +1,7 @@
 import { logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
+import type { IProject } from "@/entities/Project";
 import { projectSchema } from "@/entities/Project";
 import type { IQueryFilter } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
@@ -9,7 +10,7 @@ import ClusterManager from "@/modules/k8s";
 import AppService from "./AppService";
 import BaseService from "./BaseService";
 
-export default class ProjectService extends BaseService {
+export default class ProjectService extends BaseService<IProject> {
 	constructor() {
 		super(projectSchema);
 	}
