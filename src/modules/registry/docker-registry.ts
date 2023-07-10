@@ -30,6 +30,8 @@ const DockerRegistry = {
 
 		const { server = "https://index.docker.io/v2/", username, password, email } = creds;
 
+		if (!password) throw new Error(`Permissions denied.`);
+
 		try {
 			let connectRes: ExecaReturnValue<string>;
 			if (Config.BUILDER === "docker") {
@@ -93,6 +95,8 @@ const DockerRegistry = {
 			dockerEmail: email,
 			dockerPassword: password,
 		} = registry;
+
+		if (!password) throw new Error(`Permissions denied.`);
 
 		const secretName = `${registry.slug}-docker-registry-key`;
 		let secretValue: string;

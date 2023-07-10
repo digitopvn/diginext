@@ -71,7 +71,7 @@ export async function startupScripts() {
 		}
 		// migrate all git provider's db field: "gitWorkspace" -> "org"
 		gitSvc
-			.update({ org: { $exists: false } }, { org: "$gitWorkspace" }, { isDebugging: true })
+			.update({ org: { $exists: false } }, { org: "$gitWorkspace" }, { isDebugging: false })
 			.then((res) => console.log(`[MIGRATION] Migrated "gitWorkspace" to "org" of ${res.length} git providers.`));
 	}
 

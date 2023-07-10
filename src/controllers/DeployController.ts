@@ -8,7 +8,6 @@ import pkg from "@/../package.json";
 import { Config } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IWorkspace } from "@/entities";
-import type { DeployEnvironment } from "@/interfaces";
 import { type InputOptions, type ResponseData, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
@@ -65,11 +64,6 @@ export default class DeployController extends BaseController {
 	clusterSvc = new ClusterService();
 
 	gitSvc = new GitProviderService();
-
-	constructor() {
-		super();
-		this.appSvc.req = this.regSvc.req = this.clusterSvc.req = this.gitSvc.req = this.req;
-	}
 
 	/**
 	 * ### [DEPRECATED SOON]
@@ -243,6 +237,7 @@ export default class DeployController extends BaseController {
 
 	/**
 	 * Build container image from app's git repo and deploy it to target deploy environment.
+	 * - Flow: fork the git repo -> build from the new repo -> deploy to Diginext
 	 */
 	@Security("api_key")
 	@Security("jwt")
@@ -278,10 +273,9 @@ export default class DeployController extends BaseController {
 
 		const { env } = body.deployParams;
 
-		let app = await this.appSvc.findOne({ [`git.repoSSH`]: body.sshUrl });
+		let app = await this.appSvc.findOne({ "git.repoSSH": body.sshUrl });
 
 		// generate new app
-		let deployEnvironment: DeployEnvironment;
 		if (!app) {
 			// try to get default git provider
 			const gitData = parseGitRepoDataFromRepoSSH(body.sshUrl);
@@ -289,56 +283,77 @@ export default class DeployController extends BaseController {
 			if (!gitProvider) throw new Error(`Unable to deploy: no git providers (${gitData.gitProvider.toUpperCase()}) in this workspace.`);
 
 			// create a new app
-			app = await this.appSvc.createWithGitURL(body.sshUrl, MongoDB.toString(gitProvider._id), { gitBranch: body.gitBranch });
-
-			// get random registry in this workspace
-			const registry = await this.regSvc.findOne({ workspace: this.workspace._id });
-			if (!registry) throw new Error(`Unable to deploy: no container registries in this workspace.`);
-
-			// find cluster
-			let cluster = body.clusterSlug ? await this.clusterSvc.findOne({ slug: body.clusterSlug, workspace: this.workspace._id }) : undefined;
-			// get default cluster
-			if (!cluster) {
-				const defaultCluster = await this.clusterSvc.findOne({ isDefault: true, workspace: this.workspace._id });
-				if (defaultCluster) cluster = defaultCluster;
+			try {
+				app = await this.appSvc.createWithGitURL(
+					body.sshUrl,
+					MongoDB.toString(gitProvider._id),
+					{ workspace: this.workspace, owner: this.user },
+					{ gitBranch: body.gitBranch, returnExisting: true }
+				);
+			} catch (e) {
+				return respondFailure(e.toString());
 			}
-			// get random cluster
-			if (!cluster) {
-				const randomCluster = await this.clusterSvc.findOne({ workspace: this.workspace._id });
-				if (randomCluster) cluster = randomCluster;
-			}
-			if (!cluster) throw new Error(`Unable to deploy: no clusters in this workspace.`);
-
-			// generate new environment
-			app = await this.appSvc.createDeployEnvironment(
-				app.slug,
-				{
-					env,
-					deployEnvironmentData: {
-						registry: registry.slug,
-						cluster: cluster.slug,
-						port: toNumber(body.port),
-						imageURL: `${registry.imageBaseURL}/${app.projectSlug}/${app.slug}`,
-						buildNumber: makeDaySlug({ divider: "" }),
-					},
-				},
-				{ owner: this.user._id }
-			);
 		}
 
-		deployEnvironment = await getDeployEvironmentByApp(app, env);
-		if (!deployEnvironment) respondFailure(`Unable to deploy: this app doesn't have any "${env}" deploy environment.`);
+		// get random registry in this workspace
+		const defaultRegistry = await this.regSvc.findOne({ workspace: this.workspace._id });
+		if (!defaultRegistry) throw new Error(`Unable to deploy: no container registries in this workspace.`);
 
-		// const registry = await this.regSvc.findOne({ slug: deployEnvironment.registry });
-		if (!deployEnvironment.registry) return respondFailure(`Container registry "${deployEnvironment.registry}" not found.`);
+		// find default cluster
+		let cluster = body.clusterSlug ? await this.clusterSvc.findOne({ slug: body.clusterSlug, workspace: this.workspace._id }) : undefined;
+		// get default cluster
+		if (!cluster) {
+			const defaultCluster = await this.clusterSvc.findOne({ isDefault: true, workspace: this.workspace._id });
+			if (defaultCluster) cluster = defaultCluster;
+		}
+		// get random cluster
+		if (!cluster) {
+			const randomCluster = await this.clusterSvc.findOne({ workspace: this.workspace._id });
+			if (randomCluster) cluster = randomCluster;
+		}
+		if (!cluster) throw new Error(`Unable to deploy: no clusters in this workspace.`);
 
+		// create deploy environment (if not exists):
+		let deployEnvironment = await getDeployEvironmentByApp(app, env);
+		if (!deployEnvironment) {
+			try {
+				app = await this.appSvc.createDeployEnvironment(
+					app.slug,
+					{
+						env,
+						deployEnvironmentData: {
+							registry: defaultRegistry.slug,
+							cluster: cluster.slug,
+							port: toNumber(body.port),
+							imageURL: `${defaultRegistry.imageBaseURL}/${app.projectSlug}/${app.slug}`,
+							buildNumber: makeDaySlug({ divider: "" }),
+						},
+					},
+					{ owner: this.user, workspace: this.workspace }
+				);
+
+				// assign new created deploy environment:
+				deployEnvironment = app.deployEnvironment[env];
+			} catch (e) {
+				return respondFailure(e.toString());
+			}
+		}
+
+		// validate deploy params
+		if (!deployEnvironment.cluster) deployEnvironment.cluster = cluster.slug;
+		if (!deployEnvironment.registry) deployEnvironment.registry = defaultRegistry.slug;
+
+		// start build & deploy from source (repo):
 		const buildParams: StartBuildParams = {
 			appSlug: app.slug,
 			buildNumber: makeDaySlug({ divider: "" }),
 			gitBranch: body.gitBranch,
 			registrySlug: deployEnvironment.registry,
 		};
+
 		const deployParams = body.deployParams;
+		deployParams.author = MongoDB.toString(this.user._id);
+
 		const buildAndDeployParams = { buildParams, deployParams };
 		return this.buildAndDeploy(buildAndDeployParams);
 	}

@@ -30,6 +30,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		providerProject,
 		region,
 		zone,
+		registry,
 	} = options;
 
 	const { app, project } = await askForProjectAndApp(options.targetDirectory, options);
@@ -70,6 +71,9 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 	if (typeof providerProject !== "undefined") deployEnvironment.project = providerProject;
 	if (typeof region !== "undefined") deployEnvironment.region = region;
 	if (typeof zone !== "undefined") deployEnvironment.zone = zone;
+
+	// Container Registry
+	if (typeof registry !== "undefined") deployEnvironment.registry = registry;
 
 	// Domains
 	if (typeof domain !== "undefined") deployEnvironment.domains = [domain];

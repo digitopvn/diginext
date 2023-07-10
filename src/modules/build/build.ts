@@ -161,7 +161,7 @@ export async function startBuild(
 	} = params;
 
 	const author = user || (await DB.findOne("user", { _id: userId }, { populate: ["workspaces", "activeWorkspaces"] }));
-	console.log("author :>> ", author);
+	if (isDebugging) console.log("author :>> ", author);
 
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	// get workspace
