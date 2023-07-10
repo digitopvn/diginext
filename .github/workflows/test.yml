@@ -80,7 +80,7 @@ jobs:
         with:
           kubectl: '1.24.10'
         
-      - run: kubectl get namespace
+      # - run: kubectl get namespace
 
       - name: 'Set up Google Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v1'
