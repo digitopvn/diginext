@@ -1,4 +1,4 @@
-import type { FilterQuery } from "mongoose";
+import type { FilterQuery, QueryWithHelpers } from "mongoose";
 
 export interface IQueryGeneral {
 	[key: string]: any;
@@ -126,9 +126,8 @@ export interface IQueryPagination extends IQueryGeneral {
 	prev_page?: string;
 }
 
-export interface IQueryFilter extends FilterQuery<any> {
-	[key: string]: any;
-}
+export type IQueryFilter<T = any> = FilterQuery<T>;
+export interface ServiceFilter<ResultType, DocType> extends QueryWithHelpers<ResultType, DocType> {}
 
 export interface IResponsePagination {
 	total_items?: number;

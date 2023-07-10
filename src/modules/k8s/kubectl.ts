@@ -5,7 +5,6 @@ import { isEmpty, round, toInteger } from "lodash";
 import path from "path";
 
 import { CLI_DIR } from "@/config/const";
-import type { ICluster } from "@/entities";
 import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { KubeIngressClass } from "@/interfaces/KubeIngressClass";
@@ -190,7 +189,7 @@ export async function deleteNamespace(namespace: string, options: KubeCommandOpt
  * Delete a namespace of a cluster
  */
 export async function deleteNamespaceByCluster(namespace: string, clusterShortName: string) {
-	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 	if (!cluster) {
 		logError(`[KUBECTL] Can't delete namespace "${namespace}" due to cluster "${clusterShortName}" not found.`);
 		return;

@@ -1,9 +1,9 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isJSON } from "class-validator";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
-import { isArray, isBoolean, isEmpty, isNumber, isString, isUndefined } from "lodash";
+import { isArray, isBoolean, isEmpty, isNumber, isUndefined } from "lodash";
 
-import type { AppGitInfo, IApp, IBuild, ICluster, IContainerRegistry, IFramework, IProject, IRelease } from "@/entities";
+import type { AppGitInfo, IApp, IBuild, ICluster, IFramework, IProject } from "@/entities";
 import * as entities from "@/entities";
 import type { SslType } from "@/interfaces";
 import * as interfaces from "@/interfaces";
@@ -11,8 +11,6 @@ import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
-import { sslIssuerList } from "@/interfaces/SystemTypes";
-import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environment";
 import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
@@ -21,11 +19,9 @@ import type { GenerateDeploymentResult } from "@/modules/deploy";
 import { fetchDeploymentFromContent, generateDeployment } from "@/modules/deploy";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
 import { dxCreateDomain } from "@/modules/diginext/dx-domain";
-import { getRepoURLFromRepoSSH } from "@/modules/git";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
-import { currentVersion, parseGitRepoDataFromRepoSSH } from "@/plugins";
-import { MongoDB } from "@/plugins/mongodb";
+import { currentVersion } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 import { ProjectService } from "@/services";
 import AppService from "@/services/AppService";
@@ -287,72 +283,86 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: AppInputSchema, @Queries() queryParams?: interfaces.IPostQueryParams) {
-		let project: IProject,
-			appDto: IApp = { ...(body as any) };
-
-		// check dx quota
-		const quotaRes = await checkQuota(this.workspace);
-		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
-		if (quotaRes.data && quotaRes.data.isExceed)
-			return respondFailure(`You've exceeded the limit amount of apps (${quotaRes.data.type} / Max. ${quotaRes.data.limits.apps} apps).`);
-
-		// validate
-		if (!body.project) return respondFailure({ msg: `Project ID or slug or instance is required.` });
-		if (!body.name) return respondFailure({ msg: `App's name is required.` });
-		if (!body.git) return respondFailure("App's git info is required.");
-
-		// find parent project of this app
-		if (MongoDB.isValidObjectId(body.project)) {
-			project = await DB.findOne<IProject>("project", { _id: body.project });
-		} else if (isString(body.project)) {
-			project = await DB.findOne<IProject>("project", { slug: body.project });
-		} else {
-			return respondFailure({ msg: `"project" is not a valid ID or slug.` });
-		}
-
-		if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
-		appDto.projectSlug = project.slug;
-
-		// framework
-		if (!body.framework) body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" } as IFramework;
-		if (body.framework === "none") body.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" } as IFramework;
-		appDto.framework = body.framework as IFramework;
-
-		// git
-		if (isString(body.git)) {
-			const gitData = parseGitRepoDataFromRepoSSH(body.git);
-			if (!gitData) return respondFailure({ msg: `Git repository information is not valid.` });
-
-			body.git = {
-				repoSSH: body.git as string,
-				repoURL: getRepoURLFromRepoSSH(gitData.gitProvider, gitData.fullSlug),
-				provider: gitData.gitProvider,
-			};
-		}
-		appDto.git = body.git;
-
-		let newApp: IApp;
+		let appDto: IApp = { ...(body as any) };
 
 		try {
-			newApp = await this.service.create(appDto);
-			if (!newApp) return { status: 0, messages: [`Failed to update app at "${JSON.stringify(this.filter)}"`] } as ResponseData;
+			const newApp = await this.service.create(appDto, this.options);
+			return respondSuccess({ data: newApp });
 		} catch (e) {
-			return { status: 0, messages: [e.message] } as ResponseData;
+			return respondFailure(e.toString());
 		}
+	}
 
-		const newAppId = newApp._id;
-
-		// migrate app environment variables if needed (convert {Object} to {Array})
-		const migratedApp = await migrateAppEnvironmentVariables(newApp);
-		if (migratedApp) newApp = migratedApp;
-
-		// add this new app to the project info
-		if (project) {
-			const projectApps = [...(project.apps || []), newAppId];
-			[project] = await DB.update<IProject>("project", { _id: project._id }, { apps: projectApps });
+	/**
+	 * Create new app from a git repo SSH url
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/ssh-url")
+	async createFromSshURL(
+		@Body()
+		body: {
+			/**
+			 * Git repo SSH url
+			 * @example git@github.com:digitopvn/diginext.git
+			 */
+			sshUrl: string;
+			/**
+			 * Git provider ID to host the new repo of this app
+			 */
+			gitProviderID: string;
 		}
+	) {
+		try {
+			const newApp = await this.service.createWithGitURL(body.sshUrl, body.gitProviderID, { workspace: this.workspace, owner: this.user });
+			return respondSuccess({ data: newApp });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
 
-		return { status: 1, data: newApp, messages: [""] } as ResponseData;
+	/**
+	 * Import a git repo SSH url & create new app from it
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/import-git")
+	async importFromGitSshURL(
+		@Body()
+		body: {
+			/**
+			 * Git repo SSH url
+			 * @example git@github.com:digitopvn/diginext.git
+			 */
+			sshUrl: string;
+			/**
+			 * Git provider ID to host the new repo of this app
+			 */
+			gitProviderID: string;
+			/**
+			 * Select git branch to pull
+			 */
+			gitBranch?: string;
+			/**
+			 * `DANGER`
+			 * ---
+			 * Delete app and git repo if they were existed.
+			 * @default false
+			 */
+			force?: boolean;
+		}
+	) {
+		const newApp = await this.service.createWithGitURL(
+			body.sshUrl,
+			body.gitProviderID,
+			{ workspace: this.workspace, owner: this.user },
+			{
+				force: body.force,
+				gitBranch: body.gitBranch,
+				isDebugging: false,
+			}
+		);
+		return respondSuccess({ data: newApp });
 	}
 
 	@Security("api_key")
@@ -416,14 +426,14 @@ export default class AppController extends BaseController<IApp, AppService> {
 			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
 				if (!isEmpty(deployEnvironment)) {
 					const { cluster: clusterShortName, namespace } = deployEnvironment;
-					const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+					const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 					let errorMsg;
 
 					if (cluster) {
 						const { contextName: context } = cluster;
 
 						// switch to the cluster of this environment
-						await ClusterManager.authCluster(clusterShortName);
+						await ClusterManager.authCluster(cluster);
 
 						try {
 							/**
@@ -672,183 +682,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		},
 		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
-		// conversion if needed...
-		if (isJSON(body.deployEnvironmentData))
-			body.deployEnvironmentData = JSON.parse(body.deployEnvironmentData as unknown as string) as DeployEnvironmentData;
-
-		//
-		const { appSlug, env, deployEnvironmentData } = body;
-		if (!appSlug) return respondFailure({ msg: `App slug is required.` });
-		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
-		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
-
-		// get app data:
-		const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
-		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
-		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
-		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
-		if (!deployEnvironmentData.buildNumber) respondFailure({ msg: `Build number (image's tag) is required.` });
-
-		const mainAppName = await getDeploymentName(app);
-		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-
-		const { buildNumber } = deployEnvironmentData;
-
-		const project = app.project as IProject;
-		const { slug: projectSlug } = project;
-
-		// Assign default values to optional params:
-
-		if (!deployEnvironmentData.size) deployEnvironmentData.size = "1x";
-		if (!deployEnvironmentData.shouldInherit) deployEnvironmentData.shouldInherit = true;
-		if (!deployEnvironmentData.replicas) deployEnvironmentData.replicas = 1;
-		if (!deployEnvironmentData.redirect) deployEnvironmentData.redirect = true;
-
-		// Check DX quota
-		const quotaRes = await checkQuota(this.workspace, { resourceSize: deployEnvironmentData.size });
-		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
-		if (quotaRes.data && quotaRes.data.isExceed)
-			return respondFailure(
-				`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
-			);
-
-		// Validate deploy environment data:
-
-		// cluster
-		if (!deployEnvironmentData.cluster) return respondFailure({ msg: `Param "cluster" (Cluster's short name) is required.` });
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: deployEnvironmentData.cluster });
-		if (!cluster) return respondFailure({ msg: `Cluster "${deployEnvironmentData.cluster}" is not valid` });
-
-		// namespace
-		if (!deployEnvironmentData.namespace) {
-			deployEnvironmentData.namespace = `${projectSlug}-${env}`;
-		} else {
-			// Check if namespace is existed...
-			// const isNamespaceExisted = await ClusterManager.isNamespaceExisted(deployEnvironmentData.namespace, { context: cluster.contextName });
-			// if (isNamespaceExisted)
-			// 	return respondFailure({
-			// 		msg: `Namespace "${deployEnvironmentData.namespace}" was existed in "${deployEnvironmentData.cluster}" cluster, please choose different name or leave empty to use generated namespace name.`,
-			// 	});
-		}
-
-		// container registry
-		if (!deployEnvironmentData.registry) return respondFailure({ msg: `Param "registry" (Container Registry's slug) is required.` });
-		const registry = await DB.findOne<IContainerRegistry>("registry", { slug: deployEnvironmentData.registry });
-		if (!registry) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
-
-		// Domains & SSL certificate...
-		if (!deployEnvironmentData.domains) deployEnvironmentData.domains = [];
-		if (deployEnvironmentData.useGeneratedDomain) {
-			const subdomain = `${projectSlug}-${appSlug}.${env}`;
-			const {
-				status,
-				messages,
-				data: { domain },
-			} = await dxCreateDomain({ name: subdomain, data: cluster.primaryIP }, this.workspace.dx_key);
-			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
-			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
-		}
-
-		if (!deployEnvironmentData.ssl) {
-			deployEnvironmentData.ssl = deployEnvironmentData.domains.length > 0 ? "letsencrypt" : "none";
-		}
-		if (!sslIssuerList.includes(deployEnvironmentData.ssl))
-			return respondFailure({ msg: `Param "ssl" issuer is invalid, should be one of: "letsencrypt", "custom" or "none".` });
-
-		if (deployEnvironmentData.ssl === "letsencrypt") {
-			deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
-		} else if (deployEnvironmentData.ssl === "custom") {
-			if (!deployEnvironmentData.tlsSecret) {
-				deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
-			}
-		} else {
-			deployEnvironmentData.tlsSecret = "";
-		}
-
-		// Exposing ports, enable/disable CDN, and select Ingress type
-		if (isUndefined(deployEnvironmentData.port)) return respondFailure({ msg: `Param "port" is required.` });
-		if (isUndefined(deployEnvironmentData.cdn) || !isBoolean(deployEnvironmentData.cdn)) deployEnvironmentData.cdn = false;
-		// deployEnvironmentData.ingress = "nginx";
-
-		// create deploy environment in the app:
-		let [updatedApp] = await this.service.update(
-			{ slug: appSlug },
-			{
-				[`deployEnvironment.${env}`]: deployEnvironmentData,
-			}
-		);
-		// console.log("updatedApp :>> ", updatedApp);
-		if (!updatedApp) return respondFailure({ msg: `Failed to create "${env}" deploy environment.` });
-
-		const appConfig = await getAppConfigFromApp(updatedApp);
-
-		// if (
-		// 	typeof buildNumber === "undefined" &&
-		// 	updatedApp.deployEnvironment &&
-		// 	updatedApp.deployEnvironment[env] &&
-		// 	updatedApp.deployEnvironment[env].deploymentYaml
-		// ) {
-		// 	// generate deployment files and apply new config
-		// 	const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		// 	console.log("buildNumber :>> ", buildNumber);
-		// 	console.log("this.user :>> ", this.user);
-		// }
-
-		console.log("buildNumber :>> ", buildNumber);
-
-		let deployment: GenerateDeploymentResult = await generateDeployment({
-			appSlug: app.slug,
-			env,
-			username: this.user.slug,
-			workspace: this.workspace,
-			buildNumber,
-		});
-
-		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
-
-		// update data to deploy environment:
-		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
-		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
-		serverDeployEnvironment.deploymentYaml = deploymentContent;
-		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
-		serverDeployEnvironment.updatedAt = new Date();
-		serverDeployEnvironment.lastUpdatedBy = this.user.username;
-
-		// Update {user}, {project}, {environment} to database before rolling out
-		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
-		updatedAppData.lastUpdatedBy = this.user.username;
-		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
-
-		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
-		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
-
-		// ----- SHOULD ROLL OUT NEW RELEASE OR NOT ----
-
-		let workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
-			context: cluster.contextName,
-			filterLabel: `main-app=${mainAppName}`,
-		});
-		// Fallback support for deprecated mainAppName
-		if (!workloads || workloads.length === 0) {
-			workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
-				context: cluster.contextName,
-				filterLabel: `main-app=${deprecatedMainAppName}`,
-			});
-		}
-
-		if (workloads && workloads.length > 0) {
-			// create new release and roll out
-			const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
-				author: this.user,
-				cliVersion: currentVersion(),
-				workspace: this.workspace,
-			});
-
-			const result = await ClusterManager.rollout(release._id.toString());
-			if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
-		}
-
-		return respondSuccess({ data: appConfig });
+		const app = await this.service.createDeployEnvironment(body.appSlug, body, { owner: this.user, workspace: this.workspace });
+		return respondSuccess({ data: app });
 	}
 
 	/**
@@ -889,7 +724,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
 
 		// get app data:
-		const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+		const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
 		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
@@ -903,11 +738,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 			const releaseFilter = { appSlug: app.slug, buildStatus: "success", env, active: true };
 			console.log("updateDeployEnvironment() > releaseFilter :>> ", releaseFilter);
 
-			let latestRelease = await DB.findOne<IRelease>("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
+			let latestRelease = await DB.findOne("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
 			// "sometime" there are no "active" release, so just get the "success" release instead :)
 			if (!latestRelease) {
 				delete releaseFilter.active;
-				latestRelease = await DB.findOne<IRelease>("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
+				latestRelease = await DB.findOne("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
 			}
 			if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Release not found (app: "${app.slug}" - env: "${env}")`);
 
@@ -938,8 +773,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// cluster
 		let cluster: ICluster | undefined;
-		if (deployEnvironmentData.cluster) cluster = await DB.findOne<ICluster>("cluster", { shortName: deployEnvironmentData.cluster });
-		if (!cluster && currentDeployEnvData.cluster) cluster = await DB.findOne<ICluster>("cluster", { shortName: currentDeployEnvData.cluster });
+		if (deployEnvironmentData.cluster) cluster = await DB.findOne("cluster", { shortName: deployEnvironmentData.cluster });
+		if (!cluster && currentDeployEnvData.cluster) cluster = await DB.findOne("cluster", { shortName: currentDeployEnvData.cluster });
 
 		// namespace
 		const namespace = deployEnvironmentData.namespace;
@@ -954,7 +789,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// container registry
 		if (deployEnvironmentData.registry) {
-			const registry = await DB.findOne<IContainerRegistry>("registry", { slug: deployEnvironmentData.registry });
+			const registry = await DB.findOne("registry", { slug: deployEnvironmentData.registry });
 			if (!registry) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
 		}
 
@@ -1042,7 +877,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		updatedAppData.lastUpdatedBy = this.user.username;
 		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		if (!cluster) return respondSuccess({ data: updatedApp.deployEnvironment[env] });
@@ -1144,14 +979,14 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!clusterShortName) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Cluster "${clusterShortName}" not found.`);
 		if (!namespace) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Namespace "${namespace}" not found.`);
 
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		let errorMsg;
 
 		if (cluster) {
 			const { contextName: context } = cluster;
 
 			// switch to the cluster of this environment
-			await ClusterManager.authCluster(clusterShortName);
+			await ClusterManager.authCluster(cluster);
 
 			try {
 				/**
@@ -1250,7 +1085,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
 
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
 		const newEnvVars = isJSON(envVars)
@@ -1295,7 +1130,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			updatedAppData.lastUpdatedBy = this.user.username;
 			updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-			updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+			updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
 			if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 		}
 
@@ -1378,7 +1213,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
 
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
 		// check if deployment is existed in the cluster / namespace
@@ -1481,7 +1316,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		const { namespace, cluster: clusterShortName } = deployEnvironment;
 
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
 		// check if deployment is existed in the cluster / namespace
@@ -1555,7 +1390,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
 
 		const clusterShortName = app.deployEnvironment[env].cluster;
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
 
 		const mainAppName = await getDeploymentName(app);
@@ -1612,7 +1447,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		updatedAppData.lastUpdatedBy = this.user.username;
 		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-		updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updatedAppData);
+		updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		let workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {

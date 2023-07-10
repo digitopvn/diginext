@@ -1,6 +1,6 @@
 import { isEmpty } from "lodash";
 
-import type { IApp, IBuild, ICluster, IRelease, IUser, IWorkspace } from "@/entities";
+import type { IApp, IBuild, IRelease, IUser, IWorkspace } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
@@ -49,7 +49,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	const { slug: username } = author;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	if (!app) {
 		sendLog({
 			SOCKET_ROOM,
@@ -98,7 +98,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 
 	const { namespace, cluster: clusterShortName } = serverDeployEnvironment;
 
-	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 	const { contextName: context } = cluster;
 
 	// get app config to generate deployment data
@@ -142,7 +142,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	updatedAppData.lastUpdatedBy = username;
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-	const [updatedApp] = await DB.update<IApp>("app", { slug: appSlug }, updatedAppData);
+	const [updatedApp] = await DB.update("app", { slug: appSlug }, updatedAppData);
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
@@ -302,7 +302,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 };
 
 export const deployWithBuildSlug = async (buildSlug: string, options: DeployBuildOptions) => {
-	const build = await DB.findOne<IBuild>("build", { slug: buildSlug });
+	const build = await DB.findOne("build", { slug: buildSlug });
 	if (!build) throw new Error(`[DEPLOY BUILD] Build slug "${buildSlug}" not found.`);
 
 	return deployBuild(build, options);

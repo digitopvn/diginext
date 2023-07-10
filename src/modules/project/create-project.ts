@@ -42,7 +42,7 @@ export default async function createProjectByForm(options: InputOptions) {
 	const newProjectData = await askCreateProjectQuestions(options);
 
 	// Save this project to database
-	const newProject = await DB.create<IProject>("project", newProjectData);
+	const newProject = await DB.create("project", newProjectData);
 	if (options.isDebugging) console.log("[createProjectByForm] newProject :>> ", newProject);
 	if (!newProject) return;
 

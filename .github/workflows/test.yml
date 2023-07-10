@@ -20,7 +20,7 @@ env:
   BASE_URL: http://localhost:6969
   JWT_SECRET: J9xjKudq5p6dNopGHExnRv5zIB4vo6aX3z3mdrPJPJSYqB4jIA8z5ftLmKz03boo
   TEST_BITBUCKET_ORG: ${{ vars.TEST_BITBUCKET_ORG }}
-  TEST_BITBUCKET_USERNAME: ${{ vars.TEST_BITBUCKET_USERNAME }}
+  TEST_BITBUCKET_USER: ${{ vars.TEST_BITBUCKET_USER }}
   TEST_BITBUCKET_APP_PASS: ${{ secrets.TEST_BITBUCKET_APP_PASS }}
   TEST_DOCKERHUB_USER: ${{ vars.TEST_DOCKERHUB_USER }}
   TEST_DOCKERHUB_PASS: ${{ secrets.TEST_DOCKERHUB_PASS }}
@@ -29,6 +29,8 @@ env:
   TEST_GCLOUD_CLUSTER_NAME: ${{ vars.TEST_GCLOUD_CLUSTER_NAME }}
   TEST_GCLOUD_SERVICE_ACCOUNT: ${{ secrets.TEST_GCLOUD_SERVICE_ACCOUNT }}
   TEST_GITHUB_PAT: ${{ secrets.TEST_GITHUB_PAT }}
+  TEST_GITHUB_ORG: ${{ vars.TEST_GITHUB_ORG }}
+  TEST_GITHUB_USER: ${{ vars.TEST_GITHUB_USER }}
   TEST_METAL_CLUSTER_NAME: ${{ vars.TEST_METAL_CLUSTER_NAME }}
   TEST_METAL_CLUSTER_KUBECONFIG: ${{ secrets.TEST_METAL_CLUSTER_KUBECONFIG }}
 
@@ -38,6 +40,12 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     if: startsWith(github.event.head_commit.message, 'ci(') == false
+    
+    # Add "id-token" with the intended permissions.
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -51,6 +59,38 @@ jobs:
       
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.8.0
+
+      # - name: Install MicroK8S
+      #   uses: balchua/microk8s-actions@v0.3.2
+      #   with:
+      #     channel: 'latest/stable'
+      #     addons: '["dns", "rbac", "registry", "dashboard", "dns", "ingress", "metrics-server", "helm", "helm3", "cert-manager", "hostpath-storage", "prometheus"]'
+      
+      # - run: sudo usermod -a -G microk8s runner
+      # - run: sudo chown -R runner ~/.kube
+      # - run: newgrp microk8s
+      # - run: mkdir -p ~/.kube
+      # - run: microk8s config
+      # - run: microk8s config > ~/kubeconfig
+      # # - run: microk8s config > ~/.kube/config
+      # # - run: cat ~/.kube/config
+      
+      - name: Setup Kubernetes Tools
+        uses: yokawasa/action-setup-kube-tools@v0.9.3
+        with:
+          kubectl: '1.24.10'
+        
+      # - run: kubectl get namespace
+
+      - name: 'Set up Google Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+        with:
+          version: '>= 363.0.0'
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.TEST_DO_API_TOKEN }}
 
       - name: Docker login to Docker Hub
         uses: docker/login-action@v2
@@ -87,13 +127,9 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install package dependencies
-      #   run: npm ci
         run: pnpm install --no-frozen-lockfile
-
-      - name: Build
-        run: pnpm build
 
       - name: Run tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm test
+        run: pnpm test:build

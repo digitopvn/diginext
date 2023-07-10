@@ -70,7 +70,7 @@ export const cliLogin = async (options: CliLoginOptions) => {
 	let currentUser: IUser;
 
 	// validate the "access_token" -> get "userId":
-	const { status, data } = await fetchApi<IUser>({ url: `/auth/profile`, access_token });
+	const { status, data } = await fetchApi({ url: `/auth/profile`, access_token });
 	if (status === 0) {
 		logError(`Authentication failed, "access_token" is not valid.`);
 		return;
@@ -143,7 +143,7 @@ export async function cliAuthenticate(options: InputOptions) {
 		status,
 		data: userData,
 		messages,
-	} = await fetchApi<IUser>({
+	} = await fetchApi({
 		url: `/auth/profile`,
 		access_token: accessToken,
 	});

@@ -3,8 +3,11 @@ import { MongoDB } from "../../src/plugins/mongodb";
 import {
 	CLI_TEST_DIR,
 	apiKeySvc,
+	clusterCtl,
+	clusterSvc,
 	createFakeUser,
 	createWorkspace,
+	currentWorkspace,
 	dxCmd,
 	frameworkCtl,
 	frameworkSvc,
@@ -27,6 +30,9 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import { Config } from "@/app.config";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { readdirSync } from "fs";
+import { addBareMetalCluster } from "@/seeds/seed-clusters";
+import ClusterManager from "@/modules/k8s";
+import { DB } from "@/modules/api/DB";
 
 export function testFlow1() {
 	let wsId: string;
@@ -57,7 +63,7 @@ export function testFlow1() {
 		const loginRes1 = await loginUser(userId);
 		expect(loginRes1.user).toBeDefined();
 		expect(loginRes1.user.token?.access_token).toBeDefined();
-	});
+	}, 10000);
 
 	it("Workspace #1: Create workspace", async () => {
 		// query db
@@ -75,20 +81,24 @@ export function testFlow1() {
 		if (!wsId) return;
 
 		// reload fake user
-		fakeUser1 = await userSvc.findOne({ name });
+		fakeUser1 = await getCurrentUser();
 
+		// check user data
 		expect(Array.isArray(fakeUser1.workspaces)).toBe(true);
 		expect(fakeUser1.workspaces).toContain(wsId);
 
 		// second login (has workspace)
 		const loginRes = await loginUser(userId, wsId);
+
+		// check user data after login
 		expect(loginRes.user).toBeDefined();
 		expect(loginRes.workspace).toBeDefined();
 		expect(loginRes.user._id).toEqual(fakeUser1._id);
 		expect(loginRes.workspace._id).toEqual(ws._id);
 		expect(loginRes.user.token?.access_token).toBeDefined();
 		expect((loginRes.user.activeWorkspace as IWorkspace)._id).toEqual(wsId);
-	});
+		expect((loginRes.user.activeRole as IRole).type).toEqual("admin");
+	}, 10000);
 
 	it("Workspace #1: Initial data", async () => {
 		// current authenticated user:
@@ -125,7 +135,7 @@ export function testFlow1() {
 		const defaulSvcAcc = apiKeys[0];
 		expect(defaulSvcAcc.roles.length).toBeGreaterThan(0);
 		expect(defaulSvcAcc.roles.map((role) => (role as IRole).name)).toContain("Moderator");
-	});
+	}, 15000);
 
 	it("Workspace #1: Git Provider - Bitbucket", async () => {
 		const curUser = await getCurrentUser();
@@ -134,9 +144,10 @@ export function testFlow1() {
 		const createRes = await gitCtl.create({
 			name: "Bitbucket",
 			type: "bitbucket",
-			gitWorkspace: process.env.TEST_BITBUCKET_ORG,
+			isOrg: true,
+			org: process.env.TEST_BITBUCKET_ORG,
 			bitbucket_oauth: {
-				username: process.env.TEST_BITBUCKET_USERNAME,
+				username: process.env.TEST_BITBUCKET_USER,
 				app_password: process.env.TEST_BITBUCKET_APP_PASS,
 			},
 		});
@@ -151,11 +162,12 @@ export function testFlow1() {
 		expect(bitbucket.verified).toBe(true);
 		expect(bitbucket.host).toBe("bitbucket.org");
 		expect(bitbucket.isOrg).toBeTruthy();
+		expect(bitbucket.org).toBeDefined();
 
 		// test api
 		const profile = await GitProviderAPI.getProfile(bitbucket);
 		expect(profile).toBeDefined();
-		expect(profile.username).toBe(process.env.TEST_BITBUCKET_USERNAME);
+		expect(profile.username).toBe(process.env.TEST_BITBUCKET_USER);
 	}, 30000);
 
 	it("Workspace #1: Git Provider - Github", async () => {
@@ -164,7 +176,8 @@ export function testFlow1() {
 		const createRes = await gitCtl.create({
 			name: "Github",
 			type: "github",
-			gitWorkspace: process.env.TEST_GITHUB_ORG,
+			isOrg: true,
+			org: process.env.TEST_GITHUB_ORG,
 			github_oauth: {
 				personal_access_token: process.env.TEST_GITHUB_PAT,
 			},
@@ -179,6 +192,7 @@ export function testFlow1() {
 		expect(github.verified).toBe(true);
 		expect(github.host).toBe("github.com");
 		expect(github.isOrg).toBeTruthy();
+		expect(github.org).toBeDefined();
 
 		// test api
 		const profile = await GitProviderAPI.getProfile(github);
@@ -189,15 +203,20 @@ export function testFlow1() {
 		const curUser = await getCurrentUser();
 
 		// add new "public" framework
+		frameworkCtl.user = curUser;
+		frameworkCtl.workspace = curUser.activeWorkspace;
+
 		const createRes = await frameworkCtl.create({
 			name: "Static Site Starter with NGINX",
 			repoURL: "https://github.com/digitopvn/static-nginx-site",
 			repoSSH: "git@github.com:digitopvn/static-nginx-site.git",
 			gitProvider: "github",
 			mainBranch: "main",
-		});
+			workspace: curUser.activeWorkspace._id,
+		} as any);
 
-		if (!createRes.status) console.log("FRAMEWORK > createRes :>> ", createRes);
+		console.log('Add "public" framework > createRes :>> ', createRes);
+		if (!createRes.status) throw new Error(createRes.messages.join("."));
 		expect(createRes.status).toBe(1);
 
 		// check...
@@ -283,6 +302,18 @@ export function testFlow1() {
 		expect(dockerPullRes.indexOf("digitop/static:latest")).toBeGreaterThan(-1);
 	}, 30000);
 
+	it("Workspace #1: Add Bare-metal K8S cluster", async () => {
+		const curUser = await getCurrentUser();
+
+		// seed cluster: Bare-metal
+		const cluster = await addBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG, currentWorkspace, curUser);
+		console.log("cluster :>> ", cluster);
+
+		// verify cluster connection
+		expect(cluster).toBeDefined();
+		expect(cluster.isVerified).toBe(true);
+	}, 30000);
+
 	it("CLI: Check version", async () => {
 		const cliVersion = await dxCmd(`dx -v`);
 		expect(cliVersion).toBeDefined();
@@ -334,6 +365,44 @@ export function testFlow1() {
 		},
 		5 * 60000
 	);
+
+	it("CLI: Cluster management (BARE-METAL)", async () => {
+		// get bare-metal cluster (default)
+		const cluster = await clusterSvc.findOne({ providerShortName: "custom" });
+		expect(cluster.contextName).toBeDefined();
+		expect(cluster.isVerified).toBeTruthy();
+
+		const { contextName: context } = cluster;
+
+		// switch context to this cluster
+		const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${cluster.shortName}`, { isDebugging: true });
+		console.log("switchCtxRes :>> ", switchCtxRes);
+		expect(switchCtxRes.indexOf("Connected")).toBeGreaterThan(-1);
+
+		// check test namespace exists
+		const namespace = "diginext-test";
+		let isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+		if (isNamespaceExisted) await ClusterManager.deleteNamespace(namespace, { context });
+		await ClusterManager.createNamespace(namespace, { context });
+		// check again
+		isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+		expect(isNamespaceExisted).toBeTruthy();
+
+		// create imagePullSecrets
+		const dockerhub = await DB.findOne("registry", { provider: "dockerhub" });
+		console.log("dockerhub :>> ", dockerhub);
+
+		// const createIPS = await dxCmd(`dx registry allow --registry=${dockerhub.slug} --cluster=${cluster.shortName} --namespace=${namespace}`);
+		// console.log("createIPS :>> ", createIPS);
+
+		// const secrets = await dxCmd(`kubectl get secret -n ${namespace}`);
+		// console.log("secrets :>> ", secrets);
+
+		// expect(secrets).toContain("docker-registry-key");
+
+		// clean up test namespace
+		await ClusterManager.deleteNamespace(namespace, { context });
+	}, 60000);
 
 	it("Workspace #1: Add member", async () => {
 		// registerr fake user #2:

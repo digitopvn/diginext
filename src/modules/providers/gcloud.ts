@@ -7,7 +7,7 @@ import yargs from "yargs";
 
 import { Config, isServerMode } from "@/app.config";
 import { saveCliConfig } from "@/config/config";
-import type { ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
+import type { IContainerRegistry } from "@/entities";
 import type { GoogleServiceAccount } from "@/interfaces/GoogleServiceAccount";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { createTmpFile, execCmd, isWin } from "@/plugins";
@@ -46,11 +46,11 @@ export const authenticate = async (options?: InputOptions) => {
 
 	// Save this cloud provider to database
 	const serviceAccount = fs.readFileSync(serviceAccountPath, "utf8");
-	const gcloud = await DB.findOne<ICloudProvider>("provider", { shortName: "gcloud" });
+	const gcloud = await DB.findOne("provider", { shortName: "gcloud" });
 
 	// not support multiple cloud providers yet!
 	if (!gcloud) {
-		const newProvider = DB.create<ICloudProvider>("provider", {
+		const newProvider = DB.create("provider", {
 			name: "Google Cloud",
 			shortName: "gcloud",
 			serviceAccount: serviceAccount,
@@ -116,14 +116,14 @@ export const connectDockerToRegistry = async (options?: InputOptions & { builder
 		return;
 	}
 
-	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+	const existingRegistry = await DB.findOne("registry", { slug: registrySlug });
 	if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { existingRegistry });
 	if (existingRegistry) return existingRegistry;
 
 	// IF NOT EXISTED -> Save this container registry to database!
 	const registryHost = host || "asia.gcr.io";
 	const imageBaseURL = `${registryHost}/${serviceAccountObject.project_id}`;
-	const newRegistry = await DB.create<IContainerRegistry>("registry", {
+	const newRegistry = await DB.create("registry", {
 		name: "Google Container Registry",
 		host: registryHost,
 		provider: "gcloud",
@@ -151,7 +151,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	}
 
 	// get Container Registry data:
-	const registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+	const registry = await DB.findOne("registry", { slug: registrySlug });
 
 	if (!registry) {
 		logError(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
@@ -162,7 +162,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const { host, serviceAccount } = registry;
 
 	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
-	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 	if (!cluster) {
 		logError(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterShortName}" cluster.`);
 		return;
@@ -216,7 +216,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			},
 		};
 
-		const updatedRegistries = await DB.update<IContainerRegistry>("registry", { slug: registrySlug }, updateData as IContainerRegistry);
+		const updatedRegistries = await DB.update("registry", { slug: registrySlug }, updateData as IContainerRegistry);
 		const updatedRegistry = updatedRegistries[0];
 
 		if (!isServerMode) {
@@ -281,7 +281,7 @@ export const execGoogleCloud = async (options?: InputOptions) => {
 			break;
 
 		case "create-image-pull-secret":
-			const registries = await DB.find<IContainerRegistry>("registry", {});
+			const registries = await DB.find("registry", {});
 			if (isEmpty(registries)) {
 				logError(`This workspace doesn't have any registered Container Registries.`);
 				return;

@@ -14,7 +14,7 @@ import BaseController from "./BaseController";
 
 @Tags("Cluster")
 @Route("cluster")
-export default class ClusterController extends BaseController<ICluster> {
+export default class ClusterController extends BaseController {
 	constructor() {
 		super(new ClusterService());
 	}
@@ -75,7 +75,7 @@ export default class ClusterController extends BaseController<ICluster> {
 
 		if (newCluster) {
 			try {
-				const auth = await ClusterManager.authCluster(newCluster.shortName);
+				const auth = await ClusterManager.authCluster(newCluster);
 				if (!auth) return respondFailure(`Failed to connect to the cluster, please double check your information.`);
 
 				return respondSuccess({ data: newCluster });

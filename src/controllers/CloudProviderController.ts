@@ -1,6 +1,5 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { ICloudProvider } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
 import CloudProviderService from "@/services/CloudProviderService";
@@ -9,7 +8,7 @@ import BaseController from "./BaseController";
 
 @Tags("Cloud Provider")
 @Route("provider")
-export default class CloudProviderController extends BaseController<ICloudProvider> {
+export default class CloudProviderController extends BaseController {
 	constructor() {
 		super(new CloudProviderService());
 	}

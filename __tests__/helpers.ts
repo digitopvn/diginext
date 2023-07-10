@@ -158,7 +158,8 @@ export const createFakeUser = async (id: number = randomInt(100)) => {
 
 export const getCurrentUser = async () => {
 	// reload user data
-	if (currentUser) currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "roles", "activeRole"] });
+	if (currentUser) currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "activeRole", "roles"] });
+	if (currentUser.activeWorkspace) currentWorkspace = currentUser.activeWorkspace as IWorkspace;
 	return currentUser as IUser & { activeWorkspace: IWorkspace & { _id: string } };
 };
 
@@ -238,7 +239,7 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 	return { user, workspace };
 };
 
-export type DxOptions = { onProgress: (msg: string) => void };
+export type DxOptions = { onProgress?: (msg: string) => void; isDebugging?: boolean };
 
 export const CLI_TEST_DIR = path.resolve(CLI_CONFIG_DIR, "tests");
 if (!existsSync(CLI_TEST_DIR)) mkdirSync(CLI_TEST_DIR, { recursive: true });
@@ -252,6 +253,7 @@ export const dxCmd = async (command: string, options?: DxOptions) => {
 			_stdio.on("data", (data) => {
 				let logMsg = data.toString();
 				stdout += logMsg;
+				if (options?.isDebugging) console.log("[DX_CMD]", logMsg);
 				if (options?.onProgress && logMsg) options?.onProgress(logMsg);
 			});
 		}

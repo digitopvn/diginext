@@ -8,6 +8,9 @@ import { DB } from "@/modules/api/DB";
 export const registerController = (controller: BaseController) => {
 	return async (req: AppRequest, res: Response, next: NextFunction) => {
 		try {
+			// assign Express request
+			controller.req = req;
+
 			// assign current user to the controller
 			controller.user = req.user;
 
@@ -17,7 +20,7 @@ export const registerController = (controller: BaseController) => {
 				controller.workspace =
 					typeof (controller.user?.activeWorkspace as any)._id === "undefined"
 						? (controller.user?.activeWorkspace as IWorkspace)
-						: await DB.findOne<IWorkspace>("workspace", { _id: wsId });
+						: await DB.findOne("workspace", { _id: wsId });
 			}
 			req.workspace = controller.workspace;
 

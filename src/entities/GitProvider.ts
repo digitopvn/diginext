@@ -109,6 +109,11 @@ export interface IGitProvider extends IBase {
 	name?: string;
 
 	/**
+	 * Is this a default git provider
+	 */
+	isDefault?: boolean;
+
+	/**
 	 * The host of the Git provider.
 	 *
 	 * @type {string}
@@ -117,10 +122,16 @@ export interface IGitProvider extends IBase {
 	host?: string;
 
 	/**
-	 * The Git workspace of the Git provider.
+	 * The Git workspace (ORG) of the Git provider.
 	 *
 	 * @type {string}
 	 * @memberof IGitProvider
+	 */
+	org?: string;
+
+	/**
+	 * Alias of `org` field, will be remove soon.
+	 * @deprecated
 	 */
 	gitWorkspace?: string;
 
@@ -207,11 +218,13 @@ export interface IGitProvider extends IBase {
 
 export type GitProviderDto = Omit<IGitProvider, keyof HiddenBodyKeys>;
 
-export const gitProviderSchema = new Schema<IGitProvider>(
+export const gitProviderSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
+		isDefault: { type: Boolean, default: false },
 		host: { type: String },
+		org: { type: String },
 		gitWorkspace: { type: String },
 		repo: {
 			url: { type: String },
@@ -241,4 +254,4 @@ export const gitProviderSchema = new Schema<IGitProvider>(
 	{ collection: "git_providers", timestamps: true }
 );
 
-export const GitProviderModel = model<IGitProvider>("GitProvider", gitProviderSchema, "git_providers");
+export const GitProviderModel = model("GitProvider", gitProviderSchema, "git_providers");

@@ -10,7 +10,7 @@ import { filterUsersByWorkspaceRole } from "@/plugins/user-utils";
 export async function authorize(req: AppRequest, res: Response, next: NextFunction) {
 	let { user } = req;
 
-	const { baseUrl: route, method } = req;
+	const { baseUrl: routePath, method } = req;
 	// console.log("authorize > route :>> ", route);
 
 	// filter roles
@@ -77,7 +77,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	}
 
 	// Check again if a specific route is specified:
-	routeRole = activeRole.routes.find((routeInfo) => routeInfo.path === route);
+	routeRole = activeRole.routes.find((routeInfo) => routeInfo.path === routePath);
 
 	if (routeRole) {
 		if (!routeRole.permissions) routeRole.permissions = [];
@@ -105,12 +105,12 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	}
 
 	// print the debug info
-	console.log(
-		`authorize > [${requestPermission}] ${route} > role :>> [WS: ${activeRole.workspace}] ${activeRole.name}:`,
-		`${activeRole.routes.map((r) => `· ${r.path} - ${r.permissions.join(",") || "none"}`).join("\n")}`,
-		`>> ALLOW:`,
-		isAllowed
-	);
+	// console.log(
+	// 	`authorize > [${requestPermission}] ${routePath} > role :>> [WS: ${activeRole.workspace}] ${activeRole.name}:`,
+	// 	`${activeRole.routes.map((r) => `· ${r.path} - ${r.permissions.join(",") || "none"}`).join("\n")}`,
+	// 	`>> ALLOW:`,
+	// 	isAllowed
+	// );
 
 	if (!isAllowed) return ApiResponse.rejected(res);
 

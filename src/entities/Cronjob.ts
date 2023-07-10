@@ -74,7 +74,7 @@ export interface ICronjob extends IBase {
 }
 export type CronjobDto = Omit<ICronjob, keyof HiddenBodyKeys>;
 
-export const cronjobSchema = new Schema<ICronjob>(
+export const cronjobSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },

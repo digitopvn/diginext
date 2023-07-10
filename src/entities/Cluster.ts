@@ -21,6 +21,10 @@ export interface ICluster extends IBase {
 	 */
 	isVerified?: boolean;
 	/**
+	 * Is this a default cluster
+	 */
+	isDefault?: boolean;
+	/**
 	 * A cluster name on the cloud provider, **NOT** a cluster name in `kubeconfig`
 	 */
 	shortName?: string;
@@ -86,6 +90,7 @@ export const clusterSchema = new Schema(
 		name: { type: String },
 		slug: { type: String },
 		isVerified: { type: Boolean },
+		isDefault: { type: Boolean, default: false },
 		shortName: { type: String },
 		contextName: { type: String },
 		provider: { type: Types.ObjectId, ref: "cloud_providers" },

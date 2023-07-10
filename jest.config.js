@@ -11,6 +11,6 @@ module.exports = {
 	moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
 	collectCoverage: false,
 	testEnvironment: "node",
-	coverageReporters: ["json", "lcov", "text", "clover"] // "text-summary"
-	
+	coverageReporters: ["json", "lcov", "text", "clover"], // "text-summary"
+	modulePathIgnorePatterns: ["node_modules", ".temp"]
 };

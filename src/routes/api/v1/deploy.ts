@@ -33,7 +33,15 @@ router
 	/**
 	 * Deploy from a build instance.
 	 */
-	.post("/from-build", processApiRequest(controller.deployFromBuild.bind(controller)));
+	.post("/from-build", processApiRequest(controller.deployFromBuild.bind(controller)))
+	/**
+	 * Build & deploy from an app.
+	 */
+	.post("/from-app", processApiRequest(controller.buildFromAppAndDeploy.bind(controller)))
+	/**
+	 * Build & deploy from a git repo.
+	 */
+	.post("/from-git", processApiRequest(controller.buildFromGitRepoAndDeploy.bind(controller)));
 /**
  * Deploy from an image URL
  */

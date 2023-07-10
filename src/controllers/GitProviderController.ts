@@ -3,15 +3,14 @@ import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { upperCase } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IGitProvider } from "@/entities";
-import * as entities from "@/entities";
-import type { IQueryFilter } from "@/interfaces";
-import * as interfaces from "@/interfaces";
+import type { IRole } from "@/entities";
+import { GitProviderDto } from "@/entities";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { type GitProviderType, gitProviderDomain } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
-import GitProviderAPI, * as gitProviderApi from "@/modules/git/git-provider-api";
+import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
 import { makeSlug } from "@/plugins/slug";
 import GitProviderService from "@/services/GitProviderService";
 
@@ -19,7 +18,7 @@ import BaseController from "./BaseController";
 
 @Tags("Git Provider")
 @Route("git")
-export default class GitProviderController extends BaseController<IGitProvider> {
+export default class GitProviderController extends BaseController {
 	service: GitProviderService;
 
 	constructor() {
@@ -32,7 +31,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	async read(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	async read(@Queries() queryParams?: IGetQueryParams) {
 		if (!this.filter) this.filter = {};
 
 		try {
@@ -47,7 +46,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: entities.GitProviderDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async create(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
 		// validation
 		const { type, name, bitbucket_oauth, github_oauth } = body;
 
@@ -120,12 +119,12 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 			return respondFailure(`Git "${type}" type is not supported yet.`);
 		}
 
+		// Fallback support "gitWorkspace" === "org" -> will be removed soon
+		if (body.org) body.gitWorkspace = body.org;
+		if (body.gitWorkspace) body.org = body.gitWorkspace;
+
 		// generate repo info
 		body.host = gitProviderDomain[body.type];
-		// body.repo = {
-		// 	url: `https://${body.host}/${body.gitWorkspace}`,
-		// 	sshPrefix: `git@${body.host}:${body.gitWorkspace}`,
-		// };
 
 		// grab data to create:
 		body.access_token = access_token;
@@ -133,7 +132,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		body.method = method;
 
 		// mark as organization git provider or not
-		body.public = body.isOrg = (this.user.activeRole as entities.IRole).type === "admin";
+		body.public = body.isOrg = (this.user.activeRole as IRole).type === "admin";
 
 		try {
 			// verify
@@ -149,24 +148,24 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: entities.GitProviderDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async update(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
 		let provider = await this.service.findOne(this.filter, this.options);
 		if (!provider) return respondFailure(`Git provider not found.`);
 
 		if (provider.type === "github" && provider.host !== "github.com") body.host = "github.com";
 		if (provider.type === "bitbucket" && provider.host !== "bitbucket.org") body.host = "bitbucket.org";
 
-		if (body.gitWorkspace && provider.type === "github") {
-			if (!provider.name) body.name = `${upperCase(body.gitWorkspace)} Github`;
+		if (body.org && provider.type === "github") {
+			if (!provider.name) body.name = `${upperCase(body.org)} Github`;
 		}
 
-		if (body.gitWorkspace && provider.type === "bitbucket") {
-			if (!provider.name) body.name = `${upperCase(body.gitWorkspace)} Bitbucket`;
+		if (body.org && provider.type === "bitbucket") {
+			if (!provider.name) body.name = `${upperCase(body.org)} Bitbucket`;
 		}
 
 		body.repo = {
-			url: `https://${provider.host}/${body.gitWorkspace}`,
-			sshPrefix: `git@${provider.host}:${body.gitWorkspace}`,
+			url: `https://${provider.host}/${body.org}`,
+			sshPrefix: `git@${provider.host}:${body.org}`,
 		};
 
 		// regenerate slug
@@ -202,7 +201,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
+	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
@@ -211,10 +210,9 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/verify")
-	async verify(@Queries() queryParams?: interfaces.IPostQueryParams) {
+	async verify(@Queries() queryParams?: IPostQueryParams) {
 		// validation
 		const { _id, slug } = this.filter;
-
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
 
 		let provider = await this.service.findOne(this.filter, this.options);
@@ -232,7 +230,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/profile")
-	async getProfile(@Queries() queryParams?: interfaces.IPostQueryParams) {
+	async getProfile(@Queries() queryParams?: IPostQueryParams) {
 		// validation
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
@@ -311,7 +309,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 
 		// process
 		try {
-			const repos = await GitProviderAPI.listOrgRepositories(provider);
+			const repos = await GitProviderAPI.listGitRepositories(provider);
 			return respondSuccess({ data: repos });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -325,7 +323,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("jwt")
 	@Post("/orgs/repos")
 	async createOrgRepo(
-		@Body() body: gitProviderApi.GitRepositoryDto,
+		@Body() body: GitRepositoryDto,
 		@Queries()
 		queryParams?: {
 			/**
@@ -342,16 +340,12 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
 
-		const filter: IQueryFilter = {};
-		if (_id) filter._id = _id;
-		if (slug) filter.slug = slug;
-
-		let provider = await this.service.findOne(filter);
+		let provider = await this.service.findOne(this.filter, this.options);
 		if (!provider) return respondFailure(`Git provider not found.`);
 
 		// process
 		try {
-			const repo = await GitProviderAPI.createOrgRepository(provider, body, { isDebugging: true });
+			const repo = await GitProviderAPI.createGitRepository(provider, body, { isDebugging: true });
 			return respondSuccess({ data: repo });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -365,7 +359,7 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	@Security("jwt")
 	@Delete("/orgs/repos")
 	async deleteOrgRepo(
-		@Body() body: gitProviderApi.GitRepositoryDto,
+		@Body() body: GitRepositoryDto,
 		@Queries()
 		queryParams?: {
 			/**
@@ -380,19 +374,15 @@ export default class GitProviderController extends BaseController<IGitProvider> 
 	) {
 		// validation
 		const { _id, slug } = this.filter;
-		if (!_id && !slug) return respondFailure(`Param git provider's "_id" or "slug" is required.`);
+		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
 		if (!body.name) return respondFailure(`Data git repo "name" (slug) is required.`);
 
-		const filter: IQueryFilter = {};
-		if (_id) filter._id = _id;
-		if (slug) filter.slug = slug;
-
-		let provider = await this.service.findOne(filter);
+		let provider = await this.service.findOne(this.filter, this.options);
 		if (!provider) return respondFailure(`Git provider not found.`);
 
 		// process
 		try {
-			const repo = await GitProviderAPI.deleteOrgRepository(provider, provider.gitWorkspace, body.name);
+			const repo = await GitProviderAPI.deleteGitRepository(provider, provider.org, body.name);
 			return respondSuccess({ data: repo });
 		} catch (e) {
 			return respondFailure(e.toString());

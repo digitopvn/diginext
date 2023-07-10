@@ -11,6 +11,7 @@ import type { IWorkspace } from "./Workspace";
 
 export interface IProject extends IBase {
 	name?: string;
+	isDefault?: boolean;
 	image?: string;
 	slug?: string;
 	apiKey?: string;
@@ -27,7 +28,7 @@ export interface IProject extends IBase {
 	 *
 	 * @remarks This can be populated to {App} data
 	 */
-	appSlugs?: string;
+	appSlugs?: string[];
 	/**
 	 * List of App IDs
 	 *
@@ -43,6 +44,7 @@ export const projectSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
+		isDefault: { type: Boolean },
 		image: { type: String },
 		slug: { type: String },
 		apiKey: { type: String },

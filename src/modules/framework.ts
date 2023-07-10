@@ -1,5 +1,5 @@
 import detectPrivateKey from "diginext-utils/dist/file/detectPrivateKey";
-import { log, logError } from "diginext-utils/dist/xconsole/log";
+import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import fs from "fs";
 import { mkdir } from "fs/promises";
 import ora from "ora";
@@ -86,9 +86,10 @@ export const selectFrameworkVersion = async (framework = "diginext") => {
 	// return versionList;
 };
 
-export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
-	// const repoSSH = `git@bitbucket.org:${config.workspace}/${config.framework[framework]}.git`;
-	const { frameworkVersion, user } = options;
+export interface PullFrameworkVersion extends Pick<InputOptions, "framework" | "frameworkVersion" | "name" | "repoSSH" | "ci"> {}
+
+export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
+	const { frameworkVersion } = options;
 	const { name, repoSSH } = options.framework;
 
 	const spin = ora(`Pulling "${name}" framework... 0%`).start();
@@ -111,12 +112,12 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 				spin.text = `Pulling "${name}" framework... ${progress || 0}%`;
 			}
 		},
+		// delete framework git
+		removeGitOnFinish: true,
+		removeCIOnFinish: !options.ci,
 	});
 
 	spin.stop();
-
-	// delete framework git
-	if (fs.existsSync(".fw/.git")) await deleteFolderRecursive(".fw/.git");
 
 	// delete unneccessary files
 	// if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
@@ -127,13 +128,34 @@ export const pullingLatestFrameworkVersion = async (options: InputOptions) => {
 	return true;
 };
 
+export const changePackageName = async (options: InputOptions) => {
+	//
+	const { targetDirectory, repoSlug } = options;
+
+	if (!path.resolve(targetDirectory, "package.json")) {
+		logWarn("NOT FOUND package.json");
+		return;
+	}
+	try {
+		const json = fs.readFileSync(path.resolve(targetDirectory, "package.json"), "utf-8");
+
+		const data = JSON.parse(json);
+		data.name = repoSlug;
+		fs.writeFileSync(path.resolve(targetDirectory, "package.json"), JSON.stringify(data, undefined, 4));
+	} catch (error) {
+		console.error(`changePackageName error`, error);
+	}
+};
+
 export async function pullingFramework(options: InputOptions) {
 	if (options.framework.name != "none") {
 		// TODO: Select specific branch as a version?
 
-		await pullingLatestFrameworkVersion(options);
+		await pullFrameworkVersion(options);
 
 		await copyFrameworkResources(options.targetDirectory);
+
+		await changePackageName(options);
 
 		await cleanUpFramework();
 	}
@@ -143,6 +165,7 @@ export async function pullingFramework(options: InputOptions) {
 
 export const cloneGitFramework = async (options: InputOptions) => {
 	//
+
 	const { name, repoSSH } = options.framework;
 
 	// create tmp dir

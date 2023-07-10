@@ -1,6 +1,5 @@
 import { Body, Get, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { ICluster } from "@/entities";
 import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import type { KubeNode } from "@/interfaces/KubeNode";
@@ -26,7 +25,7 @@ export default class MonitorController extends BaseController {
 		let data: KubeNode[] = [];
 
 		if (!clusterShortName) {
-			const clusters = await DB.find<ICluster>("cluster", { workspace: this.workspace._id });
+			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
 					const { contextName: context } = cluster;
@@ -43,7 +42,7 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
 			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
 
 			const { contextName: context } = cluster;
@@ -74,7 +73,7 @@ export default class MonitorController extends BaseController {
 		let data: KubeNamespace[] = [];
 
 		if (!clusterShortName) {
-			const clusters = await DB.find<ICluster>("cluster", { workspace: this.workspace._id });
+			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
 					const { contextName: context } = cluster;
@@ -91,7 +90,7 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
 			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
 
 			const { contextName: context } = cluster;
@@ -131,7 +130,7 @@ export default class MonitorController extends BaseController {
 
 		if (!clusterShortName) return respondFailure(`Param "clusterShortName" is required.`);
 
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
 		if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
 
 		const { contextName: context } = cluster;
@@ -163,7 +162,7 @@ export default class MonitorController extends BaseController {
 		let data: KubeService[] = [];
 
 		if (!clusterShortName) {
-			const clusters = await DB.find<ICluster>("cluster", { workspace: this.workspace._id });
+			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
 					const { contextName: context } = cluster;
@@ -184,7 +183,7 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
 			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
 
 			const { contextName: context } = cluster;
@@ -241,7 +240,7 @@ export default class MonitorController extends BaseController {
 
 		if (!clusterShortName) return respondFailure(`Param "clusterShortName" is required.`);
 
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
 		if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
 
 		const { contextName: context } = cluster;
@@ -267,7 +266,7 @@ export default class MonitorController extends BaseController {
 		let data: KubeIngress[] = [];
 
 		if (!clusterShortName) {
-			const clusters = await DB.find<ICluster>("cluster", { workspace: this.workspace._id });
+			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
 					const { contextName: context } = cluster;
@@ -288,7 +287,7 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
 			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
 
 			const { contextName: context } = cluster;
@@ -319,7 +318,7 @@ export default class MonitorController extends BaseController {
 		let data: KubeDeployment[] = [];
 
 		if (!clusterShortName) {
-			const clusters = await DB.find<ICluster>("cluster", { workspace: this.workspace._id });
+			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
 					const { contextName: context } = cluster;
@@ -340,7 +339,7 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
 			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
 
 			const { contextName: context } = cluster;
@@ -371,7 +370,7 @@ export default class MonitorController extends BaseController {
 		let data: KubePod[] = [];
 
 		if (!clusterShortName) {
-			const clusters = await DB.find<ICluster>("cluster", { workspace: this.workspace._id });
+			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
 					const { contextName: context } = cluster;
@@ -390,7 +389,7 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
 			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
 
 			const { contextName: context } = cluster;
@@ -421,7 +420,7 @@ export default class MonitorController extends BaseController {
 		let data: KubeSecret[] = [];
 
 		if (!clusterShortName) {
-			const clusters = await DB.find<ICluster>("cluster", { workspace: this.workspace._id });
+			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
 					const { contextName: context } = cluster;
@@ -442,7 +441,7 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
+			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
 			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
 
 			const { contextName: context } = cluster;

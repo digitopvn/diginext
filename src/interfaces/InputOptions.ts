@@ -31,6 +31,14 @@ export type InputOptions = {
 	};
 
 	/**
+	 * Continuous integration (CI) flag
+	 * - Flag: `--ci`
+	 * - Revert: `--no-ci`
+	 * @default false
+	 */
+	ci?: boolean;
+
+	/**
 	 * Define if the command was executed on local machine or server machine
 	 */
 	isLocal?: boolean;
@@ -49,8 +57,8 @@ export type InputOptions = {
 	workspaceId?: string;
 
 	/**
-	 * User input organization
-	 * - Use when container registry authentication
+	 * User input organization. Used in:
+	 * - Container registry authentication
 	 */
 	org?: string;
 
@@ -90,7 +98,7 @@ export type InputOptions = {
 	slug?: string;
 
 	/**
-	 *
+	 * Flag: `--token`
 	 */
 	token?: string;
 
@@ -100,27 +108,25 @@ export type InputOptions = {
 	refreshToken?: string;
 
 	/**
-	 *
+	 * Flag: `-i`, `--input`
 	 */
 	input?: string;
 
 	/**
 	 *
 	 */
-	key?: string;
-
-	/**
-	 *
-	 */
 	data?: string;
-
 	/**
-	 *
+	 * Flag: `--key`, `--token`
+	 */
+	key?: string;
+	/**
+	 * Flag: `--val`, `--value`
 	 */
 	value?: string;
 
 	/**
-	 *
+	 * Flag: `-f`, `--file`
 	 */
 	filePath?: string;
 
@@ -145,24 +151,21 @@ export type InputOptions = {
 	targetDirectory?: string;
 
 	/**
-	 *
+	 * Git repo URL
+	 * @example https://github.com/digitopvn/diginext
 	 */
 	repoURL?: string;
 
 	/**
-	 *
+	 * Git repo SSH url
+	 * @example git@github.com:digitopvn/diginext.git
+	 */
+	repoSSH?: string;
+
+	/**
+	 * Git repo slug
 	 */
 	repoSlug?: string;
-
-	/**
-	 *
-	 */
-	code?: string;
-
-	/**
-	 *
-	 */
-	remoteSSH?: string;
 
 	/**
 	 *
@@ -185,49 +188,27 @@ export type InputOptions = {
 	overwrite?: boolean;
 
 	/**
-	 *
+	 * DX command's action level 1
 	 */
-	action?:
-		| "new"
-		| "init"
-		| "auth"
-		| "gcloud"
-		| "digitalocean"
-		| "upgrade"
-		| "update"
-		| "cdn"
-		| "help"
-		| "git"
-		| "db"
-		| "pipeline"
-		| "deploy"
-		| "build"
-		| "analytics"
-		| "test-build"
-		| "release"
-		| "down"
-		| "free"
-		| "transfer"
-		| "newpage"
-		| string;
+	action?: string;
 
 	/**
-	 *
+	 * DX command's action level 2
 	 */
 	secondAction?: string;
 
 	/**
-	 *
+	 * DX command's action level 3
 	 */
 	thirdAction?: string;
 
 	/**
-	 *
+	 * DX command's action level 4
 	 */
 	fourAction?: string;
 
 	/**
-	 *
+	 * DX command's action level 5
 	 */
 	fifthAction?: string;
 
@@ -430,11 +411,6 @@ export type InputOptions = {
 	projectName?: string;
 
 	/**
-	 *
-	 */
-	remoteURL?: string;
-
-	/**
 	 * Kubernetes namespace
 	 */
 	namespace?: string;
@@ -526,6 +502,7 @@ export type InputOptions = {
 
 	/**
 	 * Cloud provider
+	 * - Flag: `--provider`, `--pro`
 	 * @type {"gcloud" | "digitalocean" | "custom"}
 	 * @default "custom"
 	 */
@@ -533,23 +510,27 @@ export type InputOptions = {
 
 	/**
 	 * Container Registry's slug
+	 * - Flag: `-r`, `--registry`
 	 */
 	registry?: string;
 
 	/**
 	 * Git provider
+	 * - Flag: `--git`
 	 */
 	git?: IGitProvider;
 
 	/**
 	 * Git provider type
+	 * - Flag: `--gp`, `--git-provider`
 	 */
 	gitProvider?: GitProviderType;
 
 	/**
 	 * A slug of git workspace
+	 * - Flag: `--org`, `--git-org`
 	 */
-	gitWorkspace?: string;
+	gitOrg?: string;
 
 	/**
 	 * Specify a git branch
@@ -562,7 +543,7 @@ export type InputOptions = {
 	providerProject?: string;
 
 	/**
-	 * Output type: `string`, `json`, `yaml`.
+	 * Flag: `-o`, `--output`
 	 * @default "string"
 	 * @example "string" | "json" | "yaml"
 	 */

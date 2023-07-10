@@ -1,7 +1,6 @@
 import { logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
-import type { ICluster } from "@/entities";
 import type { IProject } from "@/entities/Project";
 import { projectSchema } from "@/entities/Project";
 import type { IQueryFilter } from "@/interfaces";
@@ -33,7 +32,7 @@ export default class ProjectService extends BaseService<IProject> {
 				for (const [env, deployEnvironment] of Object.entries(app.deployEnvironment)) {
 					if (!isEmpty(deployEnvironment)) {
 						const { cluster: clusterShortName, namespace } = deployEnvironment;
-						const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+						const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 
 						if (cluster) {
 							const { contextName: context } = cluster;

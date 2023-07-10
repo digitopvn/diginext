@@ -8,7 +8,7 @@ import path from "path";
 import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { IApp, ICluster, IRelease } from "@/entities";
+import type { ICluster, IRelease } from "@/entities";
 import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { objectToDeploymentYaml, wait, waitUntil } from "@/plugins";
@@ -33,7 +33,7 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 
 	// validation
 	if (isValidObjectId(idOrRelease)) {
-		let data = await DB.findOne<IRelease>("release", { id: idOrRelease });
+		let data = await DB.findOne("release", { id: idOrRelease });
 
 		if (!data) {
 			throw new Error(`Release "${idOrRelease}" not found.`);
@@ -51,7 +51,7 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		cluster = await ClusterManager.authCluster(clusterShortName);
+		cluster = await ClusterManager.authClusterByShortName(clusterShortName);
 	} catch (e) {
 		logError(`[KUBE_DEPLOY] Clean up > `, e);
 		return { error: e.message };
@@ -59,7 +59,7 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	const { contextName: context } = cluster;
 
 	// Fallback support to the deprecated "main-app" name
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 	const mainAppName = await getDeploymentName(app);
 
@@ -129,13 +129,13 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 export async function previewPrerelease(id: string, options: RolloutOptions = {}) {
 	const { onUpdate } = options;
 
-	let releaseData = await DB.findOne<IRelease>("release", { id });
+	let releaseData = await DB.findOne("release", { id });
 
 	if (isEmpty(releaseData)) return { error: `Release not found.` };
 
 	const { slug: releaseSlug, cluster: clusterShortName, appSlug, projectSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
 
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	const mainAppName = await getDeploymentName(app);
 
 	log(`Preview the release: "${releaseSlug}" (${id})...`);
@@ -144,7 +144,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		cluster = await ClusterManager.authCluster(clusterShortName);
+		cluster = await ClusterManager.authClusterByShortName(clusterShortName);
 	} catch (e) {
 		logError(`[PREVIEW_PRERELEASE]`, e);
 		return { error: e.message };
@@ -212,7 +212,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const { onUpdate } = options;
 	const { execa, execaCommand, execaSync } = await import("execa");
 
-	const releaseData = await DB.findOne<IRelease>("release", { id });
+	const releaseData = await DB.findOne("release", { id });
 	if (isEmpty(releaseData)) return { error: `Release "${id}" not found.` };
 
 	const {
@@ -231,7 +231,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	if (onUpdate) onUpdate(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
 
 	// get the app
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	log(`Rolling out > app:`, app);
 
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
@@ -240,14 +240,14 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		await ClusterManager.authCluster(clusterShortName);
+		await ClusterManager.authClusterByShortName(clusterShortName);
 		log(`Rolling out > Checked connectivity of "${clusterShortName}" cluster.`);
 	} catch (e) {
 		logError(`[ROLL_OUT]`, e);
 		return { error: e.message };
 	}
 
-	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 	if (!cluster) {
 		logError(`Cluster "${clusterShortName}" not found.`);
 		return { error: `Cluster "${clusterShortName}" not found.` };
@@ -611,10 +611,10 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const filter = [{ projectSlug, appSlug, active: true }];
 
 	// Mark previous releases as "inactive":
-	await DB.update<IRelease>("release", { $or: filter }, { active: false });
+	await DB.update("release", { $or: filter }, { active: false });
 
 	// Mark this latest release as "active":
-	const latestReleases = await DB.update<IRelease>("release", { _id: id }, { active: true });
+	const latestReleases = await DB.update("release", { _id: id }, { active: true });
 
 	const latestRelease = latestReleases[0];
 	// log({ latestRelease });

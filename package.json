@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.17.0",
+	"version": "3.18.0-prerelease.9",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"exports": "./index.js",
 	"bin": {
@@ -76,7 +76,11 @@
 		"check-types": "tsc --noEmit --pretty -p tsconfig.json",
 		"lint": "eslint \"src/**/*.ts\" --fix && pnpm check-types",
 		"clean": "rimraf .yarn/cache node_modules yarn.lock pnpm-lock.yaml dist",
-		"test": "CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false",
+		"test": "run-script-os",
+		"test:win32": "set CLI_MODE=server && set NODE_ENV=test && jest --runInBand --detectOpenHandles --watchAll=false",
+		"test:darwin:linux": "CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false",
+		"test:default": "CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false",
+		"test:build": "pnpm build && CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false",
 		"coverage": "pnpm lint && pnpm build && jest --coverage",
 		"format": "prettier 'src/**/*.{js,ts,tsx,json,yaml}' --write && pnpm lint",
 		"commit": "git add . && cz && git push origin && exit 0",

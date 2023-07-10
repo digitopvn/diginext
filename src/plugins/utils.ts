@@ -9,9 +9,10 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import dns from "dns";
 import dotenv from "dotenv";
+import { execa, execaCommand } from "execa";
 import * as afs from "fs/promises";
 import yaml from "js-yaml";
-import _, { isArray, isEmpty, isString, toInteger, toNumber } from "lodash";
+import _, { isArray, isEmpty, isString, toInteger, toNumber, trimEnd } from "lodash";
 import * as m from "marked";
 import TerminalRenderer from "marked-terminal";
 import path from "path";
@@ -220,9 +221,27 @@ export function logVersion() {
 
 type ErrorCallback = (e: string) => void;
 
+export type CmdOptions = { isDebugging?: boolean; onProgress?: (msg: string) => void };
+export const progressCmd = async (command: string, options?: CmdOptions) => {
+	if (options?.isDebugging) console.log("Processing command :>> ", command);
+	const stream = execaCommand(command);
+	let stdout: string = "";
+	stream.stdio.forEach((_stdio) => {
+		if (_stdio) {
+			_stdio.on("data", (data) => {
+				let logMsg = data.toString();
+				stdout += logMsg;
+				if (options?.isDebugging && logMsg) console.log(logMsg);
+				if (options?.onProgress && logMsg) options?.onProgress(logMsg);
+			});
+		}
+	});
+	const end = await stream;
+	return stdout || end.stdout;
+};
+
 export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCallback = "") {
 	try {
-		const { execaCommand } = await import("execa");
 		let { stdout } = await execaCommand(cmd, cliOpts);
 		// console.log(`[execCmd]`, { stdout });
 		return stdout;
@@ -482,9 +501,31 @@ export const savePackageConfig = (_config, options: SaveOpts) => {
 	}
 };
 
-export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
-	// git@bitbucket.org:<namespace>/<git-repo-slug>.git
-	let namespace: string, fullSlug: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+export interface GitRepoData {
+	namespace: string;
+	repoSlug: string;
+	/**
+	 * @example org-slug/repo-slug
+	 */
+	fullSlug: string;
+	/**
+	 * @example github.com, bitbucket.org,...
+	 */
+	gitDomain: string;
+	/**
+	 * Git provider type
+	 */
+	gitProvider: GitProviderType;
+}
+
+/**
+ * Read git data in a repo SSH url
+ * @param {string} repoSSH - Example: `git@bitbucket.org:organization-name/git-repo-slug.git`
+ */
+export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
+	let namespace: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+
+	let fullSlug: string;
 
 	try {
 		namespace = repoSSH.split(":")[1].split("/")[0];
@@ -517,15 +558,62 @@ export const parseGitRepoDataFromRepoSSH = (repoSSH: string) => {
 	fullSlug = `${namespace}/${repoSlug}`;
 
 	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
-};
+}
+
+/**
+ * Read git data in a git repo url
+ * @param {string} repoURL - Example: `https://bitbucket.org/organization-name/git-repo-slug`
+ */
+export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
+	let namespace: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+
+	let fullSlug: string;
+
+	repoURL = trimEnd(repoURL, "/");
+	repoURL = trimEnd(repoURL, "#");
+	if (repoURL.indexOf(".git") > -1) repoURL = repoURL.substring(0, repoURL.indexOf(".git"));
+	if (repoURL.indexOf("?") > -1) repoURL = repoURL.substring(0, repoURL.indexOf("?"));
+	console.log(repoURL);
+
+	[gitDomain, namespace, repoSlug] = repoURL.split("://")[1].split("/");
+
+	try {
+		gitProvider = gitDomain.split(".")[0] as GitProviderType;
+	} catch (e) {
+		console.error(`Repository SSH (${repoURL}) is invalid`);
+		return;
+	}
+
+	fullSlug = `${namespace}/${repoSlug}`;
+
+	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
+}
+
+/**
+ * Generate git repo SSH url from a git repo URL
+ * @example "git@github.com:digitopvn/diginext.git" -> "https://github.com/digitopvn/diginext"
+ */
+export function repoUrlToRepoSSH(repoSSH: string) {
+	const repoData = parseGitRepoDataFromRepoSSH(repoSSH);
+	if (!repoData) throw new Error(`Unable to parse: ${repoSSH}`);
+	return `https://${repoData.gitDomain}/${repoData.fullSlug}`;
+}
+
+/**
+ * Generate git repo URL from a git repo SSH url
+ * @example "https://github.com/digitopvn/diginext" -> "git@github.com:digitopvn/diginext.git"
+ */
+export function repoSshToRepoURL(repoURL: string) {
+	const repoData = parseGitRepoDataFromRepoURL(repoURL);
+	if (!repoData) throw new Error(`Unable to parse: ${repoURL}`);
+	return `git@${repoData.gitDomain}:${repoData.fullSlug}.git`;
+}
 
 /**
  * Process `npm install` or `yarn install` or `pnpm install` on current directory
  */
 export const installPackages = async () => {
 	log(`Đang tiến hành cài đặt "package.json" mới...`);
-
-	const { execa, execaCommand } = await import("execa");
 
 	let areDependenciesInstalled = false;
 	// Install dependencies
@@ -552,12 +640,27 @@ export const installPackages = async () => {
 	}
 };
 
-interface PullOrCloneGitRepoOptions {
+interface PullOrCloneGitRepoOptions extends Pick<InputOptions, "ci" | "isDebugging"> {
+	/**
+	 * Should remove ".git" directory after finished pull/clone repo
+	 * @default false
+	 */
+	removeGitOnFinish?: boolean;
+	/**
+	 * Should remove ".github" directory after finished pull/clone repo
+	 * @default false
+	 */
+	removeCIOnFinish?: boolean;
+	/**
+	 * Use git provider's access_token to authenticate before pulling/cloneing repo
+	 */
 	useAccessToken?: {
 		type: "Bearer" | "Basic";
 		value: string;
 	};
-	isDebugging?: boolean;
+	/**
+	 * Callback for in progressing events
+	 */
 	onUpdate?: (msg: string, progress?: number) => void;
 }
 
@@ -575,7 +678,7 @@ export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOr
 	if (fs.existsSync(dir)) {
 		try {
 			git = simpleGit(dir, { progress: onProgress });
-			await git.clone(repoSSH, dir);
+			await git.clone(repoSSH, dir, ["--depth", "1"]);
 
 			console.log("\ndone");
 		} catch (e) {}
@@ -644,6 +747,10 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 			const curBranch = await getCurrentGitBranch(dir);
 			await git.pull("origin", curBranch, ["--no-ff"]);
 
+			// remove git on finish
+			if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
+			if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
+
 			success = true;
 		} catch (e) {
 			if (onUpdate) onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
@@ -656,6 +763,11 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			try {
 				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+
+				// remove git on finish
+				if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
+				if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
+
 				success = true;
 			} catch (e2) {
 				if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
@@ -668,6 +780,11 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 		try {
 			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+
+			// remove git on finish
+			if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
+			if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
+
 			success = true;
 		} catch (e) {
 			if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
@@ -680,7 +797,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 /**
  * Get current remote SSH & URL
  */
-export const getCurrentGitRepoData = async (dir = process.cwd()) => {
+export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isDebugging: boolean }) => {
 	try {
 		const git = simpleGit(dir, {
 			baseDir: `${dir}`,
@@ -690,11 +807,15 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 		// ! DO NOT SET TO "FALSE"
 		// -----------------------
 		const remotes = await git.getRemotes(true);
+		if (options?.isDebugging) {
+			console.log("[CURRENT DIR] Current git > remotes :>>");
+			console.dir(remotes, { depth: 10 });
+		}
 
-		const remoteSSH = (remotes[0] as any)?.refs?.fetch;
-		if (!remoteSSH) return;
+		const repoSSH = (remotes[0] as any)?.refs?.fetch;
+		if (!repoSSH) return;
 
-		if (remoteSSH.indexOf("https://") > -1) {
+		if (repoSSH.indexOf("https://") > -1) {
 			logError(`Git repository using HTTPS origin is not supported, please use SSH origin.`);
 			log(`For example: "git remote set-url origin git@bitbucket.org:<namespace>/<git-repo-slug>.git"`);
 			return;
@@ -703,11 +824,11 @@ export const getCurrentGitRepoData = async (dir = process.cwd()) => {
 		const branch = await getCurrentGitBranch(dir);
 		if (!branch) return;
 
-		const { repoSlug: slug, gitProvider: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(remoteSSH);
+		const { repoSlug: slug, gitProvider: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(repoSSH);
 
-		const remoteURL = generateRepoURL(provider, fullSlug);
+		const repoURL = generateRepoURL(provider, fullSlug);
 
-		return { remoteSSH, remoteURL, provider, slug, fullSlug, namespace, gitDomain, branch };
+		return { repoSSH, repoURL, provider, slug, fullSlug, namespace, gitDomain, branch };
 	} catch (e) {
 		// logWarn(`getCurrentGitRepoData() :>>`, e.toString());
 		return;
@@ -1006,8 +1127,6 @@ export const cliContainerExec = async (command, options) => {
 	// 	await wait(2000);
 	// 	options.pipelineReady = true;
 	// }
-
-	const { execa, execaCommand } = await import("execa");
 
 	if (isWin()) {
 		getContainerName = await execaCommand(`docker ps --format '{{.Names}}' | findstr diginext-cli`);

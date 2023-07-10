@@ -46,7 +46,7 @@ const repoDeleteApiPath = (provider: GitProviderType, org: string, slug: string)
 /**
  * Only applicable for Bitbucket
  */
-const orgProjectApiPath = (provider: IGitProvider) => `/workspaces/${provider.gitWorkspace}/projects/DXP`;
+const orgProjectApiPath = (provider: IGitProvider) => `/workspaces/${provider.org}/projects/DXP`;
 
 interface GithubFailureResponse {
 	message?: string;
@@ -490,7 +490,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 
 	try {
 		const response = await axios({ url, headers, method, data });
-		if (options?.isDebugging) console.log("Git Provider API > response :>> ", response);
+		// if (options?.isDebugging) console.log("Git Provider API > response :>> ", response);
 		const resData = response.data;
 
 		// catch errors
@@ -502,7 +502,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 			const tokens = await bitbucketRefeshToken(provider);
 
 			// save new tokens to database
-			const [updatedProvider] = await DB.update<IGitProvider>("git", { _id: provider._id }, tokens);
+			const [updatedProvider] = await DB.update("git", { _id: provider._id }, tokens);
 
 			if (!updatedProvider)
 				throw new Error(`[${provider.type.toUpperCase()}_API_ERROR] "${path}" > Can't update tokens to "${provider.name}" git provider.`);
@@ -623,7 +623,7 @@ const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDt
 		// console.log("dxProject :>> ", dxProject);
 
 		// create new repository
-		const newBitbucketRepo = (await api(provider, orgRepoApiPath(provider.type, provider.gitWorkspace, data.name), {
+		const newBitbucketRepo = (await api(provider, orgRepoApiPath(provider.type, provider.org, data.name), {
 			data: {
 				name: data.name,
 				description: data.description,
@@ -658,7 +658,7 @@ const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDt
 	}
 
 	if (provider.type === "github") {
-		const url = provider.isOrg ? orgRepoApiPath(provider.type, provider.gitWorkspace) : userRepoApiPath(provider.type);
+		const url = provider.isOrg ? orgRepoApiPath(provider.type, provider.org) : userRepoApiPath(provider.type);
 		const newGithubRepo = (await api(provider, url, {
 			data: {
 				...data,
@@ -666,7 +666,7 @@ const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDt
 				has_wiki: true,
 			},
 			method: "POST",
-			isDebugging: options.isDebugging,
+			isDebugging: options?.isDebugging,
 		})) as GitHubOrgRepository & GithubFailureResponse;
 
 		if (newGithubRepo.message) throw new Error(`[GITHUB_API_ERROR] ${newGithubRepo.message}`);
@@ -697,10 +697,7 @@ const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDt
 
 const listGitRepositories = async (provider: IGitProvider) => {
 	if (provider.type === "bitbucket") {
-		const { values: bitbucketRepos } = (await api(
-			provider,
-			orgRepoApiPath(provider.type, provider.gitWorkspace)
-		)) as BitbucketOrgRepoListResponse;
+		const { values: bitbucketRepos } = (await api(provider, orgRepoApiPath(provider.type, provider.org))) as BitbucketOrgRepoListResponse;
 
 		return bitbucketRepos.map((repo) => {
 			return {
@@ -725,7 +722,7 @@ const listGitRepositories = async (provider: IGitProvider) => {
 	}
 
 	if (provider.type === "github") {
-		const apiUrl = provider.isOrg ? orgRepoApiPath(provider.type, provider.gitWorkspace) : userRepoApiPath(provider.type, provider.gitWorkspace);
+		const apiUrl = provider.isOrg ? orgRepoApiPath(provider.type, provider.org) : userRepoApiPath(provider.type, provider.org);
 		// console.log("apiUrl :>> ", apiUrl);
 		const githubRepos = (await api(provider, apiUrl)) as GitHubOrgRepository[];
 		// console.log("githubRepos :>> ", githubRepos);
@@ -755,7 +752,7 @@ const listGitRepositories = async (provider: IGitProvider) => {
 	throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 };
 
-export const deleteOrgRepository = async (provider: IGitProvider, org: string, slug: string) => {
+export const deleteGitRepository = async (provider: IGitProvider, org: string, slug: string) => {
 	const apiPath = repoDeleteApiPath(provider.type, org, slug);
 	const res = await api(provider, apiPath, { method: "DELETE" });
 	return res;
@@ -764,9 +761,9 @@ export const deleteOrgRepository = async (provider: IGitProvider, org: string, s
 const GitProviderAPI = {
 	getProfile,
 	listOrgs,
-	listOrgRepositories: listGitRepositories,
-	createOrgRepository: createGitRepository,
-	deleteOrgRepository,
+	listGitRepositories,
+	createGitRepository,
+	deleteGitRepository,
 };
 
 export default GitProviderAPI;

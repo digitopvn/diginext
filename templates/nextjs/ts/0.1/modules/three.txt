@@ -1,0 +1,16 @@
+//import * as THREE from 'three'
+import Object3DExtend from "diginext-three/dist/core/Object3DExtend";
+
+export default class @@PAGE_FILE_NAMEScene extends Object3DExtend {
+\tconstructor(props?: any) {
+\t\tsuper(props);
+
+\t\tObject.assign(this, props);
+
+\t\tthis.#awake();
+\t}
+
+\t#awake() {
+\t\tconst scope = this;
+\t}
+}

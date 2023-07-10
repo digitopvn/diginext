@@ -2,7 +2,7 @@ import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { logError } from "diginext-utils/dist/xconsole/log";
 
 import { isServerMode } from "@/app.config";
-import type { ICluster, IWorkspace } from "@/entities";
+import type { IWorkspace } from "@/entities";
 
 import { fetchApi } from "../api";
 import { DB } from "../api/DB";
@@ -49,7 +49,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	let targetIP: string;
 
 	if (clusterShortName) {
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
 		if (!cluster) {
 			logError(`Cluster "${clusterShortName}" not found.`);
 			return { status: 0, domain, ip: null, messages: [`Cluster "${clusterShortName}" not found.`] } as GenerateDomainResult;
