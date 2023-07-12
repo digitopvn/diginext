@@ -6,10 +6,11 @@ import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { DeployEnvironmentData } from "@/controllers/AppController";
-import type { ICluster, IFramework, IProject, IUser, IWorkspace } from "@/entities";
+import type { ICluster, IFramework, IProject } from "@/entities";
 import type { IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
 import type { DeployEnvironment, IQueryFilter, IQueryOptions, IQueryPagination, KubeDeployment } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environment";
 import { DB } from "@/modules/api/DB";
@@ -128,10 +129,7 @@ export default class AppService extends BaseService<IApp> {
 	async createWithGitURL(
 		repoSSH: string,
 		gitProviderID: string,
-		ownership: {
-			workspace: IWorkspace;
-			owner: IUser;
-		},
+		ownership: Ownership,
 		options?: {
 			/**
 			 * `DANGER`
@@ -383,7 +381,7 @@ export default class AppService extends BaseService<IApp> {
 			 */
 			deployEnvironmentData: DeployEnvironmentData;
 		},
-		ownership?: { owner?: IUser; workspace?: IWorkspace }
+		ownership?: Ownership
 	) {
 		// conversion if needed...
 		if (isJSON(params.deployEnvironmentData))

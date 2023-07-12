@@ -1,11 +1,10 @@
 import type { NextFunction, Response } from "express";
 
-import type BaseController from "@/controllers/BaseController";
 import type { IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { DB } from "@/modules/api/DB";
 
-export const registerController = (controller: BaseController) => {
+export const registerController = (controller: any) => {
 	return async (req: AppRequest, res: Response, next: NextFunction) => {
 		try {
 			// assign Express request
@@ -31,9 +30,9 @@ export const registerController = (controller: BaseController) => {
 			}
 
 			// parse filter, body and pagination data:
-			await controller.parsePagination(req);
-			controller.parseFilter(req);
-			controller.parseBody(req);
+			if (controller.parsePagination) await controller.parsePagination(req);
+			if (controller.parseFilter) controller.parseFilter(req);
+			if (controller.parseBody) controller.parseBody(req);
 
 			next();
 		} catch (e) {

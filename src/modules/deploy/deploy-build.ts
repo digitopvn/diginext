@@ -1,11 +1,14 @@
 import { isEmpty } from "lodash";
+import path from "path";
 
+import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IRelease, IUser, IWorkspace } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 
 import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
+import { updateAppConfig } from "../apps/update-config";
 import { createReleaseFromBuild, sendLog } from "../build";
 import ClusterManager from "../k8s";
 import { fetchDeploymentFromContent } from "./fetch-deployment";
@@ -16,7 +19,6 @@ export type DeployBuildOptions = {
 	env: string;
 	author: IUser;
 	workspace: IWorkspace;
-	buildDirectory: string;
 	cliVersion?: string;
 	shouldUseFreshDeploy?: boolean;
 	/**
@@ -35,21 +37,16 @@ export type DeployBuildOptions = {
 };
 
 export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
-	const {
-		env,
-		author,
-		workspace,
-		buildDirectory,
-		cliVersion,
-		shouldUseFreshDeploy = false,
-		skipReadyCheck = false,
-		forceRollOut = false,
-	} = options;
+	const { env, author, workspace, cliVersion, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
 	const { slug: username } = author;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 
-	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
+	// build directory
+	const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
+	const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
+
+	let app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	if (!app) {
 		sendLog({
 			SOCKET_ROOM,
@@ -62,6 +59,14 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	let serverDeployEnvironment = await getDeployEvironmentByApp(app, env);
 	let isPassedDeployEnvironmentValidation = true;
 	const errMsgs: string[] = [];
+
+	if (!serverDeployEnvironment.namespace) {
+		const namespace = `${projectSlug}-${env || "dev"}`;
+		await updateAppConfig(app, env, { namespace });
+		// reload data...
+		serverDeployEnvironment.namespace = namespace;
+		app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
+	}
 
 	// validating...
 	if (isEmpty(serverDeployEnvironment)) {
@@ -82,16 +87,6 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		});
 		isPassedDeployEnvironmentValidation = false;
 		errMsgs.push(`Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`);
-	}
-
-	if (!serverDeployEnvironment.namespace) {
-		sendLog({
-			SOCKET_ROOM,
-			type: "error",
-			message: `Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`,
-		});
-		isPassedDeployEnvironmentValidation = false;
-		errMsgs.push(`Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`);
 	}
 
 	if (!isPassedDeployEnvironmentValidation) return { error: errMsgs.join(",") };

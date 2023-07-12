@@ -42,8 +42,8 @@ const jwt_auth = (req: AppRequest, res, next) =>
 						{ populate: ["roles", "workspaces", "activeWorkspace"] }
 					);
 				}
-				req.workspace = user.activeWorkspace as IWorkspace;
 			}
+			req.workspace = user.activeWorkspace as IWorkspace;
 			// console.log("user.activeWorkspace :>> ", user.activeWorkspace);
 
 			// role
@@ -63,8 +63,10 @@ const jwt_auth = (req: AppRequest, res, next) =>
 				);
 			}
 
+			// WHY????
 			if (isEmpty(user.activeWorkspace)) delete user.activeWorkspace;
 			if (isEmpty(user.activeRole)) delete user.activeRole;
+			if (isEmpty(user.activeWorkspace) && isEmpty(user.activeRole)) return Response.rejected(res, "Permissions denied.");
 
 			req.role = user.activeRole = activeRole;
 
