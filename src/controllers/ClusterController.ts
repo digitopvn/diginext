@@ -7,8 +7,7 @@ import * as interfaces from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
-import { CloudProviderService } from "@/services";
-import ClusterService from "@/services/ClusterService";
+import { CloudProviderService, ClusterService } from "@/services";
 
 import BaseController from "./BaseController";
 

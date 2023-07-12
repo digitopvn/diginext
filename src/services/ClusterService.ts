@@ -3,10 +3,8 @@ import { clusterSchema } from "@/entities/Cluster";
 
 import BaseService from "./BaseService";
 
-export default class ClusterService extends BaseService<ICluster> {
+export class ClusterService extends BaseService<ICluster> {
 	constructor() {
 		super(clusterSchema);
 	}
 }
-
-export { ClusterService };

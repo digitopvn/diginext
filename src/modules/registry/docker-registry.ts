@@ -5,7 +5,6 @@ import { Config, isServerMode } from "@/app.config";
 import { saveCliConfig } from "@/config/config";
 import type { IContainerRegistry } from "@/entities";
 
-import { DB } from "../api/DB";
 import ClusterManager from "../k8s";
 import { getKubeContextByCluster } from "../k8s/kube-config";
 import type { ContainerRegistrySecretOptions, DockerRegistryCredentials } from "./ContainerRegistrySecretOptions";
@@ -24,6 +23,8 @@ interface DockerRegistryConnectOptions {
 
 const DockerRegistry = {
 	connectDockerToRegistry: async (creds: DockerRegistryCredentials, options: DockerRegistryConnectOptions) => {
+		const { DB } = await import("@/modules/api/DB");
+
 		const { execaCommand, execaSync } = await import("execa");
 
 		const { workspaceId, registry: registrySlug } = options;
@@ -71,6 +72,7 @@ const DockerRegistry = {
 		return newRegistry;
 	},
 	createImagePullSecret: async (options: ContainerRegistrySecretOptions) => {
+		const { DB } = await import("@/modules/api/DB");
 		const { execa, execaCommand, execaSync } = await import("execa");
 
 		const { registrySlug, namespace = "default", clusterShortName } = options;

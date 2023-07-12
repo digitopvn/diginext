@@ -4,11 +4,13 @@ import { IsTest } from "@/app.config";
 import type { IWorkspace } from "@/entities";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 
-import { DB } from "../api/DB";
+// import { DB } from "../api/DB";
 import type { CheckQuotaParams, CheckQuotaResponse } from "../diginext/dx-subscription";
 import { dxCheckQuota } from "../diginext/dx-subscription";
 
 export async function checkQuota(workspace: IWorkspace, options: { resourceSize?: ResourceQuotaSize } = {}) {
+	const { DB } = await import("../api/DB");
+
 	if (IsTest()) return { status: 1, data: { isExceed: false }, messages: ["Ok"] } as CheckQuotaResponse;
 
 	const { dx_key } = workspace;
@@ -29,6 +31,8 @@ export async function checkQuota(workspace: IWorkspace, options: { resourceSize?
 }
 
 export async function checkQuotaByWorkspaceId(id: string) {
+	const { DB } = await import("../api/DB");
+
 	const workspace = await DB.findOne("workspace", { _id: id });
 	if (!workspace) throw new Error(`Workspace not found`);
 

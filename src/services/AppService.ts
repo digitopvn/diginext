@@ -31,8 +31,7 @@ import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
 import BaseService from "./BaseService";
-import GitProviderService from "./GitProviderService";
-import ProjectService from "./ProjectService";
+import { GitProviderService, ProjectService } from "./index";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -44,7 +43,7 @@ export type KubeDeploymentOnCluster = KubeDeployment & {
 	cluster: ICluster;
 };
 
-export default class AppService extends BaseService<IApp> {
+export class AppService extends BaseService<IApp> {
 	constructor() {
 		super(appSchema);
 	}
@@ -579,5 +578,3 @@ export default class AppService extends BaseService<IApp> {
 		return logs;
 	}
 }
-
-// export { AppService };

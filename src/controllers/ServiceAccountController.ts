@@ -2,8 +2,7 @@ import BaseController from "@/controllers/BaseController";
 import type { IServiceAccount, ServiceAccountDto } from "@/entities/ServiceAccount";
 import type { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, ResponseData } from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
-import { ServiceAccountService } from "@/services";
-import WorkspaceService from "@/services/WorkspaceService";
+import { ServiceAccountService, WorkspaceService } from "@/services";
 
 interface JoinWorkspaceBody {
 	userId: string;

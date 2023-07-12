@@ -7,10 +7,11 @@ import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IWorkspace } from "@/entities";
 import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
-import { DB } from "../api/DB";
 import { generateDomains } from "../deploy/generate-domain";
 
 export const askForDomain = async (env: string, projectSlug: string, appSlug: string, deployEnvironment: ClientDeployEnvironmentConfig) => {
+	const { DB } = await import("../api/DB");
+
 	let subdomainName = `${projectSlug}-${appSlug}.${env}`;
 	let domains: string[] = [];
 

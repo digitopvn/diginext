@@ -8,7 +8,7 @@ import type { GitHubOrg, GithubRepoBranch, GithubRepository, GithubUser } from "
 import type { GitProviderType, RequestMethodType } from "@/interfaces/SystemTypes";
 import { makeSlug } from "@/plugins/slug";
 
-import { DB } from "../api/DB";
+// import { DB } from "../api/DB";
 
 type GitProviderApiOptions = {
 	/**
@@ -165,6 +165,8 @@ const bitbucketRefeshToken = async (provider: IGitProvider) => {
 };
 
 const api = async (provider: IGitProvider, path: string, options: GitProviderApiOptions = {}) => {
+	const { DB } = await import("../api/DB");
+
 	const { method = "GET", data, headers = {} } = options;
 
 	const baseURL = provider.type === "github" ? githubApiBaseURL : bitbucketApiBaseURL;

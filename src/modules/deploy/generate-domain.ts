@@ -5,7 +5,7 @@ import { isServerMode } from "@/app.config";
 import type { IWorkspace } from "@/entities";
 
 import { fetchApi } from "../api";
-import { DB } from "../api/DB";
+// import { DB } from "../api/DB";
 import type { CreateDiginextDomainParams } from "../diginext/dx-domain";
 import { dxCreateDomain } from "../diginext/dx-domain";
 
@@ -41,6 +41,8 @@ interface GenerateDomainResult {
 }
 
 export const generateDomains = async (params: GenerateDomainOptions) => {
+	const { DB } = await import("../api/DB");
+
 	// Manage domains in database to avoid duplication
 	const dxKey = params.workspace.dx_key;
 

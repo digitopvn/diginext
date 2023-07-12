@@ -4,6 +4,5 @@ export * from "./create-release-from-build";
 export * from "./exec-build";
 export * from "./query-build";
 export * from "./send-log-message";
-// export * from "./start-build";
 export * from "./start-build-and-run";
 export * from "./update-build-status";

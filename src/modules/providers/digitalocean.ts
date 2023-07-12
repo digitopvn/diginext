@@ -13,7 +13,6 @@ import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
 import { wait } from "@/plugins";
 
 import type { DomainRecord } from "../../interfaces/DomainRecord";
-import { DB } from "../api/DB";
 import ClusterManager from "../k8s";
 import { getKubeContextByCluster } from "../k8s/kube-config";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
@@ -55,6 +54,7 @@ export async function doApi(options: AxiosRequestConfig & { access_token?: strin
  * @param {InputOptions} options
  */
 export const authenticate = async (options?: InputOptions) => {
+	const { DB } = await import("@/modules/api/DB");
 	const provider = await DB.findOne("provider", { shortName: "digitalocean" });
 	const { execa, execaCommand, execaSync } = await import("execa");
 
@@ -156,6 +156,8 @@ export const createRecordInDomain = async (input: DomainRecord) => {
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
 	const { execa, execaCommand, execaSync } = await import("execa");
+	const { DB } = await import("@/modules/api/DB");
+
 	// Implement create "imagePullSecret" of Digital Ocean
 	const { registrySlug, clusterShortName, namespace = "default" } = options;
 
@@ -236,6 +238,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
  */
 export const connectDockerToRegistry = async (options?: InputOptions) => {
 	const { execa, execaCommand, execaSync } = await import("execa");
+	const { DB } = await import("@/modules/api/DB");
 
 	const { host, key: API_ACCESS_TOKEN, userId, workspaceId, registry: registrySlug } = options;
 
@@ -291,6 +294,7 @@ export const connectDockerToRegistry = async (options?: InputOptions) => {
 
 export const execDigitalOcean = async (options?: InputOptions) => {
 	const { secondAction } = options;
+	const { DB } = await import("@/modules/api/DB");
 
 	switch (secondAction) {
 		case "auth":

@@ -24,7 +24,7 @@ import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 import { ProjectService } from "@/services";
-import AppService from "@/services/AppService";
+import { AppService } from "@/services/AppService";
 
 import BaseController from "./BaseController";
 

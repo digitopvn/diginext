@@ -10,7 +10,7 @@ import { makeSlug } from "@/plugins/slug";
 
 import BaseService from "./BaseService";
 
-export default class FrameworkService extends BaseService<IFramework> {
+export class FrameworkService extends BaseService<IFramework> {
 	constructor() {
 		super(frameworkSchema);
 	}
@@ -52,4 +52,3 @@ export default class FrameworkService extends BaseService<IFramework> {
 		return item;
 	}
 }
-export { FrameworkService };

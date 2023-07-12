@@ -15,7 +15,7 @@ import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfil
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 
-import { DB } from "../api/DB";
+// import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import builder from "../builder";
 import type { GenerateDeploymentResult } from "../deploy";
@@ -31,6 +31,8 @@ export let queue = new PQueue({ concurrency: 1 });
  * Stop the build process.
  */
 export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug: string) => {
+	const { DB } = await import("../api/DB");
+
 	let error;
 
 	// Validate...
@@ -65,6 +67,8 @@ export async function startBuildV1(
 		shouldRollout?: boolean;
 	} = { shouldRollout: true }
 ) {
+	const { DB } = await import("../api/DB");
+
 	// parse variables
 	const { shouldRollout = true } = addition;
 	const startTime = dayjs();

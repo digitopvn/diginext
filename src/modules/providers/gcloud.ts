@@ -12,7 +12,7 @@ import type { GoogleServiceAccount } from "@/interfaces/GoogleServiceAccount";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { createTmpFile, execCmd, isWin } from "@/plugins";
 
-import { DB } from "../api/DB";
+// import { DB } from "../api/DB";
 import ClusterManager from "../k8s";
 import { getKubeContextByCluster } from "../k8s/kube-config";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
@@ -21,6 +21,8 @@ import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegist
  * Authenticate Google Cloud
  */
 export const authenticate = async (options?: InputOptions) => {
+	const { DB } = await import("@/modules/api/DB");
+
 	if (!options.filePath) {
 		logError(`Param "filePath" is required.`);
 		return false;
@@ -68,6 +70,7 @@ export const authenticate = async (options?: InputOptions) => {
  */
 export const connectDockerToRegistry = async (options?: InputOptions & { builder?: "docker" | "podman" }) => {
 	const { execa, execaCommand, execaSync } = await import("execa");
+	const { DB } = await import("@/modules/api/DB");
 
 	const { host, filePath, userId, workspaceId, registry: registrySlug, builder = Config.BUILDER } = options;
 
@@ -141,6 +144,7 @@ export const connectDockerToRegistry = async (options?: InputOptions & { builder
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
 	const { execa, execaCommand, execaSync } = await import("execa");
+	const { DB } = await import("@/modules/api/DB");
 
 	const { registrySlug, namespace = "default", clusterShortName } = options;
 	// log(`providerShortName :>>`, providerShortName);
@@ -262,6 +266,7 @@ export const showHelp = (options?: InputOptions) => {
 
 export const execGoogleCloud = async (options?: InputOptions) => {
 	const { secondAction } = options;
+	const { DB } = await import("@/modules/api/DB");
 
 	switch (secondAction) {
 		case "auth":

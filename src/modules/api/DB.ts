@@ -4,6 +4,7 @@ import type { UpdateQuery, UpdateWithAggregationPipeline } from "mongoose";
 
 import { isServerMode } from "@/app.config";
 import type {
+	IApiKeyAccount,
 	IApp,
 	IBuild,
 	ICloudDatabase,
@@ -11,19 +12,18 @@ import type {
 	ICloudProvider,
 	ICluster,
 	IContainerRegistry,
+	ICronjob,
 	IFramework,
 	IGitProvider,
 	IProject,
 	IRelease,
 	IRole,
+	IRoute,
+	IServiceAccount,
 	ITeam,
 	IUser,
 	IWorkspace,
 } from "@/entities";
-import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
-import type { ICronjob } from "@/entities/Cronjob";
-import type { IRoute } from "@/entities/Route";
-import type { IServiceAccount } from "@/entities/ServiceAccount";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 import {
 	ApiKeyUserService,

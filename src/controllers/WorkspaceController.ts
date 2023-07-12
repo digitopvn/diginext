@@ -16,8 +16,7 @@ import { dxCreateWorkspace } from "@/modules/diginext/dx-workspace";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
-import { RoleService, UserService } from "@/services";
-import WorkspaceService from "@/services/WorkspaceService";
+import { RoleService, UserService, WorkspaceService } from "@/services";
 
 interface AddUserBody {
 	userId: Types.ObjectId;

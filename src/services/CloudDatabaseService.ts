@@ -21,7 +21,7 @@ import PostgreSQL from "@/modules/db/pg";
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
-import CloudDatabaseBackupService from "./CloudDatabaseBackupService";
+import { CloudDatabaseBackupService } from "./CloudDatabaseBackupService";
 
 export type DatabaseConnectionInfo = {
 	type: CloudDatabaseType;
@@ -66,7 +66,7 @@ export type DatabaseRestoreParams = {
 	path?: string;
 };
 
-export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
+export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 	constructor() {
 		super(cloudDatabaseSchema);
 	}
@@ -355,5 +355,3 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		return updatedDb;
 	}
 }
-
-export { ICloudDatabase as CloudDatabase };

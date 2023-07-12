@@ -9,15 +9,13 @@ import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import * as buildModule from "@/modules/build";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { Logger } from "@/plugins";
-import BuildService from "@/services/BuildService";
+import { BuildService } from "@/services";
 
 import BaseController from "./BaseController";
 
 @Tags("Build")
 @Route("build")
-export default class BuildController extends BaseController<IBuild> {
-	service: BuildService;
-
+export default class BuildController extends BaseController<IBuild, BuildService> {
 	constructor() {
 		super(new BuildService());
 	}

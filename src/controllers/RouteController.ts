@@ -8,7 +8,7 @@ import * as interfaces from "@/interfaces";
 import type { DBCollection } from "@/modules/api/DB";
 import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
-import RouteService from "@/services/RouteService";
+import { RouteService } from "@/services";
 
 import BaseController from "./BaseController";
 

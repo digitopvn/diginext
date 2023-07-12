@@ -7,10 +7,10 @@ import type { IQueryFilter } from "@/interfaces";
 import { DB } from "@/modules/api/DB";
 import ClusterManager from "@/modules/k8s";
 
-import AppService from "./AppService";
+import { AppService } from "./AppService";
 import BaseService from "./BaseService";
 
-export default class ProjectService extends BaseService<IProject> {
+export class ProjectService extends BaseService<IProject> {
 	constructor() {
 		super(projectSchema);
 	}
@@ -59,4 +59,3 @@ export default class ProjectService extends BaseService<IProject> {
 		return result;
 	}
 }
-export { ProjectService };

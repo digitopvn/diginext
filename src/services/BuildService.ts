@@ -3,12 +3,11 @@ import type { IBuild } from "@/entities/Build";
 import { buildSchema } from "@/entities/Build";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import type { StartBuildParams } from "@/modules/build";
-import * as buildModule from "@/modules/build";
 import { checkQuota } from "@/modules/workspace/check-quota";
 
 import BaseService from "./BaseService";
 
-export default class BuildService extends BaseService<IBuild> {
+export class BuildService extends BaseService<IBuild> {
 	constructor() {
 		super(buildSchema);
 	}
@@ -31,6 +30,7 @@ export default class BuildService extends BaseService<IBuild> {
 		if (!registrySlug) throw new Error(`Container registry slug is required.`);
 
 		// start the build
+		const buildModule = await import("@/modules/build");
 		const buildInfo = await buildModule.startBuild(data);
 
 		const buildServerUrl = Config.BASE_URL;
@@ -50,6 +50,7 @@ export default class BuildService extends BaseService<IBuild> {
 		let build = await this.findOne({ slug });
 		if (!build) throw new Error(`Build "${slug}" not found.`);
 
+		const buildModule = await import("@/modules/build");
 		const stoppedBuild = await buildModule.stopBuild(build.projectSlug, build.appSlug, slug.toString());
 		if ((stoppedBuild as { error: string })?.error) throw new Error((stoppedBuild as { error: string }).error);
 
@@ -57,5 +58,3 @@ export default class BuildService extends BaseService<IBuild> {
 		return build;
 	}
 }
-
-export { BuildService };

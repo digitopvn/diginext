@@ -5,11 +5,12 @@ import type { IApp, IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 import { getAppConfig, getCurrentGitRepoData } from "@/plugins";
 
-import { DB } from "../api/DB";
 import { createOrSelectApp } from "./create-or-select-app";
 import { createOrSelectProject } from "./create-or-select-project";
 
 export const askForProjectAndApp = async (dir: string, options?: InputOptions) => {
+	const { DB } = await import("../api/DB");
+
 	if (isServerMode) throw new Error(`Unable to use "askForProjectAndApp()" in SERVER mode.`);
 
 	const currentGitData = await getCurrentGitRepoData(dir || options?.targetDirectory);

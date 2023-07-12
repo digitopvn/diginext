@@ -2,18 +2,17 @@ import chalk from "chalk";
 import dayjs from "dayjs";
 import { log, logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import humanizeDuration from "humanize-duration";
-import { isEmpty } from "lodash";
+import { isEmpty, upperFirst } from "lodash";
 import PQueue from "p-queue";
 import path from "path";
 
-import { isServerMode } from "@/app.config";
+import { Config, isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IProject, IUser, IWorkspace } from "@/entities";
 import type { BuildPlatform } from "@/interfaces/SystemTypes";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
 import { getIO, socketIO } from "@/server";
 
-import { DB } from "../api/DB";
 import builder from "../builder";
 import { verifySSH } from "../git";
 import { connectRegistry } from "../registry/connect-registry";
@@ -104,6 +103,7 @@ export async function testBuild() {
  * Save build log content to database
  */
 export async function saveLogs(buildSlug: string, logs: string) {
+	const { DB } = await import("../api/DB");
 	if (!buildSlug) throw new Error(`Build's slug is required, it's empty now.`);
 	const [build] = await DB.update("build", { slug: buildSlug }, { logs });
 	return build;
@@ -113,6 +113,8 @@ export async function saveLogs(buildSlug: string, logs: string) {
  * Stop the build process.
  */
 export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug: string) => {
+	const { DB } = await import("../api/DB");
+
 	let error;
 
 	// Validate...
@@ -124,7 +126,7 @@ export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug:
 
 	// Stop the f*cking buildx driver...
 	const builderName = `${projectSlug.toLowerCase()}_${appSlug.toLowerCase()}`;
-	await builder.Docker.stopBuild(builderName);
+	await builder[upperFirst(Config.BUILDER)].stopBuild(builderName);
 
 	// Update the status in the database
 	const stoppedBuild = await updateBuildStatusByAppSlug(appSlug, buildSlug, "failed");
@@ -141,6 +143,8 @@ export async function startBuild(
 		onError?: (msg: string) => void;
 	}
 ) {
+	const { DB } = await import("../api/DB");
+
 	// parse variables
 	const startTime = dayjs();
 

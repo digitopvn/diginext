@@ -10,8 +10,7 @@ import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import { createReleaseFromBuild } from "@/modules/build/create-release-from-build";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
-import BuildService from "@/services/BuildService";
-import ReleaseService from "@/services/ReleaseService";
+import { BuildService, ReleaseService } from "@/services";
 
 import BaseController from "./BaseController";
 

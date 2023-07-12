@@ -3,7 +3,7 @@ import { isEmpty } from "lodash";
 import type { IBuild, IRelease, IUser, IWorkspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 
-import { DB } from "../api/DB";
+// import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { fetchDeploymentFromContent } from "../deploy/fetch-deployment";
 
@@ -14,6 +14,8 @@ type OwnershipParams = {
 };
 
 export const createReleaseFromBuild = async (build: IBuild, env?: string, ownership?: OwnershipParams) => {
+	const { DB } = await import("../api/DB");
+
 	// get app data
 	const app = await DB.findOne("app", { id: build.app }, { populate: ["owner", "workspace"] });
 	if (!app) throw new Error(`App "${build.appSlug}" not found.`);

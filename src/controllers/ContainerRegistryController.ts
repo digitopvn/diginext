@@ -14,7 +14,7 @@ import gcloud from "@/modules/providers/gcloud";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { createTmpFile } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
-import ContainerRegistryService from "@/services/ContainerRegistryService";
+import { ContainerRegistryService } from "@/services/ContainerRegistryService";
 
 import BaseController from "./BaseController";
 
