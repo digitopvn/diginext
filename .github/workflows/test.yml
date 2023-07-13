@@ -58,6 +58,10 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
+      - uses: webfactory/ssh-agent@v0.7.0
+        with:
+            ssh-private-key: ${{ secrets.ID_RSA }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
