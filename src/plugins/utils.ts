@@ -729,20 +729,20 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 		if (options?.onUpdate) options?.onUpdate(message, progress);
 	};
 
-	const commandConfig: string[] = [];
+	const config: string[] = [];
 
 	if (options?.useAccessToken && options.useAccessToken.type && options.useAccessToken.value) {
-		commandConfig.push(`http.extraHeader=Authorization: ${options.useAccessToken.type} ${options.useAccessToken.value}`);
+		config.push(`http.extraHeader=Authorization: ${options.useAccessToken.type} ${options.useAccessToken.value}`);
 		repoUrl = repoSshToRepoURL(repoSSH);
 	}
 
 	console.log("pullOrCloneGitRepo() > repoUrl :>> ", repoUrl);
-	console.log("pullOrCloneGitRepo() > commandConfig :>> ", commandConfig);
+	console.log("pullOrCloneGitRepo() > commandConfig :>> ", config);
 
 	if (fs.existsSync(dir)) {
 		try {
 			console.log("pullOrCloneGitRepo() > directory exists :>> try to PULL...");
-			git = simpleGit(dir, { progress: onProgress, config: commandConfig });
+			git = simpleGit(dir, { progress: onProgress, config });
 			// -----------------------
 			// ! DO NOT SET TO "FALSE"
 			// -----------------------
@@ -769,9 +769,9 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 				await deleteFolderRecursive(dir);
 
 				// for CLI create new app from a framework
-				git = simpleGit({ progress: onProgress, config: commandConfig });
+				git = simpleGit({ progress: onProgress, config: config });
 
-				await git.clone(repoUrl, dir, [`--branch=${branch}`, "--single-branch"]);
+				await git.clone(repoUrl, dir, [`--branch=${branch}`, "--single-branch", ...config]);
 				console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 				// remove git on finish
@@ -789,9 +789,9 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 		if (options?.onUpdate) options?.onUpdate(`Cache source code not found. Cloning "${repoUrl}" (${branch}) to "${dir}" directory.`);
 
 		try {
-			git = simpleGit({ progress: onProgress, config: commandConfig });
+			git = simpleGit({ progress: onProgress, config: config });
 
-			await git.clone(repoUrl, dir, [`--branch=${branch}`, "--single-branch"]);
+			await git.clone(repoUrl, dir, [`--branch=${branch}`, "--single-branch", ...config]);
 			console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 			// remove git on finish

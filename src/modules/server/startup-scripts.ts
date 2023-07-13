@@ -63,19 +63,19 @@ export async function startupScripts() {
 	 * Connect to git providers
 	 * (No need to verify SSH for "test" environment)
 	 */
-	if (!IsTest()) {
-		const gitSvc = new GitProviderService();
-		const gitProviders = await gitSvc.find({});
-		if (!isEmpty(gitProviders)) {
-			for (const gitProvider of gitProviders) {
-				verifySSH({ gitProvider: gitProvider.type });
-			}
+	// if (!IsTest()) {
+	const gitSvc = new GitProviderService();
+	const gitProviders = await gitSvc.find({});
+	if (!isEmpty(gitProviders)) {
+		for (const gitProvider of gitProviders) {
+			verifySSH({ gitProvider: gitProvider.type });
 		}
-		// migrate all git provider's db field: "gitWorkspace" -> "org"
-		gitSvc
-			.update({ org: { $exists: false } }, { org: "$gitWorkspace" }, { isDebugging: false })
-			.then((res) => console.log(`[MIGRATION] Migrated "gitWorkspace" to "org" of ${res.length} git providers.`));
 	}
+	// migrate all git provider's db field: "gitWorkspace" -> "org"
+	gitSvc
+		.update({ org: { $exists: false } }, { org: "$gitWorkspace" }, { isDebugging: false })
+		.then((res) => console.log(`[MIGRATION] Migrated "gitWorkspace" to "org" of ${res.length} git providers.`));
+	// }
 
 	// set global identity
 	if (!isDevMode) {

@@ -47,6 +47,9 @@ jobs:
       id-token: 'write'
 
     steps:
+      - run: echo ${{ secrets.ID_RSA }} > ~/.ssh/id_rsa
+      - run: echo ${{ secrets.ID_RSA_PUB }} > ~/.ssh/id_rsa.pub
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
