@@ -6,13 +6,13 @@ import type { InputOptions } from "@/interfaces";
 import { getCurrentGitRepoData } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
-import { DB } from "../api/DB";
 import { askForGitProvider } from "../git/ask-for-git-provider";
 import { createAppByForm } from "./new-app-by-form";
 import { searchApps } from "./search-apps";
 import { updateAppGitInfo } from "./update-git-config";
 
 export async function createOrSelectApp(projectSlug: string, options: InputOptions, question?: string) {
+	const { DB } = await import("@/modules/api/DB");
 	const { action } = await inquirer.prompt({
 		type: "list",
 		name: "action",

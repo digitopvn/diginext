@@ -3,10 +3,8 @@ import { routeSchema } from "@/entities/Route";
 
 import BaseService from "./BaseService";
 
-export default class RouteService extends BaseService<IRoute> {
+export class RouteService extends BaseService<IRoute> {
 	constructor() {
 		super(routeSchema);
 	}
 }
-
-export { RouteService };

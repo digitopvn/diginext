@@ -1,10 +1,10 @@
 import type { IRole, IUser, IWorkspace, UserDto } from "@/entities";
-import { DB } from "@/modules/api/DB";
 import { RoleService } from "@/services";
 
 import { isObjectId, MongoDB } from "./mongodb";
 
 export const addUserToWorkspace = async (userId: string, workspace: IWorkspace, roleType: "admin" | "moderator" | "member" = "member") => {
+	const { DB } = await import("@/modules/api/DB");
 	let user = await DB.findOne("user", { id: userId });
 	if (!user) throw new Error(`User not found.`);
 
@@ -29,6 +29,7 @@ export const addUserToWorkspace = async (userId: string, workspace: IWorkspace, 
 };
 
 export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", userId: string, workspace: IWorkspace) => {
+	const { DB } = await import("@/modules/api/DB");
 	// find user
 	let user = await DB.findOne("user", { id: userId }, { populate: ["roles"] });
 	if (!user) throw new Error(`User not found.`);
@@ -51,6 +52,7 @@ export const addRoleToUser = async (roleType: "admin" | "moderator" | "member", 
 };
 
 export const getActiveRole = async (user: IUser, workspace: IWorkspace, options?: { makeActive?: boolean; assignMember?: boolean }) => {
+	const { DB } = await import("@/modules/api/DB");
 	const userId = MongoDB.toString(user._id);
 	const wsId = MongoDB.toString(workspace._id);
 	let activeRole: IRole;
@@ -106,6 +108,7 @@ export const getActiveRole = async (user: IUser, workspace: IWorkspace, options?
 };
 
 export const getActiveRoleByUserId = async (userId: string, workspace: IWorkspace) => {
+	const { DB } = await import("@/modules/api/DB");
 	// find user
 	let user = await DB.findOne("user", { id: userId }, { populate: ["roles"] });
 	if (!user) throw new Error(`User not found.`);
@@ -114,6 +117,7 @@ export const getActiveRoleByUserId = async (userId: string, workspace: IWorkspac
 };
 
 export async function getActiveWorkspace(user: IUser) {
+	const { DB } = await import("@/modules/api/DB");
 	let workspace = (user.activeWorkspace as any)._id ? (user.activeWorkspace as IWorkspace) : undefined;
 	if (!workspace && MongoDB.isValidObjectId(user.activeWorkspace)) {
 		workspace = await DB.findOne("workspace", { _id: user.activeWorkspace });
@@ -122,6 +126,7 @@ export async function getActiveWorkspace(user: IUser) {
 }
 
 export async function assignRole(role: IRole, user: IUser, options?: { makeActive?: boolean }) {
+	const { DB } = await import("@/modules/api/DB");
 	// validate
 	if (!user.activeRole || !user.activeWorkspace) throw new Error(`Permissions denied.`);
 
@@ -176,6 +181,7 @@ export async function assignRoleByID(roleId: any, userId: any, options?: { makeA
 }
 
 export const makeWorkspaceActive = async (userId: string, workspaceId: string) => {
+	const { DB } = await import("@/modules/api/DB");
 	const user = await DB.updateOne("user", { _id: userId }, { activeWorkspace: workspaceId });
 	return user;
 };

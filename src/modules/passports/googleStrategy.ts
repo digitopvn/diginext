@@ -3,7 +3,7 @@ import GoogleStrategy from "passport-google-oauth2";
 
 import { Config } from "@/app.config";
 import type { ProviderInfo, UserDto } from "@/entities/User";
-import UserService from "@/services/UserService";
+import { UserService } from "@/services";
 
 export const googleStrategy = new GoogleStrategy(
 	{

@@ -2,7 +2,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
-import FrameworkService from "@/services/FrameworkService";
+import { FrameworkService } from "@/services/FrameworkService";
 
 import BaseController from "./BaseController";
 

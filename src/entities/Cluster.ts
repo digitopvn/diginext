@@ -25,7 +25,8 @@ export interface ICluster extends IBase {
 	 */
 	isDefault?: boolean;
 	/**
-	 * A cluster name on the cloud provider, **NOT** a cluster name in `kubeconfig`
+	 * A cluster name on the cloud provider
+	 * - **Applied for GKE & DOK only**
 	 */
 	shortName?: string;
 	/**
@@ -84,7 +85,7 @@ export interface ICluster extends IBase {
 }
 export type ClusterDto = Omit<ICluster, keyof HiddenBodyKeys>;
 
-export const clusterSchema = new Schema(
+export const clusterSchema = new Schema<ICluster>(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },

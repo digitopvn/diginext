@@ -1,6 +1,6 @@
-import authCluster, { authClusterByShortName } from "./cluster-auth";
+import authCluster, { authClusterBySlug } from "./cluster-auth";
 import { createImagePullSecretsInNamespace } from "./image-pull-secret";
-import { currentCluster, currentContext, getKubeConfig, getKubeContextByCluster, getKubeContextByClusterShortName } from "./kube-config";
+import { currentCluster, currentContext, getKubeConfig, getKubeContextByCluster, getKubeContextByClusterSlug } from "./kube-config";
 import { previewPrerelease, rollout } from "./kube-deploy";
 import {
 	createNamespace,
@@ -56,7 +56,7 @@ import { installCertManagerStack, installNginxIngressStack } from "./stack-insta
 const ClusterManager = {
 	// cluster-helpers
 	authCluster,
-	authClusterByShortName,
+	authClusterBySlug,
 	createImagePullSecretsInNamespace,
 	currentContext,
 	currentCluster,
@@ -75,7 +75,7 @@ const ClusterManager = {
 	deleteService,
 	deleteServiceByFilter,
 	getKubeConfig,
-	getKubeContextByClusterShortName,
+	getKubeContextByClusterShortName: getKubeContextByClusterSlug,
 	getKubeContextByCluster,
 	getDeploys,
 	getDeploysByFilter,

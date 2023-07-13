@@ -6,7 +6,6 @@ import { type AppGitInfo, type IApp } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 import { getCurrentGitRepoData } from "@/plugins";
 
-import { DB } from "../api/DB";
 import { askForGitProvider } from "../git/ask-for-git-provider";
 import { printInformation } from "../project/printInformation";
 import { getAppConfigFromApp } from "./app-helper";
@@ -17,6 +16,7 @@ import { searchApps } from "./search-apps";
 export async function execInitApp(options: InputOptions) {
 	const gitInfo = await getCurrentGitRepoData(options.targetDirectory);
 	if (options.isDebugging) console.log("[INIT APP] gitInfo :>> ", gitInfo);
+	const { DB } = await import("@/modules/api/DB");
 
 	if (gitInfo?.repoSSH) {
 		const foundApps = await searchApps({ repoSSH: gitInfo?.repoSSH });

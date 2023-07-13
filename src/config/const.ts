@@ -4,6 +4,8 @@ import path from "path";
 export const DIGINEXT_DOMAIN = `diginext.site`;
 
 export const HOME_DIR = homedir();
+export const KUBECONFIG_DIR = path.resolve(HOME_DIR, ".kube");
+export const KUBECONFIG_FILE = path.resolve(KUBECONFIG_DIR, "config");
 
 export const CLI_DIR = path.resolve(__dirname, "../../");
 export const CLI_CONFIG_DIR = path.resolve(HOME_DIR, ".diginext");

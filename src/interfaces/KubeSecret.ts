@@ -10,6 +10,11 @@ export interface KubeSecret {
 		[key: string]: string;
 	};
 	// extras
+	clusterSlug?: string;
+	/**
+	 * Cluster's short name
+	 * @deprecated
+	 */
 	clusterShortName?: string;
 	/**
 	 * Cluster ID

@@ -7,8 +7,7 @@ import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { MongoDB } from "@/plugins/mongodb";
-import AppService from "@/services/AppService";
-import ProjectService from "@/services/ProjectService";
+import { AppService, ProjectService } from "@/services";
 
 import BaseController from "./BaseController";
 

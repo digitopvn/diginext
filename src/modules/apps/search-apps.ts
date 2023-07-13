@@ -1,8 +1,6 @@
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import { DB } from "../api/DB";
-
 type SearchAppOptions = {
 	projectSlug?: string;
 	repoSSH?: string;
@@ -16,6 +14,7 @@ type SearchAppOptions = {
 export async function searchApps(options: SearchAppOptions) {
 	const { projectSlug, repoSSH, question, canSkip = true } = options;
 
+	const { DB } = await import("@/modules/api/DB");
 	const { keyword } = await inquirer.prompt({
 		type: "input",
 		name: "keyword",

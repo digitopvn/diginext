@@ -1,20 +1,21 @@
 import { logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
+import type { IProject } from "@/entities/Project";
 import { projectSchema } from "@/entities/Project";
 import type { IQueryFilter } from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import ClusterManager from "@/modules/k8s";
 
-import AppService from "./AppService";
+import { AppService } from "./AppService";
 import BaseService from "./BaseService";
 
-export default class ProjectService extends BaseService {
+export class ProjectService extends BaseService<IProject> {
 	constructor() {
 		super(projectSchema);
 	}
 
 	async softDelete(filter?: IQueryFilter) {
+		const { DB } = await import("@/modules/api/DB");
 		// find the project:
 		const project = await this.findOne(filter);
 		if (!project) return { ok: false, affected: 0 };
@@ -30,8 +31,8 @@ export default class ProjectService extends BaseService {
 				if (!app.deployEnvironment) break;
 				for (const [env, deployEnvironment] of Object.entries(app.deployEnvironment)) {
 					if (!isEmpty(deployEnvironment)) {
-						const { cluster: clusterShortName, namespace } = deployEnvironment;
-						const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
+						const { cluster: clusterSlug, namespace } = deployEnvironment;
+						const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 
 						if (cluster) {
 							const { contextName: context } = cluster;
@@ -58,4 +59,3 @@ export default class ProjectService extends BaseService {
 		return result;
 	}
 }
-export { ProjectService };

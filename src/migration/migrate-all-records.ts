@@ -1,8 +1,7 @@
 import { log } from "diginext-utils/dist/xconsole/log";
 
-import { DB, dbCollections } from "../modules/api/DB";
-
 export const migrateAllRecords = async () => {
+	const { DB, dbCollections } = await import("@/modules/api/DB");
 	const results = await Promise.all(
 		dbCollections
 			.filter((collection) => collection !== "workspace")

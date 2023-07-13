@@ -46,6 +46,9 @@ export interface IRelease extends IBase {
 	createdBy?: string;
 	branch?: string;
 	provider?: string;
+	/**
+	 * Cluster's slug
+	 */
 	cluster?: string;
 	projectSlug?: string;
 	appSlug?: string;

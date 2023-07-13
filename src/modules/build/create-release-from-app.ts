@@ -3,7 +3,6 @@ import { isEmpty } from "lodash";
 import type { IApp, IRelease, IUser, IWorkspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 
-import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { fetchDeploymentFromContent } from "../deploy/fetch-deployment";
 
@@ -14,6 +13,8 @@ type OwnershipParams = {
 };
 
 export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: string, ownership?: OwnershipParams) => {
+	const { DB } = await import("@/modules/api/DB");
+
 	const deployedEnvironment = await getDeployEvironmentByApp(app, env);
 	const { imageURL: IMAGE_NAME } = deployedEnvironment;
 	// const { BUILD_NUMBER } = fetchDeploymentFromContent(deployedEnvironment.deploymentYaml);

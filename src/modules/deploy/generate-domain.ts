@@ -5,7 +5,6 @@ import { isServerMode } from "@/app.config";
 import type { IWorkspace } from "@/entities";
 
 import { fetchApi } from "../api";
-import { DB } from "../api/DB";
 import type { CreateDiginextDomainParams } from "../diginext/dx-domain";
 import { dxCreateDomain } from "../diginext/dx-domain";
 
@@ -30,7 +29,7 @@ export interface GenerateDomainOptions {
 	 * If cluster's short name is specify, IP address will be ignored and
 	 * the primary IP address of the cluster will be used as the A RECORD value
 	 */
-	clusterShortName?: string;
+	clusterSlug?: string;
 }
 
 interface GenerateDomainResult {
@@ -41,18 +40,20 @@ interface GenerateDomainResult {
 }
 
 export const generateDomains = async (params: GenerateDomainOptions) => {
+	const { DB } = await import("../api/DB");
+
 	// Manage domains in database to avoid duplication
 	const dxKey = params.workspace.dx_key;
 
-	let { subdomainName, clusterShortName, ipAddress, primaryDomain } = params;
+	let { subdomainName, clusterSlug, ipAddress, primaryDomain } = params;
 	let domain = `${subdomainName}.${primaryDomain}`;
 	let targetIP: string;
 
-	if (clusterShortName) {
-		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
+	if (clusterSlug) {
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 		if (!cluster) {
-			logError(`Cluster "${clusterShortName}" not found.`);
-			return { status: 0, domain, ip: null, messages: [`Cluster "${clusterShortName}" not found.`] } as GenerateDomainResult;
+			logError(`Cluster "${clusterSlug}" not found.`);
+			return { status: 0, domain, ip: null, messages: [`Cluster "${clusterSlug}" not found.`] } as GenerateDomainResult;
 		}
 		targetIP = cluster.primaryIP;
 	}
@@ -60,7 +61,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	if (!targetIP) {
 		if (!ipAddress) {
 			logError(`Failed to generate domain: "ipAddress" is required.`);
-			return { status: 0, messages: [`Failed to generate domain: "clusterShortName" or "ipAddress" is required.`] } as GenerateDomainResult;
+			return { status: 0, messages: [`Failed to generate domain: "clusterSlug" or "ipAddress" is required.`] } as GenerateDomainResult;
 		} else {
 			targetIP = ipAddress;
 		}

@@ -1,8 +1,7 @@
 import { log } from "diginext-utils/dist/xconsole/log";
 
-import { DB } from "../modules/api/DB";
-
 export const migrateAllFrameworks = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	const filter = { isPrivate: { $exists: true } };
 	const items = await DB.update(
 		"framework",

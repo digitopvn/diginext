@@ -1,5 +1,4 @@
 import type { FrameworkDto, IUser, IWorkspace } from "@/entities";
-import { DB } from "@/modules/api/DB";
 
 export const initialFrameworks: FrameworkDto[] = [
 	{
@@ -21,6 +20,7 @@ export const initialFrameworks: FrameworkDto[] = [
 ];
 
 export const seedFrameworks = async (workspace: IWorkspace, owner: IUser) => {
+	const { DB } = await import("@/modules/api/DB");
 	const results = (
 		await Promise.all(
 			initialFrameworks.map(async (fw) => {

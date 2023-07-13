@@ -5,9 +5,9 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
-import RoleService from "./RoleService";
+import { RoleService } from "./RoleService";
 
-export default class UserService extends BaseService<IUser> {
+export class UserService extends BaseService<IUser> {
 	constructor() {
 		super(userSchema);
 	}

@@ -1,18 +1,18 @@
 import { isJSON } from "class-validator";
 import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { isBoolean, isEmpty, isString, isUndefined } from "lodash";
-import type { QuerySelector, Types } from "mongoose";
+import type { QuerySelector } from "mongoose";
 import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { DeployEnvironmentData } from "@/controllers/AppController";
 import type { ICluster, IFramework, IProject } from "@/entities";
-import type { AppDto, IApp } from "@/entities/App";
+import type { IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
 import type { DeployEnvironment, IQueryFilter, IQueryOptions, IQueryPagination, KubeDeployment } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environment";
-import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
@@ -30,8 +30,7 @@ import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
 import BaseService from "./BaseService";
-import GitProviderService from "./GitProviderService";
-import ProjectService from "./ProjectService";
+import { ClusterService, ContainerRegistryService, GitProviderService, ProjectService, WorkspaceService } from "./index";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -43,18 +42,32 @@ export type KubeDeploymentOnCluster = KubeDeployment & {
 	cluster: ICluster;
 };
 
-export default class AppService extends BaseService<IApp> {
+export class AppService extends BaseService<IApp> {
+	projectSvc = new ProjectService();
+
+	wsSvc = new WorkspaceService();
+
+	clusterSvc = new ClusterService();
+
+	regSvc = new ContainerRegistryService();
+
 	constructor() {
 		super(appSchema);
 	}
 
-	async create(data: AppDto, options?: IQueryOptions & IQueryPagination) {
+	async create(data: Partial<IApp>, options?: IQueryOptions & IQueryPagination) {
 		// validate
 		let project: IProject;
 		let appDto = { ...data };
 
+		// ownership
+		if (!data.owner && !MongoDB.isValidObjectId(data.owner)) throw new Error(`[ObjectID] "owner" is required.`);
+		if (!data.workspace && !MongoDB.isValidObjectId(data.workspace)) throw new Error(`[ObjectID] "workspace" is required.`);
+		const workspace = await this.wsSvc.findOne({ _id: data.workspace });
+		if (!workspace) throw new Error(`Invalid workspace.`);
+
 		// check dx quota
-		const quotaRes = await checkQuota(this.req.workspace);
+		const quotaRes = await checkQuota(workspace);
 		if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
 		if (quotaRes.data && quotaRes.data.isExceed)
 			throw new Error(`You've exceeded the limit amount of apps (${quotaRes.data.type} / Max. ${quotaRes.data.limits.apps} apps).`);
@@ -66,9 +79,9 @@ export default class AppService extends BaseService<IApp> {
 
 		// find parent project of this app
 		if (MongoDB.isValidObjectId(data.project)) {
-			project = await DB.findOne("project", { _id: data.project });
+			project = await this.projectSvc.findOne({ _id: data.project });
 		} else if (isString(data.project)) {
-			project = await DB.findOne("project", { slug: data.project });
+			project = await this.projectSvc.findOne({ slug: data.project });
 		} else {
 			throw new Error(`"project" is not a valid ID or slug.`);
 		}
@@ -89,8 +102,8 @@ export default class AppService extends BaseService<IApp> {
 
 			data.git = {
 				repoSSH: data.git as string,
-				repoURL: getRepoURLFromRepoSSH(gitData.gitProvider, gitData.fullSlug),
-				provider: gitData.gitProvider,
+				repoURL: getRepoURLFromRepoSSH(gitData.providerType, gitData.fullSlug),
+				provider: gitData.providerType,
 			};
 		}
 		appDto.git = data.git;
@@ -98,7 +111,7 @@ export default class AppService extends BaseService<IApp> {
 		let newApp: IApp;
 
 		try {
-			newApp = await super.create(appDto);
+			newApp = await super.create(appDto, options);
 			if (!newApp) throw new Error(`Unable to create new app: "${appDto.name}".`);
 		} catch (e) {
 			throw new Error(e.toString());
@@ -113,7 +126,7 @@ export default class AppService extends BaseService<IApp> {
 		// add this new app to the project info
 		if (project) {
 			const projectApps = [...(project.apps || []), newAppId];
-			[project] = await DB.update("project", { _id: project._id }, { apps: projectApps });
+			[project] = await this.projectSvc.update({ _id: project._id }, { apps: projectApps });
 		}
 
 		return newApp;
@@ -122,6 +135,7 @@ export default class AppService extends BaseService<IApp> {
 	async createWithGitURL(
 		repoSSH: string,
 		gitProviderID: string,
+		ownership: Ownership,
 		options?: {
 			/**
 			 * `DANGER`
@@ -130,14 +144,25 @@ export default class AppService extends BaseService<IApp> {
 			 * @default false
 			 */
 			force?: boolean;
+			/**
+			 * If `TRUE`, return the existing app instead of throwing errors.
+			 * @default false;
+			 */
+			returnExisting?: boolean;
+			/**
+			 * @default main
+			 */
 			gitBranch?: string;
+			/**
+			 * If `TRUE`: remove `.github/*` directory after pulling/cloning the repo.
+			 */
 			removeCI?: boolean;
 			isDebugging?: boolean;
 		}
 	) {
 		const appDto: Partial<IApp> = {};
-		const workspace = this.req.workspace;
-		const owner = this.req.user;
+		const workspace = ownership.workspace;
+		const owner = ownership.owner;
 		if (options?.isDebugging) console.log("createWithGitURL() > ownership :>> ", { workspace, owner });
 
 		// parse git data
@@ -162,14 +187,17 @@ export default class AppService extends BaseService<IApp> {
 		const newRepoSlug = `${project.slug}-${makeSlug(repoSlug)}`.toLowerCase();
 		const newRepoSSH = `git@${gitProvider.host}:${gitProvider.org}/${newRepoSlug}.git`;
 
-		if (options?.force) {
-			// delete existing app
-			await this.softDelete({ "git.repoSSH": newRepoSSH, workspace: workspace._id });
-		} else {
-			// check app is existed
-			const existingApp = await this.findOne({ "git.repoSSH": newRepoSSH, workspace: workspace._id }, options);
-			if (options?.isDebugging) console.log("createWithGitURL() > existingApp :>> ", existingApp);
-			if (existingApp) throw new Error(`Unable to import: app was existed with name "${existingApp.slug}".`);
+		// check app is existed
+		const existingApp = await this.findOne({ "git.repoSSH": newRepoSSH, workspace: workspace._id }, options);
+		if (options?.isDebugging) console.log("createWithGitURL() > existingApp :>> ", existingApp);
+		if (existingApp) {
+			// [DANGEROUS] delete existing app when `--force` is specified:
+			if (options?.force) {
+				await this.softDelete({ "git.repoSSH": newRepoSSH, workspace: workspace._id });
+			} else {
+				if (options?.returnExisting) return existingApp;
+				throw new Error(`Unable to import: app was existed with name "${existingApp.slug}" (Project: "${project.name}").`);
+			}
 		}
 
 		// clone/pull that repo url
@@ -221,6 +249,11 @@ export default class AppService extends BaseService<IApp> {
 		appDto.gitProvider = gitProvider._id;
 		appDto.git = { provider: gitProvider.type, repoSSH: gitRepo.ssh_url, repoURL: gitRepo.repo_url };
 		appDto.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" } as IFramework;
+		// ownership
+		appDto.workspace = workspace._id;
+		appDto.workspaceSlug = workspace.slug;
+		appDto.owner = owner._id;
+		appDto.ownerSlug = owner.slug;
 
 		// save to database
 		const newApp = await this.create(appDto, options);
@@ -246,7 +279,7 @@ export default class AppService extends BaseService<IApp> {
 
 		const clusterFilter: any = {};
 		if (filter?.workspace) clusterFilter.workspace = filter.workspace;
-		const clusters = await DB.find("cluster", clusterFilter);
+		const clusters = await this.clusterSvc.find(clusterFilter);
 
 		// check app deploy environment's status in clusters
 		const appsWithStatus = await Promise.all(
@@ -263,8 +296,8 @@ export default class AppService extends BaseService<IApp> {
 							if (!app.deployEnvironment[env].cluster) return app;
 
 							// find cluster & namespace
-							const clusterShortName = app.deployEnvironment[env].cluster;
-							const cluster = clusters.find((_cluster) => _cluster.shortName === clusterShortName);
+							const clusterSlug = app.deployEnvironment[env].cluster;
+							const cluster = clusters.find((_cluster) => _cluster.slug === clusterSlug);
 							if (!cluster) return app;
 
 							const { contextName: context } = cluster;
@@ -354,7 +387,7 @@ export default class AppService extends BaseService<IApp> {
 			 */
 			deployEnvironmentData: DeployEnvironmentData;
 		},
-		ownership?: { owner?: string | Types.ObjectId; workspace?: string | Types.ObjectId }
+		ownership?: Ownership
 	) {
 		// conversion if needed...
 		if (isJSON(params.deployEnvironmentData))
@@ -367,7 +400,7 @@ export default class AppService extends BaseService<IApp> {
 		if (!deployEnvironmentData) throw new Error(`Deploy environment configuration is required.`);
 
 		// get app data:
-		const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
+		const app = await this.findOne({ slug: appSlug }, { populate: ["project"] });
 		if (!app)
 			if (ownership?.owner) throw new Error(`Unauthorized.`);
 			else throw new Error(`App not found.`);
@@ -401,7 +434,7 @@ export default class AppService extends BaseService<IApp> {
 
 		// cluster
 		if (!deployEnvironmentData.cluster) throw new Error(`Param "cluster" (Cluster's short name) is required.`);
-		const cluster = await DB.findOne("cluster", { shortName: deployEnvironmentData.cluster });
+		const cluster = await this.clusterSvc.findOne({ slug: deployEnvironmentData.cluster });
 		if (!cluster) throw new Error(`Cluster "${deployEnvironmentData.cluster}" is not valid`);
 
 		// namespace
@@ -409,7 +442,7 @@ export default class AppService extends BaseService<IApp> {
 
 		// container registry
 		if (!deployEnvironmentData.registry) throw new Error(`Param "registry" (Container Registry's slug) is required.`);
-		const registry = await DB.findOne("registry", { slug: deployEnvironmentData.registry });
+		const registry = await this.regSvc.findOne({ slug: deployEnvironmentData.registry });
 		if (!registry) throw new Error(`Container Registry "${deployEnvironmentData.registry}" is not existed.`);
 
 		// Domains & SSL certificate...
@@ -495,7 +528,7 @@ export default class AppService extends BaseService<IApp> {
 		updatedAppData.lastUpdatedBy = this.req.user.username;
 		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-		updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
+		updatedApp = await this.updateOne({ slug: app.slug }, updatedAppData);
 		if (!updatedApp) throw new Error("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// ----- SHOULD ROLL OUT NEW RELEASE OR NOT ----
@@ -530,8 +563,8 @@ export default class AppService extends BaseService<IApp> {
 	async viewDeployEnvironmentLogs(app: IApp, env: string) {
 		const deployEnvironment = app.deployEnvironment[env];
 
-		const clusterShortName = deployEnvironment.cluster;
-		const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: app.workspace });
+		const clusterSlug = deployEnvironment.cluster;
+		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug, workspace: app.workspace });
 		if (!cluster) return;
 
 		const { contextName: context } = cluster;
@@ -552,5 +585,3 @@ export default class AppService extends BaseService<IApp> {
 		return logs;
 	}
 }
-
-// export { AppService };

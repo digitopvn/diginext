@@ -5,7 +5,6 @@ import * as fs from "fs";
 import path from "path";
 
 import type { InputOptions } from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import selectApp from "@/modules/apps/selectApp";
 import selectProject from "@/modules/apps/selectProject";
@@ -90,6 +89,7 @@ export default async function transferRepo(options: InputOptions) {
 	if (options.app.git.provider != gitProvider.type) {
 		//
 
+		const { DB } = await import("@/modules/api/DB");
 		const newRepo = await DB.create("git_repo", repoData, {
 			subpath: "/orgs/repos",
 			filter: { slug: gitProvider.slug },
@@ -128,6 +128,7 @@ export default async function transferRepo(options: InputOptions) {
 		repoURL: options.repoURL,
 	};
 
+	const { DB } = await import("@/modules/api/DB");
 	// return;
 	// // first commit & create default branches (main, dev/*)
 	const error = await initalizeAndCreateDefaultBranches(options);

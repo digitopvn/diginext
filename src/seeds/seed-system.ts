@@ -1,5 +1,4 @@
 import type { ICloudProvider } from "@/entities";
-import { DB } from "@/modules/api/DB";
 import { seedSystemRoutes } from "@/seeds/seed-all-routes";
 
 const initialCloudProviders = [
@@ -18,6 +17,7 @@ const initialCloudProviders = [
 ] as ICloudProvider[];
 
 export const seedDefaultCloudProviders = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	const results = (
 		await Promise.all(
 			initialCloudProviders.map(async (providerData) => {

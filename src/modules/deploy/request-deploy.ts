@@ -9,7 +9,6 @@ import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { currentVersion, resolveDockerfilePath, stageAllFiles } from "@/plugins";
 
-import { DB } from "../api/DB";
 import type { StartBuildParams } from "../build";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
 import { parseOptionsToAppConfig } from "./parse-options-to-app-config";
@@ -22,6 +21,7 @@ export async function requestDeploy(options: InputOptions) {
 		logError(`This command is only available at CLIENT MODE.`);
 		return;
 	}
+	const { DB } = await import("@/modules/api/DB");
 
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
@@ -97,32 +97,6 @@ export async function requestDeploy(options: InputOptions) {
 	options.slug = appConfig.slug;
 
 	// Make an API to request server to build:
-	// const deployOptions = JSON.stringify(options);
-
-	// if (options.isDebugging) {
-	// 	console.log("Request deploy data :>> ");
-	// 	console.dir(options, { depth: 10 });
-	// }
-
-	// try {
-	// 	const requestResult = await fetchApi({
-	// 		url: DEPLOY_API_PATH,
-	// 		method: "POST",
-	// 		data: { options: deployOptions },
-	// 	});
-
-	// 	if (options.isDebugging) {
-	// 		console.log("Request deploy result :>> ");
-	// 		console.dir(requestResult, { depth: 10 });
-	// 	}
-
-	// 	if (!requestResult.status) logError(requestResult.messages[0] || `Unable to call Request Deploy API.`);
-	// } catch (e) {
-	// 	logError(`Unable to call Request Deploy API:`, e);
-	// 	return;
-	// }
-
-	// const deployOptions = JSON.stringify(options);
 	const requestDeployData: { buildParams: StartBuildParams; deployParams: DeployBuildParams } = {
 		buildParams: {
 			env,

@@ -4,9 +4,9 @@ export interface ContainerRegistrySecretOptions {
 	 */
 	registrySlug: string;
 	/**
-	 * Short name of targeted cluster to create new `imagePullSecrets`
+	 * Slug of targeted cluster to create new `imagePullSecrets`
 	 */
-	clusterShortName: string;
+	clusterSlug: string;
 	/**
 	 * Targeted namespace to create new `imagePullSecrets`
 	 */

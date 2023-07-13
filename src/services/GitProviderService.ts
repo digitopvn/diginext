@@ -4,7 +4,7 @@ import GitProviderAPI from "@/modules/git/git-provider-api";
 
 import BaseService from "./BaseService";
 
-export default class GitProviderService extends BaseService {
+export class GitProviderService extends BaseService<IGitProvider> {
 	constructor() {
 		super(gitProviderSchema);
 	}
@@ -27,4 +27,3 @@ export default class GitProviderService extends BaseService {
 		throw new Error(`Unable to verify "${provider.name}" git provider.`);
 	}
 }
-export { GitProviderService };

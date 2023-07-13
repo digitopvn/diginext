@@ -3,10 +3,10 @@
 import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IUser, IWorkspace } from "@/entities";
 import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
-import { DB } from "@/modules/api/DB";
 import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
 
 export const seedApiKeys = async (workspace: IWorkspace, owner: IUser) => {
+	const { DB } = await import("@/modules/api/DB");
 	// seed default API ACCESS TOKEN:
 	const apiKeyToken = generateWorkspaceApiAccessToken();
 

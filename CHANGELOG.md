@@ -1,3 +1,68 @@
+# [3.19.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.18.0...v3.19.0-prerelease.1) (2023-07-13)
+
+
+### Bug Fixes
+
+* **cli new app:** pull framework should not check package.json ([fae6a50](https://github.com/digitopvn/diginext/commit/fae6a50b83bd806fc4bf28d325bc5d427e1346b9))
+* **cli, pull github fw:** debugging github actions ([03b74cc](https://github.com/digitopvn/diginext/commit/03b74cc9599923513cb4c2f244dfb3b89d7b2984))
+* **cli,framework:** debug clone or pull ([24b1795](https://github.com/digitopvn/diginext/commit/24b17955319216e4849d62f67f4ab9771d54b99a))
+* **server,services,modules:** issue of import circular dependencies ([b21c090](https://github.com/digitopvn/diginext/commit/b21c090a2a032770e918caf703f9b3b2ab4a3ceb))
+* **test:** persist git credentials ([92c2e35](https://github.com/digitopvn/diginext/commit/92c2e35a75c8a2e5babe48582a8d4017c0293cc6))
+
+
+### Features
+
+* **server,api:** deploy page, import git, fix api key auth ([04c9a46](https://github.com/digitopvn/diginext/commit/04c9a46e944847b1f95e648810c579ffa001205d))
+
+# [3.18.0](https://github.com/digitopvn/diginext/compare/v3.17.0...v3.18.0) (2023-07-10)
+
+
+### Bug Fixes
+
+* **app:** trim null process.env ([1de8d3a](https://github.com/digitopvn/diginext/commit/1de8d3a035c950d4e74c0ef6fe832bdcc99b59ef))
+* **cli,git:** add debug select git provider ([8266c42](https://github.com/digitopvn/diginext/commit/8266c4221246636db2624b14fcd550873ef317fa))
+* **cli:** add debug mode to utils current git ([bdc713c](https://github.com/digitopvn/diginext/commit/bdc713c5b4a0d3f8ddd1b4c2f8deecd25402ead9))
+* **cli:** create app, add debug git providerr ([859a576](https://github.com/digitopvn/diginext/commit/859a576e6c314da524e7783a07c0e44bd029a7f0))
+* **cli:** src/plugins/utils.ts cloneGitRepo depth=1 ([917417b](https://github.com/digitopvn/diginext/commit/917417b9f54c3d55c5c99b2c488bb84a42049d88))
+* **cli:** templates/nextjs/ts/0.1/components/three.txt ([38b639a](https://github.com/digitopvn/diginext/commit/38b639a0c3f90b260b17eed1dae5791e729cfcfc))
+* **cli:** updateBranchProtection ([6c91a1e](https://github.com/digitopvn/diginext/commit/6c91a1eda89d91495146b8547a9612a8a000bc49))
+* **cli:** updateBranchProtection ([20c600b](https://github.com/digitopvn/diginext/commit/20c600bc11cc2f3e8d2aaca3c6a0b4f92f94b9c0))
+* **server,api:** capture screenshot of release ([d8ba8a7](https://github.com/digitopvn/diginext/commit/d8ba8a7ee26ff4094a929ccbfe647c632be39161))
+* **server,api:** import git create app, seed default projects ([32ef04d](https://github.com/digitopvn/diginext/commit/32ef04db36e7000bf5684f35c305656ff4d701d4))
+* **server,api:** issue of generating swagger json ([f2124c3](https://github.com/digitopvn/diginext/commit/f2124c3c605dbd0498d4c2c26a05e1d2acc83b20))
+* **server,api:** only mask info when share credential is off ([1da3a55](https://github.com/digitopvn/diginext/commit/1da3a5577cd9b51b3b31bd4afb3a9dba20489054))
+* **server,cli:** git provider api should use correct org name ([1c5435d](https://github.com/digitopvn/diginext/commit/1c5435d62bc7e25a980ecc8cfc86b7e9153926c4))
+* **server,cli:** role update restriction, cluster cli connect ([54b0aae](https://github.com/digitopvn/diginext/commit/54b0aae418254d961d25a5725d2ddde1bf9098a6))
+* **server,cli:** role update restriction, cluster cli connect ([#281](https://github.com/digitopvn/diginext/issues/281)) ([ef42a3f](https://github.com/digitopvn/diginext/commit/ef42a3fa1b05b71dd5810b0754f58969738e372e))
+* **server:** are only unique within a workspace ([c4b52c8](https://github.com/digitopvn/diginext/commit/c4b52c8eeefadebb31900e141375fc7433e55749))
+* **server:** are only unique within a workspace ([#286](https://github.com/digitopvn/diginext/issues/286)) ([5d64a6f](https://github.com/digitopvn/diginext/commit/5d64a6ffe17db3cd115e311288e4b69b2109ab95))
+* **server:** base service issue of generate slug ([be3b53f](https://github.com/digitopvn/diginext/commit/be3b53f86489850b37ace97d0da6957aaaa015cf))
+* update test ([127f81a](https://github.com/digitopvn/diginext/commit/127f81a83d7c1d0a02851c9a9e8322856ab36c76))
+* update test ([57c185d](https://github.com/digitopvn/diginext/commit/57c185d4ff7d009326e499f685e696f82d61ff06))
+
+
+### Features
+
+* **api:** import git ssh url, deploy from git ssh url ([66d01d6](https://github.com/digitopvn/diginext/commit/66d01d6273cdabcdee84de1c6f8f1dd2e5305432))
+* **cli:** changePackageName when create new app ([12c6d06](https://github.com/digitopvn/diginext/commit/12c6d06bb2b1b7289ccc2f20ff445c229248b4b0))
+* **cli:** initalizeAndCreateDefaultBranches > Update main branch protection ([7e01852](https://github.com/digitopvn/diginext/commit/7e01852805c0b9d0bbd249e9c7353f484b0ccf78))
+* **server,api:** import app from git, deploy from git ([d1a3d5e](https://github.com/digitopvn/diginext/commit/d1a3d5e84a34c9eb0d78bbe8718c272ee30e0b39))
+* **server:** revert scroll dir build logs, db backup list ([1e8ec81](https://github.com/digitopvn/diginext/commit/1e8ec81da6afcf0cc92aa1ad36dc8b62a64fa947))
+
+# [3.18.0-prerelease.9](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.8...v3.18.0-prerelease.9) (2023-07-10)
+
+
+### Features
+
+* **api:** import git ssh url, deploy from git ssh url ([66d01d6](https://github.com/digitopvn/diginext/commit/66d01d6273cdabcdee84de1c6f8f1dd2e5305432))
+
+# [3.18.0-prerelease.8](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.7...v3.18.0-prerelease.8) (2023-07-07)
+
+
+### Bug Fixes
+
+* **app:** trim null process.env ([1de8d3a](https://github.com/digitopvn/diginext/commit/1de8d3a035c950d4e74c0ef6fe832bdcc99b59ef))
+
 # [3.18.0-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.6...v3.18.0-prerelease.7) (2023-07-07)
 
 

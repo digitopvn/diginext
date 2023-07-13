@@ -3,10 +3,11 @@ import { logError } from "diginext-utils/dist/xconsole/log";
 import type { AppDto, IApp, IProject } from "@/entities";
 import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
-import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "./app-helper";
 
 export const updateAppConfig = async (app: IApp, env?: string, serverDeployEnvironment?: ClientDeployEnvironmentConfig) => {
+	const { DB } = await import("../api/DB");
+
 	let project: IProject = app.project as IProject;
 
 	const updateAppData: AppDto = {

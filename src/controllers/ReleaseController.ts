@@ -5,13 +5,11 @@ import type { IRelease } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
-import { DB } from "@/modules/api/DB";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import { createReleaseFromBuild } from "@/modules/build/create-release-from-build";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
-import BuildService from "@/services/BuildService";
-import ReleaseService from "@/services/ReleaseService";
+import { BuildService, ReleaseService } from "@/services";
 
 import BaseController from "./BaseController";
 
@@ -76,6 +74,8 @@ export default class ReleaseController extends BaseController<IRelease> {
 			buildNumber: string;
 		}
 	) {
+		const { DB } = await import("@/modules/api/DB");
+
 		if (!body.env) return respondFailure({ msg: `Param "env" (deploy environment code) is required.` });
 		if (!body.buildNumber) return respondFailure({ msg: `Param "buildNumber" (image's tag) is required.` });
 

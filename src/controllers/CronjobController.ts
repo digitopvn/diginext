@@ -1,13 +1,13 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
+import type { ICloudDatabase } from "@/entities";
 import type { CronjobRepeat, CronjobRequest, CronjonRepeatCondition, ICronjob } from "@/entities/Cronjob";
 import type { HiddenBodyKeys } from "@/interfaces";
 import * as interfaces from "@/interfaces";
 import { cancelCronjobById } from "@/modules/cronjob/cancel-job";
 import { createCronjobAtTime, createCronjobRepeat } from "@/modules/cronjob/schedule";
 import { MongoDB } from "@/plugins/mongodb";
-import type { CloudDatabase } from "@/services/CloudDatabaseService";
-import CronjobService from "@/services/CronjobService";
+import { CronjobService } from "@/services/CronjobService";
 
 import BaseController from "./BaseController";
 
@@ -30,7 +30,7 @@ export default class CronjobController extends BaseController<ICronjob> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async create(@Body() body: Omit<ICloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		try {
 			const data = await this.service.create(body);
 			return interfaces.respondSuccess({ data });
@@ -42,7 +42,7 @@ export default class CronjobController extends BaseController<ICronjob> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async update(@Body() body: Omit<ICloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		try {
 			const data = await super.update(body);
 			return interfaces.respondSuccess({ data });

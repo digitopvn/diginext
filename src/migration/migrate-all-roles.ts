@@ -4,8 +4,6 @@ import type { RoleRoute } from "@/entities";
 import { adminRoleRoutes, memberRoleRoutes, moderatorRoleRoutes } from "@/interfaces/SystemTypes";
 import { MongoDB } from "@/plugins/mongodb";
 
-import { DB } from "../modules/api/DB";
-
 const toRouteStr = (route: RoleRoute) => `${route.path}-${(route.scope || []).sort().join(",")}-${route.permissions.sort().join(",")}`;
 const toAllRoutesStr = (routes: RoleRoute[]) =>
 	routes
@@ -14,6 +12,7 @@ const toAllRoutesStr = (routes: RoleRoute[]) =>
 		.join("|");
 
 export const migrateAllRoles = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	let roles = await await DB.find(
 		"role",
 		{ type: { $in: ["admin", "moderator", "member"] } },

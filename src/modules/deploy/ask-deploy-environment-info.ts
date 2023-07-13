@@ -11,7 +11,6 @@ import { availableResourceSizes } from "@/interfaces/SystemTypes";
 import { getCurrentGitRepoData, resolveEnvFilePath } from "@/plugins";
 import { isNumeric } from "@/plugins/number";
 
-import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
@@ -110,6 +109,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	/**
 	 * PARSE LOCAL DEPLOYMENT CONFIG & ASK FOR MISSING INFO
 	 */
+	const { DB } = await import("@/modules/api/DB");
 
 	// request cluster
 	if (!serverDeployEnvironment.cluster) {
@@ -127,10 +127,10 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 				return { name: _cluster.name, value: _cluster };
 			}),
 		});
-		serverDeployEnvironment.cluster = cluster.shortName;
+		serverDeployEnvironment.cluster = cluster.slug;
 		serverDeployEnvironment.provider = (cluster.provider as ICloudProvider).shortName;
 	} else {
-		const cluster = await DB.findOne("cluster", { shortName: serverDeployEnvironment.cluster });
+		const cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster });
 		if (!cluster) {
 			logError(`Cluster "${serverDeployEnvironment.cluster}" not found.`);
 			return;

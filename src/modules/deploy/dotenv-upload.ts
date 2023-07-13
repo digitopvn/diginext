@@ -7,7 +7,6 @@ import type { IApp } from "@/entities";
 import { loadEnvFileAsContainerEnvVars } from "@/plugins";
 
 import { fetchApi } from "../api";
-import { DB } from "../api/DB";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
 
@@ -59,6 +58,7 @@ export const uploadDotenvFileByApp = async (envFile: string, app: IApp, env: str
 };
 
 export const uploadDotenvFileByAppSlug = async (envFile: string, appSlug: string, env: string = "dev") => {
+	const { DB } = await import("@/modules/api/DB");
 	const app = await DB.findOne("app", { slug: appSlug });
 	if (!app) throw new Error(`Can't upload dotenv variables to "${env}" deploy environment due to "${appSlug}" app not found.`);
 
