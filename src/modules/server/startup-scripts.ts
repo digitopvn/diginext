@@ -51,11 +51,13 @@ export async function startupScripts() {
 	}
 
 	// Generate SSH keys
-	const isSSHKeysExisted = await sshKeysExisted();
-	if (!isSSHKeysExisted) await generateSSH();
-	// verify if generated SSH key should not require passphase
-	const keyHasPassphase = sshKeyContainPassphase();
-	if (keyHasPassphase) console.warn(`SSH key "id_rsa" should not contain passphase.`);
+	if (!IsTest()) {
+		const isSSHKeysExisted = await sshKeysExisted();
+		if (!isSSHKeysExisted) await generateSSH();
+		// verify if generated SSH key should not require passphase
+		const keyHasPassphase = sshKeyContainPassphase();
+		if (keyHasPassphase) console.warn(`SSH key "id_rsa" should not contain passphase.`);
+	}
 
 	/**
 	 * Connect to git providers

@@ -719,6 +719,8 @@ export async function stageAllFiles(options: GitStageOptions) {
 export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
 	let git: SimpleGit;
 	let success: boolean = false;
+	console.log("pullOrCloneGitRepo() > repoSSH :>> ", repoSSH);
+	console.log("pullOrCloneGitRepo() > dir :>> ", dir);
 	console.log("pullOrCloneGitRepo() > options :>> ", options);
 
 	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
@@ -755,7 +757,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			success = true;
 		} catch (e) {
-			console.log("pullOrCloneGitRepo() > Failed to PULL :>> try to CLONE...");
+			console.log("pullOrCloneGitRepo() > Failed to PULL :>> try to CLONE...", e);
 			if (options?.onUpdate) options?.onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
 
 			try {
