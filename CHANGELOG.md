@@ -1,3 +1,11 @@
+## [3.19.1-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.19.1-prerelease.1...v3.19.1-prerelease.2) (2023-07-13)
+
+
+### Bug Fixes
+
+* **cli:** member unable to create git repo for new app ([83279f1](https://github.com/digitopvn/diginext/commit/83279f17c5de4c776cf029c7d6bd576f1be1c097))
+* **cli:** member unable to create git repo for new app ([#296](https://github.com/digitopvn/diginext/issues/296)) ([422d7ef](https://github.com/digitopvn/diginext/commit/422d7eff3fed9eb15c33bc500abb304abaa849b6))
+
 ## [3.19.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.19.0...v3.19.1-prerelease.1) (2023-07-13)
 
 
