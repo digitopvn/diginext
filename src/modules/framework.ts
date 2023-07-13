@@ -2,13 +2,14 @@ import detectPrivateKey from "diginext-utils/dist/file/detectPrivateKey";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import fs from "fs";
 import { mkdir } from "fs/promises";
+import { upperFirst } from "lodash";
 import ora from "ora";
 import path from "path";
 import copy from "recursive-copy";
 
 import { isServerMode } from "@/app.config";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { cloneGitRepo, deleteFolderRecursive, pullOrCloneGitRepo, wait } from "@/plugins";
+import { cloneGitRepo, deleteFolderRecursive, parseGitRepoDataFromRepoSSH, pullOrCloneGitRepo, wait } from "@/plugins";
 
 /**
  * Delete temporary directory of the framework
@@ -91,6 +92,7 @@ export interface PullFrameworkVersion extends Pick<InputOptions, "framework" | "
 export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 	const { frameworkVersion } = options;
 	const { name, repoSSH } = options.framework;
+	if (!repoSSH) throw new Error(`Unable to pull/clone framework: repo SSH url is required.`);
 
 	const spin = ora(`Pulling "${name}" framework... 0%`).start();
 
@@ -103,8 +105,14 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 	}
 	await mkdir(tmpDir, { recursive: true });
 
+	// parse framework repo SSH url -> use git provider's credentials accordingly:
+	const { providerType } = parseGitRepoDataFromRepoSSH(repoSSH);
+	const { DB } = await import("@/modules/api/DB");
+	const gitProvider = await DB.findOne("git", { type: providerType });
+
 	// pull or clone git repo
 	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
+		useAccessToken: gitProvider ? { type: upperFirst(gitProvider.method) as "Bearer" | "Basic", value: gitProvider.access_token } : undefined,
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
 				console.log(msg);
@@ -155,7 +163,8 @@ export async function pullingFramework(options: InputOptions) {
 
 		await copyFrameworkResources(options.targetDirectory);
 
-		await changePackageName(options);
+		// @teexiii : SHOULD CHECK FOR SPECIFIC CASE AS NODE.JS ONLY!
+		// await changePackageName(options);
 
 		await cleanUpFramework();
 	}

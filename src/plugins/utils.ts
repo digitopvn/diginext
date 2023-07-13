@@ -515,7 +515,7 @@ export interface GitRepoData {
 	/**
 	 * Git provider type
 	 */
-	gitProvider: GitProviderType;
+	providerType: GitProviderType;
 }
 
 /**
@@ -523,7 +523,7 @@ export interface GitRepoData {
  * @param {string} repoSSH - Example: `git@bitbucket.org:organization-name/git-repo-slug.git`
  */
 export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
-	let namespace: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+	let namespace: string, repoSlug: string, gitDomain: string, providerType: GitProviderType;
 
 	let fullSlug: string;
 
@@ -549,7 +549,7 @@ export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
 	}
 
 	try {
-		gitProvider = gitDomain.split(".")[0] as GitProviderType;
+		providerType = gitDomain.split(".")[0] as GitProviderType;
 	} catch (e) {
 		logError(`Repository SSH (${repoSSH}) is invalid`);
 		return;
@@ -557,7 +557,7 @@ export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
 
 	fullSlug = `${namespace}/${repoSlug}`;
 
-	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
+	return { namespace, repoSlug, fullSlug, gitDomain, providerType };
 }
 
 /**
@@ -565,7 +565,7 @@ export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
  * @param {string} repoURL - Example: `https://bitbucket.org/organization-name/git-repo-slug`
  */
 export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
-	let namespace: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+	let namespace: string, repoSlug: string, gitDomain: string, providerType: GitProviderType;
 
 	let fullSlug: string;
 
@@ -578,7 +578,7 @@ export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
 	[gitDomain, namespace, repoSlug] = repoURL.split("://")[1].split("/");
 
 	try {
-		gitProvider = gitDomain.split(".")[0] as GitProviderType;
+		providerType = gitDomain.split(".")[0] as GitProviderType;
 	} catch (e) {
 		console.error(`Repository SSH (${repoURL}) is invalid`);
 		return;
@@ -586,7 +586,7 @@ export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
 
 	fullSlug = `${namespace}/${repoSlug}`;
 
-	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
+	return { namespace, repoSlug, fullSlug, gitDomain, providerType };
 }
 
 /**
@@ -824,7 +824,7 @@ export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isD
 		const branch = await getCurrentGitBranch(dir);
 		if (!branch) return;
 
-		const { repoSlug: slug, gitProvider: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(repoSSH);
+		const { repoSlug: slug, providerType: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(repoSSH);
 
 		const repoURL = generateRepoURL(provider, fullSlug);
 

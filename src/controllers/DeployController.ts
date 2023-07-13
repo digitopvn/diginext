@@ -260,8 +260,8 @@ export default class DeployController {
 		if (!app) {
 			// try to get default git provider
 			const gitData = parseGitRepoDataFromRepoSSH(body.sshUrl);
-			const gitProvider = await this.gitSvc.findOne({ type: gitData.gitProvider, public: true, workspace: this.workspace._id });
-			if (!gitProvider) throw new Error(`Unable to deploy: no git providers (${gitData.gitProvider.toUpperCase()}) in this workspace.`);
+			const gitProvider = await this.gitSvc.findOne({ type: gitData.providerType, public: true, workspace: this.workspace._id });
+			if (!gitProvider) throw new Error(`Unable to deploy: no git providers (${gitData.providerType.toUpperCase()}) in this workspace.`);
 
 			// create a new app
 			try {

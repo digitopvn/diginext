@@ -102,8 +102,8 @@ export class AppService extends BaseService<IApp> {
 
 			data.git = {
 				repoSSH: data.git as string,
-				repoURL: getRepoURLFromRepoSSH(gitData.gitProvider, gitData.fullSlug),
-				provider: gitData.gitProvider,
+				repoURL: getRepoURLFromRepoSSH(gitData.providerType, gitData.fullSlug),
+				provider: gitData.providerType,
 			};
 		}
 		appDto.git = data.git;
