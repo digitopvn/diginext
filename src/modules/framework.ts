@@ -38,7 +38,7 @@ export const copyFrameworkResources = async (destDirectory: string) => {
 
 	let success = false;
 	try {
-		const tmpFrameworkDir = path.resolve(".fw");
+		const tmpFrameworkDir = path.resolve(CLI_CONFIG_DIR, ".fw");
 		await copy(tmpFrameworkDir, destDirectory, options);
 		success = true;
 	} catch (e) {

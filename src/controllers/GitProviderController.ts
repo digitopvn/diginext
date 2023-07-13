@@ -345,7 +345,7 @@ export default class GitProviderController extends BaseController {
 
 		// process
 		try {
-			const repo = await GitProviderAPI.createGitRepository(provider, body, { isDebugging: true });
+			const repo = await GitProviderAPI.createGitRepository(provider, body, { isDebugging: false });
 			return respondSuccess({ data: repo });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -426,7 +426,7 @@ export default class GitProviderController extends BaseController {
 
 		// process
 		try {
-			const branches = await GitProviderAPI.listRepoBranches(provider, provider.org, repoSlug, { isDebugging: true });
+			const branches = await GitProviderAPI.listRepoBranches(provider, provider.org, repoSlug, { isDebugging: false });
 			return respondSuccess({ data: branches });
 		} catch (e) {
 			return respondFailure(e.toString());
