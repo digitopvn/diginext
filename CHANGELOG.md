@@ -1,4 +1,5 @@
 # [3.19.0](https://github.com/digitopvn/diginext/compare/v3.18.0...v3.19.0) (2023-07-13)
+# [3.19.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.19.0-prerelease.1...v3.19.0-prerelease.2) (2023-07-13)
 
 
 ### Bug Fixes
@@ -13,6 +14,7 @@
 ### Features
 
 * **server,api:** deploy page, import git, fix api key auth ([04c9a46](https://github.com/digitopvn/diginext/commit/04c9a46e944847b1f95e648810c579ffa001205d))
+* **cli:** missing fs.existsSync checking package.json ([33811de](https://github.com/digitopvn/diginext/commit/33811de13df6b63924fbc307a2d403adc6be42d8))
 
 # [3.19.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.18.0...v3.19.0-prerelease.1) (2023-07-13)
 
