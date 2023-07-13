@@ -78,7 +78,7 @@ export async function startupScripts() {
 	// }
 
 	// set global identity
-	if (!isDevMode && !IsTest()) {
+	if (!isDevMode) {
 		// <-- to make sure it won't override your GIT config when developing Diginext
 		execCmd(`git init`);
 		execCmd(`git config --global user.email server@diginext.site`);

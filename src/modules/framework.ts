@@ -165,8 +165,6 @@ export async function pullingFramework(options: InputOptions) {
 
 		// @teexiii : SHOULD CHECK FOR SPECIFIC CASE AS NODE.JS ONLY!
 		// await changePackageName(options);
-
-		await cleanUpFramework();
 	}
 
 	return true;
