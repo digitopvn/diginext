@@ -341,7 +341,11 @@ export default class GitProviderController extends BaseController {
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
 
 		let provider = await this.service.findOne(this.filter, this.options);
-		if (!provider) return respondFailure(`Git provider not found.`);
+		if (!provider) {
+			console.log("this.filter :>> ", this.filter);
+			console.log("this.options :>> ", this.options);
+			return respondFailure(`Git provider not found.`);
+		}
 
 		// process
 		try {

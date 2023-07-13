@@ -9,6 +9,7 @@ import { getAppConfigFromApp } from "../apps/app-helper";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppConfig } from "../apps/update-config";
 import { askForDomain } from "../build";
+import { askForCluster } from "../cluster/ask-for-cluster";
 import { askForCertIssuer } from "./ask-deploy-environment-info";
 
 export const parseOptionsToAppConfig = async (options: InputOptions) => {
@@ -80,7 +81,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 
 	// Kubernetes Info
 	if (typeof namespace !== "undefined") deployEnvironment.namespace = namespace;
-	if (typeof cluster !== "undefined") deployEnvironment.cluster = cluster;
+	if (typeof cluster !== "undefined") deployEnvironment.cluster = typeof cluster !== "boolean" ? cluster : (await askForCluster()).slug;
 	if (typeof port !== "undefined") deployEnvironment.port = port;
 	if (typeof cdn !== "undefined") deployEnvironment.cdn = cdn;
 	if (typeof shouldInherit !== "undefined") deployEnvironment.shouldInherit = shouldInherit;

@@ -11,6 +11,7 @@ import type { KubeRegistrySecret } from "@/interfaces/KubeRegistrySecret";
 import { wait } from "@/plugins";
 
 import type { DomainRecord } from "../../interfaces/DomainRecord";
+import { askForCluster } from "../cluster/ask-for-cluster";
 import ClusterManager from "../k8s";
 import { getKubeContextByCluster } from "../k8s/kube-config";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
@@ -225,10 +226,10 @@ export const execDigitalOcean = async (options?: InputOptions) => {
 					return { name: `[${i + 1}] ${reg.name} (${reg.provider})`, value: reg };
 				}),
 			});
-
+			const clusterSlug = typeof options.cluster === "boolean" ? (await askForCluster()).slug : options.cluster;
 			try {
 				await createImagePullingSecret({
-					clusterSlug: options.cluster,
+					clusterSlug,
 					registrySlug: selectedRegistry.slug,
 					namespace: options.namespace,
 					shouldCreateSecretInNamespace: options.shouldCreate,
