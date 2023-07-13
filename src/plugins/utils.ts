@@ -719,18 +719,19 @@ export async function stageAllFiles(options: GitStageOptions) {
 export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
 	let git: SimpleGit;
 	let success: boolean = false;
-
-	const { onUpdate } = options;
+	console.log("pullOrCloneGitRepo() > options :>> ", options);
 
 	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
 		const message = `git.${method} ${stage} stage ${progress}% complete`;
-		if (onUpdate) onUpdate(message, progress);
+		if (options?.onUpdate) options?.onUpdate(message, progress);
 	};
 
 	const commandConfig: string[] = [];
 
 	if (options?.useAccessToken && options.useAccessToken.type && options.useAccessToken.value)
 		commandConfig.push(`http.extraHeader=Authorization: ${options.useAccessToken.type} ${options.useAccessToken.value}`);
+
+	console.log("pullOrCloneGitRepo() > commandConfig :>> ", commandConfig);
 
 	if (fs.existsSync(dir)) {
 		try {
@@ -753,7 +754,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			success = true;
 		} catch (e) {
-			if (onUpdate) onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
+			if (options?.onUpdate) options?.onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
 
 			// just for sure...
 			await deleteFolderRecursive(dir);
@@ -770,11 +771,11 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 				success = true;
 			} catch (e2) {
-				if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+				if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
 			}
 		}
 	} else {
-		if (onUpdate) onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
+		if (options?.onUpdate) options?.onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
 
 		git = simpleGit({ progress: onProgress, config: commandConfig });
 
@@ -787,7 +788,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			success = true;
 		} catch (e) {
-			if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+			if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
 		}
 	}
 

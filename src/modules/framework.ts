@@ -106,11 +106,12 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 		return false;
 	}
 	await mkdir(tmpDir, { recursive: true });
-
+	console.log("pullFrameworkVersion() > tmpDir :>> ", tmpDir);
 	// parse framework repo SSH url -> use git provider's credentials accordingly:
 	const { providerType } = parseGitRepoDataFromRepoSSH(repoSSH);
 	const { DB } = await import("@/modules/api/DB");
 	const gitProvider = await DB.findOne("git", { type: providerType });
+	console.log("pullFrameworkVersion() > gitProvider :>> ", gitProvider);
 
 	// pull or clone git repo
 	const pullStatus = await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
@@ -126,14 +127,8 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 		removeGitOnFinish: true,
 		removeCIOnFinish: !options.ci,
 	});
-
+	console.log("pullFrameworkVersion() > pullStatus :>> ", pullStatus);
 	spin.stop();
-
-	// delete unneccessary files
-	// if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
-	// if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
-	// if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
-	// if (fs.existsSync(".fw/yarn.lock")) fs.unlinkSync(".fw/yarn.lock");
 
 	return pullStatus;
 };
