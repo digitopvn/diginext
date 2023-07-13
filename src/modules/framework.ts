@@ -2,7 +2,6 @@ import detectPrivateKey from "diginext-utils/dist/file/detectPrivateKey";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import fs from "fs";
 import { mkdir } from "fs/promises";
-import { upperFirst } from "lodash";
 import ora from "ora";
 import path from "path";
 import copy from "recursive-copy";
@@ -10,7 +9,7 @@ import copy from "recursive-copy";
 import { isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { cloneGitRepo, deleteFolderRecursive, parseGitRepoDataFromRepoSSH, pullOrCloneGitRepo, wait } from "@/plugins";
+import { cloneGitRepo, deleteFolderRecursive, pullOrCloneGitRepo, wait } from "@/plugins";
 
 /**
  * Delete temporary directory of the framework
@@ -88,7 +87,7 @@ export const selectFrameworkVersion = async (framework = "diginext") => {
 	// return versionList;
 };
 
-export interface PullFrameworkVersion extends Pick<InputOptions, "framework" | "frameworkVersion" | "name" | "repoSSH" | "ci"> {}
+export interface PullFrameworkVersion extends Pick<InputOptions, "framework" | "frameworkVersion" | "name" | "repoSSH" | "ci" | "isDebugging"> {}
 
 export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 	const { frameworkVersion = "main" } = options;
@@ -106,18 +105,18 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 		return false;
 	}
 	await mkdir(tmpDir, { recursive: true });
-	console.log("pullFrameworkVersion() > frameworkVersion :>> ", frameworkVersion);
-	console.log("pullFrameworkVersion() > tmpDir :>> ", tmpDir);
+	if (options.isDebugging) console.log("pullFrameworkVersion() > frameworkVersion :>> ", frameworkVersion);
+	if (options.isDebugging) console.log("pullFrameworkVersion() > tmpDir :>> ", tmpDir);
 
-	// parse framework repo SSH url -> use git provider's credentials accordingly:
-	const { providerType } = parseGitRepoDataFromRepoSSH(repoSSH);
-	const { DB } = await import("@/modules/api/DB");
-	const gitProvider = await DB.findOne("git", { type: providerType });
-	console.log("pullFrameworkVersion() > gitProvider :>> ", gitProvider);
+	// [NOT WORKING] parse framework repo SSH url -> use git provider's credentials accordingly:
+	// const { providerType } = parseGitRepoDataFromRepoSSH(repoSSH);
+	// const { DB } = await import("@/modules/api/DB");
+	// const gitProvider = await DB.findOne("git", { type: providerType });
+	// if (options.isDebugging) console.log("pullFrameworkVersion() > gitProvider :>> ", gitProvider);
 
 	// pull or clone git repo
 	const pullStatus = await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
-		useAccessToken: gitProvider ? { type: upperFirst(gitProvider.method) as "Bearer" | "Basic", value: gitProvider.access_token } : undefined,
+		// useAccessToken: gitProvider ? { type: upperFirst(gitProvider.method) as "Bearer" | "Basic", value: gitProvider.access_token } : undefined,
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
 				console.log(msg);
@@ -129,20 +128,21 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 		removeGitOnFinish: true,
 		removeCIOnFinish: !options.ci,
 	});
-	console.log("pullFrameworkVersion() > pullStatus :>> ", pullStatus);
+	if (options.isDebugging) console.log("pullFrameworkVersion() > pullStatus :>> ", pullStatus);
+
 	spin.stop();
 
 	return pullStatus;
 };
 
 export const changePackageName = async (options: InputOptions) => {
-	//
 	const { targetDirectory, repoSlug } = options;
 
 	if (!path.resolve(targetDirectory, "package.json")) {
 		logWarn("NOT FOUND package.json");
 		return;
 	}
+
 	try {
 		const json = fs.readFileSync(path.resolve(targetDirectory, "package.json"), "utf-8");
 
@@ -164,7 +164,7 @@ export async function pullingFramework(options: InputOptions) {
 		await copyFrameworkResources(options.targetDirectory);
 
 		// @teexiii : SHOULD CHECK FOR SPECIFIC CASE AS NODE.JS ONLY!
-		// await changePackageName(options);
+		await changePackageName(options);
 	}
 
 	return true;
