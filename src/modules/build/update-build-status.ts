@@ -4,9 +4,9 @@ import { log, logError } from "diginext-utils/dist/xconsole/log";
 import type { IBuild, IProject } from "@/entities";
 import type { BuildStatus } from "@/interfaces/SystemTypes";
 
-import { DB } from "../api/DB";
-
 export async function updateBuildStatus(build: IBuild, status: BuildStatus, extra?: { env?: string }) {
+	const { DB } = await import("@/modules/api/DB");
+
 	if (!build) {
 		logError(`[START BUILD] updateBuildStatus > "build" is required.`);
 		return;
@@ -42,6 +42,8 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, extr
 }
 
 export async function updateBuildStatusByAppSlug(appSlug: string, buildSlug: string, buildStatus: BuildStatus) {
+	const { DB } = await import("../api/DB");
+
 	// find the existing project
 	if (!appSlug) {
 		logError(`[START BUILD] updateBuildStatus > "appSlug" is required.`);

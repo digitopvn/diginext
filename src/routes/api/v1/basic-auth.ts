@@ -4,7 +4,6 @@ import express from "express";
 import { Config } from "@/app.config";
 import type { IWorkspace } from "@/entities";
 import { respondFailure, respondSuccess } from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import { generateJWT } from "@/modules/passports";
 import { MongoDB } from "@/plugins/mongodb";
 
@@ -15,6 +14,7 @@ const router = express.Router();
  */
 router.post("/register", async (req, res) => {
 	const { email, password } = req.body;
+	const { DB } = await import("@/modules/api/DB");
 
 	try {
 		const existingUser = await DB.findOne("user", { email });
@@ -73,6 +73,7 @@ router.post(
 	// recaptcha.middleware.verify,
 	async (req, res) => {
 		const { email, password } = req.body;
+		const { DB } = await import("@/modules/api/DB");
 
 		try {
 			const user = await DB.findOne("user", { email });

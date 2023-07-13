@@ -5,9 +5,8 @@ import type { IRoute, RouteDto } from "@/entities/Route";
 import type { RequestMethodType } from "@/interfaces/SystemTypes";
 import { app } from "@/server";
 
-import { DB } from "../modules/api/DB";
-
 export const seedSystemRoutes = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	// get routes from the database
 	let dbRoutes = await DB.find("route", {});
 	// console.log("dbRoutes >>", dbRoutes.length);

@@ -515,7 +515,7 @@ export interface GitRepoData {
 	/**
 	 * Git provider type
 	 */
-	gitProvider: GitProviderType;
+	providerType: GitProviderType;
 }
 
 /**
@@ -523,7 +523,7 @@ export interface GitRepoData {
  * @param {string} repoSSH - Example: `git@bitbucket.org:organization-name/git-repo-slug.git`
  */
 export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
-	let namespace: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+	let namespace: string, repoSlug: string, gitDomain: string, providerType: GitProviderType;
 
 	let fullSlug: string;
 
@@ -549,7 +549,7 @@ export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
 	}
 
 	try {
-		gitProvider = gitDomain.split(".")[0] as GitProviderType;
+		providerType = gitDomain.split(".")[0] as GitProviderType;
 	} catch (e) {
 		logError(`Repository SSH (${repoSSH}) is invalid`);
 		return;
@@ -557,7 +557,7 @@ export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
 
 	fullSlug = `${namespace}/${repoSlug}`;
 
-	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
+	return { namespace, repoSlug, fullSlug, gitDomain, providerType };
 }
 
 /**
@@ -565,7 +565,7 @@ export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
  * @param {string} repoURL - Example: `https://bitbucket.org/organization-name/git-repo-slug`
  */
 export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
-	let namespace: string, repoSlug: string, gitDomain: string, gitProvider: GitProviderType;
+	let namespace: string, repoSlug: string, gitDomain: string, providerType: GitProviderType;
 
 	let fullSlug: string;
 
@@ -578,7 +578,7 @@ export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
 	[gitDomain, namespace, repoSlug] = repoURL.split("://")[1].split("/");
 
 	try {
-		gitProvider = gitDomain.split(".")[0] as GitProviderType;
+		providerType = gitDomain.split(".")[0] as GitProviderType;
 	} catch (e) {
 		console.error(`Repository SSH (${repoURL}) is invalid`);
 		return;
@@ -586,24 +586,24 @@ export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
 
 	fullSlug = `${namespace}/${repoSlug}`;
 
-	return { namespace, repoSlug, fullSlug, gitDomain, gitProvider };
+	return { namespace, repoSlug, fullSlug, gitDomain, providerType };
 }
 
 /**
  * Generate git repo SSH url from a git repo URL
  * @example "git@github.com:digitopvn/diginext.git" -> "https://github.com/digitopvn/diginext"
  */
-export function repoUrlToRepoSSH(repoSSH: string) {
+export function repoSshToRepoURL(repoSSH: string) {
 	const repoData = parseGitRepoDataFromRepoSSH(repoSSH);
 	if (!repoData) throw new Error(`Unable to parse: ${repoSSH}`);
-	return `https://${repoData.gitDomain}/${repoData.fullSlug}`;
+	return `https://${repoData.gitDomain}/${repoData.fullSlug}.git`;
 }
 
 /**
  * Generate git repo URL from a git repo SSH url
  * @example "https://github.com/digitopvn/diginext" -> "git@github.com:digitopvn/diginext.git"
  */
-export function repoSshToRepoURL(repoURL: string) {
+export function repoUrlToRepoSSH(repoURL: string) {
 	const repoData = parseGitRepoDataFromRepoURL(repoURL);
 	if (!repoData) throw new Error(`Unable to parse: ${repoURL}`);
 	return `git@${repoData.gitDomain}:${repoData.fullSlug}.git`;
@@ -720,21 +720,29 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 	let git: SimpleGit;
 	let success: boolean = false;
 
-	const { onUpdate } = options;
+	console.log("pullOrCloneGitRepo() > repoSSH :>> ", repoSSH);
+	console.log("pullOrCloneGitRepo() > dir :>> ", dir);
+	console.log("pullOrCloneGitRepo() > options :>> ", options);
 
 	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
 		const message = `git.${method} ${stage} stage ${progress}% complete`;
-		if (onUpdate) onUpdate(message, progress);
+		if (options?.onUpdate) options?.onUpdate(message, progress);
 	};
 
-	const commandConfig: string[] = [];
+	// const config: string[] = [];
 
-	if (options?.useAccessToken && options.useAccessToken.type && options.useAccessToken.value)
-		commandConfig.push(`http.extraHeader=Authorization: ${options.useAccessToken.type} ${options.useAccessToken.value}`);
+	// if (options?.useAccessToken && options.useAccessToken.type && options.useAccessToken.value) {
+	// 	config.push(`http.extraHeader=Authorization: ${options.useAccessToken.type} ${options.useAccessToken.value}`);
+	// 	repoSSH = repoSshToRepoURL(repoSSH);
+	// }
+
+	console.log("pullOrCloneGitRepo() > repoSSH :>> ", repoSSH);
+	// console.log("pullOrCloneGitRepo() > commandConfig :>> ", config);
 
 	if (fs.existsSync(dir)) {
 		try {
-			git = simpleGit(dir, { progress: onProgress, config: commandConfig });
+			console.log("pullOrCloneGitRepo() > directory exists :>> try to PULL...");
+			git = simpleGit(dir, { progress: onProgress });
 			// -----------------------
 			// ! DO NOT SET TO "FALSE"
 			// -----------------------
@@ -753,16 +761,18 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			success = true;
 		} catch (e) {
-			if (onUpdate) onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
-
-			// just for sure...
-			await deleteFolderRecursive(dir);
-
-			// for CLI create new app from a framework
-			git = simpleGit({ progress: onProgress, config: commandConfig });
+			console.log("pullOrCloneGitRepo() > Failed to PULL :>> try to CLONE...", e);
+			if (options?.onUpdate) options?.onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
 
 			try {
+				// just for sure...
+				await deleteFolderRecursive(dir);
+
+				// for CLI create new app from a framework
+				git = simpleGit({ progress: onProgress });
+
 				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+				console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 				// remove git on finish
 				if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
@@ -770,16 +780,19 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 				success = true;
 			} catch (e2) {
-				if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+				console.log("pullOrCloneGitRepo() > Failed to PULL & CLONE :>> ", e2);
+				if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e2.message}`);
 			}
 		}
 	} else {
-		if (onUpdate) onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
-
-		git = simpleGit({ progress: onProgress, config: commandConfig });
+		console.log("pullOrCloneGitRepo() > directory NOT exists :>> try to CLONE...");
+		if (options?.onUpdate) options?.onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
 
 		try {
+			git = simpleGit({ progress: onProgress });
+
 			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+			console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 			// remove git on finish
 			if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
@@ -787,7 +800,8 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			success = true;
 		} catch (e) {
-			if (onUpdate) onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+			console.log("pullOrCloneGitRepo() > Failed to CLONE !");
+			if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
 		}
 	}
 
@@ -824,7 +838,7 @@ export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isD
 		const branch = await getCurrentGitBranch(dir);
 		if (!branch) return;
 
-		const { repoSlug: slug, gitProvider: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(repoSSH);
+		const { repoSlug: slug, providerType: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(repoSSH);
 
 		const repoURL = generateRepoURL(provider, fullSlug);
 

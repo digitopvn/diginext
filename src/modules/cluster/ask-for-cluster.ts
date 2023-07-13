@@ -4,9 +4,8 @@ import { isEmpty } from "lodash";
 
 import type { ICluster } from "@/entities";
 
-import { DB } from "../api/DB";
-
 export const askForCluster = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	const clusters = await DB.find("cluster", {});
 
 	if (isEmpty(clusters)) {
@@ -20,7 +19,7 @@ export const askForCluster = async () => {
 		message: `Select cluster:`,
 		default: clusters[0],
 		choices: clusters.map((c, i) => {
-			return { name: `[${i + 1}] ${c.name} (${c.shortName} / ${c.providerShortName})`, value: c };
+			return { name: `[${i + 1}] ${c.name} (${c.slug} / ${c.providerShortName})`, value: c };
 		}),
 	});
 

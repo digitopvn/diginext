@@ -1,11 +1,11 @@
 import { Config } from "@/app.config";
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import { credentialFields, memberRoleRoutes, moderatorRoleRoutes } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
 
 // seed default roles of a workspace
 export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
+	const { DB } = await import("@/modules/api/DB");
 	// ADMIN
 	let adminRole = await DB.findOne("role", { type: "admin", workspace: workspace._id });
 	let adminMaskedFields: string[] = [];

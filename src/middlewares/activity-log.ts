@@ -4,10 +4,10 @@ import type { NextFunction } from "express";
 import type { IWorkspace } from "@/entities";
 import type { IActivity } from "@/entities/Activity";
 import type { AppRequest, AppResponse } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import ActivityService from "@/services/ActivityService";
 
 export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: NextFunction) => {
+	const { DB } = await import("@/modules/api/DB");
 	// Only save log for POST, PATCH & DELETE
 	// if (req.method === "GET") return next();
 

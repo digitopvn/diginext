@@ -12,7 +12,6 @@ import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { objectToDeploymentYaml } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
-import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
 import ClusterManager from "../k8s";
 import { createImagePullSecretsInNamespace } from "../k8s/image-pull-secret";
@@ -66,6 +65,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		//
 	} = params;
 
+	const { DB } = await import("@/modules/api/DB");
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
 	const { slug, project } = currentAppConfig;
@@ -102,7 +102,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	let replicas = deployEnvironmentConfig.replicas ?? 1;
 
 	const BASE_URL = domains && domains.length > 0 ? `https://${domains[0]}` : `http://${svcName}.${nsName}.svc.cluster.local`;
-	const clusterShortName = deployEnvironmentConfig.cluster;
+	const clusterSlug = deployEnvironmentConfig.cluster;
 
 	// get container registry
 	let registry: IContainerRegistry = await DB.findOne("registry", { slug: registrySlug });
@@ -110,15 +110,15 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		throw new Error(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
 	}
 	if (!registry.imagePullSecret) {
-		const imagePullSecret = await createImagePullSecretsInNamespace(slug, env, clusterShortName, nsName);
+		const imagePullSecret = await createImagePullSecretsInNamespace(slug, env, clusterSlug, nsName);
 		[registry] = await DB.update("registry", { _id: registry._id }, { imagePullSecret });
 	}
 	// console.log("registry :>> ", registry);
 
 	// get destination cluster
-	let cluster = await DB.findOne("cluster", { shortName: clusterShortName });
+	let cluster = await DB.findOne("cluster", { slug: clusterSlug });
 	if (!cluster) {
-		throw new Error(`Cannot find any clusters with short name as "${clusterShortName}", please contact your admin or create a new one.`);
+		throw new Error(`Cannot find any clusters with short name as "${clusterSlug}", please contact your admin or create a new one.`);
 	}
 	const { contextName: context } = cluster;
 
@@ -139,7 +139,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			workspace,
 			primaryDomain: DIGINEXT_DOMAIN,
 			subdomainName: prereleaseSubdomainName,
-			clusterShortName: deployEnvironmentConfig.cluster,
+			clusterSlug: deployEnvironmentConfig.cluster,
 		});
 		if (status === 0) {
 			throw new Error(`Can't create "prerelease" domain: ${domain} because "${messages.join(". ")}"`);

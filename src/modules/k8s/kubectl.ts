@@ -12,7 +12,6 @@ import type { KubeNode } from "@/interfaces/KubeNode";
 import type { KubePod } from "@/interfaces/KubePod";
 import { execCmd } from "@/plugins";
 
-import { DB } from "../api/DB";
 import ClusterManager from "./index";
 
 interface KubeGenericOptions {
@@ -188,10 +187,11 @@ export async function deleteNamespace(namespace: string, options: KubeCommandOpt
 /**
  * Delete a namespace of a cluster
  */
-export async function deleteNamespaceByCluster(namespace: string, clusterShortName: string) {
-	const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
+export async function deleteNamespaceByCluster(namespace: string, clusterSlug: string) {
+	const { DB } = await import("@/modules/api/DB");
+	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 	if (!cluster) {
-		logError(`[KUBECTL] Can't delete namespace "${namespace}" due to cluster "${clusterShortName}" not found.`);
+		logError(`[KUBECTL] Can't delete namespace "${namespace}" due to cluster "${clusterSlug}" not found.`);
 		return;
 	}
 	const { name: context } = await ClusterManager.getKubeContextByCluster(cluster);

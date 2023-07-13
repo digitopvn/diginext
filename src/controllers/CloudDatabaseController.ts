@@ -6,8 +6,7 @@ import type { CronjobRepeat, CronjonRepeatCondition } from "@/entities/Cronjob";
 import type { HiddenBodyKeys } from "@/interfaces";
 import * as interfaces from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
-import type { CloudDatabase } from "@/services/CloudDatabaseService";
-import CloudDatabaseService from "@/services/CloudDatabaseService";
+import { CloudDatabaseService } from "@/services/CloudDatabaseService";
 
 import BaseController from "./BaseController";
 
@@ -30,7 +29,7 @@ export default class CloudDatabaseController extends BaseController<ICloudDataba
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async create(@Body() body: Omit<ICloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		try {
 			return await super.create(body);
 		} catch (e) {
@@ -41,7 +40,7 @@ export default class CloudDatabaseController extends BaseController<ICloudDataba
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	update(@Body() body: Omit<ICloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.update(body);
 	}
 

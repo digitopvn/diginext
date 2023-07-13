@@ -2,9 +2,8 @@ import { isJSON } from "class-validator";
 import { log } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
-import { DB } from "../modules/api/DB";
-
 export const migrateAllReleases = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	const releases = await DB.find("release", { appConfig: undefined }, { populate: ["app"], select: ["app", "_id", "diginext", "envVars"] });
 	if (isEmpty(releases)) return;
 

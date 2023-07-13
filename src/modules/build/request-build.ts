@@ -9,7 +9,6 @@ import type { InputOptions } from "@/interfaces";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { getCurrentGitRepoData, resolveDockerfilePath, stageAllFiles } from "@/plugins";
 
-import { DB } from "../api/DB";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppGitInfo } from "../apps/update-git-config";
 import { askForRegistry } from "../registry/ask-for-registry";
@@ -23,6 +22,7 @@ export async function requestBuild(options: InputOptions) {
 		logError(`This command is only available at CLIENT MODE.`);
 		return;
 	}
+	const { DB } = await import("@/modules/api/DB");
 
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 

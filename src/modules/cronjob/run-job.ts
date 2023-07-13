@@ -4,10 +4,10 @@ import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole
 
 import { type CronjobHistory, type ICronjob } from "@/entities/Cronjob";
 
-import { DB } from "../api/DB";
 import { calculateNextRunAt } from "./calculate-next-run-at";
 
 export const runCronjob = async (job: ICronjob) => {
+	const { DB } = await import("@/modules/api/DB");
 	// call api request of the cronjob:
 	axios({
 		url: `${job.url}`,

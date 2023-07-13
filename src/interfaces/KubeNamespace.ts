@@ -16,6 +16,11 @@ export interface KubeNamespace {
 		phase?: string;
 	};
 	// extras
+	clusterSlug?: string;
+	/**
+	 * Cluster's short name
+	 * @deprecated
+	 */
 	clusterShortName?: string;
 	/**
 	 * Cluster ID

@@ -7,8 +7,7 @@ import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
 import { assignRoleByID, assignRoleByRoleID, filterSensitiveInfo, filterUsersByWorkspaceRole, getActiveRole } from "@/plugins/user-utils";
-import UserService from "@/services/UserService";
-import WorkspaceService from "@/services/WorkspaceService";
+import { UserService, WorkspaceService } from "@/services";
 
 interface JoinWorkspaceBody {
 	/**

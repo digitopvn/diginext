@@ -7,10 +7,11 @@ import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IWorkspace } from "@/entities";
 import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
-import { DB } from "../api/DB";
 import { generateDomains } from "../deploy/generate-domain";
 
 export const askForDomain = async (env: string, projectSlug: string, appSlug: string, deployEnvironment: ClientDeployEnvironmentConfig) => {
+	const { DB } = await import("../api/DB");
+
 	let subdomainName = `${projectSlug}-${appSlug}.${env}`;
 	let domains: string[] = [];
 
@@ -20,7 +21,7 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 		generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
 		logWarn(`This app's domain is too long, it will be shorten randomly to: ${generatedDomain}`);
 	}
-	const clusterShortName = deployEnvironment.cluster;
+	const clusterSlug = deployEnvironment.cluster;
 
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["workspace"] });
 	if (!app) throw new Error(`[ASK_FOR_DOMAIN] App "${appSlug}" not found.`);
@@ -49,7 +50,7 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 				workspace,
 				primaryDomain: DIGINEXT_DOMAIN,
 				subdomainName,
-				clusterShortName,
+				clusterSlug: clusterSlug,
 			});
 
 			if (status === 0) throw new Error(messages.join("."));

@@ -2,7 +2,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
-import CloudProviderService from "@/services/CloudProviderService";
+import { CloudProviderService } from "@/services/CloudProviderService";
 
 import BaseController from "./BaseController";
 

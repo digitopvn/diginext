@@ -1,11 +1,13 @@
 import { isEmpty } from "lodash";
+import path from "path";
 
+import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IRelease, IUser, IWorkspace } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 
-import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
+import { updateAppConfig } from "../apps/update-config";
 import { createReleaseFromBuild, sendLog } from "../build";
 import ClusterManager from "../k8s";
 import { fetchDeploymentFromContent } from "./fetch-deployment";
@@ -16,7 +18,6 @@ export type DeployBuildOptions = {
 	env: string;
 	author: IUser;
 	workspace: IWorkspace;
-	buildDirectory: string;
 	cliVersion?: string;
 	shouldUseFreshDeploy?: boolean;
 	/**
@@ -35,21 +36,17 @@ export type DeployBuildOptions = {
 };
 
 export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
-	const {
-		env,
-		author,
-		workspace,
-		buildDirectory,
-		cliVersion,
-		shouldUseFreshDeploy = false,
-		skipReadyCheck = false,
-		forceRollOut = false,
-	} = options;
+	const { DB } = await import("@/modules/api/DB");
+	const { env, author, workspace, cliVersion, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
 	const { slug: username } = author;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 
-	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
+	// build directory
+	const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
+	const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
+
+	let app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	if (!app) {
 		sendLog({
 			SOCKET_ROOM,
@@ -62,6 +59,14 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	let serverDeployEnvironment = await getDeployEvironmentByApp(app, env);
 	let isPassedDeployEnvironmentValidation = true;
 	const errMsgs: string[] = [];
+
+	if (!serverDeployEnvironment.namespace) {
+		const namespace = `${projectSlug}-${env || "dev"}`;
+		await updateAppConfig(app, env, { namespace });
+		// reload data...
+		serverDeployEnvironment.namespace = namespace;
+		app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
+	}
 
 	// validating...
 	if (isEmpty(serverDeployEnvironment)) {
@@ -84,21 +89,11 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		errMsgs.push(`Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`);
 	}
 
-	if (!serverDeployEnvironment.namespace) {
-		sendLog({
-			SOCKET_ROOM,
-			type: "error",
-			message: `Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`,
-		});
-		isPassedDeployEnvironmentValidation = false;
-		errMsgs.push(`Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "namespace" name (probably deleted?).`);
-	}
-
 	if (!isPassedDeployEnvironmentValidation) return { error: errMsgs.join(",") };
 
-	const { namespace, cluster: clusterShortName } = serverDeployEnvironment;
+	const { namespace, cluster: clusterSlug } = serverDeployEnvironment;
 
-	const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 	const { contextName: context } = cluster;
 
 	// get app config to generate deployment data
@@ -142,7 +137,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	updatedAppData.lastUpdatedBy = username;
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-	const [updatedApp] = await DB.update("app", { slug: appSlug }, updatedAppData);
+	const updatedApp = await DB.updateOne("app", { slug: appSlug }, updatedAppData);
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
@@ -156,6 +151,16 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		console.log("Created new Release successfully:", newRelease);
 
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });
+	} catch (e) {
+		console.log("e :>> ", e);
+		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error" });
+		return { error: e.message };
+	}
+
+	// authenticate cluster & switch to that cluster's context
+	try {
+		await ClusterManager.authCluster(cluster);
+		sendLog({ SOCKET_ROOM, message: `✓ Connected to "${cluster.name}" (context: ${cluster.contextName}).` });
 	} catch (e) {
 		console.log("e :>> ", e);
 		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error" });
@@ -302,6 +307,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 };
 
 export const deployWithBuildSlug = async (buildSlug: string, options: DeployBuildOptions) => {
+	const { DB } = await import("@/modules/api/DB");
 	const build = await DB.findOne("build", { slug: buildSlug });
 	if (!build) throw new Error(`[DEPLOY BUILD] Build slug "${buildSlug}" not found.`);
 

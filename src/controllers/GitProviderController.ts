@@ -12,7 +12,7 @@ import { type GitProviderType, gitProviderDomain } from "@/interfaces/SystemType
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
 import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
 import { makeSlug } from "@/plugins/slug";
-import GitProviderService from "@/services/GitProviderService";
+import { GitProviderService } from "@/services";
 
 import BaseController from "./BaseController";
 
@@ -345,7 +345,7 @@ export default class GitProviderController extends BaseController {
 
 		// process
 		try {
-			const repo = await GitProviderAPI.createGitRepository(provider, body, { isDebugging: true });
+			const repo = await GitProviderAPI.createGitRepository(provider, body, { isDebugging: false });
 			return respondSuccess({ data: repo });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -384,6 +384,50 @@ export default class GitProviderController extends BaseController {
 		try {
 			const repo = await GitProviderAPI.deleteGitRepository(provider, provider.org, body.name);
 			return respondSuccess({ data: repo });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
+
+	/**
+	 * Create new repository in git provider organization
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/orgs/repos/branches")
+	async listRepoBranches(
+		@Queries()
+		queryParams?: {
+			/**
+			 * Git provider's ID
+			 */
+			_id?: string;
+			/**
+			 * Git provider's SLUG
+			 */
+			slug?: string;
+			/**
+			 * Git repo's SLUG
+			 */
+			repo: string;
+		}
+	) {
+		// repo's slug
+		const repoSlug = this.filter.repo;
+		if (!repoSlug) return respondFailure(`Repo's slug is required.`);
+		delete this.filter.repo; // <-- to get correct git provider 😅
+
+		// validation
+		const { _id, slug } = this.filter;
+		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
+
+		let provider = await this.service.findOne(this.filter, this.options);
+		if (!provider) return respondFailure(`Git provider not found.`);
+
+		// process
+		try {
+			const branches = await GitProviderAPI.listRepoBranches(provider, provider.org, repoSlug, { isDebugging: false });
+			return respondSuccess({ data: branches });
 		} catch (e) {
 			return respondFailure(e.toString());
 		}

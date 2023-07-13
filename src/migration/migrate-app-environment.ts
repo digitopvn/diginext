@@ -4,9 +4,8 @@ import { isEmpty, isObject } from "lodash";
 
 import type { IApp } from "@/entities";
 
-import { DB } from "../modules/api/DB";
-
 export const migrateDeployEnvironmentOfSpecificApps = async (filter: any = {}) => {
+	const { DB } = await import("@/modules/api/DB");
 	const apps = await DB.find("app", { ...filter, deployEnvironment: undefined });
 	if (isEmpty(apps)) return;
 
@@ -63,6 +62,7 @@ export const migrateAppEnvironmentVariables = async (app: IApp) => {
 
 	if (isEmpty(updateData)) return;
 
+	const { DB } = await import("@/modules/api/DB");
 	const [updatedApp] = await DB.update("app", { _id: app._id }, updateData);
 	if (!updatedApp) return;
 
@@ -70,6 +70,7 @@ export const migrateAppEnvironmentVariables = async (app: IApp) => {
 };
 
 export const migrateAllAppEnvironment = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	const apps = await DB.find("app", { deployEnvironment: undefined }, { select: ["_id", "deployEnvironment"] });
 	if (isEmpty(apps)) return;
 

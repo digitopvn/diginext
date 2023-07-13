@@ -9,7 +9,6 @@ import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { currentVersion, resolveDockerfilePath, stageAllFiles } from "@/plugins";
 
-import { DB } from "../api/DB";
 import type { StartBuildParams } from "../build";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
 import { parseOptionsToAppConfig } from "./parse-options-to-app-config";
@@ -22,6 +21,7 @@ export async function requestDeploy(options: InputOptions) {
 		logError(`This command is only available at CLIENT MODE.`);
 		return;
 	}
+	const { DB } = await import("@/modules/api/DB");
 
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 

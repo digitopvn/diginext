@@ -14,6 +14,11 @@ export interface KubeService {
 		selector?: { app?: string };
 	};
 	// extras
+	clusterSlug?: string;
+	/**
+	 * Cluster's short name
+	 * @deprecated
+	 */
 	clusterShortName?: string;
 	/**
 	 * Cluster ID
