@@ -12,6 +12,7 @@ import type { DxPackage } from "@/modules/diginext/dx-package";
 import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
 import type { DxSubsription } from "@/modules/diginext/dx-subscription";
 import { dxCreateWorkspace } from "@/modules/diginext/dx-workspace";
+import { filterUniqueItems } from "@/plugins/array";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
@@ -208,8 +209,17 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		// create temporary users of invited members:
 		const invitedMembers = await Promise.all(
 			emails.map(async (email) => {
-				const invitedMember = await DB.create("user", { email: email, workspaces: [wsId], roles: [memberRole._id] });
-				return invitedMember;
+				let existingUser = await DB.findOne("user", { email });
+				if (!existingUser) {
+					const username = email.split("@")[0] || "New User";
+					const invitedMember = await DB.create("user", { name: username, email: email, workspaces: [wsId], roles: [memberRole._id] });
+					return invitedMember;
+				} else {
+					const workspaces = existingUser.workspaces || [];
+					workspaces.push(wsId);
+					existingUser = await DB.updateOne("user", { _id: existingUser._id }, { workspaces: filterUniqueItems(workspaces) });
+					return existingUser;
+				}
 			})
 		);
 

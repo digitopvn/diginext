@@ -12,10 +12,8 @@ export default class StatsController extends BaseController {
 	/**
 	 * Current version
 	 */
-	@Security("api_key")
-	@Security("jwt")
 	@Get("/version")
-	async version() {
+	version() {
 		return respondSuccess({ data: { version: currentVersion() } });
 	}
 

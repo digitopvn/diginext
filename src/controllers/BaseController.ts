@@ -142,6 +142,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			raw = false,
 			where = {},
 			access_token,
+			isDebugging,
 			...filter
 		} = req.query as any;
 
@@ -149,6 +150,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 		const _populate = populate ? trim(populate.toString(), ",") : "";
 		const _select = select ? trim(select.toString(), ",") : "";
 		const options: IQueryOptions & IQueryPagination = {
+			isDebugging,
 			download,
 			populate: _populate == "" ? [] : _populate.indexOf(",") > -1 ? _populate.split(",") : [_populate],
 			select: _select == "" ? [] : _select.indexOf(",") > -1 ? _select.split(",") : [_select],

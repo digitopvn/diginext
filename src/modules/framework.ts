@@ -138,7 +138,7 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 export const changePackageName = async (options: InputOptions) => {
 	const { targetDirectory, repoSlug } = options;
 
-	if (!path.resolve(targetDirectory, "package.json")) {
+	if (!fs.existsSync(path.resolve(targetDirectory, "package.json"))) {
 		logWarn("NOT FOUND package.json");
 		return;
 	}
