@@ -593,7 +593,7 @@ export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
  * Generate git repo SSH url from a git repo URL
  * @example "git@github.com:digitopvn/diginext.git" -> "https://github.com/digitopvn/diginext"
  */
-export function repoUrlToRepoSSH(repoSSH: string) {
+export function repoSshToRepoURL(repoSSH: string) {
 	const repoData = parseGitRepoDataFromRepoSSH(repoSSH);
 	if (!repoData) throw new Error(`Unable to parse: ${repoSSH}`);
 	return `https://${repoData.gitDomain}/${repoData.fullSlug}`;
@@ -603,7 +603,7 @@ export function repoUrlToRepoSSH(repoSSH: string) {
  * Generate git repo URL from a git repo SSH url
  * @example "https://github.com/digitopvn/diginext" -> "git@github.com:digitopvn/diginext.git"
  */
-export function repoSshToRepoURL(repoURL: string) {
+export function repoUrlToRepoSSH(repoURL: string) {
 	const repoData = parseGitRepoDataFromRepoURL(repoURL);
 	if (!repoData) throw new Error(`Unable to parse: ${repoURL}`);
 	return `git@${repoData.gitDomain}:${repoData.fullSlug}.git`;
@@ -719,6 +719,7 @@ export async function stageAllFiles(options: GitStageOptions) {
 export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
 	let git: SimpleGit;
 	let success: boolean = false;
+	let repoUrl = repoSSH;
 	console.log("pullOrCloneGitRepo() > repoSSH :>> ", repoSSH);
 	console.log("pullOrCloneGitRepo() > dir :>> ", dir);
 	console.log("pullOrCloneGitRepo() > options :>> ", options);
@@ -730,9 +731,12 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 	const commandConfig: string[] = [];
 
-	if (options?.useAccessToken && options.useAccessToken.type && options.useAccessToken.value)
+	if (options?.useAccessToken && options.useAccessToken.type && options.useAccessToken.value) {
 		commandConfig.push(`http.extraHeader=Authorization: ${options.useAccessToken.type} ${options.useAccessToken.value}`);
+		repoUrl = repoSshToRepoURL(repoSSH);
+	}
 
+	console.log("pullOrCloneGitRepo() > repoUrl :>> ", repoUrl);
 	console.log("pullOrCloneGitRepo() > commandConfig :>> ", commandConfig);
 
 	if (fs.existsSync(dir)) {
@@ -767,7 +771,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 				// for CLI create new app from a framework
 				git = simpleGit({ progress: onProgress, config: commandConfig });
 
-				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+				await git.clone(repoUrl, dir, [`--branch=${branch}`, "--single-branch"]);
 				console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 				// remove git on finish
@@ -777,17 +781,17 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 				success = true;
 			} catch (e2) {
 				console.log("pullOrCloneGitRepo() > Failed to PULL & CLONE :>> ", e2);
-				if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e2.message}`);
+				if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoUrl}" (${branch}) to "${dir}" directory: ${e2.message}`);
 			}
 		}
 	} else {
 		console.log("pullOrCloneGitRepo() > directory NOT exists :>> try to CLONE...");
-		if (options?.onUpdate) options?.onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
+		if (options?.onUpdate) options?.onUpdate(`Cache source code not found. Cloning "${repoUrl}" (${branch}) to "${dir}" directory.`);
 
 		try {
 			git = simpleGit({ progress: onProgress, config: commandConfig });
 
-			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+			await git.clone(repoUrl, dir, [`--branch=${branch}`, "--single-branch"]);
 			console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 			// remove git on finish
@@ -797,7 +801,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 			success = true;
 		} catch (e) {
 			console.log("pullOrCloneGitRepo() > Failed to CLONE !");
-			if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+			if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoUrl}" (${branch}) to "${dir}" directory: ${e.message}`);
 		}
 	}
 
