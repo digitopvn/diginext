@@ -369,6 +369,8 @@ export class DB {
 			const path = collection === "git_repo" ? "git" : collection;
 			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
+			if (options.isDebugging) console.log("[DB] CREATE > Data ", newData);
+
 			// console.log("newData :>> ", newData);
 			const {
 				data: result,

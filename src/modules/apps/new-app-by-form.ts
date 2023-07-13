@@ -166,6 +166,10 @@ export async function createAppByForm(
 		});
 		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > newRepo :>> ", newRepo);
 
+		if (!newRepo) {
+			logError("Something went wrong!");
+			return;
+		}
 		options.gitProvider = newRepo.provider;
 		options.repoSSH = newRepo.ssh_url;
 		options.repoURL = newRepo.repo_url;
