@@ -15,7 +15,6 @@ import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfil
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 
-// import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import builder from "../builder";
 import type { GenerateDeploymentResult } from "../deploy";
@@ -209,7 +208,7 @@ export async function startBuildV1(
 	 * Create namespace & imagePullScrets here!
 	 * Because it will generate the name of secret to put into deployment yaml
 	 */
-	const cluster = await DB.findOne("cluster", { shortName: serverDeployEnvironment.cluster });
+	const cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster });
 
 	if (!cluster) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `Cluster "${serverDeployEnvironment.cluster}" not found` });

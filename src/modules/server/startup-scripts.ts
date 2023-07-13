@@ -6,6 +6,7 @@ import { isDevMode, IsTest } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
+import { migrateAllClusters } from "@/migration/migrate-all-clusters";
 import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
 import { migrateAllRecords } from "@/migration/migrate-all-records";
@@ -15,14 +16,13 @@ import { migrateAllUsers } from "@/migration/migrate-all-users";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
 import { generateSSH, sshKeyContainPassphase, sshKeysExisted, verifySSH } from "@/modules/git";
-import ClusterManager from "@/modules/k8s";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { execCmd, wait } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
 import { seedDefaultProjects } from "@/seeds/seed-projects";
 import { seedSystemInitialData } from "@/seeds/seed-system";
 import { setServerStatus } from "@/server";
-import { ClusterService, ContainerRegistryService, GitProviderService, WorkspaceService } from "@/services";
+import { ContainerRegistryService, GitProviderService, WorkspaceService } from "@/services";
 
 import { findAndRunCronjob } from "../cronjob/find-and-run-job";
 
@@ -109,13 +109,13 @@ export async function startupScripts() {
 	}
 
 	// connect clusters
-	const clusterSvc = new ClusterService();
-	const clusters = await clusterSvc.find({});
-	if (clusters.length > 0) {
-		for (const cluster of clusters) {
-			await ClusterManager.authCluster(cluster, { shouldSwitchContextToThisCluster: false });
-		}
-	}
+	// const clusterSvc = new ClusterService();
+	// const clusters = await clusterSvc.find({});
+	// if (clusters.length > 0) {
+	// 	for (const cluster of clusters) {
+	// 		await ClusterManager.authCluster(cluster, { shouldSwitchContextToThisCluster: false });
+	// 	}
+	// }
 
 	/**
 	 * CRONJOBS
@@ -141,6 +141,7 @@ export async function startupScripts() {
 	await migrateAllGitProviders();
 	await migrateServiceAccountAndApiKey();
 	await migrateDefaultServiceAccountAndApiKeyUser();
+	await migrateAllClusters();
 
 	/**
 	 * Mark "healthz" return true & server is ready to receive connections:

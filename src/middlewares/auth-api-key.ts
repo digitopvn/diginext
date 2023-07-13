@@ -4,10 +4,10 @@ import { isEmpty } from "lodash";
 
 import type { IRole, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
 
 export const apiAccessTokenHandler = async (req: AppRequest, res: ExpressResponse, next: NextFunction) => {
+	const { DB } = await import("@/modules/api/DB");
 	// extract API key from headers
 	const access_token = req.headers["x-api-key"].toString();
 

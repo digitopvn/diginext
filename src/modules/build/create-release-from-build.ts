@@ -3,7 +3,6 @@ import { isEmpty } from "lodash";
 import type { IBuild, IRelease, IUser, IWorkspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 
-// import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { fetchDeploymentFromContent } from "../deploy/fetch-deployment";
 

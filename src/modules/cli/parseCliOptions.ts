@@ -8,8 +8,6 @@ import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType, ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { currentVersion, getLatestCliVersion, shouldNotifyCliUpdate } from "@/plugins";
 
-import { DB } from "../api/DB";
-
 const cliHeader =
 	chalk.bold.underline.green(`Diginext CLI USAGE - VERSION ${pkg.version}`.toUpperCase()) +
 	chalk.redBright("\n\n  [TIPS] You can use 'dx' as an alias of 'diginext' command (for faster typing):") +
@@ -360,7 +358,9 @@ export async function parseCliOptions() {
 		// command: cluster
 		.command("cluster", "Manage your clusters", (_yargs) =>
 			_yargs
-				.command("connect", "Connect your machine to the cluster")
+				.command("connect", "Connect your machine to the cluster", (__yargs) =>
+					__yargs.option("cluster", { describe: "Cluster's slug", alias: "c" })
+				)
 				.command("get", "Get cluster info")
 				.command("set", "Set value to cluster's property")
 				.command({
@@ -550,6 +550,8 @@ export async function parseCliOptions() {
 		ssl: argv.ssl as boolean, // [FLAG] --no-ssl
 		imageURL: argv.image as string,
 	};
+
+	const { DB } = await import("@/modules/api/DB");
 
 	if (typeof argv.git !== "undefined") {
 		options.git = await DB.findOne("git", { slug: argv.git });

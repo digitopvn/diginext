@@ -4,7 +4,6 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import type { FrameworkDto, IFramework } from "@/entities/Framework";
 import { frameworkSchema } from "@/entities/Framework";
 import { type IQueryOptions } from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import { pullOrCloneGitRepo } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
@@ -17,6 +16,7 @@ export class FrameworkService extends BaseService<IFramework> {
 
 	async create(data: FrameworkDto, options?: IQueryOptions) {
 		console.log("data :>> ", data);
+		const { DB } = await import("@/modules/api/DB");
 		// validate
 		const requiredFields: string[] = [];
 		if (!data.name) requiredFields.push("name");

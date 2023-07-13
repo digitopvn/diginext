@@ -3,7 +3,6 @@ import { MongoDB } from "../../src/plugins/mongodb";
 import {
 	CLI_TEST_DIR,
 	apiKeySvc,
-	clusterCtl,
 	clusterSvc,
 	createFakeUser,
 	createWorkspace,
@@ -15,22 +14,18 @@ import {
 	gitCtl,
 	gitSvc,
 	loginUser,
-	providerSvc,
 	registryCtl,
 	roleSvc,
 	serviceAccountSvc,
 	userSvc,
 	workspaceSvc,
 } from "../helpers";
-import { IApiKeyAccount } from "@/entities/ApiKeyAccount";
+
 import GitProviderAPI from "@/modules/git/git-provider-api";
-import { execaCommand, execaCommandSync } from "execa";
 import { initialFrameworks } from "@/seeds/seed-frameworks";
-import { CLI_CONFIG_DIR } from "@/config/const";
-import { Config } from "@/app.config";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { readdirSync } from "fs";
-import { addBareMetalCluster } from "@/seeds/seed-clusters";
+import { addInitialBareMetalCluster } from "@/seeds/seed-clusters";
 import ClusterManager from "@/modules/k8s";
 import { DB } from "@/modules/api/DB";
 
@@ -306,11 +301,13 @@ export function testFlow1() {
 		const curUser = await getCurrentUser();
 
 		// seed cluster: Bare-metal
-		const cluster = await addBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG, currentWorkspace, curUser);
+		const cluster = await addInitialBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG, currentWorkspace, curUser);
 		console.log("cluster :>> ", cluster);
 
 		// verify cluster connection
 		expect(cluster).toBeDefined();
+		expect(cluster.contextName).toBeDefined();
+		expect(cluster.provider).toBeDefined();
 		expect(cluster.isVerified).toBe(true);
 	}, 30000);
 
@@ -338,7 +335,9 @@ export function testFlow1() {
 			// create new app...
 			const res = await dxCmd(`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force`);
 			console.log("res :>> ", res);
+
 			expect(res).toBeDefined();
+			expect(res.toLowerCase()).not.toContain("error");
 
 			const files = readdirSync(CLI_TEST_DIR);
 			console.log("files :>> ", files);
@@ -369,15 +368,19 @@ export function testFlow1() {
 	it("CLI: Cluster management (BARE-METAL)", async () => {
 		// get bare-metal cluster (default)
 		const cluster = await clusterSvc.findOne({ providerShortName: "custom" });
+		console.log("[TEST] Cluster management > cluster :>> ", cluster);
 		expect(cluster.contextName).toBeDefined();
+		expect(cluster.provider).toBeDefined();
 		expect(cluster.isVerified).toBeTruthy();
 
-		const { contextName: context } = cluster;
+		const context = cluster.contextName;
+		console.log("[TEST] Cluster management > context :>> ", context);
+		if (!context) throw new Error(`Cluster is not verifed (no "contextName")`);
 
 		// switch context to this cluster
-		const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${cluster.shortName}`, { isDebugging: true });
+		const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${cluster.slug} --debug`);
 		console.log("switchCtxRes :>> ", switchCtxRes);
-		expect(switchCtxRes.indexOf("Connected")).toBeGreaterThan(-1);
+		expect(switchCtxRes.toLowerCase().indexOf("connected")).toBeGreaterThan(-1);
 
 		// check test namespace exists
 		const namespace = "diginext-test";
@@ -392,7 +395,7 @@ export function testFlow1() {
 		const dockerhub = await DB.findOne("registry", { provider: "dockerhub" });
 		console.log("dockerhub :>> ", dockerhub);
 
-		// const createIPS = await dxCmd(`dx registry allow --registry=${dockerhub.slug} --cluster=${cluster.shortName} --namespace=${namespace}`);
+		// const createIPS = await dxCmd(`dx registry allow --registry=${dockerhub.slug} --cluster=${cluster.slug} --namespace=${namespace}`);
 		// console.log("createIPS :>> ", createIPS);
 
 		// const secrets = await dxCmd(`kubectl get secret -n ${namespace}`);
@@ -417,4 +420,10 @@ export function testFlow1() {
 
 		// login back to fake user #1
 	});
+
+	it("Clean up: delete test data (eg. kube_config,...)", async () => {
+		// delete all "custom" test clusters & access credentials
+		const clusters = await clusterSvc.find({ providerShortName: "custom" });
+		await Promise.all(clusters.map((cluster) => clusterSvc.delete({ _id: cluster._id })));
+	}, 60000);
 }

@@ -2,11 +2,11 @@ import type { NextFunction, Response } from "express";
 
 import type { IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 
 export const registerController = (controller: any) => {
 	return async (req: AppRequest, res: Response, next: NextFunction) => {
 		try {
+			const { DB } = await import("@/modules/api/DB");
 			// assign Express request
 			controller.req = req;
 

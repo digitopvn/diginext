@@ -5,7 +5,6 @@ import passport from "passport";
 
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
 
 /**
@@ -15,6 +14,7 @@ import { MongoDB } from "@/plugins/mongodb";
  */
 const jwt_auth = (req: AppRequest, res, next) =>
 	passport.authenticate("jwt", { session: false }, async function (err, user: IUser, info) {
+		const { DB } = await import("@/modules/api/DB");
 		// console.log(err, user, info);
 		// console.log(`AUTHENTICATE: jwt_auth > user:`, user);
 

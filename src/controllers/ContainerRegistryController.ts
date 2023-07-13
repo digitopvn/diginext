@@ -8,7 +8,6 @@ import * as entities from "@/entities";
 import type { ResponseData } from "@/interfaces";
 import * as interfaces from "@/interfaces";
 import { registryProviderList } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import digitalocean from "@/modules/providers/digitalocean";
 import gcloud from "@/modules/providers/gcloud";
 import { connectRegistry } from "@/modules/registry/connect-registry";
@@ -113,6 +112,7 @@ export default class ContainerRegistryController extends BaseController {
 		// console.log("this.workspace :>> ", this.workspace);
 		// verify container registry connection...
 		const authRes = await connectRegistry(newRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
+		const { DB } = await import("@/modules/api/DB");
 		if (authRes) newRegistry = await DB.updateOne("registry", { _id: newRegistry._id }, { isVerified: true });
 
 		// const newRegistry = await connectRegistry(newRegistryData, { userId: this.user?._id, workspaceId: this.workspace?._id });
@@ -162,6 +162,8 @@ export default class ContainerRegistryController extends BaseController {
 			if (!host) host = "docker.io";
 			if (!imageBaseURL) imageBaseURL = `${host}/${organization}`;
 		}
+
+		const { DB } = await import("@/modules/api/DB");
 
 		// update db
 		let [updatedRegistry] = await DB.update("registry", this.filter, updateData);

@@ -5,7 +5,6 @@ import type { ContainerRegistryDto } from "@/entities";
 import type { RegistryProviderType } from "@/interfaces/SystemTypes";
 import { registryProviderList } from "@/interfaces/SystemTypes";
 
-import { DB } from "../api/DB";
 import { connectRegistry } from "./connect-registry";
 
 export const addContainerRegistry = async (
@@ -123,6 +122,7 @@ export const addContainerRegistry = async (
 			return logError(`Container registry provider "${data.provider}" is not valid.`);
 	}
 
+	const { DB } = await import("@/modules/api/DB");
 	const registry = await DB.create("registry", data);
 
 	if (registry) {

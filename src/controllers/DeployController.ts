@@ -7,7 +7,6 @@ import pkg from "@/../package.json";
 import type { IBuild, IUser, IWorkspace } from "@/entities";
 import type { IQueryFilter, IQueryOptions, IResponsePagination } from "@/interfaces";
 import { type InputOptions, type ResponseData, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import type { StartBuildParams } from "@/modules/build";
 import { startBuildV1 } from "@/modules/build/start-build";
@@ -239,7 +238,7 @@ export default class DeployController {
 			 * Cluster's slug
 			 * - **CAUTION: will take the default or random cluster if not specified**.
 			 */
-			clusterShortName?: string;
+			clusterSlug?: string;
 			/**
 			 * Exposed port
 			 */
@@ -282,9 +281,7 @@ export default class DeployController {
 		if (!defaultRegistry) throw new Error(`Unable to deploy: no container registries in this workspace.`);
 
 		// find default cluster
-		let cluster = body.clusterShortName
-			? await this.clusterSvc.findOne({ shortName: body.clusterShortName, workspace: this.workspace._id })
-			: undefined;
+		let cluster = body.clusterSlug ? await this.clusterSvc.findOne({ slug: body.clusterSlug, workspace: this.workspace._id }) : undefined;
 		// get default cluster
 		if (!cluster) {
 			const defaultCluster = await this.clusterSvc.findOne({ isDefault: true, workspace: this.workspace._id });
@@ -307,7 +304,7 @@ export default class DeployController {
 						env,
 						deployEnvironmentData: {
 							registry: defaultRegistry.slug,
-							cluster: cluster.shortName,
+							cluster: cluster.slug,
 							port: toNumber(body.port),
 							imageURL: `${defaultRegistry.imageBaseURL}/${app.projectSlug}/${app.slug}`,
 							buildNumber: makeDaySlug({ divider: "" }),
@@ -324,7 +321,7 @@ export default class DeployController {
 		}
 
 		// validate deploy params
-		if (!deployEnvironment.cluster) deployEnvironment.cluster = cluster.shortName;
+		if (!deployEnvironment.cluster) deployEnvironment.cluster = cluster.slug;
 		if (!deployEnvironment.registry) deployEnvironment.registry = defaultRegistry.slug;
 
 		// start build & deploy from source (repo):
@@ -358,6 +355,7 @@ export default class DeployController {
 		} & DeployBuildParams,
 		@Queries() queryParams?: IPostQueryParams
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		const { buildSlug } = body;
 		if (!buildSlug) return { status: 0, messages: [`Build "slug" is required`] };
 
@@ -403,6 +401,7 @@ export default class DeployController {
 		} & DeployBuildParams,
 		@Queries() queryParams?: IPostQueryParams
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		const { releaseSlug } = body;
 		if (!releaseSlug) return { status: 0, messages: [`Build "slug" is required`] };
 

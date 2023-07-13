@@ -3,24 +3,20 @@ import yargs from "yargs";
 
 import type InputOptions from "@/interfaces/InputOptions";
 
-import { DB } from "../api/DB";
 import { askForCluster } from "../cluster/ask-for-cluster";
 import { authCluster } from "../k8s/cluster-auth";
 
 export const execCluster = async (options?: InputOptions) => {
+	const { DB } = await import("@/modules/api/DB");
 	const { secondAction: action, thirdAction: resource, isDebugging } = options;
 
 	switch (action) {
 		case "connect":
-			const cluster = options?.cluster ? await DB.findOne("cluster", { shortName: options.cluster }) : await askForCluster();
-			if (options.isDebugging) console.log("[COMMAND] cluster > connect > cluster :>> ", cluster);
-			if (!cluster) return;
-			try {
-				await authCluster(cluster, { shouldSwitchContextToThisCluster: true, isDebugging });
-			} catch (e) {
-				logError(`[CLUSTER]`, e);
-			}
-
+			// if (options.isDebugging) console.log("[CLUSTER] options.cluster :>> ", options.cluster);
+			const cluster = options?.cluster ? await DB.findOne("cluster", { slug: options.cluster }) : await askForCluster();
+			// if (options.isDebugging) console.log("[COMMAND] cluster > connect > cluster :>> ", cluster);
+			if (!cluster) throw new Error(`Unable to connect cluster, cluster "${options?.cluster}" not found.`);
+			await authCluster(cluster, { isDebugging });
 			break;
 
 		case "get":

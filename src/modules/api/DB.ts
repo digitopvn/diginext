@@ -1,5 +1,5 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
-import { isEmpty } from "lodash";
+import { isArray, isEmpty } from "lodash";
 import type { UpdateQuery, UpdateWithAggregationPipeline } from "mongoose";
 
 import { isServerMode } from "@/app.config";
@@ -431,9 +431,10 @@ export class DB {
 				data: updateData,
 			});
 
-			// console.log("[DB] UPDATE > result :>> ", status, "-", result, "-", messages);
+			if (options.isDebugging) console.log("[DB] UPDATE > result :>> ", status, "-", result, "-", messages);
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] UPDATE - ${url} :>>`, messages);
-			items = result;
+
+			items = isArray(result) ? result : [result];
 		}
 		return items;
 	}

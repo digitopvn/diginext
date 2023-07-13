@@ -4,9 +4,8 @@ import { isEmpty } from "lodash";
 
 import type { IContainerRegistry } from "@/entities";
 
-import { DB } from "../api/DB";
-
 export const askForRegistry = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	const registries = await DB.find("registry", {});
 	if (isEmpty(registries)) {
 		logError(`There are no registered container registries in this workspace.`);

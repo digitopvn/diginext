@@ -4,7 +4,6 @@ import { Config } from "@/app.config";
 import type { DeployBuildParams } from "@/controllers/DeployController";
 import type { IBuild, IRelease, IWorkspace } from "@/entities";
 import type { Ownership } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import type { StartBuildParams } from "@/modules/build";
 import { buildAndDeploy } from "@/modules/build/build-and-deploy";
 import { type DeployBuildOptions, deployBuild } from "@/modules/deploy/deploy-build";
@@ -16,12 +15,13 @@ export default class DeployService {
 	 * Build container image first, then deploy that build to target deploy environment.
 	 */
 	async buildAndDeploy(buildParams: StartBuildParams, deployParams: DeployBuildParams, ownership: Ownership) {
+		const { DB } = await import("@/modules/api/DB");
 		let app = await DB.findOne("app", { slug: buildParams.appSlug });
 
 		// change cluster (if needed)
 		if (deployParams.cluster) {
 			const cluster = await DB.findOne("cluster", { slug: deployParams.cluster, workspace: ownership.workspace._id });
-			if (cluster) app = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${deployParams.env}.cluster`]: cluster.shortName });
+			if (cluster) app = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${deployParams.env}.cluster`]: cluster.slug });
 		}
 		// change container registry (if needed)
 		if (buildParams.registrySlug) deployParams.registry = buildParams.registrySlug;

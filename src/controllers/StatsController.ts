@@ -2,7 +2,6 @@ import dayjs from "dayjs";
 import { Get, Route, Security, Tags } from "tsoa/dist";
 
 import { respondSuccess } from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import { currentVersion } from "@/plugins";
 
 import BaseController from "./BaseController";
@@ -27,6 +26,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/summary")
 	async summary() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspace: this.workspace._id };
 		const [
 			// all
@@ -181,6 +181,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/projects")
 	async projects() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspace: this.workspace._id };
 		const projects = await DB.count("project", filter);
 		return respondSuccess({ data: { total: projects } });
@@ -193,6 +194,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/apps")
 	async apps() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspace: this.workspace._id };
 		const apps = await DB.count("app", filter);
 		return respondSuccess({ data: { total: apps } });
@@ -205,6 +207,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/clusters")
 	async clusters() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspace: this.workspace._id };
 		const clusters = await DB.count("cluster", filter);
 		return respondSuccess({ data: { total: clusters } });
@@ -217,6 +220,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/databases")
 	async databases() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspace: this.workspace._id };
 		const databases = await DB.count("database", filter);
 		return respondSuccess({ data: { total: databases } });
@@ -229,6 +233,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/gits")
 	async gits() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspace: this.workspace._id };
 		const gits = await DB.count("git", filter);
 		return respondSuccess({ data: { total: gits } });
@@ -241,6 +246,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/registries")
 	async registries() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspace: this.workspace._id };
 		const registries = await DB.count("registry", filter);
 		return respondSuccess({ data: { total: registries } });
@@ -253,6 +259,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/frameworks")
 	async frameworks() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspace: this.workspace._id };
 		const frameworks = await DB.count("framework", filter);
 		return respondSuccess({ data: { total: frameworks } });
@@ -265,6 +272,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/users")
 	async users() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspaces: this.workspace._id };
 		const users = await DB.count("user", filter);
 		return respondSuccess({ data: { total: users } });
@@ -277,6 +285,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/builds")
 	async builds() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspace: this.workspace._id };
 		const builds = await DB.count("build", filter);
 		return respondSuccess({ data: { total: builds } });
@@ -289,6 +298,7 @@ export default class StatsController extends BaseController {
 	@Security("jwt")
 	@Get("/releases")
 	async releases() {
+		const { DB } = await import("@/modules/api/DB");
 		const filter = { workspace: this.workspace._id };
 		const releases = await DB.count("release", filter);
 		return respondSuccess({ data: { total: releases } });

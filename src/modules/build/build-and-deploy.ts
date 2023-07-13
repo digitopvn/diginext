@@ -7,7 +7,6 @@ import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 import MediaService from "@/services/MediaService";
 
-import { DB } from "../api/DB";
 import screenshot from "../capture/screenshot";
 import type { DeployBuildOptions } from "../deploy/deploy-build";
 import { deployBuild } from "../deploy/deploy-build";
@@ -16,6 +15,7 @@ import { startBuild } from "./build";
 import { sendLog } from "./send-log-message";
 
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildOptions) => {
+	const { DB } = await import("@/modules/api/DB");
 	// [1] Build container image
 	if (!deployParams.env) deployParams.env = "dev";
 	buildParams.buildWatch = true;

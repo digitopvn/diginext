@@ -5,7 +5,6 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IRelease, IUser, IWorkspace } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 
-import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { updateAppConfig } from "../apps/update-config";
@@ -37,6 +36,7 @@ export type DeployBuildOptions = {
 };
 
 export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
+	const { DB } = await import("@/modules/api/DB");
 	const { env, author, workspace, cliVersion, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
 	const { slug: username } = author;
@@ -91,9 +91,9 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 
 	if (!isPassedDeployEnvironmentValidation) return { error: errMsgs.join(",") };
 
-	const { namespace, cluster: clusterShortName } = serverDeployEnvironment;
+	const { namespace, cluster: clusterSlug } = serverDeployEnvironment;
 
-	const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 	const { contextName: context } = cluster;
 
 	// get app config to generate deployment data
@@ -137,7 +137,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	updatedAppData.lastUpdatedBy = username;
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-	const [updatedApp] = await DB.update("app", { slug: appSlug }, updatedAppData);
+	const updatedApp = await DB.updateOne("app", { slug: appSlug }, updatedAppData);
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
@@ -151,6 +151,16 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		console.log("Created new Release successfully:", newRelease);
 
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });
+	} catch (e) {
+		console.log("e :>> ", e);
+		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error" });
+		return { error: e.message };
+	}
+
+	// authenticate cluster & switch to that cluster's context
+	try {
+		await ClusterManager.authCluster(cluster);
+		sendLog({ SOCKET_ROOM, message: `✓ Connected to "${cluster.name}" (context: ${cluster.contextName}).` });
 	} catch (e) {
 		console.log("e :>> ", e);
 		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error" });
@@ -297,6 +307,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 };
 
 export const deployWithBuildSlug = async (buildSlug: string, options: DeployBuildOptions) => {
+	const { DB } = await import("@/modules/api/DB");
 	const build = await DB.findOne("build", { slug: buildSlug });
 	if (!build) throw new Error(`[DEPLOY BUILD] Build slug "${buildSlug}" not found.`);
 

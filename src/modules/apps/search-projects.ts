@@ -1,7 +1,5 @@
 import inquirer from "inquirer";
 
-import { DB } from "../api/DB";
-
 type SearchAppOptions = {
 	question?: string;
 	/**
@@ -12,6 +10,7 @@ type SearchAppOptions = {
 
 export async function searchProjects(options: SearchAppOptions = {}) {
 	const { question, canSkip = true } = options;
+	const { DB } = await import("@/modules/api/DB");
 
 	const { keyword } = await inquirer.prompt<{ keyword: string }>({
 		type: "input",

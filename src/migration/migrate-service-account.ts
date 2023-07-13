@@ -5,9 +5,8 @@ import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import type { IServiceAccount } from "@/entities/ServiceAccount";
 import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
 
-import { DB } from "../modules/api/DB";
-
 export const migrateDefaultServiceAccountAndApiKeyUser = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	const workspaces = await DB.find("workspace", {}, { select: ["_id", "slug", "name"] });
 
 	let affectedWs = 0;

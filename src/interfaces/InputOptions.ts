@@ -486,7 +486,7 @@ export type InputOptions = {
 	appSlug?: string;
 
 	/**
-	 * Cluster's short name. For deploy to specific cluster.
+	 * Cluster's slug. For deploy to specific cluster.
 	 */
 	cluster?: string;
 

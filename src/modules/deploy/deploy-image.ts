@@ -5,7 +5,6 @@ import type { AppConfig, DeployEnvironment } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { MongoDB } from "@/plugins/mongodb";
 
-import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { queue } from "../build";
 import { createReleaseFromBuild } from "../build/create-release-from-build";
@@ -44,6 +43,7 @@ export type DeployImageParams = {
 };
 
 export const deployImage = async (options: DeployImageParams, appConfig: AppConfig, envVars?: KubeEnvironmentVariable[]) => {
+	const { DB } = await import("@/modules/api/DB");
 	const { env = "dev", projectSlug, slug, username, workspaceId, cliVersion } = options;
 	const { imageURL } = appConfig.deployEnvironment[env];
 

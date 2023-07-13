@@ -26,6 +26,11 @@ export interface KubeIngress {
 		}[];
 	};
 	// extras
+	clusterSlug?: string;
+	/**
+	 * Cluster's short name
+	 * @deprecated
+	 */
 	clusterShortName?: string;
 	/**
 	 * Cluster ID

@@ -9,9 +9,9 @@ import ClusterManager from "./index";
  * @returns Error message in string or TRUE
  */
 export const checkNginxIngressInstalled = async (cluster: ICluster) => {
-	const { shortName, contextName: context, isVerified } = cluster;
+	const { slug, contextName: context, isVerified } = cluster;
 
-	if (!isVerified) return `Cluster (${shortName}) hasn't been verified yet.`;
+	if (!isVerified) return `Cluster (${slug}) hasn't been verified yet.`;
 
 	const allNamespaces = await ClusterManager.getAllNamespaces({ context });
 	let nginxIngressInstalled = false;
@@ -31,9 +31,9 @@ export const checkNginxIngressInstalled = async (cluster: ICluster) => {
  * @returns Error message in string or TRUE
  */
 export const checkCertManagerInstalled = async (cluster: ICluster) => {
-	const { shortName, contextName: context, isVerified } = cluster;
+	const { slug, contextName: context, isVerified } = cluster;
 
-	if (!isVerified) return `Cluster (${shortName}) hasn't been verified yet.`;
+	if (!isVerified) return `Cluster (${slug}) hasn't been verified yet.`;
 
 	const certManagerNamespaces = await ClusterManager.getAllNamespaces({ context, filterLabel: "kubernetes.io/metadata.name=cert-manager" });
 

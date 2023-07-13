@@ -8,8 +8,6 @@ import type { GitHubOrg, GithubRepoBranch, GithubRepository, GithubUser } from "
 import type { GitProviderType, RequestMethodType } from "@/interfaces/SystemTypes";
 import { makeSlug } from "@/plugins/slug";
 
-// import { DB } from "../api/DB";
-
 type GitProviderApiOptions = {
 	/**
 	 * Mark `TRUE` if this is a personal repo API

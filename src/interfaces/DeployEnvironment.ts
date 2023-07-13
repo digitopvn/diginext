@@ -37,7 +37,7 @@ export interface ClientDeployEnvironmentConfig {
 	provider?: string;
 
 	/**
-	 * Cluster's short name
+	 * Cluster's slug
 	 */
 	cluster?: string;
 

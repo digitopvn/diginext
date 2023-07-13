@@ -2,14 +2,13 @@ import { log, logError } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type { AppDto, AppGitInfo } from "@/entities";
+import type { AppGitInfo, IApp } from "@/entities";
 import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { getCurrentGitRepoData, parseGitRepoDataFromRepoSSH } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
-import { DB } from "../api/DB";
 import { askForGitProvider } from "../git/ask-for-git-provider";
 import type { GitRepositoryDto } from "../git/git-provider-api";
 import { createOrSelectProject } from "./create-or-select-project";
@@ -26,6 +25,7 @@ export async function createAppByForm(
 ) {
 	if (!options.project) options.project = await createOrSelectProject(options);
 	// console.log("options.project :>> ", options.project);
+	const { DB } = await import("@/modules/api/DB");
 
 	const { skipFramework } = options;
 
@@ -172,7 +172,7 @@ export async function createAppByForm(
 	}
 
 	// Call API to create new app
-	const appData: AppDto = {
+	const appData: IApp = {
 		name: options.name,
 		public: options.git.public,
 		project: options.project._id,
@@ -189,6 +189,11 @@ export async function createAppByForm(
 		environment: {},
 		deployEnvironment: {},
 		gitProvider: options.git?._id,
+		// ownership
+		owner: options.userId,
+		ownerSlug: options.user,
+		workspace: options.workspaceId,
+		workspaceSlug: options.workspace.slug,
 	};
 
 	appData.git.provider = options.gitProvider;

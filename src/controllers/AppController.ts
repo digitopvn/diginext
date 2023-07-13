@@ -11,7 +11,6 @@ import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
@@ -415,6 +414,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("jwt")
 	@Delete("/")
 	async delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
+		const { DB } = await import("@/modules/api/DB");
 		const app = await this.service.findOne(this.filter, { populate: ["project"] });
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
@@ -425,8 +425,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (app.deployEnvironment)
 			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
 				if (!isEmpty(deployEnvironment)) {
-					const { cluster: clusterShortName, namespace } = deployEnvironment;
-					const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
+					const { cluster: clusterSlug, namespace } = deployEnvironment;
+					const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 					let errorMsg;
 
 					if (cluster) {
@@ -449,7 +449,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 							// Delete DEPLOYMENT
 							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 						} catch (e) {
-							logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
+							logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace}) :>>`, e);
 							errorMsg = e.message;
 						}
 
@@ -464,7 +464,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 							// Delete DEPLOYMENT
 							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
 						} catch (e) {
-							logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) :>>`, e);
+							logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace}) :>>`, e);
 							errorMsg += e.message;
 						}
 					}
@@ -718,6 +718,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		//
+		const { DB } = await import("@/modules/api/DB");
 		const { appSlug, env, deployEnvironmentData } = body;
 		if (!appSlug) return respondFailure({ msg: `App slug is required.` });
 		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
@@ -773,8 +774,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// cluster
 		let cluster: ICluster | undefined;
-		if (deployEnvironmentData.cluster) cluster = await DB.findOne("cluster", { shortName: deployEnvironmentData.cluster });
-		if (!cluster && currentDeployEnvData.cluster) cluster = await DB.findOne("cluster", { shortName: currentDeployEnvData.cluster });
+		if (deployEnvironmentData.cluster) cluster = await DB.findOne("cluster", { slug: deployEnvironmentData.cluster });
+		if (!cluster && currentDeployEnvData.cluster) cluster = await DB.findOne("cluster", { slug: currentDeployEnvData.cluster });
 
 		// namespace
 		const namespace = deployEnvironmentData.namespace;
@@ -940,6 +941,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			env?: string;
 		}
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		let result = { status: 1, data: {}, messages: [] } as ResponseData & { data: IApp };
 
 		// input validation
@@ -975,11 +977,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// take down the deploy environment
 		const envConfig = await getDeployEvironmentByApp(app, env.toString());
-		const { cluster: clusterShortName, namespace } = envConfig;
-		if (!clusterShortName) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Cluster "${clusterShortName}" not found.`);
+		const { cluster: clusterSlug, namespace } = envConfig;
+		if (!clusterSlug) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Cluster "${clusterSlug}" not found.`);
 		if (!namespace) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Namespace "${namespace}" not found.`);
 
-		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 		let errorMsg;
 
 		if (cluster) {
@@ -1002,7 +1004,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 				// Delete DEPLOYMENT
 				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 			} catch (e) {
-				logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace}) - "main-app=${mainAppName}" :>>`, e);
+				logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace}) - "main-app=${mainAppName}" :>>`, e);
 				errorMsg = e.message;
 			}
 
@@ -1017,7 +1019,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 				// Delete DEPLOYMENT
 				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
 			} catch (e) {
-				logError(`[BaseController] deleteEnvironment (${clusterShortName} - ${namespace} - "main-app=${deprecatedMainAppName}") :>>`, e);
+				logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace} - "main-app=${deprecatedMainAppName}") :>>`, e);
 				errorMsg = e.message;
 			}
 		}
@@ -1066,6 +1068,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
 		console.log("createEnvVarsOnDeployEnvironment > body :>> ", body);
+		const { DB } = await import("@/modules/api/DB");
 		// return { status: 0 };
 		let { slug, env, envVars } = body;
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
@@ -1084,9 +1087,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironment.namespace) return respondFailure(`Namespace not existed in deploy environment "${env}" of "${slug}" app.`);
 		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
 
-		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
-		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
+		const { namespace, cluster: clusterSlug } = deployEnvironment;
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
 
 		const newEnvVars = isJSON(envVars)
 			? (JSON.parse(envVars) as KubeEnvironmentVariable[])
@@ -1188,6 +1191,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		},
 		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		let { slug, env, envVar } = body;
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
@@ -1212,9 +1216,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironment.namespace) return respondFailure(`Namespace not existed in deploy environment "${env}" of "${slug}" app.`);
 		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
 
-		const { namespace, cluster: clusterShortName } = deployEnvironment;
-		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
-		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
+		const { namespace, cluster: clusterSlug } = deployEnvironment;
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
 
 		// check if deployment is existed in the cluster / namespace
 		let workloads = await ClusterManager.getDeploysByFilter(namespace, {
@@ -1229,7 +1233,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			});
 		}
 		if (!workloads || workloads.length === 0)
-			return respondFailure(`There are no deployments in "${namespace}" namespace of "${clusterShortName}" cluster `);
+			return respondFailure(`There are no deployments in "${namespace}" namespace of "${clusterSlug}" cluster `);
 
 		// --- validation success ---
 
@@ -1314,10 +1318,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironment.namespace) return respondFailure(`Namespace not existed in deploy environment "${env}" of "${slug}" app.`);
 		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
 
-		const { namespace, cluster: clusterShortName } = deployEnvironment;
+		const { namespace, cluster: clusterSlug } = deployEnvironment;
 
-		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
-		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
+		const { DB } = await import("@/modules/api/DB");
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
 
 		// check if deployment is existed in the cluster / namespace
 		let workloads = await ClusterManager.getDeploysByFilter(namespace, {
@@ -1332,7 +1337,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			});
 		}
 		if (!workloads || workloads.length === 0)
-			return respondFailure(`There are no deployments in "${namespace}" namespace of "${clusterShortName}" cluster.`);
+			return respondFailure(`There are no deployments in "${namespace}" namespace of "${clusterSlug}" cluster.`);
 
 		// delete in database
 		let [updatedApp] = await this.service.update({ _id: app._id }, { [`deployEnvironment.${env}.envVars`]: [] });
@@ -1378,6 +1383,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		},
 		@Queries() queryParams?: interfaces.IPostQueryParams
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		// validate
 		let { env, domains } = body;
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
@@ -1389,9 +1395,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app.deployEnvironment) return respondFailure(`App "${app.slug}" doesn't have any deploy environments.`);
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
 
-		const clusterShortName = app.deployEnvironment[env].cluster;
-		const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
-		if (!cluster) return respondFailure(`Cluster not found: "${clusterShortName}"`);
+		const clusterSlug = app.deployEnvironment[env].cluster;
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
 
 		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();

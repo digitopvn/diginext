@@ -25,6 +25,16 @@ const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 export default class BaseService<T = any> {
 	readonly model: Model<T>;
 
+	/**
+	 * Current login user
+	 */
+	user?: IUser;
+
+	/**
+	 * Current active workspace
+	 */
+	workspace?: IWorkspace;
+
 	req?: AppRequest;
 
 	constructor(schema: Schema) {

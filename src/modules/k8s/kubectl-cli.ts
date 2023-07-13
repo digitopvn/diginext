@@ -17,7 +17,7 @@ export const execKubectl = async (options?: InputOptions) => {
 
 	const cluster = await askForCluster();
 	if (!cluster) return;
-	const { contextName: context, shortName } = cluster;
+	const { contextName: context, slug } = cluster;
 
 	switch (action) {
 		case "get":
@@ -42,7 +42,7 @@ export const execKubectl = async (options?: InputOptions) => {
 							const imgRes = await ClusterManager.setDeployImageAll(targetDeployment, imageURL, targetNamespace, { context });
 							if (imgRes)
 								logSuccess(
-									`[DX_KB] Successfully set new image (${imageURL}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`
+									`[DX_KB] Successfully set new image (${imageURL}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${slug}" cluster.`
 								);
 							break;
 
@@ -53,7 +53,7 @@ export const execKubectl = async (options?: InputOptions) => {
 							const imgPullRes = await ClusterManager.setDeployImagePullSecretByFilter(imagePullSecret, targetNamespace, { context });
 							if (imgPullRes)
 								logSuccess(
-									`[DX_KB] Successfully set new imagePullSecret (${imagePullSecret}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`
+									`[DX_KB] Successfully set new imagePullSecret (${imagePullSecret}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${slug}" cluster.`
 								);
 							break;
 
@@ -64,7 +64,7 @@ export const execKubectl = async (options?: InputOptions) => {
 							const portRes = await ClusterManager.setDeployPortAll(targetDeployment, port.toString(), targetNamespace, { context });
 							if (portRes)
 								logSuccess(
-									`[DX_KB] Successfully set new port (${port}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${shortName}" cluster.`
+									`[DX_KB] Successfully set new port (${port}) to "${targetDeployment}" deployment of "${targetNamespace}" namespace on "${slug}" cluster.`
 								);
 							break;
 					}

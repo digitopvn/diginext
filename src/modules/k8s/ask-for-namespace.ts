@@ -16,7 +16,7 @@ export const askForNamespace = async (cluster: ICluster) => {
 	const namespaces = await ClusterManager.getAllNamespaces({ context });
 
 	if (isEmpty(namespaces)) {
-		logError(`This cluster (${cluster.shortName}) doesn't have any namespaces.`);
+		logError(`This cluster (${cluster.slug}) doesn't have any namespaces.`);
 		return;
 	}
 

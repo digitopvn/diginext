@@ -13,7 +13,6 @@ import type { DeployEnvironment, IQueryFilter, IQueryOptions, IQueryPagination, 
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environment";
-import { DB } from "@/modules/api/DB";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
@@ -31,7 +30,7 @@ import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
 import BaseService from "./BaseService";
-import { GitProviderService, ProjectService } from "./index";
+import { ClusterService, ContainerRegistryService, GitProviderService, ProjectService, WorkspaceService } from "./index";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -44,6 +43,14 @@ export type KubeDeploymentOnCluster = KubeDeployment & {
 };
 
 export class AppService extends BaseService<IApp> {
+	projectSvc = new ProjectService();
+
+	wsSvc = new WorkspaceService();
+
+	clusterSvc = new ClusterService();
+
+	regSvc = new ContainerRegistryService();
+
 	constructor() {
 		super(appSchema);
 	}
@@ -56,7 +63,7 @@ export class AppService extends BaseService<IApp> {
 		// ownership
 		if (!data.owner && !MongoDB.isValidObjectId(data.owner)) throw new Error(`[ObjectID] "owner" is required.`);
 		if (!data.workspace && !MongoDB.isValidObjectId(data.workspace)) throw new Error(`[ObjectID] "workspace" is required.`);
-		const workspace = await DB.findOne("workspace", { _id: data.workspace });
+		const workspace = await this.wsSvc.findOne({ _id: data.workspace });
 		if (!workspace) throw new Error(`Invalid workspace.`);
 
 		// check dx quota
@@ -72,9 +79,9 @@ export class AppService extends BaseService<IApp> {
 
 		// find parent project of this app
 		if (MongoDB.isValidObjectId(data.project)) {
-			project = await DB.findOne("project", { _id: data.project });
+			project = await this.projectSvc.findOne({ _id: data.project });
 		} else if (isString(data.project)) {
-			project = await DB.findOne("project", { slug: data.project });
+			project = await this.projectSvc.findOne({ slug: data.project });
 		} else {
 			throw new Error(`"project" is not a valid ID or slug.`);
 		}
@@ -119,7 +126,7 @@ export class AppService extends BaseService<IApp> {
 		// add this new app to the project info
 		if (project) {
 			const projectApps = [...(project.apps || []), newAppId];
-			[project] = await DB.update("project", { _id: project._id }, { apps: projectApps });
+			[project] = await this.projectSvc.update({ _id: project._id }, { apps: projectApps });
 		}
 
 		return newApp;
@@ -272,7 +279,7 @@ export class AppService extends BaseService<IApp> {
 
 		const clusterFilter: any = {};
 		if (filter?.workspace) clusterFilter.workspace = filter.workspace;
-		const clusters = await DB.find("cluster", clusterFilter);
+		const clusters = await this.clusterSvc.find(clusterFilter);
 
 		// check app deploy environment's status in clusters
 		const appsWithStatus = await Promise.all(
@@ -289,8 +296,8 @@ export class AppService extends BaseService<IApp> {
 							if (!app.deployEnvironment[env].cluster) return app;
 
 							// find cluster & namespace
-							const clusterShortName = app.deployEnvironment[env].cluster;
-							const cluster = clusters.find((_cluster) => _cluster.shortName === clusterShortName);
+							const clusterSlug = app.deployEnvironment[env].cluster;
+							const cluster = clusters.find((_cluster) => _cluster.slug === clusterSlug);
 							if (!cluster) return app;
 
 							const { contextName: context } = cluster;
@@ -393,7 +400,7 @@ export class AppService extends BaseService<IApp> {
 		if (!deployEnvironmentData) throw new Error(`Deploy environment configuration is required.`);
 
 		// get app data:
-		const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
+		const app = await this.findOne({ slug: appSlug }, { populate: ["project"] });
 		if (!app)
 			if (ownership?.owner) throw new Error(`Unauthorized.`);
 			else throw new Error(`App not found.`);
@@ -427,7 +434,7 @@ export class AppService extends BaseService<IApp> {
 
 		// cluster
 		if (!deployEnvironmentData.cluster) throw new Error(`Param "cluster" (Cluster's short name) is required.`);
-		const cluster = await DB.findOne("cluster", { shortName: deployEnvironmentData.cluster });
+		const cluster = await this.clusterSvc.findOne({ slug: deployEnvironmentData.cluster });
 		if (!cluster) throw new Error(`Cluster "${deployEnvironmentData.cluster}" is not valid`);
 
 		// namespace
@@ -435,7 +442,7 @@ export class AppService extends BaseService<IApp> {
 
 		// container registry
 		if (!deployEnvironmentData.registry) throw new Error(`Param "registry" (Container Registry's slug) is required.`);
-		const registry = await DB.findOne("registry", { slug: deployEnvironmentData.registry });
+		const registry = await this.regSvc.findOne({ slug: deployEnvironmentData.registry });
 		if (!registry) throw new Error(`Container Registry "${deployEnvironmentData.registry}" is not existed.`);
 
 		// Domains & SSL certificate...
@@ -521,7 +528,7 @@ export class AppService extends BaseService<IApp> {
 		updatedAppData.lastUpdatedBy = this.req.user.username;
 		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-		updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
+		updatedApp = await this.updateOne({ slug: app.slug }, updatedAppData);
 		if (!updatedApp) throw new Error("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		// ----- SHOULD ROLL OUT NEW RELEASE OR NOT ----
@@ -556,8 +563,8 @@ export class AppService extends BaseService<IApp> {
 	async viewDeployEnvironmentLogs(app: IApp, env: string) {
 		const deployEnvironment = app.deployEnvironment[env];
 
-		const clusterShortName = deployEnvironment.cluster;
-		const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: app.workspace });
+		const clusterSlug = deployEnvironment.cluster;
+		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug, workspace: app.workspace });
 		if (!cluster) return;
 
 		const { contextName: context } = cluster;

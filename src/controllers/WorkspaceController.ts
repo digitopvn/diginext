@@ -7,7 +7,6 @@ import BaseController from "@/controllers/BaseController";
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { IGetQueryParams, ResponseData } from "@/interfaces";
 import * as interfaces from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import { dxSendEmail } from "@/modules/diginext/dx-email";
 import type { DxPackage } from "@/modules/diginext/dx-package";
 import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
@@ -161,6 +160,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("jwt")
 	@Delete("/")
 	async delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
+		const { DB } = await import("@/modules/api/DB");
 		// delete workspace in user:
 		const _user = await DB.findOne("user", { workspaces: this.workspace._id });
 		const workspaces = _user.workspaces.filter((wsId) => MongoDB.toString(wsId) !== MongoDB.toString(this.workspace._id));
@@ -191,6 +191,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	async inviteMember(@Body() data: { emails: string[] }) {
 		if (!data.emails || data.emails.length === 0) return interfaces.respondFailure({ msg: `List of email is required.` });
 		if (!this.user) return interfaces.respondFailure({ msg: `Unauthenticated.` });
+		const { DB } = await import("@/modules/api/DB");
 
 		const { emails } = data;
 
@@ -279,6 +280,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		@Queries()
 		queryParams?: ApiUserAndServiceAccountQueries
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		const { workspace } = this.filter;
 		if (!workspace) return interfaces.respondFailure({ msg: `Workspace ID or slug is required.` });
 
@@ -308,6 +310,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		@Queries()
 		queryParams?: ApiUserAndServiceAccountQueries
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		const { workspace } = this.filter;
 		if (!workspace) return interfaces.respondFailure({ msg: `Workspace ID or slug is required.` });
 

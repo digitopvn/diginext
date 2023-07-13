@@ -4,7 +4,6 @@ import { IsTest } from "@/app.config";
 import type { IWorkspace } from "@/entities";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 
-// import { DB } from "../api/DB";
 import type { CheckQuotaParams, CheckQuotaResponse } from "../diginext/dx-subscription";
 import { dxCheckQuota } from "../diginext/dx-subscription";
 

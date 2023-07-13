@@ -4,7 +4,6 @@ import { isEmpty } from "lodash";
 import type { IProject } from "@/entities/Project";
 import { projectSchema } from "@/entities/Project";
 import type { IQueryFilter } from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import ClusterManager from "@/modules/k8s";
 
 import { AppService } from "./AppService";
@@ -16,6 +15,7 @@ export class ProjectService extends BaseService<IProject> {
 	}
 
 	async softDelete(filter?: IQueryFilter) {
+		const { DB } = await import("@/modules/api/DB");
 		// find the project:
 		const project = await this.findOne(filter);
 		if (!project) return { ok: false, affected: 0 };
@@ -31,8 +31,8 @@ export class ProjectService extends BaseService<IProject> {
 				if (!app.deployEnvironment) break;
 				for (const [env, deployEnvironment] of Object.entries(app.deployEnvironment)) {
 					if (!isEmpty(deployEnvironment)) {
-						const { cluster: clusterShortName, namespace } = deployEnvironment;
-						const cluster = await DB.findOne("cluster", { shortName: clusterShortName });
+						const { cluster: clusterSlug, namespace } = deployEnvironment;
+						const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 
 						if (cluster) {
 							const { contextName: context } = cluster;

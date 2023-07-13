@@ -1,8 +1,7 @@
 import { log } from "diginext-utils/dist/xconsole/log";
 
-import { DB } from "../modules/api/DB";
-
 export const migrateAllGitProviders = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	const filter = { $or: [{ isOrg: null }, { isOrg: { $exists: false } }] };
 	const items = await DB.find("git", filter, { select: ["_id", "public"] });
 	if (items.length === 0) return;
