@@ -140,11 +140,11 @@ export default class BaseService<T = any> {
 
 			// set created/updated date:
 			data.createdAt = data.updatedAt = new Date();
-			if (options.isDebugging) console.log(`BaseService > ""${this.model.collection.name}"" > create > data :>> `, data);
+			if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > create > data :>> `, data);
 
 			const createdDoc = new this.model(data);
 			let newItem = await createdDoc.save();
-			if (options.isDebugging) console.log(`BaseService > ""${this.model.collection.name}"" > create > newItem :>> `, newItem);
+			if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > create > newItem :>> `, newItem);
 
 			// strip unneccessary fields
 			delete newItem.__v;

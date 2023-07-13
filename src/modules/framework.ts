@@ -8,6 +8,7 @@ import path from "path";
 import copy from "recursive-copy";
 
 import { isServerMode } from "@/app.config";
+import { CLI_CONFIG_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { cloneGitRepo, deleteFolderRecursive, parseGitRepoDataFromRepoSSH, pullOrCloneGitRepo, wait } from "@/plugins";
 
@@ -97,11 +98,12 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 	const spin = ora(`Pulling "${name}" framework... 0%`).start();
 
 	// create tmp dir
-	const tmpDir = path.resolve(".fw/");
+	const tmpDir = path.resolve(CLI_CONFIG_DIR, ".fw");
 	try {
 		await deleteFolderRecursive(tmpDir);
 	} catch (e) {
-		logError(e);
+		logError(`[PULL FRAMEWORK]`, e);
+		return false;
 	}
 	await mkdir(tmpDir, { recursive: true });
 
@@ -111,7 +113,7 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 	const gitProvider = await DB.findOne("git", { type: providerType });
 
 	// pull or clone git repo
-	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
+	const pullStatus = await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
 		useAccessToken: gitProvider ? { type: upperFirst(gitProvider.method) as "Bearer" | "Basic", value: gitProvider.access_token } : undefined,
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
@@ -133,7 +135,7 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 	// if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
 	// if (fs.existsSync(".fw/yarn.lock")) fs.unlinkSync(".fw/yarn.lock");
 
-	return true;
+	return pullStatus;
 };
 
 export const changePackageName = async (options: InputOptions) => {
@@ -159,7 +161,8 @@ export async function pullingFramework(options: InputOptions) {
 	if (options.framework.name != "none") {
 		// TODO: Select specific branch as a version?
 
-		await pullFrameworkVersion(options);
+		const pullStatus = await pullFrameworkVersion(options);
+		if (!pullStatus) throw new Error(`Unable to pull/clone framework: ${options.framework.name} (${options.framework.repoSSH})`);
 
 		await copyFrameworkResources(options.targetDirectory);
 

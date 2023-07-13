@@ -210,7 +210,6 @@ export function testFlow1() {
 			workspace: curUser.activeWorkspace._id,
 		} as any);
 
-		console.log('Add "public" framework > createRes :>> ', createRes);
 		if (!createRes.status) throw new Error(createRes.messages.join("."));
 		expect(createRes.status).toBe(1);
 
@@ -302,7 +301,6 @@ export function testFlow1() {
 
 		// seed cluster: Bare-metal
 		const cluster = await addInitialBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG, currentWorkspace, curUser);
-		console.log("cluster :>> ", cluster);
 
 		// verify cluster connection
 		expect(cluster).toBeDefined();
@@ -322,8 +320,8 @@ export function testFlow1() {
 		const stdout = await dxCmd(`dx login http://localhost:6969 --token=${user.token.access_token}`);
 		expect(stdout.indexOf("You're logged in")).toBeGreaterThan(-1);
 
-		const cliInfo = await dxCmd(`dx info`);
-		// console.log("cliInfo :>> ", cliInfo);
+		// print CLI information
+		await dxCmd(`dx info`);
 	}, 15000);
 
 	it(
@@ -334,7 +332,6 @@ export function testFlow1() {
 
 			// create new app...
 			const res = await dxCmd(`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force`);
-			console.log("res :>> ", res);
 
 			expect(res).toBeDefined();
 			expect(res.toLowerCase()).not.toContain("error");
@@ -357,6 +354,7 @@ export function testFlow1() {
 				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
 			);
 			expect(res).toBeDefined();
+			expect(res.toLowerCase()).not.toContain("error");
 
 			const files = readdirSync(CLI_TEST_DIR);
 			console.log("files :>> ", files);
@@ -368,18 +366,15 @@ export function testFlow1() {
 	it("CLI: Cluster management (BARE-METAL)", async () => {
 		// get bare-metal cluster (default)
 		const cluster = await clusterSvc.findOne({ providerShortName: "custom" });
-		console.log("[TEST] Cluster management > cluster :>> ", cluster);
 		expect(cluster.contextName).toBeDefined();
 		expect(cluster.provider).toBeDefined();
 		expect(cluster.isVerified).toBeTruthy();
 
 		const context = cluster.contextName;
-		console.log("[TEST] Cluster management > context :>> ", context);
 		if (!context) throw new Error(`Cluster is not verifed (no "contextName")`);
 
 		// switch context to this cluster
-		const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${cluster.slug} --debug`);
-		console.log("switchCtxRes :>> ", switchCtxRes);
+		const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${cluster.slug}`);
 		expect(switchCtxRes.toLowerCase().indexOf("connected")).toBeGreaterThan(-1);
 
 		// check test namespace exists
@@ -387,13 +382,14 @@ export function testFlow1() {
 		let isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 		if (isNamespaceExisted) await ClusterManager.deleteNamespace(namespace, { context });
 		await ClusterManager.createNamespace(namespace, { context });
+
 		// check again
 		isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 		expect(isNamespaceExisted).toBeTruthy();
 
 		// create imagePullSecrets
 		const dockerhub = await DB.findOne("registry", { provider: "dockerhub" });
-		console.log("dockerhub :>> ", dockerhub);
+		// console.log("dockerhub :>> ", dockerhub);
 
 		// const createIPS = await dxCmd(`dx registry allow --registry=${dockerhub.slug} --cluster=${cluster.slug} --namespace=${namespace}`);
 		// console.log("createIPS :>> ", createIPS);
