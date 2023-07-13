@@ -63,6 +63,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 				isAllowed = true;
 			} else if (routeRole.permissions.includes("public") && routeRole.permissions.includes("own")) {
 				req.query.$or = [{ public: "true" }, { owner: userId }];
+				delete req.query.owner;
 				isAllowed = true;
 			} else if (routeRole.permissions.includes("public")) {
 				req.query.public = "true";
@@ -91,6 +92,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 				isAllowed = true;
 			} else if (routeRole.permissions.includes("public") && routeRole.permissions.includes("own")) {
 				req.query.$or = [{ public: true }, { owner: userId }];
+				delete req.query.owner;
 				isAllowed = true;
 			} else if (routeRole.permissions.includes("public")) {
 				req.query.public = true;

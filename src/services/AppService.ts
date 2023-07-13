@@ -6,10 +6,10 @@ import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { DeployEnvironmentData } from "@/controllers/AppController";
-import type { ICluster, IFramework, IProject } from "@/entities";
+import type { ICluster, IFramework, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
-import type { DeployEnvironment, IQueryFilter, IQueryOptions, IQueryPagination, KubeDeployment } from "@/interfaces";
+import { type DeployEnvironment, type IQueryFilter, type IQueryOptions, type IQueryPagination, type KubeDeployment } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environment";
@@ -30,7 +30,8 @@ import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
 import BaseService from "./BaseService";
-import { ClusterService, ContainerRegistryService, GitProviderService, ProjectService, WorkspaceService } from "./index";
+import DeployService from "./DeployService";
+import { BuildService, ClusterService, ContainerRegistryService, GitProviderService, ProjectService, WorkspaceService } from "./index";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -50,6 +51,10 @@ export class AppService extends BaseService<IApp> {
 	clusterSvc = new ClusterService();
 
 	regSvc = new ContainerRegistryService();
+
+	deploySvc = new DeployService();
+
+	buildSvc = new BuildService();
 
 	constructor() {
 		super(appSchema);
@@ -181,7 +186,7 @@ export class AppService extends BaseService<IApp> {
 		const gitSvc = new GitProviderService();
 		const gitProvider = await gitSvc.findOne({ _id: gitProviderID });
 		if (options?.isDebugging) console.log("createWithGitURL() > gitProvider :>> ", gitProvider);
-		if (!gitProvider) throw new Error(`Git provider not found.`);
+		if (!gitProvider) throw new Error(`Unable to import git repo, git provider not found.`);
 
 		// new repo slug
 		const newRepoSlug = `${project.slug}-${makeSlug(repoSlug)}`.toLowerCase();
@@ -583,5 +588,103 @@ export class AppService extends BaseService<IApp> {
 		);
 
 		return logs;
+	}
+
+	async deleteDeployEnvironment(app: IApp, env: string) {
+		const deployEnvironment = app.deployEnvironment[env];
+		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
+
+		const clusterSlug = deployEnvironment.cluster;
+		if (!clusterSlug) throw new Error(`This app's deploy environment (${env}) hasn't been deployed in any clusters.`);
+
+		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug });
+		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+
+		const { contextName: context } = cluster;
+		const { namespace } = deployEnvironment;
+
+		// get deployment's labels
+		const mainAppName = await getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+
+		// switch to the cluster of this environment
+		await ClusterManager.authCluster(cluster);
+
+		/**
+		 * IMPORTANT
+		 * ---
+		 * Should NOT delete namespace because it will affect other apps in a project!
+		 */
+		let errorMsg;
+
+		try {
+			// Delete INGRESS
+			await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
+			// Delete SERVICE
+			await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
+			// Delete DEPLOYMENT
+			await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
+		} catch (e) {
+			errorMsg = `Unable to delete deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
+		}
+
+		try {
+			/**
+			 * FALLBACK SUPPORT for deprecated mainAppName
+			 */
+			// Delete INGRESS
+			await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+			// Delete SERVICE
+			await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+			// Delete DEPLOYMENT
+			await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+		} catch (e) {
+			errorMsg += `, ${e}.`;
+		}
+
+		// delete deploy environment in database
+		const updatedApp = await this.updateOne(
+			{
+				_id: app._id,
+			},
+			{
+				$unset: { [`deployEnvironment.${env}`]: true },
+			},
+			{ raw: true }
+		);
+
+		return updatedApp;
+	}
+
+	async changeCluster(
+		app: IApp,
+		env: string,
+		cluster: ICluster,
+		options: { user: IUser; workspace: IWorkspace; deleteAppOnPreviousCluster?: boolean; isDebugging?: boolean }
+	) {
+		// validate
+		const deployEnvironment = app.deployEnvironment[env];
+		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
+
+		// delete app on previous cluster (if needed)
+		if (options.deleteAppOnPreviousCluster) {
+			app = await this.deleteDeployEnvironment(app, env);
+		}
+
+		// update new cluster slug:
+		app = await this.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.cluster`]: cluster.slug });
+
+		// deploy to new cluster
+		const latestBuild = await this.buildSvc.findOne({ slug: app.latestBuild });
+		const { build, release, error } = await this.deploySvc.deployBuild(latestBuild, {
+			env,
+			author: options.user,
+			workspace: options.workspace,
+			forceRollOut: true,
+		});
+		if (error) throw new Error(`Unable to deploy new cluster: ${error}`);
+
+		// return
+		return { build, release, app };
 	}
 }
