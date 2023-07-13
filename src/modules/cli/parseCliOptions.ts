@@ -564,7 +564,7 @@ export async function parseCliOptions() {
 		} else {
 			options.framework = await DB.findOne("framework", { slug: argv.framework });
 			if (!options.framework) throw new Error(`Framework "${argv.framework}" not found.`);
-			options.frameworkVersion = options.framework.mainBranch;
+			options.frameworkVersion = options.framework.mainBranch || "main";
 		}
 	}
 

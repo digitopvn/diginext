@@ -91,7 +91,7 @@ export const selectFrameworkVersion = async (framework = "diginext") => {
 export interface PullFrameworkVersion extends Pick<InputOptions, "framework" | "frameworkVersion" | "name" | "repoSSH" | "ci"> {}
 
 export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
-	const { frameworkVersion } = options;
+	const { frameworkVersion = "main" } = options;
 	const { name, repoSSH } = options.framework;
 	if (!repoSSH) throw new Error(`Unable to pull/clone framework: repo SSH url is required.`);
 
@@ -106,7 +106,9 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 		return false;
 	}
 	await mkdir(tmpDir, { recursive: true });
+	console.log("pullFrameworkVersion() > frameworkVersion :>> ", frameworkVersion);
 	console.log("pullFrameworkVersion() > tmpDir :>> ", tmpDir);
+
 	// parse framework repo SSH url -> use git provider's credentials accordingly:
 	const { providerType } = parseGitRepoDataFromRepoSSH(repoSSH);
 	const { DB } = await import("@/modules/api/DB");

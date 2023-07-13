@@ -735,6 +735,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 	if (fs.existsSync(dir)) {
 		try {
+			console.log("pullOrCloneGitRepo() > directory exists :>> try to PULL...");
 			git = simpleGit(dir, { progress: onProgress, config: commandConfig });
 			// -----------------------
 			// ! DO NOT SET TO "FALSE"
@@ -754,16 +755,18 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			success = true;
 		} catch (e) {
+			console.log("pullOrCloneGitRepo() > Failed to PULL :>> try to CLONE...");
 			if (options?.onUpdate) options?.onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
 
-			// just for sure...
-			await deleteFolderRecursive(dir);
-
-			// for CLI create new app from a framework
-			git = simpleGit({ progress: onProgress, config: commandConfig });
-
 			try {
+				// just for sure...
+				await deleteFolderRecursive(dir);
+
+				// for CLI create new app from a framework
+				git = simpleGit({ progress: onProgress, config: commandConfig });
+
 				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+				console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 				// remove git on finish
 				if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
@@ -771,16 +774,19 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 				success = true;
 			} catch (e2) {
-				if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+				console.log("pullOrCloneGitRepo() > Failed to PULL & CLONE :>> ", e2);
+				if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e2.message}`);
 			}
 		}
 	} else {
+		console.log("pullOrCloneGitRepo() > directory NOT exists :>> try to CLONE...");
 		if (options?.onUpdate) options?.onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
 
-		git = simpleGit({ progress: onProgress, config: commandConfig });
-
 		try {
+			git = simpleGit({ progress: onProgress, config: commandConfig });
+
 			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+			console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 			// remove git on finish
 			if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
@@ -788,6 +794,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			success = true;
 		} catch (e) {
+			console.log("pullOrCloneGitRepo() > Failed to CLONE !");
 			if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
 		}
 	}
