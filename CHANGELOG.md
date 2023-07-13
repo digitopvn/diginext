@@ -1,3 +1,10 @@
+# [3.18.0-prerelease.9](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.8...v3.18.0-prerelease.9) (2023-07-10)
+
+
+### Features
+
+* **api:** import git ssh url, deploy from git ssh url ([66d01d6](https://github.com/digitopvn/diginext/commit/66d01d6273cdabcdee84de1c6f8f1dd2e5305432))
+
 # [3.18.0-prerelease.8](https://github.com/digitopvn/diginext/compare/v3.18.0-prerelease.7...v3.18.0-prerelease.8) (2023-07-07)
 
 
