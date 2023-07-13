@@ -370,6 +370,7 @@ export class DB {
 			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 			if (options?.isDebugging) console.log(`[CLI] DB > CREATE > ${url} :>>`, newData);
 			// console.log("newData :>> ", newData);
+
 			const {
 				data: result,
 				status,

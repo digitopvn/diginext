@@ -1,4 +1,14 @@
+## [3.19.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.19.0...v3.19.1-prerelease.1) (2023-07-13)
+
+
+### Bug Fixes
+
+* **cli:** add some log ([3a0f663](https://github.com/digitopvn/diginext/commit/3a0f6635aedcd32900b80a32996b7c99358662ec))
+* **cli:** ask for cluster when --cluster flag is specified ([6d01e00](https://github.com/digitopvn/diginext/commit/6d01e00a2b3618e944e8dbf3135d9ebd83b07f88))
+* **cli:** missing fs.existsSync checking package.json ([33811de](https://github.com/digitopvn/diginext/commit/33811de13df6b63924fbc307a2d403adc6be42d8))
+
 # [3.19.0](https://github.com/digitopvn/diginext/compare/v3.18.0...v3.19.0) (2023-07-13)
+# [3.19.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.19.0-prerelease.1...v3.19.0-prerelease.2) (2023-07-13)
 
 
 ### Bug Fixes
@@ -13,6 +23,7 @@
 ### Features
 
 * **server,api:** deploy page, import git, fix api key auth ([04c9a46](https://github.com/digitopvn/diginext/commit/04c9a46e944847b1f95e648810c579ffa001205d))
+* **cli:** missing fs.existsSync checking package.json ([33811de](https://github.com/digitopvn/diginext/commit/33811de13df6b63924fbc307a2d403adc6be42d8))
 
 # [3.19.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.18.0...v3.19.0-prerelease.1) (2023-07-13)
 
