@@ -488,7 +488,7 @@ export type InputOptions = {
 	/**
 	 * Cluster's slug. For deploy to specific cluster.
 	 */
-	cluster?: string;
+	cluster?: string | boolean;
 
 	/**
 	 * [GOOGLE CLOUD] Specify a zone of your cluster
