@@ -60,7 +60,8 @@ jobs:
 
       - uses: webfactory/ssh-agent@v0.8.0
         with:
-          ssh-private-key: ${{ secrets.ID_RSA }}
+          ssh-private-key: |
+            ${{ secrets.ID_RSA }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
