@@ -1,3 +1,19 @@
+# [3.19.0](https://github.com/digitopvn/diginext/compare/v3.18.0...v3.19.0) (2023-07-13)
+
+
+### Bug Fixes
+
+* **cli new app:** pull framework should not check package.json ([fae6a50](https://github.com/digitopvn/diginext/commit/fae6a50b83bd806fc4bf28d325bc5d427e1346b9))
+* **cli, pull github fw:** debugging github actions ([03b74cc](https://github.com/digitopvn/diginext/commit/03b74cc9599923513cb4c2f244dfb3b89d7b2984))
+* **cli,framework:** debug clone or pull ([24b1795](https://github.com/digitopvn/diginext/commit/24b17955319216e4849d62f67f4ab9771d54b99a))
+* **server,services,modules:** issue of import circular dependencies ([b21c090](https://github.com/digitopvn/diginext/commit/b21c090a2a032770e918caf703f9b3b2ab4a3ceb))
+* **test:** persist git credentials ([92c2e35](https://github.com/digitopvn/diginext/commit/92c2e35a75c8a2e5babe48582a8d4017c0293cc6))
+
+
+### Features
+
+* **server,api:** deploy page, import git, fix api key auth ([04c9a46](https://github.com/digitopvn/diginext/commit/04c9a46e944847b1f95e648810c579ffa001205d))
+
 # [3.19.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.18.0...v3.19.0-prerelease.1) (2023-07-13)
 
 
