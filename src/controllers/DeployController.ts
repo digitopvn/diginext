@@ -1,26 +1,20 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { log } from "diginext-utils/dist/xconsole/log";
 import { toNumber } from "lodash";
-import path from "path";
 import { Body, Deprecated, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import pkg from "@/../package.json";
-import { Config } from "@/app.config";
-import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IWorkspace } from "@/entities";
+import type { IBuild, IUser, IWorkspace } from "@/entities";
+import type { IQueryFilter, IQueryOptions, IResponsePagination } from "@/interfaces";
 import { type InputOptions, type ResponseData, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import type { StartBuildParams } from "@/modules/build";
-import { buildAndDeploy } from "@/modules/build/build-and-deploy";
 import { startBuildV1 } from "@/modules/build/start-build";
 import type { DeployBuildOptions } from "@/modules/deploy/deploy-build";
-import { deployWithBuildSlug } from "@/modules/deploy/deploy-build";
 import { parseGitRepoDataFromRepoSSH } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { AppService, ClusterService, ContainerRegistryService, GitProviderService } from "@/services";
-
-import BaseController from "./BaseController";
+import DeployService from "@/services/DeployService";
 
 export type DeployBuildParams = {
 	/**
@@ -28,6 +22,14 @@ export type DeployBuildParams = {
 	 * @example "dev", "prod"
 	 */
 	env: string;
+	/**
+	 * `[OPTIONAL]` - Cluster's slug
+	 */
+	cluster?: string;
+	/**
+	 * `[OPTIONAL]` - Container registry's slug
+	 */
+	registry?: string;
 	/**
 	 * User ID of the author
 	 */
@@ -56,7 +58,19 @@ export type DeployBuildParams = {
 
 @Tags("Deploy")
 @Route("deploy")
-export default class DeployController extends BaseController {
+export default class DeployController {
+	service: DeployService = new DeployService();
+
+	user: IUser;
+
+	workspace: IWorkspace;
+
+	filter: IQueryFilter;
+
+	options: IQueryOptions;
+
+	pagination: IResponsePagination;
+
 	appSvc = new AppService();
 
 	regSvc = new ContainerRegistryService();
@@ -66,7 +80,7 @@ export default class DeployController extends BaseController {
 	gitSvc = new GitProviderService();
 
 	/**
-	 * ### [DEPRECATED SOON]
+	 * ### [DEPRECATED]
 	 * #### Use `buildAndDeploy()` instead.
 	 * Build container image first, then deploy that build to target deploy environment.
 	 */
@@ -124,55 +138,18 @@ export default class DeployController extends BaseController {
 	) {
 		let { buildParams, deployParams } = body;
 
-		// validation & conversion...
-		if (!buildParams) return { status: 0, messages: [`Build "params" is required.`] } as ResponseData;
-		if (!deployParams) return { status: 0, messages: [`Deploy "params" is required.`] } as ResponseData;
-
-		const app = await DB.findOne("app", { slug: buildParams.appSlug });
-		const author = this.user || (await DB.findOne("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] }));
-		const workspace = author.activeWorkspace as IWorkspace;
-		const SOURCE_CODE_DIR = `cache/${app.projectSlug}/${app.slug}/${buildParams.gitBranch}`;
-		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
-
-		const deployBuildOptions: DeployBuildOptions = {
-			env: deployParams.env || buildParams.env || "dev",
-			shouldUseFreshDeploy: deployParams.shouldUseFreshDeploy,
-			author,
-			workspace,
-			buildDirectory,
-		};
-
-		// check for version compatibility between CLI & SERVER:
-		buildParams.user = author;
-
-		if (buildParams.cliVersion) {
-			const breakingChangeVersionCli = buildParams.cliVersion.split(".")[0];
-			const serverVersion = pkg.version;
-			const breakingChangeVersionServer = serverVersion.split(".")[0];
-
-			if (breakingChangeVersionCli != breakingChangeVersionServer) {
-				return respondFailure(
-					`Your CLI version (${buildParams.cliVersion}) is much lower than the BUILD SERVER version (${serverVersion}). Please update your CLI with: "dx update"`
-				);
-			}
-		}
-
-		// if (typeof buildParams.buildWatch === "undefined") buildParams.buildWatch = true;
-
-		log(`buildAndDeploy > buildParams.buildNumber :>>`, buildParams.buildNumber);
-		try {
-			buildAndDeploy(buildParams, deployBuildOptions);
-		} catch (e) {
-			return respondFailure(`${e}`);
-		}
-
-		const { appSlug, buildNumber } = buildParams;
-		const buildServerUrl = Config.BASE_URL;
-		const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
-		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}`;
+		// validation
+		if (!buildParams) return respondFailure(`Build "params" is required.`);
+		if (!deployParams) return respondFailure(`Deploy "params" is required.`);
 
 		// start build in background:
-		return { messages: [`Building...`], status: 1, data: { logURL } };
+		try {
+			const { logURL } = await this.service.buildAndDeploy(buildParams, deployParams, { owner: this.user, workspace: this.workspace });
+			return respondSuccess({ data: { logURL }, msg: "Building" });
+		} catch (e) {
+			console.error(e);
+			return respondFailure(e.toString());
+		}
 	}
 
 	/**
@@ -209,7 +186,7 @@ export default class DeployController extends BaseController {
 			deployParams: DeployBuildParams;
 		}
 	) {
-		if (!body.appSlug) return respondFailure(`Data of "appId" is required.`);
+		if (!body.appSlug) return respondFailure(`Data of "appSlug" is required.`);
 		if (!body.deployParams) return respondFailure(`Data of "deployParams" is required.`);
 		if (!body.deployParams.env) return respondFailure(`Data of "deployParams.env" is required.`);
 
@@ -221,17 +198,21 @@ export default class DeployController extends BaseController {
 		const deployEnvironment = await getDeployEvironmentByApp(app, env);
 		if (!deployEnvironment) respondFailure(`Unable to deploy: this app doesn't have any "${env}" deploy environment.`);
 
-		// const registry = await this.regSvc.findOne({ slug: deployEnvironment.registry });
-		if (!deployEnvironment.registry) return respondFailure(`Container registry "${deployEnvironment.registry}" not found.`);
+		// validate registry -> if this app has no registries but specified in deploy params -> move forward as it will use deploy params
+		if (!deployEnvironment.registry && !body.deployParams.registry) return respondFailure(`Container registry is required.`);
+
+		// validate cluster -> if this app has no clusters but specified in deploy params -> move forward as it will use deploy params
+		if (!deployEnvironment.cluster && !body.deployParams.cluster) return respondFailure(`Cluster is required.`);
 
 		const buildParams: StartBuildParams = {
 			appSlug: body.appSlug,
 			buildNumber: makeDaySlug({ divider: "" }),
 			gitBranch: body.gitBranch,
-			registrySlug: deployEnvironment.registry,
+			registrySlug: deployEnvironment.registry || body.deployParams.registry,
 		};
 		const deployParams = body.deployParams;
 		const buildAndDeployParams = { buildParams, deployParams };
+		console.log("[DEPLOY CONTROLLER] this :>> ", this);
 		return this.buildAndDeploy(buildAndDeployParams);
 	}
 
@@ -279,8 +260,8 @@ export default class DeployController extends BaseController {
 		if (!app) {
 			// try to get default git provider
 			const gitData = parseGitRepoDataFromRepoSSH(body.sshUrl);
-			const gitProvider = await this.gitSvc.findOne({ type: gitData.gitProvider, public: true, workspace: this.workspace._id });
-			if (!gitProvider) throw new Error(`Unable to deploy: no git providers (${gitData.gitProvider.toUpperCase()}) in this workspace.`);
+			const gitProvider = await this.gitSvc.findOne({ type: gitData.providerType, public: true, workspace: this.workspace._id });
+			if (!gitProvider) throw new Error(`Unable to deploy: no git providers (${gitData.providerType.toUpperCase()}) in this workspace.`);
 
 			// create a new app
 			try {
@@ -358,6 +339,9 @@ export default class DeployController extends BaseController {
 		return this.buildAndDeploy(buildAndDeployParams);
 	}
 
+	/**
+	 * Deploy app to target environment from a "success" build.
+	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/from-build")
@@ -371,24 +355,18 @@ export default class DeployController extends BaseController {
 		} & DeployBuildParams,
 		@Queries() queryParams?: IPostQueryParams
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		const { buildSlug } = body;
 		if (!buildSlug) return { status: 0, messages: [`Build "slug" is required`] };
 
 		const build = await DB.findOne("build", { slug: buildSlug });
-		const workspace = await DB.findOne("workspace", { _id: build.workspace });
-		const author = this.user || (await DB.findOne("user", { _id: body.author }));
-
-		if (!author) return respondFailure({ msg: `Author is required.` });
-
-		const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
-		const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
+		if (!build) return respondFailure(`Build not found.`);
 
 		const deployBuildOptions: DeployBuildOptions = {
-			author,
+			author: this.user,
+			workspace: this.workspace,
 			env: body.env,
 			shouldUseFreshDeploy: body.shouldUseFreshDeploy,
-			workspace,
-			buildDirectory,
 			skipReadyCheck: body.skipReadyCheck,
 			forceRollOut: body.forceRollOut,
 		};
@@ -396,14 +374,58 @@ export default class DeployController extends BaseController {
 
 		// DEPLOY A BUILD:
 		try {
-			const result = await deployWithBuildSlug(buildSlug, deployBuildOptions);
+			const result = await this.service.deployBuild(build, deployBuildOptions);
 			const { release } = result;
 
-			if (!release) return { status: 0, messages: [`Failed to deploy from a build (${buildSlug}).`] };
+			if (!release) return respondFailure(`Failed to deploy from a build (${buildSlug}).`);
 
 			return { messages: [], status: 1, data: result };
 		} catch (e) {
 			return respondFailure(`${e}`);
+		}
+	}
+
+	/**
+	 * Deploy app to target environment from a release.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/from-release")
+	async deployFromRelease(
+		@Body()
+		body: {
+			/**
+			 * Release's slug
+			 */
+			releaseSlug: string;
+		} & DeployBuildParams,
+		@Queries() queryParams?: IPostQueryParams
+	) {
+		const { DB } = await import("@/modules/api/DB");
+		const { releaseSlug } = body;
+		if (!releaseSlug) return { status: 0, messages: [`Build "slug" is required`] };
+
+		const release = await DB.findOne("release", { slug: releaseSlug }, { populate: ["build"] });
+		if (!release) return respondFailure(`Release not found.`);
+
+		const build = release.build as IBuild;
+		if (!build) return respondFailure(`Build not found.`);
+
+		const deployBuildOptions: DeployBuildOptions = {
+			author: this.user,
+			workspace: this.workspace,
+			env: body.env,
+			shouldUseFreshDeploy: body.shouldUseFreshDeploy,
+			skipReadyCheck: body.skipReadyCheck,
+			forceRollOut: body.forceRollOut,
+		};
+		console.log("deployBuildOptions :>> ", deployBuildOptions);
+
+		// DEPLOY A BUILD:
+		try {
+			const result = await this.service.deployRelease(release, deployBuildOptions);
+		} catch (e) {
+			return respondFailure(e.toString());
 		}
 	}
 }

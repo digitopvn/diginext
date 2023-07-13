@@ -6,9 +6,8 @@ import type { IRoute } from "@/entities/Route";
 import type { IRoutePermission } from "@/interfaces";
 import * as interfaces from "@/interfaces";
 import type { DBCollection } from "@/modules/api/DB";
-import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
-import RouteService from "@/services/RouteService";
+import { RouteService } from "@/services";
 
 import BaseController from "./BaseController";
 
@@ -38,6 +37,7 @@ export default class RouteController extends BaseController<IRoute> {
 	@Security("jwt")
 	@Post("/permission")
 	async checkPermissions(@Body() body: { action: IRoutePermission; route: string; itemId?: ObjectId }) {
+		const { DB } = await import("@/modules/api/DB");
 		if (!body.route) return interfaces.respondFailure(`Param "route" is required.`);
 		if (!body.action) return interfaces.respondFailure(`Param "action" is required.`);
 

@@ -9,15 +9,13 @@ import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import * as buildModule from "@/modules/build";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { Logger } from "@/plugins";
-import BuildService from "@/services/BuildService";
+import { BuildService } from "@/services";
 
 import BaseController from "./BaseController";
 
 @Tags("Build")
 @Route("build")
-export default class BuildController extends BaseController<IBuild> {
-	service: BuildService;
-
+export default class BuildController extends BaseController<IBuild, BuildService> {
 	constructor() {
 		super(new BuildService());
 	}
@@ -29,7 +27,6 @@ export default class BuildController extends BaseController<IBuild> {
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
-		console.log("BuildController > this.filter :>> ", this.filter);
 		return super.read();
 	}
 
@@ -58,37 +55,18 @@ export default class BuildController extends BaseController<IBuild> {
 	@Security("jwt")
 	@Get("/logs")
 	async getLogs(@Queries() queryParams?: { slug: string }) {
-		let result: ResponseData & { data: string } = { status: 1, data: "", messages: [] };
 		const { slug } = this.filter;
 
 		// validation
-		if (!slug) {
-			result.status = 0;
-			result.messages.push("slug is required.");
-			return result;
-		}
+		if (!slug) return respondFailure("Build's slug is required.");
 
-		// Attempt [1]: get logs from the database
+		// Get logs from the database
 		const build = await this.service.findOne({ slug });
-		// console.log("build :>> ", build);
-		if (build) {
-			const logContent = build.logs;
-			if (logContent) {
-				result.data = logContent;
-				return result;
-			}
-		}
+		if (build?.logs) return respondSuccess({ data: build?.logs });
 
-		// Attempt [2]: get logs from files
-		// const LOG_DIR = process.env.LOG_DIR ?? path.resolve(CLI_DIR, `public/logs`);
-		// const LOG_FILE_PATH = path.resolve(LOG_DIR, `${slug}.txt`);
-		// console.log("LOG_FILE_PATH :>> ", LOG_FILE_PATH);
-		// const logs = fs.existsSync(LOG_FILE_PATH) ? fs.readFileSync(LOG_FILE_PATH, "utf8") : "No data.";
-
+		// if no logs in database -> try to fetch in local storage:
 		const logs = Logger.getLogs(slug) || "No data.";
-
-		result.data = logs;
-		return result;
+		return respondSuccess({ data: logs });
 	}
 
 	/**
@@ -98,29 +76,16 @@ export default class BuildController extends BaseController<IBuild> {
 	@Security("jwt")
 	@Get("/status")
 	async getStatus(@Queries() queryParams?: { slug: string }) {
-		let result: ResponseData & { data: string } = { status: 1, data: "", messages: [] };
 		const { slug } = this.filter;
 
 		// validation
-		if (!slug) {
-			result.status = 0;
-			result.messages.push("slug is required.");
-			return result;
-		}
+		if (!slug) return respondFailure("Build's slug is required.");
 
 		// Attempt [1]: get logs from the database
 		const build = await this.service.findOne({ slug });
-		if (build) {
-			const { status } = build;
-			if (status) {
-				result.data = status;
-				return result;
-			}
-		}
-		const logs = Logger.getLogs(slug) || "No data.";
+		if (typeof build?.status !== "undefined") return respondSuccess({ data: build?.status });
 
-		result.data = logs;
-		return result;
+		return respondFailure("Unable to get build's status.");
 	}
 
 	/**
@@ -145,6 +110,7 @@ export default class BuildController extends BaseController<IBuild> {
 		if (!user && !userId) return respondFailure({ msg: `User or UserID is required.` });
 		if (!gitBranch) return respondFailure({ msg: `Git branch is required.` });
 		if (!registrySlug) return respondFailure({ msg: `Container registry slug is required.` });
+
 		// start the build
 		const buildInfo = await buildModule.startBuild(body);
 

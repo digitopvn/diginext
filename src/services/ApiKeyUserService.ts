@@ -4,7 +4,7 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces
 
 import BaseService from "./BaseService";
 
-export default class ApiKeyUserService extends BaseService<IApiKeyAccount> {
+export class ApiKeyUserService extends BaseService<IApiKeyAccount> {
 	constructor() {
 		super(apiKeyAccountSchema);
 	}

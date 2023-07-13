@@ -9,6 +9,7 @@ import ClusterManager from "./index";
 import { checkCertManagerInstalled, checkNginxIngressInstalled } from "./stack-check";
 
 export interface InstallStackOptions {
+	skipable?: boolean;
 	onUpdate?: (msg: string, type?: "log" | "error" | "warn") => void;
 }
 
@@ -18,19 +19,22 @@ export interface InstallStackOptions {
  */
 export const installNginxIngressStack = async (cluster: ICluster, options: InstallStackOptions = {}) => {
 	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
-	const { shortName, contextName: context, isVerified } = cluster;
+	const { slug, contextName: context, isVerified } = cluster;
 	const { onUpdate } = options;
 
-	if (!isVerified) throw new Error(`Cluster (${shortName}) hasn't been verified yet.`);
+	if (!isVerified) throw new Error(`Cluster (${slug}) hasn't been verified yet.`);
 
 	let nginxIngressInstalled = await checkNginxIngressInstalled(cluster);
-	if (nginxIngressInstalled) throw new Error(`Cluster already had "NGINX Ingress" Stack installed.`);
+	if (nginxIngressInstalled) {
+		if (!options?.skipable) throw new Error(`Cluster already had "NGINX Ingress" Stack installed.`);
+		return true;
+	}
 
 	// use Helm to install:
 	const name = "ingress-nginx";
 	const namespace = "ingress-nginx";
-	const repoURL = "https://kubernetes.github.io/ingress-nginx";
-	const command = `helm upgrade --install ${name} ${name} --repo ${repoURL} --namespace ${namespace} --create-namespace`;
+	const helmRepoURL = "https://kubernetes.github.io/ingress-nginx";
+	const command = `helm upgrade --install ${name} ${name} --repo ${helmRepoURL} --namespace ${namespace} --create-namespace`;
 	const stream = execaCommand(command);
 	stream.stdio.forEach((_stdio) => {
 		if (_stdio) {
@@ -61,14 +65,17 @@ export const installNginxIngressStack = async (cluster: ICluster, options: Insta
  */
 export const installCertManagerStack = async (cluster: ICluster, options: InstallStackOptions = {}) => {
 	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
-	const { shortName, contextName: context, isVerified } = cluster;
+	const { slug, contextName: context, isVerified } = cluster;
 	const { onUpdate } = options;
 
-	if (!isVerified) throw new Error(`Cluster (${shortName}) hasn't been verified yet.`);
+	if (!isVerified) throw new Error(`Cluster (${slug}) hasn't been verified yet.`);
 
 	// check stack has been installed yet or not
 	let isStackInstalled = await checkCertManagerInstalled(cluster);
-	if (isStackInstalled) throw new Error(`Cluster already had "CertManager" Stack installed.`);
+	if (isStackInstalled) {
+		if (!options?.skipable) throw new Error(`Cluster already had "CertManager" Stack installed.`);
+		return true;
+	}
 
 	// add Helm repo
 	await execaCommand(`helm repo add jetstack https://charts.jetstack.io && helm repo update`);

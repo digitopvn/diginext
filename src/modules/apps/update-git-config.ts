@@ -2,9 +2,8 @@ import { logError } from "diginext-utils/dist/xconsole/log";
 
 import type { AppDto, AppGitInfo, IApp } from "@/entities";
 
-import { DB } from "../api/DB";
-
 export const updateAppGitInfo = async (app: IApp, gitInfo: AppGitInfo) => {
+	const { DB } = await import("@/modules/api/DB");
 	const updateData = {} as AppDto;
 	updateData.git = gitInfo;
 

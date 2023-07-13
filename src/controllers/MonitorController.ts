@@ -4,7 +4,6 @@ import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeServic
 import { respondFailure, respondSuccess } from "@/interfaces";
 import type { KubeNode } from "@/interfaces/KubeNode";
 import type { KubePod } from "@/interfaces/KubePod";
-import { DB } from "@/modules/api/DB";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
 
@@ -19,12 +18,13 @@ export default class MonitorController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/nodes")
-	async getNodes(@Queries() queryParams?: { clusterShortName: string }) {
-		let { clusterShortName } = this.filter;
+	async getNodes(@Queries() queryParams?: { clusterSlug: string }) {
+		const { DB } = await import("@/modules/api/DB");
+		let { clusterSlug } = this.filter;
 
 		let data: KubeNode[] = [];
 
-		if (!clusterShortName) {
+		if (!clusterSlug) {
 			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
@@ -33,7 +33,7 @@ export default class MonitorController extends BaseController {
 					let nodeList = await ClusterManager.getAllNodes({ context });
 					nodeList = nodeList.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterShortName = cluster.shortName;
+						ns.clusterSlug = cluster.slug;
 						ns.cluster = MongoDB.toString(cluster._id);
 						return ns;
 					});
@@ -42,16 +42,16 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
+			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
 
 			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
 
 			data = await ClusterManager.getAllNodes({ context });
 			data = data.map((ns) => {
 				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterShortName = cluster.shortName;
+				ns.clusterSlug = cluster.slug;
 				ns.cluster = MongoDB.toString(cluster._id);
 				return ns;
 			});
@@ -67,12 +67,13 @@ export default class MonitorController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/namespaces")
-	async getNamespaces(@Queries() queryParams?: { clusterShortName: string }) {
-		let { clusterShortName } = this.filter;
+	async getNamespaces(@Queries() queryParams?: { clusterSlug: string }) {
+		const { DB } = await import("@/modules/api/DB");
+		let { clusterSlug } = this.filter;
 
 		let data: KubeNamespace[] = [];
 
-		if (!clusterShortName) {
+		if (!clusterSlug) {
 			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
@@ -81,7 +82,7 @@ export default class MonitorController extends BaseController {
 					let nsList = await ClusterManager.getAllNamespaces({ context });
 					nsList = nsList.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterShortName = cluster.shortName;
+						ns.clusterSlug = cluster.slug;
 						ns.cluster = MongoDB.toString(cluster._id);
 						return ns;
 					});
@@ -90,16 +91,16 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
+			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
 
 			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
 
 			data = await ClusterManager.getAllNamespaces({ context });
 			data = data.map((ns) => {
 				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterShortName = cluster.shortName;
+				ns.clusterSlug = cluster.slug;
 				ns.cluster = MongoDB.toString(cluster._id);
 				return ns;
 			});
@@ -123,18 +124,19 @@ export default class MonitorController extends BaseController {
 			 */
 			name: string;
 		},
-		@Queries() queryParams?: { clusterShortName: string }
+		@Queries() queryParams?: { clusterSlug: string }
 	) {
-		const { clusterShortName } = this.filter;
+		const { DB } = await import("@/modules/api/DB");
+		const { clusterSlug } = this.filter;
 		const { name } = body;
 
-		if (!clusterShortName) return respondFailure(`Param "clusterShortName" is required.`);
+		if (!clusterSlug) return respondFailure(`Param "clusterSlug" is required.`);
 
-		const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
-		if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
+		if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
 
 		const { contextName: context } = cluster;
-		if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+		if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
 
 		// check name existed
 		const isExisted = await ClusterManager.isNamespaceExisted(name);
@@ -143,7 +145,7 @@ export default class MonitorController extends BaseController {
 		const data = await ClusterManager.createNamespace(name, { context });
 
 		// data.workspace = MongoDB.toString(this.workspace._id);
-		// data.clusterShortName = clusterShortName;
+		// data.clusterSlug = clusterSlug;
 		// data.cluster = MongoDB.toString(cluster._id);
 
 		// process
@@ -156,12 +158,13 @@ export default class MonitorController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/services")
-	async getServices(@Queries() queryParams?: { clusterShortName: string; namespace?: string }) {
-		const { namespace, clusterShortName } = this.filter;
+	async getServices(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
+		const { DB } = await import("@/modules/api/DB");
+		const { namespace, clusterSlug } = this.filter;
 
 		let data: KubeService[] = [];
 
-		if (!clusterShortName) {
+		if (!clusterSlug) {
 			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
@@ -174,7 +177,7 @@ export default class MonitorController extends BaseController {
 
 					nsList = nsList.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterShortName = cluster.shortName;
+						ns.clusterSlug = cluster.slug;
 						ns.cluster = MongoDB.toString(cluster._id);
 						return ns;
 					});
@@ -183,16 +186,16 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
+			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
 
 			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
 
 			data = namespace ? await ClusterManager.getServices(namespace, { context }) : await ClusterManager.getAllServices({ context });
 			data = data.map((ns) => {
 				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterShortName = cluster.shortName;
+				ns.clusterSlug = cluster.slug;
 				ns.cluster = MongoDB.toString(cluster._id);
 				return ns;
 			});
@@ -232,19 +235,20 @@ export default class MonitorController extends BaseController {
 		},
 		@Queries()
 		queryParams?: {
-			clusterShortName: string;
+			clusterSlug: string;
 		}
 	) {
-		const { clusterShortName, namespace = "default" } = this.filter;
+		const { DB } = await import("@/modules/api/DB");
+		const { clusterSlug, namespace = "default" } = this.filter;
 		const { name } = body;
 
-		if (!clusterShortName) return respondFailure(`Param "clusterShortName" is required.`);
+		if (!clusterSlug) return respondFailure(`Param "clusterSlug" is required.`);
 
-		const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
-		if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
+		if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
 
 		const { contextName: context } = cluster;
-		if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+		if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
 
 		// check name existed
 		const isExisted = await ClusterManager.isNamespaceExisted(name);
@@ -260,12 +264,13 @@ export default class MonitorController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/ingresses")
-	async getIngresses(@Queries() queryParams?: { clusterShortName: string; namespace?: string }) {
-		const { namespace, clusterShortName } = this.filter;
+	async getIngresses(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
+		const { DB } = await import("@/modules/api/DB");
+		const { namespace, clusterSlug } = this.filter;
 
 		let data: KubeIngress[] = [];
 
-		if (!clusterShortName) {
+		if (!clusterSlug) {
 			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
@@ -278,7 +283,7 @@ export default class MonitorController extends BaseController {
 
 					nsList = nsList.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterShortName = cluster.shortName;
+						ns.clusterSlug = cluster.slug;
 						ns.cluster = MongoDB.toString(cluster._id);
 						return ns;
 					});
@@ -287,16 +292,16 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
+			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
 
 			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
 
 			data = namespace ? await ClusterManager.getIngresses(namespace, { context }) : await ClusterManager.getAllIngresses({ context });
 			data = data.map((ns) => {
 				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterShortName = cluster.shortName;
+				ns.clusterSlug = cluster.slug;
 				ns.cluster = MongoDB.toString(cluster._id);
 				return ns;
 			});
@@ -312,12 +317,13 @@ export default class MonitorController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/deployments")
-	async getDeploys(@Queries() queryParams?: { clusterShortName: string; namespace?: string }) {
-		const { namespace, clusterShortName } = this.filter;
+	async getDeploys(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
+		const { DB } = await import("@/modules/api/DB");
+		const { namespace, clusterSlug } = this.filter;
 
 		let data: KubeDeployment[] = [];
 
-		if (!clusterShortName) {
+		if (!clusterSlug) {
 			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
@@ -330,7 +336,7 @@ export default class MonitorController extends BaseController {
 
 					nsList = nsList.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterShortName = cluster.shortName;
+						ns.clusterSlug = cluster.slug;
 						ns.cluster = MongoDB.toString(cluster._id);
 						return ns;
 					});
@@ -339,16 +345,16 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
+			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
 
 			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
 
 			data = namespace ? await ClusterManager.getDeploys(namespace, { context }) : await ClusterManager.getAllDeploys({ context });
 			data = data.map((ns) => {
 				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterShortName = cluster.shortName;
+				ns.clusterSlug = cluster.slug;
 				ns.cluster = MongoDB.toString(cluster._id);
 				return ns;
 			});
@@ -364,12 +370,13 @@ export default class MonitorController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/pods")
-	async getPods(@Queries() queryParams?: { clusterShortName: string; namespace?: string }) {
-		const { namespace, clusterShortName } = this.filter;
+	async getPods(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
+		const { DB } = await import("@/modules/api/DB");
+		const { namespace, clusterSlug } = this.filter;
 
 		let data: KubePod[] = [];
 
-		if (!clusterShortName) {
+		if (!clusterSlug) {
 			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
@@ -380,7 +387,7 @@ export default class MonitorController extends BaseController {
 
 					list = list.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterShortName = cluster.shortName;
+						ns.clusterSlug = cluster.slug;
 						ns.cluster = MongoDB.toString(cluster._id);
 						return ns;
 					});
@@ -389,16 +396,16 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
+			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
 
 			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
 
 			data = namespace ? await ClusterManager.getPods(namespace, { context }) : await ClusterManager.getAllPods({ context });
 			data = data.map((ns) => {
 				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterShortName = cluster.shortName;
+				ns.clusterSlug = cluster.slug;
 				ns.cluster = MongoDB.toString(cluster._id);
 				return ns;
 			});
@@ -414,12 +421,13 @@ export default class MonitorController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/secrets")
-	async getSecrets(@Queries() queryParams?: { clusterShortName: string; namespace?: string }) {
-		const { namespace, clusterShortName } = this.filter;
+	async getSecrets(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
+		const { DB } = await import("@/modules/api/DB");
+		const { namespace, clusterSlug } = this.filter;
 
 		let data: KubeSecret[] = [];
 
-		if (!clusterShortName) {
+		if (!clusterSlug) {
 			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
@@ -432,7 +440,7 @@ export default class MonitorController extends BaseController {
 
 					nsList = nsList.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterShortName = cluster.shortName;
+						ns.clusterSlug = cluster.slug;
 						ns.cluster = MongoDB.toString(cluster._id);
 						return ns;
 					});
@@ -441,16 +449,16 @@ export default class MonitorController extends BaseController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne("cluster", { shortName: clusterShortName, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterShortName}" not found.`);
+			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
+			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
 
 			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterShortName}"`);
+			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
 
 			data = namespace ? await ClusterManager.getSecrets(namespace, { context }) : await ClusterManager.getAllSecrets({ context });
 			data = data.map((ns) => {
 				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterShortName = cluster.shortName;
+				ns.clusterSlug = cluster.slug;
 				ns.cluster = MongoDB.toString(cluster._id);
 				return ns;
 			});

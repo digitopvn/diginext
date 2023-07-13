@@ -10,13 +10,13 @@ import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCre
 import { printInformation } from "@/modules/project/printInformation";
 import { makeSlug } from "@/plugins/slug";
 
-import { DB } from "../api/DB";
 import { createAppByForm } from "./new-app-by-form";
 
 /**
  * Create new app with pre-setup: git, cli, config,...
  */
 export default async function createApp(options: InputOptions) {
+	const { DB } = await import("@/modules/api/DB");
 	// FORM > Create new project & app:
 	const newApp = await createAppByForm(options);
 	// console.log("newApp :>> ", newApp);

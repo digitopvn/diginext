@@ -1,6 +1,5 @@
-import { DB } from "@/modules/api/DB";
-
 export const migrateServiceAccountAndApiKey = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	const workspaces = (await DB.find("workspace", {}, { select: ["_id", "name"] })) || [];
 
 	// create default roles for each workspace: Admin, Moderator & Member

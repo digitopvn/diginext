@@ -7,6 +7,7 @@ import path from "path";
 import copy from "recursive-copy";
 
 import { isServerMode } from "@/app.config";
+import { CLI_CONFIG_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { cloneGitRepo, deleteFolderRecursive, pullOrCloneGitRepo, wait } from "@/plugins";
 
@@ -37,7 +38,7 @@ export const copyFrameworkResources = async (destDirectory: string) => {
 
 	let success = false;
 	try {
-		const tmpFrameworkDir = path.resolve(".fw");
+		const tmpFrameworkDir = path.resolve(CLI_CONFIG_DIR, ".fw");
 		await copy(tmpFrameworkDir, destDirectory, options);
 		success = true;
 	} catch (e) {
@@ -86,25 +87,36 @@ export const selectFrameworkVersion = async (framework = "diginext") => {
 	// return versionList;
 };
 
-export interface PullFrameworkVersion extends Pick<InputOptions, "framework" | "frameworkVersion" | "name" | "repoSSH" | "ci"> {}
+export interface PullFrameworkVersion extends Pick<InputOptions, "framework" | "frameworkVersion" | "name" | "repoSSH" | "ci" | "isDebugging"> {}
 
 export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
-	const { frameworkVersion } = options;
+	const { frameworkVersion = "main" } = options;
 	const { name, repoSSH } = options.framework;
+	if (!repoSSH) throw new Error(`Unable to pull/clone framework: repo SSH url is required.`);
 
 	const spin = ora(`Pulling "${name}" framework... 0%`).start();
 
 	// create tmp dir
-	const tmpDir = path.resolve(".fw/");
+	const tmpDir = path.resolve(CLI_CONFIG_DIR, ".fw");
 	try {
 		await deleteFolderRecursive(tmpDir);
 	} catch (e) {
-		logError(e);
+		logError(`[PULL FRAMEWORK]`, e);
+		return false;
 	}
 	await mkdir(tmpDir, { recursive: true });
+	if (options.isDebugging) console.log("pullFrameworkVersion() > frameworkVersion :>> ", frameworkVersion);
+	if (options.isDebugging) console.log("pullFrameworkVersion() > tmpDir :>> ", tmpDir);
+
+	// [NOT WORKING] parse framework repo SSH url -> use git provider's credentials accordingly:
+	// const { providerType } = parseGitRepoDataFromRepoSSH(repoSSH);
+	// const { DB } = await import("@/modules/api/DB");
+	// const gitProvider = await DB.findOne("git", { type: providerType });
+	// if (options.isDebugging) console.log("pullFrameworkVersion() > gitProvider :>> ", gitProvider);
 
 	// pull or clone git repo
-	await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
+	const pullStatus = await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
+		// useAccessToken: gitProvider ? { type: upperFirst(gitProvider.method) as "Bearer" | "Basic", value: gitProvider.access_token } : undefined,
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
 				console.log(msg);
@@ -116,26 +128,21 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 		removeGitOnFinish: true,
 		removeCIOnFinish: !options.ci,
 	});
+	if (options.isDebugging) console.log("pullFrameworkVersion() > pullStatus :>> ", pullStatus);
 
 	spin.stop();
 
-	// delete unneccessary files
-	// if (fs.existsSync(".fw/README.md")) fs.unlinkSync(".fw/README.md");
-	// if (fs.existsSync(".fw/CHANGELOG.md")) fs.unlinkSync(".fw/CHANGELOG.md");
-	// if (fs.existsSync(".fw/package-lock.json")) fs.unlinkSync(".fw/package-lock.json");
-	// if (fs.existsSync(".fw/yarn.lock")) fs.unlinkSync(".fw/yarn.lock");
-
-	return true;
+	return pullStatus;
 };
 
 export const changePackageName = async (options: InputOptions) => {
-	//
 	const { targetDirectory, repoSlug } = options;
 
 	if (!path.resolve(targetDirectory, "package.json")) {
 		logWarn("NOT FOUND package.json");
 		return;
 	}
+
 	try {
 		const json = fs.readFileSync(path.resolve(targetDirectory, "package.json"), "utf-8");
 
@@ -151,13 +158,13 @@ export async function pullingFramework(options: InputOptions) {
 	if (options.framework.name != "none") {
 		// TODO: Select specific branch as a version?
 
-		await pullFrameworkVersion(options);
+		const pullStatus = await pullFrameworkVersion(options);
+		if (!pullStatus) throw new Error(`Unable to pull/clone framework: ${options.framework.name} (${options.framework.repoSSH})`);
 
 		await copyFrameworkResources(options.targetDirectory);
 
+		// @teexiii : SHOULD CHECK FOR SPECIFIC CASE AS NODE.JS ONLY!
 		await changePackageName(options);
-
-		await cleanUpFramework();
 	}
 
 	return true;

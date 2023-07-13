@@ -5,10 +5,10 @@ import type { GitProviderDto, IGitProvider } from "@/entities";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { availableGitProviders } from "@/interfaces/SystemTypes";
 
-import { DB } from "../api/DB";
 import type { GitOrg } from "./git-provider-api";
 
 export async function askForGitOrg(gitProvider: IGitProvider) {
+	const { DB } = await import("@/modules/api/DB");
 	// select git org (namespace)
 	const orgs = await DB.find("git", { _id: gitProvider._id }, { subpath: "/orgs", filter: { slug: gitProvider.slug } });
 	if (!orgs || orgs.length === 0) throw new Error(`This account doesn't have any git workspaces.`);
@@ -37,6 +37,7 @@ export async function askForGitOrg(gitProvider: IGitProvider) {
 }
 
 export async function askForGitProvider() {
+	const { DB } = await import("@/modules/api/DB");
 	const gitProviders = await DB.find("git", {});
 
 	if (isEmpty(gitProviders)) {

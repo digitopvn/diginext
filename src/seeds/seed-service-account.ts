@@ -3,10 +3,10 @@
 import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IUser, IWorkspace } from "@/entities";
 import type { IServiceAccount } from "@/entities/ServiceAccount";
-import { DB } from "@/modules/api/DB";
 import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
 
 export const seedServiceAccounts = async (workspace: IWorkspace, owner: IUser) => {
+	const { DB } = await import("@/modules/api/DB");
 	// seed default service account:
 	const serviceAccountToken = generateWorkspaceApiAccessToken();
 	const moderatorRole = await DB.findOne("role", { type: "moderator", workspace: workspace._id });

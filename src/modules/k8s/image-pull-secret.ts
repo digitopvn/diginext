@@ -1,7 +1,6 @@
 import { log, logError } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
-import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
@@ -12,10 +11,11 @@ import DockerRegistry from "../registry/docker-registry";
  * Create imagePullSecrets in a namespace
  * @param appSlug - App's slug
  * @param env @example "dev", "prod"
- * @param clusterShortName - Cluster's short name on Cloud Provider (this is **NOT** a cluster name in `KUBE_CONFIG`)
+ * @param clusterSlug - Cluster's slug
  * @param namespace @default "default"
  */
-export async function createImagePullSecretsInNamespace(appSlug: string, env: string, clusterShortName: string, namespace: string = "default") {
+export async function createImagePullSecretsInNamespace(appSlug: string, env: string, clusterSlug: string, namespace: string = "default") {
+	const { DB } = await import("@/modules/api/DB");
 	let message = "";
 
 	let app = await DB.findOne("app", { slug: appSlug });
@@ -31,11 +31,12 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 	let registry = await DB.findOne("registry", { slug: regSlug });
 
 	if (!registry) throw new Error(`Container Registry (${regSlug}) of "${appSlug}" app not found.`);
+	const registrySlug = registry.slug;
 
 	const options: ContainerRegistrySecretOptions = {
-		namespace: namespace,
-		clusterShortName: clusterShortName,
-		registrySlug: registry.slug,
+		namespace,
+		clusterSlug,
+		registrySlug,
 		shouldCreateSecretInNamespace: true,
 	};
 	// console.log("createImagePullSecretsInNamespace > options :>> ", options);

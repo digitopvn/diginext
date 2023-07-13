@@ -95,5 +95,4 @@ class CronjobService extends BaseService<ICronjob> {
 	}
 }
 
-export default CronjobService;
 export { CronjobService };

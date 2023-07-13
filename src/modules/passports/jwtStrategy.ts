@@ -9,8 +9,6 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 import { Config } from "@/app.config";
 import type { AccessTokenInfo } from "@/entities";
 
-import { DB } from "../api/DB";
-
 dayjs.extend(relativeTime);
 
 export type JWTOptions = {
@@ -95,6 +93,7 @@ export const jwtStrategy = new Strategy(
 	},
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
 		// console.log(`[1] AUTHENTICATE: jwtStrategy > payload...`, payload);
+		const { DB } = await import("@/modules/api/DB");
 
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		// console.log("jwtStrategy > access_token :>> ", access_token);

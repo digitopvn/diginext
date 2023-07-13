@@ -4,7 +4,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 import type { IRole } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
-import RoleService from "@/services/RoleService";
+import { RoleService } from "@/services";
 
 import BaseController from "./BaseController";
 

@@ -2,8 +2,7 @@ import BaseController from "@/controllers/BaseController";
 import type { ApiKeyAccountDto, IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import type { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces";
-import { ApiKeyUserService } from "@/services";
-import WorkspaceService from "@/services/WorkspaceService";
+import { ApiKeyUserService, WorkspaceService } from "@/services";
 
 interface JoinWorkspaceBody {
 	userId: string;

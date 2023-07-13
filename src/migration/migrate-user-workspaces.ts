@@ -2,9 +2,8 @@ import { log } from "diginext-utils/dist/xconsole/log";
 
 import { isObjectId } from "@/plugins/mongodb";
 
-import { DB } from "../modules/api/DB";
-
 export const migrateUserWorkspaces = async () => {
+	const { DB } = await import("@/modules/api/DB");
 	let users = await DB.find("user", { roles: undefined });
 
 	users = users

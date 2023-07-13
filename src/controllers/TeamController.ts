@@ -3,7 +3,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 import type { ITeam } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
-import TeamService from "@/services/TeamService";
+import { TeamService } from "@/services";
 
 import BaseController from "./BaseController";
 

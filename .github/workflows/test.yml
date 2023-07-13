@@ -33,6 +33,8 @@ env:
   TEST_GITHUB_USER: ${{ vars.TEST_GITHUB_USER }}
   TEST_METAL_CLUSTER_NAME: ${{ vars.TEST_METAL_CLUSTER_NAME }}
   TEST_METAL_CLUSTER_KUBECONFIG: ${{ secrets.TEST_METAL_CLUSTER_KUBECONFIG }}
+  ID_RSA: ${{ secrets.ID_RSA }}
+  ID_RSA_PUB: ${{ secrets.ID_RSA_PUB }}
 
 # CI/CD STEPS
 jobs:
@@ -47,10 +49,19 @@ jobs:
       id-token: 'write'
 
     steps:
+      # - run: echo $ID_RSA > ~/.ssh/id_rsa
+      # - run: echo $ID_RSA_PUB > ~/.ssh/id_rsa.pub
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          persist-credentials: true
+
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.ID_RSA }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v3

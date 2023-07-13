@@ -13,7 +13,6 @@ import { cronjobRepeatUnitList } from "@/entities/Cronjob";
 import { respondFailure } from "@/interfaces";
 import type { CloudDatabaseType } from "@/interfaces/SystemTypes";
 import { cloudDatabaseList } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import { createCronjobRepeat } from "@/modules/cronjob/schedule";
 import MongoShell from "@/modules/db/mongo";
 import MySQL from "@/modules/db/mysql";
@@ -21,7 +20,7 @@ import PostgreSQL from "@/modules/db/pg";
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
-import CloudDatabaseBackupService from "./CloudDatabaseBackupService";
+import { CloudDatabaseBackupService } from "./CloudDatabaseBackupService";
 
 export type DatabaseConnectionInfo = {
 	type: CloudDatabaseType;
@@ -66,7 +65,7 @@ export type DatabaseRestoreParams = {
 	path?: string;
 };
 
-export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
+export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 	constructor() {
 		super(cloudDatabaseSchema);
 	}
@@ -121,6 +120,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 
 	// healthz
 	async checkHealthById(id: string) {
+		const { DB } = await import("@/modules/api/DB");
 		const db = await DB.findOne("database", { _id: id });
 		if (!db) throw new Error(`Cloud database not found.`);
 		return this.checkHealth(db);
@@ -164,6 +164,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 	}
 
 	async backupById(id: string) {
+		const { DB } = await import("@/modules/api/DB");
 		const db = await DB.findOne("database", { _id: id });
 		if (!db) throw new Error(`Cloud database not found.`);
 		return this.backup(db);
@@ -263,6 +264,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 	}
 
 	async restoreById(options: DatabaseRestoreParams, id: string) {
+		const { DB } = await import("@/modules/api/DB");
 		const db = await DB.findOne("database", { _id: id });
 		if (!db) throw new Error(`Cloud database not found.`);
 		return this.restore(options, db);
@@ -325,6 +327,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		condition?: CronjonRepeatCondition,
 		ownership?: { owner: string; workspace: string }
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		// validate
 		if (typeof repeat?.range === "undefined") throw new Error(`Recurrent range is required.`);
 		if (typeof repeat?.unit === "undefined") throw new Error(`Recurrent unit is required, one of: ${cronjobRepeatUnitList.join(", ")}.`);
@@ -355,5 +358,3 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		return updatedDb;
 	}
 }
-
-export { ICloudDatabase as CloudDatabase };

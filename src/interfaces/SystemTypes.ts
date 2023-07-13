@@ -14,6 +14,12 @@ export interface AppResponse extends express.Response {
 	body?: string;
 }
 
+// ownership
+export interface Ownership {
+	workspace: IWorkspace;
+	owner: IUser;
+}
+
 // http methods
 export const requestMethodList = ["GET", "POST", "PATCH", "DELETE"] as const;
 export type RequestMethodType = typeof requestMethodList[number];

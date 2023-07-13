@@ -5,7 +5,7 @@ import type { BackupStatus } from "@/interfaces/SystemTypes";
 
 import BaseService from "./BaseService";
 
-export default class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup> {
+export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup> {
 	constructor() {
 		super(cloudDatabaseBackupSchema);
 	}

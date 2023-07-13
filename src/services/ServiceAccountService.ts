@@ -4,7 +4,7 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces
 
 import BaseService from "./BaseService";
 
-export default class ServiceAccountService extends BaseService<IServiceAccount> {
+export class ServiceAccountService extends BaseService<IServiceAccount> {
 	constructor() {
 		super(serviceAccountSchema);
 	}
