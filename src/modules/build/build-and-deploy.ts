@@ -16,9 +16,10 @@ import { sendLog } from "./send-log-message";
 
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildOptions) => {
 	const { DB } = await import("@/modules/api/DB");
+
 	// [1] Build container image
-	if (!deployParams.env) deployParams.env = "dev";
-	buildParams.buildWatch = true;
+	if (!deployParams.env) deployParams.env = buildParams.env || "dev";
+	if (typeof buildParams.buildWatch === "undefined") buildParams.buildWatch = true;
 	buildParams.env = deployParams.env;
 
 	const { build, startTime, SOCKET_ROOM } = await startBuild(buildParams);
