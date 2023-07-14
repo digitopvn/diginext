@@ -590,7 +590,7 @@ export class AppService extends BaseService<IApp> {
 		return logs;
 	}
 
-	async deleteDeployEnvironment(app: IApp, env: string) {
+	async takeDownDeployEnvironment(app: IApp, env: string) {
 		const deployEnvironment = app.deployEnvironment[env];
 		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
 
@@ -642,6 +642,13 @@ export class AppService extends BaseService<IApp> {
 			errorMsg += `, ${e}.`;
 		}
 
+		return { success: true, message: errorMsg };
+	}
+
+	async deleteDeployEnvironment(app: IApp, env: string) {
+		// take down deploy environment on clusters
+		await this.takeDownDeployEnvironment(app, env);
+
 		// delete deploy environment in database
 		const updatedApp = await this.updateOne(
 			{
@@ -686,5 +693,21 @@ export class AppService extends BaseService<IApp> {
 
 		// return
 		return { build, release, app };
+	}
+
+	async archiveApp(app: IApp, ownership?: Ownership) {
+		// take down all deploy environments
+		const deployEnvs = Object.keys(app.deployEnvironment);
+		await Promise.all(deployEnvs.map((env) => this.takeDownDeployEnvironment(app, env)));
+
+		// update database
+		const archivedApp = await this.updateOne({ _id: app._id }, { archivedAt: new Date() });
+		return archivedApp;
+	}
+
+	async unarchiveApp(app: IApp, ownership?: Ownership) {
+		// update database
+		const unarchivedApp = await this.updateOne({ _id: app._id }, { $unset: { archivedAt: true } }, { raw: true });
+		return unarchivedApp;
 	}
 }

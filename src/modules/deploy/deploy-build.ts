@@ -15,14 +15,33 @@ import type { GenerateDeploymentResult } from "./generate-deployment";
 import { generateDeployment } from "./generate-deployment";
 
 export type DeployBuildOptions = {
+	/**
+	 * ### `REQUIRED`
+	 * Deploy environment
+	 */
 	env: string;
+	/**
+	 * ### `REQUIRED`
+	 * The USER who process this request
+	 */
 	author: IUser;
+	/**
+	 * ### `REQUIRED`
+	 * Workspace
+	 */
 	workspace: IWorkspace;
+	/**
+	 * Current version of the Diginext CLI
+	 */
 	cliVersion?: string;
+	/**
+	 * ### CAUTION
+	 * If `TRUE`, it will find and wipe out the current deployment, then deploy a new one!
+	 */
 	shouldUseFreshDeploy?: boolean;
 	/**
-	 * ### FOR DEPLOY to PROD
-	 * Force roll out the release to "prod" deploy environment (instead of "prerelease" environment)
+	 * ### ONLY APPLY FOR DEPLOYING to PROD
+	 * Force roll out the release to "prod" deploy environment (skip the "prerelease" environment)
 	 * @default false
 	 */
 	forceRollOut?: boolean;

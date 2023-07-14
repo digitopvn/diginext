@@ -1,5 +1,6 @@
 import type express from "express";
 
+import { getContainerResourceBySize } from "@/config/config";
 import type { IRole, IUser, IWorkspace, RoleRoute } from "@/entities";
 
 // express.js
@@ -58,6 +59,22 @@ export const availableResourceSizes = ["none", "1x", "2x", "3x", "4x", "5x", "6x
  * "10x" - { requests: { cpu: "10024m", memory: "32464Mi" }, limits: { cpu: "10024m", memory: "32464Mi" } }
  */
 export type ResourceQuotaSize = typeof availableResourceSizes[number];
+export const resourceSizeConfigs: Record<
+	ResourceQuotaSize,
+	{ requests?: { cpu: string; memory: string }; limits?: { cpu: string; memory: string } }
+> = {
+	none: {},
+	"1x": getContainerResourceBySize("1x"),
+	"2x": getContainerResourceBySize("2x"),
+	"3x": getContainerResourceBySize("3x"),
+	"4x": getContainerResourceBySize("4x"),
+	"5x": getContainerResourceBySize("5x"),
+	"6x": getContainerResourceBySize("6x"),
+	"7x": getContainerResourceBySize("7x"),
+	"8x": getContainerResourceBySize("8x"),
+	"9x": getContainerResourceBySize("9x"),
+	"10x": getContainerResourceBySize("10x"),
+};
 
 // git provider domains
 export const gitProviderDomain = {

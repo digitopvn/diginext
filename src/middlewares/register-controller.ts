@@ -23,6 +23,9 @@ export const registerController = (controller: any) => {
 			}
 			req.workspace = controller.workspace;
 
+			// assign ownership
+			controller.ownership = { owner: controller.user, workspace: controller.workspace };
+
 			// assign express.Request to service
 			if (controller.service) {
 				controller.service.req = req;

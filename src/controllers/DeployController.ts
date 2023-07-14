@@ -7,6 +7,7 @@ import pkg from "@/../package.json";
 import type { IBuild, IUser, IWorkspace } from "@/entities";
 import type { IQueryFilter, IQueryOptions, IResponsePagination } from "@/interfaces";
 import { type InputOptions, type ResponseData, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import type { StartBuildParams } from "@/modules/build";
 import { startBuildV1 } from "@/modules/build/start-build";
@@ -59,11 +60,13 @@ export type DeployBuildParams = {
 @Tags("Deploy")
 @Route("deploy")
 export default class DeployController {
-	service: DeployService = new DeployService();
-
 	user: IUser;
 
 	workspace: IWorkspace;
+
+	ownership: Ownership;
+
+	service: DeployService = new DeployService();
 
 	filter: IQueryFilter;
 

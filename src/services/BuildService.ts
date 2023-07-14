@@ -1,13 +1,18 @@
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+
 import { Config } from "@/app.config";
 import type { IBuild } from "@/entities/Build";
 import { buildSchema } from "@/entities/Build";
 import type { Ownership } from "@/interfaces/SystemTypes";
-import type { StartBuildParams } from "@/modules/build";
+import type { RerunBuildParams, StartBuildParams } from "@/modules/build";
 import { checkQuota } from "@/modules/workspace/check-quota";
 
 import BaseService from "./BaseService";
+import { ContainerRegistryService } from "./ContainerRegistryService";
 
 export class BuildService extends BaseService<IBuild> {
+	regSvc = new ContainerRegistryService();
+
 	constructor() {
 		super(buildSchema);
 	}
@@ -56,5 +61,28 @@ export class BuildService extends BaseService<IBuild> {
 
 		build = await this.updateOne({ _id: build._id }, { status: "failed" });
 		return build;
+	}
+
+	async rerunBuild(build: IBuild, options: RerunBuildParams, ownership?: Ownership) {
+		// validate
+		const { appSlug, tag: prevBuildNumber, branch: gitBranch, registry: registryID, status } = build;
+		if (!appSlug) throw new Error(`App slug is required.`);
+		if (!gitBranch) throw new Error(`Git branch is required.`);
+		if (!registryID) throw new Error(`Container registry ID is required.`);
+
+		// find registry
+		const registry = await this.regSvc.findOne({ _id: registryID });
+		if (!registry) throw new Error(`Container registry not found.`);
+
+		// build params
+		const buildNumber = options.buildNumber || makeDaySlug({ divider: "" });
+		const buildParams: StartBuildParams = {
+			appSlug,
+			buildNumber,
+			gitBranch,
+			registrySlug: registry.slug,
+		};
+
+		return this.startBuild(buildParams, ownership);
 	}
 }

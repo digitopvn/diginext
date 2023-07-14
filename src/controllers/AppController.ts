@@ -484,6 +484,42 @@ export default class AppController extends BaseController<IApp, AppService> {
 		return super.delete();
 	}
 
+	/**
+	 * Take down all deploy environments of this app on the clusters, then mark this app as "archived" in database.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/archive")
+	async archiveApp(@Queries() queryParams?: interfaces.IGetQueryParams) {
+		const app = await this.service.findOne(this.filter, this.options);
+		if (!app) return respondFailure(`Unable to archive: app not found.`);
+
+		try {
+			const archivedApp = await this.service.archiveApp(app, this.ownership);
+			return respondSuccess({ data: archivedApp });
+		} catch (e) {
+			return respondFailure(`Unable to archive this app: ${e}`);
+		}
+	}
+
+	/**
+	 * Mark this app as "unarchived" in database.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/unarchive")
+	async unarchiveApp(@Queries() queryParams?: interfaces.IGetQueryParams) {
+		const app = await this.service.findOne(this.filter, this.options);
+		if (!app) return respondFailure(`Unable to archive: app not found.`);
+
+		try {
+			const unarchivedApp = await this.service.unarchiveApp(app, this.ownership);
+			return respondSuccess({ data: unarchivedApp });
+		} catch (e) {
+			return respondFailure(`Unable to archive this app: ${e}`);
+		}
+	}
+
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/config")

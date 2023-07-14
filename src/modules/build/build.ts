@@ -94,6 +94,8 @@ export type StartBuildParams = {
 	args?: { name: string; value: string }[];
 };
 
+export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildNumber">;
+
 export async function testBuild() {
 	let socketServer = getIO();
 	log("socketServer:", socketServer);

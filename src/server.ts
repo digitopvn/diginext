@@ -71,7 +71,10 @@ function initialize(db?: typeof mongoose) {
 	app.use((req, res, next) => {
 		res.header("Access-Control-Allow-Origin", "*");
 		res.header("Access-Control-Allow-Methods", "OPTIONS, GET, PATCH, POST, DELETE");
-		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control");
+		res.header(
+			"Access-Control-Allow-Headers",
+			"Origin, X-Requested-With, x-api-key, x-auth-cookie, Content-Type, Accept, Authorization, Cache-Control, Cookie, User-Agent"
+		);
 		res.header("X-Powered-By", "TOP GROUP");
 		next();
 	});
@@ -129,6 +132,7 @@ function initialize(db?: typeof mongoose) {
 			name: Config.grab(`SESSION_NAME`, `diginext`),
 			secret: Config.grab(`JWT_SECRET`),
 			maxAge: 1000 * 60 * 100,
+			httpOnly: false,
 		})
 	);
 
