@@ -1,3 +1,17 @@
+# [3.20.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.19.1-prerelease.2...v3.20.0-prerelease.1) (2023-07-14)
+
+
+### Bug Fixes
+
+* **cli:** ask for registry when --registry is specified ([15294b2](https://github.com/digitopvn/diginext/commit/15294b205f76b9a0451233ee11e1c6fb3887d979))
+* **server,dashboard:** improve responsive,change cluster,change registry ([04b7411](https://github.com/digitopvn/diginext/commit/04b74116756c369dac51b8cfb249c3a0bb1177d9))
+* **server:** connect docker registry workspace not found ([dc0124b](https://github.com/digitopvn/diginext/commit/dc0124b6ce337bfdbf4ce41043569a336ee7b41d))
+
+
+### Features
+
+* **dashboard:** deploy app page ([c04b442](https://github.com/digitopvn/diginext/commit/c04b4429d103c2de51914a7caf5217613a762a2e))
+
 ## [3.19.1-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.19.1-prerelease.1...v3.19.1-prerelease.2) (2023-07-13)
 
 
