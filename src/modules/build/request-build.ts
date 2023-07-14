@@ -60,7 +60,7 @@ export async function requestBuild(options: InputOptions) {
 
 	// container registry
 	let registry: IContainerRegistry;
-	if (!options.registry) {
+	if (typeof options.registry === "boolean" || typeof options.registry === "undefined") {
 		registry = await askForRegistry();
 		options.registry = registry.slug;
 	} else {
@@ -113,7 +113,7 @@ export async function requestBuild(options: InputOptions) {
 	const requestBuildData: StartBuildParams = {
 		gitBranch: gitBranch,
 		buildNumber: options.buildNumber,
-		registrySlug: options.registry,
+		registrySlug: registry.slug,
 		appSlug: app.slug,
 	};
 

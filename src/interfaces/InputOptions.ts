@@ -512,7 +512,7 @@ export type InputOptions = {
 	 * Container Registry's slug
 	 * - Flag: `-r`, `--registry`
 	 */
-	registry?: string;
+	registry?: string | boolean;
 
 	/**
 	 * Git provider

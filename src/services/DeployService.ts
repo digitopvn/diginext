@@ -65,7 +65,7 @@ export default class DeployService {
 		const { appSlug, buildNumber } = buildParams;
 		const buildServerUrl = Config.BASE_URL;
 		const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
-		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}`;
+		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}&env=${deployParams.env}`;
 
 		return { logURL };
 	}
