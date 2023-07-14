@@ -18,7 +18,7 @@ router
 	.get("/verify", processApiRequest(controller.verify.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
-	.delete("/", processApiRequest(controller.delete.bind(controller)))
-	.delete("/empty", processApiRequest(controller.empty.bind(controller)));
+	.delete("/", processApiRequest(controller.delete.bind(controller)));
+// .delete("/empty", processApiRequest(controller.empty.bind(controller)));
 
 export default router;

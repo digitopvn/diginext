@@ -20,7 +20,7 @@ router
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
-	.delete("/empty", processApiRequest(controller.empty.bind(controller)))
+	// .delete("/empty", processApiRequest(controller.empty.bind(controller)))
 	.post("/start", processApiRequest(controller.startBuild.bind(controller)))
 	.patch("/stop", processApiRequest(controller.stopBuild.bind(controller)))
 	.get("/status", processApiRequest(controller.getStatus.bind(controller)));
