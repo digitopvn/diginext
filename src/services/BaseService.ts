@@ -159,7 +159,7 @@ export default class BaseService<T = any> {
 	}
 
 	async find(filter: IQueryFilter<T> = {}, options: IQueryOptions & IQueryPagination = {}, pagination?: IQueryPagination) {
-		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find :>> filter:`, filter);
+		// if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find :>> filter:`, filter);
 
 		// where
 		let _filter = parseRequestFilter(filter);

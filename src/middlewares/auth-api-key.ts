@@ -1,4 +1,4 @@
-import { Response as ApiResponse, Response } from "diginext-utils/dist/response";
+import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response as ExpressResponse } from "express";
 import { isEmpty } from "lodash";
 
@@ -52,7 +52,7 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: ExpressRespons
 		// WHY????
 		if (isEmpty(apiKeyAccount.activeWorkspace)) delete apiKeyAccount.activeWorkspace;
 		if (isEmpty(apiKeyAccount.activeRole)) delete apiKeyAccount.activeRole;
-		if (isEmpty(apiKeyAccount.activeWorkspace) && isEmpty(apiKeyAccount.activeRole)) return Response.rejected(res, "Permissions denied.");
+		// if (isEmpty(apiKeyAccount.activeWorkspace) && isEmpty(apiKeyAccount.activeRole)) return Response.rejected(res, "Permissions denied.");
 
 		// user
 		req.user = apiKeyAccount;

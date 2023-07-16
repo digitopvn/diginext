@@ -14,14 +14,15 @@ const controller = new StatsController();
 const router = express.Router();
 
 router
+	// version
+	.get("/version", (req, res) => res.status(200).json(controller.version()))
+	// middlewares
 	.use(authenticate, authorize)
 	.use(registerController(controller))
-	// version, export pdf, capture screenshot,...
-	.get("/version", processApiRequest(controller.version.bind(controller)))
+	// statistics
 	.get("/summary", processApiRequest(controller.summary.bind(controller)))
 	.get("/projects", processApiRequest(controller.projects.bind(controller)))
 	.get("/apps", processApiRequest(controller.apps.bind(controller)))
-	// .get("/deploy-environments", processApiRequest(controller.captureScreenshot.bind(controller)))
 	.get("/clusters", processApiRequest(controller.clusters.bind(controller)))
 	.get("/databases", processApiRequest(controller.databases.bind(controller)))
 	.get("/gits", processApiRequest(controller.gits.bind(controller)))

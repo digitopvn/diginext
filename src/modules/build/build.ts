@@ -359,7 +359,7 @@ export async function startBuild(
 
 	// authenticate build engine with container registry before building & pushing image
 	try {
-		await connectRegistry(registry);
+		await connectRegistry(registry, { userId, workspaceId: workspace._id });
 	} catch (e) {
 		if (options?.onError) options?.onError(`Unable to authenticate with "${registry.name}" registry: ${e}`);
 		sendLog({

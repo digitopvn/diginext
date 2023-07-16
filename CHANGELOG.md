@@ -1,3 +1,34 @@
+# [3.20.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.19.1-prerelease.2...v3.20.0-prerelease.1) (2023-07-14)
+
+
+### Bug Fixes
+
+* **cli:** ask for registry when --registry is specified ([15294b2](https://github.com/digitopvn/diginext/commit/15294b205f76b9a0451233ee11e1c6fb3887d979))
+* **server,dashboard:** improve responsive,change cluster,change registry ([04b7411](https://github.com/digitopvn/diginext/commit/04b74116756c369dac51b8cfb249c3a0bb1177d9))
+* **server:** connect docker registry workspace not found ([dc0124b](https://github.com/digitopvn/diginext/commit/dc0124b6ce337bfdbf4ce41043569a336ee7b41d))
+
+
+### Features
+
+* **dashboard:** deploy app page ([c04b442](https://github.com/digitopvn/diginext/commit/c04b4429d103c2de51914a7caf5217613a762a2e))
+
+## [3.19.1-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.19.1-prerelease.1...v3.19.1-prerelease.2) (2023-07-13)
+
+
+### Bug Fixes
+
+* **cli:** member unable to create git repo for new app ([83279f1](https://github.com/digitopvn/diginext/commit/83279f17c5de4c776cf029c7d6bd576f1be1c097))
+* **cli:** member unable to create git repo for new app ([#296](https://github.com/digitopvn/diginext/issues/296)) ([422d7ef](https://github.com/digitopvn/diginext/commit/422d7eff3fed9eb15c33bc500abb304abaa849b6))
+
+## [3.19.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.19.0...v3.19.1-prerelease.1) (2023-07-13)
+
+
+### Bug Fixes
+
+* **cli:** add some log ([3a0f663](https://github.com/digitopvn/diginext/commit/3a0f6635aedcd32900b80a32996b7c99358662ec))
+* **cli:** ask for cluster when --cluster flag is specified ([6d01e00](https://github.com/digitopvn/diginext/commit/6d01e00a2b3618e944e8dbf3135d9ebd83b07f88))
+* **cli:** missing fs.existsSync checking package.json ([33811de](https://github.com/digitopvn/diginext/commit/33811de13df6b63924fbc307a2d403adc6be42d8))
+
 # [3.19.0](https://github.com/digitopvn/diginext/compare/v3.18.0...v3.19.0) (2023-07-13)
 # [3.19.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.19.0-prerelease.1...v3.19.0-prerelease.2) (2023-07-13)
 
