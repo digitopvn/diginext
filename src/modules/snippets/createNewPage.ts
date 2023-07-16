@@ -82,7 +82,7 @@ export default async function createNewPage(options: ExtendedType) {
 		const nameComponent = `Page${name}`;
 		const fileName = generateFileName(x);
 
-		let PATH_PAGE = "page";
+		let PATH_PAGE = "pages";
 		let PATH_COMPONENT_PAGE = "components/router";
 		let PATH_MODULE = "modules";
 
