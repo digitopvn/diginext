@@ -11,7 +11,7 @@ const @@PAGE_FILE_NAME = () => {
 \t\t\t<style global jsx>{``}</style>
 \t\t\t<MasterPage
 \t\t\t\tmeta={{
-\t\t\t\t\tpageName: "@@PAGE_NAME",
+\t\t\t\t\ttitle: "@@PAGE_NAME",
 \t\t\t\t}}
 \t\t\t>
 \t\t\t\t<Page@@PAGE_FILE_NAME />

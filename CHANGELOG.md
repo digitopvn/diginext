@@ -1,3 +1,10 @@
+# [3.20.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.20.0-prerelease.1...v3.20.0-prerelease.2) (2023-07-16)
+
+
+### Bug Fixes
+
+* **cli:** snpt createNewPage typo ([6cb16d1](https://github.com/digitopvn/diginext/commit/6cb16d10870f9b8933b568bb1eff7fdf5bb356d0))
+
 # [3.20.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.19.1-prerelease.2...v3.20.0-prerelease.1) (2023-07-14)
 
 
