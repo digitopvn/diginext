@@ -27,7 +27,7 @@ export const signAndRedirect = (res: Response, data: { userId: string; workspace
 	const params = new URLSearchParams(url.search);
 	params.set("access_token", access_token);
 
-	const finalUrl = url.origin + "/workspace/select?access_token=" + access_token;
+	const finalUrl = url.origin + "/workspace/select?access_token=" + access_token + "&redirect_url=" + redirectUrl;
 	console.log("[2] signAndRedirect > finalUrl", finalUrl);
 	return res.redirect(endsWith(finalUrl, "%23") ? finalUrl.substring(0, finalUrl.length - 3) : finalUrl);
 };

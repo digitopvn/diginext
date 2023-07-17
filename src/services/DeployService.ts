@@ -27,10 +27,10 @@ export default class DeployService {
 		if (buildParams.registrySlug) deployParams.registry = buildParams.registrySlug;
 		if (deployParams.registry) {
 			const registry = await DB.findOne("registry", { slug: deployParams.registry, workspace: ownership.workspace._id });
-			console.log("buildAndDeploy > registry.slug :>> ", registry.slug);
 			if (registry) app = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${deployParams.env}.registry`]: registry.slug });
 		}
 
+		// ownership
 		const author = ownership.owner || (await DB.findOne("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] }));
 		const workspace = author.activeWorkspace as IWorkspace;
 
@@ -69,6 +69,10 @@ export default class DeployService {
 
 		return { logURL };
 	}
+
+	/**
+	 * Re-run build and deploy
+	 */
 
 	/**
 	 * Deploy from a build

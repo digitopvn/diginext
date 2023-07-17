@@ -74,16 +74,6 @@ export type StartBuildParams = {
 	buildWatch?: boolean;
 
 	/**
-	 * Diginext CLI version of client user
-	 */
-	cliVersion?: string;
-
-	/**
-	 * @default false
-	 */
-	isDebugging?: boolean;
-
-	/**
 	 * Targeted platform arch: linux/arm64, linux/amd64,...
 	 */
 	platforms?: BuildPlatform[];
@@ -92,7 +82,19 @@ export type StartBuildParams = {
 	 * Build arguments
 	 */
 	args?: { name: string; value: string }[];
+
+	/**
+	 * Diginext CLI version of client user
+	 */
+	cliVersion?: string;
+
+	/**
+	 * @default false
+	 */
+	isDebugging?: boolean;
 };
+
+export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildNumber" | "buildWatch">;
 
 export async function testBuild() {
 	let socketServer = getIO();
@@ -258,6 +260,7 @@ export async function startBuild(
 		createdBy: username,
 		projectSlug,
 		appSlug,
+		branch: gitBranch,
 		logs: logger?.content,
 		cliVersion,
 		registry: registry._id,

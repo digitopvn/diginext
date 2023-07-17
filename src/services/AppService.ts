@@ -5,14 +5,13 @@ import type { QuerySelector } from "mongoose";
 import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { DeployEnvironmentData } from "@/controllers/AppController";
+import type { AppInputSchema, DeployEnvironmentData } from "@/controllers/AppController";
 import type { ICluster, IFramework, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
 import { type DeployEnvironment, type IQueryFilter, type IQueryOptions, type IQueryPagination, type KubeDeployment } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
-import { migrateAppEnvironmentVariables } from "@/migration/migrate-app-environment";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
@@ -26,12 +25,13 @@ import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCre
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion, parseGitRepoDataFromRepoSSH, pullOrCloneGitRepo } from "@/plugins";
+import { basicUserFields } from "@/plugins/mask-sensitive-info";
 import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
 import BaseService from "./BaseService";
 import DeployService from "./DeployService";
-import { BuildService, ClusterService, ContainerRegistryService, GitProviderService, ProjectService, WorkspaceService } from "./index";
+import { BuildService, ClusterService, ContainerRegistryService, GitProviderService, ProjectService, UserService, WorkspaceService } from "./index";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -45,6 +45,8 @@ export type KubeDeploymentOnCluster = KubeDeployment & {
 
 export class AppService extends BaseService<IApp> {
 	projectSvc = new ProjectService();
+
+	userSvc = new UserService();
 
 	wsSvc = new WorkspaceService();
 
@@ -60,16 +62,19 @@ export class AppService extends BaseService<IApp> {
 		super(appSchema);
 	}
 
-	async create(data: Partial<IApp>, options?: IQueryOptions & IQueryPagination) {
+	async create(
+		data: Partial<AppInputSchema & IApp>,
+		options?: IQueryOptions & IQueryPagination & { shouldCreateGitRepo?: boolean; force?: boolean }
+	) {
 		// validate
 		let project: IProject;
 		let appDto = { ...data };
 
 		// ownership
-		if (!data.owner && !MongoDB.isValidObjectId(data.owner)) throw new Error(`[ObjectID] "owner" is required.`);
-		if (!data.workspace && !MongoDB.isValidObjectId(data.workspace)) throw new Error(`[ObjectID] "workspace" is required.`);
-		const workspace = await this.wsSvc.findOne({ _id: data.workspace });
-		if (!workspace) throw new Error(`Invalid workspace.`);
+		const workspace =
+			this.ownership.workspace ||
+			(data.workspace && MongoDB.isValidObjectId(data.workspace) ? await this.wsSvc.findOne({ _id: data.workspace }) : undefined);
+		if (!workspace) throw new Error(`Workspace not found.`);
 
 		// check dx quota
 		const quotaRes = await checkQuota(workspace);
@@ -80,7 +85,6 @@ export class AppService extends BaseService<IApp> {
 		// validate
 		if (!data.project) throw new Error(`Project ID or slug or instance is required.`);
 		if (!data.name) throw new Error(`App's name is required.`);
-		if (!data.git) throw new Error("App's git info is required.");
 
 		// find parent project of this app
 		if (MongoDB.isValidObjectId(data.project)) {
@@ -100,18 +104,42 @@ export class AppService extends BaseService<IApp> {
 			data.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" } as IFramework;
 		appDto.framework = data.framework as IFramework;
 
-		// git
-		if (isString(data.git)) {
-			const gitData = parseGitRepoDataFromRepoSSH(data.git);
-			if (!gitData) throw new Error(`Git repository information is not valid.`);
+		// git repo
+		if (options.shouldCreateGitRepo) {
+			// create repo if needed
+			if (!data.gitProvider) throw new Error(`"gitProvider" is required.`);
+			const gitSvc = new GitProviderService();
+			const gitProvider = await gitSvc.findOne({ _id: data.gitProvider });
+			if (!gitProvider) throw new Error(`Git provider not found.`);
 
-			data.git = {
-				repoSSH: data.git as string,
-				repoURL: getRepoURLFromRepoSSH(gitData.providerType, gitData.fullSlug),
-				provider: gitData.providerType,
+			const repoSlug = `${project.slug}-${makeSlug(data.name)}`.toLowerCase();
+			if (options?.force) {
+				try {
+					await GitProviderAPI.deleteGitRepository(gitProvider, gitProvider.org, repoSlug);
+				} catch (e) {}
+			}
+			const newRepo = await GitProviderAPI.createGitRepository(gitProvider, { name: repoSlug, private: true });
+
+			// assign to app data:
+			appDto.git = {
+				repoSSH: newRepo.ssh_url,
+				repoURL: newRepo.repo_url,
+				provider: gitProvider.type,
 			};
+		} else {
+			if (isString(data.git)) {
+				const gitData = parseGitRepoDataFromRepoSSH(data.git);
+				if (!gitData) throw new Error(`Git repository information is not valid.`);
+
+				data.git = {
+					repoSSH: data.git as string,
+					repoURL: getRepoURLFromRepoSSH(gitData.providerType, gitData.fullSlug),
+					provider: gitData.providerType,
+				};
+			}
+			if (!data.git) throw new Error(`Git info is required.`);
+			appDto.git = data.git;
 		}
-		appDto.git = data.git;
 
 		let newApp: IApp;
 
@@ -124,14 +152,18 @@ export class AppService extends BaseService<IApp> {
 
 		const newAppId = newApp._id;
 
+		/**
+		 * @deprecated
+		 */
 		// migrate app environment variables if needed (convert {Object} to {Array})
-		const migratedApp = await migrateAppEnvironmentVariables(newApp);
-		if (migratedApp) newApp = migratedApp;
+		// const migratedApp = await migrateAppEnvironmentVariables(newApp);
+		// if (migratedApp) newApp = migratedApp;
 
 		// add this new app to the project info
 		if (project) {
+			this.projectSvc.ownership = this.ownership;
 			const projectApps = [...(project.apps || []), newAppId];
-			[project] = await this.projectSvc.update({ _id: project._id }, { apps: projectApps });
+			project = await this.projectSvc.updateOne({ _id: project._id }, { apps: projectApps });
 		}
 
 		return newApp;
@@ -179,6 +211,7 @@ export class AppService extends BaseService<IApp> {
 
 		// default project
 		const projectSvc = new ProjectService();
+		projectSvc.ownership = this.ownership;
 		let project = await projectSvc.findOne({ isDefault: true, workspace: workspace._id }, options);
 		if (!project) project = await projectSvc.create({ name: "Default", isDefault: true, workspace: workspace._id, owner: owner._id });
 
@@ -219,9 +252,11 @@ export class AppService extends BaseService<IApp> {
 		// delete current git
 		// await deleteFolderRecursive(path.join(APP_DIR, ".git"));
 
-		try {
-			await GitProviderAPI.deleteGitRepository(gitProvider, gitProvider.org, newRepoSlug);
-		} catch (e) {}
+		if (options?.force) {
+			try {
+				await GitProviderAPI.deleteGitRepository(gitProvider, gitProvider.org, newRepoSlug);
+			} catch (e) {}
+		}
 
 		// create git repo
 		const gitRepo = await GitProviderAPI.createGitRepository(
@@ -261,9 +296,10 @@ export class AppService extends BaseService<IApp> {
 		appDto.ownerSlug = owner.slug;
 
 		// save to database
-		const newApp = await this.create(appDto, options);
+		const newApp = await this.create(appDto as Partial<AppInputSchema & IApp>, options);
 
 		// add app & app slug to project
+		this.projectSvc.ownership = this.ownership;
 		await projectSvc.updateOne({ _id: project._id }, { $push: { apps: newApp._id, appSlugs: newApp.slug } }, { raw: true });
 
 		return newApp;
@@ -590,7 +626,12 @@ export class AppService extends BaseService<IApp> {
 		return logs;
 	}
 
-	async deleteDeployEnvironment(app: IApp, env: string) {
+	/**
+	 * Make deploy environment sleep by scale the replicas to ZERO, so you can wake it up later without re-deploy.
+	 */
+	async sleepDeployEnvironment(app: IApp, env: string) {
+		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
+
 		const deployEnvironment = app.deployEnvironment[env];
 		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
 
@@ -599,6 +640,106 @@ export class AppService extends BaseService<IApp> {
 
 		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug });
 		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+
+		if (!deployEnvironment.namespace) throw new Error(`Namespace not found.`);
+
+		const { contextName: context } = cluster;
+		const { namespace } = deployEnvironment;
+
+		// get deployment's labels
+		const mainAppName = await getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+
+		// switch to the cluster of this environment
+		await ClusterManager.authCluster(cluster);
+
+		let success = false;
+		let message = "";
+		try {
+			/**
+			 * FALLBACK SUPPORT for deprecated mainAppName
+			 */
+			await ClusterManager.scaleDeployByFilter(0, namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+			success = true;
+		} catch (e) {
+			// skip...
+		}
+
+		try {
+			await ClusterManager.scaleDeployByFilter(0, namespace, { context, filterLabel: `main-app=${mainAppName}` });
+			success = true;
+		} catch (e) {
+			message = `Unable to sleep a deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
+		}
+
+		return { success, message };
+	}
+
+	/**
+	 * Wake a sleeping deploy environment up by scale it to 1 (Will FAIL if this environment hasn't been deployed).
+	 */
+	async wakeUpDeployEnvironment(app: IApp, env: string) {
+		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
+
+		const deployEnvironment = app.deployEnvironment[env];
+		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
+
+		const clusterSlug = deployEnvironment.cluster;
+		if (!clusterSlug) throw new Error(`This app's deploy environment (${env}) hasn't been deployed in any clusters.`);
+
+		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug });
+		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+
+		if (!deployEnvironment.namespace) throw new Error(`Namespace not found.`);
+
+		const { contextName: context } = cluster;
+		const { namespace } = deployEnvironment;
+
+		// get deployment's labels
+		const mainAppName = await getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+
+		// switch to the cluster of this environment
+		await ClusterManager.authCluster(cluster);
+
+		let success = false;
+		let message = "";
+		try {
+			/**
+			 * FALLBACK SUPPORT for deprecated mainAppName
+			 */
+			await ClusterManager.scaleDeployByFilter(1, namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+			success = true;
+		} catch (e) {
+			// skip...
+		}
+
+		try {
+			await ClusterManager.scaleDeployByFilter(1, namespace, { context, filterLabel: `main-app=${mainAppName}` });
+			success = true;
+		} catch (e) {
+			message = `Unable to wake up a deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
+		}
+
+		return { success, message };
+	}
+
+	/**
+	 * Take down a deploy environment but still keep the deploy environment information (cluster, registry, namespace,...)
+	 */
+	async takeDownDeployEnvironment(app: IApp, env: string) {
+		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
+
+		const deployEnvironment = app.deployEnvironment[env];
+		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
+
+		const clusterSlug = deployEnvironment.cluster;
+		if (!clusterSlug) throw new Error(`This app's deploy environment (${env}) hasn't been deployed in any clusters.`);
+
+		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug });
+		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+
+		if (!deployEnvironment.namespace) throw new Error(`Namespace not found.`);
 
 		const { contextName: context } = cluster;
 		const { namespace } = deployEnvironment;
@@ -641,6 +782,13 @@ export class AppService extends BaseService<IApp> {
 		} catch (e) {
 			errorMsg += `, ${e}.`;
 		}
+
+		return { success: true, message: errorMsg };
+	}
+
+	async deleteDeployEnvironment(app: IApp, env: string) {
+		// take down deploy environment on clusters
+		await this.takeDownDeployEnvironment(app, env);
 
 		// delete deploy environment in database
 		const updatedApp = await this.updateOne(
@@ -686,5 +834,31 @@ export class AppService extends BaseService<IApp> {
 
 		// return
 		return { build, release, app };
+	}
+
+	async archiveApp(app: IApp, ownership?: Ownership) {
+		// take down all deploy environments
+		const deployEnvs = Object.keys(app.deployEnvironment);
+		await Promise.all(deployEnvs.map((env) => this.takeDownDeployEnvironment(app, env)));
+
+		// update database
+		const archivedApp = await this.updateOne({ _id: app._id }, { archivedAt: new Date() });
+		return archivedApp;
+	}
+
+	async unarchiveApp(app: IApp, ownership?: Ownership) {
+		// update database
+		const unarchivedApp = await this.updateOne({ _id: app._id }, { $unset: { archivedAt: true } }, { raw: true });
+		return unarchivedApp;
+	}
+
+	/**
+	 * Get all users that participated in this app.
+	 */
+	async getParticipants(app: IApp, options?: IQueryOptions & IQueryPagination) {
+		this.buildSvc.ownership = this.ownership;
+		const listOwners = await this.buildSvc.distinct("owner", { app: app._id });
+		const ids = listOwners.map((item) => item.owner);
+		return this.userSvc.find({ _id: { $in: ids } }, { select: basicUserFields });
 	}
 }

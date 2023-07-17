@@ -2,7 +2,7 @@ import { isEmpty } from "lodash";
 import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IApp, IBuild, IRelease, IUser, IWorkspace } from "@/entities";
+import type { IApp, IBuild, ICluster, IRelease, IUser, IWorkspace } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
@@ -15,14 +15,33 @@ import type { GenerateDeploymentResult } from "./generate-deployment";
 import { generateDeployment } from "./generate-deployment";
 
 export type DeployBuildOptions = {
+	/**
+	 * ### `REQUIRED`
+	 * Deploy environment
+	 */
 	env: string;
+	/**
+	 * ### `REQUIRED`
+	 * The USER who process this request
+	 */
 	author: IUser;
+	/**
+	 * ### `REQUIRED`
+	 * Workspace
+	 */
 	workspace: IWorkspace;
+	/**
+	 * Current version of the Diginext CLI
+	 */
 	cliVersion?: string;
+	/**
+	 * ### CAUTION
+	 * If `TRUE`, it will find and wipe out the current deployment, then deploy a new one!
+	 */
 	shouldUseFreshDeploy?: boolean;
 	/**
-	 * ### FOR DEPLOY to PROD
-	 * Force roll out the release to "prod" deploy environment (instead of "prerelease" environment)
+	 * ### ONLY APPLY FOR DEPLOYING to PROD
+	 * Force roll out the release to "prod" deploy environment (skip the "prerelease" environment)
 	 * @default false
 	 */
 	forceRollOut?: boolean;
@@ -33,10 +52,172 @@ export type DeployBuildOptions = {
 	 * @default false
 	 */
 	skipReadyCheck?: boolean;
+	/**
+	 * ### WARNING
+	 * Skip checking the progress of deployment, let it run in background, won't return the deployment's status.
+	 * @default false
+	 */
+	deployInBackground?: boolean;
+};
+
+export const processDeployBuild = async (build: IBuild, release: IRelease, cluster: ICluster, options: DeployBuildOptions) => {
+	const { env, author, workspace, cliVersion, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
+	const { appSlug, projectSlug, tag: buildNumber } = build;
+	const { slug: username } = author;
+	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
+
+	// authenticate cluster & switch to that cluster's context
+	try {
+		await ClusterManager.authCluster(cluster);
+		sendLog({ SOCKET_ROOM, message: `✓ Connected to "${cluster.name}" (context: ${cluster.contextName}).` });
+	} catch (e) {
+		console.log("e :>> ", e);
+		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error" });
+		return { error: e.message };
+	}
+
+	// target environment info
+	const { contextName: context } = cluster;
+	const { namespace } = release;
+
+	/**
+	 * Create namespace & imagePullScrets here!
+	 * Because it will generate the name of secret to put into deployment yaml
+	 */
+	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+	if (!isNsExisted) {
+		const createNsResult = await ClusterManager.createNamespace(namespace, { context });
+		if (!createNsResult) return { error: `Unable to create new namespace: ${namespace}` };
+	}
+
+	try {
+		const { name: imagePullSecretName } = await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, cluster.slug, namespace);
+		sendLog({
+			SOCKET_ROOM,
+			message: `Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace.`,
+		});
+	} catch (e) {
+		sendLog({
+			SOCKET_ROOM,
+			type: "error",
+			message: `Can't create "imagePullSecrets" in the "${namespace}" namespace.`,
+		});
+		return { error: `Can't create "imagePullSecrets" in the "${namespace}" namespace.` };
+	}
+
+	// Start rolling out new release
+	/**
+	 * ! [WARNING]
+	 * ! If "--fresh" flag was specified, the deployment's namespace will be deleted & redeploy from scratch!
+	 */
+	// console.log("[START BUILD] options.shouldUseFreshDeploy :>> ", options.shouldUseFreshDeploy);
+	if (shouldUseFreshDeploy) {
+		sendLog({
+			SOCKET_ROOM,
+			type: "warn",
+			message: `[SYSTEM WARNING] Flag "--fresh" of CLI was specified by "${username}" while executed request deploy command, the build server's going to delete the "${namespace}" namespace (APP: ${appSlug} / PROJECT: ${projectSlug}) shortly...`,
+		});
+
+		const wipedNamespaceRes = await ClusterManager.deleteNamespaceByCluster(namespace, cluster.slug);
+		if (isEmpty(wipedNamespaceRes)) {
+			sendLog({
+				SOCKET_ROOM,
+				type: "error",
+				message: `Unable to delete "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
+			});
+
+			return {
+				error: `Unable to delete "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
+			};
+		}
+
+		sendLog({
+			SOCKET_ROOM,
+			message: `Successfully deleted "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
+		});
+	}
+
+	const releaseId = release._id.toString();
+
+	if (skipReadyCheck) {
+		sendLog({
+			SOCKET_ROOM,
+			message:
+				env === "prod"
+					? `Rolling out the PRE-RELEASE deployment to "${env.toUpperCase()}" environment...`
+					: `Rolling out the deployment to "${env.toUpperCase()}" environment...`,
+		});
+
+		try {
+			if (forceRollOut) {
+				ClusterManager.rollout(releaseId);
+			} else {
+				if (env === "prod") {
+					ClusterManager.previewPrerelease(releaseId, {
+						onUpdate: (msg) => {
+							sendLog({ SOCKET_ROOM, message: msg });
+						},
+					});
+				} else {
+					ClusterManager.rollout(releaseId, {
+						onUpdate: (msg) => {
+							sendLog({ SOCKET_ROOM, message: msg });
+						},
+					});
+				}
+			}
+		} catch (e) {
+			sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}:` });
+			return { error: `Failed to roll out the release :>> ${e.message}:` };
+		}
+	} else {
+		if (release._id) {
+			sendLog({
+				SOCKET_ROOM,
+				message:
+					env === "prod"
+						? `Rolling out the PRE-RELEASE deployment to "${env.toUpperCase()}" environment...`
+						: `Rolling out the deployment to "${env.toUpperCase()}" environment...`,
+			});
+
+			try {
+				const onRolloutUpdate = (msg: string) => {
+					// if any errors on rolling out -> stop processing deployment
+					if (msg.indexOf("Error from server") > -1) {
+						sendLog({ SOCKET_ROOM, type: "error", message: msg });
+						throw new Error(msg);
+					} else {
+						// if normal log message -> print out to the Web UI
+						sendLog({ SOCKET_ROOM, message: msg });
+					}
+				};
+
+				const result =
+					env === "prod"
+						? forceRollOut
+							? await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate })
+							: await ClusterManager.previewPrerelease(releaseId, { onUpdate: onRolloutUpdate })
+						: await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
+
+				if (result.error) {
+					const errMsg = `Failed to roll out the release :>> ${result.error}.`;
+					sendLog({ SOCKET_ROOM, type: "error", message: errMsg });
+					return { error: errMsg };
+				}
+
+				release = result.data;
+			} catch (e) {
+				sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}` });
+				return { error: `Failed to roll out the release :>> ${e.message}` };
+			}
+		}
+	}
 };
 
 export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
 	const { DB } = await import("@/modules/api/DB");
+
+	// parse options
 	const { env, author, workspace, cliVersion, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
 	const { slug: username } = author;
@@ -56,19 +237,21 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		return { error: `[DEPLOY BUILD] App "${appSlug}" not found.` };
 	}
 
+	// get deploy environment data
 	let serverDeployEnvironment = await getDeployEvironmentByApp(app, env);
 	let isPassedDeployEnvironmentValidation = true;
 	const errMsgs: string[] = [];
 
+	// generate 'namespace' if it's not exists
 	if (!serverDeployEnvironment.namespace) {
 		const namespace = `${projectSlug}-${env || "dev"}`;
 		await updateAppConfig(app, env, { namespace });
-		// reload data...
+		// reload app & deploy environment data...
 		serverDeployEnvironment.namespace = namespace;
 		app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	}
 
-	// validating...
+	// validate deploy environment data...
 	if (isEmpty(serverDeployEnvironment)) {
 		sendLog({
 			SOCKET_ROOM,
@@ -91,10 +274,9 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 
 	if (!isPassedDeployEnvironmentValidation) return { error: errMsgs.join(",") };
 
-	const { namespace, cluster: clusterSlug } = serverDeployEnvironment;
-
+	// find cluster
+	const { cluster: clusterSlug } = serverDeployEnvironment;
 	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
-	const { contextName: context } = cluster;
 
 	// get app config to generate deployment data
 	const appConfig = getAppConfigFromApp(app);
@@ -121,8 +303,6 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		sendLog({ SOCKET_ROOM, type: "error", message: e.message });
 		return { error: e.message };
 	}
-
-	// console.log("deployment :>> ", deployment);
 	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
 
 	// update data to deploy environment:
@@ -157,153 +337,14 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		return { error: e.message };
 	}
 
-	// authenticate cluster & switch to that cluster's context
-	try {
-		await ClusterManager.authCluster(cluster);
-		sendLog({ SOCKET_ROOM, message: `✓ Connected to "${cluster.name}" (context: ${cluster.contextName}).` });
-	} catch (e) {
-		console.log("e :>> ", e);
-		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error" });
-		return { error: e.message };
-	}
-
-	/**
-	 * Create namespace & imagePullScrets here!
-	 * Because it will generate the name of secret to put into deployment yaml
-	 */
-	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
-	if (!isNsExisted) {
-		const createNsResult = await ClusterManager.createNamespace(namespace, { context });
-		if (!createNsResult) return { error: `Unable to create new namespace: ${namespace}` };
-	}
-
-	try {
-		const { name: imagePullSecretName } = await ClusterManager.createImagePullSecretsInNamespace(
-			appSlug,
-			env,
-			serverDeployEnvironment.cluster,
-			namespace
-		);
-		sendLog({
-			SOCKET_ROOM,
-			message: `Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace.`,
-		});
-	} catch (e) {
-		sendLog({
-			SOCKET_ROOM,
-			type: "error",
-			message: `Can't create "imagePullSecrets" in the "${namespace}" namespace.`,
-		});
-		return { error: `Can't create "imagePullSecrets" in the "${namespace}" namespace.` };
-	}
-
-	// Start rolling out new release
-	/**
-	 * ! [WARNING]
-	 * ! If "--fresh" flag was specified, the deployment's namespace will be deleted & redeploy from scratch!
-	 */
-	// console.log("[START BUILD] options.shouldUseFreshDeploy :>> ", options.shouldUseFreshDeploy);
-	if (shouldUseFreshDeploy) {
-		sendLog({
-			SOCKET_ROOM,
-			type: "warn",
-			message: `[SYSTEM WARNING] Flag "--fresh" of CLI was specified by "${username}" while executed request deploy command, the build server's going to delete the "${namespace}" namespace (APP: ${appSlug} / PROJECT: ${projectSlug}) shortly...`,
-		});
-
-		const wipedNamespaceRes = await ClusterManager.deleteNamespaceByCluster(namespace, serverDeployEnvironment.cluster);
-		if (isEmpty(wipedNamespaceRes)) {
-			sendLog({
-				SOCKET_ROOM,
-				type: "error",
-				message: `Unable to delete "${namespace}" namespace of "${serverDeployEnvironment.cluster}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
-			});
-
-			return {
-				error: `Unable to delete "${namespace}" namespace of "${serverDeployEnvironment.cluster}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
-			};
-		}
-
-		sendLog({
-			SOCKET_ROOM,
-			message: `Successfully deleted "${namespace}" namespace of "${serverDeployEnvironment.cluster}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
-		});
-	}
-
-	if (skipReadyCheck) {
-		sendLog({
-			SOCKET_ROOM,
-			message:
-				env === "prod"
-					? `Rolling out the PRE-RELEASE deployment to "${env.toUpperCase()}" environment...`
-					: `Rolling out the deployment to "${env.toUpperCase()}" environment...`,
-		});
-
-		try {
-			if (forceRollOut) {
-				ClusterManager.rollout(releaseId);
-			} else {
-				if (env === "prod") {
-					ClusterManager.previewPrerelease(releaseId, {
-						onUpdate: (msg) => {
-							sendLog({ SOCKET_ROOM, message: msg });
-						},
-					});
-				} else {
-					ClusterManager.rollout(releaseId, {
-						onUpdate: (msg) => {
-							sendLog({ SOCKET_ROOM, message: msg });
-						},
-					});
-				}
-			}
-		} catch (e) {
-			sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}:` });
-			return { error: `Failed to roll out the release :>> ${e.message}:` };
-		}
+	// process deploy build to cluster
+	if (options?.deployInBackground) {
+		processDeployBuild(build, newRelease, cluster, options);
 	} else {
-		if (releaseId) {
-			sendLog({
-				SOCKET_ROOM,
-				message:
-					env === "prod"
-						? `Rolling out the PRE-RELEASE deployment to "${env.toUpperCase()}" environment...`
-						: `Rolling out the deployment to "${env.toUpperCase()}" environment...`,
-			});
-
-			try {
-				const onRolloutUpdate = (msg: string) => {
-					// if any errors on rolling out -> stop processing deployment
-					if (msg.indexOf("Error from server") > -1) {
-						sendLog({ SOCKET_ROOM, type: "error", message: msg });
-						throw new Error(msg);
-					} else {
-						// if normal log message -> print out to the Web UI
-						sendLog({ SOCKET_ROOM, message: msg });
-					}
-				};
-
-				const result =
-					env === "prod"
-						? forceRollOut
-							? await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate })
-							: await ClusterManager.previewPrerelease(releaseId, { onUpdate: onRolloutUpdate })
-						: await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
-
-				if (result.error) {
-					const errMsg = `Failed to roll out the release :>> ${result.error}.`;
-					sendLog({ SOCKET_ROOM, type: "error", message: errMsg });
-					return { error: errMsg };
-				}
-
-				newRelease = result.data;
-			} catch (e) {
-				sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}` });
-				return { error: `Failed to roll out the release :>> ${e.message}` };
-			}
-		}
+		await processDeployBuild(build, newRelease, cluster, options);
 	}
 
-	return { build, release: newRelease, deployment };
+	return { app: updatedApp, build, release: newRelease, deployment, endpoint, prerelease: prereleaseDeploymentData };
 };
 
 export const deployWithBuildSlug = async (buildSlug: string, options: DeployBuildOptions) => {

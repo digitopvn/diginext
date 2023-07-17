@@ -17,7 +17,7 @@ export const seedDefaultProjects = async (workspace: IWorkspace, owner: IUser) =
 					const seedProj = await DB.create("project", { ...proj, owner: owner._id, workspace: workspace._id }, { isDebugging: true });
 					return seedProj;
 				}
-				return project;
+				return;
 			})
 		)
 	).filter((res) => typeof res !== "undefined");
