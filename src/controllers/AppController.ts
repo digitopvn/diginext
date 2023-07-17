@@ -1,6 +1,6 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isJSON } from "class-validator";
-import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
+import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import { isArray, isBoolean, isEmpty, isNumber, isUndefined } from "lodash";
 
 import type { AppGitInfo, IApp, IBuild, ICluster, IFramework, IProject } from "@/entities";
@@ -24,6 +24,7 @@ import { currentVersion } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 import { ProjectService } from "@/services";
 import { AppService } from "@/services/AppService";
+import DeployService from "@/services/DeployService";
 
 import BaseController from "./BaseController";
 
@@ -255,6 +256,8 @@ export interface DeployEnvironmentData {
 @Route("app")
 export default class AppController extends BaseController<IApp, AppService> {
 	service: AppService;
+
+	deploySvc = new DeployService();
 
 	constructor() {
 		super(new AppService());
@@ -529,7 +532,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	 */
 	@Security("api_key")
 	@Security("jwt")
-	@Post("/unarchive")
+	@Patch("/unarchive")
 	async unarchiveApp(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		const app = await this.service.findOne(this.filter, this.options);
 		if (!app) return respondFailure(`Unable to archive: app not found.`);
@@ -1005,16 +1008,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// input validation
 		let { _id, id, slug, env } = body;
 		if (!id && _id) id = _id;
-		if (!id && !slug) {
-			result.status = 0;
-			result.messages.push(`App "id" or "slug" is required.`);
-			return result;
-		}
-		if (!env) {
-			result.status = 0;
-			result.messages.push(`App "env" is required.`);
-			return result;
-		}
+		if (!id && !slug) return respondFailure(`App "id" or "slug" is required.`);
+		if (!env) return respondFailure(`App "env" is required.`);
 
 		// find the app
 		const appFilter = typeof id != "undefined" ? { _id: id } : { slug };
@@ -1023,64 +1018,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// check if the environment is existed
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const mainAppName = await getDeploymentName(app);
-		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-
-		const deployEnvironment = (app.deployEnvironment || {})[env.toString()];
-		if (!deployEnvironment) {
-			result.status = 0;
-			result.messages.push(`App environment "${env}" not found.`);
-			return result;
-		}
-
 		// take down the deploy environment
-		const envConfig = await getDeployEvironmentByApp(app, env.toString());
-		const { cluster: clusterSlug, namespace } = envConfig;
-		if (!clusterSlug) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Cluster "${clusterSlug}" not found.`);
-		if (!namespace) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Namespace "${namespace}" not found.`);
-
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
-		let errorMsg;
-
-		if (cluster) {
-			const { contextName: context } = cluster;
-
-			// switch to the cluster of this environment
-			await ClusterManager.authCluster(cluster);
-
-			try {
-				/**
-				 * IMPORTANT
-				 * ---
-				 * Should NOT delete namespace because it will affect other apps in a project!
-				 */
-
-				// Delete INGRESS
-				await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-				// Delete SERVICE
-				await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-				// Delete DEPLOYMENT
-				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-			} catch (e) {
-				logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace}) - "main-app=${mainAppName}" :>>`, e);
-				errorMsg = e.message;
-			}
-
-			/**
-			 * FALLBACK SUPPORT FOR DEPRECATED MAIN APP NAME
-			 */
-			try {
-				// Delete INGRESS
-				await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-				// Delete SERVICE
-				await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-				// Delete DEPLOYMENT
-				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-			} catch (e) {
-				logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace} - "main-app=${deprecatedMainAppName}") :>>`, e);
-				errorMsg = e.message;
-			}
-		}
+		await this.service.takeDownDeployEnvironment(app, env.toString());
 
 		// update the app (delete the deploy environment)
 		const updatedApp = await this.service.update(appFilter, {
@@ -1570,5 +1509,122 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!logs) return respondFailure({ data: "", msg: "No logs found." });
 
 		return respondSuccess({ data: logs });
+	}
+
+	/**
+	 * Take down a deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/deploy_environment/down")
+	async takeDownDeployEnvironment(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's ID
+			 */
+			_id?: string;
+			/**
+			 * App slug
+			 */
+			slug?: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { _id, slug, env } = this.filter;
+		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
+
+		const app = await this.service.findOne(this.filter, this.options);
+		if (!app) return respondFailure(`App not found.`);
+
+		try {
+			const result = await this.service.takeDownDeployEnvironment(app, env);
+			if (!result.success) return respondFailure(`Unable to take down this deploy environment: ${result.message}.`);
+			return respondSuccess({ data: result });
+		} catch (e) {
+			return respondFailure(`Unable to take down this deploy environment: ${e}`);
+		}
+	}
+
+	/**
+	 * Sleep a deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/deploy_environment/sleep")
+	async sleepDeployEnvironment(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's ID
+			 */
+			_id?: string;
+			/**
+			 * App slug
+			 */
+			slug?: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { _id, slug, env } = this.filter;
+		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
+
+		const app = await this.service.findOne(this.filter, this.options);
+		if (!app) return respondFailure(`App not found.`);
+
+		try {
+			const result = await this.service.sleepDeployEnvironment(app, env);
+			if (!result.success) return respondFailure(`Unable to sleep a deploy environment: ${result.message}.`);
+			return respondSuccess({ data: result });
+		} catch (e) {
+			return respondFailure(`Unable to sleep a deploy environment: ${e}`);
+		}
+	}
+
+	/**
+	 * Awake a sleeping deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/deploy_environment/awake")
+	async awakeDeployEnvironment(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's ID
+			 */
+			_id?: string;
+			/**
+			 * App slug
+			 */
+			slug?: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { _id, slug, env } = this.filter;
+		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
+
+		const app = await this.service.findOne(this.filter, this.options);
+		if (!app) return respondFailure(`App not found.`);
+
+		try {
+			const result = await this.service.wakeUpDeployEnvironment(app, env);
+			if (!result.success) return respondFailure(`Unable to awake a deploy environment: ${result.message}.`);
+			return respondSuccess({ data: result });
+		} catch (e) {
+			return respondFailure(`Unable to awake a deploy environment: ${e}`);
+		}
 	}
 }

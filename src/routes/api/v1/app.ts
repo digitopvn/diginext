@@ -22,7 +22,7 @@ router
 	.post("/ssh-url", processApiRequest(controller.createFromSshURL.bind(controller)))
 	.post("/import-git", processApiRequest(controller.importFromGitSshURL.bind(controller)))
 	.delete("/archive", processApiRequest(controller.archiveApp.bind(controller)))
-	.post("/unarchive", processApiRequest(controller.unarchiveApp.bind(controller)))
+	.patch("/unarchive", processApiRequest(controller.unarchiveApp.bind(controller)))
 	// .delete("/empty", processApiRequest(controller.empty.bind(controller)))
 	// environment
 	.get("/environment", processApiRequest(controller.getDeployEnvironment.bind(controller)))
@@ -34,6 +34,9 @@ router
 	.post("/deploy_environment", processApiRequest(controller.createDeployEnvironmentV2.bind(controller)))
 	.patch("/deploy_environment", processApiRequest(controller.updateDeployEnvironmentV2.bind(controller)))
 	.delete("/deploy_environment", processApiRequest(controller.deleteDeployEnvironmentV2.bind(controller)))
+	.delete("/deploy_environment/down", processApiRequest(controller.takeDownDeployEnvironment.bind(controller)))
+	.delete("/deploy_environment/sleep", processApiRequest(controller.sleepDeployEnvironment.bind(controller)))
+	.patch("/deploy_environment/awake", processApiRequest(controller.awakeDeployEnvironment.bind(controller)))
 	// logs
 	.get("/environment/logs", processApiRequest(controller.viewLogs.bind(controller)))
 	// domains

@@ -626,7 +626,12 @@ export class AppService extends BaseService<IApp> {
 		return logs;
 	}
 
-	async takeDownDeployEnvironment(app: IApp, env: string) {
+	/**
+	 * Make deploy environment sleep by scale the replicas to ZERO, so you can wake it up later without re-deploy.
+	 */
+	async sleepDeployEnvironment(app: IApp, env: string) {
+		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
+
 		const deployEnvironment = app.deployEnvironment[env];
 		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
 
@@ -635,6 +640,106 @@ export class AppService extends BaseService<IApp> {
 
 		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug });
 		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+
+		if (!deployEnvironment.namespace) throw new Error(`Namespace not found.`);
+
+		const { contextName: context } = cluster;
+		const { namespace } = deployEnvironment;
+
+		// get deployment's labels
+		const mainAppName = await getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+
+		// switch to the cluster of this environment
+		await ClusterManager.authCluster(cluster);
+
+		let success = false;
+		let message = "";
+		try {
+			/**
+			 * FALLBACK SUPPORT for deprecated mainAppName
+			 */
+			await ClusterManager.scaleDeployByFilter(0, namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+			success = true;
+		} catch (e) {
+			// skip...
+		}
+
+		try {
+			await ClusterManager.scaleDeployByFilter(0, namespace, { context, filterLabel: `main-app=${mainAppName}` });
+			success = true;
+		} catch (e) {
+			message = `Unable to sleep a deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
+		}
+
+		return { success, message };
+	}
+
+	/**
+	 * Wake a sleeping deploy environment up by scale it to 1 (Will FAIL if this environment hasn't been deployed).
+	 */
+	async wakeUpDeployEnvironment(app: IApp, env: string) {
+		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
+
+		const deployEnvironment = app.deployEnvironment[env];
+		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
+
+		const clusterSlug = deployEnvironment.cluster;
+		if (!clusterSlug) throw new Error(`This app's deploy environment (${env}) hasn't been deployed in any clusters.`);
+
+		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug });
+		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+
+		if (!deployEnvironment.namespace) throw new Error(`Namespace not found.`);
+
+		const { contextName: context } = cluster;
+		const { namespace } = deployEnvironment;
+
+		// get deployment's labels
+		const mainAppName = await getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+
+		// switch to the cluster of this environment
+		await ClusterManager.authCluster(cluster);
+
+		let success = false;
+		let message = "";
+		try {
+			/**
+			 * FALLBACK SUPPORT for deprecated mainAppName
+			 */
+			await ClusterManager.scaleDeployByFilter(1, namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+			success = true;
+		} catch (e) {
+			// skip...
+		}
+
+		try {
+			await ClusterManager.scaleDeployByFilter(1, namespace, { context, filterLabel: `main-app=${mainAppName}` });
+			success = true;
+		} catch (e) {
+			message = `Unable to wake up a deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
+		}
+
+		return { success, message };
+	}
+
+	/**
+	 * Take down a deploy environment but still keep the deploy environment information (cluster, registry, namespace,...)
+	 */
+	async takeDownDeployEnvironment(app: IApp, env: string) {
+		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
+
+		const deployEnvironment = app.deployEnvironment[env];
+		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
+
+		const clusterSlug = deployEnvironment.cluster;
+		if (!clusterSlug) throw new Error(`This app's deploy environment (${env}) hasn't been deployed in any clusters.`);
+
+		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug });
+		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+
+		if (!deployEnvironment.namespace) throw new Error(`Namespace not found.`);
 
 		const { contextName: context } = cluster;
 		const { namespace } = deployEnvironment;

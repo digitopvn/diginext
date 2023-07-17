@@ -132,6 +132,7 @@ export default class BuildController extends BaseController<IBuild, BuildService
 			_id: string;
 		}
 	) {
+		console.log("rerunBuild() > this.filter :>> ", this.filter);
 		// validates
 		const build = await this.service.findOne({ $or: [{ _id: this.filter._id }, { slug: this.filter.slug }], workspace: this.workspace._id });
 		if (!build) return respondFailure(`Unable to rerun building: Build not found.`);

@@ -260,6 +260,7 @@ export async function startBuild(
 		createdBy: username,
 		projectSlug,
 		appSlug,
+		branch: gitBranch,
 		logs: logger?.content,
 		cliVersion,
 		registry: registry._id,
