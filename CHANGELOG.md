@@ -1,3 +1,18 @@
+# [3.20.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.20.0-prerelease.2...v3.20.0-prerelease.3) (2023-07-17)
+
+
+### Bug Fixes
+
+* **api,routes:** disable empty db routes ([7cbda4f](https://github.com/digitopvn/diginext/commit/7cbda4f66e1ad13837179848aa9397fc16c317e9))
+* **server,deploy:** limit rpm to ingress of dev env ([7a8db17](https://github.com/digitopvn/diginext/commit/7a8db1733f6cecb82272ad419e39dd47aa68da4e))
+
+
+### Features
+
+* **dashboard,deploy:** sleep, awake, take down, deploy now, import git ([80bfc82](https://github.com/digitopvn/diginext/commit/80bfc82a6923dfa874c7ebf698cc8422db3cd8ca))
+* **server,api:** archive and unarchive apps ([a1060bc](https://github.com/digitopvn/diginext/commit/a1060bc19018247d58de3bac5d0c71c496983c75))
+* **server,api:** get participant list of an app ([31faa79](https://github.com/digitopvn/diginext/commit/31faa7956e1d5aad52ac38e574759cc7018bfd9d))
+
 # [3.20.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.20.0-prerelease.1...v3.20.0-prerelease.2) (2023-07-16)
 
 
