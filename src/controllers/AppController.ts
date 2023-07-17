@@ -463,60 +463,15 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("jwt")
 	@Delete("/")
 	async delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
-		const { DB } = await import("@/modules/api/DB");
 		const app = await this.service.findOne(this.filter, { populate: ["project"] });
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const mainAppName = await getDeploymentName(app);
-		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-
 		if (app.deployEnvironment)
 			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
+				// take down environment
 				if (!isEmpty(deployEnvironment)) {
-					const { cluster: clusterSlug, namespace } = deployEnvironment;
-					const cluster = await DB.findOne("cluster", { slug: clusterSlug });
-					let errorMsg;
-
-					if (cluster) {
-						const { contextName: context } = cluster;
-
-						// switch to the cluster of this environment
-						await ClusterManager.authCluster(cluster);
-
-						try {
-							/**
-							 * IMPORTANT
-							 * ---
-							 * Should NOT delete namespace because it will affect other apps in a project!
-							 */
-
-							// Delete INGRESS
-							await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-							// Delete SERVICE
-							await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-							// Delete DEPLOYMENT
-							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-						} catch (e) {
-							logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace}) :>>`, e);
-							errorMsg = e.message;
-						}
-
-						try {
-							/**
-							 * FALLBACK SUPPORT for deprecated mainAppName
-							 */
-							// Delete INGRESS
-							await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-							// Delete SERVICE
-							await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-							// Delete DEPLOYMENT
-							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-						} catch (e) {
-							logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace}) :>>`, e);
-							errorMsg += e.message;
-						}
-					}
+					await this.service.takeDownDeployEnvironment(app, env);
 				}
 			});
 
@@ -531,6 +486,24 @@ export default class AppController extends BaseController<IApp, AppService> {
 			{ raw: true }
 		);
 		return super.delete();
+	}
+
+	/**
+	 * List of participants in an app
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/participants")
+	async participants(@Queries() queryParams?: interfaces.IGetQueryParams) {
+		const app = await this.service.findOne(this.filter);
+		if (!app) return respondFailure(`App not found.`);
+
+		try {
+			const participants = await this.service.getParticipants(app, this.options);
+			return respondSuccess({ data: participants });
+		} catch (e) {
+			return respondFailure(`Unable to get participants: ${e}`);
+		}
 	}
 
 	/**

@@ -18,6 +18,7 @@ router
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
 	.get("/config", processApiRequest(controller.getAppConfig.bind(controller)))
+	.get("/participants", processApiRequest(controller.participants.bind(controller)))
 	.post("/ssh-url", processApiRequest(controller.createFromSshURL.bind(controller)))
 	.post("/import-git", processApiRequest(controller.importFromGitSshURL.bind(controller)))
 	.delete("/archive", processApiRequest(controller.archiveApp.bind(controller)))

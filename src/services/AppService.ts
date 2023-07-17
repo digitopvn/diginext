@@ -25,12 +25,13 @@ import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCre
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion, parseGitRepoDataFromRepoSSH, pullOrCloneGitRepo } from "@/plugins";
+import { basicUserFields } from "@/plugins/mask-sensitive-info";
 import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
 import BaseService from "./BaseService";
 import DeployService from "./DeployService";
-import { BuildService, ClusterService, ContainerRegistryService, GitProviderService, ProjectService, WorkspaceService } from "./index";
+import { BuildService, ClusterService, ContainerRegistryService, GitProviderService, ProjectService, UserService, WorkspaceService } from "./index";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -44,6 +45,8 @@ export type KubeDeploymentOnCluster = KubeDeployment & {
 
 export class AppService extends BaseService<IApp> {
 	projectSvc = new ProjectService();
+
+	userSvc = new UserService();
 
 	wsSvc = new WorkspaceService();
 
@@ -742,5 +745,15 @@ export class AppService extends BaseService<IApp> {
 		// update database
 		const unarchivedApp = await this.updateOne({ _id: app._id }, { $unset: { archivedAt: true } }, { raw: true });
 		return unarchivedApp;
+	}
+
+	/**
+	 * Get all users that participated in this app.
+	 */
+	async getParticipants(app: IApp, options?: IQueryOptions & IQueryPagination) {
+		this.buildSvc.ownership = this.ownership;
+		const listOwners = await this.buildSvc.distinct("owner", { app: app._id });
+		const ids = listOwners.map((item) => item.owner);
+		return this.userSvc.find({ _id: { $in: ids } }, { select: basicUserFields });
 	}
 }

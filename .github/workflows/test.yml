@@ -93,10 +93,10 @@ jobs:
         
       # - run: kubectl get namespace
 
-      - name: 'Set up Google Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v1'
-        with:
-          version: '>= 363.0.0'
+      # - name: 'Set up Google Cloud SDK'
+      #   uses: 'google-github-actions/setup-gcloud@v1'
+      #   with:
+      #     version: '>= 363.0.0'
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
