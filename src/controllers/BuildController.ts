@@ -119,7 +119,7 @@ export default class BuildController extends BaseController<IBuild, BuildService
 	@Security("jwt")
 	@Post("/rerun")
 	async rerunBuild(
-		@Body() body: Pick<buildModule.StartBuildParams, "platforms" | "args" | "registrySlug" | "buildNumber">,
+		@Body() body: buildModule.RerunBuildParams,
 		@Queries()
 		queryParams?: {
 			/**

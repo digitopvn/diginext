@@ -94,7 +94,7 @@ export type StartBuildParams = {
 	isDebugging?: boolean;
 };
 
-export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildNumber">;
+export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildNumber" | "buildWatch">;
 
 export async function testBuild() {
 	let socketServer = getIO();

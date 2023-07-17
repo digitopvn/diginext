@@ -16,13 +16,14 @@ router
 	.use(authenticate, authorize)
 	.use(registerController(controller))
 	.get("/", processApiRequest(controller.read.bind(controller)))
-	.get("/logs", processApiRequest(controller.getLogs.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
 	// .delete("/empty", processApiRequest(controller.empty.bind(controller)))
+	.get("/logs", processApiRequest(controller.getLogs.bind(controller)))
 	.post("/start", processApiRequest(controller.startBuild.bind(controller)))
 	.patch("/stop", processApiRequest(controller.stopBuild.bind(controller)))
+	.post("/rerun", processApiRequest(controller.rerunBuild.bind(controller)))
 	.get("/status", processApiRequest(controller.getStatus.bind(controller)));
 
 export default router;

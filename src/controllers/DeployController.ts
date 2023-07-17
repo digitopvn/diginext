@@ -55,6 +55,12 @@ export type DeployBuildParams = {
 	 * @default false
 	 */
 	skipReadyCheck?: boolean;
+	/**
+	 * ### WARNING
+	 * Skip checking the progress of deployment, let it run in background, won't return the deployment's status.
+	 * @default false
+	 */
+	deployInBackground?: boolean;
 };
 
 @Tags("Deploy")

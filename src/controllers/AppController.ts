@@ -61,10 +61,9 @@ export interface AppInputSchema {
 	/**
 	 * `REQUIRES`
 	 * ---
-	 * A SSH URI of the source code repository or a detail information of this repository
-	 * @example git@bitbucket.org:digitopvn/example-repo.git
+	 * Git provider ID
 	 */
-	git: string | AppGitInfo;
+	gitProvider: string;
 
 	/**
 	 * OPTIONAL
@@ -72,6 +71,31 @@ export interface AppInputSchema {
 	 * Framework's ID or slug or {Framework} instance
 	 */
 	framework?: string | IFramework;
+
+	/**
+	 * `OPTIONAL`
+	 * ---
+	 * A SSH URI of the source code repository or a detail information of this repository
+	 * @example git@bitbucket.org:digitopvn/example-repo.git
+	 */
+	git?: string | AppGitInfo;
+
+	/**
+	 * `OPTIONAL`
+	 * ---
+	 * Should create new git repository on the selected git provider
+	 * @default false
+	 */
+	shouldCreateGitRepo?: boolean;
+
+	/**
+	 * `OPTIONAL`
+	 * ---
+	 * ### [CAUTION]
+	 * If `TRUE`, it will delete the existing git repo, then create a new one.
+	 * @default false
+	 */
+	force?: boolean;
 }
 
 export interface DeployEnvironmentData {
@@ -281,14 +305,16 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: AppInputSchema, @Queries() queryParams?: interfaces.IPostQueryParams) {
-		let appDto: IApp = { ...(body as any) };
-
+	async create(@Body() body: AppInputSchema & Partial<IApp>, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		try {
-			const newApp = await this.service.create(appDto, this.options);
+			const newApp = await this.service.create(body, { ...this.options, force: body.force, shouldCreateGitRepo: body.shouldCreateGitRepo });
+
+			delete body.force;
+			delete body.shouldCreateGitRepo;
+
 			return respondSuccess({ data: newApp });
 		} catch (e) {
-			return respondFailure(e.toString());
+			return respondFailure(`Unable to create new app: ${e}`);
 		}
 	}
 
@@ -310,10 +336,20 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 * Git provider ID to host the new repo of this app
 			 */
 			gitProviderID: string;
+			/**
+			 * ### CAUTION
+			 * If `TRUE`, it will delete existing git repo and create a new one.
+			 */
+			force?: boolean;
 		}
 	) {
 		try {
-			const newApp = await this.service.createWithGitURL(body.sshUrl, body.gitProviderID, { workspace: this.workspace, owner: this.user });
+			const newApp = await this.service.createWithGitURL(
+				body.sshUrl,
+				body.gitProviderID,
+				{ workspace: this.workspace, owner: this.user },
+				{ force: body.force }
+			);
 			return respondSuccess({ data: newApp });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -330,6 +366,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 		@Body()
 		body: {
 			/**
+			 * App's name
+			 */
+			name?: string;
+			/**
 			 * Git repo SSH url
 			 * @example git@github.com:digitopvn/diginext.git
 			 */
@@ -343,6 +383,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			gitBranch?: string;
 			/**
+			 * Project ID of this app
+			 */
+			projectID?: string;
+			/**
 			 * `DANGER`
 			 * ---
 			 * Delete app and git repo if they were existed.
@@ -351,17 +395,22 @@ export default class AppController extends BaseController<IApp, AppService> {
 			force?: boolean;
 		}
 	) {
-		const newApp = await this.service.createWithGitURL(
-			body.sshUrl,
-			body.gitProviderID,
-			{ workspace: this.workspace, owner: this.user },
-			{
-				force: body.force,
-				gitBranch: body.gitBranch,
-				isDebugging: false,
-			}
-		);
-		return respondSuccess({ data: newApp });
+		try {
+			const newApp = await this.service.createWithGitURL(
+				body.sshUrl,
+				body.gitProviderID,
+				{ workspace: this.workspace, owner: this.user },
+				{
+					force: body.force,
+					gitBranch: body.gitBranch,
+					isDebugging: false,
+					removeCI: true,
+				}
+			);
+			return respondSuccess({ data: newApp });
+		} catch (e) {
+			respondFailure(`Unable to import: ${e}`);
+		}
 	}
 
 	@Security("api_key")

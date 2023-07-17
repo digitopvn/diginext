@@ -7,7 +7,7 @@ import { model } from "mongoose";
 
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import { roleSchema, workspaceSchema } from "@/entities";
-import type { AppRequest } from "@/interfaces/SystemTypes";
+import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import { makeSlug } from "@/plugins/slug";
@@ -34,6 +34,11 @@ export default class BaseService<T = any> {
 	 * Current active workspace
 	 */
 	workspace?: IWorkspace;
+
+	/**
+	 * Current owner & workspace
+	 */
+	ownership?: Ownership;
 
 	req?: AppRequest;
 
@@ -115,7 +120,7 @@ export default class BaseService<T = any> {
 					data.metadata[key] = clearUnicodeCharacters(value.toString());
 			}
 
-			// assign item authority:
+			// assign item ownership:
 			if (this.req?.user) {
 				const { user } = this.req;
 				const userId = user?._id;
@@ -130,6 +135,14 @@ export default class BaseService<T = any> {
 						data.workspace = workspace._id;
 						data.workspaceSlug = workspace.slug;
 					}
+				}
+			}
+			if (this.ownership) {
+				data.owner = this.ownership.owner?._id;
+				data.ownerSlug = this.ownership.owner?.slug;
+				if (this.model.collection.name !== "workspaces") {
+					data.workspace = this.ownership.workspace?._id;
+					data.workspaceSlug = this.ownership.workspace?.slug;
 				}
 			}
 
