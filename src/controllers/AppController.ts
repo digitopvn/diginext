@@ -1016,21 +1016,24 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne(appFilter, { populate: ["project"] });
 
 		// check if the environment is existed
-		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+		if (!app) return respondFailure({ msg: `App not found.` });
 
 		// take down the deploy environment
 		await this.service.takeDownDeployEnvironment(app, env.toString());
 
 		// update the app (delete the deploy environment)
-		const updatedApp = await this.service.update(appFilter, {
-			[`deployEnvironment.${env}`]: {},
-		});
+		const updatedApp = await this.service.updateOne(
+			appFilter,
+			{
+				$unset: { [`deployEnvironment.${env}`]: true },
+			},
+			{ raw: true }
+		);
 
-		log(`[BaseController] deleted Environment`, { appFilter }, ` :>>`, { updatedApp });
+		if (this.options.isDebugging) log(`[BaseController] deleted Environment`, { appFilter }, ` :>>`, { updatedApp });
 
 		// respond the results
-		result.data = updatedApp;
-		return result;
+		return respondSuccess({ data: updatedApp });
 	}
 
 	/**
@@ -1538,7 +1541,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const { _id, slug, env } = this.filter;
 		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
 
-		const app = await this.service.findOne(this.filter, this.options);
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
 		if (!app) return respondFailure(`App not found.`);
 
 		try {
@@ -1577,7 +1580,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const { _id, slug, env } = this.filter;
 		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
 
-		const app = await this.service.findOne(this.filter, this.options);
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
 		if (!app) return respondFailure(`App not found.`);
 
 		try {
@@ -1616,7 +1619,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const { _id, slug, env } = this.filter;
 		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
 
-		const app = await this.service.findOne(this.filter, this.options);
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
 		if (!app) return respondFailure(`App not found.`);
 
 		try {
