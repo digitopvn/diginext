@@ -3,7 +3,7 @@ import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty, isNaN } from "lodash";
 
-import type { AppGitInfo, IApp, ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
+import type { AppGitInfo, ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
@@ -11,7 +11,6 @@ import { availableResourceSizes } from "@/interfaces/SystemTypes";
 import { getCurrentGitRepoData, resolveEnvFilePath } from "@/plugins";
 import { isNumeric } from "@/plugins/number";
 
-import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
@@ -59,7 +58,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 
 		if (!gitInfo) throw new Error(`This app's directory doesn't have any git remote integrated.`);
 
-		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.remoteSSH, repoURL: gitInfo.remoteURL };
+		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.repoSSH, repoURL: gitInfo.repoURL };
 		if (options.isDebugging) console.log("askForDeployEnvironmentInfo > updateGitInfo :>> ", updateGitInfo);
 
 		app = await updateAppGitInfo(app, updateGitInfo);
@@ -110,10 +109,11 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	/**
 	 * PARSE LOCAL DEPLOYMENT CONFIG & ASK FOR MISSING INFO
 	 */
+	const { DB } = await import("@/modules/api/DB");
 
 	// request cluster
 	if (!serverDeployEnvironment.cluster) {
-		const clusters = await DB.find<ICluster>("cluster", {}, { populate: ["provider"] }, { limit: 20 });
+		const clusters = await DB.find("cluster", {}, { populate: ["provider"] }, { limit: 20 });
 		if (isEmpty(clusters)) {
 			logError(`No clusters found in this workspace. Please add one to deploy on.`);
 			return;
@@ -127,10 +127,10 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 				return { name: _cluster.name, value: _cluster };
 			}),
 		});
-		serverDeployEnvironment.cluster = cluster.shortName;
+		serverDeployEnvironment.cluster = cluster.slug;
 		serverDeployEnvironment.provider = (cluster.provider as ICloudProvider).shortName;
 	} else {
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: serverDeployEnvironment.cluster });
+		const cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster });
 		if (!cluster) {
 			logError(`Cluster "${serverDeployEnvironment.cluster}" not found.`);
 			return;
@@ -270,7 +270,7 @@ To expose this app to the internet later, you can add your own domain to deploy 
 	if (options.isDebugging) log(`[ASK DEPLOY INFO] serverDeployEnvironment :>>`, serverDeployEnvironment);
 
 	// fetched latest app on server
-	app = await DB.findOne<IApp>("app", { slug: app.slug }, { populate: ["project", "owner", "workspace"] });
+	app = await DB.findOne("app", { slug: app.slug }, { populate: ["project", "owner", "workspace"] });
 	if (options.isDebugging) log(`[ASK DEPLOY INFO] updated app :>>`, app);
 
 	/**

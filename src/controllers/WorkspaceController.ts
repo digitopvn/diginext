@@ -7,17 +7,16 @@ import BaseController from "@/controllers/BaseController";
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { IGetQueryParams, ResponseData } from "@/interfaces";
 import * as interfaces from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import { dxSendEmail } from "@/modules/diginext/dx-email";
 import type { DxPackage } from "@/modules/diginext/dx-package";
 import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
 import type { DxSubsription } from "@/modules/diginext/dx-subscription";
 import { dxCreateWorkspace } from "@/modules/diginext/dx-workspace";
+import { filterUniqueItems } from "@/plugins/array";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
-import { RoleService, UserService } from "@/services";
-import WorkspaceService from "@/services/WorkspaceService";
+import { RoleService, UserService, WorkspaceService } from "@/services";
 
 interface AddUserBody {
 	userId: Types.ObjectId;
@@ -162,10 +161,11 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("jwt")
 	@Delete("/")
 	async delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
+		const { DB } = await import("@/modules/api/DB");
 		// delete workspace in user:
-		const _user = await DB.findOne<IUser>("user", { workspaces: this.workspace._id });
+		const _user = await DB.findOne("user", { workspaces: this.workspace._id });
 		const workspaces = _user.workspaces.filter((wsId) => MongoDB.toString(wsId) !== MongoDB.toString(this.workspace._id));
-		const updatedUser = await DB.updateOne<IUser>("user", { _id: _user._id }, { workspaces, activeWorkspace: undefined });
+		const updatedUser = await DB.updateOne("user", { _id: _user._id }, { workspaces, activeWorkspace: undefined });
 		console.log("[WorkspaceController] delete > updatedUser :>> ", updatedUser);
 
 		// delete related data:
@@ -192,6 +192,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	async inviteMember(@Body() data: { emails: string[] }) {
 		if (!data.emails || data.emails.length === 0) return interfaces.respondFailure({ msg: `List of email is required.` });
 		if (!this.user) return interfaces.respondFailure({ msg: `Unauthenticated.` });
+		const { DB } = await import("@/modules/api/DB");
 
 		const { emails } = data;
 
@@ -203,13 +204,22 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		const activeRole = this.user.activeRole as IRole;
 		if (activeRole.type !== "admin" && activeRole.type !== "moderator") return interfaces.respondFailure(`Unauthorized.`);
 
-		const memberRole = await DB.findOne<IRole>("role", { type: "member", workspace: wsId });
+		const memberRole = await DB.findOne("role", { type: "member", workspace: wsId });
 
 		// create temporary users of invited members:
 		const invitedMembers = await Promise.all(
 			emails.map(async (email) => {
-				const invitedMember = await DB.create<IUser>("user", { email: email, workspaces: [wsId], roles: [memberRole._id] });
-				return invitedMember;
+				let existingUser = await DB.findOne("user", { email });
+				if (!existingUser) {
+					const username = email.split("@")[0] || "New User";
+					const invitedMember = await DB.create("user", { name: username, email: email, workspaces: [wsId], roles: [memberRole._id] });
+					return invitedMember;
+				} else {
+					const workspaces = existingUser.workspaces || [];
+					workspaces.push(wsId);
+					existingUser = await DB.updateOne("user", { _id: existingUser._id }, { workspaces: filterUniqueItems(workspaces) });
+					return existingUser;
+				}
 			})
 		);
 
@@ -280,16 +290,17 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		@Queries()
 		queryParams?: ApiUserAndServiceAccountQueries
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		const { workspace } = this.filter;
 		if (!workspace) return interfaces.respondFailure({ msg: `Workspace ID or slug is required.` });
 
 		let serviceAccounts: IUser[] = [];
 		if (isValidObjectId(workspace)) {
-			serviceAccounts = await DB.find<IUser>("service_account", { workspaces: { $in: [workspace] } });
+			serviceAccounts = await DB.find("service_account", { workspaces: { $in: [workspace] } });
 		} else {
-			const ws = await DB.findOne<IWorkspace>("workspace", { slug: workspace });
+			const ws = await DB.findOne("workspace", { slug: workspace });
 			if (!ws) return interfaces.respondFailure({ msg: `Workspace not found.` });
-			serviceAccounts = await DB.find<IUser>("service_account", { workspaces: { $in: [ws._id] } });
+			serviceAccounts = await DB.find("service_account", { workspaces: { $in: [ws._id] } });
 		}
 
 		return interfaces.respondSuccess({ data: serviceAccounts });
@@ -309,16 +320,17 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		@Queries()
 		queryParams?: ApiUserAndServiceAccountQueries
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		const { workspace } = this.filter;
 		if (!workspace) return interfaces.respondFailure({ msg: `Workspace ID or slug is required.` });
 
 		let list: IUser[] = [];
 		if (isValidObjectId(workspace)) {
-			list = await DB.find<IUser>("api_key_user", { workspaces: { $in: [workspace] } });
+			list = await DB.find("api_key_user", { workspaces: { $in: [workspace] } });
 		} else {
-			const ws = await DB.findOne<IWorkspace>("workspace", { slug: workspace });
+			const ws = await DB.findOne("workspace", { slug: workspace });
 			if (!ws) return interfaces.respondFailure({ msg: `Workspace not found.` });
-			list = await DB.find<IUser>("api_key_user", { workspaces: { $in: [ws._id] } });
+			list = await DB.find("api_key_user", { workspaces: { $in: [ws._id] } });
 		}
 
 		return interfaces.respondSuccess({ data: list });

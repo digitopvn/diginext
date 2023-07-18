@@ -1,17 +1,15 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IApp, IRelease } from "@/entities";
+import type { IRelease } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
-import { DB } from "@/modules/api/DB";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import { createReleaseFromBuild } from "@/modules/build/create-release-from-build";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
-import BuildService from "@/services/BuildService";
-import ReleaseService from "@/services/ReleaseService";
+import { BuildService, ReleaseService } from "@/services";
 
 import BaseController from "./BaseController";
 
@@ -76,12 +74,14 @@ export default class ReleaseController extends BaseController<IRelease> {
 			buildNumber: string;
 		}
 	) {
+		const { DB } = await import("@/modules/api/DB");
+
 		if (!body.env) return respondFailure({ msg: `Param "env" (deploy environment code) is required.` });
 		if (!body.buildNumber) return respondFailure({ msg: `Param "buildNumber" (image's tag) is required.` });
 
 		const { app: appSlug, buildNumber } = body;
 
-		const app = await DB.findOne<IApp>("app", { slug: appSlug });
+		const app = await DB.findOne("app", { slug: appSlug });
 		if (!app) return respondFailure(`App "${appSlug}" not found.`);
 
 		const newRelease = await createReleaseFromApp(app, body.env, buildNumber, { author: this.user, workspace: this.workspace });

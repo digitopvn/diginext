@@ -4,7 +4,6 @@
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
-// import pkg from "@/../package.json";
 import { execConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { execAnalytics } from "@/modules/analytics";
@@ -22,6 +21,7 @@ import DigitalOcean, { execDigitalOcean } from "@/modules/providers/digitalocean
 import GCloud, { execGoogleCloud } from "@/modules/providers/gcloud";
 import { execRegistry } from "@/modules/registry";
 import { execServer } from "@/modules/server";
+import generateSnippet from "@/modules/snippets/generateSnippet";
 import { currentVersion, freeUp } from "@/plugins";
 
 import { execInitApp } from "./modules/apps/init-app";
@@ -228,6 +228,11 @@ export async function processCLI(options?: InputOptions) {
 			await cliAuthenticate(options);
 
 			await transferRepo(options);
+			return;
+
+		case "snippets":
+		case "snpt":
+			await generateSnippet(options as any);
 			return;
 
 		default:

@@ -7,7 +7,7 @@ import { cloneDeepWith, isBoolean, isDate, isEmpty, isNumber, isString, toNumber
 import { Config } from "@/app.config";
 import type { IUser, IWorkspace } from "@/entities";
 import type { IBase } from "@/entities/Base";
-import type { AppRequest } from "@/interfaces/SystemTypes";
+import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
 import { isObjectId, isValidObjectId, MongoDB, toObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import type { BaseService } from "@/services/BaseService";
@@ -19,11 +19,15 @@ import { respondFailure, respondSuccess } from "../interfaces/ResponseData";
 const DEFAULT_PAGE_SIZE = 100;
 
 export default class BaseController<T extends IBase = any, S extends BaseService<T> = BaseService> {
+	req: AppRequest;
+
 	service: S;
 
 	user: IUser;
 
 	workspace: IWorkspace;
+
+	ownership: Ownership;
 
 	filter: IQueryFilter;
 
@@ -32,7 +36,11 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 	pagination: IResponsePagination;
 
 	constructor(service?: S) {
-		if (service) this.service = service;
+		if (service) {
+			this.service = service;
+			this.req = service.req;
+		}
+		this.ownership = { owner: this.user, workspace: this.workspace };
 	}
 
 	async read() {
@@ -137,6 +145,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			raw = false,
 			where = {},
 			access_token,
+			isDebugging,
 			...filter
 		} = req.query as any;
 
@@ -144,6 +153,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 		const _populate = populate ? trim(populate.toString(), ",") : "";
 		const _select = select ? trim(select.toString(), ",") : "";
 		const options: IQueryOptions & IQueryPagination = {
+			isDebugging,
 			download,
 			populate: _populate == "" ? [] : _populate.indexOf(",") > -1 ? _populate.split(",") : [_populate],
 			select: _select == "" ? [] : _select.indexOf(",") > -1 ? _select.split(",") : [_select],

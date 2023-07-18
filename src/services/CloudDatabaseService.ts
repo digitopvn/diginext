@@ -1,10 +1,10 @@
+import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError } from "diginext-utils/dist/xconsole/log";
 import { existsSync } from "fs";
 import { toString } from "lodash";
 import path from "path";
 
 import { Config } from "@/app.config";
-import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import type { CloudDatabaseDto, ICloudDatabase } from "@/entities/CloudDatabase";
 import { cloudDatabaseSchema } from "@/entities/CloudDatabase";
 import type { ICloudDatabaseBackup } from "@/entities/CloudDatabaseBackup";
@@ -13,7 +13,6 @@ import { cronjobRepeatUnitList } from "@/entities/Cronjob";
 import { respondFailure } from "@/interfaces";
 import type { CloudDatabaseType } from "@/interfaces/SystemTypes";
 import { cloudDatabaseList } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import { createCronjobRepeat } from "@/modules/cronjob/schedule";
 import MongoShell from "@/modules/db/mongo";
 import MySQL from "@/modules/db/mysql";
@@ -21,7 +20,7 @@ import PostgreSQL from "@/modules/db/pg";
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
-import CloudDatabaseBackupService from "./CloudDatabaseBackupService";
+import { CloudDatabaseBackupService } from "./CloudDatabaseBackupService";
 
 export type DatabaseConnectionInfo = {
 	type: CloudDatabaseType;
@@ -66,7 +65,7 @@ export type DatabaseRestoreParams = {
 	path?: string;
 };
 
-export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
+export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 	constructor() {
 		super(cloudDatabaseSchema);
 	}
@@ -121,6 +120,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 
 	// healthz
 	async checkHealthById(id: string) {
+		const { DB } = await import("@/modules/api/DB");
 		const db = await DB.findOne("database", { _id: id });
 		if (!db) throw new Error(`Cloud database not found.`);
 		return this.checkHealth(db);
@@ -164,6 +164,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 	}
 
 	async backupById(id: string) {
+		const { DB } = await import("@/modules/api/DB");
 		const db = await DB.findOne("database", { _id: id });
 		if (!db) throw new Error(`Cloud database not found.`);
 		return this.backup(db);
@@ -182,15 +183,34 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 
 		// backup
 		try {
-			let res: { name: string; path: string };
+			const bkSvc = new CloudDatabaseBackupService();
+
+			// check if this process has been done by other pods, if yes, ignore this.
+			const bkName = `${db.type}-backup-${makeDaySlug()}`;
+			let backup = await bkSvc.findOne({ name: bkName });
+			if (backup) return;
+
+			// create backup in db
+			backup = await bkSvc.create({
+				database: MongoDB.toString(db._id),
+				status: "start",
+				name: bkName,
+				type: db.type,
+				dbSlug: db.slug,
+				// ownerships
+				workspace: this.req.workspace._id as string,
+				owner: this.req.user._id as string,
+			});
 
 			switch (db.type) {
 				case "mariadb":
 				case "mysql":
-					res = await MySQL.backup({ dbName: options?.dbName, host: db.host, port: toString(db.port), user: db.user, pass: db.pass });
+					MySQL.backup({ dbName: options?.dbName, host: db.host, port: toString(db.port), user: db.user, pass: db.pass })
+						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
+						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
 					break;
 				case "mongodb":
-					res = await MongoShell.backup({
+					MongoShell.backup({
 						dbName: options?.dbName,
 						authDb: options?.authDb,
 						url: db.url,
@@ -198,34 +218,25 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						port: toString(db.port),
 						user: db.user,
 						pass: db.pass,
-					});
+					})
+						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
+						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
 					break;
 				case "postgresql":
-					res = await PostgreSQL.backup({
+					PostgreSQL.backup({
 						dbName: options?.dbName,
 						url: db.url,
 						host: db.host,
 						port: toString(db.port),
 						user: db.user,
 						pass: db.pass,
-					});
+					})
+						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
+						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
 					break;
 				default:
-					return respondFailure(`Database type "${db.type}" is not supported backing up at the moment.`);
+					throw new Error(`Database type "${db.type}" is not supported backing up at the moment.`);
 			}
-
-			// insert backup to db
-			const url = `${Config.BASE_URL}/storage/${res.path.split("storage/")[1]}`;
-			const bkSvc = new CloudDatabaseBackupService();
-			const backup = await bkSvc.create({
-				database: MongoDB.toString(db._id),
-				status: "success",
-				name: res.name,
-				path: res.path,
-				type: db.type,
-				dbSlug: db.slug,
-				url,
-			});
 
 			return backup;
 		} catch (e) {
@@ -253,6 +264,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 	}
 
 	async restoreById(options: DatabaseRestoreParams, id: string) {
+		const { DB } = await import("@/modules/api/DB");
 		const db = await DB.findOne("database", { _id: id });
 		if (!db) throw new Error(`Cloud database not found.`);
 		return this.restore(options, db);
@@ -315,6 +327,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		condition?: CronjonRepeatCondition,
 		ownership?: { owner: string; workspace: string }
 	) {
+		const { DB } = await import("@/modules/api/DB");
 		// validate
 		if (typeof repeat?.range === "undefined") throw new Error(`Recurrent range is required.`);
 		if (typeof repeat?.unit === "undefined") throw new Error(`Recurrent unit is required, one of: ${cronjobRepeatUnitList.join(", ")}.`);
@@ -322,7 +335,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		const db = await this.findOne({ _id: id });
 		if (!db) throw new Error(`Database not found.`);
 
-		const apiKey = await DB.findOne<IApiKeyAccount>("api_key_user", { workspaces: db.workspace });
+		const apiKey = await DB.findOne("api_key_user", { workspaces: db.workspace });
 
 		// create new cronjob
 		const request: CronjobRequest = {
@@ -337,7 +350,7 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		if (!cronjob) throw new Error(`Unable to schedule auto-backup for "${db.name}" database.`);
 
 		// update cronjob ID to database:
-		const updatedDb = await DB.updateOne<ICloudDatabase>(
+		const updatedDb = await DB.updateOne(
 			"database",
 			{ _id: id },
 			{ autoBackup: cronjob._id, owner: ownership?.owner, workspace: ownership?.workspace }
@@ -345,5 +358,3 @@ export default class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		return updatedDb;
 	}
 }
-
-export { ICloudDatabase as CloudDatabase };

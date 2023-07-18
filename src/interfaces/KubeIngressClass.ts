@@ -17,4 +17,11 @@ export interface KubeIngressClass {
 	spec?: {
 		controller?: string;
 	};
+	// extras
+	clusterSlug?: string;
+	/**
+	 * Cluster's short name
+	 * @deprecated
+	 */
+	clusterShortName?: string;
 }

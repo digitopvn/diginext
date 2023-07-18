@@ -1,0 +1,40 @@
+import dynamic from "next/dynamic";
+
+import MasterPage from "@/components/layouts/MasterPage";
+
+const Page@@PAGE_FILE_NAME = dynamic(() => import("@@PATH_COMPONENT"), { ssr: false });
+
+// @@URL
+const @@PAGE_FILE_NAME = () => {
+\treturn (
+\t\t<>
+\t\t\t<style global jsx>{`
+\t\t\t\thtml,
+\t\t\t\tbody {
+\t\t\t\t\toverflow: hidden;
+\t\t\t\t}
+
+\t\t\t\t* {
+\t\t\t\t\t-webkit-touch-callout: none; /* iOS Safari */
+\t\t\t\t\t-webkit-user-select: none; /* Safari */
+\t\t\t\t\t-khtml-user-select: none; /* Konqueror HTML */
+\t\t\t\t\t-moz-user-select: none; /* Old versions of Firefox */
+\t\t\t\t\t-ms-user-select: none; /* Internet Explorer/Edge */
+\t\t\t\t\tuser-select: none; /* Non-prefixed version, currently
+\t\t\t\t\t\t\t\t  supported by Chrome, Edge, Opera and Firefox */
+\t\t\t\t\ttouch-action: none;
+\t\t\t\t}
+\t\t\t`}</style>
+
+\t\t\t<MasterPage
+\t\t\t\tmeta={{
+\t\t\t\t\ttitle: "@@PAGE_NAME",
+\t\t\t\t}}
+\t\t\t>
+\t\t\t\t<Page@@PAGE_FILE_NAME />
+\t\t\t</MasterPage>
+\t\t</>
+\t);
+};
+
+export default @@PAGE_FILE_NAME;

@@ -3,8 +3,6 @@ import inquirer from "inquirer";
 import type { IProject } from "@/entities/Project";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
-import { DB } from "../api/DB";
-
 export async function askCreateProjectQuestions(options?: InputOptions) {
 	const project = {} as IProject;
 
@@ -38,11 +36,12 @@ export async function askCreateProjectQuestions(options?: InputOptions) {
  * Create new project & children app with pre-setup: git, cli, deployment,...
  */
 export default async function createProjectByForm(options: InputOptions) {
+	const { DB } = await import("@/modules/api/DB");
 	// create project form:
 	const newProjectData = await askCreateProjectQuestions(options);
 
 	// Save this project to database
-	const newProject = await DB.create<IProject>("project", newProjectData);
+	const newProject = await DB.create("project", newProjectData);
 	if (options.isDebugging) console.log("[createProjectByForm] newProject :>> ", newProject);
 	if (!newProject) return;
 

@@ -1,15 +1,14 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IFramework } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
-import FrameworkService from "@/services/FrameworkService";
+import { FrameworkService } from "@/services/FrameworkService";
 
 import BaseController from "./BaseController";
 
 @Tags("Framework")
 @Route("framework")
-export default class FrameworkController extends BaseController<IFramework> {
+export default class FrameworkController extends BaseController {
 	service: FrameworkService;
 
 	constructor() {
@@ -31,6 +30,7 @@ export default class FrameworkController extends BaseController<IFramework> {
 	@Post("/")
 	async create(@Body() body: entities.FrameworkDto) {
 		try {
+			this.service.req = this.req;
 			const data = await this.service.create(body, {
 				...this.options,
 				// isDebugging: true,

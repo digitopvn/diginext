@@ -3,13 +3,10 @@ import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
 import pkg from "@/../package.json";
-import type { IGitProvider } from "@/entities";
 import { type IApp, type IFramework, type IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType, ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { currentVersion, getLatestCliVersion, shouldNotifyCliUpdate } from "@/plugins";
-
-import { DB } from "../api/DB";
 
 const cliHeader =
 	chalk.bold.underline.green(`Diginext CLI USAGE - VERSION ${pkg.version}`.toUpperCase()) +
@@ -33,7 +30,7 @@ const argvOptions = {
 	input: { describe: "Input string", alias: "i" },
 	type: { describe: "Input type as string" },
 	data: { describe: "Input data", alias: "d" },
-	value: { describe: "Input value" },
+	value: { describe: "Input value", alias: "val" },
 	file: { describe: "Input file path", alias: "f" },
 	key: { describe: "Input key in string", alias: "token" },
 	url: { describe: "Input URL address with http" },
@@ -62,13 +59,13 @@ const argvOptions = {
 	targetDir: { describe: "Specify target project directory", alias: "dir" },
 	git: { describe: "Specify GIT provider's slug" },
 	"git-provider": { describe: "Specify GIT provider type", alias: "gp" },
-	"git-workspace": { describe: "Specify GIT workspace slug", alias: "gw" },
-	provider: { describe: "Specify selected cloud provider", alias: "cp" },
+	"git-org": { describe: "Specify GIT workspace slug", alias: "org" },
+	provider: { describe: "Specify selected cloud provider", alias: "pro" },
 	custom: { describe: "Select a custom provider", alias: "custom" },
 	do: { describe: "Select Digital Ocean as a provider", alias: "digitalocean" },
 	gcloud: { describe: "Select Google Cloud as a provider", alias: "gcp" },
-	cluster: { describe: "Specify selected cluster" },
-	registry: { describe: "Specify container registry's slug", alias: "reg" },
+	cluster: { describe: "Specify selected cluster", alias: "c" },
+	registry: { describe: "Specify container registry's slug", alias: "r" },
 	project: { describe: "Specify selected project id (for Google Cloud)", alias: "pro" },
 	zone: { describe: "Specify selected zone (for Google Cloud)" },
 	region: { describe: "Specify selected region (for Google Cloud)" },
@@ -85,6 +82,7 @@ const argvOptions = {
 	compress: { describe: "Should compress static files or not", alias: "zip" },
 	redirect: { describe: "Should redirect all alternative domains to the primary or not" },
 	generate: { describe: "Should generate config file or not", alias: "G" },
+	ci: { describe: "Should enable CI related actions or not" },
 	pipeline: { describe: "Should generate Bitbucket pipeline YAML or not" },
 	template: { describe: "Should replace current deployment with the templates or not", alias: "tpl" },
 	fresh: { describe: "Should do a fresh deploy [WARN - this will wipe out the current namespace]", alias: "fr" },
@@ -111,7 +109,7 @@ const newProjectOptions = {
 	name: argvOptions.name,
 	slug: argvOptions.slug,
 	public: argvOptions.public,
-	"git-workspace": argvOptions["git-workspace"],
+	"git-org": argvOptions["git-org"],
 };
 
 const userInputOptions = {
@@ -238,6 +236,8 @@ export async function parseCliOptions() {
 		.command("new", "Create new project & application", newProjectOptions)
 		// command: transfer
 		.command(["transfer", "tf"], "Tranfer repo from other provider", newProjectOptions)
+		// command: snippets
+		.command(["snippets", "snpt"], "Generate snippets", newProjectOptions)
 		// command: init
 		.command("init", "Initialize CLI in the current project directory")
 		// command: upgrade
@@ -358,7 +358,9 @@ export async function parseCliOptions() {
 		// command: cluster
 		.command("cluster", "Manage your clusters", (_yargs) =>
 			_yargs
-				.command("connect", "Connect your machine to the cluster")
+				.command("connect", "Connect your machine to the cluster", (__yargs) =>
+					__yargs.option("cluster", { describe: "Cluster's slug", alias: "c" })
+				)
 				.command("get", "Get cluster info")
 				.command("set", "Set value to cluster's property")
 				.command({
@@ -466,6 +468,8 @@ export async function parseCliOptions() {
 		.epilog("Copyright by TOP GROUP VIETNAM © 2023").argv;
 
 	const options: InputOptions = {
+		...argv,
+
 		// always attach current version to input options
 		version: currentVersion(),
 
@@ -503,7 +507,7 @@ export async function parseCliOptions() {
 		projectSlug: argv.projectSlug as string,
 		targetDirectory: argv.targetDir as string,
 		isPublic: (argv.public as boolean) ?? false,
-		gitWorkspace: argv["git-workspace"] as string,
+		gitOrg: argv["git-org"] as string,
 
 		// environment
 		env: (argv.env as string) ?? "dev",
@@ -513,6 +517,7 @@ export async function parseCliOptions() {
 		isProd: (argv.prod as boolean) ?? argv.env === "prod" ?? false,
 
 		// helper
+		ci: (argv.ci as boolean) ?? false,
 		shouldShowInputOptions: (argv["show-options"] as boolean) ?? false,
 		shouldInstallPackage: (argv.install as boolean) ?? true,
 		shouldShowHelp: (argv.help as boolean) ?? false,
@@ -546,8 +551,10 @@ export async function parseCliOptions() {
 		imageURL: argv.image as string,
 	};
 
+	const { DB } = await import("@/modules/api/DB");
+
 	if (typeof argv.git !== "undefined") {
-		options.git = await DB.findOne<IGitProvider>("git", { slug: argv.git });
+		options.git = await DB.findOne("git", { slug: argv.git });
 		if (!options.git) throw new Error(`Git provider "${argv.git}" not found.`);
 	}
 
@@ -555,9 +562,9 @@ export async function parseCliOptions() {
 		if (argv.framework === "none") {
 			options.framework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
 		} else {
-			options.framework = await DB.findOne<IFramework>("framework", { slug: argv.framework });
+			options.framework = await DB.findOne("framework", { slug: argv.framework });
 			if (!options.framework) throw new Error(`Framework "${argv.framework}" not found.`);
-			options.frameworkVersion = options.framework.mainBranch;
+			options.frameworkVersion = options.framework.mainBranch || "main";
 		}
 	}
 

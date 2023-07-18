@@ -7,12 +7,12 @@ import yargs from "yargs";
 
 import { Config, isServerMode } from "@/app.config";
 import { saveCliConfig } from "@/config/config";
-import type { ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
+import type { IContainerRegistry } from "@/entities";
 import type { GoogleServiceAccount } from "@/interfaces/GoogleServiceAccount";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { createTmpFile, execCmd, isWin } from "@/plugins";
 
-import { DB } from "../api/DB";
+import { askForCluster } from "../cluster/ask-for-cluster";
 import ClusterManager from "../k8s";
 import { getKubeContextByCluster } from "../k8s/kube-config";
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
@@ -37,30 +37,13 @@ export const authenticate = async (options?: InputOptions) => {
 		// authenticate Google Cloud platform with Service Account file
 		await execCmd(`gcloud auth activate-service-account --key-file ${serviceAccountPath}`);
 
-		// authenticate Docker with Google Cloud platform
-		// await execCmd(`gcloud auth configure-docker ${containerRegistryUrl} --quiet`);
+		// if success
+		return true;
 	} catch (e) {
+		// if failed
 		logError(e);
 		return false;
 	}
-
-	// Save this cloud provider to database
-	const serviceAccount = fs.readFileSync(serviceAccountPath, "utf8");
-	const gcloud = await DB.findOne<ICloudProvider>("provider", { shortName: "gcloud" });
-
-	// not support multiple cloud providers yet!
-	if (!gcloud) {
-		const newProvider = DB.create<ICloudProvider>("provider", {
-			name: "Google Cloud",
-			shortName: "gcloud",
-			serviceAccount: serviceAccount,
-			owner: options.userId,
-			workspace: options.workspaceId,
-		});
-		if (!newProvider) logError(`Can't save this cloud provider (Google Cloud) to database.`);
-	}
-
-	return true;
 };
 
 /**
@@ -68,6 +51,7 @@ export const authenticate = async (options?: InputOptions) => {
  */
 export const connectDockerToRegistry = async (options?: InputOptions & { builder?: "docker" | "podman" }) => {
 	const { execa, execaCommand, execaSync } = await import("execa");
+	const { DB } = await import("@/modules/api/DB");
 
 	const { host, filePath, userId, workspaceId, registry: registrySlug, builder = Config.BUILDER } = options;
 
@@ -116,14 +100,14 @@ export const connectDockerToRegistry = async (options?: InputOptions & { builder
 		return;
 	}
 
-	const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+	const existingRegistry = await DB.findOne("registry", { slug: registrySlug });
 	if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { existingRegistry });
 	if (existingRegistry) return existingRegistry;
 
 	// IF NOT EXISTED -> Save this container registry to database!
 	const registryHost = host || "asia.gcr.io";
 	const imageBaseURL = `${registryHost}/${serviceAccountObject.project_id}`;
-	const newRegistry = await DB.create<IContainerRegistry>("registry", {
+	const newRegistry = await DB.create("registry", {
 		name: "Google Container Registry",
 		host: registryHost,
 		provider: "gcloud",
@@ -140,18 +124,19 @@ export const connectDockerToRegistry = async (options?: InputOptions & { builder
  * Create Google Container Registry image pulling secret
  */
 export const createImagePullingSecret = async (options?: ContainerRegistrySecretOptions) => {
-	const { execa, execaCommand, execaSync } = await import("execa");
+	const { execaCommand } = await import("execa");
+	const { DB } = await import("@/modules/api/DB");
 
-	const { registrySlug, namespace = "default", clusterShortName } = options;
+	const { registrySlug, namespace = "default", clusterSlug } = options;
 	// log(`providerShortName :>>`, providerShortName);
 
-	if (!clusterShortName) {
+	if (!clusterSlug) {
 		logError(`Cluster's short name is required.`);
 		return;
 	}
 
 	// get Container Registry data:
-	const registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+	const registry = await DB.findOne("registry", { slug: registrySlug });
 
 	if (!registry) {
 		logError(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
@@ -162,9 +147,9 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const { host, serviceAccount } = registry;
 
 	// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
-	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 	if (!cluster) {
-		logError(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterShortName}" cluster.`);
+		logError(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterSlug}" cluster.`);
 		return;
 	}
 
@@ -182,7 +167,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 		// create new namespace?
 		const ns = await ClusterManager.createNamespace(namespace, { context });
 		// still can't create namespace -> throw error!
-		if (!ns) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+		if (!ns) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterSlug}").`);
 	}
 
 	// check if the secret is existed within the namespace, try to delete it!
@@ -216,7 +201,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 			},
 		};
 
-		const updatedRegistries = await DB.update<IContainerRegistry>("registry", { slug: registrySlug }, updateData as IContainerRegistry);
+		const updatedRegistries = await DB.update("registry", { slug: registrySlug }, updateData as IContainerRegistry);
 		const updatedRegistry = updatedRegistries[0];
 
 		if (!isServerMode) {
@@ -226,9 +211,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 		// console.log(JSON.stringify(updatedRegistry.imagePullSecret, null, 2));
 		// log(`gcloud.createImagePullingSecret() :>>`, { updatedRegistry });
-		logSuccess(
-			`[GCLOUD] ✓ Successfully assign "imagePullSecret" data (${secretName}) to "${namespace}" namespace of "${clusterShortName}" cluster.`
-		);
+		logSuccess(`[GCLOUD] ✓ Successfully assign "imagePullSecret" data (${secretName}) to "${namespace}" namespace of "${clusterSlug}" cluster.`);
 
 		return updatedRegistry.imagePullSecret;
 	} catch (e) {
@@ -262,6 +245,7 @@ export const showHelp = (options?: InputOptions) => {
 
 export const execGoogleCloud = async (options?: InputOptions) => {
 	const { secondAction } = options;
+	const { DB } = await import("@/modules/api/DB");
 
 	switch (secondAction) {
 		case "auth":
@@ -281,7 +265,7 @@ export const execGoogleCloud = async (options?: InputOptions) => {
 			break;
 
 		case "create-image-pull-secret":
-			const registries = await DB.find<IContainerRegistry>("registry", {});
+			const registries = await DB.find("registry", {});
 			if (isEmpty(registries)) {
 				logError(`This workspace doesn't have any registered Container Registries.`);
 				return;
@@ -295,9 +279,10 @@ export const execGoogleCloud = async (options?: InputOptions) => {
 				}),
 			});
 
+			const clusterSlug = typeof options.cluster === "boolean" ? (await askForCluster()).slug : options.cluster;
 			try {
 				await createImagePullingSecret({
-					clusterShortName: options.cluster,
+					clusterSlug,
 					registrySlug: selectedRegistry.slug,
 					namespace: options.namespace,
 					shouldCreateSecretInNamespace: options.shouldCreate,

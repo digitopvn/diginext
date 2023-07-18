@@ -46,6 +46,9 @@ export interface IRelease extends IBase {
 	createdBy?: string;
 	branch?: string;
 	provider?: string;
+	/**
+	 * Cluster's slug
+	 */
 	cluster?: string;
 	projectSlug?: string;
 	appSlug?: string;
@@ -71,7 +74,7 @@ export interface IRelease extends IBase {
 }
 export type ReleaseDto = Omit<IRelease, keyof HiddenBodyKeys>;
 
-export const releaseSchema = new Schema<IRelease>(
+export const releaseSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
@@ -121,4 +124,4 @@ export const releaseSchema = new Schema<IRelease>(
 	{ collection: "releases", timestamps: true }
 );
 
-export const ReleaseModel = model<IRelease>("Release", releaseSchema, "releases");
+export const ReleaseModel = model("Release", releaseSchema, "releases");

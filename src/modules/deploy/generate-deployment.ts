@@ -6,13 +6,12 @@ import _, { isEmpty, isObject, toNumber } from "lodash";
 
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
-import type { IApp, ICluster, IContainerRegistry, IWorkspace } from "@/entities";
+import type { IContainerRegistry, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { objectToDeploymentYaml } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
-import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
 import ClusterManager from "../k8s";
 import { createImagePullSecretsInNamespace } from "../k8s/image-pull-secret";
@@ -66,7 +65,8 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		//
 	} = params;
 
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
+	const { DB } = await import("@/modules/api/DB");
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
 	const { slug, project } = currentAppConfig;
 
@@ -102,23 +102,23 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	let replicas = deployEnvironmentConfig.replicas ?? 1;
 
 	const BASE_URL = domains && domains.length > 0 ? `https://${domains[0]}` : `http://${svcName}.${nsName}.svc.cluster.local`;
-	const clusterShortName = deployEnvironmentConfig.cluster;
+	const clusterSlug = deployEnvironmentConfig.cluster;
 
 	// get container registry
-	let registry: IContainerRegistry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+	let registry: IContainerRegistry = await DB.findOne("registry", { slug: registrySlug });
 	if (!registry) {
 		throw new Error(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
 	}
 	if (!registry.imagePullSecret) {
-		const imagePullSecret = await createImagePullSecretsInNamespace(slug, env, clusterShortName, nsName);
-		[registry] = await DB.update<IContainerRegistry>("registry", { _id: registry._id }, { imagePullSecret });
+		const imagePullSecret = await createImagePullSecretsInNamespace(slug, env, clusterSlug, nsName);
+		[registry] = await DB.update("registry", { _id: registry._id }, { imagePullSecret });
 	}
 	// console.log("registry :>> ", registry);
 
 	// get destination cluster
-	let cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+	let cluster = await DB.findOne("cluster", { slug: clusterSlug });
 	if (!cluster) {
-		throw new Error(`Cannot find any clusters with short name as "${clusterShortName}", please contact your admin or create a new one.`);
+		throw new Error(`Cannot find any clusters with short name as "${clusterSlug}", please contact your admin or create a new one.`);
 	}
 	const { contextName: context } = cluster;
 
@@ -139,7 +139,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			workspace,
 			primaryDomain: DIGINEXT_DOMAIN,
 			subdomainName: prereleaseSubdomainName,
-			clusterShortName: deployEnvironmentConfig.cluster,
+			clusterSlug: deployEnvironmentConfig.cluster,
 		});
 		if (status === 0) {
 			throw new Error(`Can't create "prerelease" domain: ${domain} because "${messages.join(". ")}"`);
@@ -252,6 +252,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 						ingressClass = ingressClasses[0].metadata.name;
 					}
 					if (ingressClass) ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
+
+					// requests per minute
+					if (env !== "prod") ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rpm"] = `30`;
 
 					// labels
 					if (!doc.metadata.labels) doc.metadata.labels = {};

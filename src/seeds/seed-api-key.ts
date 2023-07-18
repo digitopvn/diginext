@@ -1,16 +1,16 @@
 // import { Role } from "@/entities";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { IRole, IUser, IWorkspace } from "@/entities";
+import type { IUser, IWorkspace } from "@/entities";
 import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
-import { DB } from "@/modules/api/DB";
 import { generateWorkspaceApiAccessToken, getUnexpiredAccessToken } from "@/plugins";
 
 export const seedApiKeys = async (workspace: IWorkspace, owner: IUser) => {
+	const { DB } = await import("@/modules/api/DB");
 	// seed default API ACCESS TOKEN:
 	const apiKeyToken = generateWorkspaceApiAccessToken();
 
-	const moderatorRole = await DB.findOne<IRole>("role", { type: "moderator", workspace: workspace._id });
+	const moderatorRole = await DB.findOne("role", { type: "moderator", workspace: workspace._id });
 
 	const apiKeyDto = {} as IApiKeyAccount;
 	apiKeyDto.type = "api_key";
@@ -22,7 +22,7 @@ export const seedApiKeys = async (workspace: IWorkspace, owner: IUser) => {
 	apiKeyDto.activeWorkspace = workspace._id;
 	apiKeyDto.token = getUnexpiredAccessToken(apiKeyToken.value);
 
-	const apiKey = await DB.create<IApiKeyAccount>("api_key_user", apiKeyDto);
+	const apiKey = await DB.create("api_key_user", apiKeyDto);
 
 	return apiKey;
 };

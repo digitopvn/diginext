@@ -1,18 +1,16 @@
 import { log, logError } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
-import { isEmpty, upperFirst } from "lodash";
+import { isEmpty } from "lodash";
 
-import type { AppDto, AppGitInfo, IApp } from "@/entities";
+import type { AppGitInfo, IApp } from "@/entities";
 import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { getCurrentGitRepoData, parseGitRepoDataFromRepoSSH } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
-import { DB } from "../api/DB";
-import { checkGitProviderAccess, checkGitRepoAccess } from "../git";
 import { askForGitProvider } from "../git/ask-for-git-provider";
-import type { GitRepository, GitRepositoryDto } from "../git/git-provider-api";
+import type { GitRepositoryDto } from "../git/git-provider-api";
 import { createOrSelectProject } from "./create-or-select-project";
 import { updateAppConfig } from "./update-config";
 
@@ -27,6 +25,7 @@ export async function createAppByForm(
 ) {
 	if (!options.project) options.project = await createOrSelectProject(options);
 	// console.log("options.project :>> ", options.project);
+	const { DB } = await import("@/modules/api/DB");
 
 	const { skipFramework } = options;
 
@@ -62,7 +61,7 @@ export async function createAppByForm(
 	if (skipFramework) options.framework = curFramework = noneFramework;
 
 	if (!options.framework) {
-		const frameworks = await DB.find<IFramework>("framework", {});
+		const frameworks = await DB.find("framework", {});
 
 		const selectFrameworks = [noneFramework];
 		if (!isEmpty(frameworks)) selectFrameworks.push(...frameworks);
@@ -93,23 +92,23 @@ export async function createAppByForm(
 		isFwPrivate = isPrivate;
 		fwRepoSSH = repoSSH;
 
-		const { gitProvider } = parseGitRepoDataFromRepoSSH(repoSSH);
+		const { providerType: gitProvider } = parseGitRepoDataFromRepoSSH(repoSSH);
 		frameworkGitProvider = gitProvider;
 
 		const { namespace } = parseGitRepoDataFromRepoSSH(fwRepoSSH);
-		if (!isFwPrivate) {
-			const canAccessPublicRepo = await checkGitProviderAccess(frameworkGitProvider);
-			if (!canAccessPublicRepo) {
-				logError(`You need to authenticate ${upperFirst(frameworkGitProvider)} first to be able to pull this framework.`);
-				return;
-			}
-		} else {
-			const canAccessPrivateRepo = await checkGitRepoAccess(fwRepoSSH);
-			if (!canAccessPrivateRepo) {
-				logError(`You may not have access to this private repository or ${namespace} organization, please authenticate first.`);
-				return;
-			}
-		}
+		// if (!isFwPrivate) {
+		// 	const canAccessPublicRepo = await checkGitProviderAccess(frameworkGitProvider);
+		// 	if (!canAccessPublicRepo) {
+		// 		logError(`You need to authenticate ${upperFirst(frameworkGitProvider)} first to be able to pull this framework.`);
+		// 		return;
+		// 	}
+		// } else {
+		// 	const canAccessPrivateRepo = await checkGitRepoAccess(fwRepoSSH);
+		// 	if (!canAccessPrivateRepo) {
+		// 		logError(`You may not have access to this private repository or ${namespace} organization, please authenticate first.`);
+		// 		return;
+		// 	}
+		// }
 
 		// Request select specific version
 		if (!options.frameworkVersion) {
@@ -128,14 +127,16 @@ export async function createAppByForm(
 	// select git provider for this app:
 	let gitProvider = options.git || (await askForGitProvider());
 	options.git = gitProvider;
+	options.gitProvider = gitProvider.type;
+	if (options.isDebugging) log(`[CREATE APP BY FORM] git provider :>>`, gitProvider);
 
 	const currentGitData = options.shouldCreate ? undefined : await getCurrentGitRepoData(options.targetDirectory);
 	if (options.isDebugging) log(`[CREATE APP BY FORM] current git data :>>`, currentGitData);
 
 	if (currentGitData) {
 		options.gitProvider = currentGitData.provider;
-		options.remoteSSH = currentGitData.remoteSSH;
-		options.remoteURL = currentGitData.remoteURL;
+		options.repoSSH = currentGitData.repoSSH;
+		options.repoURL = currentGitData.repoURL;
 	} else {
 		// Create new repo:
 		const repoData: GitRepositoryDto = {
@@ -147,7 +148,7 @@ export async function createAppByForm(
 		if (options.overwrite) {
 			try {
 				await DB.delete(
-					"git",
+					"git_repo",
 					{ slug: gitProvider.slug },
 					{ name: options.repoSlug },
 					{
@@ -159,19 +160,24 @@ export async function createAppByForm(
 		}
 
 		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > repoData :>> ", repoData);
-		const newRepo = await DB.create<GitRepository>("git", repoData, {
+		const newRepo = await DB.create("git_repo", repoData, {
 			subpath: "/orgs/repos",
 			filter: { slug: gitProvider.slug },
+			isDebugging: true,
 		});
 		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > newRepo :>> ", newRepo);
 
+		if (!newRepo) {
+			logError("Something went wrong!");
+			return;
+		}
 		options.gitProvider = newRepo.provider;
-		options.remoteSSH = newRepo.ssh_url;
-		options.remoteURL = newRepo.repo_url;
+		options.repoSSH = newRepo.ssh_url;
+		options.repoURL = newRepo.repo_url;
 	}
 
 	// Call API to create new app
-	const appData: AppDto = {
+	const appData: IApp = {
 		name: options.name,
 		public: options.git.public,
 		project: options.project._id,
@@ -183,19 +189,24 @@ export async function createAppByForm(
 			version: options.frameworkVersion,
 		},
 		git: currentGitData
-			? ({ repoSSH: currentGitData.remoteSSH, provider: currentGitData.provider, repoURL: currentGitData.remoteURL } as AppGitInfo)
+			? ({ repoSSH: currentGitData.repoSSH, provider: currentGitData.provider, repoURL: currentGitData.repoURL } as AppGitInfo)
 			: ({} as AppGitInfo),
 		environment: {},
 		deployEnvironment: {},
 		gitProvider: options.git?._id,
+		// ownership
+		owner: options.userId,
+		ownerSlug: options.user,
+		workspace: options.workspaceId,
+		workspaceSlug: options.workspace.slug,
 	};
 
 	appData.git.provider = options.gitProvider;
-	if (options.remoteSSH) appData.git.repoSSH = options.remoteSSH;
-	if (options.remoteURL) appData.git.repoURL = options.remoteURL;
+	if (options.repoSSH) appData.git.repoSSH = options.repoSSH;
+	if (options.repoURL) appData.git.repoURL = options.repoURL;
 
 	if (options.isDebugging) log(`Create new app with data:`, appData);
-	const newApp = await DB.create<IApp>("app", appData, { isDebugging: options.isDebugging });
+	const newApp = await DB.create("app", appData, { isDebugging: options.isDebugging });
 	if (options.isDebugging) log({ newApp });
 
 	if (isEmpty(newApp) || (newApp as any).error) {

@@ -3,10 +3,10 @@ import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { upperFirst } from "lodash";
 
 import type { IGitProvider } from "@/entities";
+import type { BitbucketOrg, BitbucketProject, BitbucketRepoBranch, BitbucketRepository, BitbucketUser } from "@/interfaces/bitbucket";
+import type { GitHubOrg, GithubRepoBranch, GithubRepository, GithubUser } from "@/interfaces/github";
 import type { GitProviderType, RequestMethodType } from "@/interfaces/SystemTypes";
 import { makeSlug } from "@/plugins/slug";
-
-import { DB } from "../api/DB";
 
 type GitProviderApiOptions = {
 	/**
@@ -43,10 +43,14 @@ const orgRepoApiPath = (provider: GitProviderType, org?: string, slug?: string) 
 
 const repoDeleteApiPath = (provider: GitProviderType, org: string, slug: string) =>
 	provider === "bitbucket" ? `/repositories/${org}/${slug}` : `/repos/${org}/${slug}`;
+
+const repoBranchApiPath = (provider: GitProviderType, org: string, slug: string) =>
+	provider === "bitbucket" ? `/repositories/${org}/${slug}/refs/branches` : `/repos/${org}/${slug}/branches`;
+
 /**
  * Only applicable for Bitbucket
  */
-const orgProjectApiPath = (provider: IGitProvider) => `/workspaces/${provider.gitWorkspace}/projects/DXP`;
+const orgProjectApiPath = (provider: IGitProvider) => `/workspaces/${provider.org}/projects/DXP`;
 
 interface GithubFailureResponse {
 	message?: string;
@@ -66,290 +70,6 @@ interface GitUser {
 	display_name?: string;
 	url?: string;
 	email?: string;
-}
-
-interface BitbucketUser {
-	display_name: string;
-	links: {
-		self: {
-			href: string;
-		};
-		avatar: {
-			href: string;
-		};
-		repositories: {
-			href: string;
-		};
-		snippets: {
-			href: string;
-		};
-		html: {
-			href: string;
-		};
-		hooks: {
-			href: string;
-		};
-	};
-	created_on: string;
-	type: string;
-	uuid: string;
-	has_2fa_enabled: null;
-	username: string;
-	is_staff: boolean;
-	account_id: string;
-	nickname: string;
-	account_status: string;
-	location: string;
-}
-
-interface GithubUser {
-	login: string;
-	id: number;
-	node_id: string;
-	avatar_url: string;
-	gravatar_id: string;
-	url: string;
-	html_url: string;
-	followers_url: string;
-	following_url: string;
-	gists_url: string;
-	starred_url: string;
-	subscriptions_url: string;
-	organizations_url: string;
-	repos_url: string;
-	events_url: string;
-	received_events_url: string;
-	type: string;
-	site_admin: boolean;
-	name: string;
-	company: string | null;
-	blog: string;
-	location: string | null;
-	email: string | null;
-	hireable: boolean | null;
-	bio: string | null;
-	twitter_username: string | null;
-	public_repos: number;
-	public_gists: number;
-	followers: number;
-	following: number;
-	created_at: string;
-	updated_at: string;
-}
-
-interface BitbucketOrg {
-	uuid: string;
-	links: {
-		owners: {
-			href: string;
-		};
-		self: {
-			href: string;
-		};
-		repositories: {
-			href: string;
-		};
-		snippets: {
-			href: string;
-		};
-		html: {
-			href: string;
-		};
-		avatar: {
-			href: string;
-		};
-		members: {
-			href: string;
-		};
-		projects: {
-			href: string;
-		};
-	};
-	created_on: string;
-	type: string;
-	slug: string;
-	is_private: boolean;
-	name: string;
-}
-
-interface BitbucketProject {
-	type: string;
-	owner: {
-		display_name: string;
-		links: {
-			self: {
-				href: string;
-			};
-			avatar: {
-				href: string;
-			};
-			html: {
-				href: string;
-			};
-		};
-		type: string;
-		uuid: string;
-		username: string;
-	};
-	workspace: {
-		type: string;
-		uuid: string;
-		name: string;
-		slug: string;
-		links: {
-			avatar: {
-				href: string;
-			};
-			html: {
-				href: string;
-			};
-			self: {
-				href: string;
-			};
-		};
-	};
-	key: string;
-	uuid: string;
-	is_private: boolean;
-	name: string;
-	description: string;
-	links: {
-		self: {
-			href: string;
-		};
-		html: {
-			href: string;
-		};
-		repositories: {
-			href: string;
-		};
-		avatar: {
-			href: string;
-		};
-	};
-	created_on: string;
-	updated_on: string;
-	has_publicly_visible_repos: boolean;
-}
-
-interface BitbucketRepository {
-	type: string;
-	full_name: string;
-	links: {
-		self: {
-			href: string;
-		};
-		html: {
-			href: string;
-		};
-		avatar: {
-			href: string;
-		};
-		pullrequests: {
-			href: string;
-		};
-		commits: {
-			href: string;
-		};
-		forks: {
-			href: string;
-		};
-		watchers: {
-			href: string;
-		};
-		branches: {
-			href: string;
-		};
-		tags: {
-			href: string;
-		};
-		downloads: {
-			href: string;
-		};
-		source: {
-			href: string;
-		};
-		clone: {
-			name: string;
-			href: string;
-		}[];
-		hooks: {
-			href: string;
-		};
-	};
-	name: string;
-	slug: string;
-	description: string;
-	scm: string;
-	website: string;
-	owner: {
-		display_name: string;
-		links: {
-			self: {
-				href: string;
-			};
-			avatar: {
-				href: string;
-			};
-			html: {
-				href: string;
-			};
-		};
-		type: string;
-		uuid: string;
-		username: string;
-	};
-	workspace: {
-		type: string;
-		uuid: string;
-		name: string;
-		slug: string;
-		links: {
-			avatar: {
-				href: string;
-			};
-			html: {
-				href: string;
-			};
-			self: {
-				href: string;
-			};
-		};
-	};
-	is_private: boolean;
-	project: {
-		type: string;
-		key: string;
-		uuid: string;
-		name: string;
-		links: {
-			self: {
-				href: string;
-			};
-			html: {
-				href: string;
-			};
-			avatar: {
-				href: string;
-			};
-		};
-	};
-	fork_policy: string;
-	created_on: string;
-	updated_on: string;
-	size: number;
-	language: string;
-	has_issues: boolean;
-	has_wiki: false;
-	uuid: string;
-	mainbranch: {
-		name: string;
-		type: string;
-	};
-	override_settings: {
-		default_merge_strategy: boolean;
-		branching_model: boolean;
-	};
 }
 
 interface BitbucketResponse extends BitbucketFailureResponse {
@@ -373,21 +93,6 @@ interface BitbucketOrgProjectListResponse extends BitbucketResponse {
 
 type BitbucketOrgProjectResponse = BitbucketProject & BitbucketResponse;
 
-interface GitHubOrg {
-	login: string;
-	id: number;
-	node_id: string;
-	url: string;
-	repos_url: string;
-	events_url: string;
-	hooks_url: string;
-	issues_url: string;
-	members_url: string;
-	public_members_url: string;
-	avatar_url: string;
-	description: string;
-}
-
 export interface GitOrg {
 	id: string;
 	name: string;
@@ -397,26 +102,6 @@ export interface GitOrg {
 	 * `false` if this is a personal account
 	 */
 	is_org: boolean;
-}
-
-interface GitHubOrgRepository {
-	id: number;
-	name: string;
-	full_name: string;
-	description: string;
-	private: boolean;
-	fork: boolean;
-	html_url: string;
-	git_url: string;
-	ssh_url: string;
-	owner: {
-		login: string;
-		id: number;
-		url: string;
-		type: string;
-	};
-	created_at: string;
-	updated_at: string;
 }
 
 export interface GitRepository {
@@ -443,6 +128,11 @@ export interface GitRepositoryDto {
 	name: string;
 	description?: string;
 	private: boolean;
+}
+
+export interface GitRepoBranch {
+	name: string;
+	url: string;
 }
 
 const bitbucketRefeshToken = async (provider: IGitProvider) => {
@@ -473,6 +163,8 @@ const bitbucketRefeshToken = async (provider: IGitProvider) => {
 };
 
 const api = async (provider: IGitProvider, path: string, options: GitProviderApiOptions = {}) => {
+	const { DB } = await import("../api/DB");
+
 	const { method = "GET", data, headers = {} } = options;
 
 	const baseURL = provider.type === "github" ? githubApiBaseURL : bitbucketApiBaseURL;
@@ -490,7 +182,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 
 	try {
 		const response = await axios({ url, headers, method, data });
-		if (options?.isDebugging) console.log("Git Provider API > response :>> ", response);
+		// if (options?.isDebugging) console.log("Git Provider API > response :>> ", response);
 		const resData = response.data;
 
 		// catch errors
@@ -502,7 +194,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 			const tokens = await bitbucketRefeshToken(provider);
 
 			// save new tokens to database
-			const [updatedProvider] = await DB.update<IGitProvider>("git", { _id: provider._id }, tokens);
+			const [updatedProvider] = await DB.update("git", { _id: provider._id }, tokens);
 
 			if (!updatedProvider)
 				throw new Error(`[${provider.type.toUpperCase()}_API_ERROR] "${path}" > Can't update tokens to "${provider.name}" git provider.`);
@@ -623,7 +315,7 @@ const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDt
 		// console.log("dxProject :>> ", dxProject);
 
 		// create new repository
-		const newBitbucketRepo = (await api(provider, orgRepoApiPath(provider.type, provider.gitWorkspace, data.name), {
+		const newBitbucketRepo = (await api(provider, orgRepoApiPath(provider.type, provider.org, data.name), {
 			data: {
 				name: data.name,
 				description: data.description,
@@ -658,7 +350,7 @@ const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDt
 	}
 
 	if (provider.type === "github") {
-		const url = provider.isOrg ? orgRepoApiPath(provider.type, provider.gitWorkspace) : userRepoApiPath(provider.type);
+		const url = provider.isOrg ? orgRepoApiPath(provider.type, provider.org) : userRepoApiPath(provider.type);
 		const newGithubRepo = (await api(provider, url, {
 			data: {
 				...data,
@@ -666,8 +358,8 @@ const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDt
 				has_wiki: true,
 			},
 			method: "POST",
-			isDebugging: options.isDebugging,
-		})) as GitHubOrgRepository & GithubFailureResponse;
+			isDebugging: options?.isDebugging,
+		})) as GithubRepository & GithubFailureResponse;
 
 		if (newGithubRepo.message) throw new Error(`[GITHUB_API_ERROR] ${newGithubRepo.message}`);
 
@@ -695,12 +387,9 @@ const createGitRepository = async (provider: IGitProvider, data: GitRepositoryDt
 	throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 };
 
-const listGitRepositories = async (provider: IGitProvider) => {
+const listGitRepositories = async (provider: IGitProvider, options?: { isDebugging?: boolean }) => {
 	if (provider.type === "bitbucket") {
-		const { values: bitbucketRepos } = (await api(
-			provider,
-			orgRepoApiPath(provider.type, provider.gitWorkspace)
-		)) as BitbucketOrgRepoListResponse;
+		const { values: bitbucketRepos } = (await api(provider, orgRepoApiPath(provider.type, provider.org))) as BitbucketOrgRepoListResponse;
 
 		return bitbucketRepos.map((repo) => {
 			return {
@@ -725,9 +414,9 @@ const listGitRepositories = async (provider: IGitProvider) => {
 	}
 
 	if (provider.type === "github") {
-		const apiUrl = provider.isOrg ? orgRepoApiPath(provider.type, provider.gitWorkspace) : userRepoApiPath(provider.type, provider.gitWorkspace);
+		const apiUrl = provider.isOrg ? orgRepoApiPath(provider.type, provider.org) : userRepoApiPath(provider.type, provider.org);
 		// console.log("apiUrl :>> ", apiUrl);
-		const githubRepos = (await api(provider, apiUrl)) as GitHubOrgRepository[];
+		const githubRepos = (await api(provider, apiUrl)) as GithubRepository[];
 		// console.log("githubRepos :>> ", githubRepos);
 
 		return githubRepos.map((repo) => {
@@ -755,18 +444,37 @@ const listGitRepositories = async (provider: IGitProvider) => {
 	throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 };
 
-export const deleteOrgRepository = async (provider: IGitProvider, org: string, slug: string) => {
+export const deleteGitRepository = async (provider: IGitProvider, org: string, slug: string, options?: { isDebugging?: boolean }) => {
 	const apiPath = repoDeleteApiPath(provider.type, org, slug);
 	const res = await api(provider, apiPath, { method: "DELETE" });
 	return res;
 };
 
+export const listRepoBranches = async (provider: IGitProvider, org: string, slug: string, options?: { isDebugging?: boolean }) => {
+	const apiPath = repoBranchApiPath(provider.type, org, slug);
+	const res = await api(provider, apiPath);
+
+	if (provider.type === "bitbucket") {
+		return (res as BitbucketResponse & { values: BitbucketRepoBranch[] }).values.map(
+			(branch) => ({ name: branch.name, url: branch.links.html.href } as GitRepoBranch)
+		);
+	}
+	if (provider.type === "github") {
+		return (res as GithubRepoBranch[]).map(
+			(branch) => ({ name: branch.name, url: `https://github.com/${org}/${slug}/tree/${branch.name}` } as GitRepoBranch)
+		);
+	}
+
+	throw new Error(`Git provider "${provider.type}" is not supported.`);
+};
+
 const GitProviderAPI = {
 	getProfile,
 	listOrgs,
-	listOrgRepositories: listGitRepositories,
-	createOrgRepository: createGitRepository,
-	deleteOrgRepository,
+	listGitRepositories,
+	createGitRepository,
+	deleteGitRepository,
+	listRepoBranches,
 };
 
 export default GitProviderAPI;

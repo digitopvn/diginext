@@ -1,9 +1,6 @@
 import { log, logError } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
-import type { IApp, IContainerRegistry } from "@/entities";
-
-import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
@@ -14,13 +11,14 @@ import DockerRegistry from "../registry/docker-registry";
  * Create imagePullSecrets in a namespace
  * @param appSlug - App's slug
  * @param env @example "dev", "prod"
- * @param clusterShortName - Cluster's short name on Cloud Provider (this is **NOT** a cluster name in `KUBE_CONFIG`)
+ * @param clusterSlug - Cluster's slug
  * @param namespace @default "default"
  */
-export async function createImagePullSecretsInNamespace(appSlug: string, env: string, clusterShortName: string, namespace: string = "default") {
+export async function createImagePullSecretsInNamespace(appSlug: string, env: string, clusterSlug: string, namespace: string = "default") {
+	const { DB } = await import("@/modules/api/DB");
 	let message = "";
 
-	let app = await DB.findOne<IApp>("app", { slug: appSlug });
+	let app = await DB.findOne("app", { slug: appSlug });
 
 	if (!app) throw new Error(`App "${appSlug}" not found.`);
 
@@ -30,14 +28,15 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 	}
 
 	const { registry: regSlug } = deployEnvironment;
-	let registry = await DB.findOne<IContainerRegistry>("registry", { slug: regSlug });
+	let registry = await DB.findOne("registry", { slug: regSlug });
 
 	if (!registry) throw new Error(`Container Registry (${regSlug}) of "${appSlug}" app not found.`);
+	const registrySlug = registry.slug;
 
 	const options: ContainerRegistrySecretOptions = {
-		namespace: namespace,
-		clusterShortName: clusterShortName,
-		registrySlug: registry.slug,
+		namespace,
+		clusterSlug,
+		registrySlug,
 		shouldCreateSecretInNamespace: true,
 	};
 	// console.log("createImagePullSecretsInNamespace > options :>> ", options);
@@ -66,7 +65,7 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 
 		if (imagePullSecret && imagePullSecret.name) {
 			// update image pull secret name into container registry
-			const [updatedRegistry] = await DB.update<IContainerRegistry>("registry", { slug: regSlug }, { imagePullSecret });
+			const [updatedRegistry] = await DB.update("registry", { slug: regSlug }, { imagePullSecret });
 			if (!updatedRegistry) logError(`[IMAGE PULL SECRET] Can't update "imagePullSecrets" to "${regSlug}" registry`);
 
 			// print success

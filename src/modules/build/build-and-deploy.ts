@@ -3,13 +3,10 @@ import dayjs from "dayjs";
 import humanizeDuration from "humanize-duration";
 
 import { Config } from "@/app.config";
-import type { IApp } from "@/entities";
-import { type IRelease } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 import MediaService from "@/services/MediaService";
 
-import { DB } from "../api/DB";
 import screenshot from "../capture/screenshot";
 import type { DeployBuildOptions } from "../deploy/deploy-build";
 import { deployBuild } from "../deploy/deploy-build";
@@ -18,9 +15,11 @@ import { startBuild } from "./build";
 import { sendLog } from "./send-log-message";
 
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildOptions) => {
+	const { DB } = await import("@/modules/api/DB");
+
 	// [1] Build container image
-	if (!deployParams.env) deployParams.env = "dev";
-	buildParams.buildWatch = true;
+	if (!deployParams.env) deployParams.env = buildParams.env || "dev";
+	if (typeof buildParams.buildWatch === "undefined") buildParams.buildWatch = true;
 	buildParams.env = deployParams.env;
 
 	const { build, startTime, SOCKET_ROOM } = await startBuild(buildParams);
@@ -72,11 +71,11 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 			const media = await mediaSvc.create({ ...result, owner: deployParams.author._id, workspace: deployParams.workspace._id });
 			if (media) {
 				// update screenshot to release
-				const updatedRelease = await DB.updateOne<IRelease>("release", { _id: releaseId }, { screenshot: media.url });
+				const updatedRelease = await DB.updateOne("release", { _id: releaseId }, { screenshot: media.url });
 				if (updatedRelease) sendLog({ SOCKET_ROOM, message: `Screenshot: ${media.url}` });
 
 				// update screenshot to app's deploy environment
-				const app = await DB.updateOne<IApp>("app", { slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
+				const app = await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
 				if (!app) sendLog({ SOCKET_ROOM, message: `Unable to update screenshot to app's deploy environment (${env})` });
 			}
 		}

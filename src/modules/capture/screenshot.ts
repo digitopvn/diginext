@@ -90,9 +90,11 @@ const screenshot = async (url: string, options: ScreenshotOptions = defaultExpor
 	const browser = await puppeteer.launch({
 		headless: "new",
 		defaultViewport: viewport,
-		// executablePath: process.env.CHROMIUM_PATH,
-		executablePath: "/usr/bin/chromium",
-		args: ["--no-sandbox"],
+		executablePath: process.env.CHROMIUM_PATH,
+		args: [
+			"--no-sandbox",
+			"--disable-dev-shm-usage", // <-- add this one
+		],
 	});
 	const page = await browser.newPage();
 
@@ -115,10 +117,9 @@ const screenshot = async (url: string, options: ScreenshotOptions = defaultExpor
 		// res.send(pdfBuffer);
 		return { name: fileName, url: fileUrl, path: filePath, buffer, mime: `image/${screenshotOptions.type}` };
 	} catch (e) {
-		throw new Error(`Unable to capture screenshot of "${url}": ${e}`);
-	} finally {
 		await page.close();
 		await browser.close();
+		throw new Error(`Unable to capture screenshot of "${url}": ${e}`);
 	}
 };
 

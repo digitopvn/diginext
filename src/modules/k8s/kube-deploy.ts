@@ -8,14 +8,13 @@ import path from "path";
 import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { IApp, ICluster, IRelease } from "@/entities";
+import type { ICluster, IRelease } from "@/entities";
 import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { objectToDeploymentYaml, wait, waitUntil } from "@/plugins";
 import { isValidObjectId } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
-import { DB } from "../api/DB";
 import getDeploymentName from "../deploy/generate-deployment-name";
 import ClusterManager from "./index";
 import { logPodByFilter } from "./kubectl";
@@ -29,11 +28,12 @@ export interface RolloutOptions {
  * @param idOrRelease - Release ID or {Release} data
  */
 export async function cleanUp(idOrRelease: string | IRelease) {
+	const { DB } = await import("@/modules/api/DB");
 	let releaseData: IRelease;
 
 	// validation
 	if (isValidObjectId(idOrRelease)) {
-		let data = await DB.findOne<IRelease>("release", { id: idOrRelease });
+		let data = await DB.findOne("release", { id: idOrRelease });
 
 		if (!data) {
 			throw new Error(`Release "${idOrRelease}" not found.`);
@@ -46,12 +46,12 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 		releaseData = idOrRelease as IRelease;
 	}
 
-	const { slug: releaseSlug, cluster: clusterShortName, projectSlug, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
+	const { slug: releaseSlug, cluster: clusterSlug, projectSlug, appSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
 
 	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		cluster = await ClusterManager.authCluster(clusterShortName);
+		cluster = await ClusterManager.authClusterBySlug(clusterSlug);
 	} catch (e) {
 		logError(`[KUBE_DEPLOY] Clean up > `, e);
 		return { error: e.message };
@@ -59,7 +59,7 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	const { contextName: context } = cluster;
 
 	// Fallback support to the deprecated "main-app" name
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 	const mainAppName = await getDeploymentName(app);
 
@@ -127,15 +127,16 @@ export async function cleanUp(idOrRelease: string | IRelease) {
  * @param  {String} id - Release ID
  */
 export async function previewPrerelease(id: string, options: RolloutOptions = {}) {
+	const { DB } = await import("@/modules/api/DB");
 	const { onUpdate } = options;
 
-	let releaseData = await DB.findOne<IRelease>("release", { id });
+	let releaseData = await DB.findOne("release", { id });
 
 	if (isEmpty(releaseData)) return { error: `Release not found.` };
 
-	const { slug: releaseSlug, cluster: clusterShortName, appSlug, projectSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
+	const { slug: releaseSlug, cluster: clusterSlug, appSlug, projectSlug, preYaml, prereleaseUrl, namespace, env } = releaseData;
 
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	const mainAppName = await getDeploymentName(app);
 
 	log(`Preview the release: "${releaseSlug}" (${id})...`);
@@ -144,7 +145,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		cluster = await ClusterManager.authCluster(clusterShortName);
+		cluster = await ClusterManager.authClusterBySlug(clusterSlug);
 	} catch (e) {
 		logError(`[PREVIEW_PRERELEASE]`, e);
 		return { error: e.message };
@@ -160,7 +161,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 		log(`[KUBE_DEPLOY] Namespace "${namespace}" not found, creating one...`);
 		const createNsRes = await ClusterManager.createNamespace(namespace, { context });
 		if (!createNsRes) {
-			const errMsg = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
+			const errMsg = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
 			logError(errMsg);
 			return { error: errMsg };
 		}
@@ -170,11 +171,11 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	 * Create "imagePullSecrets" in a namespace
 	 */
 	try {
-		const { name: imagePullSecretName } = await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+		const { name: imagePullSecretName } = await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterSlug, namespace);
 		if (onUpdate)
-			onUpdate(`[PREVIEW] Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace (cluster: "${clusterShortName}").`);
+			onUpdate(`[PREVIEW] Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace (cluster: "${clusterSlug}").`);
 	} catch (e) {
-		throw new Error(`[PREVIEW] Can't create "imagePullSecrets" in the "${namespace}" namespace (cluster: "${clusterShortName}").`);
+		throw new Error(`[PREVIEW] Can't create "imagePullSecrets" in the "${namespace}" namespace (cluster: "${clusterSlug}").`);
 	}
 
 	/**
@@ -197,7 +198,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, { context });
 	if (!prereleaseDeploymentRes)
 		throw new Error(
-			`Can't preview the pre-release "${id}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${preYaml}`
+			`Can't preview the pre-release "${id}" (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${preYaml}`
 		);
 
 	logSuccess(`The PRE-RELEASE environment is ready to preview: https://${prereleaseUrl}`);
@@ -209,16 +210,17 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
  * Roll out a release
  */
 export async function rollout(id: string, options: RolloutOptions = {}) {
+	const { DB } = await import("@/modules/api/DB");
 	const { onUpdate } = options;
 	const { execa, execaCommand, execaSync } = await import("execa");
 
-	const releaseData = await DB.findOne<IRelease>("release", { id });
+	const releaseData = await DB.findOne("release", { id });
 	if (isEmpty(releaseData)) return { error: `Release "${id}" not found.` };
 
 	const {
 		slug: releaseSlug,
 		projectSlug, // ! This is not PROJECT_ID of Google Cloud provider
-		cluster: clusterShortName,
+		cluster: clusterSlug,
 		appSlug,
 		preYaml: prereleaseYaml,
 		deploymentYaml,
@@ -231,7 +233,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	if (onUpdate) onUpdate(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
 
 	// get the app
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	log(`Rolling out > app:`, app);
 
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
@@ -240,20 +242,20 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		await ClusterManager.authCluster(clusterShortName);
-		log(`Rolling out > Checked connectivity of "${clusterShortName}" cluster.`);
+		await ClusterManager.authClusterBySlug(clusterSlug);
+		log(`Rolling out > Checked connectivity of "${clusterSlug}" cluster.`);
 	} catch (e) {
 		logError(`[ROLL_OUT]`, e);
 		return { error: e.message };
 	}
 
-	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 	if (!cluster) {
-		logError(`Cluster "${clusterShortName}" not found.`);
-		return { error: `Cluster "${clusterShortName}" not found.` };
+		logError(`Cluster "${clusterSlug}" not found.`);
+		return { error: `Cluster "${clusterSlug}" not found.` };
 	}
 	const { name: context } = await ClusterManager.getKubeContextByCluster(cluster);
-	log(`Rolling out > Connected to "${clusterShortName}" cluster.`);
+	log(`Rolling out > Connected to "${clusterSlug}" cluster.`);
 
 	const tmpDir = path.resolve(CLI_DIR, `storage/releases/${releaseSlug}`);
 	if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
@@ -270,7 +272,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 		const createNsRes = await ClusterManager.createNamespace(namespace, { context });
 		if (!createNsRes) {
-			const err = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
+			const err = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
 			logError(`[ROLL_OUT]`, err);
 			if (onUpdate) onUpdate(err);
 			return { error: err };
@@ -279,13 +281,11 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 	// create "imagePullSecret" in namespace:
 	try {
-		const { name: imagePullSecretName } = await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterShortName, namespace);
+		const { name: imagePullSecretName } = await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, clusterSlug, namespace);
 		if (onUpdate)
-			onUpdate(
-				`[ROLL OUT] Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace (cluster: "${clusterShortName}").`
-			);
+			onUpdate(`[ROLL OUT] Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace (cluster: "${clusterSlug}").`);
 	} catch (e) {
-		const error = `[ROLL OUT] Can't create "imagePullSecrets" in the "${namespace}" namespace (cluster: "${clusterShortName}").`;
+		const error = `[ROLL OUT] Can't create "imagePullSecrets" in the "${namespace}" namespace (cluster: "${clusterSlug}").`;
 		// throw new Error();
 		return { error };
 	}
@@ -340,9 +340,9 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, { context });
 	if (!applySvcRes) {
 		// throw new Error(
-		// 	`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`
+		// 	`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`
 		// );
-		const error = `Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterShortName} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`;
+		const error = `Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`;
 		// throw new Error();
 		return { error };
 	}
@@ -611,10 +611,10 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	const filter = [{ projectSlug, appSlug, active: true }];
 
 	// Mark previous releases as "inactive":
-	await DB.update<IRelease>("release", { $or: filter }, { active: false });
+	await DB.update("release", { $or: filter }, { active: false });
 
 	// Mark this latest release as "active":
-	const latestReleases = await DB.update<IRelease>("release", { _id: id }, { active: true });
+	const latestReleases = await DB.update("release", { _id: id }, { active: true });
 
 	const latestRelease = latestReleases[0];
 	// log({ latestRelease });

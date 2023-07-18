@@ -6,7 +6,6 @@ import path from "path";
 import type { IApp } from "@/entities";
 import { kubeEnvToDotenv } from "@/plugins";
 
-import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
@@ -71,7 +70,8 @@ export const downloadDotenvByApp = async (app: IApp, env: string = "dev", option
 };
 
 export const downloadDotenvByAppSlug = async (appSlug: string, env: string = "dev", options: DownloadDotenvOptions = {}) => {
-	const app = await DB.findOne<IApp>("app", { slug: appSlug });
+	const { DB } = await import("@/modules/api/DB");
+	const app = await DB.findOne("app", { slug: appSlug });
 	if (!app) throw new Error(`Can't download dotenv variables to ".env.${env}" locally due to "${appSlug}" app not existed.`);
 
 	return downloadDotenvByApp(app, env, options);

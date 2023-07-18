@@ -1,18 +1,18 @@
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
-import type { IApp, IGitProvider } from "@/entities";
+import type { IApp } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 import { getCurrentGitRepoData } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
-import { DB } from "../api/DB";
 import { askForGitProvider } from "../git/ask-for-git-provider";
 import { createAppByForm } from "./new-app-by-form";
 import { searchApps } from "./search-apps";
 import { updateAppGitInfo } from "./update-git-config";
 
 export async function createOrSelectApp(projectSlug: string, options: InputOptions, question?: string) {
+	const { DB } = await import("@/modules/api/DB");
 	const { action } = await inquirer.prompt({
 		type: "list",
 		name: "action",
@@ -40,10 +40,8 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 			});
 
 			// [backward compatible <3.15.X] apps have no git provider id -> update one!
-			options.git = selectedApp.gitProvider
-				? await DB.findOne<IGitProvider>("git", { _id: selectedApp.gitProvider })
-				: await askForGitProvider();
-			if (!selectedApp.gitProvider && options.git) await DB.updateOne<IApp>("app", { _id: selectedApp._id }, { gitProvider: options.git._id });
+			options.git = selectedApp.gitProvider ? await DB.findOne("git", { _id: selectedApp.gitProvider }) : await askForGitProvider();
+			if (!selectedApp.gitProvider && options.git) await DB.updateOne("app", { _id: selectedApp._id }, { gitProvider: options.git._id });
 
 			// [backward compatible <3.15.X] apps have no "public" field -> update them follows their gitProvider's "public" field
 			if (selectedApp.public !== options.git.public) {
@@ -76,17 +74,17 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 
 		app = await updateAppGitInfo(app, {
 			provider: gitInfo.provider,
-			repoURL: gitInfo.remoteURL,
-			repoSSH: gitInfo.remoteSSH,
+			repoURL: gitInfo.repoURL,
+			repoSSH: gitInfo.repoSSH,
 		});
 
 		if (!app) throw new Error(`[CREATE_OR_SELECT_APP] Failed to update new git info to this app (${options.slug} / ${projectSlug}).`);
 	}
 
-	options.remoteSSH = app.git.repoSSH;
-	options.remoteURL = app.git.repoURL;
+	options.repoSSH = app.git.repoSSH;
+	options.repoURL = app.git.repoURL;
 	options.gitProvider = app.git.provider;
-	options.repoURL = options.remoteURL;
+	options.repoURL = options.repoURL;
 
 	return app;
 }

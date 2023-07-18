@@ -11,6 +11,7 @@ import type { IWorkspace } from "./Workspace";
 
 export interface IProject extends IBase {
 	name?: string;
+	isDefault?: boolean;
 	image?: string;
 	slug?: string;
 	apiKey?: string;
@@ -27,7 +28,8 @@ export interface IProject extends IBase {
 	 *
 	 * @remarks This can be populated to {App} data
 	 */
-	appSlugs?: string;
+	appSlugs?: string[];
+
 	/**
 	 * List of App IDs
 	 *
@@ -36,6 +38,11 @@ export interface IProject extends IBase {
 	apps?: (Types.ObjectId | IApp | string)[];
 	owner?: Types.ObjectId | IUser | string;
 	workspace?: Types.ObjectId | IWorkspace | string;
+
+	/**
+	 * Date when the project was archived (take down all deploy environments)
+	 */
+	archivedAt?: Date;
 }
 export type ProjectDto = Omit<IProject, keyof HiddenBodyKeys>;
 
@@ -43,6 +50,7 @@ export const projectSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
+		isDefault: { type: Boolean },
 		image: { type: String },
 		slug: { type: String },
 		apiKey: { type: String },
@@ -55,6 +63,7 @@ export const projectSchema = new Schema(
 		apps: [{ type: Schema.Types.ObjectId, ref: "apps" }],
 		owner: { type: Schema.Types.ObjectId, ref: "users" },
 		workspace: { type: Schema.Types.ObjectId, ref: "workspaces" },
+		archivedAt: { type: Date },
 	},
 	{ collection: "projects", timestamps: true }
 );

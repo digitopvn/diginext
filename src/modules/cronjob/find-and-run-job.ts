@@ -4,19 +4,19 @@ import localizedFormat from "dayjs/plugin/localizedFormat";
 import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
 
 import { IsDev } from "@/app.config";
-import { type ICronjob, weekDays } from "@/entities/Cronjob";
+import { weekDays } from "@/entities/Cronjob";
 
-import { DB } from "../api/DB";
 import { runCronjob } from "./run-job";
 
 dayjs.extend(localizedFormat);
 
 export const findAndRunCronjob = async (workspaceId?: string) => {
+	const { DB } = await import("@/modules/api/DB");
 	const now = dayjs().toDate();
 	const filter: any = { nextRunAt: { $lte: now } };
 	if (workspaceId) filter.workspace = workspaceId;
 
-	const jobs = await DB.find<ICronjob>("cronjob", filter);
+	const jobs = await DB.find("cronjob", filter);
 	if (jobs?.length) {
 		// find & execute jobs...
 		const foundJobs = jobs

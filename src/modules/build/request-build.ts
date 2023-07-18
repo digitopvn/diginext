@@ -9,7 +9,6 @@ import type { InputOptions } from "@/interfaces";
 import { fetchApi } from "@/modules/api/fetchApi";
 import { getCurrentGitRepoData, resolveDockerfilePath, stageAllFiles } from "@/plugins";
 
-import { DB } from "../api/DB";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppGitInfo } from "../apps/update-git-config";
 import { askForRegistry } from "../registry/ask-for-registry";
@@ -23,6 +22,7 @@ export async function requestBuild(options: InputOptions) {
 		logError(`This command is only available at CLIENT MODE.`);
 		return;
 	}
+	const { DB } = await import("@/modules/api/DB");
 
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
@@ -51,7 +51,7 @@ export async function requestBuild(options: InputOptions) {
 
 	const gitBranch = gitInfo.branch;
 	if (!app.git || !app.git.provider || !app.git.repoSSH || !app.git.repoURL) {
-		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.remoteSSH, repoURL: gitInfo.remoteURL };
+		const updateGitInfo: AppGitInfo = { provider: gitInfo.provider, repoSSH: gitInfo.repoSSH, repoURL: gitInfo.repoURL };
 		if (options.isDebugging) console.log("askForDeployEnvironmentInfo > updateGitInfo :>> ", updateGitInfo);
 
 		app = await updateAppGitInfo(app, updateGitInfo);
@@ -60,11 +60,11 @@ export async function requestBuild(options: InputOptions) {
 
 	// container registry
 	let registry: IContainerRegistry;
-	if (!options.registry) {
+	if (typeof options.registry === "boolean" || typeof options.registry === "undefined") {
 		registry = await askForRegistry();
 		options.registry = registry.slug;
 	} else {
-		registry = await DB.findOne<IContainerRegistry>("registry", { slug: options.registry });
+		registry = await DB.findOne("registry", { slug: options.registry });
 	}
 
 	if (!registry) {
@@ -113,7 +113,7 @@ export async function requestBuild(options: InputOptions) {
 	const requestBuildData: StartBuildParams = {
 		gitBranch: gitBranch,
 		buildNumber: options.buildNumber,
-		registrySlug: options.registry,
+		registrySlug: registry.slug,
 		appSlug: app.slug,
 	};
 
@@ -142,7 +142,7 @@ export async function requestBuild(options: InputOptions) {
 
 	// update the project so it can be sorted on top
 	try {
-		await DB.update<IProject>("project", { slug: app.projectSlug }, { lastUpdatedBy: options.username });
+		await DB.update("project", { slug: app.projectSlug }, { lastUpdatedBy: options.username });
 	} catch (e) {
 		logWarn(e);
 	}

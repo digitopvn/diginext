@@ -8,19 +8,18 @@ import * as entities from "@/entities";
 import type { ResponseData } from "@/interfaces";
 import * as interfaces from "@/interfaces";
 import { registryProviderList } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import digitalocean from "@/modules/providers/digitalocean";
 import gcloud from "@/modules/providers/gcloud";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { createTmpFile } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
-import ContainerRegistryService from "@/services/ContainerRegistryService";
+import { ContainerRegistryService } from "@/services/ContainerRegistryService";
 
 import BaseController from "./BaseController";
 
 @Tags("Container Registry")
 @Route("registry")
-export default class ContainerRegistryController extends BaseController<IContainerRegistry> {
+export default class ContainerRegistryController extends BaseController {
 	service: ContainerRegistryService;
 
 	constructor() {
@@ -113,7 +112,8 @@ export default class ContainerRegistryController extends BaseController<IContain
 		// console.log("this.workspace :>> ", this.workspace);
 		// verify container registry connection...
 		const authRes = await connectRegistry(newRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
-		if (authRes) newRegistry = await DB.updateOne<IContainerRegistry>("registry", { _id: newRegistry._id }, { isVerified: true });
+		const { DB } = await import("@/modules/api/DB");
+		if (authRes) newRegistry = await DB.updateOne("registry", { _id: newRegistry._id }, { isVerified: true });
 
 		// const newRegistry = await connectRegistry(newRegistryData, { userId: this.user?._id, workspaceId: this.workspace?._id });
 
@@ -163,14 +163,16 @@ export default class ContainerRegistryController extends BaseController<IContain
 			if (!imageBaseURL) imageBaseURL = `${host}/${organization}`;
 		}
 
+		const { DB } = await import("@/modules/api/DB");
+
 		// update db
-		let [updatedRegistry] = await DB.update<IContainerRegistry>("registry", this.filter, updateData);
+		let [updatedRegistry] = await DB.update("registry", this.filter, updateData);
 		if (!updatedRegistry) return interfaces.respondFailure({ msg: `Failed to update.` });
 
 		// verify container registry connection...
 		let verifiedRegistry: IContainerRegistry;
 		const authRes = await connectRegistry(updatedRegistry, { userId: this.user?._id, workspaceId: this.workspace?._id });
-		[verifiedRegistry] = await DB.update<IContainerRegistry>("registry", { _id: updatedRegistry._id }, { isVerified: authRes ? true : false });
+		[verifiedRegistry] = await DB.update("registry", { _id: updatedRegistry._id }, { isVerified: authRes ? true : false });
 
 		return interfaces.respondSuccess({ data: updatedRegistry });
 	}

@@ -9,6 +9,8 @@ import { getAppConfigFromApp } from "../apps/app-helper";
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppConfig } from "../apps/update-config";
 import { askForDomain } from "../build";
+import { askForCluster } from "../cluster/ask-for-cluster";
+import { askForRegistry } from "../registry/ask-for-registry";
 import { askForCertIssuer } from "./ask-deploy-environment-info";
 
 export const parseOptionsToAppConfig = async (options: InputOptions) => {
@@ -30,6 +32,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		providerProject,
 		region,
 		zone,
+		registry,
 	} = options;
 
 	const { app, project } = await askForProjectAndApp(options.targetDirectory, options);
@@ -48,15 +51,15 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		return;
 	}
 
-	const { remoteSSH, remoteURL, provider: gitProvider, branch } = gitRepoData;
+	const { repoSSH, repoURL, provider: gitProvider, branch } = gitRepoData;
 
 	if (!appConfig.git) appConfig.git = {};
 	appConfig.git.provider = gitProvider;
-	appConfig.git.repoSSH = remoteSSH;
-	appConfig.git.repoURL = remoteURL;
+	appConfig.git.repoSSH = repoSSH;
+	appConfig.git.repoURL = repoURL;
 
-	options.remoteSSH = remoteSSH;
-	options.remoteURL = remoteURL;
+	options.repoSSH = repoSSH;
+	options.repoURL = repoURL;
 	options.gitProvider = gitProvider;
 	options.gitBranch = branch;
 
@@ -71,12 +74,15 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 	if (typeof region !== "undefined") deployEnvironment.region = region;
 	if (typeof zone !== "undefined") deployEnvironment.zone = zone;
 
+	// Container Registry
+	if (typeof registry !== "undefined") deployEnvironment.registry = typeof registry !== "boolean" ? registry : (await askForRegistry()).slug;
+
 	// Domains
 	if (typeof domain !== "undefined") deployEnvironment.domains = [domain];
 
 	// Kubernetes Info
 	if (typeof namespace !== "undefined") deployEnvironment.namespace = namespace;
-	if (typeof cluster !== "undefined") deployEnvironment.cluster = cluster;
+	if (typeof cluster !== "undefined") deployEnvironment.cluster = typeof cluster !== "boolean" ? cluster : (await askForCluster()).slug;
 	if (typeof port !== "undefined") deployEnvironment.port = port;
 	if (typeof cdn !== "undefined") deployEnvironment.cdn = cdn;
 	if (typeof shouldInherit !== "undefined") deployEnvironment.shouldInherit = shouldInherit;

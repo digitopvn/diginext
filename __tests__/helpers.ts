@@ -56,52 +56,62 @@ import { Options, execaCommand } from "execa";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import path from "path";
 import { existsSync, mkdirSync } from "fs";
+import CloudDatabaseBackupController from "@/controllers/CloudDatabaseBackupController";
 
 const user1 = { name: "Test User 1", email: "user1@test.local" } as IUser;
 const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
 
-// for directly interact with the database...
-export const appSvc = new AppService();
-export const buildSvc = new BuildService();
-export const databaseSvc = new CloudDatabaseService();
-export const databaseBackupSvc = new CloudDatabaseBackupService();
-export const providerSvc = new CloudProviderService();
-export const clusterSvc = new ClusterService();
-export const cronjobSvc = new CronjobService();
-export const registrySvc = new ContainerRegistryService();
-export const frameworkSvc = new FrameworkService();
-export const gitSvc = new GitProviderService();
-export const projectSvc = new ProjectService();
-export const releaseSvc = new ReleaseService();
-export const roleSvc = new RoleService();
-export const teamSvc = new TeamService();
-export const userSvc = new UserService();
-export const apiKeySvc = new ApiKeyUserService();
-export const serviceAccountSvc = new ServiceAccountService();
-export const workspaceSvc = new WorkspaceService();
-
 // for API testing...
-export const appCtl = new AppController();
-export const buildCtl = new BuildController();
-export const databaseCtl = new CloudDatabaseController();
 export const providerCtl = new CloudProviderController();
-export const clusterCtl = new ClusterController();
-export const cronjobCtl = new CronjobController();
-export const registryCtl = new ContainerRegistryController();
-export const frameworkCtl = new FrameworkController();
-export const gitCtl = new GitProviderController();
-export const projectCtl = new ProjectController();
-export const releaseCtl = new ReleaseController();
 export const roleCtl = new RoleController();
 export const teamCtl = new TeamController();
 export const userCtl = new UserController();
 export const apiKeyCtl = new ApiKeyUserController();
 export const serviceAccountCtl = new ServiceAccountController();
 export const workspaceCtl = new WorkspaceController();
+export const projectCtl = new ProjectController();
+export const appCtl = new AppController();
+export const buildCtl = new BuildController();
+export const releaseCtl = new ReleaseController();
+export const databaseCtl = new CloudDatabaseController();
+export const databaseBackupCtl = new CloudDatabaseBackupController();
+export const clusterCtl = new ClusterController();
+export const cronjobCtl = new CronjobController();
+export const registryCtl = new ContainerRegistryController();
+export const frameworkCtl = new FrameworkController();
+export const gitCtl = new GitProviderController();
+
+// for directly interact with the database...
+export const providerSvc = providerCtl.service;
+export const roleSvc = roleCtl.service;
+export const teamSvc = teamCtl.service;
+export const userSvc = userCtl.service;
+export const apiKeySvc = apiKeyCtl.service;
+export const serviceAccountSvc = serviceAccountCtl.service;
+export const workspaceSvc = workspaceCtl.service;
+export const projectSvc = projectCtl.service;
+export const appSvc = appCtl.service;
+export const buildSvc = buildCtl.service;
+export const releaseSvc = releaseCtl.service;
+export const databaseSvc = databaseCtl.service;
+export const databaseBackupSvc = databaseBackupCtl.service;
+export const clusterSvc = clusterCtl.service;
+export const cronjobSvc = cronjobCtl.service;
+export const registrySvc = registryCtl.service;
+export const frameworkSvc = frameworkCtl.service;
+export const gitSvc = gitCtl.service;
 
 export const controllers = [
+	roleCtl,
+	teamCtl,
+	userCtl,
+	apiKeyCtl,
+	serviceAccountCtl,
+	workspaceCtl,
+	projectCtl,
 	appCtl,
 	buildCtl,
+	releaseCtl,
 	databaseCtl,
 	providerCtl,
 	clusterCtl,
@@ -109,14 +119,6 @@ export const controllers = [
 	registryCtl,
 	frameworkCtl,
 	gitCtl,
-	projectCtl,
-	releaseCtl,
-	roleCtl,
-	teamCtl,
-	userCtl,
-	apiKeyCtl,
-	serviceAccountCtl,
-	workspaceCtl,
 ];
 
 // current logged in user
@@ -158,7 +160,8 @@ export const createFakeUser = async (id: number = randomInt(100)) => {
 
 export const getCurrentUser = async () => {
 	// reload user data
-	if (currentUser) currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "roles", "activeRole"] });
+	if (currentUser) currentUser = await userSvc.findOne({ _id: currentUser._id }, { populate: ["activeWorkspace", "activeRole", "roles"] });
+	if (currentUser.activeWorkspace) currentWorkspace = currentUser.activeWorkspace as IWorkspace;
 	return currentUser as IUser & { activeWorkspace: IWorkspace & { _id: string } };
 };
 
@@ -238,7 +241,7 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 	return { user, workspace };
 };
 
-export type DxOptions = { onProgress: (msg: string) => void };
+export type DxOptions = { onProgress?: (msg: string) => void; isDebugging?: boolean };
 
 export const CLI_TEST_DIR = path.resolve(CLI_CONFIG_DIR, "tests");
 if (!existsSync(CLI_TEST_DIR)) mkdirSync(CLI_TEST_DIR, { recursive: true });
@@ -252,6 +255,7 @@ export const dxCmd = async (command: string, options?: DxOptions) => {
 			_stdio.on("data", (data) => {
 				let logMsg = data.toString();
 				stdout += logMsg;
+				if (options?.isDebugging) console.log("[DX_CMD]", logMsg);
 				if (options?.onProgress && logMsg) options?.onProgress(logMsg);
 			});
 		}

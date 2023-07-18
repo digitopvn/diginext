@@ -1,10 +1,10 @@
 // import { log } from "diginext-utils/dist/xconsole/log";
 import { Response } from "diginext-utils/dist/response";
+import { isEmpty } from "lodash";
 import passport from "passport";
 
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
 
 /**
@@ -14,6 +14,7 @@ import { MongoDB } from "@/plugins/mongodb";
  */
 const jwt_auth = (req: AppRequest, res, next) =>
 	passport.authenticate("jwt", { session: false }, async function (err, user: IUser, info) {
+		const { DB } = await import("@/modules/api/DB");
 		// console.log(err, user, info);
 		// console.log(`AUTHENTICATE: jwt_auth > user:`, user);
 
@@ -34,34 +35,39 @@ const jwt_auth = (req: AppRequest, res, next) =>
 			if (!user.activeWorkspace) {
 				const workspaces = user.workspaces as IWorkspace[];
 				if (workspaces.length === 1) {
-					user = await DB.updateOne<IUser>(
+					user = await DB.updateOne(
 						"user",
 						{ _id: user._id },
 						{ activeWorkspace: workspaces[0]._id },
 						{ populate: ["roles", "workspaces", "activeWorkspace"] }
 					);
 				}
-				req.workspace = user.activeWorkspace as IWorkspace;
 			}
+			req.workspace = user.activeWorkspace as IWorkspace;
 			// console.log("user.activeWorkspace :>> ", user.activeWorkspace);
 
 			// role
 			const { roles = [] } = user;
-			const activeRole = roles.find(
-				(role) => MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id)
-			) as IRole;
-			// console.log("user.activeRole :>> ", user.activeRole);
-			// console.log("activeRole :>> ", activeRole);
+			const activeRole = isEmpty(user.activeWorkspace)
+				? undefined
+				: (roles.find(
+						(role) => MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id)
+				  ) as IRole);
+
 			if (activeRole && user.activeRole !== activeRole._id) {
-				user = await DB.updateOne<IUser>(
+				user = await DB.updateOne(
 					"user",
 					{ _id: user._id },
 					{ activeRole: activeRole._id },
 					{ populate: ["roles", "workspaces", "activeRole", "activeWorkspace"] }
 				);
-				// console.log("user.activeRole :>> ", user.activeRole);
-				// user.activeRole = activeRole;
 			}
+
+			// WHY????
+			if (isEmpty(user.activeWorkspace)) delete user.activeWorkspace;
+			if (isEmpty(user.activeRole)) delete user.activeRole;
+			// if (isEmpty(user.activeWorkspace) && isEmpty(user.activeRole)) return Response.rejected(res, "Permissions denied.");
+
 			req.role = user.activeRole = activeRole;
 
 			// user

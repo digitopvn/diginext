@@ -1,13 +1,15 @@
 import type { NextFunction, Response } from "express";
 
-import type BaseController from "@/controllers/BaseController";
 import type { IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
-import { DB } from "@/modules/api/DB";
 
-export const registerController = (controller: BaseController) => {
+export const registerController = (controller: any) => {
 	return async (req: AppRequest, res: Response, next: NextFunction) => {
 		try {
+			const { DB } = await import("@/modules/api/DB");
+			// assign Express request
+			controller.req = req;
+
 			// assign current user to the controller
 			controller.user = req.user;
 
@@ -17,20 +19,26 @@ export const registerController = (controller: BaseController) => {
 				controller.workspace =
 					typeof (controller.user?.activeWorkspace as any)._id === "undefined"
 						? (controller.user?.activeWorkspace as IWorkspace)
-						: await DB.findOne<IWorkspace>("workspace", { _id: wsId });
+						: await DB.findOne("workspace", { _id: wsId });
 			}
 			req.workspace = controller.workspace;
 
-			// assign express.Request to service
+			// assign ownership
+			controller.ownership = { owner: controller.user, workspace: controller.workspace };
+
+			// assign ownership, express.Request to service
 			if (controller.service) {
+				controller.service.user = controller.user;
+				controller.service.workspace = controller.workspace;
+				controller.service.ownership = controller.ownership;
 				controller.service.req = req;
 				controller.service.req.workspace = controller.workspace;
 			}
 
 			// parse filter, body and pagination data:
-			await controller.parsePagination(req);
-			controller.parseFilter(req);
-			controller.parseBody(req);
+			if (controller.parsePagination) await controller.parsePagination(req);
+			if (controller.parseFilter) controller.parseFilter(req);
+			if (controller.parseBody) controller.parseBody(req);
 
 			next();
 		} catch (e) {

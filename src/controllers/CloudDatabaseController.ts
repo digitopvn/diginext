@@ -1,12 +1,12 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { ICloudDatabase } from "@/entities";
+import { CloudDatabaseBackupDto } from "@/entities";
 import type { CronjobRepeat, CronjonRepeatCondition } from "@/entities/Cronjob";
 import type { HiddenBodyKeys } from "@/interfaces";
 import * as interfaces from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
-import type { CloudDatabase } from "@/services/CloudDatabaseService";
-import CloudDatabaseService from "@/services/CloudDatabaseService";
+import { CloudDatabaseService } from "@/services/CloudDatabaseService";
 
 import BaseController from "./BaseController";
 
@@ -29,7 +29,7 @@ export default class CloudDatabaseController extends BaseController<ICloudDataba
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async create(@Body() body: Omit<ICloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		try {
 			return await super.create(body);
 		} catch (e) {
@@ -40,7 +40,7 @@ export default class CloudDatabaseController extends BaseController<ICloudDataba
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	update(@Body() body: Omit<ICloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		return super.update(body);
 	}
 
@@ -98,7 +98,16 @@ export default class CloudDatabaseController extends BaseController<ICloudDataba
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/restore")
-	async restore(@Body() body: Omit<CloudDatabase, keyof HiddenBodyKeys>, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async restore(
+		@Body() body: CloudDatabaseBackupDto,
+		@Queries()
+		queryParams?: {
+			/**
+			 * Cloud Database Backup ID
+			 */
+			id: string;
+		}
+	) {
 		try {
 			// restore...
 			return interfaces.respondFailure(`This feature is under development.`);

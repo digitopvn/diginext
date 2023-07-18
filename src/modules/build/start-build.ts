@@ -8,14 +8,13 @@ import path from "path";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IApp, IBuild, ICluster, IProject, IRelease, IUser, IWorkspace } from "@/entities";
+import type { IApp, IBuild, IRelease, IWorkspace } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath, wait } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 
-import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import builder from "../builder";
 import type { GenerateDeploymentResult } from "../deploy";
@@ -31,6 +30,8 @@ export let queue = new PQueue({ concurrency: 1 });
  * Stop the build process.
  */
 export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug: string) => {
+	const { DB } = await import("../api/DB");
+
 	let error;
 
 	// Validate...
@@ -65,16 +66,18 @@ export async function startBuildV1(
 		shouldRollout?: boolean;
 	} = { shouldRollout: true }
 ) {
+	const { DB } = await import("../api/DB");
+
 	// parse variables
 	const { shouldRollout = true } = addition;
 	const startTime = dayjs();
 
 	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, namespace } = options;
 
-	const latestBuild = await DB.findOne<IBuild>("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
-	const project = await DB.findOne<IProject>("project", { slug: projectSlug });
-	const author = await DB.findOne<IUser>("user", { _id: options.userId });
+	const latestBuild = await DB.findOne("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
+	const project = await DB.findOne("project", { slug: projectSlug });
+	const author = await DB.findOne("user", { _id: options.userId });
 	const workspace = app.workspace as IWorkspace;
 
 	// socket & logs
@@ -106,7 +109,7 @@ export async function startBuildV1(
 	options.buildDir = buildDir;
 
 	// detect "gitProvider":
-	const gitProvider = getGitProviderFromRepoSSH(options.remoteSSH);
+	const gitProvider = getGitProviderFromRepoSSH(options.repoSSH);
 
 	// create new build on build server:
 	const buildData = {
@@ -127,7 +130,7 @@ export async function startBuildV1(
 		workspace: workspace._id,
 	} as IBuild;
 
-	const newBuild = await DB.create<IBuild>("build", buildData);
+	const newBuild = await DB.create("build", buildData);
 	if (!newBuild) {
 		console.log("buildData :>> ", buildData);
 		sendLog({ SOCKET_ROOM, message: "Failed to create new build on server." });
@@ -144,9 +147,9 @@ export async function startBuildV1(
 	}
 
 	// Git SSH verified -> start pulling now...
-	sendLog({ SOCKET_ROOM, message: `Pulling latest source code from "${options.remoteSSH}" at "${gitBranch}" branch...` });
+	sendLog({ SOCKET_ROOM, message: `Pulling latest source code from "${options.repoSSH}" at "${gitBranch}" branch...` });
 
-	await pullOrCloneGitRepo(options.remoteSSH, buildDir, gitBranch, { onUpdate: (message) => sendLog({ SOCKET_ROOM, message }) });
+	await pullOrCloneGitRepo(options.repoSSH, buildDir, gitBranch, { onUpdate: (message) => sendLog({ SOCKET_ROOM, message }) });
 
 	// emit socket message to "digirelease" app:
 	sendLog({ SOCKET_ROOM, message: `Finished pulling latest files of "${gitBranch}"...` });
@@ -205,7 +208,7 @@ export async function startBuildV1(
 	 * Create namespace & imagePullScrets here!
 	 * Because it will generate the name of secret to put into deployment yaml
 	 */
-	const cluster = await DB.findOne<ICluster>("cluster", { shortName: serverDeployEnvironment.cluster });
+	const cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster });
 
 	if (!cluster) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `Cluster "${serverDeployEnvironment.cluster}" not found` });
@@ -277,7 +280,7 @@ export async function startBuildV1(
 	updatedAppData.lastUpdatedBy = username;
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-	const [updatedApp] = await DB.update<IApp>("app", { slug: appSlug }, updatedAppData);
+	const [updatedApp] = await DB.update("app", { slug: appSlug }, updatedAppData);
 
 	sendLog({ SOCKET_ROOM, message: `Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
@@ -288,7 +291,7 @@ export async function startBuildV1(
 
 		// authenticate registry before building & pushing image
 		const registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry });
-		await connectRegistry(registry);
+		await connectRegistry(registry, { userId: author._id, workspaceId: workspace._id });
 
 		const buildEngine = process.env.BUILDER === "docker" ? builder.Docker : builder.Podman;
 		await buildEngine.build(buildImage, {

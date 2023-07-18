@@ -8,9 +8,8 @@ export const testCommand = async (options?: InputOptions) => {
 	// const originRemote = remotes[0] as any;
 	// if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
 	// console.log("originRemote :>> ", originRemote);
-
 	// ---- GENERATE SSH KEY ----
-	const { execa, execaCommand } = await import("execa");
-	const privateIdRsaFile = "id_rsa";
-	await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", ""]);
+	// const { execa, execaCommand } = await import("execa");
+	// const privateIdRsaFile = "id_rsa";
+	// await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", ""]);
 };

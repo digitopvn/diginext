@@ -1,11 +1,10 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 
-import type { IApp, IBuild, IProject, IUser, IWorkspace } from "@/entities";
+import type { IApp, IBuild, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { MongoDB } from "@/plugins/mongodb";
 
-import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { queue } from "../build";
 import { createReleaseFromBuild } from "../build/create-release-from-build";
@@ -44,6 +43,7 @@ export type DeployImageParams = {
 };
 
 export const deployImage = async (options: DeployImageParams, appConfig: AppConfig, envVars?: KubeEnvironmentVariable[]) => {
+	const { DB } = await import("@/modules/api/DB");
 	const { env = "dev", projectSlug, slug, username, workspaceId, cliVersion } = options;
 	const { imageURL } = appConfig.deployEnvironment[env];
 
@@ -53,20 +53,20 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	if (!username) throw new Error(`Author user's name is required.`);
 	if (!imageURL) throw new Error(`Image URL in App config is required.`);
 
-	const project = await DB.findOne<IProject>("project", { slug: projectSlug });
+	const project = await DB.findOne("project", { slug: projectSlug });
 	if (!project) throw new Error(`Project "${projectSlug}" not found. Should you create a new one first?`);
 
-	const app = await DB.findOne<IApp>("app", { slug });
+	const app = await DB.findOne("app", { slug });
 	if (!app) throw new Error(`App "${slug}" not found. Should you create a new one first?`);
 
-	const author = await DB.findOne<IUser>("user", { slug: username });
+	const author = await DB.findOne("user", { slug: username });
 
 	// get workspace
 	let workspace = options.workspace;
-	if (!workspace) workspace = await DB.findOne<IWorkspace>("workspace", { _id: app.workspace });
-	if (!workspace) workspace = await DB.findOne<IWorkspace>("workspace", { _id: project.workspace });
-	if (!workspace && workspaceId) workspace = await DB.findOne<IWorkspace>("workspace", { _id: workspaceId });
-	if (!workspace && author) workspace = await DB.findOne<IWorkspace>("workspace", { _id: author.activeWorkspace });
+	if (!workspace) workspace = await DB.findOne("workspace", { _id: app.workspace });
+	if (!workspace) workspace = await DB.findOne("workspace", { _id: project.workspace });
+	if (!workspace && workspaceId) workspace = await DB.findOne("workspace", { _id: workspaceId });
+	if (!workspace && author) workspace = await DB.findOne("workspace", { _id: author.activeWorkspace });
 
 	// deploy environment
 	let targetEnvironmentFromDB = await getDeployEvironmentByApp(app, env);
@@ -95,10 +95,10 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	updateAppData.environment[env] = JSON.stringify({ ...targetEnvironment, envVars: serverEnvironmentVariables });
 	// log({ updateAppData });
 
-	const updatedApps = await DB.update<IApp>("app", { slug }, updateAppData);
+	const updatedApps = await DB.update("app", { slug }, updateAppData);
 
 	// update the project so it can be sorted on top
-	await DB.update<IProject>("project", { slug: projectSlug }, { lastUpdatedBy: username });
+	await DB.update("project", { slug: projectSlug }, { lastUpdatedBy: username });
 
 	// Create new build:
 	const SOCKET_ROOM = `${slug}-${makeDaySlug()}`;
@@ -119,7 +119,7 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 		cliVersion,
 	} as IBuild;
 
-	const newBuild = await DB.create<IBuild>("build", buildData);
+	const newBuild = await DB.create("build", buildData);
 
 	// create new release & roll it out if needed
 	let releaseId: string;

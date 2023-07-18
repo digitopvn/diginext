@@ -1,6 +1,6 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync, rmSync } from "fs";
 import generator from "generate-password";
 import { MongoClient } from "mongodb";
 import path from "path";
@@ -100,6 +100,10 @@ export const backup = async (
 	const compressedBackupName = `${bkName}.tar.gz`;
 	const { stdout } = execaSync("tar", ["-czf", compressedBackupName, bkName], { cwd: mongoBackupDir });
 	if (options.isDebugging) console.log("Compressing backup directory :>> ", stdout);
+
+	// keep the compressed file, remove the directory to save disk space...
+	const childBackupDir = path.join(mongoBackupDir, bkName);
+	if (existsSync(childBackupDir)) rmSync(childBackupDir, { recursive: true, force: true });
 
 	return { name: bkName, path: path.join(mongoBackupDir, compressedBackupName) };
 };

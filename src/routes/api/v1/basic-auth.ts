@@ -2,9 +2,8 @@ import bcrypt from "bcrypt";
 import express from "express";
 
 import { Config } from "@/app.config";
-import type { IUser, IWorkspace } from "@/entities";
+import type { IWorkspace } from "@/entities";
 import { respondFailure, respondSuccess } from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import { generateJWT } from "@/modules/passports";
 import { MongoDB } from "@/plugins/mongodb";
 
@@ -15,9 +14,10 @@ const router = express.Router();
  */
 router.post("/register", async (req, res) => {
 	const { email, password } = req.body;
+	const { DB } = await import("@/modules/api/DB");
 
 	try {
-		const existingUser = await DB.findOne<IUser>("user", { email });
+		const existingUser = await DB.findOne("user", { email });
 		if (existingUser) return res.json(respondFailure(`Email is existed.`));
 
 		// Hash the password
@@ -27,7 +27,7 @@ router.post("/register", async (req, res) => {
 		const name = (email as string).split("@")[0];
 
 		// Create a new user
-		const newUser = await DB.create<IUser>("user", { name, email, password: hashedPassword });
+		const newUser = await DB.create("user", { name, email, password: hashedPassword });
 
 		// sign JWT and redirect
 		let workspace: IWorkspace;
@@ -73,9 +73,10 @@ router.post(
 	// recaptcha.middleware.verify,
 	async (req, res) => {
 		const { email, password } = req.body;
+		const { DB } = await import("@/modules/api/DB");
 
 		try {
-			const user = await DB.findOne<IUser>("user", { email });
+			const user = await DB.findOne("user", { email });
 			if (!user) return res.json(respondFailure("Invalid credentials"));
 
 			// account was authenticated by other methods

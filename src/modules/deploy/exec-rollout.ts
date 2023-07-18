@@ -31,7 +31,7 @@ export const execRollOut = async (options?: InputOptions) => {
 
 		log(`Looking for some latest releases of this app (${project}/${slug})...`);
 		const releaseURL = `/api/v1/release?sort=-createdAt&limit=5&active=false&projectSlug=${project}&appSlug=${slug}`;
-		const { data } = await fetchApi<IRelease>({ url: releaseURL });
+		const { data } = await fetchApi({ url: releaseURL });
 		const latestReleases = data as IRelease[];
 		// log({ data });
 

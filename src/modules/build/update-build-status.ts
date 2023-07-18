@@ -1,12 +1,12 @@
 import dayjs from "dayjs";
 import { log, logError } from "diginext-utils/dist/xconsole/log";
 
-import type { IApp, IBuild, IProject } from "@/entities";
+import type { IBuild, IProject } from "@/entities";
 import type { BuildStatus } from "@/interfaces/SystemTypes";
 
-import { DB } from "../api/DB";
-
 export async function updateBuildStatus(build: IBuild, status: BuildStatus, extra?: { env?: string }) {
+	const { DB } = await import("@/modules/api/DB");
+
 	if (!build) {
 		logError(`[START BUILD] updateBuildStatus > "build" is required.`);
 		return;
@@ -19,7 +19,7 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, extr
 	const endTime = status === "failed" || status === "success" ? new Date() : undefined;
 	const duration = endTime ? dayjs(endTime).diff(startTime, "millisecond") : undefined;
 
-	const updatedBuild = await DB.updateOne<IBuild>("build", { _id: build._id }, { status, endTime, duration }, { populate: ["project"] });
+	const updatedBuild = await DB.updateOne("build", { _id: build._id }, { status, endTime, duration }, { populate: ["project"] });
 	if (!updatedBuild) {
 		logError(`[START BUILD] updateBuildStatus >> error!`);
 		return;
@@ -30,11 +30,11 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, extr
 	if (extra?.env && status === "success") updateDto[`deployEnvironment.${extra.env}.buildNumber`] = build.tag;
 	log(`[START BUILD] updateBuildStatus > updateDto :>>`, updateDto);
 
-	const updatedApp = await DB.updateOne<IApp>("app", { _id: appId }, updateDto);
+	const updatedApp = await DB.updateOne("app", { _id: appId }, updateDto);
 	log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp);
 
 	if (updatedApp) {
-		const updatedProject = await DB.updateOne<IProject>("project", { _id: updatedApp.project }, { latestBuild: build.slug });
+		const updatedProject = await DB.updateOne("project", { _id: updatedApp.project }, { latestBuild: build.slug });
 		log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject);
 	}
 
@@ -42,28 +42,30 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, extr
 }
 
 export async function updateBuildStatusByAppSlug(appSlug: string, buildSlug: string, buildStatus: BuildStatus) {
+	const { DB } = await import("../api/DB");
+
 	// find the existing project
 	if (!appSlug) {
 		logError(`[START BUILD] updateBuildStatus > "appSlug" is required.`);
 		return;
 	}
 
-	const app = await DB.findOne<IApp>("app", { slug: appSlug }, { populate: ["project"] });
+	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
 	if (!app) return;
 
 	// update latest build to current project
 	let projectSlug = (app.project as IProject).slug;
 	// log(`[START BUILD] updateBuildStatus > projectSlug :>>`, projectSlug);
 
-	const [updatedProject] = await DB.update<IProject>("project", { slug: projectSlug }, { latestBuild: buildSlug });
+	const [updatedProject] = await DB.update("project", { slug: projectSlug }, { latestBuild: buildSlug });
 	// log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject.latestBuild);
 
 	// update latest build to current app
-	const [updatedApp] = await DB.update<IApp>("app", { slug: appSlug }, { latestBuild: buildSlug });
+	const [updatedApp] = await DB.update("app", { slug: appSlug }, { latestBuild: buildSlug });
 	// log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp.latestBuild);
 
 	// update build's status on server
-	const [updatedBuild] = await DB.update<IBuild>("build", { slug: buildSlug }, { status: buildStatus }, { populate: ["project"] });
+	const [updatedBuild] = await DB.update("build", { slug: buildSlug }, { status: buildStatus }, { populate: ["project"] });
 	if (updatedBuild) {
 		// log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> new status: ${buildStatus.toUpperCase()}`);
 		return updatedBuild;

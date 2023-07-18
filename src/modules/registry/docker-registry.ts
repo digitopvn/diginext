@@ -3,9 +3,8 @@ import type { ExecaReturnValue } from "execa";
 
 import { Config, isServerMode } from "@/app.config";
 import { saveCliConfig } from "@/config/config";
-import type { ICluster, IContainerRegistry, IWorkspace } from "@/entities";
+import type { IContainerRegistry } from "@/entities";
 
-import { DB } from "../api/DB";
 import ClusterManager from "../k8s";
 import { getKubeContextByCluster } from "../k8s/kube-config";
 import type { ContainerRegistrySecretOptions, DockerRegistryCredentials } from "./ContainerRegistrySecretOptions";
@@ -24,11 +23,15 @@ interface DockerRegistryConnectOptions {
 
 const DockerRegistry = {
 	connectDockerToRegistry: async (creds: DockerRegistryCredentials, options: DockerRegistryConnectOptions) => {
+		const { DB } = await import("@/modules/api/DB");
+
 		const { execaCommand, execaSync } = await import("execa");
 
 		const { workspaceId, registry: registrySlug } = options;
 
 		const { server = "https://index.docker.io/v2/", username, password, email } = creds;
+
+		if (!password) throw new Error(`Permissions denied.`);
 
 		try {
 			let connectRes: ExecaReturnValue<string>;
@@ -44,17 +47,17 @@ const DockerRegistry = {
 			throw new Error(`[DOCKER] ${e}`);
 		}
 
-		const workspace = await DB.findOne<IWorkspace>("workspace", { _id: workspaceId });
+		const workspace = await DB.findOne("workspace", { _id: workspaceId });
 		if (!workspace) throw new Error(`[DOCKER] Workspace not found.`);
 
-		const existingRegistry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+		const existingRegistry = await DB.findOne("registry", { slug: registrySlug });
 		if (options.isDebugging) log(`[DOCKER] connectDockerRegistry >`, { existingRegistry });
 
 		if (existingRegistry) return existingRegistry;
 
 		// IF NOT EXISTED -> Save this container registry to database!
 		const imageBaseURL = `${server}/${workspace.slug}`;
-		const newRegistry = await DB.create<IContainerRegistry>("registry", {
+		const newRegistry = await DB.create("registry", {
 			name: "Docker Registry",
 			provider: "dockerhub",
 			imageBaseURL,
@@ -69,20 +72,21 @@ const DockerRegistry = {
 		return newRegistry;
 	},
 	createImagePullSecret: async (options: ContainerRegistrySecretOptions) => {
+		const { DB } = await import("@/modules/api/DB");
 		const { execa, execaCommand, execaSync } = await import("execa");
 
-		const { registrySlug, namespace = "default", clusterShortName } = options;
+		const { registrySlug, namespace = "default", clusterSlug } = options;
 
-		if (!clusterShortName) throw new Error(`Cluster's short name is required.`);
+		if (!clusterSlug) throw new Error(`Cluster's short name is required.`);
 
 		// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
-		const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
-		if (!cluster) throw new Error(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterShortName}" cluster.`);
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+		if (!cluster) throw new Error(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterSlug}" cluster.`);
 
 		const { name: context } = await getKubeContextByCluster(cluster);
 
 		// get Container Registry data:
-		const registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+		const registry = await DB.findOne("registry", { slug: registrySlug });
 
 		if (!registry) {
 			throw new Error(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);
@@ -94,6 +98,8 @@ const DockerRegistry = {
 			dockerPassword: password,
 		} = registry;
 
+		if (!password) throw new Error(`Permissions denied.`);
+
 		const secretName = `${registry.slug}-docker-registry-key`;
 		let secretValue: string;
 
@@ -103,7 +109,7 @@ const DockerRegistry = {
 			// create new namespace?
 			const ns = await ClusterManager.createNamespace(namespace, { context });
 			// still can't create namespace -> throw error!
-			if (!ns) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterShortName}").`);
+			if (!ns) throw new Error(`Namespace "${namespace}" is not existed on this cluster ("${clusterSlug}").`);
 		}
 
 		// check if the secret is existed within the namespace, try to delete it!
@@ -142,14 +148,14 @@ const DockerRegistry = {
 				},
 			} as IContainerRegistry;
 
-			const updatedRegistries = await DB.update<IContainerRegistry>("registry", { slug: registrySlug }, updateData);
+			const updatedRegistries = await DB.update("registry", { slug: registrySlug }, updateData);
 			const updatedRegistry = updatedRegistries[0];
 
 			// save registry to local config:
 			if (!isServerMode) saveCliConfig({ currentRegistry: updatedRegistry });
 
 			logSuccess(
-				`[DOCKER] ✓ Successfully assign "imagePullSecret" data (${secretName}) to "${namespace}" namespace of "${clusterShortName}" cluster.`
+				`[DOCKER] ✓ Successfully assign "imagePullSecret" data (${secretName}) to "${namespace}" namespace of "${clusterSlug}" cluster.`
 			);
 
 			return updatedRegistry.imagePullSecret;

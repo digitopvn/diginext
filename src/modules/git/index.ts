@@ -85,21 +85,11 @@ export const logout = async () => {
 	logSuccess(`Logged out from all git providers.`);
 };
 
-export interface InitializeGitRemoteOptions {
+export interface InitializeGitRemoteOptions extends Pick<InputOptions, "repoSSH" | "targetDirectory" | "username"> {
 	/**
 	 * App's working directory
 	 */
 	dir: string;
-
-	/**
-	 * Git repository's SSH URL
-	 */
-	remoteSSH?: string;
-
-	/**
-	 * Git username of the user
-	 */
-	username?: string;
 }
 
 /**
@@ -107,33 +97,11 @@ export interface InitializeGitRemoteOptions {
  * Setup "main" branch and "dev/*" branch
  */
 export async function initializeGitRemote(options: InitializeGitRemoteOptions) {
-	// Create new remote repository
-	// options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`.toLowerCase();
-
-	// log(`options.git >>`, options.git);
-	// log("options.gitProvider :>> ", options.gitProvider);
-	// log("options.repoSlug :>> ", options.repoSlug);
-	// log(`options.remoteURL >>`, options.remoteURL);
-	// log(`options.remoteSSH >>`, options.remoteSSH);
-	// log(`options.repoURL >>`, options.repoURL);
-
-	// log(`Created new repository on ${provider.type}`);
-
-	const { dir = process.cwd() } = options;
-
-	// const repoData = {
-	// 	name: repoSlug,
-	// 	description: options.description,
-	// 	private: isPrivate,
-	// } as GitRepositoryDto;
-
-	// create new repo via REST API
-	// const newRepo = await DB.create<GitRepository>("git", repoData, { subpath: `/orgs/repos`, filter: { slug: provider.slug } });
-	// console.log("createRepoResult :>> ", newRepo);
+	const { dir = options.targetDirectory || process.cwd() } = options;
 
 	// add git origin:
 	const git = simpleGit(dir, { binary: "git" });
-	await git.addRemote("origin", options.remoteSSH);
+	await git.addRemote("origin", options.repoSSH);
 	await git.push("origin", "main");
 
 	// create developer branches
@@ -200,10 +168,10 @@ export const createNewPullRequest = async (options?: InputOptions) => {
 			logWarn(`This feature is under development.`);
 
 		case "github":
-			if (repoInfo.remoteURL) {
+			if (repoInfo.repoURL) {
 				let destBranch = options.thirdAction || "main";
 				let fromBranch = options.fourAction || repoInfo.branch;
-				open(`${repoInfo.remoteURL}/compare/${destBranch}...${fromBranch}`);
+				open(`${repoInfo.repoURL}/compare/${destBranch}...${fromBranch}`);
 			}
 			break;
 

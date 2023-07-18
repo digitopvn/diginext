@@ -1,5 +1,4 @@
-import type { FrameworkDto, IFramework, IUser, IWorkspace } from "@/entities";
-import { DB } from "@/modules/api/DB";
+import type { FrameworkDto, IUser, IWorkspace } from "@/entities";
 
 export const initialFrameworks: FrameworkDto[] = [
 	{
@@ -21,16 +20,13 @@ export const initialFrameworks: FrameworkDto[] = [
 ];
 
 export const seedFrameworks = async (workspace: IWorkspace, owner: IUser) => {
+	const { DB } = await import("@/modules/api/DB");
 	const results = (
 		await Promise.all(
 			initialFrameworks.map(async (fw) => {
-				const framework = await DB.findOne<IFramework>("framework", { repoURL: fw.repoURL, workspace: workspace._id });
+				const framework = await DB.findOne("framework", { repoURL: fw.repoURL, workspace: workspace._id });
 				if (!framework) {
-					const seedFw = await DB.create<IFramework>(
-						"framework",
-						{ ...fw, owner: owner._id, workspace: workspace._id },
-						{ isDebugging: true }
-					);
+					const seedFw = await DB.create("framework", { ...fw, owner: owner._id, workspace: workspace._id }, { isDebugging: true });
 					return seedFw;
 				}
 				return framework;

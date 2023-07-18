@@ -111,6 +111,7 @@ export interface IApp extends IBase {
 	 *
 	 * @type {{ [key: string]: DeployEnvironment | string }}
 	 * @memberof IApp
+	 * @deprecated
 	 */
 	environment?: { [key: string]: DeployEnvironment | string };
 
@@ -142,11 +143,16 @@ export interface IApp extends IBase {
 	 * Git Provider of this app
 	 */
 	gitProvider?: Types.ObjectId | IGitProvider | string;
+
+	/**
+	 * Date when the application was archived (take down all deploy environments)
+	 */
+	archivedAt?: Date;
 }
 
 export type AppDto = Omit<IApp, keyof HiddenBodyKeys>;
 
-export const appSchema = new Schema(
+export const appSchema = new Schema<IApp>(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
@@ -171,6 +177,7 @@ export const appSchema = new Schema(
 		latestBuild: { type: String },
 		projectSlug: { type: String },
 		gitProvider: { type: Schema.Types.ObjectId, ref: "git_providers" },
+		archivedAt: { type: Date },
 	},
 	{ collection: "apps", timestamps: true }
 );

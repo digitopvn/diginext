@@ -3,7 +3,7 @@ import GoogleStrategy from "passport-google-oauth2";
 
 import { Config } from "@/app.config";
 import type { ProviderInfo, UserDto } from "@/entities/User";
-import UserService from "@/services/UserService";
+import { UserService } from "@/services";
 
 export const googleStrategy = new GoogleStrategy(
 	{
@@ -29,7 +29,7 @@ export const googleStrategy = new GoogleStrategy(
 				if (user.image != profile.picture) updateData.image = profile.picture;
 				if (user.name != profile.displayName) updateData.name = profile.displayName;
 
-				if (!isEmpty(updateData)) [user] = await userSvc.update({ _id: user._id }, updateData);
+				if (!isEmpty(updateData)) user = await userSvc.updateOne({ _id: user._id }, updateData);
 
 				request.user = user;
 

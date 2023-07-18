@@ -21,7 +21,12 @@ export interface ICluster extends IBase {
 	 */
 	isVerified?: boolean;
 	/**
-	 * A cluster name on the cloud provider, **NOT** a cluster name in `kubeconfig`
+	 * Is this a default cluster
+	 */
+	isDefault?: boolean;
+	/**
+	 * A cluster name on the cloud provider
+	 * - **Applied for GKE & DOK only**
 	 */
 	shortName?: string;
 	/**
@@ -80,12 +85,13 @@ export interface ICluster extends IBase {
 }
 export type ClusterDto = Omit<ICluster, keyof HiddenBodyKeys>;
 
-export const clusterSchema = new Schema(
+export const clusterSchema = new Schema<ICluster>(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
 		slug: { type: String },
 		isVerified: { type: Boolean },
+		isDefault: { type: Boolean, default: false },
 		shortName: { type: String },
 		contextName: { type: String },
 		provider: { type: Types.ObjectId, ref: "cloud_providers" },

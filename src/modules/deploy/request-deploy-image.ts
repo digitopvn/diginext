@@ -3,11 +3,9 @@ import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
 
-import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
 
@@ -19,6 +17,7 @@ export async function requestDeployImage(imageURL: string, options: InputOptions
 		logError(`This command is only available at CLIENT MODE.`);
 		return;
 	}
+	const { DB } = await import("@/modules/api/DB");
 
 	const { buildServerUrl } = getCliConfig();
 	const { env, projectSlug, slug } = options;
@@ -86,7 +85,7 @@ export async function requestDeployImage(imageURL: string, options: InputOptions
 
 	// update the project so it can be sorted on top
 	try {
-		await DB.update<IProject>("project", { slug: projectSlug }, { lastUpdatedBy: options.username });
+		await DB.update("project", { slug: projectSlug }, { lastUpdatedBy: options.username });
 	} catch (e) {
 		logWarn(e);
 	}

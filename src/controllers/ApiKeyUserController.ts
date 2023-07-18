@@ -1,56 +1,36 @@
-import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
-
 import BaseController from "@/controllers/BaseController";
-import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
-import * as ApiKeyAccount from "@/entities/ApiKeyAccount";
-import * as interfaces from "@/interfaces";
-import { ApiKeyUserService } from "@/services";
-import WorkspaceService from "@/services/WorkspaceService";
+import type { ApiKeyAccountDto, IApiKeyAccount } from "@/entities/ApiKeyAccount";
+import type { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import { respondFailure, respondSuccess } from "@/interfaces";
+import { ApiKeyUserService, WorkspaceService } from "@/services";
 
 interface JoinWorkspaceBody {
 	userId: string;
 	workspace: string;
 }
 
-@Tags("API Key")
-@Route("api_key")
 export default class ApiKeyUserController extends BaseController<IApiKeyAccount> {
 	constructor() {
 		super(new ApiKeyUserService());
 	}
 
-	@Security("api_key")
-	@Security("jwt")
-	@Get("/")
-	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	read(queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
-	@Security("api_key")
-	@Security("jwt")
-	@Post("/")
-	create(@Body() body: ApiKeyAccount.ApiKeyAccountDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	create(body: ApiKeyAccountDto, queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
-	@Security("api_key")
-	@Security("jwt")
-	@Patch("/")
-	update(@Body() body: ApiKeyAccount.ApiKeyAccountDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	update(body: ApiKeyAccountDto, queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
-	@Security("api_key")
-	@Security("jwt")
-	@Delete("/")
-	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
+	delete(queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
-	@Security("api_key")
-	@Security("jwt")
-	@Patch("/join-workspace")
-	async joinWorkspace(@Body() data: JoinWorkspaceBody) {
+	async joinWorkspace(data: JoinWorkspaceBody) {
 		const { userId, workspace: workspaceSlug } = data;
 		// console.log("{ userId, workspace } :>> ", { userId, workspace });
 
@@ -94,9 +74,9 @@ export default class ApiKeyUserController extends BaseController<IApiKeyAccount>
 
 			// console.log("[2] updatedUser :>> ", updatedUser[0]);
 
-			return interfaces.respondSuccess({ data: updatedUser });
+			return respondSuccess({ data: updatedUser });
 		} catch (e) {
-			return interfaces.respondFailure(e.message);
+			return respondFailure(e.message);
 		}
 	}
 }

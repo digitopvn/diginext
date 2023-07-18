@@ -7,14 +7,38 @@ import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { MongoDB } from "@/plugins/mongodb";
-import AppService from "@/services/AppService";
-import ProjectService from "@/services/ProjectService";
+import { AppService, ProjectService } from "@/services";
 
 import BaseController from "./BaseController";
 
+interface IQueryProjectsAndApps {
+	/**
+	 * Should check for item's status
+	 * @default false
+	 */
+	status?: boolean;
+	/**
+	 * Find one item by `{ObjectID}`
+	 */
+	id?: string;
+	_id?: string;
+	/**
+	 * Mark this request as search (return the similar results based on the filter query params)
+	 * @default true
+	 */
+	search?: boolean;
+	/**
+	 * Pagination
+	 */
+	page?: number;
+	size?: number;
+	limit?: number;
+	skip?: number;
+}
+
 @Tags("Project")
 @Route("project")
-export default class ProjectController extends BaseController<IProject> {
+export default class ProjectController extends BaseController {
 	service: ProjectService;
 
 	constructor() {
@@ -69,7 +93,10 @@ export default class ProjectController extends BaseController<IProject> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/with-apps")
-	async getProjectsAndApps(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	async getProjectsAndApps(@Queries() queryParams?: IQueryProjectsAndApps) {
+		const shouldGetAppStatus = this.filter.status;
+		delete this.filter.status;
+
 		let projects = await this.service.find(this.filter, { ...this.options }, this.pagination);
 
 		let result: ResponseData & { data: IProject[] } = { status: 1, data: [], messages: [] };
@@ -78,7 +105,7 @@ export default class ProjectController extends BaseController<IProject> {
 		// populate apps
 		const projectIDs = projects.map((pro) => pro._id);
 		const appSvc = new AppService();
-		let apps = await appSvc.find({ project: { $in: projectIDs }, deletedAt: { $exists: false } }, { status: true });
+		let apps = await appSvc.find({ project: { $in: projectIDs }, deletedAt: { $exists: false } }, { status: shouldGetAppStatus });
 		// console.log("apps :>> ", apps);
 
 		result.data = projects.map((project) => {

@@ -1,10 +1,8 @@
 import { isEmpty } from "lodash";
 
-import type { IApp, IBuild, IProject, IRelease, IUser, IWorkspace } from "@/entities";
-import type { IApiKeyAccount } from "@/entities/ApiKeyAccount";
+import type { IApp, IRelease, IUser, IWorkspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
 
-import { DB } from "../api/DB";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { fetchDeploymentFromContent } from "../deploy/fetch-deployment";
 
@@ -15,6 +13,8 @@ type OwnershipParams = {
 };
 
 export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: string, ownership?: OwnershipParams) => {
+	const { DB } = await import("@/modules/api/DB");
+
 	const deployedEnvironment = await getDeployEvironmentByApp(app, env);
 	const { imageURL: IMAGE_NAME } = deployedEnvironment;
 	// const { BUILD_NUMBER } = fetchDeploymentFromContent(deployedEnvironment.deploymentYaml);
@@ -24,10 +24,10 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: 
 	console.log("createReleaseFromApp() > IMAGE_NAME :>> ", IMAGE_NAME);
 	console.log("createReleaseFromApp() > BUILD_NUMBER :>> ", buildNumber);
 
-	const build = await DB.findOne<IBuild>("build", { image: IMAGE_NAME, tag: buildNumber }, { order: { createdAt: -1 } });
+	const build = await DB.findOne("build", { image: IMAGE_NAME, tag: buildNumber }, { order: { createdAt: -1 } });
 	if (!build) throw new Error(`Unable to create new release: build image "${IMAGE_NAME}" not found.`);
 
-	const project = await DB.findOne<IProject>("project", { slug: app.projectSlug });
+	const project = await DB.findOne("project", { slug: app.projectSlug });
 	if (!project) throw new Error(`Unable to create new release: project "${app.projectSlug}" not found.`);
 	// console.log("project :>> ", project);
 
@@ -51,7 +51,7 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: 
 	// const { IMAGE_NAME } = deploymentData;
 
 	let defaultAuthor = owner as IUser;
-	if (!defaultAuthor) defaultAuthor = await DB.findOne<IApiKeyAccount>("api_key_user", { workspaces: workspaceId });
+	if (!defaultAuthor) defaultAuthor = await DB.findOne("api_key_user", { workspaces: workspaceId });
 
 	// declare AppConfig
 	const appConfig = {
@@ -106,7 +106,7 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: 
 	}
 
 	// create new release in the database
-	const newRelease = DB.create<IRelease>("release", data);
+	const newRelease = DB.create("release", data);
 
 	// log("Created new Release successfully:", newRelease);
 

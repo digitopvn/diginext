@@ -5,7 +5,6 @@ import { isEmpty, round, toInteger } from "lodash";
 import path from "path";
 
 import { CLI_DIR } from "@/config/const";
-import type { ICluster } from "@/entities";
 import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { KubeIngressClass } from "@/interfaces/KubeIngressClass";
@@ -13,7 +12,6 @@ import type { KubeNode } from "@/interfaces/KubeNode";
 import type { KubePod } from "@/interfaces/KubePod";
 import { execCmd } from "@/plugins";
 
-import { DB } from "../api/DB";
 import ClusterManager from "./index";
 
 interface KubeGenericOptions {
@@ -189,10 +187,11 @@ export async function deleteNamespace(namespace: string, options: KubeCommandOpt
 /**
  * Delete a namespace of a cluster
  */
-export async function deleteNamespaceByCluster(namespace: string, clusterShortName: string) {
-	const cluster = await DB.findOne<ICluster>("cluster", { shortName: clusterShortName });
+export async function deleteNamespaceByCluster(namespace: string, clusterSlug: string) {
+	const { DB } = await import("@/modules/api/DB");
+	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 	if (!cluster) {
-		logError(`[KUBECTL] Can't delete namespace "${namespace}" due to cluster "${clusterShortName}" not found.`);
+		logError(`[KUBECTL] Can't delete namespace "${namespace}" due to cluster "${clusterSlug}" not found.`);
 		return;
 	}
 	const { name: context } = await ClusterManager.getKubeContextByCluster(cluster);
@@ -443,7 +442,7 @@ export async function getDeploy(name: string, namespace = "default", options: Ku
  * Get deployments in a namespace by filter labels
  */
 export async function getDeploysByFilter(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
+	const { execa } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -458,6 +457,50 @@ export async function getDeploysByFilter(namespace = "default", options: KubeCom
 		return JSON.parse(stdout) as KubeDeployment[];
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getDeploy >`, e);
+		return;
+	}
+}
+
+/**
+ * Set image to a container of a deployment in a namespace
+ */
+export async function scaleDeploy(name: string, replicas: number, namespace = "default", options: KubeGenericOptions = {}) {
+	const { execa } = await import("execa");
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "scale", "deployment", name, `--replicas=${replicas}`);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] scaleDeploy >`, e);
+		return;
+	}
+}
+
+/**
+ * Set image to all containers of a deployment in a namespace
+ * @param name - Deployment's name
+ */
+export async function scaleDeployByFilter(replicas: number, namespace = "default", options: KubeCommandOptions = {}) {
+	const { execa } = await import("execa");
+	const { context, filterLabel, skipOnError } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "scale", "deployment", `--replicas=${replicas}`);
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] scaleDeployByFilter >`, e);
 		return;
 	}
 }

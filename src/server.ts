@@ -3,6 +3,7 @@ import "reflect-metadata";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import session from "cookie-session";
+import cors from "cors";
 import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import type { Express, Request, Response } from "express";
 import express from "express";
@@ -32,6 +33,31 @@ import routes from "./routes/routes";
  * ENVIRONMENT CONFIG
  */
 const { BASE_PATH, PORT, CLI_MODE } = Config;
+const allowedOrigins = [
+	"http://localhost:3000",
+	"http://localhost:6969",
+	"http://localhost:4000",
+	"https://topgroup.diginext.site",
+	"https://topgroup-v2.diginext.site",
+	"https://diginext.site",
+	"https://hobby.diginext.site",
+	"https://app.diginext.site",
+	"https://wearetopgroup.com",
+	"https://digitop.vn",
+];
+const allowedHeaders = [
+	"Origin",
+	"X-Requested-With",
+	"x-api-key",
+	"x-auth-cookie",
+	"Content-Type",
+	"Accept",
+	"Authorization",
+	"Cache-Control",
+	"Cookie",
+	"User-Agent",
+];
+const allowedMethods = ["OPTIONS", "GET", "PATCH", "POST", "DELETE"];
 
 /**
  * EXPRESS JS INITIALIZING
@@ -66,12 +92,25 @@ function initialize(db?: typeof mongoose) {
 
 	/**
 	 * CORS MIDDLEWARE
-	 * Access-Control-Allow-Headers
 	 */
+	app.use(
+		cors({
+			// credentials: IsDev() ? false : true,
+			// allowedOrigins: IsDev() ? "*" : allowedOrigins,
+			credentials: true,
+			allowedOrigins,
+			allowedHeaders,
+			methods: allowedMethods,
+		})
+	);
 	app.use((req, res, next) => {
-		res.header("Access-Control-Allow-Origin", "*");
-		res.header("Access-Control-Allow-Methods", "OPTIONS, GET, PATCH, POST, DELETE");
-		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control");
+		// res.header("Access-Control-Allow-Origin", "*");
+		// res.header("Access-Control-Allow-Credentials", "true");
+		// res.header("Access-Control-Allow-Methods", "OPTIONS, GET, PATCH, POST, DELETE");
+		// res.header(
+		// 	"Access-Control-Allow-Headers",
+		// 	"Origin, X-Requested-With, x-api-key, x-auth-cookie, Content-Type, Accept, Authorization, Cache-Control, Cookie, User-Agent"
+		// );
 		res.header("X-Powered-By", "TOP GROUP");
 		next();
 	});
@@ -129,6 +168,7 @@ function initialize(db?: typeof mongoose) {
 			name: Config.grab(`SESSION_NAME`, `diginext`),
 			secret: Config.grab(`JWT_SECRET`),
 			maxAge: 1000 * 60 * 100,
+			httpOnly: false,
 		})
 	);
 
@@ -143,9 +183,10 @@ function initialize(db?: typeof mongoose) {
 	 * Enable when running on server
 	 */
 	morgan.token("user", (req: AppRequest) => (req.user ? `[${req.user.slug}]` : "[unauthenticated]"));
+	morgan.token("req-headers", (req: AppRequest) => JSON.stringify(req.headers));
 	const morganMessage = IsDev()
 		? "[REQUEST :date[clf]] :method - :user - :url :status :response-time ms - :res[content-length]"
-		: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;
+		: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent" :req-headers`;
 	const morganOptions = {
 		skip: (req) => req.method.toUpperCase() === "OPTIONS",
 		// stream: logger,

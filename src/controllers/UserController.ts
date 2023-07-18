@@ -1,16 +1,13 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isArray } from "lodash";
-import type { ObjectId } from "mongodb";
 
 import BaseController from "@/controllers/BaseController";
-import type { IRole, IUser } from "@/entities";
+import type { IUser } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
-import { DB } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
-import { addRoleToUser, filterSensitiveInfo, filterUsersByWorkspaceRole, getActiveRole } from "@/plugins/user-utils";
-import UserService from "@/services/UserService";
-import WorkspaceService from "@/services/WorkspaceService";
+import { assignRoleByID, assignRoleByRoleID, filterSensitiveInfo, filterUsersByWorkspaceRole, getActiveRole } from "@/plugins/user-utils";
+import { UserService, WorkspaceService } from "@/services";
 
 interface JoinWorkspaceBody {
 	/**
@@ -72,15 +69,17 @@ export default class UserController extends BaseController<IUser> {
 	@Patch("/")
 	async update(@Body() body: entities.UserDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		if (body.roles) {
-			const roleId = body.roles;
-			const oldRoles = this.user.roles.filter((role) => (role as IRole).workspace === this.workspace._id);
-
-			const newRole = await DB.findOne<IRole>("role", { _id: roleId });
-			const newRoles = [...this.user.roles.filter((role) => !oldRoles.map((r) => (r as IRole)._id).includes((role as IRole)._id)), newRole];
-
-			const newRoleIds = newRoles.map((role) => (role as IRole)._id);
-
-			body.roles = newRoleIds;
+			try {
+				if (isArray(body.roles)) {
+					await Promise.all(body.roles.map((roleId) => assignRoleByRoleID(roleId, this.user)));
+				} else if (MongoDB.isValidObjectId(body.roles)) {
+					const roleId = body.roles;
+					await assignRoleByRoleID(roleId, this.user);
+				}
+				delete body.roles;
+			} catch (e) {
+				return interfaces.respondFailure(e.toString());
+			}
 		}
 
 		// [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
@@ -99,22 +98,16 @@ export default class UserController extends BaseController<IUser> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/assign-role")
-	async assignRole(@Body() data: { roleId: ObjectId }) {
-		if (!data.roleId) return interfaces.respondFailure({ msg: `Role ID is required.` });
-		if (!this.user) return interfaces.respondFailure({ msg: `User not found.` });
+	async assignRole(@Body() body: { roleId: string; userId: string }) {
+		try {
+			if (!body.roleId) throw new Error(`Param "roleId" is required.`);
+			if (!body.userId) throw new Error(`Param "userId" is required.`);
 
-		const { roleId } = data;
-
-		const newRole = await DB.findOne<IRole>("role", { _id: roleId });
-		const roleType = newRole.type as "admin" | "moderator" | "member";
-
-		// add role to user
-		let { user: updatedUser } = await addRoleToUser(roleType, MongoDB.toObjectId(this.user._id), this.workspace);
-
-		// filter roles & workspaces before returning
-		[updatedUser] = await filterUsersByWorkspaceRole(MongoDB.toString(this.workspace._id), [updatedUser]);
-
-		return interfaces.respondSuccess({ data: updatedUser });
+			const { user, role } = await assignRoleByID(body.roleId, body.userId);
+			return interfaces.respondSuccess({ data: { user, role } });
+		} catch (e) {
+			return interfaces.respondFailure(e.toString());
+		}
 	}
 
 	@Security("api_key")
@@ -160,20 +153,20 @@ export default class UserController extends BaseController<IUser> {
 			const workspaceIds = user.workspaces || [];
 			const isUserInWorkspace = workspaceIds.includes(wsId);
 
-			// add this workspace to user's workspace list
-			if (!isUserInWorkspace) workspaceIds.push(workspaceId);
-
 			// check if this is a private workspace:
 			if (!workspace.public) {
 				// if this user hasn't joined yet:
 				if (!isUserInWorkspace) throw new Error(`This workspace is private, you need an invitation to access.`);
 			}
 
+			// add this workspace to user's workspace list
+			if (!isUserInWorkspace) workspaceIds.push(workspaceId);
+
 			// set active workspace of this user -> this workspace
-			[user] = await this.service.update({ _id: userId }, { activeWorkspace: workspaceId, workspaces: workspaceIds }, this.options);
+			user = await this.service.updateOne({ _id: userId }, { activeWorkspace: workspaceId, workspaces: workspaceIds }, this.options);
 
 			// set active role
-			const activeRole = await getActiveRole(user, workspace, { makeActive: true });
+			const activeRole = await getActiveRole(user, workspace, { makeActive: true, assignMember: true });
 			user.activeRole = activeRole;
 
 			// return the updated user:

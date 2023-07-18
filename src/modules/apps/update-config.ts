@@ -3,10 +3,11 @@ import { logError } from "diginext-utils/dist/xconsole/log";
 import type { AppDto, IApp, IProject } from "@/entities";
 import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
-import { DB } from "../api/DB";
 import { getAppConfigFromApp } from "./app-helper";
 
 export const updateAppConfig = async (app: IApp, env?: string, serverDeployEnvironment?: ClientDeployEnvironmentConfig) => {
+	const { DB } = await import("../api/DB");
+
 	let project: IProject = app.project as IProject;
 
 	const updateAppData: AppDto = {
@@ -24,7 +25,7 @@ export const updateAppConfig = async (app: IApp, env?: string, serverDeployEnvir
 		});
 	}
 
-	const updatedApp = await DB.updateOne<IApp>("app", { slug: app.slug }, updateAppData);
+	const updatedApp = await DB.updateOne("app", { slug: app.slug }, updateAppData, { populate: ["owner", "workspace"] });
 
 	if (!updatedApp) {
 		logError(`App not found (probably deleted?)`);

@@ -5,7 +5,6 @@ import { existsSync, readFileSync } from "fs";
 import type { ContainerRegistryDto, ICluster, IContainerRegistry } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 
-import { DB } from "../api/DB";
 import { askForCluster } from "../cluster/ask-for-cluster";
 import { askForNamespace } from "../k8s/ask-for-namespace";
 import digitalocean from "../providers/digitalocean";
@@ -17,6 +16,7 @@ import DockerRegistry from "./docker-registry";
 
 export const execRegistry = async (options: InputOptions) => {
 	let { secondAction, registry: registrySlug, namespace, shouldCreate: shouldCreateSecretInNamespace } = options;
+	const { DB } = await import("@/modules/api/DB");
 
 	switch (secondAction) {
 		case "add":
@@ -45,8 +45,8 @@ export const execRegistry = async (options: InputOptions) => {
 		case "allow":
 		case "create-secret":
 			let registry: IContainerRegistry;
-			if (registrySlug) {
-				registry = await DB.findOne<IContainerRegistry>("registry", { slug: registrySlug });
+			if (registrySlug && typeof registrySlug !== "boolean") {
+				registry = await DB.findOne("registry", { slug: registrySlug });
 			} else {
 				registry = await askForRegistry();
 				registrySlug = registry.slug;
@@ -55,33 +55,33 @@ export const execRegistry = async (options: InputOptions) => {
 
 			let cluster: ICluster;
 			if (options.cluster) {
-				cluster = await DB.findOne<ICluster>("cluster", { shortName: options.cluster });
-				if (!cluster) return logError(`Cluster named "${options.cluster}" not found.`);
+				cluster = await DB.findOne("cluster", { slug: options.cluster });
+				if (!cluster) return logError(`Cluster "${options.cluster}" not found.`);
 			} else {
 				cluster = await askForCluster();
 			}
-			const { shortName: clusterShortName } = cluster;
+			const { slug: clusterSlug } = cluster;
 
 			if (!namespace) namespace = await askForNamespace(cluster);
 
 			switch (provider) {
 				case "digitalocean":
 					return digitalocean.createImagePullingSecret({
-						clusterShortName,
+						clusterSlug,
 						registrySlug,
 						namespace,
 					});
 
 				case "gcloud":
 					return gcloud.createImagePullingSecret({
-						clusterShortName,
+						clusterSlug,
 						registrySlug,
 						namespace,
 					});
 
 				case "dockerhub":
 					return DockerRegistry.createImagePullSecret({
-						clusterShortName,
+						clusterSlug,
 						registrySlug,
 						namespace,
 					});

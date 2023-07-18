@@ -1,9 +1,5 @@
 import inquirer from "inquirer";
 
-import type { IProject } from "@/entities/Project";
-
-import { DB } from "../api/DB";
-
 type SearchAppOptions = {
 	question?: string;
 	/**
@@ -14,6 +10,7 @@ type SearchAppOptions = {
 
 export async function searchProjects(options: SearchAppOptions = {}) {
 	const { question, canSkip = true } = options;
+	const { DB } = await import("@/modules/api/DB");
 
 	const { keyword } = await inquirer.prompt<{ keyword: string }>({
 		type: "input",
@@ -23,7 +20,7 @@ export async function searchProjects(options: SearchAppOptions = {}) {
 
 	// find/search projects
 	const filter = keyword ? { name: keyword } : {};
-	let projects = await DB.find<IProject>("project", filter, { search: true, order: { updatedAt: -1, createdAt: -1 } }, { limit: 20 });
+	let projects = await DB.find("project", filter, { search: true, order: { updatedAt: -1, createdAt: -1 } }, { limit: 20 });
 
 	if (!projects || projects.length === 0) {
 		if (canSkip) {

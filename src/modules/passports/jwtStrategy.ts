@@ -7,10 +7,7 @@ import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
-import type { AccessTokenInfo, IUser } from "@/entities";
-import type { IServiceAccount } from "@/entities/ServiceAccount";
-
-import { DB } from "../api/DB";
+import type { AccessTokenInfo } from "@/entities";
 
 dayjs.extend(relativeTime);
 
@@ -96,6 +93,7 @@ export const jwtStrategy = new Strategy(
 	},
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
 		// console.log(`[1] AUTHENTICATE: jwtStrategy > payload...`, payload);
+		const { DB } = await import("@/modules/api/DB");
 
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		// console.log("jwtStrategy > access_token :>> ", access_token);
@@ -112,13 +110,13 @@ export const jwtStrategy = new Strategy(
 
 		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
-		let user = await DB.findOne<IUser | IServiceAccount>("user", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
+		let user = await DB.findOne("user", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
 		// if (user) return done(null, user);
 
 		if (user) {
 			const isAccessTokenExisted = await DB.count("user", { _id: payload.id, "token.access_token": tokenInfo.token.access_token });
 			if (isAccessTokenExisted === 0) {
-				[user] = await DB.update<IUser>(
+				[user] = await DB.update(
 					"user",
 					{ _id: payload.id },
 					{ token: tokenInfo.token },
@@ -131,11 +129,7 @@ export const jwtStrategy = new Strategy(
 		}
 
 		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
-		let serviceAccount = await DB.findOne<IServiceAccount>(
-			"service_account",
-			{ _id: payload.id },
-			{ populate: ["roles", "workspaces", "activeWorkspace"] }
-		);
+		let serviceAccount = await DB.findOne("service_account", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
 
 		if (!serviceAccount) return done(JSON.stringify({ status: 0, messages: ["Invalid service account (probably deleted?)."] }), null);
 

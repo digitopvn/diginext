@@ -31,7 +31,7 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		await wait(1000);
 
 		// add git origin:
-		await git.addRemote("origin", options.remoteSSH);
+		await git.addRemote("origin", options.repoSSH);
 
 		// create default brand: "main"
 		await git.fetch(["--all"]);
@@ -50,6 +50,14 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		}
 
 		await git.push(["--set-upstream", "origin", "main"]);
+
+		// Update main branch protection
+		/**
+		 * @teexiii đang bị lỗi gì đó nên anh comment lại...
+		 * `Update main branch protection error AxiosError: Request failed with status code 404`
+		 * Chỗ nào chưa test thì đừng đẩy lên `main` nha, sau này nó ảnh hưởng nhiều người lắm.
+		 */
+		// await updateBranchProtection(options);
 
 		// create developer branches
 		const gitUsername = (await git.getConfig(`user.name`, "global")).value;
