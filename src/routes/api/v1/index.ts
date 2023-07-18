@@ -14,6 +14,7 @@ import domainRouter from "./domain";
 import frameworkRouter from "./framework";
 import gitRouter from "./git";
 import monitorRouter from "./monitor";
+import notificationRouter from "./notification";
 import projectRouter from "./project";
 import providerRouter from "./provider";
 import registryRouter from "./registry";
@@ -25,6 +26,7 @@ import statsRouter from "./stats";
 import teamRouter from "./team";
 import userRouter from "./user";
 import utilityRouter from "./utility";
+import webhookRouter from "./webhook";
 import workspaceRouter from "./workspace";
 
 const router = express.Router();
@@ -61,5 +63,7 @@ router.use("/utility", utilityRouter);
 router.use("/monitor", monitorRouter);
 router.use("/cronjob", cronjobRouter);
 router.use("/stats", statsRouter);
+router.use("/webhook", webhookRouter);
+router.use("/notification", notificationRouter);
 
 export default router;

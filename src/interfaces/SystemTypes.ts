@@ -1,6 +1,7 @@
 import type express from "express";
 
 import type { IRole, IUser, IWorkspace, RoleRoute } from "@/entities";
+import { filterUniqueItems } from "@/plugins/array";
 
 // express.js
 export interface AppRequest extends express.Request {
@@ -70,6 +71,10 @@ export const gitProviderDomain = {
 export const buildStatusList = ["start", "building", "failed", "success", "cancelled"] as const;
 export type BuildStatus = typeof buildStatusList[number];
 
+// deploy status
+export const deployStatusList = ["pending", "in_progress", "failed", "success", "cancelled"] as const;
+export type DeployStatus = typeof deployStatusList[number];
+
 // backup status
 export const backupStatusList = ["start", "in_progress", "failed", "success", "cancelled"] as const;
 export type BackupStatus = typeof backupStatusList[number];
@@ -112,6 +117,16 @@ export const buildPlatformList = [
 	"linux/arm/v6",
 ] as const;
 export type BuildPlatform = typeof buildPlatformList[number];
+
+// webhook events
+export const webhookEventList = ["build_status", "deploy_status", "dbbackup_status", "app_status", "project_status", "environment_status"] as const;
+export type WebhookEvent = typeof webhookEventList[number];
+
+// webhook channels
+export const webhookChannelList = ["http_callback", "email", "sms", "web_push", "push_notification", "instant_message"] as const;
+export type WebhookChannel = typeof webhookChannelList[number];
+
+export const webhookEventStatusList = filterUniqueItems([...buildStatusList, ...deployStatusList, ...backupStatusList, ...appStatusList]);
 
 /**
  * Credential fields
