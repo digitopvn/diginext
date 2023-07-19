@@ -3,14 +3,14 @@ import { isJSON } from "class-validator";
 import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import { isArray, isBoolean, isEmpty, isNumber, isUndefined } from "lodash";
 
-import type { AppGitInfo, IApp, IBuild, ICluster, IFramework, IProject } from "@/entities";
-import * as entities from "@/entities";
-import type { SslType } from "@/interfaces";
-import * as interfaces from "@/interfaces";
+import type { IApp, IBuild, ICluster, IProject } from "@/entities";
+import { AppDto } from "@/entities";
+import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
+import type { AppInputSchema } from "@/interfaces/AppInterfaces";
+import { CreateEnvVarsDto, DeployEnvironmentData } from "@/interfaces/AppInterfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
-import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
@@ -23,240 +23,14 @@ import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 import { ProjectService } from "@/services";
-import { AppService } from "@/services/AppService";
-import DeployService from "@/services/DeployService";
 
+import { AppService } from "../services/AppService";
+import DeployService from "../services/DeployService";
 import BaseController from "./BaseController";
-
-export interface CreateEnvVarsDto {
-	/**
-	 * App slug
-	 */
-	slug: string;
-	/**
-	 * Deploy environment name
-	 * @example "dev" | "prod"
-	 */
-	env: string;
-	/**
-	 * Array of variables to be created on deploy environment in JSON format
-	 */
-	envVars: string;
-}
-
-export interface AppInputSchema {
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * App's name
-	 */
-	name: string;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Project's ID or slug
-	 */
-	project: string;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Git provider ID
-	 */
-	gitProvider: string;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Framework's ID or slug or {Framework} instance
-	 */
-	framework?: string | IFramework;
-
-	/**
-	 * `OPTIONAL`
-	 * ---
-	 * A SSH URI of the source code repository or a detail information of this repository
-	 * @example git@bitbucket.org:digitopvn/example-repo.git
-	 */
-	git?: string | AppGitInfo;
-
-	/**
-	 * `OPTIONAL`
-	 * ---
-	 * Should create new git repository on the selected git provider
-	 * @default false
-	 */
-	shouldCreateGitRepo?: boolean;
-
-	/**
-	 * `OPTIONAL`
-	 * ---
-	 * ### [CAUTION]
-	 * If `TRUE`, it will delete the existing git repo, then create a new one.
-	 * @default false
-	 */
-	force?: boolean;
-}
-
-export interface DeployEnvironmentData {
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Container registry's slug
-	 * @requires
-	 */
-	registry: string;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Cluster's short name
-	 * @requires
-	 */
-	cluster: string;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Container's port
-	 * @requires
-	 */
-	port: number;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Image URI of this app on the Container Registry (without `TAG`).
-	 * - Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`
-	 * - **Don't** specify `tag` at the end! (eg. `latest`, `beta`,...)
-	 * @default <registry-image-base-url>/<project-slug>/<app-name-slug>
-	 * @example "asia.gcr.io/my-workspace/my-project/my-app"
-	 */
-	imageURL: string;
-
-	/**
-	 * Build number is image's tag (no special characters, eg. "dot" or "comma")
-	 * @example latest, v01, prerelease, alpha, beta,...
-	 */
-	buildNumber: string;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Container's scaling replicas
-	 * @default 1
-	 */
-	replicas?: number;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Destination namespace name, will be generated automatically by `<project-slug>-<env>` if not specified.
-	 */
-	namespace?: string;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Container quota resources
-	 * @default 1x
-	 * @example
-	 * "none" - {}
-	 * "1x" - { requests: { cpu: "20m", memory: "128Mi" }, limits: { cpu: "20m", memory: 128Mi" } }
-	 * "2x" - { requests: { cpu: "40m", memory: "256Mi" }, limits: { cpu: "40m", memory: "256Mi" } }
-	 * "3x" - { requests: { cpu: "80m", memory: "512Mi" }, limits: { cpu: "80m", memory: "512Mi" } }
-	 * "4x" - { requests: { cpu: "160m", memory: "1024Mi" }, limits: { cpu: "160m", memory: "1024Mi" } }
-	 * "5x" - { requests: { cpu: "320m", memory: "2048Mi" }, limits: { cpu: "320m", memory: "2048Mi" } }
-	 * "6x" - { requests: { cpu: "640m", memory: "4058Mi" }, limits: { cpu: "640m", memory: "4058Mi" } }
-	 * "7x" - { requests: { cpu: "1280m", memory: "2048Mi" }, limits: { cpu: "1280m", memory: "2048Mi" } }
-	 * "8x" - { requests: { cpu: "2560m", memory: "8116Mi" }, limits: { cpu: "2560m", memory: "8116Mi" } }
-	 * "9x" - { requests: { cpu: "5120m", memory: "16232Mi" }, limits: { cpu: "5120m", memory: "16232Mi" } }
-	 * "10x" - { requests: { cpu: "10024m", memory: "32464Mi" }, limits: { cpu: "10024m", memory: "32464Mi" } }
-	 */
-	size?: ResourceQuotaSize;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment
-	 * @default true
-	 */
-	shouldInherit?: boolean;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Set to `false` if you don't want to redirect all the secondary domains to the primary domain.
-	 * @default true
-	 */
-	redirect?: boolean;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Set `true` if you want to use a generated domain for this deploy environment.
-	 * @default false
-	 */
-	useGeneratedDomain?: boolean;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * List of application's domains.
-	 * @default []
-	 */
-	domains?: string[];
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Flag to enable CDN for this application
-	 * @default false
-	 */
-	cdn?: boolean;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Select your SSL Certificate Issuer, one of:
-	 * - `letsencrypt`
-	 * - `custom`
-	 * - `none`
-	 * @default letsencrypt
-	 */
-	ssl?: SslType;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Secret name to hold the key of SSL, will be automatically generated with the primary domain.
-	 * Only need to specify when using "custom" SSL (which is the SSL from third-party issuer)
-	 */
-	tlsSecret?: string;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Kubernetes Ingress Class
-	 * @default nginx
-	 * @example "nginx" | "kong"
-	 */
-	ingress?: string;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Username of the person who update the app
-	 */
-	lastUpdatedBy?: string;
-}
 
 @Tags("App")
 @Route("app")
 export default class AppController extends BaseController<IApp, AppService> {
-	service: AppService;
-
 	deploySvc = new DeployService();
 
 	constructor() {
@@ -269,7 +43,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	async read(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	async read(@Queries() queryParams?: IGetQueryParams) {
 		let apps = await this.service.find(this.filter, this.options, this.pagination);
 		// console.log("apps :>> ", apps);
 		if (isEmpty(apps)) return respondSuccess({ data: [] });
@@ -302,13 +76,13 @@ export default class AppController extends BaseController<IApp, AppService> {
 			})
 			.filter((app) => app !== null && app !== undefined);
 
-		return { status: 1, data: apps } as ResponseData;
+		return respondSuccess({ data: apps });
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: AppInputSchema & Partial<IApp>, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async create(@Body() body: AppInputSchema & Partial<IApp>, @Queries() queryParams?: IPostQueryParams) {
 		try {
 			const newApp = await this.service.create(body, { ...this.options, force: body.force, shouldCreateGitRepo: body.shouldCreateGitRepo });
 
@@ -419,7 +193,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: entities.AppDto, @Queries() queryParams?: interfaces.IPatchQueryParams) {
+	async update(@Body() body: AppDto, @Queries() queryParams?: IPatchQueryParams) {
 		let project: IProject,
 			projectSvc = new ProjectService();
 
@@ -465,7 +239,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	async delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
+	async delete(@Queries() queryParams?: IDeleteQueryParams) {
 		const app = await this.service.findOne(this.filter, { populate: ["project"] });
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
@@ -497,7 +271,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/participants")
-	async participants(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	async participants(@Queries() queryParams?: IGetQueryParams) {
 		const app = await this.service.findOne(this.filter);
 		if (!app) return respondFailure(`App not found.`);
 
@@ -515,7 +289,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/archive")
-	async archiveApp(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	async archiveApp(@Queries() queryParams?: IGetQueryParams) {
 		const app = await this.service.findOne(this.filter, this.options);
 		if (!app) return respondFailure(`Unable to archive: app not found.`);
 
@@ -533,7 +307,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/unarchive")
-	async unarchiveApp(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	async unarchiveApp(@Queries() queryParams?: IGetQueryParams) {
 		const app = await this.service.findOne(this.filter, this.options);
 		if (!app) return respondFailure(`Unable to archive: app not found.`);
 
@@ -741,7 +515,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			deployEnvironmentData: DeployEnvironmentData;
 		},
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
 		const app = await this.service.createDeployEnvironment(body.appSlug, body, { owner: this.user, workspace: this.workspace });
 		return respondSuccess({ data: app });
@@ -776,7 +550,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			deployEnvironmentData: DeployEnvironmentData;
 		},
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
 		//
 		const { DB } = await import("@/modules/api/DB");
@@ -1002,7 +776,6 @@ export default class AppController extends BaseController<IApp, AppService> {
 			env?: string;
 		}
 	) {
-		const { DB } = await import("@/modules/api/DB");
 		let result = { status: 1, data: {}, messages: [] } as ResponseData & { data: IApp };
 
 		// input validation
@@ -1016,21 +789,24 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne(appFilter, { populate: ["project"] });
 
 		// check if the environment is existed
-		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+		if (!app) return respondFailure({ msg: `App not found.` });
 
 		// take down the deploy environment
 		await this.service.takeDownDeployEnvironment(app, env.toString());
 
 		// update the app (delete the deploy environment)
-		const updatedApp = await this.service.update(appFilter, {
-			[`deployEnvironment.${env}`]: {},
-		});
+		const updatedApp = await this.service.updateOne(
+			appFilter,
+			{
+				$unset: { [`deployEnvironment.${env}`]: true },
+			},
+			{ raw: true }
+		);
 
-		log(`[BaseController] deleted Environment`, { appFilter }, ` :>>`, { updatedApp });
+		if (this.options.isDebugging) log(`[BaseController] deleted Environment`, { appFilter }, ` :>>`, { updatedApp });
 
 		// respond the results
-		result.data = updatedApp;
-		return result;
+		return respondSuccess({ data: updatedApp });
 	}
 
 	/**
@@ -1062,11 +838,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 	async createEnvVarsOnDeployEnvironment(
 		@Body()
 		body: CreateEnvVarsDto,
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
-		console.log("createEnvVarsOnDeployEnvironment > body :>> ", body);
 		const { DB } = await import("@/modules/api/DB");
-		// return { status: 0 };
+
 		let { slug, env, envVars } = body;
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
@@ -1186,7 +961,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			envVar: KubeEnvironmentVariable;
 		},
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
 		const { DB } = await import("@/modules/api/DB");
 		let { slug, env, envVar } = body;
@@ -1294,7 +1069,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			env: string;
 		},
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
 		let { slug, env } = body;
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
@@ -1378,7 +1153,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			domains: string[];
 		},
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
 		const { DB } = await import("@/modules/api/DB");
 		// validate
@@ -1414,7 +1189,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (existedDomain) return respondFailure(`Domain "${existedDomain}" is existed.`);
 
 		// add new domains
-		const updateData: entities.AppDto = {};
+		const updateData: AppDto = {};
 		updateData[`deployEnvironment.${env}.domains`] = [...(app.deployEnvironment[env].domains || []), ...domains];
 
 		let updatedApp = await this.service.updateOne({ slug: app.slug }, updateData);
@@ -1538,7 +1313,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const { _id, slug, env } = this.filter;
 		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
 
-		const app = await this.service.findOne(this.filter, this.options);
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
 		if (!app) return respondFailure(`App not found.`);
 
 		try {
@@ -1577,7 +1352,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const { _id, slug, env } = this.filter;
 		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
 
-		const app = await this.service.findOne(this.filter, this.options);
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
 		if (!app) return respondFailure(`App not found.`);
 
 		try {
@@ -1616,7 +1391,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const { _id, slug, env } = this.filter;
 		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
 
-		const app = await this.service.findOne(this.filter, this.options);
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
 		if (!app) return respondFailure(`App not found.`);
 
 		try {

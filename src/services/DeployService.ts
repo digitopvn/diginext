@@ -35,9 +35,10 @@ export default class DeployService {
 		const workspace = author.activeWorkspace as IWorkspace;
 
 		const deployBuildOptions: DeployBuildOptions = {
+			...deployParams,
 			env: deployParams.env || buildParams.env || "dev",
-			shouldUseFreshDeploy: deployParams.shouldUseFreshDeploy,
-			author,
+			cliVersion: buildParams.cliVersion,
+			owner: author,
 			workspace,
 		};
 
@@ -60,7 +61,7 @@ export default class DeployService {
 
 		// start build in background process:
 		log(`buildAndDeploy > buildParams.buildNumber :>>`, buildParams.buildNumber);
-		buildAndDeploy(buildParams, deployBuildOptions);
+		await buildAndDeploy(buildParams, deployBuildOptions);
 
 		const { appSlug, buildNumber } = buildParams;
 		const buildServerUrl = Config.BASE_URL;

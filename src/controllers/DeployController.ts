@@ -57,8 +57,8 @@ export type DeployBuildParams = {
 	skipReadyCheck?: boolean;
 	/**
 	 * ### WARNING
-	 * Skip checking the progress of deployment, let it run in background, won't return the deployment's status.
-	 * @default false
+	 * Skip watching the progress of deployment, let it run in background, won't return the deployment's status.
+	 * @default true
 	 */
 	deployInBackground?: boolean;
 };
@@ -153,7 +153,7 @@ export default class DeployController {
 
 		// start build in background:
 		try {
-			const { logURL } = await this.service.buildAndDeploy(buildParams, deployParams, { owner: this.user, workspace: this.workspace });
+			const { logURL } = await this.service.buildAndDeploy(buildParams, deployParams, this.ownership);
 			return respondSuccess({ data: { logURL }, msg: "Building" });
 		} catch (e) {
 			console.error(e);
@@ -372,7 +372,7 @@ export default class DeployController {
 		if (!build) return respondFailure(`Build not found.`);
 
 		const deployBuildOptions: DeployBuildOptions = {
-			author: this.user,
+			owner: this.user,
 			workspace: this.workspace,
 			env: body.env,
 			shouldUseFreshDeploy: body.shouldUseFreshDeploy,
@@ -421,7 +421,7 @@ export default class DeployController {
 		if (!build) return respondFailure(`Build not found.`);
 
 		const deployBuildOptions: DeployBuildOptions = {
-			author: this.user,
+			owner: this.user,
 			workspace: this.workspace,
 			env: body.env,
 			shouldUseFreshDeploy: body.shouldUseFreshDeploy,

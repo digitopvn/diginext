@@ -83,7 +83,7 @@ export interface IContainerRegistry extends IBase {
 }
 export type ContainerRegistryDto = Omit<IContainerRegistry, keyof HiddenBodyKeys>;
 
-export const containerRegistrySchema = new Schema(
+export const containerRegistrySchema = new Schema<IContainerRegistry>(
 	{
 		...baseSchemaDefinitions,
 		name: { type: String },
