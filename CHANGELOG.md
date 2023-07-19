@@ -1,3 +1,17 @@
+# [3.20.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.20.0-prerelease.3...v3.20.0-prerelease.4) (2023-07-19)
+
+
+### Bug Fixes
+
+* **notification:** add callback url ([c87ea3a](https://github.com/digitopvn/diginext/commit/c87ea3a7fec6cb3726853d59f258ca8bd30cd38d))
+* **server,app,deploy env:** archive unarchive app not found ([722a61d](https://github.com/digitopvn/diginext/commit/722a61d5c1cef28ef5dc3c87648a2945a8d8fb6f))
+
+
+### Features
+
+* **server,webhook,notification:** define schemas, services, controllers ([33ca2df](https://github.com/digitopvn/diginext/commit/33ca2df58ec1721b766def038ecae83af33bc4d0))
+* **webhook,notification:** send notification on build and deploy event ([ab6c6e7](https://github.com/digitopvn/diginext/commit/ab6c6e74d918793be0ccc480105d786f198288e7))
+
 # [3.20.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.20.0-prerelease.2...v3.20.0-prerelease.3) (2023-07-17)
 
 
