@@ -252,7 +252,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
 	const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
 
-	let app = await DB.findOne("app", { slug: appSlug }, { populate: ["project", "owner"] });
+	let app = await DB.updateOne("app", { slug: appSlug }, { updatedBy: owner._id }, { populate: ["project", "owner"] });
 	if (!app) {
 		sendLog({
 			SOCKET_ROOM,
@@ -261,6 +261,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		});
 		return { error: `[DEPLOY BUILD] App "${appSlug}" not found.` };
 	}
+
 	const project = app.project as IProject;
 	const projectOwner = await DB.findOne("user", { _id: project.owner });
 	const appOwner = app.owner as IUser;

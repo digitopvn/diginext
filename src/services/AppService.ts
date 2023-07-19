@@ -672,6 +672,15 @@ export class AppService extends BaseService<IApp> {
 			message = `Unable to sleep a deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
 		}
 
+		// update database
+		this.updateOne(
+			{ _id: app._id },
+			{
+				[`deployEnvironment.${env}.replicas`]: 0,
+				[`deployEnvironment.${env}.sleepAt`]: new Date(),
+			}
+		);
+
 		return { success, message };
 	}
 
@@ -722,6 +731,15 @@ export class AppService extends BaseService<IApp> {
 		} catch (e) {
 			message = `Unable to wake up a deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
 		}
+
+		// update database
+		this.updateOne(
+			{ _id: app._id },
+			{
+				[`deployEnvironment.${env}.replicas`]: 1,
+				[`deployEnvironment.${env}.awakeAt`]: new Date(),
+			}
+		);
 
 		return { success, message };
 	}
@@ -786,6 +804,9 @@ export class AppService extends BaseService<IApp> {
 		} catch (e) {
 			errorMsg += `, ${e}.`;
 		}
+
+		// update database
+		this.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.tookDownAt`]: new Date() });
 
 		return { success: true, message: errorMsg };
 	}
