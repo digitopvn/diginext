@@ -39,9 +39,13 @@ export interface SendNotificationData {
 	 * Referenced data of a notification
 	 */
 	references?: IDataReferences;
+	/**
+	 * Callback URL of a notification
+	 */
+	url?: string;
 }
 
-export type SendNotificationWebhookData = Pick<SendNotificationData, "to" | "from" | "title" | "message" | "references">;
+export type SendNotificationWebhookData = Pick<SendNotificationData, "to" | "from" | "title" | "message" | "references" | "url">;
 
 export class NotificationService extends BaseService<INotification> {
 	constructor() {

@@ -89,6 +89,7 @@ export class WebhookService extends BaseService<IWebhook> {
 								const owner = ref.owner as IUser;
 								return this.notiSvc.webhookSend(webhook, {
 									references: { build: MongoDB.toString(ref._id) },
+									url: logURL,
 									from: MongoDB.toString(webhook.owner),
 									to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
 									title: webhook.status === "failed" ? `Build failed: ${ref?.name}` : `Build success: ${ref?.name}`,
@@ -113,10 +114,12 @@ export class WebhookService extends BaseService<IWebhook> {
 							).then((ref) => {
 								const build = ref?.build as IBuild;
 								const BUILD_LOG_ROOM = `${build.appSlug}-${build.tag}`;
+								const logURL = `${Config.BASE_URL}/build/logs?build_slug=${BUILD_LOG_ROOM}`;
 								const duration = humanizeDuration(build.duration);
 								const owner = ref.owner as IUser;
 								return this.notiSvc.webhookSend(webhook, {
 									references: { release: MongoDB.toString(ref._id) },
+									url: logURL,
 									from: MongoDB.toString(webhook.owner),
 									to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
 									title: webhook.status === "failed" ? `Deploy failed: ${ref?.name}` : `Deploy success: ${ref?.name}`,
@@ -131,9 +134,7 @@ export class WebhookService extends BaseService<IWebhook> {
 													ref?.projectSlug
 											  }<br/>- URL: <a href="https://${
 													ref?.env === "production" ? ref?.prereleaseUrl : ref?.productionUrl
-											  }">CLICK TO VIEW</a><br/>- View build logs: <a href="${
-													Config.BASE_URL
-											  }/build/logs?build_slug=${BUILD_LOG_ROOM}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${
+											  }">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${
 													ref?.image
 											  }`,
 								});
