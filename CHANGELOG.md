@@ -1,52 +1,13 @@
-# [3.20.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.20.0-prerelease.3...v3.20.0-prerelease.4) (2023-07-19)
+## [3.19.1](https://github.com/digitopvn/diginext/compare/v3.19.0...v3.19.1) (2023-07-13)
 
 
 ### Bug Fixes
 
-* **notification:** add callback url ([c87ea3a](https://github.com/digitopvn/diginext/commit/c87ea3a7fec6cb3726853d59f258ca8bd30cd38d))
-* **server,app,deploy env:** archive unarchive app not found ([722a61d](https://github.com/digitopvn/diginext/commit/722a61d5c1cef28ef5dc3c87648a2945a8d8fb6f))
-
-
-### Features
-
-* **server,webhook,notification:** define schemas, services, controllers ([33ca2df](https://github.com/digitopvn/diginext/commit/33ca2df58ec1721b766def038ecae83af33bc4d0))
-* **webhook,notification:** send notification on build and deploy event ([ab6c6e7](https://github.com/digitopvn/diginext/commit/ab6c6e74d918793be0ccc480105d786f198288e7))
-
-# [3.20.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.20.0-prerelease.2...v3.20.0-prerelease.3) (2023-07-17)
-
-
-### Bug Fixes
-
-* **api,routes:** disable empty db routes ([7cbda4f](https://github.com/digitopvn/diginext/commit/7cbda4f66e1ad13837179848aa9397fc16c317e9))
-* **server,deploy:** limit rpm to ingress of dev env ([7a8db17](https://github.com/digitopvn/diginext/commit/7a8db1733f6cecb82272ad419e39dd47aa68da4e))
-
-
-### Features
-
-* **dashboard,deploy:** sleep, awake, take down, deploy now, import git ([80bfc82](https://github.com/digitopvn/diginext/commit/80bfc82a6923dfa874c7ebf698cc8422db3cd8ca))
-* **server,api:** archive and unarchive apps ([a1060bc](https://github.com/digitopvn/diginext/commit/a1060bc19018247d58de3bac5d0c71c496983c75))
-* **server,api:** get participant list of an app ([31faa79](https://github.com/digitopvn/diginext/commit/31faa7956e1d5aad52ac38e574759cc7018bfd9d))
-
-# [3.20.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.20.0-prerelease.1...v3.20.0-prerelease.2) (2023-07-16)
-
-
-### Bug Fixes
-
-* **cli:** snpt createNewPage typo ([6cb16d1](https://github.com/digitopvn/diginext/commit/6cb16d10870f9b8933b568bb1eff7fdf5bb356d0))
-
-# [3.20.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.19.1-prerelease.2...v3.20.0-prerelease.1) (2023-07-14)
-
-
-### Bug Fixes
-
-* **cli:** ask for registry when --registry is specified ([15294b2](https://github.com/digitopvn/diginext/commit/15294b205f76b9a0451233ee11e1c6fb3887d979))
-* **server,dashboard:** improve responsive,change cluster,change registry ([04b7411](https://github.com/digitopvn/diginext/commit/04b74116756c369dac51b8cfb249c3a0bb1177d9))
-* **server:** connect docker registry workspace not found ([dc0124b](https://github.com/digitopvn/diginext/commit/dc0124b6ce337bfdbf4ce41043569a336ee7b41d))
-
-
-### Features
-
-* **dashboard:** deploy app page ([c04b442](https://github.com/digitopvn/diginext/commit/c04b4429d103c2de51914a7caf5217613a762a2e))
+* **cli:** add some log ([3a0f663](https://github.com/digitopvn/diginext/commit/3a0f6635aedcd32900b80a32996b7c99358662ec))
+* **cli:** ask for cluster when --cluster flag is specified ([6d01e00](https://github.com/digitopvn/diginext/commit/6d01e00a2b3618e944e8dbf3135d9ebd83b07f88))
+* **cli:** member unable to create git repo for new app ([83279f1](https://github.com/digitopvn/diginext/commit/83279f17c5de4c776cf029c7d6bd576f1be1c097))
+* **cli:** member unable to create git repo for new app ([#296](https://github.com/digitopvn/diginext/issues/296)) ([422d7ef](https://github.com/digitopvn/diginext/commit/422d7eff3fed9eb15c33bc500abb304abaa849b6))
+* **cli:** missing fs.existsSync checking package.json ([33811de](https://github.com/digitopvn/diginext/commit/33811de13df6b63924fbc307a2d403adc6be42d8))
 
 ## [3.19.1-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.19.1-prerelease.1...v3.19.1-prerelease.2) (2023-07-13)
 
