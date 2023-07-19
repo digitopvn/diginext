@@ -16,7 +16,7 @@ export default class DeployService {
 	 */
 	async buildAndDeploy(buildParams: StartBuildParams, deployParams: DeployBuildParams, ownership: Ownership) {
 		const { DB } = await import("@/modules/api/DB");
-		let app = await DB.findOne("app", { slug: buildParams.appSlug });
+		let app = await DB.updateOne("app", { slug: buildParams.appSlug }, { updatedBy: ownership.owner._id });
 
 		// change cluster (if needed)
 		if (deployParams.cluster) {
