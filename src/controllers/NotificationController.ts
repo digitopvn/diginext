@@ -50,4 +50,16 @@ export default class NotificationController extends BaseController<INotification
 	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
 		return super.delete();
 	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/read")
+	async markAsRead(@Body() body: INotification, @Queries() queryParams?: interfaces.IPostQueryParams) {
+		try {
+			const data = await this.service.markAsRead(this.filter, this.options);
+			return interfaces.respondSuccess({ data });
+		} catch (e) {
+			return interfaces.respondFailure(e.toString());
+		}
+	}
 }

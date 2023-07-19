@@ -113,3 +113,4 @@ thunder-tests/
 thunder-tests/**
 
 .temp
+dependency-graph.svg

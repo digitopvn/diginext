@@ -103,14 +103,9 @@ function initialize(db?: typeof mongoose) {
 			methods: allowedMethods,
 		})
 	);
+
+	// CREDITS
 	app.use((req, res, next) => {
-		// res.header("Access-Control-Allow-Origin", "*");
-		// res.header("Access-Control-Allow-Credentials", "true");
-		// res.header("Access-Control-Allow-Methods", "OPTIONS, GET, PATCH, POST, DELETE");
-		// res.header(
-		// 	"Access-Control-Allow-Headers",
-		// 	"Origin, X-Requested-With, x-api-key, x-auth-cookie, Content-Type, Accept, Authorization, Cache-Control, Cookie, User-Agent"
-		// );
 		res.header("X-Powered-By", "TOP GROUP");
 		next();
 	});

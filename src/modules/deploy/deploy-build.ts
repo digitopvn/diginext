@@ -1,9 +1,12 @@
 import { isEmpty } from "lodash";
 import path from "path";
 
+import { isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IApp, IBuild, ICluster, IRelease, IUser, IWorkspace } from "@/entities";
+import type { IApp, IBuild, ICluster, IProject, IRelease, IUser, IWebhook, IWorkspace } from "@/entities";
+import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
+import { WebhookService } from "@/services";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
@@ -24,7 +27,7 @@ export type DeployBuildOptions = {
 	 * ### `REQUIRED`
 	 * The USER who process this request
 	 */
-	author: IUser;
+	owner: IUser;
 	/**
 	 * ### `REQUIRED`
 	 * Workspace
@@ -54,17 +57,25 @@ export type DeployBuildOptions = {
 	skipReadyCheck?: boolean;
 	/**
 	 * ### WARNING
-	 * Skip checking the progress of deployment, let it run in background, won't return the deployment's status.
-	 * @default false
+	 * Skip watching the progress of deployment, let it run in background, won't return the deployment's status.
+	 * @default true
 	 */
 	deployInBackground?: boolean;
 };
 
 export const processDeployBuild = async (build: IBuild, release: IRelease, cluster: ICluster, options: DeployBuildOptions) => {
-	const { env, author, workspace, cliVersion, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
+	const { env, owner, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
-	const { slug: username } = author;
+	const { slug: username } = owner;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
+	const releaseId = MongoDB.toString(release._id);
+	const { DB } = await import("@/modules/api/DB");
+	const workspace = await DB.findOne("workspace", { _id: build.workspace });
+
+	// webhook
+	const webhookSvc = new WebhookService();
+	webhookSvc.ownership = { owner, workspace };
+	const webhook = await DB.findOne("webhook", { release: releaseId });
 
 	// authenticate cluster & switch to that cluster's context
 	try {
@@ -102,6 +113,8 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 			type: "error",
 			message: `Can't create "imagePullSecrets" in the "${namespace}" namespace.`,
 		});
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		return { error: `Can't create "imagePullSecrets" in the "${namespace}" namespace.` };
 	}
 
@@ -126,6 +139,9 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 				message: `Unable to delete "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
 			});
 
+			// dispatch/trigger webhook
+			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
 			return {
 				error: `Unable to delete "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
 			};
@@ -136,8 +152,6 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 			message: `Successfully deleted "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
 		});
 	}
-
-	const releaseId = release._id.toString();
 
 	if (skipReadyCheck) {
 		sendLog({
@@ -168,6 +182,10 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 			}
 		} catch (e) {
 			sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}:` });
+
+			// dispatch/trigger webhook
+			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
 			return { error: `Failed to roll out the release :>> ${e.message}:` };
 		}
 	} else {
@@ -206,8 +224,15 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 				}
 
 				release = result.data;
+
+				// dispatch/trigger webhook
+				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
 			} catch (e) {
 				sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}` });
+
+				// dispatch/trigger webhook
+				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
 				return { error: `Failed to roll out the release :>> ${e.message}` };
 			}
 		}
@@ -218,16 +243,16 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	const { DB } = await import("@/modules/api/DB");
 
 	// parse options
-	const { env, author, workspace, cliVersion, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
+	const { env, owner, workspace, deployInBackground = true, cliVersion } = options;
 	const { appSlug, projectSlug, tag: buildNumber } = build;
-	const { slug: username } = author;
+	const { slug: username } = owner;
 	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 
 	// build directory
 	const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
 	const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
 
-	let app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
+	let app = await DB.findOne("app", { slug: appSlug }, { populate: ["project", "owner"] });
 	if (!app) {
 		sendLog({
 			SOCKET_ROOM,
@@ -236,6 +261,9 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		});
 		return { error: `[DEPLOY BUILD] App "${appSlug}" not found.` };
 	}
+	const project = app.project as IProject;
+	const projectOwner = await DB.findOne("user", { _id: project.owner });
+	const appOwner = app.owner as IUser;
 
 	// get deploy environment data
 	let serverDeployEnvironment = await getDeployEvironmentByApp(app, env);
@@ -326,7 +354,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
 	let releaseId: string, newRelease: IRelease;
 	try {
-		newRelease = await createReleaseFromBuild(build, env, { author });
+		newRelease = await createReleaseFromBuild(build, env, { author: owner, workspace, cliVersion });
 		releaseId = MongoDB.toString(newRelease._id);
 		console.log("Created new Release successfully:", newRelease);
 
@@ -337,8 +365,31 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		return { error: e.message };
 	}
 
+	// create webhook
+	let webhook: IWebhook;
+	const webhookSvc = new WebhookService();
+	webhookSvc.ownership = { owner, workspace };
+
+	if (isServerMode) {
+		const consumers = filterUniqueItems([projectOwner?._id, appOwner?._id, owner?._id])
+			.filter((uid) => typeof uid !== "undefined")
+			.map((uid) => MongoDB.toString(uid));
+		console.log("consumers :>> ", consumers);
+
+		webhook = await webhookSvc.create({
+			events: ["deploy_status"],
+			channels: ["email"],
+			consumers,
+			workspace: MongoDB.toString(workspace._id),
+			project: MongoDB.toString(build.project),
+			app: MongoDB.toString(app._id),
+			build: MongoDB.toString(build._id),
+			release: releaseId,
+		});
+	}
+
 	// process deploy build to cluster
-	if (options?.deployInBackground) {
+	if (deployInBackground) {
 		processDeployBuild(build, newRelease, cluster, options);
 	} else {
 		await processDeployBuild(build, newRelease, cluster, options);

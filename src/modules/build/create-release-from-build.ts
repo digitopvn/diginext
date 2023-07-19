@@ -90,7 +90,9 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 		appSlug,
 		createdBy: isEmpty(ownership) ? defaultAuthor.slug : ownership.author.slug,
 		owner: isEmpty(ownership) ? defaultAuthor._id : ownership.author._id,
+		ownerSlug: ownership?.author.slug,
 		workspace: workspaceId,
+		workspaceSlug: workspaceSlug,
 	} as IRelease;
 
 	if (env === "prod") {

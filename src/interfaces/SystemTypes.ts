@@ -68,7 +68,7 @@ export const gitProviderDomain = {
 };
 
 // build status
-export const buildStatusList = ["start", "building", "failed", "success", "cancelled"] as const;
+export const buildStatusList = ["pending", "start", "building", "failed", "success", "cancelled"] as const;
 export type BuildStatus = typeof buildStatusList[number];
 
 // deploy status
@@ -118,15 +118,28 @@ export const buildPlatformList = [
 ] as const;
 export type BuildPlatform = typeof buildPlatformList[number];
 
+// system status
+// export const systemStatusList = ["incident", "recover"] as const;
+// export type SystemStatus = typeof systemStatusList[number];
+
 // webhook events
-export const webhookEventList = ["build_status", "deploy_status", "dbbackup_status", "app_status", "project_status", "environment_status"] as const;
-export type WebhookEvent = typeof webhookEventList[number];
+export const systemEventList = [
+	// "system_status",
+	"build_status",
+	"deploy_status",
+	"dbbackup_status",
+	"app_status",
+	"project_status",
+	"environment_status",
+] as const;
+export type SystemEvent = typeof systemEventList[number];
 
 // webhook channels
 export const webhookChannelList = ["http_callback", "email", "sms", "web_push", "push_notification", "instant_message"] as const;
 export type WebhookChannel = typeof webhookChannelList[number];
 
 export const webhookEventStatusList = filterUniqueItems([...buildStatusList, ...deployStatusList, ...backupStatusList, ...appStatusList]);
+export type WebhookEventStatus = typeof webhookEventStatusList[number];
 
 /**
  * Credential fields

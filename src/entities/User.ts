@@ -2,6 +2,7 @@ import type { Types } from "mongoose";
 import { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
+import type { WebhookChannel } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
@@ -63,9 +64,21 @@ export interface IUser extends IBase {
 	teams?: (ITeam | Types.ObjectId | string)[];
 	workspaces?: (IWorkspace | Types.ObjectId | string)[];
 	activeWorkspace?: IWorkspace | Types.ObjectId | string;
+	/**
+	 * User settings
+	 */
+	settings?: {
+		notification: {
+			workspace?: WebhookChannel[];
+			project?: WebhookChannel[];
+			app?: WebhookChannel[];
+			build?: WebhookChannel[];
+			deploy?: WebhookChannel[];
+		};
+	};
 }
 
-export const userSchema = new Schema(
+export const userSchema = new Schema<IUser>(
 	{
 		...baseSchemaDefinitions,
 		name: {
@@ -128,6 +141,7 @@ export const userSchema = new Schema(
 			ref: "users",
 		},
 		ownerSlug: String,
+		settings: { type: Schema.Types.Mixed },
 	},
 	{
 		collection: "users",

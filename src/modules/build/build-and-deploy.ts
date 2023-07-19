@@ -21,6 +21,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	if (!deployParams.env) deployParams.env = buildParams.env || "dev";
 	if (typeof buildParams.buildWatch === "undefined") buildParams.buildWatch = true;
 	buildParams.env = deployParams.env;
+	buildParams.shouldDeploy = true; // <-- keep this to disable webhook notification when build success
 
 	const { build, startTime, SOCKET_ROOM } = await startBuild(buildParams);
 	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > buildNumber :>> ${build.tag}` });
@@ -37,18 +38,15 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	if (deployRes?.error) {
 		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${buildParams.env}): ${deployRes?.error}`;
 		sendLog({ SOCKET_ROOM, message: errorMsg });
-		// throw new Error(errorMsg);
 		return;
 	}
 	if (!deployRes) {
 		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${buildParams.env}): UNKNOWN_REASON`;
 		sendLog({ SOCKET_ROOM, message: errorMsg });
-		// throw new Error(errorMsg);
 		return;
 	}
 
 	const { release, deployment } = deployRes;
-	// console.log("[BUILD_AND_DEPLOY] Finished deploying > release :>> ", release);
 	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > Release ID :>> ${release._id}` });
 
 	const releaseId = MongoDB.toString(release._id);
@@ -68,7 +66,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 			// success -> write to db
 			delete result.buffer;
 			const mediaSvc = new MediaService();
-			const media = await mediaSvc.create({ ...result, owner: deployParams.author._id, workspace: deployParams.workspace._id });
+			const media = await mediaSvc.create({ ...result, owner: deployParams.owner._id, workspace: deployParams.workspace._id });
 			if (media) {
 				// update screenshot to release
 				const updatedRelease = await DB.updateOne("release", { _id: releaseId }, { screenshot: media.url });

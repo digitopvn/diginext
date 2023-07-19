@@ -2,7 +2,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import { IWebhook } from "@/entities/Webhook";
 import * as interfaces from "@/interfaces";
-import { WebhookService } from "@/services/WebhookService";
+import { WebhookDto, WebhookService } from "@/services/WebhookService";
 
 import BaseController from "./BaseController";
 
@@ -23,7 +23,7 @@ export default class WebhookController extends BaseController<IWebhook, WebhookS
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: IWebhook, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async create(@Body() body: WebhookDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		try {
 			const data = await this.service.create(body);
 			return interfaces.respondSuccess({ data });

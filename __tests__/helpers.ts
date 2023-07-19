@@ -5,27 +5,6 @@ import { extractAccessTokenInfo, generateJWT } from "../src/modules/passports/jw
 import { isServerReady, server, socketIO } from "../src/server";
 import jwt from "jsonwebtoken";
 
-import {
-	ApiKeyUserService,
-	AppService,
-	BuildService,
-	CloudDatabaseService,
-	CloudDatabaseBackupService,
-	CloudProviderService,
-	ClusterService,
-	ContainerRegistryService,
-	CronjobService,
-	FrameworkService,
-	GitProviderService,
-	ProjectService,
-	ReleaseService,
-	RoleService,
-	ServiceAccountService,
-	TeamService,
-	UserService,
-	WorkspaceService,
-} from "../src/services";
-
 import AppController from "../src/controllers/AppController";
 import BuildController from "../src/controllers/BuildController";
 import CloudDatabaseController from "../src/controllers/CloudDatabaseController";
@@ -43,6 +22,8 @@ import UserController from "../src/controllers/UserController";
 import ApiKeyUserController from "../src/controllers/ApiKeyUserController";
 import ServiceAccountController from "../src/controllers/ServiceAccountController";
 import WorkspaceController from "../src/controllers/WorkspaceController";
+import WebhookController from "../src/controllers/WebhookController";
+import NotificationController from "../src/controllers/NotificationController";
 
 import { isEmpty } from "lodash";
 import { MongoDB } from "../src/plugins/mongodb";
@@ -80,6 +61,8 @@ export const cronjobCtl = new CronjobController();
 export const registryCtl = new ContainerRegistryController();
 export const frameworkCtl = new FrameworkController();
 export const gitCtl = new GitProviderController();
+export const notificationCtl = new NotificationController();
+export const webhookCtl = new WebhookController();
 
 // for directly interact with the database...
 export const providerSvc = providerCtl.service;
@@ -100,6 +83,8 @@ export const cronjobSvc = cronjobCtl.service;
 export const registrySvc = registryCtl.service;
 export const frameworkSvc = frameworkCtl.service;
 export const gitSvc = gitCtl.service;
+export const webhookSvc = webhookCtl.service;
+export const notificationSvc = notificationCtl.service;
 
 export const controllers = [
 	roleCtl,
@@ -119,6 +104,8 @@ export const controllers = [
 	registryCtl,
 	frameworkCtl,
 	gitCtl,
+	webhookCtl,
+	notificationCtl,
 ];
 
 // current logged in user
@@ -185,6 +172,7 @@ export const createWorkspace = async (ownerId: string, name: string, isPublic = 
 
 	// assign user & workspace to controllers:
 	controllers.map((ctl) => {
+		ctl.service.ownership = { owner: user, workspace };
 		ctl.service.req = { user, workspace } as AppRequest;
 		ctl.user = currentUser;
 		ctl.workspace = workspace;
@@ -230,6 +218,7 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 
 	// assign user & workspace to controllers:
 	controllers.map((ctl) => {
+		ctl.service.ownership = { owner: user, workspace };
 		ctl.service.req = { user, workspace } as AppRequest;
 		ctl.user = user;
 		ctl.workspace = workspace;

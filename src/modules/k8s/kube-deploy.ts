@@ -8,12 +8,13 @@ import path from "path";
 import { isServerMode } from "@/app.config";
 import { cliOpts } from "@/config/config";
 import { CLI_DIR } from "@/config/const";
-import type { ICluster, IRelease } from "@/entities";
+import type { ICluster, IRelease, IUser, IWorkspace } from "@/entities";
 import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import { objectToDeploymentYaml, wait, waitUntil } from "@/plugins";
-import { isValidObjectId } from "@/plugins/mongodb";
+import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
+import { WebhookService } from "@/services";
 
 import getDeploymentName from "../deploy/generate-deployment-name";
 import ClusterManager from "./index";
@@ -130,7 +131,14 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	const { DB } = await import("@/modules/api/DB");
 	const { onUpdate } = options;
 
-	let releaseData = await DB.findOne("release", { id });
+	let releaseData = await DB.findOne("release", { id }, { populate: ["owner", "workspace"] });
+	const owner = releaseData.owner as IUser;
+	const workspace = releaseData.workspace as IWorkspace;
+
+	// webhook
+	const webhookSvc = new WebhookService();
+	webhookSvc.ownership = { owner, workspace };
+	const webhook = await DB.findOne("webhook", { release: id });
 
 	if (isEmpty(releaseData)) return { error: `Release not found.` };
 
@@ -148,6 +156,10 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 		cluster = await ClusterManager.authClusterBySlug(clusterSlug);
 	} catch (e) {
 		logError(`[PREVIEW_PRERELEASE]`, e);
+
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
 		return { error: e.message };
 	}
 	const { contextName: context } = cluster;
@@ -163,6 +175,10 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 		if (!createNsRes) {
 			const errMsg = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
 			logError(errMsg);
+
+			// dispatch/trigger webhook
+			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
 			return { error: errMsg };
 		}
 	}
@@ -175,6 +191,9 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 		if (onUpdate)
 			onUpdate(`[PREVIEW] Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace (cluster: "${clusterSlug}").`);
 	} catch (e) {
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
 		throw new Error(`[PREVIEW] Can't create "imagePullSecrets" in the "${namespace}" namespace (cluster: "${clusterSlug}").`);
 	}
 
@@ -196,10 +215,14 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	 * Apply PRE-RELEASE deployment YAML
 	 */
 	const prereleaseDeploymentRes = await ClusterManager.kubectlApplyContent(preYaml, { context });
-	if (!prereleaseDeploymentRes)
+	if (!prereleaseDeploymentRes) {
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
 		throw new Error(
 			`Can't preview the pre-release "${id}" (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${preYaml}`
 		);
+	}
 
 	logSuccess(`The PRE-RELEASE environment is ready to preview: https://${prereleaseUrl}`);
 
@@ -208,13 +231,14 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 
 /**
  * Roll out a release
+ * @param id - Release ID
  */
 export async function rollout(id: string, options: RolloutOptions = {}) {
 	const { DB } = await import("@/modules/api/DB");
 	const { onUpdate } = options;
 	const { execa, execaCommand, execaSync } = await import("execa");
 
-	const releaseData = await DB.findOne("release", { id });
+	let releaseData = await DB.findOne("release", { id }, { populate: ["owner", "workspace"] });
 	if (isEmpty(releaseData)) return { error: `Release "${id}" not found.` };
 
 	const {
@@ -228,6 +252,15 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		namespace,
 		env,
 	} = releaseData as IRelease;
+
+	// webhook
+	const owner = releaseData.owner as IUser;
+	const workspace = releaseData.workspace as IWorkspace;
+
+	const webhookSvc = new WebhookService();
+	webhookSvc.ownership = { owner, workspace };
+
+	const webhook = await DB.findOne("webhook", { release: id });
 
 	log(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
 	if (onUpdate) onUpdate(`Rolling out the release: "${releaseSlug}" (ID: ${id})`);
@@ -246,12 +279,16 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		log(`Rolling out > Checked connectivity of "${clusterSlug}" cluster.`);
 	} catch (e) {
 		logError(`[ROLL_OUT]`, e);
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		return { error: e.message };
 	}
 
 	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 	if (!cluster) {
 		logError(`Cluster "${clusterSlug}" not found.`);
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		return { error: `Cluster "${clusterSlug}" not found.` };
 	}
 	const { name: context } = await ClusterManager.getKubeContextByCluster(cluster);
@@ -275,6 +312,8 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 			const err = `[KUBE_DEPLOY] Failed to create new namespace: ${namespace} (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env})`;
 			logError(`[ROLL_OUT]`, err);
 			if (onUpdate) onUpdate(err);
+			// dispatch/trigger webhook
+			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 			return { error: err };
 		}
 	}
@@ -286,7 +325,8 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 			onUpdate(`[ROLL OUT] Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace (cluster: "${clusterSlug}").`);
 	} catch (e) {
 		const error = `[ROLL OUT] Can't create "imagePullSecrets" in the "${namespace}" namespace (cluster: "${clusterSlug}").`;
-		// throw new Error();
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		return { error };
 	}
 
@@ -326,24 +366,15 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	});
 	// log(`3`, { appSlug, service, svcName, ingress, ingressName, deploymentName });
 
-	// create new service if it's not existed
-	const currentServices = await ClusterManager.getServices(namespace, { context, filterLabel: `phase=live,main-app=${mainAppName}` });
-
-	// if (!isEmpty(currentServices)) {
-	// 	// The service is existed
-	// 	service = currentServices[0];
-	// } else {
-
 	// Always apply new service, since the PORT could be changed !!!
-
 	const SVC_CONTENT = objectToDeploymentYaml(service);
 	const applySvcRes = await ClusterManager.kubectlApplyContent(SVC_CONTENT, { context });
 	if (!applySvcRes) {
-		// throw new Error(
-		// 	`Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`
-		// );
 		const error = `Cannot apply SERVICE "${service.metadata.name}" (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${SVC_CONTENT}`;
-		// throw new Error();
+
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
 		return { error };
 	}
 
@@ -356,7 +387,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 	if (ingress) {
 		const domains = ingress.spec.rules.map((rule) => rule.host) || [];
-		console.log("domains :>> ", domains);
+		// console.log("domains :>> ", domains);
 
 		if (domains.length > 0) {
 			const allIngresses = await ClusterManager.getAllIngresses({ context });
@@ -392,9 +423,6 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 		if (!prereleaseAppName) return { error: `"prereleaseAppName" is invalid.` };
 		if (onUpdate) onUpdate(`prereleaseAppName = ${prereleaseAppName}`);
-
-		// deploymentName = prereleaseAppName;
-		// deployment = prereleaseApp;
 	}
 
 	/**
@@ -540,6 +568,9 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		containerLogs.indexOf("An error occurred") > -1 ||
 		containerLogs.indexOf("Command failed") > -1
 	) {
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
 		return {
 			error: `[ERROR] Your app deployment has been stucked or crashed, check the container's logs to identify the problems.`,
 		};
@@ -566,7 +597,6 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		if (onUpdate) onUpdate(`Patched "${svcName}" service successfully >> new deployment: ${deploymentName}`);
 	} catch (e) {
 		if (onUpdate) onUpdate(`[WARNING] Patched "${svcName}" service failure: ${e.message}`);
-		// return { error: e.message };
 	}
 
 	/**
@@ -597,29 +627,30 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	// ! ALWAYS Create new ingress
 	const ING_CONTENT = objectToDeploymentYaml(ingress);
 	const ingCreateResult = await ClusterManager.kubectlApplyContent(ING_CONTENT, { context });
-	if (!ingCreateResult)
+	if (!ingCreateResult) {
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
 		throw new Error(
 			`Failed to apply invalid INGRESS config (${env.toUpperCase()}) to "${ingressName}" in "${namespace}" namespace of "${context}" context:\n${ING_CONTENT}`
 		);
+	}
 
 	// Print success:
 	const prodUrlInCLI = chalk.bold(`https://${endpointUrl}`);
 	const successMsg = `🎉 PUBLISHED AT: ${prodUrlInCLI} 🎉`;
 	logSuccess(successMsg);
 
-	// Filter previous releases:
-	const filter = [{ projectSlug, appSlug, active: true }];
-
 	// Mark previous releases as "inactive":
-	await DB.update("release", { $or: filter }, { active: false });
+	await DB.update("release", { appSlug, active: true }, { active: false });
 
 	// Mark this latest release as "active":
-	const latestReleases = await DB.update("release", { _id: id }, { active: true });
-
-	const latestRelease = latestReleases[0];
-	// log({ latestRelease });
-
-	if (!latestRelease) throw new Error(`Cannot set the latest release (${id}) status as "active".`);
+	const latestRelease = await DB.updateOne("release", { _id: id }, { active: true });
+	if (!latestRelease) {
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+		throw new Error(`Cannot set the latest release (${id}) status as "active".`);
+	}
 
 	/**
 	 * 5. Clean up > Delete old deployments
