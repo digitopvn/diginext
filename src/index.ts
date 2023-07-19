@@ -226,7 +226,6 @@ export async function processCLI(options?: InputOptions) {
 		case "tf":
 		case "transfer":
 			await cliAuthenticate(options);
-
 			await transferRepo(options);
 			return;
 

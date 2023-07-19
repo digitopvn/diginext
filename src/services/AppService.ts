@@ -5,11 +5,11 @@ import type { QuerySelector } from "mongoose";
 import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { AppInputSchema, DeployEnvironmentData } from "@/controllers/AppController";
 import type { ICluster, IFramework, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
 import { type DeployEnvironment, type IQueryFilter, type IQueryOptions, type IQueryPagination, type KubeDeployment } from "@/interfaces";
+import type { AppInputSchema, DeployEnvironmentData } from "@/interfaces/AppInterfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
@@ -30,8 +30,6 @@ import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 
 import BaseService from "./BaseService";
-import DeployService from "./DeployService";
-import { BuildService, ClusterService, ContainerRegistryService, GitProviderService, ProjectService, UserService, WorkspaceService } from "./index";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -44,20 +42,6 @@ export type KubeDeploymentOnCluster = KubeDeployment & {
 };
 
 export class AppService extends BaseService<IApp> {
-	projectSvc = new ProjectService();
-
-	userSvc = new UserService();
-
-	wsSvc = new WorkspaceService();
-
-	clusterSvc = new ClusterService();
-
-	regSvc = new ContainerRegistryService();
-
-	deploySvc = new DeployService();
-
-	buildSvc = new BuildService();
-
 	constructor() {
 		super(appSchema);
 	}
@@ -71,9 +55,13 @@ export class AppService extends BaseService<IApp> {
 		let appDto = { ...data };
 
 		// ownership
+		const { WorkspaceService, ProjectService, GitProviderService } = await import("./index");
+		const wsSvc = new WorkspaceService();
+		const projectSvc = new ProjectService();
+
 		const workspace =
 			this.ownership.workspace ||
-			(data.workspace && MongoDB.isValidObjectId(data.workspace) ? await this.wsSvc.findOne({ _id: data.workspace }) : undefined);
+			(data.workspace && MongoDB.isValidObjectId(data.workspace) ? await wsSvc.findOne({ _id: data.workspace }) : undefined);
 		if (!workspace) throw new Error(`Workspace not found.`);
 
 		// check dx quota
@@ -88,9 +76,9 @@ export class AppService extends BaseService<IApp> {
 
 		// find parent project of this app
 		if (MongoDB.isValidObjectId(data.project)) {
-			project = await this.projectSvc.findOne({ _id: data.project });
+			project = await projectSvc.findOne({ _id: data.project });
 		} else if (isString(data.project)) {
-			project = await this.projectSvc.findOne({ slug: data.project });
+			project = await projectSvc.findOne({ slug: data.project });
 		} else {
 			throw new Error(`"project" is not a valid ID or slug.`);
 		}
@@ -161,9 +149,9 @@ export class AppService extends BaseService<IApp> {
 
 		// add this new app to the project info
 		if (project) {
-			this.projectSvc.ownership = this.ownership;
+			projectSvc.ownership = this.ownership;
 			const projectApps = [...(project.apps || []), newAppId];
-			project = await this.projectSvc.updateOne({ _id: project._id }, { apps: projectApps });
+			project = await projectSvc.updateOne({ _id: project._id }, { apps: projectApps });
 		}
 
 		return newApp;
@@ -210,6 +198,7 @@ export class AppService extends BaseService<IApp> {
 		const { repoSlug } = repoData;
 
 		// default project
+		const { WorkspaceService, ProjectService, GitProviderService } = await import("./index");
 		const projectSvc = new ProjectService();
 		projectSvc.ownership = this.ownership;
 		let project = await projectSvc.findOne({ isDefault: true, workspace: workspace._id }, options);
@@ -299,7 +288,7 @@ export class AppService extends BaseService<IApp> {
 		const newApp = await this.create(appDto as Partial<AppInputSchema & IApp>, options);
 
 		// add app & app slug to project
-		this.projectSvc.ownership = this.ownership;
+		projectSvc.ownership = this.ownership;
 		await projectSvc.updateOne({ _id: project._id }, { $push: { apps: newApp._id, appSlugs: newApp.slug } }, { raw: true });
 
 		return newApp;
@@ -318,9 +307,11 @@ export class AppService extends BaseService<IApp> {
 
 		if (!status) return apps;
 
+		const { WorkspaceService, ProjectService, GitProviderService, ClusterService } = await import("./index");
+		const clusterSvc = new ClusterService();
 		const clusterFilter: any = {};
 		if (filter?.workspace) clusterFilter.workspace = filter.workspace;
-		const clusters = await this.clusterSvc.find(clusterFilter);
+		const clusters = await clusterSvc.find(clusterFilter);
 
 		// check app deploy environment's status in clusters
 		const appsWithStatus = await Promise.all(
@@ -473,9 +464,13 @@ export class AppService extends BaseService<IApp> {
 
 		// Validate deploy environment data:
 
+		const { WorkspaceService, ProjectService, GitProviderService, ClusterService, ContainerRegistryService } = await import("./index");
+		const clusterSvc = new ClusterService();
+		const regSvc = new ContainerRegistryService();
+
 		// cluster
 		if (!deployEnvironmentData.cluster) throw new Error(`Param "cluster" (Cluster's short name) is required.`);
-		const cluster = await this.clusterSvc.findOne({ slug: deployEnvironmentData.cluster });
+		const cluster = await clusterSvc.findOne({ slug: deployEnvironmentData.cluster });
 		if (!cluster) throw new Error(`Cluster "${deployEnvironmentData.cluster}" is not valid`);
 
 		// namespace
@@ -483,7 +478,7 @@ export class AppService extends BaseService<IApp> {
 
 		// container registry
 		if (!deployEnvironmentData.registry) throw new Error(`Param "registry" (Container Registry's slug) is required.`);
-		const registry = await this.regSvc.findOne({ slug: deployEnvironmentData.registry });
+		const registry = await regSvc.findOne({ slug: deployEnvironmentData.registry });
 		if (!registry) throw new Error(`Container Registry "${deployEnvironmentData.registry}" is not existed.`);
 
 		// Domains & SSL certificate...
@@ -604,8 +599,11 @@ export class AppService extends BaseService<IApp> {
 	async viewDeployEnvironmentLogs(app: IApp, env: string) {
 		const deployEnvironment = app.deployEnvironment[env];
 
+		const { WorkspaceService, ProjectService, GitProviderService, ClusterService, ContainerRegistryService } = await import("./index");
+		const clusterSvc = new ClusterService();
+
 		const clusterSlug = deployEnvironment.cluster;
-		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug, workspace: app.workspace });
+		const cluster = await clusterSvc.findOne({ slug: clusterSlug, workspace: app.workspace });
 		if (!cluster) return;
 
 		const { contextName: context } = cluster;
@@ -638,7 +636,9 @@ export class AppService extends BaseService<IApp> {
 		const clusterSlug = deployEnvironment.cluster;
 		if (!clusterSlug) throw new Error(`This app's deploy environment (${env}) hasn't been deployed in any clusters.`);
 
-		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug });
+		const { WorkspaceService, ProjectService, GitProviderService, ClusterService, ContainerRegistryService } = await import("./index");
+		const clusterSvc = new ClusterService();
+		const cluster = await clusterSvc.findOne({ slug: clusterSlug });
 		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
 
 		if (!deployEnvironment.namespace) throw new Error(`Namespace not found.`);
@@ -672,6 +672,15 @@ export class AppService extends BaseService<IApp> {
 			message = `Unable to sleep a deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
 		}
 
+		// update database
+		this.updateOne(
+			{ _id: app._id },
+			{
+				[`deployEnvironment.${env}.replicas`]: 0,
+				[`deployEnvironment.${env}.sleepAt`]: new Date(),
+			}
+		);
+
 		return { success, message };
 	}
 
@@ -687,7 +696,9 @@ export class AppService extends BaseService<IApp> {
 		const clusterSlug = deployEnvironment.cluster;
 		if (!clusterSlug) throw new Error(`This app's deploy environment (${env}) hasn't been deployed in any clusters.`);
 
-		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug });
+		const { WorkspaceService, ProjectService, GitProviderService, ClusterService, ContainerRegistryService } = await import("./index");
+		const clusterSvc = new ClusterService();
+		const cluster = await clusterSvc.findOne({ slug: clusterSlug });
 		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
 
 		if (!deployEnvironment.namespace) throw new Error(`Namespace not found.`);
@@ -721,6 +732,15 @@ export class AppService extends BaseService<IApp> {
 			message = `Unable to wake up a deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
 		}
 
+		// update database
+		this.updateOne(
+			{ _id: app._id },
+			{
+				[`deployEnvironment.${env}.replicas`]: 1,
+				[`deployEnvironment.${env}.awakeAt`]: new Date(),
+			}
+		);
+
 		return { success, message };
 	}
 
@@ -736,7 +756,9 @@ export class AppService extends BaseService<IApp> {
 		const clusterSlug = deployEnvironment.cluster;
 		if (!clusterSlug) throw new Error(`This app's deploy environment (${env}) hasn't been deployed in any clusters.`);
 
-		const cluster = await this.clusterSvc.findOne({ slug: clusterSlug });
+		const { WorkspaceService, ProjectService, GitProviderService, ClusterService, ContainerRegistryService } = await import("./index");
+		const clusterSvc = new ClusterService();
+		const cluster = await clusterSvc.findOne({ slug: clusterSlug });
 		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
 
 		if (!deployEnvironment.namespace) throw new Error(`Namespace not found.`);
@@ -783,6 +805,9 @@ export class AppService extends BaseService<IApp> {
 			errorMsg += `, ${e}.`;
 		}
 
+		// update database
+		this.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.tookDownAt`]: new Date() });
+
 		return { success: true, message: errorMsg };
 	}
 
@@ -822,11 +847,15 @@ export class AppService extends BaseService<IApp> {
 		// update new cluster slug:
 		app = await this.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.cluster`]: cluster.slug });
 
+		const { BuildService } = await import("./index");
+		const { default: DeployService } = await import("./DeployService");
+		const buildSvc = new BuildService();
+		const deploySvc = new DeployService();
 		// deploy to new cluster
-		const latestBuild = await this.buildSvc.findOne({ slug: app.latestBuild });
-		const { build, release, error } = await this.deploySvc.deployBuild(latestBuild, {
+		const latestBuild = await buildSvc.findOne({ slug: app.latestBuild });
+		const { build, release, error } = await deploySvc.deployBuild(latestBuild, {
 			env,
-			author: options.user,
+			owner: options.user,
 			workspace: options.workspace,
 			forceRollOut: true,
 		});
@@ -856,9 +885,13 @@ export class AppService extends BaseService<IApp> {
 	 * Get all users that participated in this app.
 	 */
 	async getParticipants(app: IApp, options?: IQueryOptions & IQueryPagination) {
-		this.buildSvc.ownership = this.ownership;
-		const listOwners = await this.buildSvc.distinct("owner", { app: app._id });
+		const { BuildService, UserService } = await import("./index");
+		const buildSvc = new BuildService();
+		const userSvc = new UserService();
+
+		buildSvc.ownership = this.ownership;
+		const listOwners = await buildSvc.distinct("owner", { app: app._id });
 		const ids = listOwners.map((item) => item.owner);
-		return this.userSvc.find({ _id: { $in: ids } }, { select: basicUserFields });
+		return userSvc.find({ _id: { $in: ids } }, { select: basicUserFields }, options);
 	}
 }

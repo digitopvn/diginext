@@ -2,8 +2,8 @@ import { log, logError } from "diginext-utils/dist/xconsole/log";
 import { existsSync } from "fs";
 import path from "path";
 
-import type { CreateEnvVarsDto } from "@/controllers/AppController";
 import type { IApp } from "@/entities";
+import type { CreateEnvVarsDto } from "@/interfaces/AppInterfaces";
 import { loadEnvFileAsContainerEnvVars } from "@/plugins";
 
 import { fetchApi } from "../api";

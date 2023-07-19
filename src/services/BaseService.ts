@@ -420,8 +420,13 @@ export default class BaseService<T = any> {
 		});
 
 		// set updated date
-		if (convertedData.$set) convertedData.$set.updatedAt = new Date();
-		else convertedData.updatedAt = new Date();
+		if (convertedData.$set) {
+			convertedData.$set.updatedAt = new Date();
+			convertedData.$set.updatedBy = this.ownership?.owner._id;
+		} else {
+			convertedData.updatedAt = new Date();
+			convertedData.updatedBy = this.ownership?.owner._id;
+		}
 
 		// Notes: keep the square brackets in [updateData] -> it's the pipelines for update query
 		const updateData = options?.raw ? convertedData : [{ $set: convertedData }];
@@ -446,7 +451,7 @@ export default class BaseService<T = any> {
 	}
 
 	async softDelete(filter?: IQueryFilter<T>, options: IQueryOptions = {}) {
-		const data = { deletedAt: new Date() };
+		const data = { deletedAt: new Date(), deletedBy: this.ownership?.owner._id };
 		const deletedItems = await this.update(filter, data, { deleted: true });
 		if (options.isDebugging)
 			console.log(`BaseService > "${this.model.collection.name}" > softDelete > deletedItems :>> `, deletedItems, deletedItems.length);

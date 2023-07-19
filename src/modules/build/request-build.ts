@@ -135,6 +135,8 @@ export async function requestBuild(options: InputOptions) {
 		}
 
 		if (!requestResult.status) logError(requestResult.messages[0] || `Unable to process Request Build API.`);
+
+		log(`-> Check build status here: ${requestResult.data.logURL} `);
 	} catch (e) {
 		logError(`Unable to call Build Deploy API:`, e);
 		return;
@@ -142,12 +144,12 @@ export async function requestBuild(options: InputOptions) {
 
 	// update the project so it can be sorted on top
 	try {
-		await DB.update("project", { slug: app.projectSlug }, { lastUpdatedBy: options.username });
+		await DB.updateOne("project", { slug: app.projectSlug }, { lastUpdatedBy: options.username });
 	} catch (e) {
 		logWarn(e);
 	}
 
-	log(`-> Check build status here: ${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM} `);
+	// friendly reminder
 	if (env == "prod") log(chalk.red(`⚠️⚠️⚠️ REMEMBER TO CREATE PULL REQUEST TO "master" (or "main") BRANCH ⚠️⚠️⚠️`));
 
 	if (options.isTail) {
