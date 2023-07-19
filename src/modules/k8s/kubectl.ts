@@ -442,7 +442,7 @@ export async function getDeploy(name: string, namespace = "default", options: Ku
  * Get deployments in a namespace by filter labels
  */
 export async function getDeploysByFilter(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
+	const { execa } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -457,6 +457,50 @@ export async function getDeploysByFilter(namespace = "default", options: KubeCom
 		return JSON.parse(stdout) as KubeDeployment[];
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getDeploy >`, e);
+		return;
+	}
+}
+
+/**
+ * Set image to a container of a deployment in a namespace
+ */
+export async function scaleDeploy(name: string, replicas: number, namespace = "default", options: KubeGenericOptions = {}) {
+	const { execa } = await import("execa");
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "scale", "deployment", name, `--replicas=${replicas}`);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] scaleDeploy >`, e);
+		return;
+	}
+}
+
+/**
+ * Set image to all containers of a deployment in a namespace
+ * @param name - Deployment's name
+ */
+export async function scaleDeployByFilter(replicas: number, namespace = "default", options: KubeCommandOptions = {}) {
+	const { execa } = await import("execa");
+	const { context, filterLabel, skipOnError } = options;
+
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "scale", "deployment", `--replicas=${replicas}`);
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] scaleDeployByFilter >`, e);
 		return;
 	}
 }

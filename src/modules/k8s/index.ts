@@ -43,6 +43,8 @@ import {
 	logPodByFilter,
 	rollbackDeploy,
 	rollbackDeployRevision,
+	scaleDeploy,
+	scaleDeployByFilter,
 	setDeployImage,
 	setDeployImageAll,
 	setDeployImagePullSecretByFilter,
@@ -106,6 +108,8 @@ const ClusterManager = {
 	setDeployImageAll,
 	setDeployImagePullSecretByFilter,
 	setDeployPortAll,
+	scaleDeploy,
+	scaleDeployByFilter,
 	// deploy
 	previewPrerelease,
 	rollout,

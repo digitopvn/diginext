@@ -6,7 +6,6 @@ import { isDevMode, IsTest } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
-import { migrateAllClusters } from "@/migration/migrate-all-clusters";
 import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
 import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
 import { migrateAllRecords } from "@/migration/migrate-all-records";
@@ -143,7 +142,7 @@ export async function startupScripts() {
 	await migrateAllGitProviders();
 	await migrateServiceAccountAndApiKey();
 	await migrateDefaultServiceAccountAndApiKeyUser();
-	await migrateAllClusters();
+	// await migrateAllClusters();
 
 	/**
 	 * Mark "healthz" return true & server is ready to receive connections:

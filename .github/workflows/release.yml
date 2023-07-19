@@ -85,6 +85,11 @@ jobs:
         with:
           name: swagger-artifact
           path: public/swagger.json
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: packagejson-artifact
+          path: package.json
       
       - name: Show current branch
         run: echo "${{ env.BRANCH_NAME }}"
@@ -155,6 +160,11 @@ jobs:
           name: swagger-artifact
           path: public
 
+      - name: Download package.json
+        uses: actions/download-artifact@v3
+        with:
+          name: packagejson-artifact
+
       # - name: Display structure of downloaded files
       #   run: ls -R
 
@@ -217,6 +227,11 @@ jobs:
         with:
           name: swagger-artifact
           path: public
+
+      - name: Download package.json
+        uses: actions/download-artifact@v3
+        with:
+          name: packagejson-artifact
 
       - name: Display structure of downloaded files
         run: ls -R

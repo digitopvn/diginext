@@ -8,5 +8,3 @@ export default class ActivityService extends BaseService<IActivity> {
 		super(activitySchema);
 	}
 }
-
-// export { AppService };

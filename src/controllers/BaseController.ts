@@ -7,7 +7,7 @@ import { cloneDeepWith, isBoolean, isDate, isEmpty, isNumber, isString, toNumber
 import { Config } from "@/app.config";
 import type { IUser, IWorkspace } from "@/entities";
 import type { IBase } from "@/entities/Base";
-import type { AppRequest } from "@/interfaces/SystemTypes";
+import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
 import { isObjectId, isValidObjectId, MongoDB, toObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import type { BaseService } from "@/services/BaseService";
@@ -27,6 +27,8 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 
 	workspace: IWorkspace;
 
+	ownership: Ownership;
+
 	filter: IQueryFilter;
 
 	options: IQueryOptions;
@@ -38,6 +40,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			this.service = service;
 			this.req = service.req;
 		}
+		this.ownership = { owner: this.user, workspace: this.workspace };
 	}
 
 	async read() {

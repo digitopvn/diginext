@@ -8,10 +8,13 @@ import path from "path";
 
 import { Config, isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IApp, IBuild, IProject, IUser, IWorkspace } from "@/entities";
+import type { IApp, IBuild, IProject, IUser, IWebhook, IWorkspace } from "@/entities";
 import type { BuildPlatform } from "@/interfaces/SystemTypes";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
+import { filterUniqueItems } from "@/plugins/array";
+import { MongoDB } from "@/plugins/mongodb";
 import { getIO, socketIO } from "@/server";
+import { WebhookService } from "@/services";
 
 import builder from "../builder";
 import { verifySSH } from "../git";
@@ -74,16 +77,6 @@ export type StartBuildParams = {
 	buildWatch?: boolean;
 
 	/**
-	 * Diginext CLI version of client user
-	 */
-	cliVersion?: string;
-
-	/**
-	 * @default false
-	 */
-	isDebugging?: boolean;
-
-	/**
 	 * Targeted platform arch: linux/arm64, linux/amd64,...
 	 */
 	platforms?: BuildPlatform[];
@@ -92,7 +85,28 @@ export type StartBuildParams = {
 	 * Build arguments
 	 */
 	args?: { name: string; value: string }[];
+
+	/**
+	 * Diginext CLI version of client user
+	 */
+	cliVersion?: string;
+
+	/**
+	 * Enable debug mode
+	 *
+	 * @default false
+	 */
+	isDebugging?: boolean;
+
+	/**
+	 * If `TRUE`, skip trigger webhook notification & process deploy this build
+	 *
+	 * @default false
+	 */
+	shouldDeploy?: boolean;
 };
+
+export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildNumber" | "buildWatch">;
 
 export async function testBuild() {
 	let socketServer = getIO();
@@ -143,7 +157,7 @@ export async function startBuild(
 		onError?: (msg: string) => void;
 	}
 ) {
-	const { DB } = await import("../api/DB");
+	const { DB } = await import("@/modules/api/DB");
 
 	// parse variables
 	const startTime = dayjs();
@@ -160,16 +174,17 @@ export async function startBuild(
 		user,
 		env,
 		buildWatch = false,
+		shouldDeploy = false,
 		isDebugging = false,
 		cliVersion,
 	} = params;
 
-	const author = user || (await DB.findOne("user", { _id: userId }, { populate: ["workspaces", "activeWorkspaces"] }));
-	if (isDebugging) console.log("author :>> ", author);
+	const owner = user || (await DB.findOne("user", { _id: userId }, { populate: ["workspaces", "activeWorkspaces"] }));
+	if (isDebugging) console.log("owner :>> ", owner);
 
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 	// get workspace
-	const { activeWorkspace, slug: username } = author;
+	const { activeWorkspace, slug: username } = owner;
 	const workspace = activeWorkspace as IWorkspace;
 
 	// socket & logs
@@ -258,13 +273,16 @@ export async function startBuild(
 		createdBy: username,
 		projectSlug,
 		appSlug,
+		branch: gitBranch,
 		logs: logger?.content,
 		cliVersion,
 		registry: registry._id,
 		app: app._id,
 		project: project._id,
-		owner: author._id,
+		owner: owner._id,
+		ownerSlug: owner.slug,
 		workspace: workspace._id,
+		workspaceSlug: workspace.slug,
 	} as IBuild;
 
 	const newBuild = await DB.create("build", buildData);
@@ -276,12 +294,38 @@ export async function startBuild(
 	}
 	sendLog({ SOCKET_ROOM, message: "[START BUILD] Created new build on server!" });
 
+	// create a webhook
+	// TODO: check user notification settings -> subscribe to webhook
+	let webhook: IWebhook;
+	const webhookSvc = new WebhookService();
+	webhookSvc.ownership = { owner, workspace };
+
+	if (isServerMode) {
+		const projectOwner = await DB.findOne("user", { _id: project.owner });
+		const appOwner = app.owner as IUser;
+		const consumers = filterUniqueItems([projectOwner?._id, appOwner?._id, owner?._id])
+			.filter((uid) => typeof uid !== "undefined")
+			.map((uid) => MongoDB.toString(uid));
+
+		webhook = await webhookSvc.create({
+			events: ["build_status"],
+			channels: ["email"],
+			consumers,
+			workspace: MongoDB.toString(workspace._id),
+			project: MongoDB.toString(project._id),
+			app: MongoDB.toString(app._id),
+			build: MongoDB.toString(newBuild._id),
+		});
+	}
+
 	// verify SSH before pulling files...
 	const gitAuth = await verifySSH({ gitProvider });
 	if (!gitAuth) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.` });
 		if (options?.onError) options?.onError(`[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`);
 		await updateBuildStatus(newBuild, "failed");
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		return;
 	}
 
@@ -297,6 +341,8 @@ export async function startBuild(
 		sendLog({ SOCKET_ROOM, type: "error", message: `Failed to pull "${repoSSH}": ${e}` });
 		if (options?.onError) options?.onError(`Failed to pull "${repoSSH}": ${e}`);
 		await updateBuildStatus(newBuild, "failed");
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 	}
 
 	// emit socket message to "digirelease" app:
@@ -316,6 +362,8 @@ export async function startBuild(
 			message: `[START BUILD] Missing "Dockerfile" to build the application, please create your "Dockerfile" in the root directory of the source code.`,
 		});
 		await updateBuildStatus(newBuild, "failed");
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		return;
 	}
 
@@ -332,6 +380,8 @@ export async function startBuild(
 			message: `Server network error, unable to perform data updating.`,
 		});
 		await updateBuildStatus(newBuild, "failed");
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		return;
 	}
 
@@ -345,7 +395,7 @@ export async function startBuild(
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Start building the Docker image...` });
 
-	const notifyClients = () => {
+	const notifyClientBuildSuccess = () => {
 		const endTime = dayjs();
 		const buildDuration = endTime.diff(startTime, "millisecond");
 		const humanDuration = humanizeDuration(buildDuration);
@@ -353,13 +403,25 @@ export async function startBuild(
 		sendLog({
 			SOCKET_ROOM,
 			message: chalk.green(`✓ FINISHED BUILDING IMAGE AFTER ${humanDuration}`),
-			type: "success",
+			type: shouldDeploy ? "log" : "success",
 		});
+
+		if (shouldDeploy) {
+			sendLog({
+				SOCKET_ROOM,
+				message: chalk.green(`Preparing to deploy this build...`),
+				type: "log",
+			});
+			return;
+		}
+
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
 	};
 
 	// authenticate build engine with container registry before building & pushing image
 	try {
-		await connectRegistry(registry);
+		await connectRegistry(registry, { userId, workspaceId: workspace._id });
 	} catch (e) {
 		if (options?.onError) options?.onError(`Unable to authenticate with "${registry.name}" registry: ${e}`);
 		sendLog({
@@ -368,6 +430,8 @@ export async function startBuild(
 			type: "error",
 		});
 		await updateBuildStatus(newBuild, "failed");
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		return;
 	}
 
@@ -396,7 +460,7 @@ export async function startBuild(
 				message: `✓ Pushed "${buildImage}" to container registry (${registrySlug}) successfully!`,
 			});
 
-			notifyClients();
+			notifyClientBuildSuccess();
 
 			if (options?.onSucceed) options?.onSucceed(newBuild);
 
@@ -406,7 +470,8 @@ export async function startBuild(
 			sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
 			if (options?.onError) options?.onError(`Build failed: ${e}`);
 
-			notifyClients();
+			// dispatch/trigger webhook
+			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
 			return;
 		}
@@ -431,7 +496,7 @@ export async function startBuild(
 					message: `✓ Pushed "${buildImage}" to container registry (${registrySlug}) successfully!`,
 				});
 
-				notifyClients();
+				notifyClientBuildSuccess();
 
 				if (options?.onSucceed) options?.onSucceed(newBuild);
 			})
@@ -440,7 +505,8 @@ export async function startBuild(
 				sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
 				if (options?.onError) options?.onError(`Build failed: ${e}`);
 
-				notifyClients();
+				// dispatch/trigger webhook
+				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 			});
 	}
 

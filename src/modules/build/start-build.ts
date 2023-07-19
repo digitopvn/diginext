@@ -291,7 +291,7 @@ export async function startBuildV1(
 
 		// authenticate registry before building & pushing image
 		const registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry });
-		await connectRegistry(registry);
+		await connectRegistry(registry, { userId: author._id, workspaceId: workspace._id });
 
 		const buildEngine = process.env.BUILDER === "docker" ? builder.Docker : builder.Podman;
 		await buildEngine.build(buildImage, {

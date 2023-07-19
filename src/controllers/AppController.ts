@@ -1,16 +1,16 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isJSON } from "class-validator";
-import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
+import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import { isArray, isBoolean, isEmpty, isNumber, isUndefined } from "lodash";
 
-import type { AppGitInfo, IApp, IBuild, ICluster, IFramework, IProject } from "@/entities";
-import * as entities from "@/entities";
-import type { SslType } from "@/interfaces";
-import * as interfaces from "@/interfaces";
+import type { IApp, IBuild, ICluster, IProject } from "@/entities";
+import { AppDto } from "@/entities";
+import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
+import type { AppInputSchema } from "@/interfaces/AppInterfaces";
+import { CreateEnvVarsDto, DeployEnvironmentData } from "@/interfaces/AppInterfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
-import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
@@ -23,214 +23,15 @@ import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 import { ProjectService } from "@/services";
-import { AppService } from "@/services/AppService";
 
+import { AppService } from "../services/AppService";
+import DeployService from "../services/DeployService";
 import BaseController from "./BaseController";
-
-export interface CreateEnvVarsDto {
-	/**
-	 * App slug
-	 */
-	slug: string;
-	/**
-	 * Deploy environment name
-	 * @example "dev" | "prod"
-	 */
-	env: string;
-	/**
-	 * Array of variables to be created on deploy environment in JSON format
-	 */
-	envVars: string;
-}
-
-export interface AppInputSchema {
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * App's name
-	 */
-	name: string;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Project's ID or slug
-	 */
-	project: string;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * A SSH URI of the source code repository or a detail information of this repository
-	 * @example git@bitbucket.org:digitopvn/example-repo.git
-	 */
-	git: string | AppGitInfo;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Framework's ID or slug or {Framework} instance
-	 */
-	framework?: string | IFramework;
-}
-
-export interface DeployEnvironmentData {
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Container registry's slug
-	 * @requires
-	 */
-	registry: string;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Cluster's short name
-	 * @requires
-	 */
-	cluster: string;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Container's port
-	 * @requires
-	 */
-	port: number;
-
-	/**
-	 * `REQUIRES`
-	 * ---
-	 * Image URI of this app on the Container Registry (without `TAG`).
-	 * - Combined from: `<registry-image-base-url>/<project-slug>/<app-name-slug>`
-	 * - **Don't** specify `tag` at the end! (eg. `latest`, `beta`,...)
-	 * @default <registry-image-base-url>/<project-slug>/<app-name-slug>
-	 * @example "asia.gcr.io/my-workspace/my-project/my-app"
-	 */
-	imageURL: string;
-
-	/**
-	 * Build number is image's tag (no special characters, eg. "dot" or "comma")
-	 * @example latest, v01, prerelease, alpha, beta,...
-	 */
-	buildNumber: string;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Container's scaling replicas
-	 * @default 1
-	 */
-	replicas?: number;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Destination namespace name, will be generated automatically by `<project-slug>-<env>` if not specified.
-	 */
-	namespace?: string;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Container quota resources
-	 * @default 1x
-	 * @example
-	 * "none" - {}
-	 * "1x" - { requests: { cpu: "20m", memory: "128Mi" }, limits: { cpu: "20m", memory: 128Mi" } }
-	 * "2x" - { requests: { cpu: "40m", memory: "256Mi" }, limits: { cpu: "40m", memory: "256Mi" } }
-	 * "3x" - { requests: { cpu: "80m", memory: "512Mi" }, limits: { cpu: "80m", memory: "512Mi" } }
-	 * "4x" - { requests: { cpu: "160m", memory: "1024Mi" }, limits: { cpu: "160m", memory: "1024Mi" } }
-	 * "5x" - { requests: { cpu: "320m", memory: "2048Mi" }, limits: { cpu: "320m", memory: "2048Mi" } }
-	 * "6x" - { requests: { cpu: "640m", memory: "4058Mi" }, limits: { cpu: "640m", memory: "4058Mi" } }
-	 * "7x" - { requests: { cpu: "1280m", memory: "2048Mi" }, limits: { cpu: "1280m", memory: "2048Mi" } }
-	 * "8x" - { requests: { cpu: "2560m", memory: "8116Mi" }, limits: { cpu: "2560m", memory: "8116Mi" } }
-	 * "9x" - { requests: { cpu: "5120m", memory: "16232Mi" }, limits: { cpu: "5120m", memory: "16232Mi" } }
-	 * "10x" - { requests: { cpu: "10024m", memory: "32464Mi" }, limits: { cpu: "10024m", memory: "32464Mi" } }
-	 */
-	size?: ResourceQuotaSize;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment
-	 * @default true
-	 */
-	shouldInherit?: boolean;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Set to `false` if you don't want to redirect all the secondary domains to the primary domain.
-	 * @default true
-	 */
-	redirect?: boolean;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Set `true` if you want to use a generated domain for this deploy environment.
-	 * @default false
-	 */
-	useGeneratedDomain?: boolean;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * List of application's domains.
-	 * @default []
-	 */
-	domains?: string[];
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Flag to enable CDN for this application
-	 * @default false
-	 */
-	cdn?: boolean;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Select your SSL Certificate Issuer, one of:
-	 * - `letsencrypt`
-	 * - `custom`
-	 * - `none`
-	 * @default letsencrypt
-	 */
-	ssl?: SslType;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Secret name to hold the key of SSL, will be automatically generated with the primary domain.
-	 * Only need to specify when using "custom" SSL (which is the SSL from third-party issuer)
-	 */
-	tlsSecret?: string;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Kubernetes Ingress Class
-	 * @default nginx
-	 * @example "nginx" | "kong"
-	 */
-	ingress?: string;
-
-	/**
-	 * OPTIONAL
-	 * ---
-	 * Username of the person who update the app
-	 */
-	lastUpdatedBy?: string;
-}
 
 @Tags("App")
 @Route("app")
 export default class AppController extends BaseController<IApp, AppService> {
-	service: AppService;
+	deploySvc = new DeployService();
 
 	constructor() {
 		super(new AppService());
@@ -242,7 +43,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	async read(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	async read(@Queries() queryParams?: IGetQueryParams) {
 		let apps = await this.service.find(this.filter, this.options, this.pagination);
 		// console.log("apps :>> ", apps);
 		if (isEmpty(apps)) return respondSuccess({ data: [] });
@@ -275,20 +76,22 @@ export default class AppController extends BaseController<IApp, AppService> {
 			})
 			.filter((app) => app !== null && app !== undefined);
 
-		return { status: 1, data: apps } as ResponseData;
+		return respondSuccess({ data: apps });
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: AppInputSchema, @Queries() queryParams?: interfaces.IPostQueryParams) {
-		let appDto: IApp = { ...(body as any) };
-
+	async create(@Body() body: AppInputSchema & Partial<IApp>, @Queries() queryParams?: IPostQueryParams) {
 		try {
-			const newApp = await this.service.create(appDto, this.options);
+			const newApp = await this.service.create(body, { ...this.options, force: body.force, shouldCreateGitRepo: body.shouldCreateGitRepo });
+
+			delete body.force;
+			delete body.shouldCreateGitRepo;
+
 			return respondSuccess({ data: newApp });
 		} catch (e) {
-			return respondFailure(e.toString());
+			return respondFailure(`Unable to create new app: ${e}`);
 		}
 	}
 
@@ -310,10 +113,20 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 * Git provider ID to host the new repo of this app
 			 */
 			gitProviderID: string;
+			/**
+			 * ### CAUTION
+			 * If `TRUE`, it will delete existing git repo and create a new one.
+			 */
+			force?: boolean;
 		}
 	) {
 		try {
-			const newApp = await this.service.createWithGitURL(body.sshUrl, body.gitProviderID, { workspace: this.workspace, owner: this.user });
+			const newApp = await this.service.createWithGitURL(
+				body.sshUrl,
+				body.gitProviderID,
+				{ workspace: this.workspace, owner: this.user },
+				{ force: body.force }
+			);
 			return respondSuccess({ data: newApp });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -330,6 +143,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 		@Body()
 		body: {
 			/**
+			 * App's name
+			 */
+			name?: string;
+			/**
 			 * Git repo SSH url
 			 * @example git@github.com:digitopvn/diginext.git
 			 */
@@ -343,6 +160,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			gitBranch?: string;
 			/**
+			 * Project ID of this app
+			 */
+			projectID?: string;
+			/**
 			 * `DANGER`
 			 * ---
 			 * Delete app and git repo if they were existed.
@@ -351,23 +172,28 @@ export default class AppController extends BaseController<IApp, AppService> {
 			force?: boolean;
 		}
 	) {
-		const newApp = await this.service.createWithGitURL(
-			body.sshUrl,
-			body.gitProviderID,
-			{ workspace: this.workspace, owner: this.user },
-			{
-				force: body.force,
-				gitBranch: body.gitBranch,
-				isDebugging: false,
-			}
-		);
-		return respondSuccess({ data: newApp });
+		try {
+			const newApp = await this.service.createWithGitURL(
+				body.sshUrl,
+				body.gitProviderID,
+				{ workspace: this.workspace, owner: this.user },
+				{
+					force: body.force,
+					gitBranch: body.gitBranch,
+					isDebugging: false,
+					removeCI: true,
+				}
+			);
+			return respondSuccess({ data: newApp });
+		} catch (e) {
+			respondFailure(`Unable to import: ${e}`);
+		}
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: entities.AppDto, @Queries() queryParams?: interfaces.IPatchQueryParams) {
+	async update(@Body() body: AppDto, @Queries() queryParams?: IPatchQueryParams) {
 		let project: IProject,
 			projectSvc = new ProjectService();
 
@@ -413,61 +239,16 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	async delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
-		const { DB } = await import("@/modules/api/DB");
+	async delete(@Queries() queryParams?: IDeleteQueryParams) {
 		const app = await this.service.findOne(this.filter, { populate: ["project"] });
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const mainAppName = await getDeploymentName(app);
-		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-
 		if (app.deployEnvironment)
 			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
+				// take down environment
 				if (!isEmpty(deployEnvironment)) {
-					const { cluster: clusterSlug, namespace } = deployEnvironment;
-					const cluster = await DB.findOne("cluster", { slug: clusterSlug });
-					let errorMsg;
-
-					if (cluster) {
-						const { contextName: context } = cluster;
-
-						// switch to the cluster of this environment
-						await ClusterManager.authCluster(cluster);
-
-						try {
-							/**
-							 * IMPORTANT
-							 * ---
-							 * Should NOT delete namespace because it will affect other apps in a project!
-							 */
-
-							// Delete INGRESS
-							await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-							// Delete SERVICE
-							await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-							// Delete DEPLOYMENT
-							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-						} catch (e) {
-							logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace}) :>>`, e);
-							errorMsg = e.message;
-						}
-
-						try {
-							/**
-							 * FALLBACK SUPPORT for deprecated mainAppName
-							 */
-							// Delete INGRESS
-							await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-							// Delete SERVICE
-							await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-							// Delete DEPLOYMENT
-							await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-						} catch (e) {
-							logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace}) :>>`, e);
-							errorMsg += e.message;
-						}
-					}
+					await this.service.takeDownDeployEnvironment(app, env);
 				}
 			});
 
@@ -482,6 +263,60 @@ export default class AppController extends BaseController<IApp, AppService> {
 			{ raw: true }
 		);
 		return super.delete();
+	}
+
+	/**
+	 * List of participants in an app
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/participants")
+	async participants(@Queries() queryParams?: IGetQueryParams) {
+		const app = await this.service.findOne(this.filter);
+		if (!app) return respondFailure(`App not found.`);
+
+		try {
+			const participants = await this.service.getParticipants(app, this.options);
+			return respondSuccess({ data: participants });
+		} catch (e) {
+			return respondFailure(`Unable to get participants: ${e}`);
+		}
+	}
+
+	/**
+	 * Take down all deploy environments of this app on the clusters, then mark this app as "archived" in database.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/archive")
+	async archiveApp(@Queries() queryParams?: IGetQueryParams) {
+		const app = await this.service.findOne(this.filter, this.options);
+		if (!app) return respondFailure(`Unable to archive: app not found.`);
+
+		try {
+			const archivedApp = await this.service.archiveApp(app, this.ownership);
+			return respondSuccess({ data: archivedApp });
+		} catch (e) {
+			return respondFailure(`Unable to archive this app: ${e}`);
+		}
+	}
+
+	/**
+	 * Mark this app as "unarchived" in database.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/unarchive")
+	async unarchiveApp(@Queries() queryParams?: IGetQueryParams) {
+		const app = await this.service.findOne(this.filter, this.options);
+		if (!app) return respondFailure(`Unable to archive: app not found.`);
+
+		try {
+			const unarchivedApp = await this.service.unarchiveApp(app, this.ownership);
+			return respondSuccess({ data: unarchivedApp });
+		} catch (e) {
+			return respondFailure(`Unable to archive this app: ${e}`);
+		}
 	}
 
 	@Security("api_key")
@@ -680,7 +515,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			deployEnvironmentData: DeployEnvironmentData;
 		},
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
 		const app = await this.service.createDeployEnvironment(body.appSlug, body, { owner: this.user, workspace: this.workspace });
 		return respondSuccess({ data: app });
@@ -715,7 +550,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			deployEnvironmentData: DeployEnvironmentData;
 		},
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
 		//
 		const { DB } = await import("@/modules/api/DB");
@@ -941,99 +776,37 @@ export default class AppController extends BaseController<IApp, AppService> {
 			env?: string;
 		}
 	) {
-		const { DB } = await import("@/modules/api/DB");
 		let result = { status: 1, data: {}, messages: [] } as ResponseData & { data: IApp };
 
 		// input validation
 		let { _id, id, slug, env } = body;
 		if (!id && _id) id = _id;
-		if (!id && !slug) {
-			result.status = 0;
-			result.messages.push(`App "id" or "slug" is required.`);
-			return result;
-		}
-		if (!env) {
-			result.status = 0;
-			result.messages.push(`App "env" is required.`);
-			return result;
-		}
+		if (!id && !slug) return respondFailure(`App "id" or "slug" is required.`);
+		if (!env) return respondFailure(`App "env" is required.`);
 
 		// find the app
 		const appFilter = typeof id != "undefined" ? { _id: id } : { slug };
 		const app = await this.service.findOne(appFilter, { populate: ["project"] });
 
 		// check if the environment is existed
-		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
-
-		const mainAppName = await getDeploymentName(app);
-		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-
-		const deployEnvironment = (app.deployEnvironment || {})[env.toString()];
-		if (!deployEnvironment) {
-			result.status = 0;
-			result.messages.push(`App environment "${env}" not found.`);
-			return result;
-		}
+		if (!app) return respondFailure({ msg: `App not found.` });
 
 		// take down the deploy environment
-		const envConfig = await getDeployEvironmentByApp(app, env.toString());
-		const { cluster: clusterSlug, namespace } = envConfig;
-		if (!clusterSlug) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Cluster "${clusterSlug}" not found.`);
-		if (!namespace) logWarn(`[BaseController] deleteEnvironment`, { appFilter }, ` :>> Namespace "${namespace}" not found.`);
-
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
-		let errorMsg;
-
-		if (cluster) {
-			const { contextName: context } = cluster;
-
-			// switch to the cluster of this environment
-			await ClusterManager.authCluster(cluster);
-
-			try {
-				/**
-				 * IMPORTANT
-				 * ---
-				 * Should NOT delete namespace because it will affect other apps in a project!
-				 */
-
-				// Delete INGRESS
-				await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-				// Delete SERVICE
-				await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-				// Delete DEPLOYMENT
-				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
-			} catch (e) {
-				logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace}) - "main-app=${mainAppName}" :>>`, e);
-				errorMsg = e.message;
-			}
-
-			/**
-			 * FALLBACK SUPPORT FOR DEPRECATED MAIN APP NAME
-			 */
-			try {
-				// Delete INGRESS
-				await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-				// Delete SERVICE
-				await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-				// Delete DEPLOYMENT
-				await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
-			} catch (e) {
-				logError(`[BaseController] deleteEnvironment (${clusterSlug} - ${namespace} - "main-app=${deprecatedMainAppName}") :>>`, e);
-				errorMsg = e.message;
-			}
-		}
+		await this.service.takeDownDeployEnvironment(app, env.toString());
 
 		// update the app (delete the deploy environment)
-		const updatedApp = await this.service.update(appFilter, {
-			[`deployEnvironment.${env}`]: {},
-		});
+		const updatedApp = await this.service.updateOne(
+			appFilter,
+			{
+				$unset: { [`deployEnvironment.${env}`]: true },
+			},
+			{ raw: true }
+		);
 
-		log(`[BaseController] deleted Environment`, { appFilter }, ` :>>`, { updatedApp });
+		if (this.options.isDebugging) log(`[BaseController] deleted Environment`, { appFilter }, ` :>>`, { updatedApp });
 
 		// respond the results
-		result.data = updatedApp;
-		return result;
+		return respondSuccess({ data: updatedApp });
 	}
 
 	/**
@@ -1065,11 +838,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 	async createEnvVarsOnDeployEnvironment(
 		@Body()
 		body: CreateEnvVarsDto,
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
-		console.log("createEnvVarsOnDeployEnvironment > body :>> ", body);
 		const { DB } = await import("@/modules/api/DB");
-		// return { status: 0 };
+
 		let { slug, env, envVars } = body;
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
@@ -1189,7 +961,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			envVar: KubeEnvironmentVariable;
 		},
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
 		const { DB } = await import("@/modules/api/DB");
 		let { slug, env, envVar } = body;
@@ -1297,7 +1069,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			env: string;
 		},
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
 		let { slug, env } = body;
 		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
@@ -1381,7 +1153,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			 */
 			domains: string[];
 		},
-		@Queries() queryParams?: interfaces.IPostQueryParams
+		@Queries() queryParams?: IPostQueryParams
 	) {
 		const { DB } = await import("@/modules/api/DB");
 		// validate
@@ -1417,7 +1189,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (existedDomain) return respondFailure(`Domain "${existedDomain}" is existed.`);
 
 		// add new domains
-		const updateData: entities.AppDto = {};
+		const updateData: AppDto = {};
 		updateData[`deployEnvironment.${env}.domains`] = [...(app.deployEnvironment[env].domains || []), ...domains];
 
 		let updatedApp = await this.service.updateOne({ slug: app.slug }, updateData);
@@ -1512,5 +1284,122 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!logs) return respondFailure({ data: "", msg: "No logs found." });
 
 		return respondSuccess({ data: logs });
+	}
+
+	/**
+	 * Take down a deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/deploy_environment/down")
+	async takeDownDeployEnvironment(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's ID
+			 */
+			_id?: string;
+			/**
+			 * App slug
+			 */
+			slug?: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { _id, slug, env } = this.filter;
+		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
+
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
+		if (!app) return respondFailure(`App not found.`);
+
+		try {
+			const result = await this.service.takeDownDeployEnvironment(app, env);
+			if (!result.success) return respondFailure(`Unable to take down this deploy environment: ${result.message}.`);
+			return respondSuccess({ data: result });
+		} catch (e) {
+			return respondFailure(`Unable to take down this deploy environment: ${e}`);
+		}
+	}
+
+	/**
+	 * Sleep a deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/deploy_environment/sleep")
+	async sleepDeployEnvironment(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's ID
+			 */
+			_id?: string;
+			/**
+			 * App slug
+			 */
+			slug?: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { _id, slug, env } = this.filter;
+		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
+
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
+		if (!app) return respondFailure(`App not found.`);
+
+		try {
+			const result = await this.service.sleepDeployEnvironment(app, env);
+			if (!result.success) return respondFailure(`Unable to sleep a deploy environment: ${result.message}.`);
+			return respondSuccess({ data: result });
+		} catch (e) {
+			return respondFailure(`Unable to sleep a deploy environment: ${e}`);
+		}
+	}
+
+	/**
+	 * Awake a sleeping deploy environment of the application.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/deploy_environment/awake")
+	async awakeDeployEnvironment(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's ID
+			 */
+			_id?: string;
+			/**
+			 * App slug
+			 */
+			slug?: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { _id, slug, env } = this.filter;
+		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
+
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
+		if (!app) return respondFailure(`App not found.`);
+
+		try {
+			const result = await this.service.wakeUpDeployEnvironment(app, env);
+			if (!result.success) return respondFailure(`Unable to awake a deploy environment: ${result.message}.`);
+			return respondSuccess({ data: result });
+		} catch (e) {
+			return respondFailure(`Unable to awake a deploy environment: ${e}`);
+		}
 	}
 }

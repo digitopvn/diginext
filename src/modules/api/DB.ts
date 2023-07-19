@@ -15,6 +15,7 @@ import type {
 	ICronjob,
 	IFramework,
 	IGitProvider,
+	INotification,
 	IProject,
 	IRelease,
 	IRole,
@@ -22,6 +23,7 @@ import type {
 	IServiceAccount,
 	ITeam,
 	IUser,
+	IWebhook,
 	IWorkspace,
 } from "@/entities";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
@@ -37,6 +39,7 @@ import {
 	CronjobService,
 	FrameworkService,
 	GitProviderService,
+	NotificationService,
 	ProjectService,
 	ReleaseService,
 	RoleService,
@@ -44,6 +47,7 @@ import {
 	ServiceAccountService,
 	TeamService,
 	UserService,
+	WebhookService,
 	WorkspaceService,
 } from "@/services";
 
@@ -71,6 +75,8 @@ export const dbCollections = [
 	"service_account",
 	"workspace",
 	"cronjob",
+	"webhook",
+	"notification",
 ] as const;
 export type DBCollection = typeof dbCollections[number];
 
@@ -131,6 +137,8 @@ const api_key_user = new ApiKeyUserService();
 const service_account = new ServiceAccountService();
 const workspace = new WorkspaceService();
 const cronjob = new CronjobService();
+const webhook = new WebhookService();
+const notification = new NotificationService();
 
 export type TypeByCollection<T extends DBCollection> = T extends "api_key_user"
 	? IApiKeyAccount
@@ -172,6 +180,10 @@ export type TypeByCollection<T extends DBCollection> = T extends "api_key_user"
 	? IUser
 	: T extends "workspace"
 	? IWorkspace
+	: T extends "webhook"
+	? IWebhook
+	: T extends "notification"
+	? INotification
 	: never;
 
 export interface DBQueryOptions extends IQueryOptions {
@@ -225,6 +237,8 @@ export class DB {
 		api_key_user,
 		service_account,
 		workspace,
+		webhook,
+		notification,
 	};
 
 	static async count<T = any>(collection: DBCollection, filter: IQueryFilter<T> = {}, options?: DBQueryOptions, pagination?: IQueryPagination) {

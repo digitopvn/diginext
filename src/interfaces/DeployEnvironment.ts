@@ -190,6 +190,21 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	updatedAt?: Date;
 
 	/**
+	 * Date when it's put to sleep
+	 */
+	sleepAt?: Date;
+
+	/**
+	 * Date when it's awaken
+	 */
+	awakeAt?: Date;
+
+	/**
+	 * Date when it's taken down
+	 */
+	tookDownAt?: Date;
+
+	/**
 	 * Deployment's status
 	 */
 	status?: AppStatus;

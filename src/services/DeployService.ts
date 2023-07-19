@@ -16,7 +16,7 @@ export default class DeployService {
 	 */
 	async buildAndDeploy(buildParams: StartBuildParams, deployParams: DeployBuildParams, ownership: Ownership) {
 		const { DB } = await import("@/modules/api/DB");
-		let app = await DB.findOne("app", { slug: buildParams.appSlug });
+		let app = await DB.updateOne("app", { slug: buildParams.appSlug }, { updatedBy: ownership.owner._id });
 
 		// change cluster (if needed)
 		if (deployParams.cluster) {
@@ -27,17 +27,18 @@ export default class DeployService {
 		if (buildParams.registrySlug) deployParams.registry = buildParams.registrySlug;
 		if (deployParams.registry) {
 			const registry = await DB.findOne("registry", { slug: deployParams.registry, workspace: ownership.workspace._id });
-			console.log("buildAndDeploy > registry.slug :>> ", registry.slug);
 			if (registry) app = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${deployParams.env}.registry`]: registry.slug });
 		}
 
+		// ownership
 		const author = ownership.owner || (await DB.findOne("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] }));
 		const workspace = author.activeWorkspace as IWorkspace;
 
 		const deployBuildOptions: DeployBuildOptions = {
+			...deployParams,
 			env: deployParams.env || buildParams.env || "dev",
-			shouldUseFreshDeploy: deployParams.shouldUseFreshDeploy,
-			author,
+			cliVersion: buildParams.cliVersion,
+			owner: author,
 			workspace,
 		};
 
@@ -60,15 +61,19 @@ export default class DeployService {
 
 		// start build in background process:
 		log(`buildAndDeploy > buildParams.buildNumber :>>`, buildParams.buildNumber);
-		buildAndDeploy(buildParams, deployBuildOptions);
+		await buildAndDeploy(buildParams, deployBuildOptions);
 
 		const { appSlug, buildNumber } = buildParams;
 		const buildServerUrl = Config.BASE_URL;
 		const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
-		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}`;
+		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}&env=${deployParams.env}`;
 
 		return { logURL };
 	}
+
+	/**
+	 * Re-run build and deploy
+	 */
 
 	/**
 	 * Deploy from a build

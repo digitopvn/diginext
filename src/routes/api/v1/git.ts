@@ -30,8 +30,8 @@ router
 	.get("/public-key", processApiRequest(controller.getPublicKey.bind(controller)))
 	.post("/ssh/create", processApiRequest(controller.createKeysSSH.bind(controller)))
 	.post("/ssh/generate", processApiRequest(controller.generateSSH.bind(controller)))
-	.post("/ssh/verify", processApiRequest(controller.verifySSH.bind(controller)))
-	// for dev
-	.delete("/empty", processApiRequest(controller.empty.bind(controller)));
+	.post("/ssh/verify", processApiRequest(controller.verifySSH.bind(controller)));
+// for dev
+// .delete("/empty", processApiRequest(controller.empty.bind(controller)));
 
 export default router;

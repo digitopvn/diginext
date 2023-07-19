@@ -10,6 +10,7 @@ import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppConfig } from "../apps/update-config";
 import { askForDomain } from "../build";
 import { askForCluster } from "../cluster/ask-for-cluster";
+import { askForRegistry } from "../registry/ask-for-registry";
 import { askForCertIssuer } from "./ask-deploy-environment-info";
 
 export const parseOptionsToAppConfig = async (options: InputOptions) => {
@@ -74,7 +75,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 	if (typeof zone !== "undefined") deployEnvironment.zone = zone;
 
 	// Container Registry
-	if (typeof registry !== "undefined") deployEnvironment.registry = registry;
+	if (typeof registry !== "undefined") deployEnvironment.registry = typeof registry !== "boolean" ? registry : (await askForRegistry()).slug;
 
 	// Domains
 	if (typeof domain !== "undefined") deployEnvironment.domains = [domain];
