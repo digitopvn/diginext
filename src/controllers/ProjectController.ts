@@ -105,7 +105,7 @@ export default class ProjectController extends BaseController {
 		// populate apps
 		const projectIDs = projects.map((pro) => pro._id);
 		const appSvc = new AppService();
-		let apps = await appSvc.find({ project: { $in: projectIDs }, deletedAt: { $exists: false } }, { status: shouldGetAppStatus });
+		let apps = await appSvc.find({ project: { $in: projectIDs }, deletedAt: { $exists: false } }, { status: shouldGetAppStatus }, this.options);
 		// console.log("apps :>> ", apps);
 
 		result.data = projects.map((project) => {

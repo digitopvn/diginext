@@ -105,7 +105,7 @@ export default class BuildController extends BaseController<IBuild, BuildService
 	@Patch("/stop")
 	async stopBuild(@Body() body: { slug: string }) {
 		try {
-			const build = await this.stopBuild(body);
+			const build = await this.service.stopBuild(body.slug, this.ownership);
 			return respondSuccess({ data: build });
 		} catch (e) {
 			return respondFailure(`Unable to stop the build process: ${e}`);
