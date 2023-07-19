@@ -1,3 +1,11 @@
+# [3.20.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.20.0-prerelease.4...v3.20.0-prerelease.5) (2023-07-19)
+
+
+### Bug Fixes
+
+* **project,app:** add updated by info ([968f1e7](https://github.com/digitopvn/diginext/commit/968f1e7e527c9f52f18e577384bf88d58f9d07cb))
+* **server:** project app update by ([ae6ddc5](https://github.com/digitopvn/diginext/commit/ae6ddc5d4f0b2983c09fe452d658e66c3a25caca))
+
 ## [3.19.1](https://github.com/digitopvn/diginext/compare/v3.19.0...v3.19.1) (2023-07-13)
 
 
