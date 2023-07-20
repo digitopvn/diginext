@@ -153,8 +153,9 @@ export default class DeployController {
 
 		// start build in background:
 		try {
-			const { logURL } = await this.service.buildAndDeploy(buildParams, deployParams, this.ownership);
-			return respondSuccess({ data: { logURL }, msg: "Building" });
+			const data = await this.service.buildAndDeploy(buildParams, deployParams, this.ownership);
+			if (this.options.isDebugging) console.log(`[DEPLOY CONTROLLER] buildAndDeploy > data :>> `, data);
+			return respondSuccess({ data, msg: "Building..." });
 		} catch (e) {
 			console.error(e);
 			return respondFailure(e.toString());
@@ -263,6 +264,9 @@ export default class DeployController {
 
 		const { env } = body.deployParams;
 
+		// inherit the ownership
+		this.appSvc.ownership = this.ownership;
+
 		let app = await this.appSvc.findOne({ "git.repoSSH": body.sshUrl });
 
 		// generate new app
@@ -304,10 +308,12 @@ export default class DeployController {
 		if (!cluster) throw new Error(`Unable to deploy: no clusters in this workspace.`);
 
 		// create deploy environment (if not exists):
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService(this.ownership);
 		let deployEnvironment = await getDeployEvironmentByApp(app, env);
 		if (!deployEnvironment) {
 			try {
-				app = await this.appSvc.createDeployEnvironment(
+				app = await deployEnvSvc.createDeployEnvironment(
 					app.slug,
 					{
 						env,
@@ -319,7 +325,7 @@ export default class DeployController {
 							buildNumber: makeDaySlug({ divider: "" }),
 						},
 					},
-					{ owner: this.user, workspace: this.workspace }
+					this.ownership
 				);
 
 				// assign new created deploy environment:

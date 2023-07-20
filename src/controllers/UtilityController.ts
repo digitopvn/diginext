@@ -26,7 +26,7 @@ export default class UtilityController extends BaseController {
 
 			// success -> write to db
 			delete result.buffer;
-			const mediaSvc = new MediaService();
+			const mediaSvc = new MediaService(this.ownership);
 			const media = await mediaSvc.create(result);
 
 			return respondSuccess({ data: media });
@@ -51,7 +51,7 @@ export default class UtilityController extends BaseController {
 
 			// success -> write to db
 			delete result.buffer;
-			const mediaSvc = new MediaService();
+			const mediaSvc = new MediaService(this.ownership);
 			const media = await mediaSvc.create(result);
 
 			return respondSuccess({ data: media });

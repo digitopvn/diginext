@@ -1,12 +1,13 @@
 import type { ApiKeyAccountDto, IApiKeyAccount } from "@/entities/ApiKeyAccount";
 import { apiKeyAccountSchema } from "@/entities/ApiKeyAccount";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 
 import BaseService from "./BaseService";
 
 export class ApiKeyUserService extends BaseService<IApiKeyAccount> {
-	constructor() {
-		super(apiKeyAccountSchema);
+	constructor(ownership?: Ownership) {
+		super(apiKeyAccountSchema, ownership);
 	}
 
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination) {

@@ -7,10 +7,11 @@ import { getCliConfig } from "@/config/config";
 import type { AppGitInfo, IApp, IContainerRegistry, IProject } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 import { fetchApi } from "@/modules/api/fetchApi";
-import { getCurrentGitRepoData, resolveDockerfilePath, stageAllFiles } from "@/plugins";
+import { getCurrentGitRepoData, resolveDockerfilePath } from "@/plugins";
 
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppGitInfo } from "../apps/update-git-config";
+import { stageCommitAndPushAll } from "../git/git-utils";
 import { askForRegistry } from "../registry/ask-for-registry";
 import type { StartBuildParams } from "./index";
 
@@ -94,7 +95,7 @@ export async function requestBuild(options: InputOptions) {
 	 * Stage, commit & push configuration files (dx.json) to GIT repository:
 	 */
 	try {
-		await stageAllFiles({
+		await stageCommitAndPushAll({
 			directory: options.targetDirectory,
 			message: `build(${env}): ${options.buildImage}`,
 		});

@@ -1,12 +1,13 @@
 import type { IServiceAccount } from "@/entities/ServiceAccount";
 import { serviceAccountSchema } from "@/entities/ServiceAccount";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 
 import BaseService from "./BaseService";
 
 export class ServiceAccountService extends BaseService<IServiceAccount> {
-	constructor() {
-		super(serviceAccountSchema);
+	constructor(ownership?: Ownership) {
+		super(serviceAccountSchema, ownership);
 	}
 
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination) {

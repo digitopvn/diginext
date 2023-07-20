@@ -9,6 +9,7 @@ export const registerController = (controller: any) => {
 			const { DB } = await import("@/modules/api/DB");
 			// assign Express request
 			controller.req = req;
+			req.controller = controller;
 
 			// assign current user to the controller
 			controller.user = req.user;
@@ -25,6 +26,7 @@ export const registerController = (controller: any) => {
 
 			// assign ownership
 			controller.ownership = { owner: controller.user, workspace: controller.workspace };
+			req.ownership = controller.ownership;
 
 			// assign ownership, express.Request to service
 			if (controller.service) {

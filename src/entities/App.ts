@@ -132,6 +132,11 @@ export interface IApp extends IBase {
 	latestBuild?: string;
 
 	/**
+	 * The incremental integer of build for this app
+	 */
+	buildNumber?: number;
+
+	/**
 	 * The project slug of the app.
 	 *
 	 * @type {string}
@@ -175,6 +180,7 @@ export const appSchema = new Schema<IApp>(
 		environment: { type: Map, of: String },
 		deployEnvironment: { type: Map },
 		latestBuild: { type: String },
+		buildNumber: { type: Number, default: 1 },
 		projectSlug: { type: String },
 		gitProvider: { type: Schema.Types.ObjectId, ref: "git_providers" },
 		archivedAt: { type: Date },

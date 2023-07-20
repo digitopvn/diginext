@@ -11,7 +11,7 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 	// Only save log for POST, PATCH & DELETE
 	// if (req.method === "GET") return next();
 
-	const { user, role, workspace } = req;
+	const { user, workspace, ownership } = req;
 	// console.log("saveActivityLog > body :>> ", res.body);
 	// console.log("user :>> ", user);
 	// console.log('role :>> ', role);
@@ -34,7 +34,7 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 		activityDto.routeName = route?.name;
 
 		// write activity log to database:
-		const activitySvc = new ActivityService();
+		const activitySvc = new ActivityService(ownership);
 		const activity = await activitySvc.create(activityDto);
 		// console.log("Saved activity info :>> ", activity._id);
 	}

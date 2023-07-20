@@ -38,13 +38,14 @@ const DockerRegistry = {
 			if (Config.BUILDER === "docker") {
 				// connect DOCKER ENGINE to DOCKER REGISTRY
 				connectRes = await execaCommand(`docker login -u ${username} -p ${password}`);
+				if (options.isDebugging) log(`[DOCKER] connectDockerRegistry >`, { connectRes });
 			} else {
 				// connect PODMAN to DOCKER REGISTRY
 				connectRes = await execaCommand(`podman login docker.io -u ${username} -p ${password}`);
+				if (options.isDebugging) log(`[PODMAN] connectDockerRegistry >`, { connectRes });
 			}
-			if (options.isDebugging) log(`[DOCKER] connectDockerRegistry >`, { connectRes });
 		} catch (e) {
-			throw new Error(`[DOCKER] ${e}`);
+			throw new Error(`[DOCKER] connectDockerRegistry > ${e}`);
 		}
 
 		const workspace = await DB.findOne("workspace", { _id: workspaceId });

@@ -250,8 +250,8 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		try {
 			const uid = userId;
 			const wsId = workspaceId;
-			const userSvc = new UserService();
-			const roleSvc = new RoleService();
+			const userSvc = new UserService(this.ownership);
+			const roleSvc = new RoleService(this.ownership);
 
 			const user = await userSvc.findOne({ id: uid });
 			const workspace = await this.service.findOne({ id: wsId });
