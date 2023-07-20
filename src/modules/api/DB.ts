@@ -27,29 +27,7 @@ import type {
 	IWorkspace,
 } from "@/entities";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
-import {
-	ApiKeyUserService,
-	AppService,
-	BuildService,
-	CloudDatabaseBackupService,
-	CloudDatabaseService,
-	CloudProviderService,
-	ClusterService,
-	ContainerRegistryService,
-	CronjobService,
-	FrameworkService,
-	GitProviderService,
-	NotificationService,
-	ProjectService,
-	ReleaseService,
-	RoleService,
-	RouteService,
-	ServiceAccountService,
-	TeamService,
-	UserService,
-	WebhookService,
-	WorkspaceService,
-} from "@/services";
+import type { Ownership } from "@/interfaces/SystemTypes";
 
 import type { GitRepository } from "../git/git-provider-api";
 import fetchApi from "./fetchApi";
@@ -117,28 +95,6 @@ export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPaginati
 
 	return optionsStr;
 }
-
-const app = new AppService();
-const build = new BuildService();
-const database = new CloudDatabaseService();
-const db_backup = new CloudDatabaseBackupService();
-const provider = new CloudProviderService();
-const cluster = new ClusterService();
-const registry = new ContainerRegistryService();
-const framework = new FrameworkService();
-const git = new GitProviderService();
-const project = new ProjectService();
-const release = new ReleaseService();
-const role = new RoleService();
-const route = new RouteService();
-const team = new TeamService();
-const user = new UserService();
-const api_key_user = new ApiKeyUserService();
-const service_account = new ServiceAccountService();
-const workspace = new WorkspaceService();
-const cronjob = new CronjobService();
-const webhook = new WebhookService();
-const notification = new NotificationService();
 
 export type TypeByCollection<T extends DBCollection> = T extends "api_key_user"
 	? IApiKeyAccount
@@ -213,38 +169,113 @@ export interface DBQueryOptions extends IQueryOptions {
 
 	user?: IUser;
 	workspace?: IWorkspace;
+	ownership?: Ownership;
 }
 
 export class DB {
-	static service = {
-		app,
-		build,
-		database,
-		db_backup,
-		provider,
-		cronjob,
-		cluster,
-		registry,
-		framework,
-		git,
-		git_repo: git,
-		project,
-		release,
-		role,
-		route,
-		team,
-		user,
-		api_key_user,
-		service_account,
-		workspace,
-		webhook,
-		notification,
-	};
+	static service = {};
+
+	static async getService(collection: DBCollection, ownership?: Ownership) {
+		let svc = DB.service[collection];
+		if (!svc) {
+			switch (collection) {
+				case "app":
+					const { AppService } = await import("@/services");
+					svc = new AppService();
+					break;
+				case "build":
+					const { BuildService } = await import("@/services");
+					svc = new BuildService();
+					break;
+				case "database":
+					const { CloudDatabaseService } = await import("@/services");
+					svc = new CloudDatabaseService();
+					break;
+				case "db_backup":
+					const { CloudDatabaseBackupService } = await import("@/services");
+					svc = new CloudDatabaseBackupService();
+					break;
+				case "provider":
+					const { CloudProviderService } = await import("@/services");
+					svc = new CloudProviderService();
+					break;
+				case "cronjob":
+					const { CronjobService } = await import("@/services");
+					svc = new CronjobService();
+					break;
+				case "cluster":
+					const { ClusterService } = await import("@/services");
+					svc = new ClusterService();
+					break;
+				case "registry":
+					const { ContainerRegistryService } = await import("@/services");
+					svc = new ContainerRegistryService();
+					break;
+				case "framework":
+					const { FrameworkService } = await import("@/services");
+					svc = new FrameworkService();
+					break;
+				case "git":
+				case "git_repo":
+					const { GitProviderService } = await import("@/services");
+					svc = new GitProviderService();
+					break;
+				case "project":
+					const { ProjectService } = await import("@/services");
+					svc = new ProjectService();
+					break;
+				case "release":
+					const { ReleaseService } = await import("@/services");
+					svc = new ReleaseService();
+					break;
+				case "role":
+					const { RoleService } = await import("@/services");
+					svc = new RoleService();
+					break;
+				case "route":
+					const { RouteService } = await import("@/services");
+					svc = new RouteService();
+					break;
+				case "team":
+					const { TeamService } = await import("@/services");
+					svc = new TeamService();
+					break;
+				case "user":
+					const { UserService } = await import("@/services");
+					svc = new UserService();
+					break;
+				case "api_key_user":
+					const { ApiKeyUserService } = await import("@/services");
+					svc = new ApiKeyUserService();
+					break;
+				case "service_account":
+					const { ServiceAccountService } = await import("@/services");
+					svc = new ServiceAccountService();
+					break;
+				case "workspace":
+					const { WorkspaceService } = await import("@/services");
+					svc = new WorkspaceService();
+					break;
+				case "webhook":
+					const { WebhookService } = await import("@/services");
+					svc = new WebhookService();
+					break;
+				case "notification":
+					const { NotificationService } = await import("@/services");
+					svc = new NotificationService();
+					break;
+			}
+			DB.service[collection] = svc;
+		}
+		// assign ownership
+		if (svc) svc.ownership = ownership;
+		return svc;
+	}
 
 	static async count<T = any>(collection: DBCollection, filter: IQueryFilter<T> = {}, options?: DBQueryOptions, pagination?: IQueryPagination) {
 		let amount: number;
 		if (isServerMode) {
-			const svc = DB.service[collection];
+			const svc = await DB.getService(collection, options?.ownership);
 			if (!svc) {
 				if (!options?.ignorable) logError(`[DB] COUNT :>> Service "${collection}" not found.`);
 				return;
@@ -282,7 +313,7 @@ export class DB {
 	): Promise<TypeByCollection<T>[]> {
 		let items;
 		if (isServerMode) {
-			const svc = DB.service[collection];
+			const svc = await DB.getService(collection, options?.ownership);
 			if (!svc) {
 				if (!options?.ignorable) logError(`[DB] FIND :>> Service "${collection}" not found.`);
 				return [];
@@ -328,7 +359,7 @@ export class DB {
 		let item;
 
 		if (isServerMode) {
-			const svc = DB.service[collection];
+			const svc = await DB.getService(collection, options?.ownership);
 			if (!svc) {
 				if (!options?.ignorable) logError(`[DB] FIND ONE > Service "${collection}" not found.`);
 				return;
@@ -361,7 +392,7 @@ export class DB {
 
 		let item;
 		if (isServerMode) {
-			const svc = DB.service[collection];
+			const svc = await DB.getService(collection, options?.ownership);
 			if (!svc) {
 				if (!options?.ignorable) logError(`[DB] CREATE :>> Service "${collection}" not found.`);
 				return;
@@ -408,7 +439,7 @@ export class DB {
 	): Promise<TypeByCollection<T>[]> {
 		let items;
 		if (isServerMode) {
-			const svc = DB.service[collection];
+			const svc = await DB.getService(collection, options?.ownership);
 			if (!svc) {
 				if (!options?.ignorable) logError(`[DB] UPDATE > Service "${collection}" :>> Service not found.`);
 				return;
@@ -468,7 +499,7 @@ export class DB {
 	static async delete<I = any>(collection: DBCollection, filter: IQueryFilter<I>, data: any = {}, options: DBQueryOptions = {}) {
 		let item: { ok: boolean; affected: number };
 		if (isServerMode) {
-			const svc = DB.service[collection];
+			const svc = await DB.getService(collection, options?.ownership);
 			if (!svc) {
 				if (!options?.ignorable) logError(`[DB] DELETE > Service "${collection}" :>> Service not found.`);
 				return;

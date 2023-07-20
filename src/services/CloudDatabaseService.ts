@@ -11,7 +11,7 @@ import type { ICloudDatabaseBackup } from "@/entities/CloudDatabaseBackup";
 import type { CronjobRepeat, CronjobRequest, CronjonRepeatCondition } from "@/entities/Cronjob";
 import { cronjobRepeatUnitList } from "@/entities/Cronjob";
 import { respondFailure } from "@/interfaces";
-import type { CloudDatabaseType } from "@/interfaces/SystemTypes";
+import type { CloudDatabaseType, Ownership } from "@/interfaces/SystemTypes";
 import { cloudDatabaseList } from "@/interfaces/SystemTypes";
 import { createCronjobRepeat } from "@/modules/cronjob/schedule";
 import MongoShell from "@/modules/db/mongo";
@@ -66,8 +66,8 @@ export type DatabaseRestoreParams = {
 };
 
 export class CloudDatabaseService extends BaseService<ICloudDatabase> {
-	constructor() {
-		super(cloudDatabaseSchema);
+	constructor(ownership?: Ownership) {
+		super(cloudDatabaseSchema, ownership);
 	}
 
 	async create(data: CloudDatabaseDto) {

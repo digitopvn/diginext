@@ -1,12 +1,13 @@
 import type { FrameworkDto, IFramework } from "@/entities/Framework";
 import { frameworkSchema } from "@/entities/Framework";
 import { type IQueryOptions } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 
 import BaseService from "./BaseService";
 
 export class FrameworkService extends BaseService<IFramework> {
-	constructor() {
-		super(frameworkSchema);
+	constructor(ownership?: Ownership) {
+		super(frameworkSchema, ownership);
 	}
 
 	async create(data: FrameworkDto, options?: IQueryOptions) {

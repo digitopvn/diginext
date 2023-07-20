@@ -3,14 +3,15 @@ import dayjs from "dayjs";
 import type { CronjobDto } from "@/entities/Cronjob";
 import { type ICronjob, cronjobRepeatUnitList, cronjobSchema, weekDays } from "@/entities/Cronjob";
 import type { IQueryOptions } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import { calculateNextRunAt } from "@/modules/cronjob/calculate-next-run-at";
 import { filterUniqueItems, sortedDaysOfWeek } from "@/plugins/array";
 
 import BaseService from "./BaseService";
 
 class CronjobService extends BaseService<ICronjob> {
-	constructor() {
-		super(cronjobSchema);
+	constructor(ownership?: Ownership) {
+		super(cronjobSchema, ownership);
 	}
 
 	create(data: CronjobDto, options?: IQueryOptions): Promise<ICronjob> {

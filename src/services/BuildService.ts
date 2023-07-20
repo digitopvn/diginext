@@ -11,10 +11,11 @@ import BaseService from "./BaseService";
 import { ContainerRegistryService } from "./ContainerRegistryService";
 
 export class BuildService extends BaseService<IBuild> {
-	regSvc = new ContainerRegistryService();
+	regSvc: ContainerRegistryService;
 
-	constructor() {
-		super(buildSchema);
+	constructor(ownership?: Ownership) {
+		super(buildSchema, ownership);
+		this.regSvc = new ContainerRegistryService(ownership);
 	}
 
 	async startBuild(data: StartBuildParams, ownership: Ownership) {

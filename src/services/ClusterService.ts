@@ -1,6 +1,7 @@
 import type { ICluster } from "@/entities/Cluster";
 import { clusterSchema } from "@/entities/Cluster";
 import type { IQueryFilter, IQueryOptions } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import type { ClusterAuthOptions } from "@/modules/k8s/cluster-auth";
 import { deleteClusterInKubeConfig } from "@/modules/k8s/kube-config";
@@ -9,8 +10,8 @@ import type { InstallStackOptions } from "@/modules/k8s/stack-install";
 import BaseService from "./BaseService";
 
 export class ClusterService extends BaseService<ICluster> {
-	constructor() {
-		super(clusterSchema);
+	constructor(ownership?: Ownership) {
+		super(clusterSchema, ownership);
 	}
 
 	async delete(filter?: IQueryFilter<ICluster>, options?: IQueryOptions): Promise<{ ok: boolean; affected: number }> {

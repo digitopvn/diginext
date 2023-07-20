@@ -29,7 +29,7 @@ import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { generateRepoURL } from "@/modules/git";
 import { getCurrentGitBranch } from "@/modules/git/git-utils";
 
-import { CLI_DIR, DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
+import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
 import { MongoDB } from "./mongodb";
 import { checkMonorepo } from "./monorepo";
 import { isNumeric } from "./number";
@@ -271,15 +271,6 @@ export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCal
  */
 export function currentVersion() {
 	return pkg.version;
-}
-
-/**
- * Get latest tag of the git repository
- */
-export async function getLatestTagOfGitRepo() {
-	const git = simpleGit(CLI_DIR, { binary: "git" });
-	const tags = (await git.tags(["--sort", "creatordate"])).all.filter((tag) => !tag.includes("beta"));
-	return _.last(tags) as string;
 }
 
 /**
@@ -686,62 +677,24 @@ export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOr
 };
 //
 
-interface GitStageOptions {
-	directory?: string;
-	message?: string;
-}
-
-/**
- *
- */
-export async function stageAllFiles(options: GitStageOptions) {
-	const { directory = "./", message = "build(prepare): commit all files & push to origin" } = options;
-	const git = simpleGit(directory, { binary: "git" });
-	const gitStatus = await git.status(["-s"]);
-	// log("[current branch]", gitStatus.current);
-
-	const currentBranch = gitStatus.current;
-	const currentBranchKebab = _.kebabCase(currentBranch);
-
-	// commit & push everything, then try to merge "master" to current branch
-	try {
-		await git.pull("origin", currentBranch, ["--no-ff"]);
-		await git.add("./*");
-		await git.commit(message);
-		await git.push("origin", currentBranch);
-	} catch (e) {
-		logError(e);
-	}
-
-	return { currentBranch, currentBranchKebab };
-}
-
 export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
 	let git: SimpleGit;
 	let success: boolean = false;
 
-	console.log("pullOrCloneGitRepo() > repoSSH :>> ", repoSSH);
-	console.log("pullOrCloneGitRepo() > dir :>> ", dir);
-	console.log("pullOrCloneGitRepo() > options :>> ", options);
+	if (options?.isDebugging) console.log("pullOrCloneGitRepo() > repoSSH :>> ", repoSSH);
+	if (options?.isDebugging) console.log("pullOrCloneGitRepo() > dir :>> ", dir);
+	if (options?.isDebugging) console.log("pullOrCloneGitRepo() > options :>> ", options);
 
 	const onProgress = ({ method, stage, progress }: SimpleGitProgressEvent) => {
 		const message = `git.${method} ${stage} stage ${progress}% complete`;
 		if (options?.onUpdate) options?.onUpdate(message, progress);
 	};
 
-	// const config: string[] = [];
-
-	// if (options?.useAccessToken && options.useAccessToken.type && options.useAccessToken.value) {
-	// 	config.push(`http.extraHeader=Authorization: ${options.useAccessToken.type} ${options.useAccessToken.value}`);
-	// 	repoSSH = repoSshToRepoURL(repoSSH);
-	// }
-
-	console.log("pullOrCloneGitRepo() > repoSSH :>> ", repoSSH);
-	// console.log("pullOrCloneGitRepo() > commandConfig :>> ", config);
+	if (options?.isDebugging) console.log("pullOrCloneGitRepo() > repoSSH :>> ", repoSSH);
 
 	if (fs.existsSync(dir)) {
 		try {
-			console.log("pullOrCloneGitRepo() > directory exists :>> try to PULL...");
+			if (options?.isDebugging) console.log("pullOrCloneGitRepo() > directory exists :>> try to PULL...");
 			git = simpleGit(dir, { progress: onProgress });
 			// -----------------------
 			// ! DO NOT SET TO "FALSE"
@@ -761,7 +714,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			success = true;
 		} catch (e) {
-			console.log("pullOrCloneGitRepo() > Failed to PULL :>> try to CLONE...", e);
+			if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Failed to PULL :>> try to CLONE...", e);
 			if (options?.onUpdate) options?.onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
 
 			try {
@@ -772,7 +725,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 				git = simpleGit({ progress: onProgress });
 
 				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
-				console.log("pullOrCloneGitRepo() > Success to CLONE !");
+				if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 				// remove git on finish
 				if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
@@ -780,19 +733,19 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 				success = true;
 			} catch (e2) {
-				console.log("pullOrCloneGitRepo() > Failed to PULL & CLONE :>> ", e2);
+				if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Failed to PULL & CLONE :>> ", e2);
 				if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e2.message}`);
 			}
 		}
 	} else {
-		console.log("pullOrCloneGitRepo() > directory NOT exists :>> try to CLONE...");
+		if (options?.isDebugging) console.log("pullOrCloneGitRepo() > directory NOT exists :>> try to CLONE...");
 		if (options?.onUpdate) options?.onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
 
 		try {
 			git = simpleGit({ progress: onProgress });
 
 			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
-			console.log("pullOrCloneGitRepo() > Success to CLONE !");
+			if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 			// remove git on finish
 			if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
@@ -800,7 +753,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 			success = true;
 		} catch (e) {
-			console.log("pullOrCloneGitRepo() > Failed to CLONE !");
+			if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Failed to CLONE !");
 			if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
 		}
 	}

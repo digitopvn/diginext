@@ -1,12 +1,13 @@
 import type { GitProviderDto, IGitProvider } from "@/entities/GitProvider";
 import { gitProviderSchema } from "@/entities/GitProvider";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import GitProviderAPI from "@/modules/git/git-provider-api";
 
 import BaseService from "./BaseService";
 
 export class GitProviderService extends BaseService<IGitProvider> {
-	constructor() {
-		super(gitProviderSchema);
+	constructor(ownership?: Ownership) {
+		super(gitProviderSchema, ownership);
 	}
 
 	async verify(provider: IGitProvider) {

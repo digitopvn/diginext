@@ -2,14 +2,15 @@ import type { IRole } from "@/entities";
 import type { IUser, UserDto } from "@/entities/User";
 import { userSchema } from "@/entities/User";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
 import { RoleService } from "./RoleService";
 
 export class UserService extends BaseService<IUser> {
-	constructor() {
-		super(userSchema);
+	constructor(ownership?: Ownership) {
+		super(userSchema, ownership);
 	}
 
 	async find(filter?: IQueryFilter<IUser>, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination) {

@@ -1,13 +1,13 @@
 import { Config } from "@/app.config";
 import type { CloudDatabaseBackupDto, ICloudDatabaseBackup } from "@/entities/CloudDatabaseBackup";
 import { cloudDatabaseBackupSchema } from "@/entities/CloudDatabaseBackup";
-import type { BackupStatus } from "@/interfaces/SystemTypes";
+import type { BackupStatus, Ownership } from "@/interfaces/SystemTypes";
 
 import BaseService from "./BaseService";
 
 export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup> {
-	constructor() {
-		super(cloudDatabaseBackupSchema);
+	constructor(ownership?: Ownership) {
+		super(cloudDatabaseBackupSchema, ownership);
 	}
 
 	create(data: CloudDatabaseBackupDto & { owner?: string; workspace?: string }): Promise<ICloudDatabaseBackup> {

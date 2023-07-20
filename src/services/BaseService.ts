@@ -42,9 +42,12 @@ export default class BaseService<T = any> {
 
 	req?: AppRequest;
 
-	constructor(schema: Schema) {
+	constructor(schema: Schema, ownership?: Ownership) {
 		const collection = schema.get("collection");
 		this.model = model<T>(collection, schema, collection);
+		this.ownership = ownership;
+		this.user = ownership?.owner;
+		this.workspace = ownership?.workspace;
 	}
 
 	async getActiveWorkspace(user: IUser) {
