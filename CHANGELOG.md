@@ -1,3 +1,10 @@
+## [3.20.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.20.0...v3.20.1-prerelease.1) (2023-07-20)
+
+
+### Bug Fixes
+
+* **dashboard:** correct cluster slug in monitoring ([49f8937](https://github.com/digitopvn/diginext/commit/49f893746b9a34b32036d1258dfe109a4dc7067f))
+
 # [3.20.0](https://github.com/digitopvn/diginext/compare/v3.19.1...v3.20.0) (2023-07-19)
 
 
