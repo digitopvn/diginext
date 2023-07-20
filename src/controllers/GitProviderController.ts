@@ -35,7 +35,6 @@ export default class GitProviderController extends BaseController {
 		if (!this.filter) this.filter = {};
 
 		try {
-			this.options.isDebugging = true;
 			const data = await this.service.find(this.filter, this.options, this.pagination);
 			return respondSuccess({ data });
 		} catch (e) {
@@ -190,7 +189,6 @@ export default class GitProviderController extends BaseController {
 
 		// update to db
 		provider = await this.service.updateOne(this.filter, body, this.options);
-		// console.log("GitProviderController > provider :>> ", provider);
 
 		// verify
 		provider = await this.service.verify(provider);
@@ -274,7 +272,6 @@ export default class GitProviderController extends BaseController {
 		// process
 		try {
 			const orgs = await GitProviderAPI.listOrgs(provider);
-			// console.log("orgs :>> ", orgs);
 			return respondSuccess({ data: orgs });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -341,15 +338,11 @@ export default class GitProviderController extends BaseController {
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
 
 		let provider = await this.service.findOne(this.filter, this.options);
-		if (!provider) {
-			console.log("this.filter :>> ", this.filter);
-			console.log("this.options :>> ", this.options);
-			return respondFailure(`Git provider not found.`);
-		}
+		if (!provider) return respondFailure(`Git provider not found.`);
 
 		// process
 		try {
-			const repo = await GitProviderAPI.createGitRepository(provider, body, { isDebugging: false });
+			const repo = await GitProviderAPI.createGitRepository(provider, body, this.options);
 			return respondSuccess({ data: repo });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -430,7 +423,7 @@ export default class GitProviderController extends BaseController {
 
 		// process
 		try {
-			const branches = await GitProviderAPI.listRepoBranches(provider, provider.org, repoSlug, { isDebugging: false });
+			const branches = await GitProviderAPI.listRepoBranches(provider, provider.org, repoSlug, this.options);
 			return respondSuccess({ data: branches });
 		} catch (e) {
 			return respondFailure(e.toString());

@@ -29,14 +29,22 @@ export type StartBuildParams = {
 	 * App's slug
 	 */
 	appSlug: string;
-	/**
-	 * Build number is also an container image's tag
-	 */
-	buildNumber: string;
+
 	/**
 	 * Select a git branch to pull source code & build
 	 */
 	gitBranch: string;
+
+	/**
+	 * Build tag is also an container image's tag
+	 */
+	buildTag?: string;
+
+	/**
+	 * Alias of `buildTag` (**ONLY put it here to fallback support CLI < `3.21.0`**)
+	 * @deprecated From `v3.21.0+`
+	 */
+	buildNumber?: string;
 
 	/**
 	 * ID of the author
@@ -106,7 +114,7 @@ export type StartBuildParams = {
 	shouldDeploy?: boolean;
 };
 
-export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildNumber" | "buildWatch">;
+export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildTag" | "buildWatch">;
 
 export async function testBuild() {
 	let socketServer = getIO();
@@ -164,12 +172,12 @@ export async function startBuild(
 
 	const {
 		// require
-		buildNumber,
+		buildTag,
 		gitBranch,
 		registrySlug,
 		appSlug,
-		userId,
 		// optional
+		userId,
 		args: buildArgs,
 		user,
 		env,
@@ -179,16 +187,25 @@ export async function startBuild(
 		cliVersion,
 	} = params;
 
+	// validate
+	if (!buildTag) throw new Error(`Unable to start building, "buildTag" is required.`);
+	if (!gitBranch) throw new Error(`Unable to start building, "gitBranch" is required.`);
+	if (!registrySlug) throw new Error(`Unable to start building, "registrySlug" is required.`);
+	if (!appSlug) throw new Error(`Unable to start building, "appSlug" is required.`);
+	if (!user && !userId) throw new Error(`Unable to start building, "user" or "userId" is required.`);
+
 	const owner = user || (await DB.findOne("user", { _id: userId }, { populate: ["workspaces", "activeWorkspaces"] }));
 	if (isDebugging) console.log("owner :>> ", owner);
 
+	// get app
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
+
 	// get workspace
 	const { activeWorkspace, slug: username } = owner;
 	const workspace = activeWorkspace as IWorkspace;
 
 	// socket & logs
-	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
+	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 	const logger = new Logger(SOCKET_ROOM);
 
 	// Emit socket message to request the BUILD SERVER to start building...
@@ -226,10 +243,6 @@ export async function startBuild(
 	const project = app.project as IProject;
 	const { slug: projectSlug } = project;
 
-	// build image
-	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}-${app.slug}` } = app;
-	if (params.isDebugging) console.log("startBuild > imageURL :>> ", imageURL);
-
 	// get latest build of this app to utilize the cache for this build process
 	const latestBuild = await DB.findOne("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
 
@@ -238,10 +251,7 @@ export async function startBuild(
 		git: { repoSSH },
 	} = app;
 
-	// Build image
-	const buildImage = `${imageURL}:${buildNumber}`;
-
-	log("[START BUILD] Input params :>>", params);
+	if (isDebugging) log("[START BUILD] Input params :>>", params);
 
 	/**
 	 * ===============================================
@@ -254,20 +264,20 @@ export async function startBuild(
 	// detect "gitProvider" from git repo SSH URI:
 	const gitProvider = getGitProviderFromRepoSSH(repoSSH);
 
-	// check if build tag is existed:
-	// const build = await DB.findOne("build", { image: buildImage, tag: buildNumber });
-	// if (build) {
-	// 	sendLog({ SOCKET_ROOM, message: `Build "${buildImage}" existed, please choose a different tag name.` });
-	// 	if (options?.onError) options?.onError(`Build "${buildImage}" existed, please choose a different tag name.`);
-	// 	return;
-	// }
+	/**
+	 * Generate build number & update build image data
+	 */
+	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}-${app.slug}` } = app;
+	const buildImage = `${imageURL}:${buildTag}`;
+	if (params.isDebugging) console.log("startBuild > imageURL :>> ", imageURL);
 
-	// create new build on build server:
+	/**
+	 * Create new build in database
+	 */
 	const buildData = {
 		slug: SOCKET_ROOM,
-		name: buildImage,
+		tag: buildTag,
 		image: imageURL,
-		tag: buildNumber,
 		status: "building",
 		startTime: startTime.toDate(),
 		createdBy: username,
@@ -404,6 +414,7 @@ export async function startBuild(
 			SOCKET_ROOM,
 			message: chalk.green(`✓ FINISHED BUILDING IMAGE AFTER ${humanDuration}`),
 			type: shouldDeploy ? "log" : "success",
+			action: shouldDeploy ? "log" : "end",
 		});
 
 		if (shouldDeploy) {
@@ -467,7 +478,7 @@ export async function startBuild(
 			return { SOCKET_ROOM, build: newBuild, imageURL, buildImage, startTime, builder: buildEngineName };
 		} catch (e) {
 			await updateBuildStatus(newBuild, "failed");
-			sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
+			sendLog({ SOCKET_ROOM, message: e.message, type: "error", action: "end" });
 			if (options?.onError) options?.onError(`Build failed: ${e}`);
 
 			// dispatch/trigger webhook
@@ -502,7 +513,7 @@ export async function startBuild(
 			})
 			.catch(async (e) => {
 				await updateBuildStatus(newBuild, "failed");
-				sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
+				sendLog({ SOCKET_ROOM, message: e.message, type: "error", action: "end" });
 				if (options?.onError) options?.onError(`Build failed: ${e}`);
 
 				// dispatch/trigger webhook

@@ -299,7 +299,7 @@ export class AppService extends BaseService<IApp> {
 				.map(async (app) => {
 					if (app && app.deployEnvironment) {
 						for (const env of Object.keys(app.deployEnvironment)) {
-							if (!app.deployEnvironment[env]) app.deployEnvironment[env] = { buildNumber: "" };
+							if (!app.deployEnvironment[env]) app.deployEnvironment[env] = { buildTag: "" };
 
 							// default values
 							app.deployEnvironment[env].readyCount = 0;
@@ -380,6 +380,33 @@ export class AppService extends BaseService<IApp> {
 		);
 
 		return appsWithStatus;
+	}
+
+	async takeDown(app: IApp, options?: IQueryOptions) {
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+
+		// take down all deploy environments
+		const deployEnvs = Object.keys(app.deployEnvironment);
+		return Promise.all(deployEnvs.map((env) => deployEnvSvc.takeDownDeployEnvironment(app, env, options)));
+	}
+
+	async delete(filter?: IQueryFilter<IApp>, options?: IQueryOptions) {
+		const app = await this.findOne(filter, options);
+		if (!app) throw new Error(`Unable to delete: App not found.`);
+
+		await this.takeDown(app, options);
+
+		return super.delete(filter, options);
+	}
+
+	async softDelete(filter?: IQueryFilter<IApp>, options?: IQueryOptions) {
+		const app = await this.findOne(filter, options);
+		if (!app) throw new Error(`Unable to delete: App not found.`);
+
+		await this.takeDown(app, options);
+
+		return super.softDelete(filter, options);
 	}
 
 	async archiveApp(app: IApp, ownership?: Ownership) {

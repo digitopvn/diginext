@@ -71,9 +71,9 @@ export async function startupScripts() {
 		}
 	}
 	// migrate all git provider's db field: "gitWorkspace" -> "org"
-	gitSvc
-		.update({ org: { $exists: false } }, { org: "$gitWorkspace" }, { isDebugging: false })
-		.then((res) => console.log(`[MIGRATION] Migrated "gitWorkspace" to "org" of ${res.length} git providers.`));
+	gitSvc.update({ org: { $exists: false } }, { org: "$gitWorkspace" }, { isDebugging: false }).then((res) => {
+		if (res.length > 0) console.log(`[MIGRATION] Migrated "gitWorkspace" to "org" of ${res.length} git providers.`);
+	});
 	// }
 
 	// set global identity

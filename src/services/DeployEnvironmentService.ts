@@ -6,6 +6,7 @@ import type { QuerySelector } from "mongoose";
 
 import type { ICluster, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
+import type { IQueryOptions } from "@/interfaces";
 import { type DeployEnvironment, type KubeDeployment } from "@/interfaces";
 import type { DeployEnvironmentData } from "@/interfaces/AppInterfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
@@ -95,12 +96,12 @@ export class DeployEnvironmentService {
 
 		if (!app.project) throw new Error(`This app is orphan, apps should belong to a project.`);
 		if (!deployEnvironmentData.imageURL) throw new Error(`Build image URL is required.`);
-		if (!deployEnvironmentData.buildNumber) throw new Error(`Build number (image's tag) is required.`);
+		if (!deployEnvironmentData.buildTag) throw new Error(`Build number (image's tag) is required.`);
 
 		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
-		const { buildNumber } = deployEnvironmentData;
+		const { buildTag } = deployEnvironmentData;
 
 		const project = app.project as IProject;
 		const { slug: projectSlug } = project;
@@ -178,27 +179,14 @@ export class DeployEnvironmentService {
 		if (!updatedApp) throw new Error(`Failed to create "${env}" deploy environment.`);
 
 		const appConfig = await getAppConfigFromApp(updatedApp);
-
-		// if (
-		// 	typeof buildNumber === "undefined" &&
-		// 	updatedApp.deployEnvironment &&
-		// 	updatedApp.deployEnvironment[env] &&
-		// 	updatedApp.deployEnvironment[env].deploymentYaml
-		// ) {
-		// 	// generate deployment files and apply new config
-		// 	const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		// 	console.log("buildNumber :>> ", buildNumber);
-		// 	console.log("this.user :>> ", this.user);
-		// }
-
-		console.log("buildNumber :>> ", buildNumber);
+		console.log("buildTag :>> ", buildTag);
 
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
 			env,
 			username: ownership.owner.slug,
 			workspace: ownership.workspace,
-			buildNumber,
+			buildTag: buildTag,
 		});
 
 		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
@@ -235,7 +223,7 @@ export class DeployEnvironmentService {
 
 		if (workloads && workloads.length > 0) {
 			// create new release and roll out
-			const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			const release = await createReleaseFromApp(updatedApp, env, buildTag, {
 				author: ownership.owner,
 				cliVersion: currentVersion(),
 				workspace: ownership.workspace,
@@ -401,7 +389,7 @@ export class DeployEnvironmentService {
 	/**
 	 * Take down a deploy environment but still keep the deploy environment information (cluster, registry, namespace,...)
 	 */
-	async takeDownDeployEnvironment(app: IApp, env: string) {
+	async takeDownDeployEnvironment(app: IApp, env: string, options?: IQueryOptions) {
 		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
 
 		const deployEnvironment = app.deployEnvironment[env];
@@ -460,10 +448,12 @@ export class DeployEnvironmentService {
 			errorMsg += `, ${e}.`;
 		}
 
+		if (options?.isDebugging) console.error(`[DEPLOY_ENV_SERVICE]`, errorMsg);
+
 		// update database
 		appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.tookDownAt`]: new Date() });
 
-		return { success: true, message: errorMsg };
+		return { app: { slug: app.slug, id: app._id, owner: app.owner, workspace: app.workspace }, success: true, message: errorMsg };
 	}
 
 	async deleteDeployEnvironment(app: IApp, env: string) {

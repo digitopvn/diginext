@@ -13,7 +13,7 @@ export interface IBuild extends IBase {
 	name?: string;
 	image?: string;
 	/**
-	 * Image tag is also "buildNumber"
+	 * Image tag is also "buildTag"
 	 */
 	tag?: string;
 	/**

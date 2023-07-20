@@ -65,9 +65,9 @@ export type DeployBuildOptions = {
 
 export const processDeployBuild = async (build: IBuild, release: IRelease, cluster: ICluster, options: DeployBuildOptions) => {
 	const { env, owner, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
-	const { appSlug, projectSlug, tag: buildNumber } = build;
+	const { appSlug, projectSlug, tag: buildTag } = build;
 	const { slug: username } = owner;
-	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
+	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 	const releaseId = MongoDB.toString(release._id);
 	const { DB } = await import("@/modules/api/DB");
 	const workspace = await DB.findOne("workspace", { _id: build.workspace });
@@ -83,7 +83,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		sendLog({ SOCKET_ROOM, message: `✓ Connected to "${cluster.name}" (context: ${cluster.contextName}).` });
 	} catch (e) {
 		console.log("e :>> ", e);
-		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error" });
+		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error", action: "end" });
 		return { error: e.message };
 	}
 
@@ -111,6 +111,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
+			action: "end",
 			message: `Can't create "imagePullSecrets" in the "${namespace}" namespace.`,
 		});
 		// dispatch/trigger webhook
@@ -181,7 +182,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 				}
 			}
 		} catch (e) {
-			sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}:` });
+			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `Failed to roll out the release :>> ${e.message}:` });
 
 			// dispatch/trigger webhook
 			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
@@ -202,7 +203,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 				const onRolloutUpdate = (msg: string) => {
 					// if any errors on rolling out -> stop processing deployment
 					if (msg.indexOf("Error from server") > -1) {
-						sendLog({ SOCKET_ROOM, type: "error", message: msg });
+						sendLog({ SOCKET_ROOM, type: "error", action: "end", message: msg });
 						throw new Error(msg);
 					} else {
 						// if normal log message -> print out to the Web UI
@@ -219,16 +220,18 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 
 				if (result.error) {
 					const errMsg = `Failed to roll out the release :>> ${result.error}.`;
-					sendLog({ SOCKET_ROOM, type: "error", message: errMsg });
+					sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
 					return { error: errMsg };
 				}
 
 				release = result.data;
 
+				sendLog({ SOCKET_ROOM, message: `✅ App has been deployed successfully!`, type: "success", action: "end" });
+
 				// dispatch/trigger webhook
 				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
 			} catch (e) {
-				sendLog({ SOCKET_ROOM, type: "error", message: `Failed to roll out the release :>> ${e.message}` });
+				sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `Failed to roll out the release :>> ${e.message}` });
 
 				// dispatch/trigger webhook
 				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
@@ -244,9 +247,9 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 
 	// parse options
 	const { env, owner, workspace, deployInBackground = true, cliVersion } = options;
-	const { appSlug, projectSlug, tag: buildNumber } = build;
+	const { appSlug, projectSlug, tag: buildTag } = build;
 	const { slug: username } = owner;
-	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
+	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 
 	// build directory
 	const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
@@ -323,13 +326,13 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 			env,
 			username,
 			workspace,
-			buildNumber,
+			buildTag: buildTag,
 			appConfig,
 			targetDirectory: buildDirectory,
 		});
 	} catch (e) {
-		console.log("e :>> ", e);
-		sendLog({ SOCKET_ROOM, type: "error", message: e.message });
+		console.error("Deploy build > generate YAML > error :>> ", e);
+		sendLog({ SOCKET_ROOM, type: "error", message: e.message, action: "end" });
 		return { error: e.message };
 	}
 	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
@@ -357,12 +360,11 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	try {
 		newRelease = await createReleaseFromBuild(build, env, { author: owner, workspace, cliVersion });
 		releaseId = MongoDB.toString(newRelease._id);
-		console.log("Created new Release successfully:", newRelease);
 
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });
 	} catch (e) {
-		console.log("e :>> ", e);
-		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error" });
+		console.error("Deploy build > error :>> ", e);
+		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error", action: "end" });
 		return { error: e.message };
 	}
 

@@ -572,9 +572,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const currentDeployEnvData = app.deployEnvironment[env];
 
 		// build number
-		if (!deployEnvironmentData.buildNumber) deployEnvironmentData.buildNumber = app.deployEnvironment[env].buildNumber;
+		if (!deployEnvironmentData.buildTag) deployEnvironmentData.buildTag = app.deployEnvironment[env].buildTag;
 
-		if (!deployEnvironmentData.buildNumber) {
+		if (!deployEnvironmentData.buildTag) {
 			const releaseFilter = { appSlug: app.slug, buildStatus: "success", env, active: true };
 			console.log("updateDeployEnvironment() > releaseFilter :>> ", releaseFilter);
 
@@ -588,13 +588,13 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 			const latestBuild = latestRelease.build as IBuild;
 			if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Latest build not found (app: "${app.slug}" - env: "${env}")`);
-			deployEnvironmentData.buildNumber = latestBuild.tag;
+			deployEnvironmentData.buildTag = latestBuild.tag;
 		}
 
-		if (!deployEnvironmentData.buildNumber) return respondFailure({ msg: `Build number (image's tag) is required.` });
+		if (!deployEnvironmentData.buildTag) return respondFailure({ msg: `Build number (image's tag) is required.` });
 
 		// finish checking build number
-		const { buildNumber } = deployEnvironmentData;
+		const { buildTag } = deployEnvironmentData;
 
 		const project = app.project as IProject;
 		const { slug: projectSlug } = project;
@@ -687,19 +687,13 @@ export default class AppController extends BaseController<IApp, AppService> {
 			updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
 		}
 
-		// if (updatedApp.deployEnvironment[env].deploymentYaml) {
-		// 	const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		// 	console.log("buildNumber :>> ", buildNumber);
-		// 	console.log("this.user :>> ", this.user);
-		// }
-
 		// generate deployment files and apply new config
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
 			env,
 			username: this.user.slug,
 			workspace: this.workspace,
-			buildNumber,
+			buildTag: buildTag,
 		});
 
 		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
@@ -739,7 +733,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (workloads && workloads.length > 0) {
 			// create new release and roll out
-			const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			const release = await createReleaseFromApp(updatedApp, env, buildTag, {
 				author: this.user,
 				cliVersion: currentVersion(),
 				workspace: this.workspace,
@@ -886,14 +880,14 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// generate deployment files and apply new config
 		if (updatedApp.deployEnvironment && updatedApp.deployEnvironment[env] && updatedApp.deployEnvironment[env].deploymentYaml) {
-			const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+			const { BUILD_TAG } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
 
 			let deployment: GenerateDeploymentResult = await generateDeployment({
 				appSlug: app.slug,
 				env,
 				username: this.user.slug,
 				workspace: this.workspace,
-				buildNumber,
+				buildTag: BUILD_TAG,
 			});
 
 			const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
@@ -1204,8 +1198,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		console.log("updatedApp.deployEnvironment[env] :>> ", updatedApp.deployEnvironment[env]);
 
 		// generate deployment files and apply new config
-		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		console.log("buildNumber :>> ", buildNumber);
+		const { BUILD_TAG } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		console.log("BUILD_TAG :>> ", BUILD_TAG);
 		console.log("this.user :>> ", this.user);
 
 		let deployment: GenerateDeploymentResult = await generateDeployment({
@@ -1213,7 +1207,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			env,
 			username: this.user.slug,
 			workspace: this.workspace,
-			buildNumber,
+			buildTag: BUILD_TAG,
 		});
 
 		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
@@ -1248,7 +1242,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (workloads && workloads.length > 0) {
 			// create new release and roll out
-			const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			const release = await createReleaseFromApp(updatedApp, env, BUILD_TAG, {
 				author: this.user,
 				cliVersion: currentVersion(),
 				workspace: this.workspace,

@@ -13,12 +13,13 @@ dayjs.extend(localizedFormat);
 
 type LogMessageOpts = {
 	type?: "log" | "warn" | "error" | "success";
+	action?: "log" | "end";
 	SOCKET_ROOM: string;
 	message: string;
 };
 
 export function sendLog(options: LogMessageOpts) {
-	const { SOCKET_ROOM, message, type = "log" } = options;
+	const { SOCKET_ROOM, message, type = "log", action = "log" } = options;
 
 	const logger = Logger.find(SOCKET_ROOM);
 
@@ -44,7 +45,7 @@ export function sendLog(options: LogMessageOpts) {
 			break;
 	}
 
-	socketIO?.to(SOCKET_ROOM).emit("message", { action: "log", message: messageWithoutANSI });
+	socketIO?.to(SOCKET_ROOM).emit("message", { action, type, message: messageWithoutANSI });
 
 	// save logs to database
 	const logContent = logger?.content ?? Logger.getLogs(SOCKET_ROOM);

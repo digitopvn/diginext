@@ -8,18 +8,15 @@ import type { GitProviderType, ResourceQuotaSize } from "./SystemTypes";
 export type InputOptions = {
 	/**
 	 * For testing purpose
+	 * - Flags: `--debug`
 	 */
 	isDebugging?: boolean;
 
 	/**
 	 * Follow the output logs until the command is finished.
+	 * - Flags: `--tail`
 	 */
 	isTail?: boolean;
-
-	/**
-	 * Print the logs and keep watching until the end
-	 */
-	tail?: boolean;
 
 	/**
 	 * Tracking information
@@ -32,19 +29,20 @@ export type InputOptions = {
 
 	/**
 	 * Continuous integration (CI) flag
-	 * - Flag: `--ci`
-	 * - Revert: `--no-ci`
+	 * - Flag: `--ci`, `--no-ci`
 	 * @default false
 	 */
 	ci?: boolean;
 
 	/**
 	 * Define if the command was executed on local machine or server machine
+	 * - Flags: `--local`
 	 */
 	isLocal?: boolean;
 
 	/**
 	 * Version string
+	 * - Flags: `--version`, `-v`
 	 */
 	version?: string;
 
@@ -58,42 +56,50 @@ export type InputOptions = {
 
 	/**
 	 * User input organization. Used in:
-	 * - Container registry authentication
+	 * - Container registry commands
+	 * - Git provider commands
 	 */
 	org?: string;
 
 	/**
 	 * User input username
+	 * - Flags: `--user`
 	 */
 	user?: string;
 
 	/**
 	 * User input password
+	 * - Flags: `--pass`
 	 */
 	pass?: string;
 
 	/**
 	 * User input email
+	 * - Flags: `--email`
 	 */
 	email?: string;
 
 	/**
 	 * User input server
+	 * - Flags: `--server`
 	 */
 	server?: string;
 
 	/**
 	 * Auth input name
+	 * - Flags: `--auth`
 	 */
 	auth?: string;
 
 	/**
 	 * User input name
+	 * - Flags: `--name`
 	 */
 	name?: string;
 
 	/**
 	 * {App} slug
+	 * - Flags: `--slug`
 	 */
 	slug?: string;
 
@@ -131,22 +137,26 @@ export type InputOptions = {
 	filePath?: string;
 
 	/**
+	 * - Flags: `--path`
 	 *
 	 */
 	path?: string;
 
 	/**
+	 * - Flags: `--url`
 	 *
 	 */
 	url?: string;
 
 	/**
+	 * - Flags: `--host`
 	 *
 	 */
 	host?: string;
 
 	/**
 	 * Location where the CLI command point to.
+	 * - Flags: `--dir`, `--targetDir`
 	 */
 	targetDirectory?: string;
 
@@ -183,6 +193,7 @@ export type InputOptions = {
 	frameworkVersion?: string;
 
 	/**
+	 * - Flags: `--force`, `--overwrite`
 	 * @default false
 	 */
 	overwrite?: boolean;
@@ -215,23 +226,27 @@ export type InputOptions = {
 	/**
 	 * Specify environment code:
 	 * - One of: `dev, prod, staging,...`
+	 * - Flags: `--env`
 	 * @default "dev"
 	 */
 	env?: "dev" | "prod" | "staging" | string;
 
 	/**
+	 * - Flags: `--dev`
 	 * @type {Boolean}
 	 * @default true
 	 */
 	isDev?: boolean;
 
 	/**
+	 * - Flags: `--staging`
 	 * @type {Boolean}
 	 * @default false
 	 */
 	isStaging?: boolean;
 
 	/**
+	 * - Flags: `--prod`
 	 * @type {Boolean}
 	 * @default false
 	 */
@@ -239,6 +254,7 @@ export type InputOptions = {
 	production?: boolean;
 
 	/**
+	 * - Flags: `--canary`
 	 * @type {Boolean}
 	 * @default false
 	 */
@@ -250,6 +266,7 @@ export type InputOptions = {
 	optimize?: boolean;
 
 	/**
+	 * - Flags: `--ssl`, `--no-ssl`
 	 * @type {Boolean}
 	 * @default true
 	 */
@@ -268,18 +285,21 @@ export type InputOptions = {
 	shouldShowInputOptions?: boolean;
 
 	/**
+	 * - Flags: `--help`, `-h`
 	 * @type {Boolean}
 	 * @default false
 	 */
 	shouldShowHelp?: boolean;
 
 	/**
+	 * - Flags: `--version`, `-v`
 	 * @type {Boolean}
 	 * @default false
 	 */
 	shouldShowVersion?: boolean;
 
 	/**
+	 * - Flags: `--update`, `-U`
 	 * Should update CLI version before running the command
 	 * @type {Boolean}
 	 * @default false
@@ -308,18 +328,21 @@ export type InputOptions = {
 	shouldGenerate?: boolean;
 
 	/**
+	 * - Flags: `--template`
 	 * @type {Boolean}
 	 * @default false
 	 */
 	shouldUseTemplate?: boolean;
 
 	/**
+	 * - Flags: `--merge`
 	 * @type {Boolean}
 	 * @default false
 	 */
 	shouldMerge?: boolean;
 
 	/**
+	 * - Flags: `--inherit`
 	 * @type {Boolean}
 	 * @default true
 	 */
@@ -337,24 +360,28 @@ export type InputOptions = {
 	shouldInstallPackage?: boolean;
 
 	/**
+	 * - Flags: `--close`
 	 * @default true
 	 */
 	shouldClose?: boolean;
 
 	/**
 	 * [Use when deploying an app] Force upload local DOTENV file to deployed environment.
+	 * - Flags: `--upload-env`
 	 * @default false
 	 */
 	shouldUploadDotenv?: boolean;
 
 	/**
 	 * [Use when deploying an app] Should enable CDN for this app
+	 * - Flags: `--cdn`
 	 * @default false
 	 */
 	shouldEnableCDN?: boolean;
 
 	/**
 	 * Should create something
+	 * - Flags: `--create`
 	 * @example
 	 * - Create "imagePullSecrets" in a namespace
 	 * @default false
@@ -363,11 +390,13 @@ export type InputOptions = {
 
 	/**
 	 * Should apply something
+	 * - Flags: `--apply`
 	 */
 	shouldApply?: boolean;
 
 	/**
 	 * ! Should deploy app from a fresh namespace
+	 * - Flags: `--fresh`
 	 * ## [WARNING]
 	 * - **With this flag enabled, the server will wipe out all current deployments within the target namespace, then deploy your app completely from scratch!**
 	 * - Use at your own risk, make sure you understand what you're doing, double check the namespace before deploying to avoid accidently take down other apps.
@@ -380,11 +409,13 @@ export type InputOptions = {
 	deployYaml?: string;
 
 	/**
+	 * - Flags: `--port`
 	 * @type {Number}
 	 */
 	port?: number;
 
 	/**
+	 * - Flags: `--replicas`
 	 * @type {Number}
 	 */
 	replicas?: number;
@@ -402,24 +433,28 @@ export type InputOptions = {
 
 	/**
 	 * {Project} slug
+	 * - Flags: `--projectSlug`
 	 */
 	projectSlug?: string;
 
 	/**
 	 * {Project} name
+	 * - Flags: `--projectName`
 	 */
 	projectName?: string;
 
 	/**
 	 * Kubernetes namespace
+	 * - Flags: `--namespace`
 	 */
 	namespace?: string;
 
 	/**
 	 * Application's domain
+	 * - Flags: `--domain`
 	 * @example "myapp.example.com"
 	 */
-	domain?: string;
+	domain?: boolean | string;
 
 	/**
 	 * @type {Boolean}
@@ -429,34 +464,38 @@ export type InputOptions = {
 
 	/**
 	 * Git repository access policy, default is PRIVATE.
+	 * - Flags: `--public`
+	 *
 	 * @type {Boolean}
 	 * @default false
 	 */
 	isPublic?: boolean;
 
 	/**
+	 * - Flags: `--redirect`
+	 *
 	 * @type {Boolean}
 	 * @default false
 	 */
 	redirect?: boolean;
 
 	/**
-	 *
+	 * Build directory
 	 */
 	buildDir?: string;
 
 	/**
-	 *
+	 * Build tag
 	 */
-	buildNumber?: string;
+	buildTag?: string;
 
 	/**
-	 *
+	 * Build image
 	 */
 	buildImage?: string;
 
 	/**
-	 *
+	 * - Flags: `--image`
 	 */
 	imageURL?: string;
 
@@ -466,6 +505,8 @@ export type InputOptions = {
 	buildId?: string;
 
 	/**
+	 * - Flags: `--size`
+	 *
 	 * @default "1x"
 	 */
 	size?: ResourceQuotaSize;
@@ -482,11 +523,13 @@ export type InputOptions = {
 
 	/**
 	 * Slug of an {App} instance
+	 * - Flags: `--appSlug`
 	 */
 	appSlug?: string;
 
 	/**
 	 * Cluster's slug. For deploy to specific cluster.
+	 * - Flags: `--cluster`
 	 */
 	cluster?: string | boolean;
 
@@ -534,6 +577,7 @@ export type InputOptions = {
 
 	/**
 	 * Specify a git branch
+	 * - Flags: `--branch`, `--git-branch`
 	 */
 	gitBranch?: string;
 

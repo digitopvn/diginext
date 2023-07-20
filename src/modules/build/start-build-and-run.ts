@@ -1,4 +1,3 @@
-import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
@@ -12,6 +11,7 @@ import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppConfig } from "../apps/update-config";
 import { updateAppGitInfo } from "../apps/update-git-config";
 import { askForDomain } from "./ask-for-domain";
+import { generateBuildTag } from "./generate-build-tag";
 import { startBuildV1 } from "./start-build";
 
 export const startBuildAndRun = async (options: InputOptions) => {
@@ -91,12 +91,13 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	 * Generate build number as docker image tag
 	 */
 	const { imageURL, namespace } = appConfig.deployEnvironment[env];
+	const tagInfo = await generateBuildTag(options.targetDirectory, { branch: options.gitBranch });
 
 	options.slug = appConfig.slug; // ! required
 	options.projectSlug = appConfig.project; // ! required
 	options.namespace = namespace; // ! required
-	options.buildNumber = makeDaySlug({ divider: "" }); // ! required
-	options.buildImage = `${imageURL}:${options.buildNumber}`; // ! required
+	options.buildTag = tagInfo.tag; // ! required
+	options.buildImage = `${imageURL}:${options.buildTag}`; // ! required
 
 	const buildStatus = await startBuildV1(options, { shouldRollout: true });
 

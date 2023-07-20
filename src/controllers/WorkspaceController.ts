@@ -124,10 +124,10 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		// ----- END VERIFYING -----
 
 		// [1] Create new workspace:
-		console.log("WorkspaceController > CREATE > body :>> ", body);
+		if (this.options?.isDebugging) console.log("WorkspaceController > CREATE > body :>> ", body);
 		const newWorkspace = await this.service.create(body);
-		console.log("WorkspaceController > CREATE > ownerUser :>> ", ownerUser);
-		console.log("WorkspaceController > CREATE > newWorkspace :>> ", newWorkspace);
+		if (this.options?.isDebugging) console.log("WorkspaceController > CREATE > ownerUser :>> ", ownerUser);
+		if (this.options?.isDebugging) console.log("WorkspaceController > CREATE > newWorkspace :>> ", newWorkspace);
 		if (!newWorkspace) return interfaces.respondFailure(`Failed to create new workspace.`);
 
 		/**

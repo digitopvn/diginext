@@ -656,13 +656,22 @@ export async function deleteDeploymentsByFilter(namespace = "default", options: 
 	}
 }
 
+export interface GetKubeDeployOptions extends KubeCommandOptions {
+	/**
+	 * If `TRUE`, it will get metrics of pods and include in the response.
+	 *
+	 * @default true
+	 */
+	metrics?: boolean;
+}
+
 /**
  * Get all deployments of a namespace
  * @param namespace @default "default"
  */
-export async function getDeploys(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
-	const { context, filterLabel, skipOnError } = options;
+export async function getDeploys(namespace = "default", options: GetKubeDeployOptions = {}) {
+	const { execa, execaCommandSync } = await import("execa");
+	const { context, filterLabel, skipOnError, metrics = true } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
@@ -678,13 +687,15 @@ export async function getDeploys(namespace = "default", options: KubeCommandOpti
 		const deploys = items as KubeDeployment[];
 
 		// get pods usage
-		const { stdout: usageStr } = execaCommandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`);
-		const podUsages = usageStr.split("\n").map((line) => {
-			const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
-			const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
-			const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
-			return { namespace: ns, name, cpu, memory, cpuInt, memInt };
-		});
+		const usageStr = metrics ? execaCommandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`).stdout : "";
+		const podUsages = metrics
+			? usageStr.split("\n").map((line) => {
+					const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+					const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+					const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+					return { namespace: ns, name, cpu, memory, cpuInt, memInt };
+			  })
+			: [];
 
 		return deploys.map((deploy) => {
 			// resource usage average
@@ -726,9 +737,9 @@ export async function getDeploys(namespace = "default", options: KubeCommandOpti
 /**
  * Get all deployments of a cluster
  */
-export async function getAllDeploys(options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
-	const { context, filterLabel, skipOnError } = options;
+export async function getAllDeploys(options: GetKubeDeployOptions = {}) {
+	const { execa, execaCommandSync } = await import("execa");
+	const { context, filterLabel, skipOnError, metrics = true } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
@@ -743,13 +754,15 @@ export async function getAllDeploys(options: KubeCommandOptions = {}) {
 		const { items } = JSON.parse(stdout);
 
 		// get pods usage
-		const { stdout: usageStr } = execaCommandSync(`kubectl --context=${context} top pod --no-headers=true -A`);
-		const podUsages = usageStr.split("\n").map((line) => {
-			const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
-			const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
-			const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
-			return { namespace: ns, name, cpu, memory, cpuInt, memInt };
-		});
+		const usageStr = metrics ? execaCommandSync(`kubectl --context=${context} top pod --no-headers=true -A`).stdout : "";
+		const podUsages = metrics
+			? usageStr.split("\n").map((line) => {
+					const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+					const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+					const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+					return { namespace: ns, name, cpu, memory, cpuInt, memInt };
+			  })
+			: [];
 
 		return (items as KubeDeployment[]).map((deploy) => {
 			// resource usage average
@@ -1020,7 +1033,7 @@ export async function logPod(
 	namespace = "default",
 	options: KubeGenericOptions & { timestamps?: boolean; prefix?: boolean; previous?: boolean } = {}
 ) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
+	const { execa } = await import("execa");
 	const { context, skipOnError, timestamps, prefix, previous } = options;
 	try {
 		const args = [];
@@ -1034,8 +1047,6 @@ export async function logPod(
 		if (previous) args.push("--previous");
 
 		const { stdout, stderr } = await execa("kubectl", args);
-		console.log(`[KUBE_CTL] logPod > stdout :>>`, stdout);
-		console.log(`[KUBE_CTL] logPod > stderr :>>`, stderr);
 		return stdout || stderr;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] logPod >`, e);
@@ -1063,8 +1074,6 @@ export async function logPodByFilter(
 		if (previous) args.push("--previous");
 
 		const { stdout, stderr } = await execa("kubectl", args);
-		console.log(`[KUBE_CTL] logPod > stdout :>>`, stdout);
-		console.log(`[KUBE_CTL] logPod > stderr :>>`, stderr);
 		return stdout || stderr;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] logPod >`, e);

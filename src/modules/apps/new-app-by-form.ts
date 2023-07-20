@@ -163,7 +163,7 @@ export async function createAppByForm(
 		const newRepo = await DB.create("git_repo", repoData, {
 			subpath: "/orgs/repos",
 			filter: { slug: gitProvider.slug },
-			isDebugging: true,
+			isDebugging: options?.isDebugging,
 		});
 		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > newRepo :>> ", newRepo);
 

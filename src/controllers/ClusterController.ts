@@ -88,7 +88,7 @@ export default class ClusterController extends BaseController<ICluster, ClusterS
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: entities.ClusterDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
-		console.log("[CLUSTER CONTROLLER] this.filter :>> ", this.filter);
+		// console.log("[CLUSTER CONTROLLER] this.filter :>> ", this.filter);
 		// find cluster to update
 		let cluster = await this.service.findOne(this.filter, { ...this.options, populate: ["provider"] });
 		if (!cluster) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Cluster not found.` });
@@ -116,7 +116,7 @@ export default class ClusterController extends BaseController<ICluster, ClusterS
 
 		// update to database
 		cluster = await this.service.updateOne({ _id: cluster._id }, body);
-		console.log("[CLUSTER CONTROLLER] UPDATE > cluster :>> ", cluster);
+		// console.log("[CLUSTER CONTROLLER] UPDATE > cluster :>> ", cluster);
 
 		return respondSuccess({ data: cluster });
 	}

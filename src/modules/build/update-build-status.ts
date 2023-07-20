@@ -4,7 +4,7 @@ import { log, logError } from "diginext-utils/dist/xconsole/log";
 import type { IBuild, IProject } from "@/entities";
 import type { BuildStatus } from "@/interfaces/SystemTypes";
 
-export async function updateBuildStatus(build: IBuild, status: BuildStatus, extra?: { env?: string }) {
+export async function updateBuildStatus(build: IBuild, status: BuildStatus, options?: { env?: string; isDebugging?: boolean }) {
 	const { DB } = await import("@/modules/api/DB");
 
 	if (!build) {
@@ -13,7 +13,7 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, extr
 	}
 
 	const appId = (build.app as any)?._id ? (build.app as any)._id : build.app;
-	log(`[START BUILD] updateBuildStatus > appId :>>`, appId);
+	if (options?.isDebugging) log(`[START BUILD] updateBuildStatus > appId :>>`, appId);
 
 	const startTime = build.startTime ? dayjs(build.startTime) : undefined;
 	const endTime = status === "failed" || status === "success" ? new Date() : undefined;
@@ -27,15 +27,15 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, extr
 
 	// update latest build to current app
 	const updateDto: any = { latestBuild: build.slug };
-	if (extra?.env && status === "success") updateDto[`deployEnvironment.${extra.env}.buildNumber`] = build.tag;
-	log(`[START BUILD] updateBuildStatus > updateDto :>>`, updateDto);
+	if (options?.env && status === "success") updateDto[`deployEnvironment.${options.env}.buildTag`] = build.tag;
+	if (options?.isDebugging) log(`[START BUILD] updateBuildStatus > updateDto :>>`, updateDto);
 
 	const updatedApp = await DB.updateOne("app", { _id: appId }, updateDto);
-	log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp);
+	if (options?.isDebugging) log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp);
 
 	if (updatedApp) {
 		const updatedProject = await DB.updateOne("project", { _id: updatedApp.project }, { latestBuild: build.slug });
-		log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject);
+		if (options?.isDebugging) log(`[START BUILD] updateBuildStatus > updatedProject :>>`, updatedProject);
 	}
 
 	return updatedBuild;
