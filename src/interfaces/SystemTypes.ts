@@ -1,5 +1,6 @@
 import type express from "express";
 
+import type BaseController from "@/controllers/BaseController";
 import type { IRole, IUser, IWorkspace, RoleRoute } from "@/entities";
 import { filterUniqueItems } from "@/plugins/array";
 
@@ -9,6 +10,8 @@ export interface AppRequest extends express.Request {
 	user?: IUser;
 	role?: IRole;
 	workspace?: IWorkspace;
+	ownership?: Ownership;
+	controller?: BaseController;
 }
 
 export interface AppResponse extends express.Response {

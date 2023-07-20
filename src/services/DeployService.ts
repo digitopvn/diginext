@@ -2,7 +2,7 @@ import { log } from "diginext-utils/dist/xconsole/log";
 
 import { Config } from "@/app.config";
 import type { DeployBuildParams } from "@/controllers/DeployController";
-import type { IBuild, IRelease, IWorkspace } from "@/entities";
+import type { IBuild, IRelease, IUser, IWorkspace } from "@/entities";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import type { StartBuildParams } from "@/modules/build";
 import { buildAndDeploy } from "@/modules/build/build-and-deploy";
@@ -11,6 +11,21 @@ import { deployRelease } from "@/modules/deploy/deploy-release";
 import { currentVersion } from "@/plugins";
 
 export default class DeployService {
+	/**
+	 * Current login user
+	 */
+	user?: IUser;
+
+	/**
+	 * Current active workspace
+	 */
+	workspace?: IWorkspace;
+
+	/**
+	 * Current owner & workspace
+	 */
+	ownership?: Ownership;
+
 	/**
 	 * Build container image first, then deploy that build to target deploy environment.
 	 */
@@ -61,14 +76,14 @@ export default class DeployService {
 
 		// start build in background process:
 		log(`buildAndDeploy > buildParams.buildNumber :>>`, buildParams.buildNumber);
-		await buildAndDeploy(buildParams, deployBuildOptions);
+		const { build, release } = await buildAndDeploy(buildParams, deployBuildOptions);
 
 		const { appSlug, buildNumber } = buildParams;
 		const buildServerUrl = Config.BASE_URL;
 		const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
 		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}&env=${deployParams.env}`;
 
-		return { logURL };
+		return { logURL, build, release };
 	}
 
 	/**

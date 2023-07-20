@@ -7,9 +7,10 @@ import { getCliConfig } from "@/config/config";
 import type { DeployBuildParams } from "@/controllers/DeployController";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
-import { currentVersion, resolveDockerfilePath, stageAllFiles } from "@/plugins";
+import { currentVersion, resolveDockerfilePath } from "@/plugins";
 
 import type { StartBuildParams } from "../build";
+import { stageCommitAndPushAll } from "../git/git-utils";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
 import { parseOptionsToAppConfig } from "./parse-options-to-app-config";
 
@@ -78,7 +79,7 @@ export async function requestDeploy(options: InputOptions) {
 	 * [4] Stage, commit & push configuration files (dx.json) to GIT repository:
 	 */
 	try {
-		await stageAllFiles({
+		await stageCommitAndPushAll({
 			directory: options.targetDirectory,
 			message: `build(${env}): ${options.buildImage}`,
 		});
@@ -132,8 +133,8 @@ export async function requestDeploy(options: InputOptions) {
 		if (!requestResult.status) logError(requestResult.messages[0] || `Unable to call Request Deploy API.`);
 
 		console.log("requestResult.data :>> ", requestResult.data);
-		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}&env=${env}`;
-		log(`-> Check build status here: ${requestResult.data.logURL || logURL} `);
+		const defaultLogURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}&env=${env}`;
+		log(`-> Check build status here: ${requestResult?.data?.logURL || defaultLogURL} `);
 	} catch (e) {
 		logError(`Unable to call Request Deploy API:`, e);
 		return;

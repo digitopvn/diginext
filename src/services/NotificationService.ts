@@ -4,7 +4,7 @@ import type { INotification } from "@/entities/Notification";
 import { notificationSchema } from "@/entities/Notification";
 import type { IDataReferences, IWebhook } from "@/entities/Webhook";
 import type { IQueryFilter, IQueryOptions } from "@/interfaces";
-import type { SystemEvent, WebhookChannel } from "@/interfaces/SystemTypes";
+import type { Ownership, SystemEvent, WebhookChannel } from "@/interfaces/SystemTypes";
 import { dxSendEmail } from "@/modules/diginext/dx-email";
 import { MongoDB } from "@/plugins/mongodb";
 
@@ -48,8 +48,8 @@ export interface SendNotificationData {
 export type SendNotificationWebhookData = Pick<SendNotificationData, "to" | "from" | "title" | "message" | "references" | "url">;
 
 export class NotificationService extends BaseService<INotification> {
-	constructor() {
-		super(notificationSchema);
+	constructor(ownership?: Ownership) {
+		super(notificationSchema, ownership);
 	}
 
 	/**

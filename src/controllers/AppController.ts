@@ -25,14 +25,11 @@ import { makeSlug } from "@/plugins/slug";
 import { ProjectService } from "@/services";
 
 import { AppService } from "../services/AppService";
-import DeployService from "../services/DeployService";
 import BaseController from "./BaseController";
 
 @Tags("App")
 @Route("app")
 export default class AppController extends BaseController<IApp, AppService> {
-	deploySvc = new DeployService();
-
 	constructor() {
 		super(new AppService());
 	}
@@ -244,11 +241,14 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+
 		if (app.deployEnvironment)
 			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
 				// take down environment
 				if (!isEmpty(deployEnvironment)) {
-					await this.service.takeDownDeployEnvironment(app, env);
+					await deployEnvSvc.takeDownDeployEnvironment(app, env);
 				}
 			});
 
@@ -428,7 +428,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		}
 	) {
 		const { slug, env } = this.filter;
-		return this.createDeployEnvironment({ appSlug: slug, env, deployEnvironmentData: body });
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+		return deployEnvSvc.createDeployEnvironment(slug, { env, deployEnvironmentData: body }, this.ownership);
 	}
 
 	/**
@@ -517,7 +519,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		},
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		const app = await this.service.createDeployEnvironment(body.appSlug, body, { owner: this.user, workspace: this.workspace });
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+		const app = await deployEnvSvc.createDeployEnvironment(body.appSlug, body, this.ownership);
 		return respondSuccess({ data: app });
 	}
 
@@ -792,7 +796,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app) return respondFailure({ msg: `App not found.` });
 
 		// take down the deploy environment
-		await this.service.takeDownDeployEnvironment(app, env.toString());
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+		await deployEnvSvc.takeDownDeployEnvironment(app, env.toString());
 
 		// update the app (delete the deploy environment)
 		const updatedApp = await this.service.updateOne(
@@ -1280,7 +1286,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne({ slug: this.filter.slug }, this.options);
 		if (!app) return respondFailure("App not found.");
 
-		const logs = await this.service.viewDeployEnvironmentLogs(app, this.filter.env);
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+
+		const logs = await deployEnvSvc.viewDeployEnvironmentLogs(app, this.filter.env);
 		if (!logs) return respondFailure({ data: "", msg: "No logs found." });
 
 		return respondSuccess({ data: logs });
@@ -1316,8 +1325,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
 		if (!app) return respondFailure(`App not found.`);
 
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+
 		try {
-			const result = await this.service.takeDownDeployEnvironment(app, env);
+			const result = await deployEnvSvc.takeDownDeployEnvironment(app, env);
 			if (!result.success) return respondFailure(`Unable to take down this deploy environment: ${result.message}.`);
 			return respondSuccess({ data: result });
 		} catch (e) {
@@ -1355,8 +1367,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
 		if (!app) return respondFailure(`App not found.`);
 
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+
 		try {
-			const result = await this.service.sleepDeployEnvironment(app, env);
+			const result = await deployEnvSvc.sleepDeployEnvironment(app, env);
 			if (!result.success) return respondFailure(`Unable to sleep a deploy environment: ${result.message}.`);
 			return respondSuccess({ data: result });
 		} catch (e) {
@@ -1394,8 +1409,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
 		if (!app) return respondFailure(`App not found.`);
 
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+
 		try {
-			const result = await this.service.wakeUpDeployEnvironment(app, env);
+			const result = await deployEnvSvc.wakeUpDeployEnvironment(app, env);
 			if (!result.success) return respondFailure(`Unable to awake a deploy environment: ${result.message}.`);
 			return respondSuccess({ data: result });
 		} catch (e) {

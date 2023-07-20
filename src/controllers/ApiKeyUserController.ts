@@ -12,6 +12,7 @@ interface JoinWorkspaceBody {
 export default class ApiKeyUserController extends BaseController<IApiKeyAccount> {
 	constructor() {
 		super(new ApiKeyUserService());
+		this.service.ownership = this.ownership;
 	}
 
 	read(queryParams?: IGetQueryParams) {
@@ -40,7 +41,7 @@ export default class ApiKeyUserController extends BaseController<IApiKeyAccount>
 			// console.log("===========");
 			// console.log("userId, workspaceSlug :>> ", userId, workspaceSlug);
 
-			const workspaceSvc = new WorkspaceService();
+			const workspaceSvc = new WorkspaceService(this.ownership);
 			const workspace = await workspaceSvc.findOne({ slug: workspaceSlug });
 
 			if (!workspace) throw new Error(`Workspace "${workspaceSlug}" not found.`);

@@ -11,6 +11,7 @@ export * from "./CloudProviderService";
 export * from "./ClusterService";
 export * from "./ContainerRegistryService";
 export * from "./CronjobService";
+export * from "./DeployEnvironmentService";
 export * from "./FrameworkService";
 export * from "./GitProviderService";
 export * from "./NotificationService";

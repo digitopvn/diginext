@@ -4,14 +4,15 @@ import { isEmpty } from "lodash";
 import type { IProject } from "@/entities/Project";
 import { projectSchema } from "@/entities/Project";
 import type { IQueryFilter } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 
 import { AppService } from "./AppService";
 import BaseService from "./BaseService";
 
 export class ProjectService extends BaseService<IProject> {
-	constructor() {
-		super(projectSchema);
+	constructor(ownership?: Ownership) {
+		super(projectSchema, ownership);
 	}
 
 	async softDelete(filter?: IQueryFilter) {

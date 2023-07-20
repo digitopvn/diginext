@@ -5,7 +5,7 @@ import type { IApp, IBuild, IProject, IUser, IWorkspace } from "@/entities";
 import type { IDataReferences, IWebhook } from "@/entities/Webhook";
 import { webhookSchema } from "@/entities/Webhook";
 import type { IQueryOptions } from "@/interfaces";
-import type { SystemEvent, WebhookChannel, WebhookEventStatus } from "@/interfaces/SystemTypes";
+import type { Ownership, SystemEvent, WebhookChannel, WebhookEventStatus } from "@/interfaces/SystemTypes";
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
@@ -29,10 +29,11 @@ export interface WebhookDto extends IDataReferences {
 }
 
 export class WebhookService extends BaseService<IWebhook> {
-	notiSvc = new NotificationService();
+	notiSvc: NotificationService;
 
-	constructor() {
-		super(webhookSchema);
+	constructor(ownership?: Ownership) {
+		super(webhookSchema, ownership);
+		this.notiSvc = new NotificationService(ownership);
 	}
 
 	async create(data: WebhookDto, options?: IQueryOptions) {
