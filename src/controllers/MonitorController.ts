@@ -1,17 +1,33 @@
-import { Body, Get, Post, Queries, Route, Security, Tags } from "tsoa/dist";
+import { Body, Delete, Get, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
+import type { IUser, IWorkspace } from "@/entities";
+import type { IResponsePagination, KubeDeployment, KubeIngress, KubeSecret, KubeService } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import type { KubeNode } from "@/interfaces/KubeNode";
 import type { KubePod } from "@/interfaces/KubePod";
+import type { MonitoringQueryFilter, MonitoringQueryOptions } from "@/interfaces/MonitoringQuery";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
-
-import BaseController from "./BaseController";
+import { MonitorService } from "@/services/MonitorService";
 
 @Tags("Monitor")
 @Route("monitor")
-export default class MonitorController extends BaseController {
+export default class MonitorController {
+	user: IUser;
+
+	workspace: IWorkspace;
+
+	ownership: Ownership;
+
+	service = new MonitorService();
+
+	filter: MonitoringQueryFilter;
+
+	options: MonitoringQueryOptions;
+
+	pagination: IResponsePagination;
+
 	/**
 	 * List of nodes in a cluster
 	 */
@@ -20,7 +36,7 @@ export default class MonitorController extends BaseController {
 	@Get("/nodes")
 	async getNodes(@Queries() queryParams?: { clusterSlug: string }) {
 		const { DB } = await import("@/modules/api/DB");
-		let { clusterSlug } = this.filter;
+		let { cluster: clusterSlug } = this.filter;
 
 		let data: KubeNode[] = [];
 
@@ -68,43 +84,9 @@ export default class MonitorController extends BaseController {
 	@Security("jwt")
 	@Get("/namespaces")
 	async getNamespaces(@Queries() queryParams?: { clusterSlug: string }) {
-		const { DB } = await import("@/modules/api/DB");
-		let { clusterSlug } = this.filter;
-
-		let data: KubeNamespace[] = [];
-
-		if (!clusterSlug) {
-			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
-			const ls = await Promise.all(
-				clusters.map(async (cluster) => {
-					const { contextName: context } = cluster;
-					if (!context) return [] as KubeNamespace[];
-					let nsList = await ClusterManager.getAllNamespaces({ context });
-					nsList = nsList.map((ns) => {
-						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterSlug = cluster.slug;
-						ns.cluster = MongoDB.toString(cluster._id);
-						return ns;
-					});
-					return nsList;
-				})
-			);
-			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
-		} else {
-			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
-
-			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
-
-			data = await ClusterManager.getAllNamespaces({ context });
-			data = data.map((ns) => {
-				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterSlug = cluster.slug;
-				ns.cluster = MongoDB.toString(cluster._id);
-				return ns;
-			});
-		}
+		const { MonitorNamespaceService } = await import("@/services/MonitorNamespaceService");
+		const nsSvc = new MonitorNamespaceService();
+		const data = await nsSvc.find(this.filter, this.options);
 
 		// process
 		return respondSuccess({ data });
@@ -127,10 +109,53 @@ export default class MonitorController extends BaseController {
 		@Queries() queryParams?: { clusterSlug: string }
 	) {
 		const { DB } = await import("@/modules/api/DB");
-		const { clusterSlug } = this.filter;
+		const { cluster: clusterSlug } = this.filter;
 		const { name } = body;
 
 		if (!clusterSlug) return respondFailure(`Param "clusterSlug" is required.`);
+
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
+		if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
+
+		const { contextName: context } = cluster;
+		if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
+
+		// check name existed
+		const isExisted = await ClusterManager.isNamespaceExisted(name);
+		if (isExisted) return respondFailure(`Namespace "${name}" is existed.`);
+
+		const data = await ClusterManager.createNamespace(name, { context });
+
+		// data.workspace = MongoDB.toString(this.workspace._id);
+		// data.clusterSlug = clusterSlug;
+		// data.cluster = MongoDB.toString(cluster._id);
+
+		// process
+		return respondSuccess({ data });
+	}
+
+	/**
+	 * Create namespace in a cluster
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/namespaces")
+	async deleteNamespace(
+		@Body()
+		body?: {
+			/**
+			 * Namespace's name
+			 */
+			name: string;
+		},
+		@Queries() queryParams?: { clusterSlug: string }
+	) {
+		const { DB } = await import("@/modules/api/DB");
+		const { cluster: clusterSlug } = this.filter;
+		const { name } = body;
+
+		if (!clusterSlug) return respondFailure(`Query "clusterSlug" is required.`);
+		if (!name) return respondFailure(`Body "name" is required.`);
 
 		const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
 		if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
@@ -160,7 +185,7 @@ export default class MonitorController extends BaseController {
 	@Get("/services")
 	async getServices(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
 		const { DB } = await import("@/modules/api/DB");
-		const { namespace, clusterSlug } = this.filter;
+		const { namespace, cluster: clusterSlug } = this.filter;
 
 		let data: KubeService[] = [];
 
@@ -239,7 +264,7 @@ export default class MonitorController extends BaseController {
 		}
 	) {
 		const { DB } = await import("@/modules/api/DB");
-		const { clusterSlug, namespace = "default" } = this.filter;
+		const { cluster: clusterSlug, namespace = "default" } = this.filter;
 		const { name } = body;
 
 		if (!clusterSlug) return respondFailure(`Param "clusterSlug" is required.`);
@@ -266,7 +291,7 @@ export default class MonitorController extends BaseController {
 	@Get("/ingresses")
 	async getIngresses(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
 		const { DB } = await import("@/modules/api/DB");
-		const { namespace, clusterSlug } = this.filter;
+		const { namespace, cluster: clusterSlug } = this.filter;
 
 		let data: KubeIngress[] = [];
 
@@ -319,7 +344,7 @@ export default class MonitorController extends BaseController {
 	@Get("/deployments")
 	async getDeploys(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
 		const { DB } = await import("@/modules/api/DB");
-		const { namespace, clusterSlug } = this.filter;
+		const { namespace, cluster: clusterSlug } = this.filter;
 
 		let data: KubeDeployment[] = [];
 
@@ -372,7 +397,7 @@ export default class MonitorController extends BaseController {
 	@Get("/pods")
 	async getPods(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
 		const { DB } = await import("@/modules/api/DB");
-		const { namespace, clusterSlug } = this.filter;
+		const { namespace, cluster: clusterSlug } = this.filter;
 
 		let data: KubePod[] = [];
 
@@ -423,7 +448,7 @@ export default class MonitorController extends BaseController {
 	@Get("/secrets")
 	async getSecrets(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
 		const { DB } = await import("@/modules/api/DB");
-		const { namespace, clusterSlug } = this.filter;
+		const { namespace, cluster: clusterSlug } = this.filter;
 
 		let data: KubeSecret[] = [];
 

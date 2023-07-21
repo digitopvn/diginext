@@ -84,6 +84,7 @@ export interface IQueryOptions extends IQueryGeneral {
 	 */
 	order?: { [key: string]: 1 | -1 };
 	/**
+	 * If `TRUE`, return the closest results of filter
 	 * @default false
 	 */
 	search?: boolean;
@@ -91,6 +92,11 @@ export interface IQueryOptions extends IQueryGeneral {
 	 * @default false
 	 */
 	download?: boolean;
+	/**
+	 * If `TRUE`, return the full data, otherwise only return optimal data.
+	 * @default false
+	 */
+	full?: boolean;
 	/**
 	 * Disable the default `{$set: body}` of "update" query & update `{body}` directly to the items
 	 * @default false

@@ -29,6 +29,7 @@ import {
 	getIngress,
 	getIngressClasses,
 	getIngresses,
+	getNamespace,
 	getPod,
 	getPods,
 	getPodsByFilter,
@@ -63,6 +64,7 @@ const ClusterManager = {
 	currentContext,
 	currentCluster,
 	// kube-helpers
+	getNamespace,
 	createNamespace,
 	deleteNamespace,
 	deleteNamespaceByCluster,

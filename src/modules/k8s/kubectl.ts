@@ -157,6 +157,20 @@ export async function getAllNamespaces(options: KubeCommandOptions = {}) {
 }
 
 /**
+ * Get a namepsace of a cluster
+ */
+export async function getNamespace(name: string, options: KubeCommandOptions = {}) {
+	const { context, skipOnError } = options;
+	const stdout = await execCmd(`kubectl ${context ? `--context=${context} ` : ""}get namespace ${name} -o json`, `Can't get a namespace.`);
+	try {
+		return JSON.parse(stdout).items as KubeNamespace;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllNamespaces > Can't get namespace list.`);
+		return;
+	}
+}
+
+/**
  * Create new namespace of a cluster
  */
 export async function createNamespace(namespace: string, options: KubeGenericOptions = {}) {

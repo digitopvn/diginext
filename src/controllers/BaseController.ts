@@ -143,9 +143,10 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			order, // @example: -updatedAt,-createdAt
 			search = false,
 			raw = false,
+			full = false,
 			where = {},
 			access_token,
-			isDebugging,
+			isDebugging = false,
 			...filter
 		} = req.query as any;
 
@@ -155,6 +156,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 		const options: IQueryOptions & IQueryPagination = {
 			isDebugging,
 			download,
+			full,
 			populate: _populate == "" ? [] : _populate.indexOf(",") > -1 ? _populate.split(",") : [_populate],
 			select: _select == "" ? [] : _select.indexOf(",") > -1 ? _select.split(",") : [_select],
 		};
@@ -231,6 +233,8 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			status,
 			sort = "createdAt",
 			search = false,
+			full = false,
+			isDebugging = false,
 			access_token,
 			...filter
 		} = req.query;

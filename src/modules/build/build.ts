@@ -41,7 +41,8 @@ export type StartBuildParams = {
 	buildTag?: string;
 
 	/**
-	 * Alias of `buildTag` (**ONLY put it here to fallback support CLI < `3.21.0`**)
+	 * Use `buildTag` instead, currently it's still an alias of `buildTag`,
+	 * **ONLY for fallback support CLI < `3.21.0`** and will be removed soon.
 	 * @deprecated From `v3.21.0+`
 	 */
 	buildNumber?: string;
@@ -213,7 +214,7 @@ export async function startBuild(
 
 	// Validating...
 	if (isEmpty(app)) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" not found.` });
+		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `[START BUILD] App "${appSlug}" not found.` });
 		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" not found.`);
 		return;
 	}
@@ -222,19 +223,29 @@ export async function startBuild(
 	const registry = await DB.findOne("registry", { slug: registrySlug });
 
 	if (isEmpty(registry)) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
+		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
 		if (options?.onError) options?.onError(`[START BUILD] Container registry "${registrySlug}" not found.`);
 		return;
 	}
 
 	if (isEmpty(app.project)) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" doesn't belong to any projects (probably deleted?).` });
+		sendLog({
+			SOCKET_ROOM,
+			type: "error",
+			action: "end",
+			message: `[START BUILD] App "${appSlug}" doesn't belong to any projects (probably deleted?).`,
+		});
 		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" doesn't belong to any projects (probably deleted?).`);
 		return;
 	}
 
 	if (isEmpty(app.git) || isEmpty(app.git?.repoSSH)) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" doesn't have any git repository data (probably deleted?).` });
+		sendLog({
+			SOCKET_ROOM,
+			type: "error",
+			action: "end",
+			message: `[START BUILD] App "${appSlug}" doesn't have any git repository data (probably deleted?).`,
+		});
 		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" doesn't have any git repository data (probably deleted?).`);
 		return;
 	}
@@ -328,10 +339,18 @@ export async function startBuild(
 		});
 	}
 
-	// verify SSH before pulling files...
+	/**
+	 * Verify SSH before cloning/pulling files from a git repository.
+	 */
+
 	const gitAuth = await verifySSH({ gitProvider });
 	if (!gitAuth) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.` });
+		sendLog({
+			SOCKET_ROOM,
+			action: "end",
+			type: "error",
+			message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`,
+		});
 		if (options?.onError) options?.onError(`[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`);
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook

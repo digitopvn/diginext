@@ -8,6 +8,7 @@ import { GitProviderDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
+import type { GitProviderDomain } from "@/interfaces/SystemTypes";
 import { type GitProviderType, gitProviderDomain } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
 import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
@@ -446,11 +447,11 @@ export default class GitProviderController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/ssh/create")
-	async createKeysSSH(@Body() body: { privateKey: string; publicKey: string }) {
-		const { privateKey, publicKey } = body;
+	async createKeysSSH(@Body() body: { gitDomain: GitProviderDomain; privateKey: string; publicKey: string }) {
+		const { gitDomain, privateKey, publicKey } = body;
 
 		try {
-			const result = await writeCustomSSHKeys({ privateKey, publicKey });
+			const result = await writeCustomSSHKeys({ gitDomain, privateKey, publicKey });
 			return { status: 1, data: result } as ResponseData;
 		} catch (e) {
 			return { status: 0, messages: [e.message] } as ResponseData;
