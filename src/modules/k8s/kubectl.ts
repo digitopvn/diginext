@@ -1,7 +1,7 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
-import { isEmpty, round, toInteger } from "lodash";
+import { isEmpty, round, startsWith, toInteger } from "lodash";
 import path from "path";
 
 import { CLI_DIR } from "@/config/const";
@@ -31,6 +31,21 @@ interface KubeCommandOptions extends KubeGenericOptions {
 	 * @example "phase!=prerelease,app=abc-xyz"
 	 */
 	filterLabel?: string;
+}
+
+/**
+ * Convert filter object to filter labels string
+ * - Use ! for different than value
+ * @example { phase: "!prerelease", app: "abc-xyz" } -> "phase!=prerelease,app=abc-xyz"
+ */
+export function objectToFilterLabels(obj: Record<string, string>) {
+	if (!obj) throw new Error(`Input object is required.`);
+	return Object.entries(obj)
+		.map(([key, val]) => {
+			if (startsWith("!", val)) return `${key}!=${val.substring(1)}`;
+			return `${key}=${val}`;
+		})
+		.join(",");
 }
 
 /**
@@ -813,6 +828,31 @@ export async function getAllDeploys(options: GetKubeDeployOptions = {}) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllDeploys >`, e);
 		return [];
 	}
+}
+
+/**
+ * Create service by name
+ * @param namespace @default "default"
+ */
+export async function createService(name, namespace = "default", options: KubeGenericOptions = {}) {
+	throw new Error(`This feature is under development.`);
+
+	// const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
+	// const { context, skipOnError } = options;
+	// try {
+	// 	const args = [];
+	// 	if (context) args.push(`--context=${context}`);
+
+	// 	args.push("-n", namespace, "get", "svc", name);
+
+	// 	args.push("-o", "json");
+
+	// 	const { stdout } = await execa("kubectl", args);
+	// 	return JSON.parse(stdout) as KubeService;
+	// } catch (e) {
+	// 	if (!skipOnError) logError(`[KUBE_CTL] getService >`, e);
+	// 	return;
+	// }
 }
 
 /**

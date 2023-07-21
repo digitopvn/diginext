@@ -16,4 +16,10 @@ export class MonitorService {
 	 * Current owner & workspace
 	 */
 	ownership?: Ownership;
+
+	constructor(ownership?: Ownership) {
+		this.ownership = ownership;
+		this.user = ownership?.owner;
+		this.workspace = ownership?.workspace;
+	}
 }

@@ -85,7 +85,7 @@ export default class MonitorController {
 	@Get("/namespaces")
 	async getNamespaces(@Queries() queryParams?: { clusterSlug: string }) {
 		const { MonitorNamespaceService } = await import("@/services/MonitorNamespaceService");
-		const nsSvc = new MonitorNamespaceService();
+		const nsSvc = new MonitorNamespaceService(this.ownership);
 		const data = await nsSvc.find(this.filter, this.options);
 
 		// process
@@ -108,27 +108,9 @@ export default class MonitorController {
 		},
 		@Queries() queryParams?: { clusterSlug: string }
 	) {
-		const { DB } = await import("@/modules/api/DB");
-		const { cluster: clusterSlug } = this.filter;
-		const { name } = body;
-
-		if (!clusterSlug) return respondFailure(`Param "clusterSlug" is required.`);
-
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-		if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
-
-		const { contextName: context } = cluster;
-		if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
-
-		// check name existed
-		const isExisted = await ClusterManager.isNamespaceExisted(name);
-		if (isExisted) return respondFailure(`Namespace "${name}" is existed.`);
-
-		const data = await ClusterManager.createNamespace(name, { context });
-
-		// data.workspace = MongoDB.toString(this.workspace._id);
-		// data.clusterSlug = clusterSlug;
-		// data.cluster = MongoDB.toString(cluster._id);
+		const { MonitorNamespaceService } = await import("@/services/MonitorNamespaceService");
+		const nsSvc = new MonitorNamespaceService(this.ownership);
+		const data = await nsSvc.create(this.filter, body);
 
 		// process
 		return respondSuccess({ data });
@@ -150,28 +132,9 @@ export default class MonitorController {
 		},
 		@Queries() queryParams?: { clusterSlug: string }
 	) {
-		const { DB } = await import("@/modules/api/DB");
-		const { cluster: clusterSlug } = this.filter;
-		const { name } = body;
-
-		if (!clusterSlug) return respondFailure(`Query "clusterSlug" is required.`);
-		if (!name) return respondFailure(`Body "name" is required.`);
-
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-		if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
-
-		const { contextName: context } = cluster;
-		if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
-
-		// check name existed
-		const isExisted = await ClusterManager.isNamespaceExisted(name);
-		if (isExisted) return respondFailure(`Namespace "${name}" is existed.`);
-
-		const data = await ClusterManager.createNamespace(name, { context });
-
-		// data.workspace = MongoDB.toString(this.workspace._id);
-		// data.clusterSlug = clusterSlug;
-		// data.cluster = MongoDB.toString(cluster._id);
+		const { MonitorNamespaceService } = await import("@/services/MonitorNamespaceService");
+		const nsSvc = new MonitorNamespaceService(this.ownership);
+		const data = await nsSvc.delete(this.filter, body);
 
 		// process
 		return respondSuccess({ data });
@@ -184,47 +147,9 @@ export default class MonitorController {
 	@Security("jwt")
 	@Get("/services")
 	async getServices(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
-		const { DB } = await import("@/modules/api/DB");
-		const { namespace, cluster: clusterSlug } = this.filter;
-
-		let data: KubeService[] = [];
-
-		if (!clusterSlug) {
-			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
-			const ls = await Promise.all(
-				clusters.map(async (cluster) => {
-					const { contextName: context } = cluster;
-					if (!context) return [] as KubeService[];
-
-					let nsList = namespace
-						? await ClusterManager.getServices(namespace, { context })
-						: await ClusterManager.getAllServices({ context });
-
-					nsList = nsList.map((ns) => {
-						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterSlug = cluster.slug;
-						ns.cluster = MongoDB.toString(cluster._id);
-						return ns;
-					});
-					return nsList;
-				})
-			);
-			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
-		} else {
-			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
-
-			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
-
-			data = namespace ? await ClusterManager.getServices(namespace, { context }) : await ClusterManager.getAllServices({ context });
-			data = data.map((ns) => {
-				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterSlug = cluster.slug;
-				ns.cluster = MongoDB.toString(cluster._id);
-				return ns;
-			});
-		}
+		const { MonitorServiceService } = await import("@/services/MonitorServiceService");
+		const serviceSvc = new MonitorServiceService(this.ownership);
+		const data = await serviceSvc.find(this.filter, this.options);
 
 		// process
 		return respondSuccess({ data });
@@ -263,24 +188,38 @@ export default class MonitorController {
 			clusterSlug: string;
 		}
 	) {
-		const { DB } = await import("@/modules/api/DB");
-		const { cluster: clusterSlug, namespace = "default" } = this.filter;
-		const { name } = body;
+		const { MonitorServiceService } = await import("@/services/MonitorServiceService");
+		const serviceSvc = new MonitorServiceService(this.ownership);
+		const data = await serviceSvc.create(this.filter, body);
 
-		if (!clusterSlug) return respondFailure(`Param "clusterSlug" is required.`);
+		return respondSuccess({ data });
+	}
 
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-		if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
+	/**
+	 * Delete service in a namespace
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/services")
+	async deleteService(
+		@Body()
+		body?: {
+			/**
+			 * Service's name
+			 */
+			name: string;
+		},
+		@Queries()
+		queryParams?: {
+			clusterSlug: string;
+			namespace: string;
+		}
+	) {
+		const { MonitorServiceService } = await import("@/services/MonitorServiceService");
+		const serviceSvc = new MonitorServiceService(this.ownership);
+		const data = await serviceSvc.delete(this.filter, body);
 
-		const { contextName: context } = cluster;
-		if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
-
-		// check name existed
-		const isExisted = await ClusterManager.isNamespaceExisted(name);
-		if (!isExisted) return respondFailure(`Namespace "${name}" not found.`);
-
-		// const data = await ClusterManager.createNamespace(name, { context });
-		return respondFailure("This feature is in processed.");
+		return respondSuccess({ data });
 	}
 
 	/**
