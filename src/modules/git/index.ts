@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
-import { execaCommandSync, execaSync } from "execa";
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
+import { execa, execaCommand, execaSync } from "execa";
+import { createWriteStream, existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import globby from "globby";
 import capitalize from "lodash/capitalize";
 import open from "open";
@@ -232,15 +232,18 @@ export const writeCustomSSHKeys = async (params: { gitDomain: GitProviderDomain;
 
 	// Make sure the private key is assigned correct permissions (400)
 	try {
-		const { execaCommand } = await import("execa");
 		await execaCommand(`chmod -R 400 ${privateIdRsaFile}`);
 	} catch (e) {
 		throw new Error(`[GIT] Can't assign permission [400] to "id_rsa" private key.`);
 	}
 
 	// write "publicKey" to file event if "publicKey" is not provided
-	const publicKeyContent = publicKey || execaCommandSync(`ssh-keygen -y -f ${privateIdRsaFile} > ${publicIdRsaFile}`).stdout;
-	writeFileSync(publicIdRsaFile, publicKeyContent, "utf8");
+	if (!publicKey) {
+		const subprocess = execa("ssh-keygen", ["-y", "-f", privateIdRsaFile]);
+		subprocess.stdout.pipe(createWriteStream(publicIdRsaFile));
+	} else {
+		writeFileSync(publicIdRsaFile, publicKey, "utf8");
+	}
 
 	// add keys to "know_hosts"
 	await addKeysToKnownHosts({ gitDomain, privateIdRsaFile, publicIdRsaFile });
@@ -283,7 +286,6 @@ export const generateSSH = async (options?: InputOptions) => {
 		publicIdRsaFile = path.resolve(idRsaDir, "id_rsa.pub");
 
 		try {
-			const { execa, execaCommand } = await import("execa");
 			await execa("ssh-keygen", ["-b", "2048", "-t", "rsa", "-f", privateIdRsaFile, "-q", "-N", ""]);
 		} catch (e) {
 			logError(`Can't generate SSH private & public key:`, e);
@@ -327,7 +329,6 @@ export const sshKeysExisted = async (options?: { publicIdRsaFile: string; privat
 
 			// Make sure the private key is assigned correct permissions (400)
 			try {
-				const { execa, execaCommand } = await import("execa");
 				await execaCommand(`chmod -R 400 ${privateIdRsaFile}`);
 			} catch (e) {
 				logError(`[GIT] Can't assign permission [400] to "id_rsa" private key.`);
@@ -391,7 +392,6 @@ export const verifySSH = async (options?: InputOptions) => {
 		case "github":
 			// has to use this because "Github does not provide shell access"
 			try {
-				const { execa, execaCommand } = await import("execa");
 				await execaCommand(`ssh -o StrictHostKeyChecking=no -T git@github.com`);
 				authResult = true;
 			} catch (e) {
@@ -431,7 +431,6 @@ export const checkGitProviderAccess = async (gitProvider: GitProviderType) => {
 		case "github":
 			// has to use this because "Github does not provide shell access"
 			try {
-				const { execa, execaCommand } = await import("execa");
 				result = await execaCommand(`ssh -o StrictHostKeyChecking=no -T git@github.com`);
 			} catch (e) {
 				result = e.toString().indexOf("successfully authenticated") > -1 ? true : undefined;
