@@ -228,7 +228,7 @@ export const writeCustomSSHKeys = async (params: { gitDomain: GitProviderDomain;
 	if (existsSync(publicIdRsaFile)) unlinkSync(publicIdRsaFile);
 
 	// write "privateKey" content to file
-	writeFileSync(privateIdRsaFile, privateKey, "utf8");
+	writeFileSync(privateIdRsaFile, privateKey + "\n", { encoding: "utf8", flag: "a" });
 
 	// Make sure the private key is assigned correct permissions (400)
 	try {
@@ -240,13 +240,19 @@ export const writeCustomSSHKeys = async (params: { gitDomain: GitProviderDomain;
 	// write "publicKey" to file event if "publicKey" is not provided
 	if (!publicKey) {
 		const subprocess = execa("ssh-keygen", ["-y", "-f", privateIdRsaFile]);
-		await subprocess.stdout.pipe(createWriteStream(publicIdRsaFile));
+		// subprocess.stdout.pipe(process.stdout);
+		subprocess.stdout.pipe(createWriteStream(publicIdRsaFile));
+		await subprocess;
+		// console.log("child output:", stdout);
 	} else {
 		writeFileSync(publicIdRsaFile, publicKey, "utf8");
 	}
 
 	// add keys to "know_hosts"
 	await addKeysToKnownHosts({ gitDomain, privateIdRsaFile, publicIdRsaFile });
+
+	// Start SSH agent & add private keys: eval `ssh-agent`
+	await execCmd(`eval $(ssh-agent -s) && ssh-add ${privateIdRsaFile}`);
 
 	// print results
 	log(`[GIT] Added new SSH keys on this machine:`);

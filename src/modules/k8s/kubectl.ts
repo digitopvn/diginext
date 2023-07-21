@@ -1080,7 +1080,46 @@ export async function getAllPods(options: KubeCommandOptions = {}) {
 	}
 }
 
+/**
+ * Alias function of `getPods()`
+ */
 export const getPodsByFilter = getPods;
+
+export async function deletePod(name: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "delete", "pod", name);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getPod >`, e);
+		return;
+	}
+}
+
+export async function deletePodsByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
+	const { context, skipOnError, filterLabel } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "delete", "pod");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getPod >`, e);
+		return;
+	}
+}
 
 export async function logPod(
 	name,

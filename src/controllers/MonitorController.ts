@@ -1,10 +1,9 @@
 import { Body, Delete, Get, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IUser, IWorkspace } from "@/entities";
-import type { IResponsePagination, KubeDeployment, KubeIngress, KubeSecret, KubeService } from "@/interfaces";
+import type { IResponsePagination, KubeService } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import type { KubeNode } from "@/interfaces/KubeNode";
-import type { KubePod } from "@/interfaces/KubePod";
 import type { MonitoringQueryFilter, MonitoringQueryOptions } from "@/interfaces/MonitoringQuery";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
@@ -34,7 +33,7 @@ export default class MonitorController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/nodes")
-	async getNodes(@Queries() queryParams?: { clusterSlug: string }) {
+	async getNodes(@Queries() queryParams?: { cluster: string }) {
 		const { DB } = await import("@/modules/api/DB");
 		let { cluster: clusterSlug } = this.filter;
 
@@ -83,7 +82,7 @@ export default class MonitorController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/namespaces")
-	async getNamespaces(@Queries() queryParams?: { clusterSlug: string }) {
+	async getNamespaces(@Queries() queryParams?: { cluster: string }) {
 		const { MonitorNamespaceService } = await import("@/services/MonitorNamespaceService");
 		const nsSvc = new MonitorNamespaceService(this.ownership);
 		const data = await nsSvc.find(this.filter, this.options);
@@ -106,7 +105,7 @@ export default class MonitorController {
 			 */
 			name: string;
 		},
-		@Queries() queryParams?: { clusterSlug: string }
+		@Queries() queryParams?: { cluster: string }
 	) {
 		const { MonitorNamespaceService } = await import("@/services/MonitorNamespaceService");
 		const nsSvc = new MonitorNamespaceService(this.ownership);
@@ -130,7 +129,7 @@ export default class MonitorController {
 			 */
 			name: string;
 		},
-		@Queries() queryParams?: { clusterSlug: string }
+		@Queries() queryParams?: { cluster: string }
 	) {
 		const { MonitorNamespaceService } = await import("@/services/MonitorNamespaceService");
 		const nsSvc = new MonitorNamespaceService(this.ownership);
@@ -146,7 +145,7 @@ export default class MonitorController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/services")
-	async getServices(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
+	async getServices(@Queries() queryParams?: { cluster: string; namespace?: string }) {
 		const { MonitorServiceService } = await import("@/services/MonitorServiceService");
 		const serviceSvc = new MonitorServiceService(this.ownership);
 		const data = await serviceSvc.find(this.filter, this.options);
@@ -185,7 +184,7 @@ export default class MonitorController {
 		},
 		@Queries()
 		queryParams?: {
-			clusterSlug: string;
+			cluster: string;
 		}
 	) {
 		const { MonitorServiceService } = await import("@/services/MonitorServiceService");
@@ -211,7 +210,7 @@ export default class MonitorController {
 		},
 		@Queries()
 		queryParams?: {
-			clusterSlug: string;
+			cluster: string;
 			namespace: string;
 		}
 	) {
@@ -228,48 +227,34 @@ export default class MonitorController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/ingresses")
-	async getIngresses(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
-		const { DB } = await import("@/modules/api/DB");
-		const { namespace, cluster: clusterSlug } = this.filter;
+	async getIngresses(@Queries() queryParams?: { cluster: string; namespace?: string }) {
+		const { MonitorIngressService } = await import("@/services/MonitorIngressService");
+		const ingressSvc = new MonitorIngressService(this.ownership);
+		const data = await ingressSvc.find(this.filter, this.options);
 
-		let data: KubeIngress[] = [];
+		// process
+		return respondSuccess({ data });
+	}
 
-		if (!clusterSlug) {
-			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
-			const ls = await Promise.all(
-				clusters.map(async (cluster) => {
-					const { contextName: context } = cluster;
-					if (!context) return [] as KubeIngress[];
-
-					let nsList = namespace
-						? await ClusterManager.getIngresses(namespace, { context })
-						: await ClusterManager.getAllIngresses({ context });
-
-					nsList = nsList.map((ns) => {
-						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterSlug = cluster.slug;
-						ns.cluster = MongoDB.toString(cluster._id);
-						return ns;
-					});
-					return nsList;
-				})
-			);
-			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
-		} else {
-			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
-
-			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
-
-			data = namespace ? await ClusterManager.getIngresses(namespace, { context }) : await ClusterManager.getAllIngresses({ context });
-			data = data.map((ns) => {
-				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterSlug = cluster.slug;
-				ns.cluster = MongoDB.toString(cluster._id);
-				return ns;
-			});
-		}
+	/**
+	 * Delete K8S Ingress
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/ingresses")
+	async deleteIngresses(
+		@Body()
+		body?: {
+			/**
+			 * Ingress's name
+			 */
+			name: string;
+		},
+		@Queries() queryParams?: { cluster: string; namespace?: string }
+	) {
+		const { MonitorIngressService } = await import("@/services/MonitorIngressService");
+		const ingressSvc = new MonitorIngressService(this.ownership);
+		const data = await ingressSvc.delete(this.filter, body);
 
 		// process
 		return respondSuccess({ data });
@@ -281,48 +266,34 @@ export default class MonitorController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/deployments")
-	async getDeploys(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
-		const { DB } = await import("@/modules/api/DB");
-		const { namespace, cluster: clusterSlug } = this.filter;
+	async getDeploys(@Queries() queryParams?: { cluster: string; namespace?: string }) {
+		const { MonitorDeploymentService } = await import("@/services/MonitorDeploymentService");
+		const deploymentSvc = new MonitorDeploymentService(this.ownership);
+		const data = await deploymentSvc.find(this.filter, this.options);
 
-		let data: KubeDeployment[] = [];
+		// process
+		return respondSuccess({ data });
+	}
 
-		if (!clusterSlug) {
-			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
-			const ls = await Promise.all(
-				clusters.map(async (cluster) => {
-					const { contextName: context } = cluster;
-					if (!context) return [] as KubeDeployment[];
-
-					let nsList = namespace
-						? await ClusterManager.getDeploys(namespace, { context })
-						: await ClusterManager.getAllDeploys({ context });
-
-					nsList = nsList.map((ns) => {
-						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterSlug = cluster.slug;
-						ns.cluster = MongoDB.toString(cluster._id);
-						return ns;
-					});
-					return nsList;
-				})
-			);
-			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
-		} else {
-			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
-
-			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
-
-			data = namespace ? await ClusterManager.getDeploys(namespace, { context }) : await ClusterManager.getAllDeploys({ context });
-			data = data.map((ns) => {
-				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterSlug = cluster.slug;
-				ns.cluster = MongoDB.toString(cluster._id);
-				return ns;
-			});
-		}
+	/**
+	 * Delete K8S Deployment
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/deployments")
+	async deleteDeploys(
+		@Body()
+		body?: {
+			/**
+			 * Deployment's name
+			 */
+			name: string;
+		},
+		@Queries() queryParams?: { cluster: string; namespace?: string }
+	) {
+		const { MonitorDeploymentService } = await import("@/services/MonitorDeploymentService");
+		const deploymentSvc = new MonitorDeploymentService(this.ownership);
+		const data = await deploymentSvc.delete(this.filter, body);
 
 		// process
 		return respondSuccess({ data });
@@ -334,46 +305,34 @@ export default class MonitorController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/pods")
-	async getPods(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
-		const { DB } = await import("@/modules/api/DB");
-		const { namespace, cluster: clusterSlug } = this.filter;
+	async getPods(@Queries() queryParams?: { cluster: string; namespace?: string }) {
+		const { MonitorPodService } = await import("@/services/MonitorPodService");
+		const podSvc = new MonitorPodService(this.ownership);
+		const data = await podSvc.find(this.filter, this.options);
 
-		let data: KubePod[] = [];
+		// process
+		return respondSuccess({ data });
+	}
 
-		if (!clusterSlug) {
-			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
-			const ls = await Promise.all(
-				clusters.map(async (cluster) => {
-					const { contextName: context } = cluster;
-					if (!context) return [] as KubePod[];
-
-					let list = namespace ? await ClusterManager.getPods(namespace, { context }) : await ClusterManager.getAllPods({ context });
-
-					list = list.map((ns) => {
-						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterSlug = cluster.slug;
-						ns.cluster = MongoDB.toString(cluster._id);
-						return ns;
-					});
-					return list;
-				})
-			);
-			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
-		} else {
-			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
-
-			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
-
-			data = namespace ? await ClusterManager.getPods(namespace, { context }) : await ClusterManager.getAllPods({ context });
-			data = data.map((ns) => {
-				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterSlug = cluster.slug;
-				ns.cluster = MongoDB.toString(cluster._id);
-				return ns;
-			});
-		}
+	/**
+	 * Delete K8S Pod
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/pods")
+	async deletePods(
+		@Body()
+		body?: {
+			/**
+			 * Deployment's name
+			 */
+			name: string;
+		},
+		@Queries() queryParams?: { cluster: string; namespace?: string }
+	) {
+		const { MonitorPodService } = await import("@/services/MonitorPodService");
+		const podSvc = new MonitorPodService(this.ownership);
+		const data = await podSvc.delete(this.filter, body);
 
 		// process
 		return respondSuccess({ data });
@@ -385,48 +344,34 @@ export default class MonitorController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/secrets")
-	async getSecrets(@Queries() queryParams?: { clusterSlug: string; namespace?: string }) {
-		const { DB } = await import("@/modules/api/DB");
-		const { namespace, cluster: clusterSlug } = this.filter;
+	async getSecrets(@Queries() queryParams?: { cluster: string; namespace?: string }) {
+		const { MonitorSecretService } = await import("@/services/MonitorSecretService");
+		const secretSvc = new MonitorSecretService(this.ownership);
+		const data = await secretSvc.find(this.filter, this.options);
 
-		let data: KubeSecret[] = [];
+		// process
+		return respondSuccess({ data });
+	}
 
-		if (!clusterSlug) {
-			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
-			const ls = await Promise.all(
-				clusters.map(async (cluster) => {
-					const { contextName: context } = cluster;
-					if (!context) return [] as KubeSecret[];
-
-					let nsList = namespace
-						? await ClusterManager.getSecrets(namespace, { context })
-						: await ClusterManager.getAllSecrets({ context });
-
-					nsList = nsList.map((ns) => {
-						ns.workspace = MongoDB.toString(this.workspace._id);
-						ns.clusterSlug = cluster.slug;
-						ns.cluster = MongoDB.toString(cluster._id);
-						return ns;
-					});
-					return nsList;
-				})
-			);
-			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
-		} else {
-			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-			if (!cluster) return respondFailure(`Cluster "${clusterSlug}" not found.`);
-
-			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterSlug}"`);
-
-			data = namespace ? await ClusterManager.getSecrets(namespace, { context }) : await ClusterManager.getAllSecrets({ context });
-			data = data.map((ns) => {
-				ns.workspace = MongoDB.toString(this.workspace._id);
-				ns.clusterSlug = cluster.slug;
-				ns.cluster = MongoDB.toString(cluster._id);
-				return ns;
-			});
-		}
+	/**
+	 * Delete K8S Secret
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/secrets")
+	async deleteSecrets(
+		@Body()
+		body?: {
+			/**
+			 * Secret's name
+			 */
+			name: string;
+		},
+		@Queries() queryParams?: { cluster: string; namespace?: string }
+	) {
+		const { MonitorSecretService } = await import("@/services/MonitorSecretService");
+		const secretSvc = new MonitorSecretService(this.ownership);
+		const data = await secretSvc.delete(this.filter, body);
 
 		// process
 		return respondSuccess({ data });
