@@ -408,11 +408,16 @@ export function testFlow1() {
 			expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
 
-			const files = readdirSync(CLI_TEST_DIR);
-			console.log("files :>> ", files);
-			expect(files.join(",").indexOf(`testgithubproject`)).toBeGreaterThan(-1);
+			const sourceCodeDirs = readdirSync(CLI_TEST_DIR);
+			console.log("sourceCodeDirs :>> ", sourceCodeDirs);
+			expect(sourceCodeDirs.join(",").indexOf(`testgithubproject`)).toBeGreaterThan(-1);
 
-			// assign variable
+			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
+			const sourceCodeFiles = readdirSync(appDir);
+			console.log("sourceCodeFiles :>> ", sourceCodeFiles);
+			expect(sourceCodeFiles.length).toBeGreaterThan(0);
+
+			// reload app's data
 			appOnGithub = await appSvc.findOne({}, { order: { createdAt: -1 } });
 		},
 		5 * 60000

@@ -95,7 +95,7 @@ export async function createAppByForm(
 		const { providerType: gitProvider } = parseGitRepoDataFromRepoSSH(repoSSH);
 		frameworkGitProvider = gitProvider;
 
-		const { namespace } = parseGitRepoDataFromRepoSSH(fwRepoSSH);
+		// const { namespace } = parseGitRepoDataFromRepoSSH(fwRepoSSH);
 		// if (!isFwPrivate) {
 		// 	const canAccessPublicRepo = await checkGitProviderAccess(frameworkGitProvider);
 		// 	if (!canAccessPublicRepo) {

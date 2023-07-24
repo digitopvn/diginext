@@ -345,6 +345,7 @@ export async function startBuild(
 
 	const gitAuth = await verifySSH({ gitProvider });
 	if (!gitAuth) {
+		// print the logs to client (Dashboard & CLI)
 		sendLog({
 			SOCKET_ROOM,
 			action: "end",
@@ -352,6 +353,7 @@ export async function startBuild(
 			message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`,
 		});
 		if (options?.onError) options?.onError(`[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`);
+		// update build status
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
@@ -367,8 +369,10 @@ export async function startBuild(
 			onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
 		});
 	} catch (e) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `Failed to pull "${repoSSH}": ${e}` });
+		// print the logs to client (Dashboard & CLI)
+		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `Failed to pull "${repoSSH}": ${e}` });
 		if (options?.onError) options?.onError(`Failed to pull "${repoSSH}": ${e}`);
+		// update build status
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
@@ -388,8 +392,10 @@ export async function startBuild(
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
+			action: "end",
 			message: `[START BUILD] Missing "Dockerfile" to build the application, please create your "Dockerfile" in the root directory of the source code.`,
 		});
+		// update build status
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
@@ -406,8 +412,10 @@ export async function startBuild(
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
+			action: "end",
 			message: `Server network error, unable to perform data updating.`,
 		});
+		// update build status
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
