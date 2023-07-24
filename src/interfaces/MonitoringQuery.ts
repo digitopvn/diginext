@@ -44,5 +44,40 @@ export interface MonitoringQueryOptions {
 	isDebugging?: boolean;
 }
 
-export type MonitoringQueryParams = MonitoringQueryFilter & MonitoringQueryOptions;
-export type MonitoringCreateParams = Omit<MonitoringQueryParams, "namespace" | "output" | "search" | "order">;
+export interface MonitoringQueryParams {
+	/**
+	 * Cluster's ID or SLUG
+	 */
+	cluster?: string;
+	/**
+	 * Resource's name
+	 */
+	name?: string;
+	/**
+	 * Namespace's name
+	 */
+	namespace?: string;
+	/**
+	 * Filter by labels
+	 */
+	labels?: any;
+	/**
+	 * Sort the results based on metadata.
+	 * @example { order: { "metadata.creationTimestamp": -1 } }
+	 */
+	order?: any;
+	/**
+	 * Alias of `order`
+	 */
+	sort?: any;
+	/**
+	 * Output data type (JSON or YAML)
+	 * @default "json"
+	 */
+	output?: "json" | "yaml";
+	/**
+	 * Debug mode enabling
+	 * @default false
+	 */
+	isDebugging?: boolean;
+}
