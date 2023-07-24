@@ -103,9 +103,8 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 		return false;
 	}
 	await mkdir(tmpDir, { recursive: true });
+
 	if (options.isDebugging) console.log("pullFrameworkVersion() > frameworkVersion :>> ", frameworkVersion);
-	if (options.isDebugging) console.log("pullFrameworkVersion() > tmpDir :>> ");
-	console.log("Framework files :>> ", readdirSync(tmpDir));
 
 	/**
 	 * [NOT WORKING]
@@ -119,7 +118,6 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 
 	// pull or clone git repo
 	const pullStatus = await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
-		// useAccessToken: gitProvider ? { type: upperFirst(gitProvider.method) as "Bearer" | "Basic", value: gitProvider.access_token } : undefined,
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
 				console.log(msg);
@@ -131,8 +129,10 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 		removeGitOnFinish: true,
 		removeCIOnFinish: !options.ci,
 	});
-	// if (options.isDebugging)
-	console.log("✅ pullFrameworkVersion() > pullStatus :>> ", pullStatus);
+
+	if (options.isDebugging) console.log("pullFrameworkVersion() > tmpDir :>> ", tmpDir);
+	if (options.isDebugging) console.log("pullFrameworkVersion() > framework files :>> ", readdirSync(tmpDir));
+	if (options.isDebugging) console.log("✅ pullFrameworkVersion() > pullStatus :>> ", pullStatus);
 
 	spin.stop();
 

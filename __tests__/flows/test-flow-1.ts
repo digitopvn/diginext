@@ -351,6 +351,7 @@ export function testFlow1() {
 		"CLI: Cluster management (BARE-METAL)",
 		async () => {
 			console.log("[TESTING] CLI: Cluster management (BARE-METAL)");
+			
 			// get bare-metal cluster (default)
 			bareMetalCluster = await clusterSvc.findOne({ providerShortName: "custom" });
 			expect(bareMetalCluster.contextName).toBeDefined();

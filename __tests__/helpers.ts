@@ -255,7 +255,7 @@ export const dxCmd = async (command: string, options?: DxOptions) => {
 			_stdio.on("data", (data) => {
 				let logMsg = data.toString();
 				stdout += logMsg;
-				console.log("[DX_CMD]", logMsg);
+				console.log(logMsg);
 				if (options?.onProgress && logMsg) options?.onProgress(logMsg);
 			});
 		}

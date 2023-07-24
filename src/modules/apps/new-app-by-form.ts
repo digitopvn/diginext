@@ -29,8 +29,8 @@ export async function createAppByForm(
 
 	const { skipFramework } = options;
 
-	if (options.isDebugging) console.log("createAppByForm() > options.framework :>> ", options.framework);
-	if (options.isDebugging) console.log("createAppByForm() > skipFramework :>> ", skipFramework);
+	// if (options.isDebugging) console.log("createAppByForm() > options.framework :>> ", options.framework);
+	// if (options.isDebugging) console.log("createAppByForm() > skipFramework :>> ", skipFramework);
 
 	if (!options.name) {
 		const { name } = await inquirer.prompt({

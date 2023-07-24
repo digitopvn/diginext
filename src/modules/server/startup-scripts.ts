@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import cronjob from "node-cron";
 
-import { Config, IsTest } from "@/app.config";
+import { Config, isDevMode, IsTest } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
@@ -15,7 +15,7 @@ import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
 import { generateSSH, sshKeyContainPassphase, sshKeysExisted, writeCustomSSHKeys } from "@/modules/git";
 import { connectRegistry } from "@/modules/registry/connect-registry";
-import { wait } from "@/plugins";
+import { execCmd, wait } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
 import { seedDefaultProjects } from "@/seeds/seed-projects";
 import { seedSystemInitialData } from "@/seeds/seed-system";
@@ -79,18 +79,22 @@ export async function startupScripts() {
 
 	// set global identity
 	// [isDevMode == process.env.DEV_MODE == true] to make sure it won't override your current GIT config when developing Diginext
-	// if (!isDevMode) {
-	// write initial private SSH keys if any
-	if (Config.grab("ID_RSA")) {
-		await writeCustomSSHKeys({ gitDomain: "github.com", privateKey: Config.grab("ID_RSA") });
-		await writeCustomSSHKeys({ gitDomain: "bitbucket.org", privateKey: Config.grab("ID_RSA") });
-	}
+	if (!isDevMode) {
+		// write initial private SSH keys if any
+		if (Config.grab("ID_RSA")) {
+			await writeCustomSSHKeys({ gitDomain: "github.com", privateKey: Config.grab("ID_RSA") });
+			await writeCustomSSHKeys({ gitDomain: "bitbucket.org", privateKey: Config.grab("ID_RSA") });
+		}
 
-	// set default git config
-	// execCmd(`git init`);
-	// execCmd(`git config --global user.email server@diginext.site`);
-	// execCmd(`git config --global --add user.name Diginext`);
-	// }
+		/**
+		 * REQUIRED: DO NOT TURN OFF THIS
+		 * ---
+		 * Set default git config
+		 */
+		execCmd(`git init`);
+		execCmd(`git config --global user.email server@diginext.site`);
+		execCmd(`git config --global --add user.name Diginext`);
+	}
 
 	// seed system initial data: Cloud Providers
 	await seedSystemInitialData();
