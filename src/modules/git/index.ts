@@ -240,10 +240,8 @@ export const writeCustomSSHKeys = async (params: { gitDomain: GitProviderDomain;
 	// write "publicKey" to file event if "publicKey" is not provided
 	if (!publicKey) {
 		const subprocess = execa("ssh-keygen", ["-y", "-f", privateIdRsaFile]);
-		// subprocess.stdout.pipe(process.stdout);
 		subprocess.stdout.pipe(createWriteStream(publicIdRsaFile));
 		await subprocess;
-		// console.log("child output:", stdout);
 	} else {
 		writeFileSync(publicIdRsaFile, publicKey, "utf8");
 	}

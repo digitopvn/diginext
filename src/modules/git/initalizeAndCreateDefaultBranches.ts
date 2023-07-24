@@ -9,8 +9,8 @@ import { wait } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
 export const initalizeAndCreateDefaultBranches = async (options: InputOptions) => {
-	console.log("initalizeAndCreateDefaultBranches > directory :>> ", options.targetDirectory);
-	console.log("initalizeAndCreateDefaultBranches > repoSSH :>> ", options.repoSSH);
+	if (options.isDebugging) console.log("initalizeAndCreateDefaultBranches > directory :>> ", options.targetDirectory);
+	if (options.isDebugging) console.log("initalizeAndCreateDefaultBranches > repoSSH :>> ", options.repoSSH);
 
 	try {
 		// Remove current git (if any) & initialize new git...
@@ -65,7 +65,7 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		await git.checkout(["-b", devBranch]);
 		await git.push(["--set-upstream", "origin", devBranch]);
 
-		console.log(`✅ Finished initializing git!`);
+		if (options.isDebugging) console.log(`✅ Finished initializing git!`);
 
 		return options;
 	} catch (error) {

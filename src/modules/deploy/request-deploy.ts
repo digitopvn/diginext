@@ -165,9 +165,6 @@ export async function requestDeploy(options: InputOptions) {
 		socket.on("disconnect", () => {
 			// log("[CLI Server] Disconnected");
 			socket.emit("leave", { room: SOCKET_ROOM });
-			process.exitCode = 1;
-
-			throw new Error(`Disconnected.`);
 		});
 
 		socket.on("connect", () => {
@@ -187,6 +184,7 @@ export async function requestDeploy(options: InputOptions) {
 				}
 				if (action == "end") {
 					socket.disconnect();
+					process.exitCode = 1;
 					resolve(true);
 				}
 			});

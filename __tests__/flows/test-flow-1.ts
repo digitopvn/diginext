@@ -30,6 +30,7 @@ import { addInitialBareMetalCluster } from "@/seeds/seed-clusters";
 import ClusterManager from "@/modules/k8s";
 import { DB } from "@/modules/api/DB";
 import path from "path";
+import { wait } from "@/plugins";
 
 export function testFlow1() {
 	let wsId: string;
@@ -351,7 +352,7 @@ export function testFlow1() {
 		"CLI: Cluster management (BARE-METAL)",
 		async () => {
 			console.log("[TESTING] CLI: Cluster management (BARE-METAL)");
-			
+
 			// get bare-metal cluster (default)
 			bareMetalCluster = await clusterSvc.findOne({ providerShortName: "custom" });
 			expect(bareMetalCluster.contextName).toBeDefined();
@@ -405,9 +406,7 @@ export function testFlow1() {
 			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
 
 			// create new app...
-			const res = await dxCmd(
-				`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force --debug`
-			);
+			const res = await dxCmd(`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force`);
 
 			expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
@@ -530,14 +529,25 @@ export function testFlow1() {
 	it(
 		"CLEAN UP: delete test data (eg. app, deployment, kube_config,...)",
 		async () => {
-			console.log("[TESTING] CLEAN UP: delete test data (eg. app, deployment, kube_config,...)");
+			console.log("[TESTING] CLEAN UP: delete test data (eg. app, git repo, deployment, kube_config,...)");
 
 			// delete & take down all test app
-			await appSvc.takeDown(appOnGithub);
+			const takedownRes = await appSvc.takeDown(appOnGithub);
+			console.log("[CLEAN UP] takedownRes :>> ", takedownRes);
+
+			// delete git repo
+			const deleteGithubAppRes = await appSvc.deleteGitRepo({ slug: appOnGithub.slug });
+			const deleteBitbucketAppRes = await appSvc.deleteGitRepo({ slug: appOnBitbucket.slug });
+			console.log("[CLEAN UP] deleteGithubAppRes :>> ", deleteGithubAppRes);
+			console.log("[CLEAN UP] deleteBitbucketAppRes :>> ", deleteBitbucketAppRes);
 
 			// delete all "custom" test clusters & access credentials
 			const clusters = await clusterSvc.find({ providerShortName: "custom" });
-			await Promise.all(clusters.map((cluster) => clusterSvc.delete({ _id: cluster._id })));
+			const clusterRes = await Promise.all(clusters.map((cluster) => clusterSvc.delete({ _id: cluster._id })));
+			console.log("[CLEAN UP] clusterRes :>> ", clusterRes);
+
+			// wait another 10 secs before closing tests, just to be sure :)
+			await wait(10000);
 		},
 		// timeout: 5 mins
 		5 * 60000
