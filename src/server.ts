@@ -85,10 +85,10 @@ function initialize(db?: typeof mongoose) {
 	 */
 	socketIO = new SocketServer(server, { transports: ["websocket"] });
 	socketIO.on("connection", (socket) => {
-		console.log("a user connected");
+		// console.log("a user connected");
 
 		socket.on("join", (data) => {
-			console.log("join room:", data);
+			// console.log("join room:", data);
 			socket.join(data.room);
 		});
 	});

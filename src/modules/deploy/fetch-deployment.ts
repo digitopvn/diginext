@@ -14,7 +14,7 @@ export const fetchDeploymentFromContent = (content: string) => {
 	// console.log("deploymentData :>> ", deploymentData);
 
 	let IMAGE_NAME = "",
-		BUILD_NUMBER = "",
+		BUILD_TAG = "",
 		APP_NAME = "",
 		REPLICAS = 1,
 		ENV_VARS: KubeEnvironmentVariable[] = [],
@@ -40,7 +40,7 @@ export const fetchDeploymentFromContent = (content: string) => {
 			const deploy = doc as KubeDeployment;
 			PORT = deploy.spec.template.spec.containers[0].ports[0].containerPort;
 			IMAGE_NAME = doc.spec.template.spec.containers[0].image;
-			BUILD_NUMBER = IMAGE_NAME.split(":")[1];
+			BUILD_TAG = IMAGE_NAME.split(":")[1];
 			APP_NAME = doc.metadata.name;
 			NAMESPACE = doc.metadata.namespace;
 			REPLICAS = doc.spec.replicas;
@@ -49,7 +49,7 @@ export const fetchDeploymentFromContent = (content: string) => {
 	});
 
 	// get build number:
-	BUILD_NUMBER = IMAGE_NAME.split(":")[1];
+	BUILD_TAG = IMAGE_NAME.split(":")[1];
 	// console.log("BUILD_NUMBER :>> ", BUILD_NUMBER);
 
 	return {
@@ -65,7 +65,7 @@ export const fetchDeploymentFromContent = (content: string) => {
 		APP_NAME,
 		REPLICAS,
 		PORT,
-		BUILD_NUMBER,
+		BUILD_TAG,
 	};
 };
 

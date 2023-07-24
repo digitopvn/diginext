@@ -78,7 +78,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 	if (typeof registry !== "undefined") deployEnvironment.registry = typeof registry !== "boolean" ? registry : (await askForRegistry()).slug;
 
 	// Domains
-	if (typeof domain !== "undefined") deployEnvironment.domains = [domain];
+	if (typeof domain !== "undefined" && typeof domain !== "boolean") deployEnvironment.domains = [domain];
 
 	// Kubernetes Info
 	if (typeof namespace !== "undefined") deployEnvironment.namespace = namespace;
@@ -93,8 +93,8 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		if (ssl) {
 			if (typeof deployEnvironment.ssl === "undefined" || deployEnvironment.ssl === "none") {
 				if (isEmpty(deployEnvironment.domains)) {
-					// generate one!
-					const domains = await askForDomain(env, project.slug, app.slug, deployEnvironment);
+					// generate one or ask to generate one!
+					const domains = await askForDomain(env, project.slug, app.slug, deployEnvironment, { shouldGenerate: domain == true });
 					if (isEmpty(domains)) {
 						logError(`No domains to issue SSL certificate.`);
 						return;
@@ -102,15 +102,20 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 					deployEnvironment.domains = domains;
 				}
 				const primaryDomain = deployEnvironment.domains[0];
-				deployEnvironment.ssl = await askForCertIssuer();
+				deployEnvironment.ssl = domain == true ? "letsencrypt" : await askForCertIssuer();
 				deployEnvironment.tlsSecret = `tls-secret-${deployEnvironment.ssl}-${makeSlug(primaryDomain)}`;
 			} else {
 				// if current ssl is "letsencrypt" or "custom"...
 				if (isEmpty(deployEnvironment.domains)) {
-					logError(
-						`There is domains in deploy environment config (${env}) but the SSL was enabled, deploy again without "--ssl" flag or delete "ssl" in deploy environment config on Diginext workspace.`
-					);
-					return;
+					if (domain == true) {
+						deployEnvironment.domains = await askForDomain(env, project.slug, app.slug, deployEnvironment, { shouldGenerate: true });
+						deployEnvironment.ssl = "letsencrypt";
+					} else {
+						logError(
+							`There is domains in deploy environment config (${env}) but the SSL was enabled, deploy again without "--ssl" flag or delete "ssl" in deploy environment config on Diginext workspace.`
+						);
+						return;
+					}
 				}
 				const primaryDomain = deployEnvironment.domains[0];
 				deployEnvironment.tlsSecret = `tls-secret-${deployEnvironment.ssl}-${makeSlug(primaryDomain)}`;

@@ -127,7 +127,7 @@ export default class DeployController {
 		}
 		// return respondSuccess({ msg: `Building...` });
 
-		log(`deployFromSource > options.buildNumber :>>`, inputOptions.buildNumber);
+		log(`deployFromSource > BUILD_TAG :>>`, inputOptions.buildTag);
 		startBuildV1(inputOptions);
 
 		// start build in background:
@@ -154,7 +154,7 @@ export default class DeployController {
 		// start build in background:
 		try {
 			const data = await this.service.buildAndDeploy(buildParams, deployParams, this.ownership);
-			if (this.options.isDebugging) console.log(`[DEPLOY CONTROLLER] buildAndDeploy > data :>> `, data);
+			if (this.options?.isDebugging) console.log(`[DEPLOY CONTROLLER] buildAndDeploy > data :>> `, data);
 			return respondSuccess({ data, msg: "Building..." });
 		} catch (e) {
 			console.error(e);
@@ -216,7 +216,7 @@ export default class DeployController {
 
 		const buildParams: StartBuildParams = {
 			appSlug: body.appSlug,
-			buildNumber: makeDaySlug({ divider: "" }),
+			buildTag: makeDaySlug({ divider: "" }),
 			gitBranch: body.gitBranch,
 			registrySlug: deployEnvironment.registry || body.deployParams.registry,
 		};
@@ -322,7 +322,7 @@ export default class DeployController {
 							cluster: cluster.slug,
 							port: toNumber(body.port),
 							imageURL: `${defaultRegistry.imageBaseURL}/${app.projectSlug}/${app.slug}`,
-							buildNumber: makeDaySlug({ divider: "" }),
+							buildTag: makeDaySlug({ divider: "" }),
 						},
 					},
 					this.ownership
@@ -342,7 +342,7 @@ export default class DeployController {
 		// start build & deploy from source (repo):
 		const buildParams: StartBuildParams = {
 			appSlug: app.slug,
-			buildNumber: makeDaySlug({ divider: "" }),
+			buildTag: makeDaySlug({ divider: "" }),
 			gitBranch: body.gitBranch,
 			registrySlug: deployEnvironment.registry,
 		};

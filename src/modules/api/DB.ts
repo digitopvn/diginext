@@ -173,99 +173,94 @@ export interface DBQueryOptions extends IQueryOptions {
 }
 
 export class DB {
-	static service = {};
-
 	static async getService(collection: DBCollection, ownership?: Ownership) {
-		let svc = DB.service[collection];
-		if (!svc) {
-			switch (collection) {
-				case "app":
-					const { AppService } = await import("@/services");
-					svc = new AppService();
-					break;
-				case "build":
-					const { BuildService } = await import("@/services");
-					svc = new BuildService();
-					break;
-				case "database":
-					const { CloudDatabaseService } = await import("@/services");
-					svc = new CloudDatabaseService();
-					break;
-				case "db_backup":
-					const { CloudDatabaseBackupService } = await import("@/services");
-					svc = new CloudDatabaseBackupService();
-					break;
-				case "provider":
-					const { CloudProviderService } = await import("@/services");
-					svc = new CloudProviderService();
-					break;
-				case "cronjob":
-					const { CronjobService } = await import("@/services");
-					svc = new CronjobService();
-					break;
-				case "cluster":
-					const { ClusterService } = await import("@/services");
-					svc = new ClusterService();
-					break;
-				case "registry":
-					const { ContainerRegistryService } = await import("@/services");
-					svc = new ContainerRegistryService();
-					break;
-				case "framework":
-					const { FrameworkService } = await import("@/services");
-					svc = new FrameworkService();
-					break;
-				case "git":
-				case "git_repo":
-					const { GitProviderService } = await import("@/services");
-					svc = new GitProviderService();
-					break;
-				case "project":
-					const { ProjectService } = await import("@/services");
-					svc = new ProjectService();
-					break;
-				case "release":
-					const { ReleaseService } = await import("@/services");
-					svc = new ReleaseService();
-					break;
-				case "role":
-					const { RoleService } = await import("@/services");
-					svc = new RoleService();
-					break;
-				case "route":
-					const { RouteService } = await import("@/services");
-					svc = new RouteService();
-					break;
-				case "team":
-					const { TeamService } = await import("@/services");
-					svc = new TeamService();
-					break;
-				case "user":
-					const { UserService } = await import("@/services");
-					svc = new UserService();
-					break;
-				case "api_key_user":
-					const { ApiKeyUserService } = await import("@/services");
-					svc = new ApiKeyUserService();
-					break;
-				case "service_account":
-					const { ServiceAccountService } = await import("@/services");
-					svc = new ServiceAccountService();
-					break;
-				case "workspace":
-					const { WorkspaceService } = await import("@/services");
-					svc = new WorkspaceService();
-					break;
-				case "webhook":
-					const { WebhookService } = await import("@/services");
-					svc = new WebhookService();
-					break;
-				case "notification":
-					const { NotificationService } = await import("@/services");
-					svc = new NotificationService();
-					break;
-			}
-			DB.service[collection] = svc;
+		let svc;
+		switch (collection) {
+			case "app":
+				const { AppService } = await import("@/services");
+				svc = new AppService();
+				break;
+			case "build":
+				const { BuildService } = await import("@/services");
+				svc = new BuildService();
+				break;
+			case "database":
+				const { CloudDatabaseService } = await import("@/services");
+				svc = new CloudDatabaseService();
+				break;
+			case "db_backup":
+				const { CloudDatabaseBackupService } = await import("@/services");
+				svc = new CloudDatabaseBackupService();
+				break;
+			case "provider":
+				const { CloudProviderService } = await import("@/services");
+				svc = new CloudProviderService();
+				break;
+			case "cronjob":
+				const { CronjobService } = await import("@/services");
+				svc = new CronjobService();
+				break;
+			case "cluster":
+				const { ClusterService } = await import("@/services");
+				svc = new ClusterService();
+				break;
+			case "registry":
+				const { ContainerRegistryService } = await import("@/services");
+				svc = new ContainerRegistryService();
+				break;
+			case "framework":
+				const { FrameworkService } = await import("@/services");
+				svc = new FrameworkService();
+				break;
+			case "git":
+			case "git_repo":
+				const { GitProviderService } = await import("@/services");
+				svc = new GitProviderService();
+				break;
+			case "project":
+				const { ProjectService } = await import("@/services");
+				svc = new ProjectService();
+				break;
+			case "release":
+				const { ReleaseService } = await import("@/services");
+				svc = new ReleaseService();
+				break;
+			case "role":
+				const { RoleService } = await import("@/services");
+				svc = new RoleService();
+				break;
+			case "route":
+				const { RouteService } = await import("@/services");
+				svc = new RouteService();
+				break;
+			case "team":
+				const { TeamService } = await import("@/services");
+				svc = new TeamService();
+				break;
+			case "user":
+				const { UserService } = await import("@/services");
+				svc = new UserService();
+				break;
+			case "api_key_user":
+				const { ApiKeyUserService } = await import("@/services");
+				svc = new ApiKeyUserService();
+				break;
+			case "service_account":
+				const { ServiceAccountService } = await import("@/services");
+				svc = new ServiceAccountService();
+				break;
+			case "workspace":
+				const { WorkspaceService } = await import("@/services");
+				svc = new WorkspaceService();
+				break;
+			case "webhook":
+				const { WebhookService } = await import("@/services");
+				svc = new WebhookService();
+				break;
+			case "notification":
+				const { NotificationService } = await import("@/services");
+				svc = new NotificationService();
+				break;
 		}
 		// assign ownership
 		if (svc) svc.ownership = ownership;
@@ -290,6 +285,7 @@ export class DB {
 			const { subpath = "" } = options;
 			delete options.subpath;
 			delete options.filter;
+			delete options.ownership;
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
@@ -329,6 +325,7 @@ export class DB {
 			const { subpath = "" } = options;
 			delete options.subpath;
 			delete options.filter;
+			delete options.ownership;
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
@@ -370,6 +367,8 @@ export class DB {
 				if (!options?.ignorable) logError(`[DB] FIND ONE > Service "${collection}" :>>`, e);
 			}
 		} else {
+			delete options.ownership;
+
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
 			// special case
@@ -406,6 +405,8 @@ export class DB {
 				if (!options?.ignorable) logError(`[DB] CREATE > Service "${collection}" :>>`, e);
 			}
 		} else {
+			delete options.ownership;
+
 			let newData = data;
 
 			const filterStr = queryFilterToUrlFilter(filter);
@@ -454,18 +455,14 @@ export class DB {
 		} else {
 			const { subpath = "" } = options;
 			delete options.subpath;
+			delete options.ownership;
 
 			const filterStr = queryFilterToUrlFilter(filter);
 			const optionStr = (filterStr ? "&" : "") + queryOptionsToUrlOptions(options);
 			// special case
 			const path = collection === "git_repo" ? "git" : collection;
 			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
-			// console.log("[DB] UPDATE > url :>> ", url);
-
-			// const updateData = flattenObjectPaths(data);
 			const updateData = data;
-			// console.log("[DB] UPDATE > updateData :>> ", updateData);
-			// console.dir(updateData, { depth: 10 });
 
 			const {
 				status,
@@ -511,6 +508,9 @@ export class DB {
 			}
 		} else {
 			const { subpath = "" } = options;
+			delete options.subpath;
+			delete options.ownership;
+
 			const filterStr = queryFilterToUrlFilter(filter);
 			// special case
 			const path = collection === "git_repo" ? "git" : collection;

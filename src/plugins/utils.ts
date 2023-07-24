@@ -745,7 +745,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 			git = simpleGit({ progress: onProgress });
 
 			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
-			if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Success to CLONE !");
+			if (options?.isDebugging) console.log("✅ pullOrCloneGitRepo() > Success to CLONE !");
 
 			// remove git on finish
 			if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));

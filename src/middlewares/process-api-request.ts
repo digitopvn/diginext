@@ -14,17 +14,13 @@ export const processApiRequest =
 
 			// mask sensitive information before responding:
 			// only for data which the current user doesn't own
-			if (!Config.SHARE_RESOURCE_CREDENTIAL) {
-				result.data = maskSensitiveInfo(result.data, req.user, req.role);
-			}
+			if (!Config.SHARE_RESOURCE_CREDENTIAL) result.data = maskSensitiveInfo(result.data, req.user, req.role);
 
 			// save activity log here...
 			saveActivityLog(req, res, next);
 
 			// respond data...
 			res.status(200).json(result);
-
-			// next();
 		} catch (e) {
 			// forward the error to Express.js Error Handling Route
 			next(e);

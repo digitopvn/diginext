@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import { io } from "socket.io-client";
 
@@ -13,6 +12,7 @@ import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppGitInfo } from "../apps/update-git-config";
 import { stageCommitAndPushAll } from "../git/git-utils";
 import { askForRegistry } from "../registry/ask-for-registry";
+import { generateBuildTag } from "./generate-build-tag";
 import type { StartBuildParams } from "./index";
 
 /**
@@ -86,10 +86,13 @@ export async function requestBuild(options: InputOptions) {
 	 * Generate build number & build image as docker image tag
 	 */
 	const imageURL = `${registry.imageBaseURL}/${app.projectSlug}-${app.slug}`;
-	options.buildNumber = makeDaySlug({ divider: "" });
-	options.buildImage = `${imageURL}:${options.buildNumber}`;
+	const tagInfo = await generateBuildTag(options.targetDirectory, { branch: options.gitBranch });
+	console.log("tagInfo :>> ", tagInfo);
+	options.buildTag = tagInfo.tag;
+	options.buildImage = `${imageURL}:${options.buildTag}`;
+	console.log("options.buildTag :>> ", options.buildTag);
 
-	const SOCKET_ROOM = `${app.slug}-${options.buildNumber}`;
+	const SOCKET_ROOM = `${app.slug}-${options.buildTag}`;
 
 	/**
 	 * Stage, commit & push configuration files (dx.json) to GIT repository:
@@ -113,7 +116,8 @@ export async function requestBuild(options: InputOptions) {
 	// const deployOptions = JSON.stringify(options);
 	const requestBuildData: StartBuildParams = {
 		gitBranch: gitBranch,
-		buildNumber: options.buildNumber,
+		buildTag: options.buildTag,
+		buildNumber: options.buildTag, // <-- Fallback support CLI <3.21.0 (Will be removed soon)
 		registrySlug: registry.slug,
 		appSlug: app.slug,
 	};
@@ -162,13 +166,13 @@ export async function requestBuild(options: InputOptions) {
 		socket.on("connect_error", (e) => logError(e));
 
 		socket.on("disconnect", () => {
-			log("[CLI Server] Disconnected");
+			// log("[CLI Server] Disconnected");
 			socket.emit("leave", { room: SOCKET_ROOM });
 			process.exit(1);
 		});
 
 		socket.on("connect", () => {
-			log("[CLI Server] Connected");
+			// log("[CLI Server] Connected");
 			socket.emit("join", { room: SOCKET_ROOM });
 		});
 

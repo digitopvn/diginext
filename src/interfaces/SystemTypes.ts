@@ -69,6 +69,8 @@ export const gitProviderDomain = {
 	github: "github.com",
 	gitlab: "gitlab.com",
 };
+export const gitProviderDomainList = ["bitbucket.org", "github.com"] as const;
+export type GitProviderDomain = typeof gitProviderDomainList[number];
 
 // build status
 export const buildStatusList = ["pending", "start", "building", "failed", "success", "cancelled"] as const;

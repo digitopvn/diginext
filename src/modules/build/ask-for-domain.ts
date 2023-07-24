@@ -9,7 +9,13 @@ import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
 import { generateDomains } from "../deploy/generate-domain";
 
-export const askForDomain = async (env: string, projectSlug: string, appSlug: string, deployEnvironment: ClientDeployEnvironmentConfig) => {
+export const askForDomain = async (
+	env: string,
+	projectSlug: string,
+	appSlug: string,
+	deployEnvironment: ClientDeployEnvironmentConfig,
+	options: { shouldGenerate?: boolean } = { shouldGenerate: true }
+) => {
 	const { DB } = await import("../api/DB");
 
 	let subdomainName = `${projectSlug}-${appSlug}.${env}`;
@@ -36,14 +42,21 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 	} else {
 		logWarn(`No domains were found in this deploy environment (${env})`);
 
-		const { useGeneratedDomain } = await inquirer.prompt({
-			name: "useGeneratedDomain",
-			type: "confirm",
-			message: `Do you want to use our generated domain: ${chalk.green(
-				generatedDomain
-			)}? (You can update it anytime in your Diginext workspace)`,
-			default: true,
-		});
+		let useGeneratedDomain: boolean;
+		if (options?.shouldGenerate) {
+			useGeneratedDomain = true;
+		} else {
+			// ask for permissions to generate new app domain
+			const askGenerate = await inquirer.prompt<{ useGeneratedDomain: boolean }>({
+				name: "useGeneratedDomain",
+				type: "confirm",
+				message: `Do you want to use our generated domain: ${chalk.green(
+					generatedDomain
+				)}? (You can update it anytime in your Diginext workspace)`,
+				default: true,
+			});
+			useGeneratedDomain = askGenerate.useGeneratedDomain;
+		}
 
 		if (useGeneratedDomain) {
 			const { status, ip, domain, messages } = await generateDomains({
@@ -67,6 +80,7 @@ export const askForDomain = async (env: string, projectSlug: string, appSlug: st
 			logSuccess(`Great! Domain "${generatedDomain}" has been created and pointed to this IP address: ${ip}`);
 		} else {
 			// logError(`You need a domain to deploy this app. Please add one in: Diginext workspace > project > app > deploy environment"`);
+			domains = [];
 		}
 	}
 

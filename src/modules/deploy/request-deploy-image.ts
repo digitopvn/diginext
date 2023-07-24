@@ -46,7 +46,7 @@ export async function requestDeployImage(imageURL: string, options: InputOptions
 	 */
 	options.buildImage = imageURL;
 
-	const SOCKET_ROOM = `${options.slug}-${options.buildNumber}`;
+	const SOCKET_ROOM = `${options.slug}-${options.buildTag}`;
 	options.SOCKET_ROOM = SOCKET_ROOM;
 
 	// check database to see should sync ENV variables or not...
@@ -102,13 +102,13 @@ export async function requestDeployImage(imageURL: string, options: InputOptions
 		socket.on("connect_error", (e) => logError(e));
 
 		socket.on("disconnect", () => {
-			log("[CLI Server] Disconnected");
+			// log("[CLI Server] Disconnected");
 			socket.emit("leave", { room: SOCKET_ROOM });
 			process.exit(1);
 		});
 
 		socket.on("connect", () => {
-			log("[CLI Server] Connected");
+			// log("[CLI Server] Connected");
 			socket.emit("join", { room: SOCKET_ROOM });
 		});
 

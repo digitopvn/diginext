@@ -1,6 +1,6 @@
 import detectPrivateKey from "diginext-utils/dist/file/detectPrivateKey";
 import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
-import fs from "fs";
+import fs, { readdirSync } from "fs";
 import { mkdir } from "fs/promises";
 import ora from "ora";
 import path from "path";
@@ -28,18 +28,16 @@ export const cleanUpFramework = async () => {
  * @param destDirectory - Destination application directory
  */
 export const copyFrameworkResources = async (destDirectory: string) => {
-	let options = {
-		overwrite: true,
-		expand: true,
-		dot: true,
-		junk: true,
-		// filter: ["**/*", "!.git"],
-	};
-
 	let success = false;
 	try {
 		const tmpFrameworkDir = path.resolve(CLI_CONFIG_DIR, ".fw");
-		await copy(tmpFrameworkDir, destDirectory, options);
+		await copy(tmpFrameworkDir, destDirectory, {
+			overwrite: true,
+			expand: true,
+			dot: true,
+			junk: true,
+			// filter: ["**/*", "!.git"],
+		});
 		success = true;
 	} catch (e) {
 		logError(e);
@@ -105,10 +103,14 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 		return false;
 	}
 	await mkdir(tmpDir, { recursive: true });
-	if (options.isDebugging) console.log("pullFrameworkVersion() > frameworkVersion :>> ", frameworkVersion);
-	if (options.isDebugging) console.log("pullFrameworkVersion() > tmpDir :>> ", tmpDir);
 
-	// [NOT WORKING] parse framework repo SSH url -> use git provider's credentials accordingly:
+	if (options.isDebugging) console.log("pullFrameworkVersion() > frameworkVersion :>> ", frameworkVersion);
+
+	/**
+	 * [NOT WORKING]
+	 * ---
+	 * Parse framework repo SSH url -> use git provider's credentials accordingly:
+	 */
 	// const { providerType } = parseGitRepoDataFromRepoSSH(repoSSH);
 	// const { DB } = await import("@/modules/api/DB");
 	// const gitProvider = await DB.findOne("git", { type: providerType });
@@ -116,7 +118,6 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 
 	// pull or clone git repo
 	const pullStatus = await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
-		// useAccessToken: gitProvider ? { type: upperFirst(gitProvider.method) as "Bearer" | "Basic", value: gitProvider.access_token } : undefined,
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
 				console.log(msg);
@@ -128,13 +129,21 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 		removeGitOnFinish: true,
 		removeCIOnFinish: !options.ci,
 	});
-	if (options.isDebugging) console.log("pullFrameworkVersion() > pullStatus :>> ", pullStatus);
+
+	if (options.isDebugging) console.log("pullFrameworkVersion() > tmpDir :>> ", tmpDir);
+	if (options.isDebugging) console.log("pullFrameworkVersion() > framework files :>> ", readdirSync(tmpDir));
+	if (options.isDebugging) console.log("✅ pullFrameworkVersion() > pullStatus :>> ", pullStatus);
 
 	spin.stop();
 
 	return pullStatus;
 };
 
+/**
+ * Change the name of "package.json" (for JS/TS apps only)
+ * @param options
+ * @returns
+ */
 export const changePackageName = async (options: InputOptions) => {
 	const { targetDirectory, repoSlug } = options;
 
@@ -155,6 +164,8 @@ export const changePackageName = async (options: InputOptions) => {
 };
 
 export async function pullingFramework(options: InputOptions) {
+	if (options.isDebugging) console.log(`Pulling framework >`, options.framework);
+
 	if (options.framework.name != "none") {
 		// TODO: Select specific branch as a version?
 

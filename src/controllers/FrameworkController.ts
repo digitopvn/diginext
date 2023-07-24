@@ -31,10 +31,7 @@ export default class FrameworkController extends BaseController {
 	async create(@Body() body: entities.FrameworkDto) {
 		try {
 			this.service.req = this.req;
-			const data = await this.service.create(body, {
-				...this.options,
-				// isDebugging: true,
-			});
+			const data = await this.service.create(body, { ...this.options });
 			return interfaces.respondSuccess({ data });
 		} catch (e) {
 			return interfaces.respondFailure(e.toString());

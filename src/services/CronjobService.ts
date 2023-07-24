@@ -89,7 +89,7 @@ class CronjobService extends BaseService<ICronjob> {
 		if (data.endDate && dayjs(data.endDate).diff(dayjs()) < 0) throw new Error(`Value of "endDate" must be in the future.`);
 
 		// calculate next run schedule:
-		data.nextRunAt = calculateNextRunAt(data, { isDebugging: true });
+		data.nextRunAt = calculateNextRunAt(data, { isDebugging: options?.isDebugging });
 
 		// return
 		return super.create(data, options);

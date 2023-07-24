@@ -1,4 +1,3 @@
-import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import yaml from "js-yaml";
@@ -34,7 +33,9 @@ export type GenerateDeploymentParams = {
 	/**
 	 * Requires if generate deployment files from source code.
 	 */
-	buildNumber?: string;
+	buildTag?: string;
+	// debug
+	isDebugging?: boolean;
 };
 
 export type GenerateDeploymentResult = {
@@ -48,33 +49,27 @@ export type GenerateDeploymentResult = {
 	prereleaseYamlObject: any[];
 	prereleaseDeploymentContent: string;
 	// accessibility
-	BUILD_NUMBER: string;
+	buildTag: string;
 	IMAGE_NAME: string;
 	endpoint: string;
 	prereleaseUrl: string;
 };
 
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
-	const {
-		appSlug,
-		env = "dev",
-		buildNumber = makeDaySlug({ divider: "" }),
-		username,
-		workspace,
-		appConfig,
-		//
-	} = params;
+	const { appSlug, buildTag, env = "dev", username, workspace, appConfig } = params;
+
+	// validate inputs
+	if (!appSlug) throw new Error(`Unable to generate YAML, app's slug is required.`);
+	if (!buildTag) throw new Error(`Unable to generate YAML, build number is required.`);
 
 	const { DB } = await import("@/modules/api/DB");
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
-	const { slug, project } = currentAppConfig;
 
-	console.log("generateDeployment() > buildNumber :>> ", buildNumber);
 	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
 
 	// DEFINE DEPLOYMENT PARTS:
-	const BUILD_NUMBER = makeSlug(buildNumber);
+	if (params.isDebugging) console.log("generateDeployment() > buildTag :>> ", buildTag);
 
 	const deployEnvironmentConfig = currentAppConfig.deployEnvironment[env];
 	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);
@@ -88,14 +83,14 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	let ingName = deploymentName;
 	let svcName = deploymentName;
 	let mainAppName = deploymentName;
-	let appName = deploymentName + "-" + BUILD_NUMBER;
+	let appName = deploymentName + "-" + (app.buildNumber ?? 1);
 	let basePath = deployEnvironmentConfig.basePath ?? "";
 
 	// Prepare for building docker image
 	const { imageURL } = deployEnvironmentConfig;
 
 	// TODO: Replace BUILD_NUMBER so it can work with Skaffold
-	const IMAGE_NAME = `${imageURL}:${buildNumber}`;
+	const IMAGE_NAME = `${imageURL}:${buildTag}`;
 
 	let projectSlug = currentAppConfig.project;
 	let domains = deployEnvironmentConfig.domains;
@@ -110,7 +105,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		throw new Error(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
 	}
 	if (!registry.imagePullSecret) {
-		const imagePullSecret = await createImagePullSecretsInNamespace(slug, env, clusterSlug, nsName);
+		const imagePullSecret = await createImagePullSecretsInNamespace(appSlug, env, clusterSlug, nsName);
 		[registry] = await DB.update("registry", { _id: registry._id }, { imagePullSecret });
 	}
 	// console.log("registry :>> ", registry);
@@ -126,7 +121,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const { imagePullSecret } = registry;
 
 	// prerelease:
-	const prereleaseSubdomainName = `${slug.toLowerCase()}.prerelease`;
+	const prereleaseSubdomainName = `${appSlug.toLowerCase()}.prerelease`;
 	let prereleaseIngName = `prerelease-${ingName}`;
 	let prereleaseSvcName = `prerelease-${svcName}`;
 	let prereleaseAppName = `prerelease-${appName}`;
@@ -474,7 +469,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		prereleaseYamlObject,
 		prereleaseDeploymentContent,
 		// accessibility
-		BUILD_NUMBER,
+		buildTag: buildTag,
 		IMAGE_NAME,
 		endpoint,
 		prereleaseUrl,

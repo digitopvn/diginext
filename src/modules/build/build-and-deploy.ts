@@ -23,8 +23,11 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	buildParams.env = deployParams.env;
 	buildParams.shouldDeploy = true; // <-- keep this to disable webhook notification when build success
 
-	const { build, startTime, SOCKET_ROOM } = await startBuild(buildParams);
-	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > buildNumber :>> ${build.tag}` });
+	const buildInfo = await startBuild(buildParams);
+	if (!buildInfo) throw new Error(`Unable to build`);
+
+	const { build, startTime, SOCKET_ROOM } = buildInfo;
+	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > buildTag :>> ${build.tag}` });
 
 	if (!build) throw new Error(`Unable to build "${buildParams.appSlug}" app (${buildParams.env}).`);
 

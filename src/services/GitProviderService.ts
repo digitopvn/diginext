@@ -1,5 +1,6 @@
 import type { GitProviderDto, IGitProvider } from "@/entities/GitProvider";
 import { gitProviderSchema } from "@/entities/GitProvider";
+import type { IQueryOptions } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import GitProviderAPI from "@/modules/git/git-provider-api";
 
@@ -26,5 +27,13 @@ export class GitProviderService extends BaseService<IGitProvider> {
 		}
 
 		throw new Error(`Unable to verify "${provider.name}" git provider.`);
+	}
+
+	async listGitRepository(provider: IGitProvider, options?: IQueryOptions) {
+		return GitProviderAPI.listGitRepositories(provider, options);
+	}
+
+	async deleteGitRepository(provider: IGitProvider, slug: string, options?: IQueryOptions) {
+		return GitProviderAPI.deleteGitRepository(provider, provider.org, slug, options);
 	}
 }

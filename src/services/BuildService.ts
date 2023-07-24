@@ -1,10 +1,12 @@
-import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import path from "path";
 
 import { Config } from "@/app.config";
+import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IBuild } from "@/entities/Build";
 import { buildSchema } from "@/entities/Build";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import type { RerunBuildParams, StartBuildParams } from "@/modules/build";
+import { generateBuildTag } from "@/modules/build/generate-build-tag";
 import { checkQuota } from "@/modules/workspace/check-quota";
 
 import BaseService from "./BaseService";
@@ -28,20 +30,27 @@ export class BuildService extends BaseService<IBuild> {
 		if (ownership.owner) data.user = ownership.owner;
 
 		// validates
-		const { appSlug, buildNumber, user, userId, gitBranch, registrySlug } = data;
+		const { appSlug, user, userId, gitBranch, registrySlug } = data;
 		if (!appSlug) throw new Error(`App slug is required.`);
-		if (!buildNumber) throw new Error(`Build number is required.`);
 		if (!user && !userId) throw new Error(`User or UserID is required.`);
 		if (!gitBranch) throw new Error(`Git branch is required.`);
 		if (!registrySlug) throw new Error(`Container registry slug is required.`);
 
+		// app build directory
+		if (!data.buildTag) {
+			const { DB } = await import("@/modules/api/DB");
+			const app = await DB.findOne("app", { slug: appSlug }, { ownership: this.ownership });
+			const projectSlug = app?.projectSlug;
+			const SOURCE_CODE_DIR = `cache/${projectSlug}/${appSlug}/${gitBranch}`;
+			const buildDir = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
+			const tagInfo = await generateBuildTag(buildDir, { branch: gitBranch });
+			data.buildTag = tagInfo.tag;
+		}
+
 		// start the build
 		const buildModule = await import("@/modules/build");
 		const buildInfo = await buildModule.startBuild(data);
-
-		const buildServerUrl = Config.BASE_URL;
-		const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
-		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}`;
+		const logURL = `${Config.BASE_URL}/build/logs?build_slug=${buildInfo.SOCKET_ROOM}`;
 
 		return { logURL, ...buildInfo };
 	}
@@ -76,10 +85,8 @@ export class BuildService extends BaseService<IBuild> {
 		if (!registry) throw new Error(`Container registry not found.`);
 
 		// build params
-		const buildNumber = options.buildNumber || makeDaySlug({ divider: "" });
 		const buildParams: StartBuildParams = {
 			appSlug,
-			buildNumber,
 			gitBranch,
 			registrySlug: registry.slug,
 		};

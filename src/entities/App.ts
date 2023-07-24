@@ -30,6 +30,12 @@ export interface AppGitInfo {
 	 * Git provider's type: `github`, `bitbucket`, `gitlab`
 	 */
 	provider?: GitProviderType;
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Git provider's type: `github`, `bitbucket`, `gitlab`
+	 */
+	providerID?: string | IGitProvider;
 }
 
 /**

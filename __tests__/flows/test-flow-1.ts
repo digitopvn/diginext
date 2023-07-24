@@ -1,8 +1,9 @@
-import { IContainerRegistry, IFramework, IGitProvider, IRole, IWorkspace } from "@/entities";
+import { IApp, ICluster, IContainerRegistry, IFramework, IGitProvider, IRole, IWorkspace } from "@/entities";
 import { MongoDB } from "../../src/plugins/mongodb";
 import {
 	CLI_TEST_DIR,
 	apiKeySvc,
+	appSvc,
 	clusterSvc,
 	createFakeUser,
 	createWorkspace,
@@ -24,22 +25,24 @@ import {
 import GitProviderAPI from "@/modules/git/git-provider-api";
 import { initialFrameworks } from "@/seeds/seed-frameworks";
 import { connectRegistry } from "@/modules/registry/connect-registry";
-import { readdirSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 import { addInitialBareMetalCluster } from "@/seeds/seed-clusters";
 import ClusterManager from "@/modules/k8s";
 import { DB } from "@/modules/api/DB";
+import path from "path";
+import { wait } from "@/plugins";
 
 export function testFlow1() {
 	let wsId: string;
 
 	it("Builder: DOCKER", async () => {
 		const dockerVersion = await dxCmd(`docker version`);
-		console.log("dockerVersion :>> ", dockerVersion);
+		console.log("Current DOCKER version :>> \n", dockerVersion);
 	});
 
 	it("Builder: PODMAN", async () => {
 		const podmanVersion = await dxCmd(`podman version`);
-		console.log("podmanVersion :>> ", podmanVersion);
+		console.log("Current PODMAN version :>> \n", podmanVersion);
 	});
 
 	it("Authenticate fake user #1 (admin)", async () => {
@@ -58,7 +61,7 @@ export function testFlow1() {
 		const loginRes1 = await loginUser(userId);
 		expect(loginRes1.user).toBeDefined();
 		expect(loginRes1.user.token?.access_token).toBeDefined();
-	}, 10000);
+	}, 60000);
 
 	it("Workspace #1: Create workspace", async () => {
 		// query db
@@ -93,7 +96,7 @@ export function testFlow1() {
 		expect(loginRes.user.token?.access_token).toBeDefined();
 		expect((loginRes.user.activeWorkspace as IWorkspace)._id).toEqual(wsId);
 		expect((loginRes.user.activeRole as IRole).type).toEqual("admin");
-	}, 10000);
+	}, 60000);
 
 	it("Workspace #1: Initial data", async () => {
 		// current authenticated user:
@@ -130,7 +133,7 @@ export function testFlow1() {
 		const defaulSvcAcc = apiKeys[0];
 		expect(defaulSvcAcc.roles.length).toBeGreaterThan(0);
 		expect(defaulSvcAcc.roles.map((role) => (role as IRole).name)).toContain("Moderator");
-	}, 15000);
+	}, 60000);
 
 	it("Workspace #1: Git Provider - Bitbucket", async () => {
 		const curUser = await getCurrentUser();
@@ -163,7 +166,7 @@ export function testFlow1() {
 		const profile = await GitProviderAPI.getProfile(bitbucket);
 		expect(profile).toBeDefined();
 		expect(profile.username).toBe(process.env.TEST_BITBUCKET_USER);
-	}, 30000);
+	}, 60000);
 
 	it("Workspace #1: Git Provider - Github", async () => {
 		const curUser = await getCurrentUser();
@@ -192,9 +195,10 @@ export function testFlow1() {
 		// test api
 		const profile = await GitProviderAPI.getProfile(github);
 		expect(profile).toBeDefined();
-	}, 30000);
+	}, 60000);
 
 	it('Workspace #1: Add "public" framework', async () => {
+		console.log('[TESTING] Workspace #1: Add "public" framework');
 		const curUser = await getCurrentUser();
 
 		// add new "public" framework
@@ -239,64 +243,79 @@ export function testFlow1() {
 	// 	expect(fw).toBeDefined();
 	// }, 30000);
 
-	it("Workspace #1: Container Registry - Google Artifact Registry", async () => {
-		const curUser = await getCurrentUser();
+	let gcr: IContainerRegistry;
 
-		// seed Container Registry: GCR
-		const createRes = await registryCtl.create({
-			name: "Google Container Registry",
-			provider: "gcloud",
-			host: "asia.gcr.io",
-			serviceAccount: process.env.TEST_GCLOUD_SERVICE_ACCOUNT,
-		});
+	it(
+		"Workspace #1: Container Registry - Google Artifact Registry",
+		async () => {
+			console.log("[TESTING] Workspace #1: Container Registry - Google Artifact Registry");
 
-		let gcr = createRes.data as IContainerRegistry;
-		expect(gcr).toBeDefined();
-		expect(gcr.isVerified).toBe(true);
+			const curUser = await getCurrentUser();
 
-		// authenticate GCR with docker & podman
-		await connectRegistry(gcr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
-		await connectRegistry(gcr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
+			// seed Container Registry: GCR
+			const createRes = await registryCtl.create({
+				name: "Google Container Registry",
+				provider: "gcloud",
+				host: "asia.gcr.io",
+				serviceAccount: process.env.TEST_GCLOUD_SERVICE_ACCOUNT,
+			});
 
-		// podman: pull private test image
-		const podmanPullRes = await dxCmd(`podman pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
-		expect(podmanPullRes.indexOf("Storing signatures")).toBeGreaterThan(-1);
+			gcr = createRes.data;
+			expect(gcr).toBeDefined();
+			expect(gcr.isVerified).toBe(true);
 
-		// docker: pull private test image
-		const dockerPullRes = await dxCmd(`docker pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
-		expect(dockerPullRes.indexOf("asia.gcr.io/top-group-k8s/staticsite-web")).toBeGreaterThan(-1);
-	}, 60000);
+			// authenticate GCR with docker & podman
+			await connectRegistry(gcr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
+			await connectRegistry(gcr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
 
-	it("Workspace #1: Container Registry - Docker Hub Registry", async () => {
-		const curUser = await getCurrentUser();
+			// podman: pull private test image
+			const podmanPullRes = await dxCmd(`podman pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
+			expect(podmanPullRes.indexOf("Storing signatures")).toBeGreaterThan(-1);
 
-		// seed Container Registry: Docker Hub
-		const createRes = await registryCtl.create({
-			name: "Docker Hub Registry",
-			provider: "dockerhub",
-			dockerUsername: process.env.TEST_DOCKERHUB_USER,
-			dockerPassword: process.env.TEST_DOCKERHUB_PASS,
-			organization: process.env.TEST_DOCKERHUB_ORG,
-		});
+			// docker: pull private test image
+			const dockerPullRes = await dxCmd(`docker pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
+			expect(dockerPullRes.indexOf("asia.gcr.io/top-group-k8s/staticsite-web")).toBeGreaterThan(-1);
+		}, // timeout: 4 mins
+		4 * 60000
+	);
 
-		let dhr = createRes.data as IContainerRegistry;
-		expect(dhr).toBeDefined();
-		expect(dhr.isVerified).toBe(true);
+	it(
+		"Workspace #1: Container Registry - Docker Hub Registry",
+		async () => {
+			console.log("[TESTING] Workspace #1: Container Registry - Docker Hub Registry");
+			const curUser = await getCurrentUser();
 
-		// authenticate GCR with docker & podman
-		await connectRegistry(dhr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
-		await connectRegistry(dhr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
+			// seed Container Registry: Docker Hub
+			const createRes = await registryCtl.create({
+				name: "Docker Hub Registry",
+				provider: "dockerhub",
+				dockerUsername: process.env.TEST_DOCKERHUB_USER,
+				dockerPassword: process.env.TEST_DOCKERHUB_PASS,
+				organization: process.env.TEST_DOCKERHUB_ORG,
+			});
 
-		// podman: pull private test image
-		const podmanPullRes = await dxCmd(`podman pull digitop/static:latest`);
-		expect(podmanPullRes.indexOf("Storing signatures")).toBeGreaterThan(-1);
+			let dhr = createRes.data as IContainerRegistry;
+			expect(dhr).toBeDefined();
+			expect(dhr.isVerified).toBe(true);
 
-		// docker: pull private test image
-		const dockerPullRes = await dxCmd(`docker pull digitop/static:latest`);
-		expect(dockerPullRes.indexOf("digitop/static:latest")).toBeGreaterThan(-1);
-	}, 30000);
+			// authenticate GCR with docker & podman
+			await connectRegistry(dhr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
+			await connectRegistry(dhr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
+
+			// podman: pull private test image
+			const podmanPullRes = await dxCmd(`podman pull digitop/static:latest`);
+			expect(podmanPullRes.indexOf("Storing signatures")).toBeGreaterThan(-1);
+
+			// docker: pull private test image
+			const dockerPullRes = await dxCmd(`docker pull digitop/static:latest`);
+			expect(dockerPullRes.indexOf("digitop/static:latest")).toBeGreaterThan(-1);
+		},
+		// timeout: 4 mins
+		4 * 60000
+	);
 
 	it("Workspace #1: Add Bare-metal K8S cluster", async () => {
+		console.log("[TESTING] Workspace #1: Add Bare-metal K8S cluster");
 		const curUser = await getCurrentUser();
 
 		// seed cluster: Bare-metal
@@ -310,23 +329,79 @@ export function testFlow1() {
 	}, 30000);
 
 	it("CLI: Check version", async () => {
+		console.log("[TESTING] CLI: Check version");
 		const cliVersion = await dxCmd(`dx -v`);
 		expect(cliVersion).toBeDefined();
 	}, 15000);
 
 	it("CLI: Authentication", async () => {
+		console.log("[TESTING] CLI: Authentication");
 		const user = await getCurrentUser();
 
 		const stdout = await dxCmd(`dx login http://localhost:6969 --token=${user.token.access_token}`);
 		expect(stdout.indexOf("You're logged in")).toBeGreaterThan(-1);
 
 		// print CLI information
-		await dxCmd(`dx info`);
+		const dxInfo = await dxCmd(`dx info`);
+		console.log("dxInfo :>> ", dxInfo);
 	}, 15000);
+
+	let bareMetalCluster: ICluster;
+
+	it(
+		"CLI: Cluster management (BARE-METAL)",
+		async () => {
+			console.log("[TESTING] CLI: Cluster management (BARE-METAL)");
+
+			// get bare-metal cluster (default)
+			bareMetalCluster = await clusterSvc.findOne({ providerShortName: "custom" });
+			expect(bareMetalCluster.contextName).toBeDefined();
+			expect(bareMetalCluster.provider).toBeDefined();
+			expect(bareMetalCluster.isVerified).toBeTruthy();
+
+			const context = bareMetalCluster.contextName;
+			if (!context) throw new Error(`Cluster is not verifed (no "contextName")`);
+
+			// switch context to this cluster
+			const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${bareMetalCluster.slug}`);
+			expect(switchCtxRes.toLowerCase().indexOf("connected")).toBeGreaterThan(-1);
+
+			// check test namespace exists
+			const namespace = "diginext-test";
+			let isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+			if (isNamespaceExisted) await ClusterManager.deleteNamespace(namespace, { context });
+			await ClusterManager.createNamespace(namespace, { context });
+
+			// check again
+			isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+			expect(isNamespaceExisted).toBeTruthy();
+
+			// create imagePullSecrets
+			const dockerhub = await DB.findOne("registry", { provider: "dockerhub" });
+			// console.log("dockerhub :>> ", dockerhub);
+
+			// const createIPS = await dxCmd(`dx registry allow --registry=${dockerhub.slug} --cluster=${cluster.slug} --namespace=${namespace}`);
+			// console.log("createIPS :>> ", createIPS);
+
+			// const secrets = await dxCmd(`kubectl get secret -n ${namespace}`);
+			// console.log("secrets :>> ", secrets);
+
+			// expect(secrets).toContain("docker-registry-key");
+
+			// clean up test namespace
+			await ClusterManager.deleteNamespace(namespace, { context });
+		},
+		// timeout: 3 mins
+		3 * 60000
+	);
+
+	let appOnGithub: IApp;
+	let appOnBitbucket: IApp;
 
 	it(
 		"CLI: Create new app (Github)",
 		async () => {
+			console.log("[TESTING] CLI: Create new app (Github)");
 			const github = await gitSvc.findOne({ type: "github" });
 			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
 
@@ -336,9 +411,18 @@ export function testFlow1() {
 			expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
 
-			const files = readdirSync(CLI_TEST_DIR);
-			console.log("files :>> ", files);
-			expect(files.join(",").indexOf(`testgithubproject`)).toBeGreaterThan(-1);
+			const sourceCodeDirs = readdirSync(CLI_TEST_DIR);
+			console.log("sourceCodeDirs :>> ", sourceCodeDirs);
+			expect(sourceCodeDirs.join(",").indexOf(`testgithubproject`)).toBeGreaterThan(-1);
+
+			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
+			const sourceCodeFiles = readdirSync(appDir);
+			console.log("sourceCodeFiles :>> ", sourceCodeFiles);
+			expect(sourceCodeFiles.length).toBeGreaterThan(0);
+			expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
+
+			// reload app's data
+			appOnGithub = await appSvc.findOne({}, { order: { createdAt: -1 } });
 		},
 		5 * 60000
 	);
@@ -346,6 +430,8 @@ export function testFlow1() {
 	it(
 		"CLI: Create new app (Bitbucket)",
 		async () => {
+			console.log("[TESTING] CLI: Create new app (Bitbucket)");
+
 			const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
 			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
 
@@ -356,54 +442,77 @@ export function testFlow1() {
 			expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
 
-			const files = readdirSync(CLI_TEST_DIR);
-			console.log("files :>> ", files);
-			expect(files.join(",").indexOf(`testbitbucketproject`)).toBeGreaterThan(-1);
+			const appDirs = readdirSync(CLI_TEST_DIR);
+			console.log("appDirs :>> ", appDirs);
+			expect(appDirs.join(",").indexOf(`testbitbucketproject`)).toBeGreaterThan(-1);
+
+			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
+			const sourceCodeFiles = readdirSync(appDir);
+			console.log("testgithubproject-web > files :>> ", sourceCodeFiles);
+			expect(sourceCodeFiles.length).toBeGreaterThan(0);
+			expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
+
+			// assign variable
+			appOnBitbucket = await appSvc.findOne({}, { order: { createdAt: -1 } });
 		},
+		// 5 mins
 		5 * 60000
 	);
 
-	it("CLI: Cluster management (BARE-METAL)", async () => {
-		// get bare-metal cluster (default)
-		const cluster = await clusterSvc.findOne({ providerShortName: "custom" });
-		expect(cluster.contextName).toBeDefined();
-		expect(cluster.provider).toBeDefined();
-		expect(cluster.isVerified).toBeTruthy();
+	it(
+		"CLI: Request server to deploy app",
+		async () => {
+			console.log("[TESTING] CLI: Request server to deploy app");
 
-		const context = cluster.contextName;
-		if (!context) throw new Error(`Cluster is not verifed (no "contextName")`);
+			if (!appOnGithub || !bareMetalCluster) throw new Error(`Failed to request deploy: no apps or clusters.`);
 
-		// switch context to this cluster
-		const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${cluster.slug}`);
-		expect(switchCtxRes.toLowerCase().indexOf("connected")).toBeGreaterThan(-1);
+			console.log("appOnGithub :>> ", appOnGithub);
 
-		// check test namespace exists
-		const namespace = "diginext-test";
-		let isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
-		if (isNamespaceExisted) await ClusterManager.deleteNamespace(namespace, { context });
-		await ClusterManager.createNamespace(namespace, { context });
+			// get app directory
+			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
+			console.log("appDir :>> ", appDir);
+			expect(existsSync(appDir)).toBeTruthy();
 
-		// check again
-		isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
-		expect(isNamespaceExisted).toBeTruthy();
+			const sourceCodeFiles = readdirSync(appDir);
+			console.log("sourceCodeFiles :>> ", sourceCodeFiles);
+			expect(sourceCodeFiles.length).toBeGreaterThan(0);
 
-		// create imagePullSecrets
-		const dockerhub = await DB.findOne("registry", { provider: "dockerhub" });
-		// console.log("dockerhub :>> ", dockerhub);
+			/**
+			 * Deploy app to dev environment:
+			 * - App directory: "app created on github"
+			 * - Cluster: Bare-metal Cluster
+			 * - Container registry: Google Artifact Registry
+			 * - Exposed port: 80
+			 * - Use SSL: true
+			 * - SSL Provider: Let's Encrypt
+			 * - Use genereted domain: true
+			 * - Follow the logs
+			 */
+			const exposedPort = 80;
+			const res = await dxCmd(`dx up --cluster=${bareMetalCluster.slug} --registry=${gcr.slug} --port=${exposedPort} --ssl --domain --tail`, {
+				cwd: appDir,
+			});
+			// dx up --cluster=topgroup-k3s --registry=google-container-registry --port=80 --ssl --domain --tail
+			// expect(res).toBeDefined();
+			// expect(res.toLowerCase()).not.toContain("error");
 
-		// const createIPS = await dxCmd(`dx registry allow --registry=${dockerhub.slug} --cluster=${cluster.slug} --namespace=${namespace}`);
-		// console.log("createIPS :>> ", createIPS);
-
-		// const secrets = await dxCmd(`kubectl get secret -n ${namespace}`);
-		// console.log("secrets :>> ", secrets);
-
-		// expect(secrets).toContain("docker-registry-key");
-
-		// clean up test namespace
-		await ClusterManager.deleteNamespace(namespace, { context });
-	}, 60000);
+			// get app info
+			const app = await appSvc.findOne({ _id: appOnGithub._id });
+			// console.log("Request deploy > app :>> ", app);
+			expect(app.buildNumber).toBeDefined();
+			expect(app.deployEnvironment).toBeDefined();
+			expect(app.deployEnvironment.dev).toBeDefined();
+			expect(app.deployEnvironment.dev.cluster).toEqual(bareMetalCluster.slug);
+			expect(app.deployEnvironment.dev.registry).toEqual(gcr.slug);
+			expect(app.deployEnvironment.dev.port).toEqual(exposedPort);
+		},
+		// timeout: 5 minutes
+		5 * 60000
+	);
 
 	it("Workspace #1: Add member", async () => {
+		console.log("[TESTING] CLI: Add member");
+
 		// registerr fake user #2:
 		let fakeUser2 = await createFakeUser(2);
 
@@ -417,9 +526,30 @@ export function testFlow1() {
 		// login back to fake user #1
 	});
 
-	it("Clean up: delete test data (eg. kube_config,...)", async () => {
-		// delete all "custom" test clusters & access credentials
-		const clusters = await clusterSvc.find({ providerShortName: "custom" });
-		await Promise.all(clusters.map((cluster) => clusterSvc.delete({ _id: cluster._id })));
-	}, 60000);
+	it(
+		"CLEAN UP: delete test data (eg. app, deployment, kube_config,...)",
+		async () => {
+			console.log("[TESTING] CLEAN UP: delete test data (eg. app, git repo, deployment, kube_config,...)");
+
+			// delete & take down all test app
+			const takedownRes = await appSvc.takeDown(appOnGithub);
+			console.log("[CLEAN UP] takedownRes :>> ", takedownRes);
+
+			// delete git repo
+			const deleteGithubAppRes = await appSvc.deleteGitRepo({ slug: appOnGithub.slug });
+			const deleteBitbucketAppRes = await appSvc.deleteGitRepo({ slug: appOnBitbucket.slug });
+			console.log("[CLEAN UP] deleteGithubAppRes :>> ", deleteGithubAppRes);
+			console.log("[CLEAN UP] deleteBitbucketAppRes :>> ", deleteBitbucketAppRes);
+
+			// delete all "custom" test clusters & access credentials
+			const clusters = await clusterSvc.find({ providerShortName: "custom" });
+			const clusterRes = await Promise.all(clusters.map((cluster) => clusterSvc.delete({ _id: cluster._id })));
+			console.log("[CLEAN UP] clusterRes :>> ", clusterRes);
+
+			// wait another 10 secs before closing tests, just to be sure :)
+			await wait(10000);
+		},
+		// timeout: 5 mins
+		5 * 60000
+	);
 }

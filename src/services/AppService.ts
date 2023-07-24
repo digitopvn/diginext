@@ -2,7 +2,7 @@ import { isString } from "lodash";
 import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IFramework, IProject } from "@/entities";
+import type { IFramework, IGitProvider, IProject } from "@/entities";
 import type { IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
 import { type IQueryFilter, type IQueryOptions, type IQueryPagination } from "@/interfaces";
@@ -299,7 +299,7 @@ export class AppService extends BaseService<IApp> {
 				.map(async (app) => {
 					if (app && app.deployEnvironment) {
 						for (const env of Object.keys(app.deployEnvironment)) {
-							if (!app.deployEnvironment[env]) app.deployEnvironment[env] = { buildNumber: "" };
+							if (!app.deployEnvironment[env]) app.deployEnvironment[env] = { buildTag: "" };
 
 							// default values
 							app.deployEnvironment[env].readyCount = 0;
@@ -380,6 +380,51 @@ export class AppService extends BaseService<IApp> {
 		);
 
 		return appsWithStatus;
+	}
+
+	async takeDown(app: IApp, options?: IQueryOptions) {
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+
+		// take down all deploy environments
+		const deployEnvs = Object.keys(app.deployEnvironment);
+		console.log("AppSvc.takeDown() > deployEnvs :>> ", deployEnvs);
+		return Promise.all(deployEnvs.map((env) => deployEnvSvc.takeDownDeployEnvironment(app, env, options)));
+	}
+
+	async delete(filter?: IQueryFilter<IApp>, options?: IQueryOptions) {
+		const app = await this.findOne(filter, options);
+		if (!app) throw new Error(`Unable to delete: App not found.`);
+
+		// take down all deploy environments of this app
+		await this.takeDown(app, options);
+
+		return super.delete(filter, options);
+	}
+
+	async softDelete(filter?: IQueryFilter<IApp>, options?: IQueryOptions) {
+		const app = await this.findOne(filter, options);
+		if (!app) throw new Error(`Unable to delete: App not found.`);
+
+		// take down all deploy environments of this app
+		await this.takeDown(app, options);
+
+		return super.softDelete(filter, options);
+	}
+
+	async deleteGitRepo(filter?: IQueryFilter<IApp>, options?: IQueryOptions) {
+		const app = await this.findOne(filter, { populate: ["gitProvider"] });
+		if (!app) throw new Error(`Unable to delete: App not found.`);
+
+		const provider = app.gitProvider as IGitProvider;
+		const repoData = await parseGitRepoDataFromRepoSSH(app.git.repoSSH);
+		if (!repoData) throw new Error(`Unable to read repo data of "${app.slug}" app: ${app.git.repoSSH}`);
+
+		// delete git repo via API
+		const { GitProviderService } = await import("./index");
+		const gitSvc = new GitProviderService(this.ownership);
+
+		return gitSvc.deleteGitRepository(provider, repoData.repoSlug, options);
 	}
 
 	async archiveApp(app: IApp, ownership?: Ownership) {

@@ -29,7 +29,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 	const { owner, workspace, slug: appSlug } = app;
 	const { slug: workspaceSlug, _id: workspaceId } = workspace as IWorkspace;
 
-	const buildNumber = tag ?? image.split(":")[1];
+	const buildTag = tag ?? image.split(":")[1];
 
 	const deployedEnvironment = await getDeployEvironmentByApp(app, env || "dev");
 	// console.log(`deployedEnvironment > ${env} :>>`, deployedEnvironment);
@@ -63,7 +63,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 	const data = {
 		env,
 		cliVersion: ownership?.cliVersion || cliVersion,
-		name: `${projectSlug}/${appSlug}:${buildNumber}`,
+		name: `${projectSlug}/${appSlug}:${buildTag}`,
 		image: IMAGE_NAME,
 		appConfig: appConfig,
 		// build status

@@ -1,7 +1,8 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
+import { execa, execaCommandSync } from "execa";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
-import { isEmpty, round, toInteger } from "lodash";
+import { isEmpty, round, startsWith, toInteger } from "lodash";
 import path from "path";
 
 import { CLI_DIR } from "@/config/const";
@@ -15,6 +16,11 @@ import { execCmd } from "@/plugins";
 import ClusterManager from "./index";
 
 interface KubeGenericOptions {
+	/**
+	 * Output type (JSON or YAML)
+	 * @default "json"
+	 */
+	output?: "json" | "yaml";
 	/**
 	 * A context name in KUBECONFIG
 	 */
@@ -31,6 +37,21 @@ interface KubeCommandOptions extends KubeGenericOptions {
 	 * @example "phase!=prerelease,app=abc-xyz"
 	 */
 	filterLabel?: string;
+}
+
+/**
+ * Convert filter object to filter labels string
+ * - Use ! for different than value
+ * @example { phase: "!prerelease", app: "abc-xyz" } -> "phase!=prerelease,app=abc-xyz"
+ */
+export function objectToFilterLabels(obj: Record<string, string>) {
+	if (!obj) throw new Error(`Input object is required.`);
+	return Object.entries(obj)
+		.map(([key, val]) => {
+			if (startsWith("!", val)) return `${key}!=${val.substring(1)}`;
+			return `${key}=${val}`;
+		})
+		.join(",");
 }
 
 /**
@@ -79,7 +100,6 @@ export async function kubectlApplyContent(yamlContent: string, options: KubeComm
  * Get all nodes of a cluster
  */
 export async function getAllNodes(options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 
 	try {
@@ -153,6 +173,20 @@ export async function getAllNamespaces(options: KubeCommandOptions = {}) {
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllNamespaces > Can't get namespace list.`);
 		return [];
+	}
+}
+
+/**
+ * Get a namepsace of a cluster
+ */
+export async function getNamespace(name: string, options: KubeCommandOptions = {}) {
+	const { context, skipOnError, output = "json" } = options;
+	const stdout = await execCmd(`kubectl ${context ? `--context=${context} ` : ""}get namespace ${name} -o ${output}`, `Can't get a namespace.`);
+	try {
+		return !options?.output || options?.output === "json" ? (JSON.parse(stdout).items as KubeNamespace) : stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllNamespaces > Can't get namespace list.`);
+		return;
 	}
 }
 
@@ -259,7 +293,6 @@ export async function isSecretExisted(name: string, namespace: string = "default
  * Delete a secret in a namespace
  */
 export async function deleteSecret(name, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
@@ -278,7 +311,6 @@ export async function deleteSecret(name, namespace = "default", options: KubeGen
  * Delete secrets in a namespace by filter
  */
 export async function deleteSecretsByFilter(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -299,7 +331,6 @@ export async function deleteSecretsByFilter(namespace = "default", options: Kube
  * Get all ingresses of a cluster
  */
 export async function getAllIngresses(options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 
 	try {
@@ -318,7 +349,6 @@ export async function getAllIngresses(options: KubeGenericOptions = {}) {
 }
 
 export async function getIngressClasses(options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 
 	try {
@@ -337,7 +367,6 @@ export async function getIngressClasses(options: KubeGenericOptions = {}) {
 }
 
 export async function getIngress(name, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 
 	try {
@@ -360,7 +389,6 @@ export async function getIngress(name, namespace = "default", options: KubeGener
  * @param namespace
  */
 export async function getIngresses(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError, filterLabel } = options;
 
 	try {
@@ -382,7 +410,6 @@ export async function getIngresses(namespace = "default", options: KubeCommandOp
 }
 
 export async function deleteIngress(name, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 
 	try {
@@ -399,7 +426,6 @@ export async function deleteIngress(name, namespace = "default", options: KubeGe
 }
 
 export async function deleteIngressByFilter(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 
 	try {
@@ -421,17 +447,16 @@ export async function deleteIngressByFilter(namespace = "default", options: Kube
  * Get a deployment in a namespace
  */
 export async function getDeploy(name: string, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
-	const { context, skipOnError } = options;
+	const { context, skipOnError, output } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 		args.push("-n", namespace, "get", "deploy", name);
 
-		args.push("-o", "json");
+		if (!output || output === "json") args.push("-o", "json");
 
 		const { stdout } = await execa("kubectl", args);
-		return JSON.parse(stdout) as KubeDeployment;
+		return !output || output === "json" ? (JSON.parse(stdout) as KubeDeployment) : stdout;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getDeploy >`, e);
 		return;
@@ -442,7 +467,6 @@ export async function getDeploy(name: string, namespace = "default", options: Ku
  * Get deployments in a namespace by filter labels
  */
 export async function getDeploysByFilter(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -465,7 +489,6 @@ export async function getDeploysByFilter(namespace = "default", options: KubeCom
  * Set image to a container of a deployment in a namespace
  */
 export async function scaleDeploy(name: string, replicas: number, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
@@ -486,7 +509,6 @@ export async function scaleDeploy(name: string, replicas: number, namespace = "d
  * @param name - Deployment's name
  */
 export async function scaleDeployByFilter(replicas: number, namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 
 	try {
@@ -509,7 +531,6 @@ export async function scaleDeployByFilter(replicas: number, namespace = "default
  * Set image to a container of a deployment in a namespace
  */
 export async function setDeployImage(name: string, container: string, imageURL: string, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
@@ -530,7 +551,6 @@ export async function setDeployImage(name: string, container: string, imageURL: 
  * @param name - Deployment's name
  */
 export async function setDeployImageAll(name: string, imageURL: string, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
@@ -551,11 +571,10 @@ export async function setDeployImageAll(name: string, imageURL: string, namespac
  * @param port - New port
  */
 export async function setDeployPortAll(name: string, port: string, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		// get all container names
-		const deployment = await getDeploy(name, namespace, options);
+		const deployment = (await getDeploy(name, namespace, options)) as KubeDeployment;
 
 		const containers = deployment.spec.template.spec.containers;
 		let res: string = "";
@@ -590,7 +609,6 @@ export async function setDeployPortAll(name: string, port: string, namespace = "
  * Set "imagePullSecrets" name to deployments in a namespace by filter
  */
 export async function setDeployImagePullSecretByFilter(imagePullSecretName: string, namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -620,7 +638,6 @@ export async function setDeployImagePullSecretByFilter(imagePullSecretName: stri
  * Delete a deployment in a namespace
  */
 export async function deleteDeploy(name, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
@@ -639,7 +656,6 @@ export async function deleteDeploy(name, namespace = "default", options: KubeGen
  * Delete a deployments in a namespace by label filter
  */
 export async function deleteDeploymentsByFilter(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -656,13 +672,21 @@ export async function deleteDeploymentsByFilter(namespace = "default", options: 
 	}
 }
 
+export interface GetKubeDeployOptions extends KubeCommandOptions {
+	/**
+	 * If `TRUE`, it will get metrics of pods and include in the response.
+	 *
+	 * @default true
+	 */
+	metrics?: boolean;
+}
+
 /**
  * Get all deployments of a namespace
  * @param namespace @default "default"
  */
-export async function getDeploys(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
-	const { context, filterLabel, skipOnError } = options;
+export async function getDeploys(namespace = "default", options: GetKubeDeployOptions = {}) {
+	const { context, filterLabel, skipOnError, metrics = true } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
@@ -678,13 +702,15 @@ export async function getDeploys(namespace = "default", options: KubeCommandOpti
 		const deploys = items as KubeDeployment[];
 
 		// get pods usage
-		const { stdout: usageStr } = execaCommandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`);
-		const podUsages = usageStr.split("\n").map((line) => {
-			const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
-			const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
-			const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
-			return { namespace: ns, name, cpu, memory, cpuInt, memInt };
-		});
+		const usageStr = metrics ? execaCommandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`).stdout : "";
+		const podUsages = metrics
+			? usageStr.split("\n").map((line) => {
+					const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+					const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+					const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+					return { namespace: ns, name, cpu, memory, cpuInt, memInt };
+			  })
+			: [];
 
 		return deploys.map((deploy) => {
 			// resource usage average
@@ -726,9 +752,8 @@ export async function getDeploys(namespace = "default", options: KubeCommandOpti
 /**
  * Get all deployments of a cluster
  */
-export async function getAllDeploys(options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
-	const { context, filterLabel, skipOnError } = options;
+export async function getAllDeploys(options: GetKubeDeployOptions = {}) {
+	const { context, filterLabel, skipOnError, metrics = true } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
@@ -743,13 +768,15 @@ export async function getAllDeploys(options: KubeCommandOptions = {}) {
 		const { items } = JSON.parse(stdout);
 
 		// get pods usage
-		const { stdout: usageStr } = execaCommandSync(`kubectl --context=${context} top pod --no-headers=true -A`);
-		const podUsages = usageStr.split("\n").map((line) => {
-			const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
-			const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
-			const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
-			return { namespace: ns, name, cpu, memory, cpuInt, memInt };
-		});
+		const usageStr = metrics ? execaCommandSync(`kubectl --context=${context} top pod --no-headers=true -A`).stdout : "";
+		const podUsages = metrics
+			? usageStr.split("\n").map((line) => {
+					const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+					const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+					const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+					return { namespace: ns, name, cpu, memory, cpuInt, memInt };
+			  })
+			: [];
 
 		return (items as KubeDeployment[]).map((deploy) => {
 			// resource usage average
@@ -789,11 +816,35 @@ export async function getAllDeploys(options: KubeCommandOptions = {}) {
 }
 
 /**
+ * Create service by name
+ * @param namespace @default "default"
+ */
+export async function createService(name, namespace = "default", options: KubeGenericOptions = {}) {
+	throw new Error(`This feature is under development.`);
+
+	// const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
+	// const { context, skipOnError } = options;
+	// try {
+	// 	const args = [];
+	// 	if (context) args.push(`--context=${context}`);
+
+	// 	args.push("-n", namespace, "get", "svc", name);
+
+	// 	args.push("-o", "json");
+
+	// 	const { stdout } = await execa("kubectl", args);
+	// 	return JSON.parse(stdout) as KubeService;
+	// } catch (e) {
+	// 	if (!skipOnError) logError(`[KUBE_CTL] getService >`, e);
+	// 	return;
+	// }
+}
+
+/**
  * Get service by name
  * @param namespace @default "default"
  */
 export async function getService(name, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
@@ -801,10 +852,10 @@ export async function getService(name, namespace = "default", options: KubeGener
 
 		args.push("-n", namespace, "get", "svc", name);
 
-		args.push("-o", "json");
+		if (!options?.output || options?.output === "json") args.push("-o", "json");
 
 		const { stdout } = await execa("kubectl", args);
-		return JSON.parse(stdout) as KubeService;
+		return !options?.output || options?.output === "json" ? (JSON.parse(stdout) as KubeService) : stdout;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getService >`, e);
 		return;
@@ -817,7 +868,6 @@ export async function getService(name, namespace = "default", options: KubeGener
  * @param labelFilter Filter by labels @example "phase!=prerelease,app=abc-xyz"
  */
 export async function getServices(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError, filterLabel } = options;
 
 	try {
@@ -828,11 +878,11 @@ export async function getServices(namespace = "default", options: KubeCommandOpt
 
 		if (filterLabel) args.push("-l", filterLabel);
 
-		args.push("-o", "json");
+		if (!options?.output || options?.output === "json") args.push("-o", "json");
 
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
-		return items as KubeService[];
+		return !options?.output || options?.output === "json" ? (items as KubeService[]) : stdout;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllServices >`, e);
 		return [];
@@ -844,7 +894,6 @@ export async function getServices(namespace = "default", options: KubeCommandOpt
  * @param labelFilter Filter by labels @example "phase!=prerelease,app=abc-xyz"
  */
 export async function getAllServices(options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError, filterLabel } = options;
 
 	try {
@@ -872,7 +921,6 @@ export async function getAllServices(options: KubeCommandOptions = {}) {
  * @param namespace @default "default"
  */
 export async function deleteService(name, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
@@ -893,7 +941,6 @@ export async function deleteService(name, namespace = "default", options: KubeGe
  * @param namespace @default "default"
  */
 export async function deleteServiceByFilter(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -912,7 +959,6 @@ export async function deleteServiceByFilter(namespace = "default", options: Kube
 }
 
 export async function getPod(name, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
@@ -935,7 +981,6 @@ export async function getPod(name, namespace = "default", options: KubeGenericOp
  * @param namespace @default "default"
  */
 export async function getPods(namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -976,7 +1021,6 @@ export async function getPods(namespace = "default", options: KubeCommandOptions
  * Get all pods in a cluster
  */
 export async function getAllPods(options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 	try {
 		const args = [];
@@ -1013,14 +1057,50 @@ export async function getAllPods(options: KubeCommandOptions = {}) {
 	}
 }
 
+/**
+ * Alias function of `getPods()`
+ */
 export const getPodsByFilter = getPods;
+
+export async function deletePod(name: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "delete", "pod", name);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getPod >`, e);
+		return;
+	}
+}
+
+export async function deletePodsByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "delete", "pod");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getPod >`, e);
+		return;
+	}
+}
 
 export async function logPod(
 	name,
 	namespace = "default",
 	options: KubeGenericOptions & { timestamps?: boolean; prefix?: boolean; previous?: boolean } = {}
 ) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError, timestamps, prefix, previous } = options;
 	try {
 		const args = [];
@@ -1034,8 +1114,6 @@ export async function logPod(
 		if (previous) args.push("--previous");
 
 		const { stdout, stderr } = await execa("kubectl", args);
-		console.log(`[KUBE_CTL] logPod > stdout :>>`, stdout);
-		console.log(`[KUBE_CTL] logPod > stderr :>>`, stderr);
 		return stdout || stderr;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] logPod >`, e);
@@ -1047,7 +1125,6 @@ export async function logPodByFilter(
 	namespace = "default",
 	options: KubeCommandOptions & { timestamps?: boolean; prefix?: boolean; previous?: boolean } = {}
 ) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError, filterLabel, timestamps, prefix, previous } = options;
 	try {
 		const args = [];
@@ -1063,8 +1140,6 @@ export async function logPodByFilter(
 		if (previous) args.push("--previous");
 
 		const { stdout, stderr } = await execa("kubectl", args);
-		console.log(`[KUBE_CTL] logPod > stdout :>>`, stdout);
-		console.log(`[KUBE_CTL] logPod > stderr :>>`, stderr);
 		return stdout || stderr;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] logPod >`, e);
@@ -1073,7 +1148,6 @@ export async function logPodByFilter(
 }
 
 export async function setEnvVar(envVars: KubeEnvironmentVariable[], deploy: string, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 
 	if (isEmpty(envVars)) {
@@ -1100,7 +1174,6 @@ export async function setEnvVar(envVars: KubeEnvironmentVariable[], deploy: stri
 }
 
 export async function setEnvVarByFilter(envVars: KubeEnvironmentVariable[], namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 
 	if (isEmpty(envVars)) {
@@ -1132,7 +1205,6 @@ export async function setEnvVarByFilter(envVars: KubeEnvironmentVariable[], name
 }
 
 export async function deleteEnvVar(envVarNames: string[], deploy: string, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 
 	if (isEmpty(envVarNames)) {
@@ -1159,7 +1231,6 @@ export async function deleteEnvVar(envVarNames: string[], deploy: string, namesp
 }
 
 export async function deleteEnvVarByFilter(envVarNames: string[], namespace = "default", options: KubeCommandOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, filterLabel, skipOnError } = options;
 
 	if (isEmpty(envVarNames)) {
@@ -1188,7 +1259,6 @@ export async function deleteEnvVarByFilter(envVarNames: string[], namespace = "d
 }
 
 export async function rollbackDeploy(name: string, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
@@ -1205,7 +1275,6 @@ export async function rollbackDeploy(name: string, namespace = "default", option
 }
 
 export async function rollbackDeployRevision(name: string, revision: number, namespace = "default", options: KubeGenericOptions = {}) {
-	const { execa, execaCommand, execaSync, execaCommandSync } = await import("execa");
 	const { context, skipOnError } = options;
 	try {
 		const args = [];
