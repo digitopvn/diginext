@@ -461,6 +461,10 @@ export function testFlow1() {
 			console.log("appDir :>> ", appDir);
 			expect(existsSync(appDir)).toBeTruthy();
 
+			const sourceCodeFiles = readdirSync(appDir);
+			console.log("sourceCodeFiles :>> ", sourceCodeFiles);
+			expect(sourceCodeFiles.length).toBeGreaterThan(0);
+
 			const exposedPort = 80;
 			/**
 			 * Deploy app to dev environment:
@@ -474,10 +478,10 @@ export function testFlow1() {
 			 * - Follow the logs
 			 */
 			const res = await dxCmd(
-				`dx deploy --cluster=${bareMetalCluster.slug} --registry=${gcr.slug} --port=${exposedPort} --ssl --domain --tail`,
+				`dx up --cluster=${bareMetalCluster.slug} --registry=${gcr.slug} --port=${exposedPort} --ssl --domain --tail`,
 				{ cwd: appDir }
 			);
-			// dx deploy --cluster=topgroup-k3s --registry=google-container-registry --port=80 --ssl --domain --tail
+			// dx up --cluster=topgroup-k3s --registry=google-container-registry --port=80 --ssl --domain --tail
 			// expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
 

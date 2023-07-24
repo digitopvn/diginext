@@ -166,6 +166,8 @@ export const changePackageName = async (options: InputOptions) => {
 };
 
 export async function pullingFramework(options: InputOptions) {
+	console.log(`Pulling framework >`, options.framework);
+
 	if (options.framework.name != "none") {
 		// TODO: Select specific branch as a version?
 
