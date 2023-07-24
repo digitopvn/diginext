@@ -341,7 +341,8 @@ export function testFlow1() {
 		expect(stdout.indexOf("You're logged in")).toBeGreaterThan(-1);
 
 		// print CLI information
-		await dxCmd(`dx info`);
+		const dxInfo = await dxCmd(`dx info`);
+		console.log("dxInfo :>> ", dxInfo);
 	}, 15000);
 
 	let bareMetalCluster: ICluster;

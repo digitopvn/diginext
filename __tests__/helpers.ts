@@ -255,13 +255,15 @@ export const dxCmd = async (command: string, options?: DxOptions) => {
 			_stdio.on("data", (data) => {
 				let logMsg = data.toString();
 				stdout += logMsg;
-				if (options?.isDebugging) console.log("[DX_CMD]", logMsg);
+				console.log("[DX_CMD]", logMsg);
 				if (options?.onProgress && logMsg) options?.onProgress(logMsg);
 			});
 		}
 	});
 	const end = await stream;
-	return stdout || end.stdout;
+	const result = stdout || end.stdout;
+	// console.log(result);
+	return result;
 };
 
 /**
