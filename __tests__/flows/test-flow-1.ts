@@ -456,6 +456,8 @@ export function testFlow1() {
 
 			if (!appOnGithub || !bareMetalCluster) throw new Error(`Failed to request deploy: no apps or clusters.`);
 
+			console.log('appOnGithub :>> ', appOnGithub);
+
 			// get app directory
 			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
 			console.log("appDir :>> ", appDir);
@@ -465,7 +467,6 @@ export function testFlow1() {
 			console.log("sourceCodeFiles :>> ", sourceCodeFiles);
 			expect(sourceCodeFiles.length).toBeGreaterThan(0);
 
-			const exposedPort = 80;
 			/**
 			 * Deploy app to dev environment:
 			 * - App directory: "app created on github"
@@ -477,6 +478,7 @@ export function testFlow1() {
 			 * - Use genereted domain: true
 			 * - Follow the logs
 			 */
+			const exposedPort = 80;
 			const res = await dxCmd(
 				`dx up --cluster=${bareMetalCluster.slug} --registry=${gcr.slug} --port=${exposedPort} --ssl --domain --tail`,
 				{ cwd: appDir }

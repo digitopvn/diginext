@@ -28,18 +28,16 @@ export const cleanUpFramework = async () => {
  * @param destDirectory - Destination application directory
  */
 export const copyFrameworkResources = async (destDirectory: string) => {
-	let options = {
-		overwrite: true,
-		expand: true,
-		dot: true,
-		junk: true,
-		// filter: ["**/*", "!.git"],
-	};
-
 	let success = false;
 	try {
 		const tmpFrameworkDir = path.resolve(CLI_CONFIG_DIR, ".fw");
-		await copy(tmpFrameworkDir, destDirectory, options);
+		await copy(tmpFrameworkDir, destDirectory, {
+			overwrite: true,
+			expand: true,
+			dot: true,
+			junk: true,
+			// filter: ["**/*", "!.git"],
+		});
 		success = true;
 	} catch (e) {
 		logError(e);

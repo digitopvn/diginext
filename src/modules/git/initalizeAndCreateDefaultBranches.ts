@@ -9,44 +9,39 @@ import { wait } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
 export const initalizeAndCreateDefaultBranches = async (options: InputOptions) => {
-	// console.log("options.username :>> ", options.username);
+	console.log("initalizeAndCreateDefaultBranches > directory :>> ", options.targetDirectory);
+	console.log("initalizeAndCreateDefaultBranches > repoSSH :>> ", options.repoSSH);
 
-	let err = false;
 	try {
-		// Remove current git & initialize new git...
+		// Remove current git (if any) & initialize new git...
 		const gitDir = path.resolve(options.targetDirectory, ".git/");
 		if (fs.existsSync(gitDir)) fs.rmSync(gitDir, { recursive: true, force: true });
 
 		// Initialize local git...
-		const git = simpleGit(options.targetDirectory, {
-			baseDir: `${options.targetDirectory}`,
-			binary: "git",
-		});
+		const git = simpleGit(options.targetDirectory);
 		await git.init();
 
-		// create main
+		// create "main" branch
 		await git.checkout(["-b", "main"]);
 
-		// make sure the remote git is ready...
+		// just to make sure the remote git is ready...
 		await wait(1000);
 
-		// add git origin:
+		// add git origin remote:
 		await git.addRemote("origin", options.repoSSH);
 
-		// create default brand: "main"
-		await git.fetch(["--all"]);
-
 		// stage all deployment files & commit it
+		await git.fetch(["--all"]);
 		await git.add(".");
 		await git.commit("feat(initial): initial commit");
 
-		{
-			//debug
+		// debug
+		if (options.isDebugging) {
 			const branch = await git.branch();
-			if (options.isDebugging) log("branch.current :>> ", branch?.current);
+			log("initalizeAndCreateDefaultBranches > branch.current :>> ", branch?.current);
 
 			const remote = await git.remote(["-v"]);
-			if (options.isDebugging) log("remote :>> ", remote);
+			log("initalizeAndCreateDefaultBranches > remote :>> ", remote);
 		}
 
 		await git.push(["--set-upstream", "origin", "main"]);
@@ -59,20 +54,22 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		 */
 		// await updateBranchProtection(options);
 
-		// create developer branches
+		// create developer's branch
 		const gitUsername = (await git.getConfig(`user.name`, "global")).value;
 		const username = options.username || (gitUsername ? makeSlug(gitUsername).toLowerCase() : undefined) || "developer";
 		const devBranch = `dev/${username}`;
+		if (options.isDebugging) {
+			console.log("initalizeAndCreateDefaultBranches > username :>> ", username);
+			console.log("initalizeAndCreateDefaultBranches > devBranch :>> ", devBranch);
+		}
 		await git.checkout(["-b", devBranch]);
 		await git.push(["--set-upstream", "origin", devBranch]);
 
-		// log(`Finished initializing git!`);
+		console.log(`✅ Finished initializing git!`);
 
 		return options;
 	} catch (error) {
 		console.error(`initalizeAndCreateDefaultBranches error`, error);
-		err = true;
+		return;
 	}
-
-	return err;
 };
