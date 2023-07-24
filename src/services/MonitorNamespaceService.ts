@@ -1,6 +1,6 @@
 import type { IUser, IWorkspace } from "@/entities";
 import type { KubeNamespace } from "@/interfaces";
-import type { MonitoringQueryFilter, MonitoringQueryOptions } from "@/interfaces/MonitoringQuery";
+import type { MonitoringQueryFilter, MonitoringQueryOptions, MonitoringQueryParams } from "@/interfaces/MonitoringQuery";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
@@ -37,16 +37,16 @@ export class MonitorNamespaceService {
 		}
 	) {
 		const { DB } = await import("@/modules/api/DB");
-		const { cluster: clusterSlug } = filter;
+		const { cluster: clusterSlugOrId } = filter;
 		const { name } = data;
 
-		if (!clusterSlug) throw new Error(`Param "clusterSlug" is required.`);
+		if (!clusterSlugOrId) throw new Error(`Param "clusterSlug" is required.`);
 
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+		const cluster = await DB.findOne("cluster", { $or: [{ slug: clusterSlugOrId }, { _id: clusterSlugOrId }], workspace: this.workspace._id });
+		if (!cluster) throw new Error(`Cluster "${clusterSlugOrId}" not found.`);
 
 		const { contextName: context } = cluster;
-		if (!context) throw new Error(`Unverified cluster: "${clusterSlug}"`);
+		if (!context) throw new Error(`Unverified cluster: "${clusterSlugOrId}"`);
 
 		// check name existed
 		const isExisted = await ClusterManager.isNamespaceExisted(name);
@@ -72,7 +72,11 @@ export class MonitorNamespaceService {
 				clusters.map(async (_cluster) => {
 					const { contextName: context } = _cluster;
 					if (!context) return [] as KubeNamespace[];
-					let nsList = name ? [await ClusterManager.getNamespace(name, { context })] : await ClusterManager.getAllNamespaces({ context });
+
+					let nsList = name
+						? [(await ClusterManager.getNamespace(name, { context, output: options?.output })) as KubeNamespace]
+						: await ClusterManager.getAllNamespaces({ context, output: options?.output });
+
 					nsList = nsList.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
 						ns.clusterSlug = _cluster.slug;
@@ -93,7 +97,10 @@ export class MonitorNamespaceService {
 			const { contextName: context } = cluster;
 			if (!context) throw new Error(`Unverified cluster: "${cluster}"`);
 
-			data = name ? [await ClusterManager.getNamespace(name, { context })] : await ClusterManager.getAllNamespaces({ context });
+			data = name
+				? [(await ClusterManager.getNamespace(name, { context, output: options?.output })) as KubeNamespace]
+				: await ClusterManager.getAllNamespaces({ context, output: options?.output });
+
 			data = data.map((ns) => {
 				ns.workspace = MongoDB.toString(this.workspace._id);
 				ns.clusterSlug = cluster.slug;
@@ -110,26 +117,18 @@ export class MonitorNamespaceService {
 		return data[0];
 	}
 
-	async delete(
-		filter: MonitoringQueryFilter,
-		data: {
-			/**
-			 * Namespace's name
-			 */
-			name: string;
-		}
-	) {
+	async delete(params: MonitoringQueryParams) {
 		const { DB } = await import("@/modules/api/DB");
-		const { cluster: clusterSlug } = filter;
-		const { name } = data;
+		const { cluster: clusterSlugOrId, name } = params;
 
-		if (!clusterSlug) throw new Error(`Param "clusterSlug" is required.`);
+		if (!clusterSlugOrId) throw new Error(`Param "cluster" is required.`);
+		if (!name) throw new Error(`Param "name" is required.`);
 
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+		const cluster = await DB.findOne("cluster", { $or: [{ slug: clusterSlugOrId }, { _id: clusterSlugOrId }], workspace: this.workspace._id });
+		if (!cluster) throw new Error(`Cluster "${clusterSlugOrId}" not found.`);
 
 		const { contextName: context } = cluster;
-		if (!context) throw new Error(`Unverified cluster: "${clusterSlug}"`);
+		if (!context) throw new Error(`Unverified cluster: "${clusterSlugOrId}"`);
 
 		// check name existed
 		const isExisted = await ClusterManager.isNamespaceExisted(name);

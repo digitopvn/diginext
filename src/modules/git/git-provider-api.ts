@@ -3,6 +3,7 @@ import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { upperFirst } from "lodash";
 
 import type { IGitProvider } from "@/entities";
+import { respondFailure, respondSuccess } from "@/interfaces";
 import type { BitbucketOrg, BitbucketProject, BitbucketRepoBranch, BitbucketRepository, BitbucketUser } from "@/interfaces/bitbucket";
 import type { GitHubOrg, GithubRepoBranch, GithubRepository, GithubUser } from "@/interfaces/github";
 import type { GitProviderType, RequestMethodType } from "@/interfaces/SystemTypes";
@@ -194,7 +195,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 			const tokens = await bitbucketRefeshToken(provider);
 
 			// save new tokens to database
-			const [updatedProvider] = await DB.update("git", { _id: provider._id }, tokens);
+			const updatedProvider = await DB.updateOne("git", { _id: provider._id }, tokens);
 
 			if (!updatedProvider)
 				throw new Error(`[${provider.type.toUpperCase()}_API_ERROR] "${path}" > Can't update tokens to "${provider.name}" git provider.`);
@@ -202,6 +203,12 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 			// fetch api again
 			return api(updatedProvider, path, options);
 		}
+
+		// [DELETE ONLY] translate HTTP response
+		if (method === "DELETE")
+			return response.status === 204
+				? respondSuccess({ data: true })
+				: respondFailure(response.status === 403 ? "Unauthorized." : "404 Not found.");
 
 		return resData;
 	} catch (e) {

@@ -22,15 +22,27 @@ export interface MonitoringQueryOptions {
 	 * Sort the results based on metadata.
 	 * @example { order: { "metadata.creationTimestamp": -1 } }
 	 */
-	order?: Record<string, 1 | -1>[];
+	order?: Record<string, 1 | -1>;
+	/**
+	 * Alias of `order`
+	 */
+	sort?: Record<string, 1 | -1>;
 	/**
 	 * If `TRUE`, return the closest results of filter
 	 * @default false
 	 */
 	search?: boolean;
 	/**
+	 * Output data type (JSON or YAML)
+	 * @default "json"
+	 */
+	output?: "json" | "yaml";
+	/**
 	 * Debug mode enabling
 	 * @default false
 	 */
 	isDebugging?: boolean;
 }
+
+export type MonitoringQueryParams = MonitoringQueryFilter & MonitoringQueryOptions;
+export type MonitoringCreateParams = Omit<MonitoringQueryParams, "namespace" | "output" | "search" | "order">;

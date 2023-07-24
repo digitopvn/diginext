@@ -1,6 +1,6 @@
 import type { IUser, IWorkspace } from "@/entities";
 import type { KubePod } from "@/interfaces/KubePod";
-import type { MonitoringQueryFilter, MonitoringQueryOptions } from "@/interfaces/MonitoringQuery";
+import type { MonitoringQueryFilter, MonitoringQueryOptions, MonitoringQueryParams } from "@/interfaces/MonitoringQuery";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import { objectToFilterLabels } from "@/modules/k8s/kubectl";
@@ -42,11 +42,11 @@ export class MonitorPodService {
 
 	async find(filter: MonitoringQueryFilter, options?: MonitoringQueryOptions) {
 		const { DB } = await import("@/modules/api/DB");
-		const { namespace, cluster: clusterSlug } = filter;
+		const { namespace, cluster: clusterSlugOrId } = filter;
 
 		let data: KubePod[] = [];
 
-		if (!clusterSlug) {
+		if (!clusterSlugOrId) {
 			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
@@ -66,11 +66,14 @@ export class MonitorPodService {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-			if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+			const cluster = await DB.findOne("cluster", {
+				$or: [{ slug: clusterSlugOrId }, { _id: clusterSlugOrId }],
+				workspace: this.workspace._id,
+			});
+			if (!cluster) throw new Error(`Cluster "${clusterSlugOrId}" not found.`);
 
 			const { contextName: context } = cluster;
-			if (!context) throw new Error(`Unverified cluster: "${clusterSlug}"`);
+			if (!context) throw new Error(`Unverified cluster: "${clusterSlugOrId}"`);
 
 			data = namespace ? await ClusterManager.getPods(namespace, { context }) : await ClusterManager.getAllPods({ context });
 			data = data.map((ns) => {
@@ -89,30 +92,22 @@ export class MonitorPodService {
 		return data[0];
 	}
 
-	async delete(
-		filter: MonitoringQueryFilter,
-		data: {
-			/**
-			 * Service's name
-			 */
-			name: string;
-		}
-	) {
+	async delete(params: MonitoringQueryParams) {
 		const { DB } = await import("@/modules/api/DB");
-		const { cluster: clusterSlug, namespace } = filter;
-		const { name } = data;
+		const { cluster: clusterSlugOrId, namespace, name } = params;
 
-		if (!clusterSlug) throw new Error(`Param "clusterSlug" is required.`);
+		if (!clusterSlugOrId) throw new Error(`Param "cluster" is required.`);
+		if (!name) throw new Error(`Param "name" is required.`);
 
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug, workspace: this.workspace._id });
-		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+		const cluster = await DB.findOne("cluster", { $or: [{ slug: clusterSlugOrId }, { _id: clusterSlugOrId }], workspace: this.workspace._id });
+		if (!cluster) throw new Error(`Cluster "${clusterSlugOrId}" not found.`);
 
 		const { contextName: context } = cluster;
-		if (!context) throw new Error(`Unverified cluster: "${clusterSlug}"`);
+		if (!context) throw new Error(`Unverified cluster: "${clusterSlugOrId}"`);
 
 		const result = name
 			? await ClusterManager.deletePod(name, namespace, { context })
-			: await ClusterManager.deletePodsByFilter(namespace, { context, filterLabel: objectToFilterLabels(filter.labels) });
+			: await ClusterManager.deletePodsByFilter(namespace, { context, filterLabel: objectToFilterLabels(params.labels) });
 
 		return result;
 	}

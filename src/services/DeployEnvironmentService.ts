@@ -398,7 +398,7 @@ export class DeployEnvironmentService {
 		const clusterSlug = deployEnvironment.cluster;
 		if (!clusterSlug) throw new Error(`This app's deploy environment (${env}) hasn't been deployed in any clusters.`);
 
-		const { AppService, ClusterService, ContainerRegistryService } = await import("./index");
+		const { AppService, ClusterService } = await import("./index");
 		const appSvc = new AppService();
 		const clusterSvc = new ClusterService();
 		const cluster = await clusterSvc.findOne({ slug: clusterSlug });
@@ -409,11 +409,12 @@ export class DeployEnvironmentService {
 		const { contextName: context } = cluster;
 		const { namespace } = deployEnvironment;
 
+		// TODO: get "main-app" label in the "release" of this app
 		// get deployment's labels
 		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
-		// switch to the cluster of this environment
+		// double check cluster's accessibility
 		await ClusterManager.authCluster(cluster);
 
 		/**
@@ -430,6 +431,8 @@ export class DeployEnvironmentService {
 			await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 			// Delete DEPLOYMENT
 			await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
+
+			console.log(`✅ Deleted "${mainAppName}" deployment.`);
 		} catch (e) {
 			errorMsg = `Unable to delete deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
 		}
@@ -444,6 +447,8 @@ export class DeployEnvironmentService {
 			await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
 			// Delete DEPLOYMENT
 			await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+
+			console.log(`✅ Deleted "${deprecatedMainAppName}" deployment.`);
 		} catch (e) {
 			errorMsg += `, ${e}.`;
 		}
@@ -451,9 +456,22 @@ export class DeployEnvironmentService {
 		if (options?.isDebugging) console.error(`[DEPLOY_ENV_SERVICE]`, errorMsg);
 
 		// update database
-		appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.tookDownAt`]: new Date() });
+		const tookDownAt = new Date();
+		app = await appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.tookDownAt`]: tookDownAt });
 
-		return { app: { slug: app.slug, id: app._id, owner: app.owner, workspace: app.workspace }, success: true, message: errorMsg };
+		// response data
+		return {
+			app: {
+				slug: app.slug,
+				id: app._id,
+				owner: app.owner,
+				workspace: app.workspace,
+				tookDownAt,
+				cluster: cluster.slug,
+			},
+			success: true,
+			message: errorMsg,
+		};
 	}
 
 	async deleteDeployEnvironment(app: IApp, env: string) {
