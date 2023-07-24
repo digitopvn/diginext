@@ -50,6 +50,8 @@ export default async function createApp(options: InputOptions) {
 		if (!fs.existsSync(options.targetDirectory)) fs.mkdirSync(options.targetDirectory);
 	}
 
+	if (options.isDebugging) console.log("createApp() > options.framework :>> ", options.framework);
+
 	// pull/clone framework...
 	if (options.framework && options.framework.slug !== "none") await pullingFramework(options);
 

@@ -403,7 +403,9 @@ export function testFlow1() {
 			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
 
 			// create new app...
-			const res = await dxCmd(`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force`);
+			const res = await dxCmd(
+				`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force --debug`
+			);
 
 			expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
@@ -416,6 +418,7 @@ export function testFlow1() {
 			const sourceCodeFiles = readdirSync(appDir);
 			console.log("sourceCodeFiles :>> ", sourceCodeFiles);
 			expect(sourceCodeFiles.length).toBeGreaterThan(0);
+			expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
 
 			// reload app's data
 			appOnGithub = await appSvc.findOne({}, { order: { createdAt: -1 } });
@@ -433,15 +436,20 @@ export function testFlow1() {
 
 			// create new app...
 			const res = await dxCmd(
-				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force --debug`
+				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
 			);
 			expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
 
-			const files = readdirSync(CLI_TEST_DIR);
-			console.log("files :>> ", files);
-			expect(files.join(",").indexOf(`testbitbucketproject`)).toBeGreaterThan(-1);
-			expect(files.includes("Dockerfile")).toBeTruthy();
+			const appDirs = readdirSync(CLI_TEST_DIR);
+			console.log("appDirs :>> ", appDirs);
+			expect(appDirs.join(",").indexOf(`testbitbucketproject`)).toBeGreaterThan(-1);
+
+			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
+			const sourceCodeFiles = readdirSync(appDir);
+			console.log("testgithubproject-web > files :>> ", sourceCodeFiles);
+			expect(sourceCodeFiles.length).toBeGreaterThan(0);
+			expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
 
 			// assign variable
 			appOnBitbucket = await appSvc.findOne({}, { order: { createdAt: -1 } });

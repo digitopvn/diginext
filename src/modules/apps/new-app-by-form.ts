@@ -29,8 +29,8 @@ export async function createAppByForm(
 
 	const { skipFramework } = options;
 
-	if (options.isDebugging) console.log("createAppByForm > options.framework :>> ", options.framework);
-	if (options.isDebugging) console.log("createAppByForm > skipFramework :>> ", skipFramework);
+	if (options.isDebugging) console.log("createAppByForm() > options.framework :>> ", options.framework);
+	if (options.isDebugging) console.log("createAppByForm() > skipFramework :>> ", skipFramework);
 
 	if (!options.name) {
 		const { name } = await inquirer.prompt({
@@ -45,7 +45,7 @@ export async function createAppByForm(
 				}
 			},
 		});
-		// console.log("createAppByForm > name :>> ", name);
+		// console.log("createAppByForm() > name :>> ", name);
 		options.name = name;
 	}
 
@@ -221,7 +221,7 @@ export async function createAppByForm(
 
 	// update existing app config if any
 	let appConfig = await updateAppConfig(newApp);
-	if (options.isDebugging) console.log("createAppByForm > appConfig :>> ", appConfig);
+	if (options.isDebugging) console.log("createAppByForm() > appConfig :>> ", appConfig);
 
 	return newApp;
 }
