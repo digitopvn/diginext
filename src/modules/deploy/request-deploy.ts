@@ -26,14 +26,14 @@ export async function requestDeploy(options: InputOptions) {
 
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
+	console.log("requestDeploy() > options.targetDirectory :>> ", options.targetDirectory);
+
 	const { buildServerUrl } = getCliConfig();
 	const { env, targetDirectory } = options;
 
-	const appDirectory = targetDirectory;
-	const DEPLOY_API_PATH = `${buildServerUrl}/api/v1/deploy`;
-
 	// check Dockerfile -> no dockerfile, no build -> failed
-	let dockerFile = resolveDockerfilePath({ targetDirectory: appDirectory, env });
+	let dockerFile = resolveDockerfilePath({ targetDirectory, env });
+	console.log("requestDeploy() > dockerFile :>> ", dockerFile);
 	if (!dockerFile) return;
 
 	/**
@@ -121,14 +121,16 @@ export async function requestDeploy(options: InputOptions) {
 	}
 
 	try {
+		const url = `${buildServerUrl}/api/v1/deploy/from-source`;
+		console.log("requestDeploy() > deploy API url :>> ", url);
 		const requestResult = await fetchApi({
-			url: `${buildServerUrl}/api/v1/deploy/from-source`,
+			url,
 			method: "POST",
 			data: requestDeployData,
 		});
 
 		if (options.isDebugging) {
-			console.log("Request deploy result :>> ");
+			console.log("requestDeploy() > Request deploy result :>> ");
 			console.dir(requestResult, { depth: 10 });
 		}
 
@@ -164,6 +166,8 @@ export async function requestDeploy(options: InputOptions) {
 			// log("[CLI Server] Disconnected");
 			socket.emit("leave", { room: SOCKET_ROOM });
 			process.exitCode = 1;
+
+			throw new Error(`Disconnected.`);
 		});
 
 		socket.on("connect", () => {

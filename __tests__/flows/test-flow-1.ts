@@ -433,7 +433,7 @@ export function testFlow1() {
 
 			// create new app...
 			const res = await dxCmd(
-				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
+				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force --debug`
 			);
 			expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
@@ -441,6 +441,7 @@ export function testFlow1() {
 			const files = readdirSync(CLI_TEST_DIR);
 			console.log("files :>> ", files);
 			expect(files.join(",").indexOf(`testbitbucketproject`)).toBeGreaterThan(-1);
+			expect(files.includes("Dockerfile")).toBeTruthy();
 
 			// assign variable
 			appOnBitbucket = await appSvc.findOne({}, { order: { createdAt: -1 } });
@@ -456,7 +457,7 @@ export function testFlow1() {
 
 			if (!appOnGithub || !bareMetalCluster) throw new Error(`Failed to request deploy: no apps or clusters.`);
 
-			console.log('appOnGithub :>> ', appOnGithub);
+			console.log("appOnGithub :>> ", appOnGithub);
 
 			// get app directory
 			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
@@ -479,10 +480,9 @@ export function testFlow1() {
 			 * - Follow the logs
 			 */
 			const exposedPort = 80;
-			const res = await dxCmd(
-				`dx up --cluster=${bareMetalCluster.slug} --registry=${gcr.slug} --port=${exposedPort} --ssl --domain --tail`,
-				{ cwd: appDir }
-			);
+			const res = await dxCmd(`dx up --cluster=${bareMetalCluster.slug} --registry=${gcr.slug} --port=${exposedPort} --ssl --domain --tail`, {
+				cwd: appDir,
+			});
 			// dx up --cluster=topgroup-k3s --registry=google-container-registry --port=80 --ssl --domain --tail
 			// expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
