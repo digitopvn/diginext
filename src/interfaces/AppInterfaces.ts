@@ -1,6 +1,7 @@
 import type { AppGitInfo, IFramework } from "@/entities";
 
 import type { SslType } from "./DeployEnvironment";
+import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
 import type { ResourceQuotaSize } from "./SystemTypes";
 
 export interface CreateEnvVarsDto {
@@ -17,6 +18,22 @@ export interface CreateEnvVarsDto {
 	 * Array of variables to be created on deploy environment in JSON format
 	 */
 	envVars: string;
+}
+
+export interface UpdateEnvVarsDto {
+	/**
+	 * App slug
+	 */
+	slug: string;
+	/**
+	 * Deploy environment name
+	 * @example "dev" | "prod"
+	 */
+	env: string;
+	/**
+	 * Array of variables to be created on deploy environment in JSON format
+	 */
+	envVars: KubeEnvironmentVariable[];
 }
 
 export interface AppInputSchema {

@@ -24,6 +24,10 @@ export default class DeployService {
 	 */
 	ownership?: Ownership;
 
+	constructor(ownership?: Ownership) {
+		this.ownership = ownership;
+	}
+
 	/**
 	 * Build container image first, then deploy that build to target deploy environment.
 	 */

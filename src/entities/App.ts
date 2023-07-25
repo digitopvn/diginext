@@ -92,6 +92,11 @@ export interface IApp extends IBase {
 	lastUpdatedBy?: string;
 
 	/**
+	 * Git Provider of this app
+	 */
+	gitProvider?: Types.ObjectId | IGitProvider | string;
+
+	/**
 	 * The Git information of the app.
 	 *
 	 * @type {AppGitInfo}
@@ -149,11 +154,6 @@ export interface IApp extends IBase {
 	 * @memberof IApp
 	 */
 	projectSlug?: string;
-
-	/**
-	 * Git Provider of this app
-	 */
-	gitProvider?: Types.ObjectId | IGitProvider | string;
 
 	/**
 	 * Date when the application was archived (take down all deploy environments)
