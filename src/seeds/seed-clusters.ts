@@ -25,12 +25,12 @@ export const addInitialBareMetalCluster = async (kubeConfig: string, workspace: 
 	const clusterIP = clusterServerURL?.hostname;
 	if (!clusterIP) return;
 
-	console.log("kubeConfigObject :>> ", kubeConfigObject);
-	console.log("clusterIP :>> ", clusterIP);
+	// console.log("kubeConfigObject :>> ", kubeConfigObject);
+	// console.log("clusterIP :>> ", clusterIP);
 
 	// get custom provider
 	const customCloudProvider = await DB.findOne("provider", { shortName: "custom" });
-	console.log("customCloudProvider :>> ", customCloudProvider);
+	// console.log("customCloudProvider :>> ", customCloudProvider);
 
 	// insert new cluster
 	const initialClusterDto: ICluster = {
@@ -45,7 +45,7 @@ export const addInitialBareMetalCluster = async (kubeConfig: string, workspace: 
 		workspace: workspace._id,
 	};
 	initialCluster = await DB.create("cluster", initialClusterDto);
-	console.log("initialCluster.slug :>> ", initialCluster.slug);
+	// console.log("initialCluster.slug :>> ", initialCluster.slug);
 
 	// verfify cluster
 	initialCluster = await ClusterManager.authCluster(initialCluster);

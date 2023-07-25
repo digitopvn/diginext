@@ -1,8 +1,7 @@
 import * as fs from "fs";
-import { isEmpty } from "lodash";
 import cronjob from "node-cron";
 
-import { isDevMode, IsTest } from "@/app.config";
+import { Config, isDevMode, IsTest } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
@@ -14,14 +13,14 @@ import { migrateServiceAccountAndApiKey } from "@/migration/migrate-all-sa-and-a
 import { migrateAllUsers } from "@/migration/migrate-all-users";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
-import { generateSSH, sshKeyContainPassphase, sshKeysExisted, verifySSH } from "@/modules/git";
+import { generateSSH, sshKeyContainPassphase, sshKeysExisted, writeCustomSSHKeys } from "@/modules/git";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { execCmd, wait } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
 import { seedDefaultProjects } from "@/seeds/seed-projects";
 import { seedSystemInitialData } from "@/seeds/seed-system";
 import { setServerStatus } from "@/server";
-import { ContainerRegistryService, GitProviderService, WorkspaceService } from "@/services";
+import { ContainerRegistryService, WorkspaceService } from "@/services";
 
 import { findAndRunCronjob } from "../cronjob/find-and-run-job";
 
@@ -62,23 +61,36 @@ export async function startupScripts() {
 	 * Connect to git providers
 	 * (No need to verify SSH for "test" environment)
 	 */
+
 	// if (!IsTest()) {
-	const gitSvc = new GitProviderService();
-	const gitProviders = await gitSvc.find({});
-	if (!isEmpty(gitProviders)) {
-		for (const gitProvider of gitProviders) {
-			verifySSH({ gitProvider: gitProvider.type });
-		}
-	}
+	// const gitSvc = new GitProviderService();
+	// const gitProviders = await gitSvc.find({});
+	// if (!isEmpty(gitProviders)) {
+	// 	for (const gitProvider of gitProviders) {
+	// 		verifySSH({ gitProvider: gitProvider.type });
+	// 	}
+	// }
+
 	// migrate all git provider's db field: "gitWorkspace" -> "org"
-	gitSvc
-		.update({ org: { $exists: false } }, { org: "$gitWorkspace" }, { isDebugging: false })
-		.then((res) => console.log(`[MIGRATION] Migrated "gitWorkspace" to "org" of ${res.length} git providers.`));
+	// gitSvc.update({ org: { $exists: false } }, { org: "$gitWorkspace" }, { isDebugging: false }).then((res) => {
+	// 	if (res.length > 0) console.log(`[MIGRATION] Migrated "gitWorkspace" to "org" of ${res.length} git providers.`);
+	// });
 	// }
 
 	// set global identity
+	// [isDevMode == process.env.DEV_MODE == true] to make sure it won't override your current GIT config when developing Diginext
 	if (!isDevMode) {
-		// <-- to make sure it won't override your GIT config when developing Diginext
+		// write initial private SSH keys if any
+		if (Config.grab("ID_RSA")) {
+			await writeCustomSSHKeys({ gitDomain: "github.com", privateKey: Config.grab("ID_RSA") });
+			await writeCustomSSHKeys({ gitDomain: "bitbucket.org", privateKey: Config.grab("ID_RSA") });
+		}
+
+		/**
+		 * REQUIRED: DO NOT TURN OFF THIS
+		 * ---
+		 * Set default git config
+		 */
 		execCmd(`git init`);
 		execCmd(`git config --global user.email server@diginext.site`);
 		execCmd(`git config --global --add user.name Diginext`);

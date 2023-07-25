@@ -1,6 +1,7 @@
 import type { AppGitInfo, IFramework } from "@/entities";
 
 import type { SslType } from "./DeployEnvironment";
+import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
 import type { ResourceQuotaSize } from "./SystemTypes";
 
 export interface CreateEnvVarsDto {
@@ -17,6 +18,22 @@ export interface CreateEnvVarsDto {
 	 * Array of variables to be created on deploy environment in JSON format
 	 */
 	envVars: string;
+}
+
+export interface UpdateEnvVarsDto {
+	/**
+	 * App slug
+	 */
+	slug: string;
+	/**
+	 * Deploy environment name
+	 * @example "dev" | "prod"
+	 */
+	env: string;
+	/**
+	 * Array of variables to be created on deploy environment in JSON format
+	 */
+	envVars: KubeEnvironmentVariable[];
 }
 
 export interface AppInputSchema {
@@ -111,10 +128,10 @@ export interface DeployEnvironmentData {
 	imageURL: string;
 
 	/**
-	 * Build number is image's tag (no special characters, eg. "dot" or "comma")
+	 * Build tag is image's tag (no special characters, eg. "dot" or "comma")
 	 * @example latest, v01, prerelease, alpha, beta,...
 	 */
-	buildNumber: string;
+	buildTag: string;
 
 	/**
 	 * OPTIONAL

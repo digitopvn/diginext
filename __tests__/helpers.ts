@@ -38,6 +38,7 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import path from "path";
 import { existsSync, mkdirSync } from "fs";
 import CloudDatabaseBackupController from "@/controllers/CloudDatabaseBackupController";
+import { DeployEnvironmentService } from "@/services";
 
 const user1 = { name: "Test User 1", email: "user1@test.local" } as IUser;
 const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
@@ -85,6 +86,7 @@ export const frameworkSvc = frameworkCtl.service;
 export const gitSvc = gitCtl.service;
 export const webhookSvc = webhookCtl.service;
 export const notificationSvc = notificationCtl.service;
+export const deployEnvSvc = new DeployEnvironmentService();
 
 export const controllers = [
 	roleCtl,
@@ -172,10 +174,13 @@ export const createWorkspace = async (ownerId: string, name: string, isPublic = 
 
 	// assign user & workspace to controllers:
 	controllers.map((ctl) => {
-		ctl.service.ownership = { owner: user, workspace };
-		ctl.service.req = { user, workspace } as AppRequest;
 		ctl.user = currentUser;
 		ctl.workspace = workspace;
+		ctl.ownership = { owner: user, workspace };
+		ctl.service.ownership = ctl.ownership;
+		ctl.service.req = { user, workspace } as AppRequest;
+		// special case (service that has no controllers)
+		deployEnvSvc.ownership = ctl.ownership;
 	});
 
 	return workspace;
@@ -218,10 +223,13 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 
 	// assign user & workspace to controllers:
 	controllers.map((ctl) => {
-		ctl.service.ownership = { owner: user, workspace };
-		ctl.service.req = { user, workspace } as AppRequest;
 		ctl.user = user;
 		ctl.workspace = workspace;
+		ctl.ownership = { owner: user, workspace };
+		ctl.service.ownership = ctl.ownership;
+		ctl.service.req = { user, workspace } as AppRequest;
+		// special case (service that has no controllers)
+		deployEnvSvc.ownership = ctl.ownership;
 	});
 
 	currentUser = user;
@@ -230,27 +238,32 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 	return { user, workspace };
 };
 
-export type DxOptions = { onProgress?: (msg: string) => void; isDebugging?: boolean };
+export type DxOptions = { onProgress?: (msg: string) => void; isDebugging?: boolean; cwd?: string };
 
 export const CLI_TEST_DIR = path.resolve(CLI_CONFIG_DIR, "tests");
 if (!existsSync(CLI_TEST_DIR)) mkdirSync(CLI_TEST_DIR, { recursive: true });
 const dxCommandOptions: Options = { env: { CLI_MODE: "client" }, cwd: CLI_TEST_DIR };
 
 export const dxCmd = async (command: string, options?: DxOptions) => {
-	const stream = execaCommand(command, dxCommandOptions);
+	const _options = { ...dxCommandOptions };
+	if (options?.cwd) _options.cwd = options.cwd;
+
+	const stream = execaCommand(command, _options);
 	let stdout: string = "";
 	stream.stdio.forEach((_stdio) => {
 		if (_stdio) {
 			_stdio.on("data", (data) => {
 				let logMsg = data.toString();
 				stdout += logMsg;
-				if (options?.isDebugging) console.log("[DX_CMD]", logMsg);
+				console.log(logMsg);
 				if (options?.onProgress && logMsg) options?.onProgress(logMsg);
 			});
 		}
 	});
 	const end = await stream;
-	return stdout || end.stdout;
+	const result = stdout || end.stdout;
+	// console.log(result);
+	return result;
 };
 
 /**

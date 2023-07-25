@@ -105,7 +105,6 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	const buildData = {
 		name: `[${env.toUpperCase()}] ${imageURL}`,
 		slug: SOCKET_ROOM,
-		// tag: buildNumber,
 		status: "success",
 		env,
 		createdBy: username,

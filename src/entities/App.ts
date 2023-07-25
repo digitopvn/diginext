@@ -30,6 +30,12 @@ export interface AppGitInfo {
 	 * Git provider's type: `github`, `bitbucket`, `gitlab`
 	 */
 	provider?: GitProviderType;
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Git provider's type: `github`, `bitbucket`, `gitlab`
+	 */
+	providerID?: string | IGitProvider;
 }
 
 /**
@@ -84,6 +90,11 @@ export interface IApp extends IBase {
 	 * @memberof IApp
 	 */
 	lastUpdatedBy?: string;
+
+	/**
+	 * Git Provider of this app
+	 */
+	gitProvider?: Types.ObjectId | IGitProvider | string;
 
 	/**
 	 * The Git information of the app.
@@ -143,11 +154,6 @@ export interface IApp extends IBase {
 	 * @memberof IApp
 	 */
 	projectSlug?: string;
-
-	/**
-	 * Git Provider of this app
-	 */
-	gitProvider?: Types.ObjectId | IGitProvider | string;
 
 	/**
 	 * Date when the application was archived (take down all deploy environments)

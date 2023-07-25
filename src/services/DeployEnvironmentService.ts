@@ -1,13 +1,15 @@
 import { isJSON } from "class-validator";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { logWarn } from "diginext-utils/dist/xconsole/log";
-import { isBoolean, isEmpty, isUndefined } from "lodash";
+import { isArray, isBoolean, isEmpty, isUndefined, toString } from "lodash";
 import type { QuerySelector } from "mongoose";
 
 import type { ICluster, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
+import type { IQueryOptions } from "@/interfaces";
 import { type DeployEnvironment, type KubeDeployment } from "@/interfaces";
 import type { DeployEnvironmentData } from "@/interfaces/AppInterfaces";
+import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
@@ -95,12 +97,12 @@ export class DeployEnvironmentService {
 
 		if (!app.project) throw new Error(`This app is orphan, apps should belong to a project.`);
 		if (!deployEnvironmentData.imageURL) throw new Error(`Build image URL is required.`);
-		if (!deployEnvironmentData.buildNumber) throw new Error(`Build number (image's tag) is required.`);
+		if (!deployEnvironmentData.buildTag) throw new Error(`Build number (image's tag) is required.`);
 
 		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
-		const { buildNumber } = deployEnvironmentData;
+		const { buildTag } = deployEnvironmentData;
 
 		const project = app.project as IProject;
 		const { slug: projectSlug } = project;
@@ -178,27 +180,14 @@ export class DeployEnvironmentService {
 		if (!updatedApp) throw new Error(`Failed to create "${env}" deploy environment.`);
 
 		const appConfig = await getAppConfigFromApp(updatedApp);
-
-		// if (
-		// 	typeof buildNumber === "undefined" &&
-		// 	updatedApp.deployEnvironment &&
-		// 	updatedApp.deployEnvironment[env] &&
-		// 	updatedApp.deployEnvironment[env].deploymentYaml
-		// ) {
-		// 	// generate deployment files and apply new config
-		// 	const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		// 	console.log("buildNumber :>> ", buildNumber);
-		// 	console.log("this.user :>> ", this.user);
-		// }
-
-		console.log("buildNumber :>> ", buildNumber);
+		console.log("buildTag :>> ", buildTag);
 
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
 			env,
 			username: ownership.owner.slug,
 			workspace: ownership.workspace,
-			buildNumber,
+			buildTag: buildTag,
 		});
 
 		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
@@ -235,7 +224,7 @@ export class DeployEnvironmentService {
 
 		if (workloads && workloads.length > 0) {
 			// create new release and roll out
-			const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			const release = await createReleaseFromApp(updatedApp, env, buildTag, {
 				author: ownership.owner,
 				cliVersion: currentVersion(),
 				workspace: ownership.workspace,
@@ -401,7 +390,7 @@ export class DeployEnvironmentService {
 	/**
 	 * Take down a deploy environment but still keep the deploy environment information (cluster, registry, namespace,...)
 	 */
-	async takeDownDeployEnvironment(app: IApp, env: string) {
+	async takeDownDeployEnvironment(app: IApp, env: string, options?: IQueryOptions) {
 		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
 
 		const deployEnvironment = app.deployEnvironment[env];
@@ -410,7 +399,7 @@ export class DeployEnvironmentService {
 		const clusterSlug = deployEnvironment.cluster;
 		if (!clusterSlug) throw new Error(`This app's deploy environment (${env}) hasn't been deployed in any clusters.`);
 
-		const { AppService, ClusterService, ContainerRegistryService } = await import("./index");
+		const { AppService, ClusterService } = await import("./index");
 		const appSvc = new AppService();
 		const clusterSvc = new ClusterService();
 		const cluster = await clusterSvc.findOne({ slug: clusterSlug });
@@ -421,11 +410,12 @@ export class DeployEnvironmentService {
 		const { contextName: context } = cluster;
 		const { namespace } = deployEnvironment;
 
+		// TODO: get "main-app" label in the "release" of this app
 		// get deployment's labels
 		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
-		// switch to the cluster of this environment
+		// double check cluster's accessibility
 		await ClusterManager.authCluster(cluster);
 
 		/**
@@ -442,6 +432,8 @@ export class DeployEnvironmentService {
 			await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
 			// Delete DEPLOYMENT
 			await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${mainAppName}` });
+
+			console.log(`✅ Deleted "${mainAppName}" deployment.`);
 		} catch (e) {
 			errorMsg = `Unable to delete deploy environment "${env}" on cluster: ${clusterSlug} (Namespace: ${namespace}): ${e}`;
 		}
@@ -456,14 +448,31 @@ export class DeployEnvironmentService {
 			await ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
 			// Delete DEPLOYMENT
 			await ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${deprecatedMainAppName}` });
+
+			console.log(`✅ Deleted "${deprecatedMainAppName}" deployment.`);
 		} catch (e) {
 			errorMsg += `, ${e}.`;
 		}
 
-		// update database
-		appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.tookDownAt`]: new Date() });
+		if (options?.isDebugging) console.error(`[DEPLOY_ENV_SERVICE]`, errorMsg);
 
-		return { success: true, message: errorMsg };
+		// update database
+		const tookDownAt = new Date();
+		app = await appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.tookDownAt`]: tookDownAt });
+
+		// response data
+		return {
+			app: {
+				slug: app.slug,
+				id: app._id,
+				owner: app.owner,
+				workspace: app.workspace,
+				tookDownAt,
+				cluster: cluster.slug,
+			},
+			success: true,
+			message: errorMsg,
+		};
 	}
 
 	async deleteDeployEnvironment(app: IApp, env: string) {
@@ -487,6 +496,14 @@ export class DeployEnvironmentService {
 		return updatedApp;
 	}
 
+	/**
+	 * Change cluster of a deploy environment
+	 * @param app
+	 * @param env
+	 * @param cluster
+	 * @param options
+	 * @returns
+	 */
 	async changeCluster(
 		app: IApp,
 		env: string,
@@ -503,15 +520,15 @@ export class DeployEnvironmentService {
 		}
 
 		const { AppService } = await import("./index");
-		const appSvc = new AppService();
+		const appSvc = new AppService(this.ownership);
 
 		// update new cluster slug:
 		app = await appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.cluster`]: cluster.slug });
 
 		const { BuildService } = await import("./index");
 		const { default: DeployService } = await import("./DeployService");
-		const buildSvc = new BuildService();
-		const deploySvc = new DeployService();
+		const buildSvc = new BuildService(this.ownership);
+		const deploySvc = new DeployService(this.ownership);
 		// deploy to new cluster
 		const latestBuild = await buildSvc.findOne({ slug: app.latestBuild });
 		const { build, release, error } = await deploySvc.deployBuild(latestBuild, {
@@ -524,5 +541,83 @@ export class DeployEnvironmentService {
 
 		// return
 		return { build, release, app };
+	}
+
+	/**
+	 * Update environment variables of a deploy environment
+	 * @param app
+	 * @param env
+	 * @param variables - Array of environment variables: `[{name,value}]`
+	 * @returns
+	 */
+	async updateEnvVars(app: IApp, env: string, variables: KubeEnvironmentVariable[]) {
+		// validate
+		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
+		if (!variables) throw new Error(`Params "variables" (array of environment variables) is required.`);
+		if (!isArray(variables)) throw new Error(`Params "variables" should be an array.`);
+
+		// just to make sure "value" is always "string"
+		variables = variables.map(({ name, value }) => ({ name, value: toString(value) }));
+
+		const deployEnvironment = app.deployEnvironment[env];
+		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
+
+		const { AppService, ClusterService } = await import("./index");
+
+		const appSvc = new AppService(this.ownership);
+
+		// process
+		let updatedApp = await appSvc.updateOne(
+			{ _id: app._id },
+			{
+				[`deployEnvironment.${env}.envVars`]: variables,
+				[`deployEnvironment.${env}.lastUpdatedBy`]: this.user.slug,
+				[`deployEnvironment.${env}.updatedAt`]: new Date(),
+			}
+		);
+		if (!updatedApp) throw new Error(`Unable to update variables of "${env}" deploy environment (App: "${app.slug}").`);
+
+		// TO BE REMOVED SOON: Fallback support "buildNumber"
+		if (!deployEnvironment.buildTag && deployEnvironment.buildNumber) deployEnvironment.buildTag = deployEnvironment.buildNumber;
+
+		let message = "";
+		// update on cluster -> if it's failed, just ignore and return warning message!
+		if (deployEnvironment.cluster && deployEnvironment.buildTag) {
+			try {
+				const clusterSlug = deployEnvironment.cluster;
+				const clusterSvc = new ClusterService(this.ownership);
+				const cluster = await clusterSvc.findOne({ slug: clusterSlug });
+				if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+
+				const { contextName: context } = cluster;
+				const { buildTag } = deployEnvironment;
+
+				// generate new deployment YAML
+				let deployment: GenerateDeploymentResult = await generateDeployment({
+					env,
+					appSlug: app.slug,
+					buildTag: buildTag,
+					username: this.user.slug,
+					workspace: this.workspace,
+				});
+
+				// apply deployment YAML
+				const result = await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context });
+				console.log("DeployEnvironmentService > updateEnvVars > result :>> ", result);
+
+				// update to database
+				updatedApp = await appSvc.updateOne(
+					{ _id: app._id },
+					{
+						[`deployEnvironment.${env}.deploymentYaml`]: deployment.deploymentContent,
+						[`deployEnvironment.${env}.prereleaseDeploymentYaml`]: deployment.prereleaseDeploymentContent,
+					}
+				);
+			} catch (e) {
+				message = e.toString();
+			}
+		}
+
+		return { app: updatedApp, message };
 	}
 }

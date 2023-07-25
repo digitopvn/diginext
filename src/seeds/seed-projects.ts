@@ -14,7 +14,7 @@ export const seedDefaultProjects = async (workspace: IWorkspace, owner: IUser) =
 			initialProjects.map(async (proj) => {
 				const project = await DB.findOne("project", { isDefault: true, workspace: workspace._id });
 				if (!project) {
-					const seedProj = await DB.create("project", { ...proj, owner: owner._id, workspace: workspace._id }, { isDebugging: true });
+					const seedProj = await DB.create("project", { ...proj, owner: owner._id, workspace: workspace._id });
 					return seedProj;
 				}
 				return;

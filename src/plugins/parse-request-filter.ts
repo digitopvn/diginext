@@ -7,18 +7,23 @@ import { MongoDB } from "./mongodb";
 export const parseRequestFilter = (requestQuery: any) => {
 	const {
 		id,
-		download = false,
+		// pagination
 		skip,
 		limit = 0,
 		page = 1,
 		size = 0,
+		// options
 		populate,
 		select,
 		status,
 		sort, // @example: -updatedAt,-createdAt
 		order, // @example: -updatedAt,-createdAt
+		download = false,
 		search = false,
 		raw = false,
+		full = false,
+		isDebugging = false,
+		// others
 		where = {},
 		access_token,
 		...filter

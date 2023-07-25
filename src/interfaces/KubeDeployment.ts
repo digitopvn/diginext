@@ -21,9 +21,7 @@ export interface KubeDeployment {
 		template?: {
 			metadata?: {
 				labels?: {
-					owner?: string;
-					app?: string;
-					project?: string;
+					[key: string]: string;
 				};
 			};
 			spec?: {

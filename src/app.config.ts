@@ -11,7 +11,10 @@ import { CLI_DIR } from "./config/const";
 let appEnv: any = {};
 let isNoEnvFile = false;
 
-const envFilePath = trimNull(process.env.NODE_ENV) === "test" ? path.resolve(CLI_DIR, `.env.test`) : path.resolve(CLI_DIR, `.env.dev`);
+const envFilePath =
+	trimNull(process.env.NODE_ENV) === "test" || trimNull(process.env.NODE_ENV) === "test_ci"
+		? path.resolve(CLI_DIR, `.env.test`)
+		: path.resolve(CLI_DIR, `.env.dev`);
 
 if (fs.existsSync(envFilePath)) {
 	dotenv.config({ path: envFilePath });
@@ -26,7 +29,6 @@ if (fs.existsSync(envFilePath)) {
 
 // dev mode?
 export const isDevMode = toBool(process.env.DEV_MODE);
-
 export const isServerMode = trimNull(process.env.CLI_MODE) === "server";
 appEnv.CLI_MODE = trimNull(process.env.CLI_MODE);
 
@@ -50,6 +52,7 @@ if (trimNull(process.env.CLI_MODE) === "server") {
 export enum EnvName {
 	DEVELOPMENT = "development",
 	TEST = "test",
+	TEST_CI = "test_ci",
 	STAGING = "staging",
 	CANARY = "canary",
 	PRODUCTION = "production",
@@ -62,7 +65,8 @@ function toInt(obj: any, valueDefault: number) {
 
 // Main config
 export class Config {
-	static grab = (key: string, defaultValue: any = "") => process.env[key] ?? appEnv[key] ?? defaultValue;
+	static grab = (key: string, defaultValue: any = "") =>
+		process.env[key] ? trimNull(process.env[key]) : appEnv[key] ? trimNull(appEnv[key]) : defaultValue;
 
 	static get ENV() {
 		return EnvName[this.grab("NODE_ENV", "development").toUpperCase()] ?? EnvName.DEVELOPMENT;
@@ -160,6 +164,9 @@ export const IsDev = function () {
 };
 export const IsTest = function () {
 	return Config.ENV === EnvName.TEST;
+};
+export const IsTestCI = function () {
+	return Config.ENV === EnvName.TEST_CI;
 };
 export const IsStag = function () {
 	return Config.ENV === EnvName.STAGING;

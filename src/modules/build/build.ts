@@ -29,14 +29,23 @@ export type StartBuildParams = {
 	 * App's slug
 	 */
 	appSlug: string;
-	/**
-	 * Build number is also an container image's tag
-	 */
-	buildNumber: string;
+
 	/**
 	 * Select a git branch to pull source code & build
 	 */
 	gitBranch: string;
+
+	/**
+	 * Build tag is also an container image's tag
+	 */
+	buildTag?: string;
+
+	/**
+	 * Use `buildTag` instead, currently it's still an alias of `buildTag`,
+	 * **ONLY for fallback support CLI < `3.21.0`** and will be removed soon.
+	 * @deprecated From `v3.21.0+`
+	 */
+	buildNumber?: string;
 
 	/**
 	 * ID of the author
@@ -106,7 +115,7 @@ export type StartBuildParams = {
 	shouldDeploy?: boolean;
 };
 
-export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildNumber" | "buildWatch">;
+export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildTag" | "buildWatch">;
 
 export async function testBuild() {
 	let socketServer = getIO();
@@ -164,12 +173,12 @@ export async function startBuild(
 
 	const {
 		// require
-		buildNumber,
+		buildTag,
 		gitBranch,
 		registrySlug,
 		appSlug,
-		userId,
 		// optional
+		userId,
 		args: buildArgs,
 		user,
 		env,
@@ -179,16 +188,25 @@ export async function startBuild(
 		cliVersion,
 	} = params;
 
+	// validate
+	if (!buildTag) throw new Error(`Unable to start building, "buildTag" is required.`);
+	if (!gitBranch) throw new Error(`Unable to start building, "gitBranch" is required.`);
+	if (!registrySlug) throw new Error(`Unable to start building, "registrySlug" is required.`);
+	if (!appSlug) throw new Error(`Unable to start building, "appSlug" is required.`);
+	if (!user && !userId) throw new Error(`Unable to start building, "user" or "userId" is required.`);
+
 	const owner = user || (await DB.findOne("user", { _id: userId }, { populate: ["workspaces", "activeWorkspaces"] }));
 	if (isDebugging) console.log("owner :>> ", owner);
 
+	// get app
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
+
 	// get workspace
 	const { activeWorkspace, slug: username } = owner;
 	const workspace = activeWorkspace as IWorkspace;
 
 	// socket & logs
-	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
+	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 	const logger = new Logger(SOCKET_ROOM);
 
 	// Emit socket message to request the BUILD SERVER to start building...
@@ -196,7 +214,7 @@ export async function startBuild(
 
 	// Validating...
 	if (isEmpty(app)) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" not found.` });
+		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `[START BUILD] App "${appSlug}" not found.` });
 		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" not found.`);
 		return;
 	}
@@ -205,19 +223,29 @@ export async function startBuild(
 	const registry = await DB.findOne("registry", { slug: registrySlug });
 
 	if (isEmpty(registry)) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
+		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
 		if (options?.onError) options?.onError(`[START BUILD] Container registry "${registrySlug}" not found.`);
 		return;
 	}
 
 	if (isEmpty(app.project)) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" doesn't belong to any projects (probably deleted?).` });
+		sendLog({
+			SOCKET_ROOM,
+			type: "error",
+			action: "end",
+			message: `[START BUILD] App "${appSlug}" doesn't belong to any projects (probably deleted?).`,
+		});
 		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" doesn't belong to any projects (probably deleted?).`);
 		return;
 	}
 
 	if (isEmpty(app.git) || isEmpty(app.git?.repoSSH)) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] App "${appSlug}" doesn't have any git repository data (probably deleted?).` });
+		sendLog({
+			SOCKET_ROOM,
+			type: "error",
+			action: "end",
+			message: `[START BUILD] App "${appSlug}" doesn't have any git repository data (probably deleted?).`,
+		});
 		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" doesn't have any git repository data (probably deleted?).`);
 		return;
 	}
@@ -225,10 +253,6 @@ export async function startBuild(
 	// project info
 	const project = app.project as IProject;
 	const { slug: projectSlug } = project;
-
-	// build image
-	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}-${app.slug}` } = app;
-	if (params.isDebugging) console.log("startBuild > imageURL :>> ", imageURL);
 
 	// get latest build of this app to utilize the cache for this build process
 	const latestBuild = await DB.findOne("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
@@ -238,10 +262,7 @@ export async function startBuild(
 		git: { repoSSH },
 	} = app;
 
-	// Build image
-	const buildImage = `${imageURL}:${buildNumber}`;
-
-	log("[START BUILD] Input params :>>", params);
+	if (isDebugging) log("[START BUILD] Input params :>>", params);
 
 	/**
 	 * ===============================================
@@ -254,20 +275,20 @@ export async function startBuild(
 	// detect "gitProvider" from git repo SSH URI:
 	const gitProvider = getGitProviderFromRepoSSH(repoSSH);
 
-	// check if build tag is existed:
-	// const build = await DB.findOne("build", { image: buildImage, tag: buildNumber });
-	// if (build) {
-	// 	sendLog({ SOCKET_ROOM, message: `Build "${buildImage}" existed, please choose a different tag name.` });
-	// 	if (options?.onError) options?.onError(`Build "${buildImage}" existed, please choose a different tag name.`);
-	// 	return;
-	// }
+	/**
+	 * Generate build number & update build image data
+	 */
+	const { image: imageURL = `${registry.imageBaseURL}/${projectSlug}-${app.slug}` } = app;
+	const buildImage = `${imageURL}:${buildTag}`;
+	if (params.isDebugging) console.log("startBuild > imageURL :>> ", imageURL);
 
-	// create new build on build server:
+	/**
+	 * Create new build in database
+	 */
 	const buildData = {
 		slug: SOCKET_ROOM,
-		name: buildImage,
+		tag: buildTag,
 		image: imageURL,
-		tag: buildNumber,
 		status: "building",
 		startTime: startTime.toDate(),
 		createdBy: username,
@@ -318,11 +339,21 @@ export async function startBuild(
 		});
 	}
 
-	// verify SSH before pulling files...
+	/**
+	 * Verify SSH before cloning/pulling files from a git repository.
+	 */
+
 	const gitAuth = await verifySSH({ gitProvider });
 	if (!gitAuth) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.` });
+		// print the logs to client (Dashboard & CLI)
+		sendLog({
+			SOCKET_ROOM,
+			action: "end",
+			type: "error",
+			message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`,
+		});
 		if (options?.onError) options?.onError(`[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`);
+		// update build status
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
@@ -338,8 +369,10 @@ export async function startBuild(
 			onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
 		});
 	} catch (e) {
-		sendLog({ SOCKET_ROOM, type: "error", message: `Failed to pull "${repoSSH}": ${e}` });
+		// print the logs to client (Dashboard & CLI)
+		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `Failed to pull "${repoSSH}": ${e}` });
 		if (options?.onError) options?.onError(`Failed to pull "${repoSSH}": ${e}`);
+		// update build status
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
@@ -359,8 +392,10 @@ export async function startBuild(
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
+			action: "end",
 			message: `[START BUILD] Missing "Dockerfile" to build the application, please create your "Dockerfile" in the root directory of the source code.`,
 		});
+		// update build status
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
@@ -377,8 +412,10 @@ export async function startBuild(
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
+			action: "end",
 			message: `Server network error, unable to perform data updating.`,
 		});
+		// update build status
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
@@ -404,6 +441,7 @@ export async function startBuild(
 			SOCKET_ROOM,
 			message: chalk.green(`✓ FINISHED BUILDING IMAGE AFTER ${humanDuration}`),
 			type: shouldDeploy ? "log" : "success",
+			action: shouldDeploy ? "log" : "end",
 		});
 
 		if (shouldDeploy) {
@@ -467,7 +505,7 @@ export async function startBuild(
 			return { SOCKET_ROOM, build: newBuild, imageURL, buildImage, startTime, builder: buildEngineName };
 		} catch (e) {
 			await updateBuildStatus(newBuild, "failed");
-			sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
+			sendLog({ SOCKET_ROOM, message: e.message, type: "error", action: "end" });
 			if (options?.onError) options?.onError(`Build failed: ${e}`);
 
 			// dispatch/trigger webhook
@@ -502,7 +540,7 @@ export async function startBuild(
 			})
 			.catch(async (e) => {
 				await updateBuildStatus(newBuild, "failed");
-				sendLog({ SOCKET_ROOM, message: e.message, type: "error" });
+				sendLog({ SOCKET_ROOM, message: e.message, type: "error", action: "end" });
 				if (options?.onError) options?.onError(`Build failed: ${e}`);
 
 				// dispatch/trigger webhook

@@ -72,7 +72,7 @@ export async function startBuildV1(
 	const { shouldRollout = true } = addition;
 	const startTime = dayjs();
 
-	const { env = "dev", buildNumber, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, namespace } = options;
+	const { env = "dev", buildTag, buildImage, gitBranch, username = "Anonymous", projectSlug, slug: appSlug, namespace } = options;
 
 	const latestBuild = await DB.findOne("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
@@ -81,7 +81,7 @@ export async function startBuildV1(
 	const workspace = app.workspace as IWorkspace;
 
 	// socket & logs
-	const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
+	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 	const logger = new Logger(SOCKET_ROOM);
 	options.SOCKET_ROOM = SOCKET_ROOM;
 
@@ -115,7 +115,7 @@ export async function startBuildV1(
 	const buildData = {
 		name: `[${options.env.toUpperCase()}] ${buildImage}`,
 		slug: SOCKET_ROOM,
-		tag: buildNumber,
+		tag: buildTag,
 		status: "building",
 		env,
 		createdBy: username,
@@ -256,7 +256,7 @@ export async function startBuildV1(
 			env,
 			username,
 			workspace,
-			buildNumber,
+			buildTag: buildTag,
 			targetDirectory: options.targetDirectory,
 		});
 	} catch (e) {

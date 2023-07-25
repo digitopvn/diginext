@@ -12,43 +12,32 @@ type OwnershipParams = {
 	cliVersion?: string;
 };
 
-export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: string, ownership?: OwnershipParams) => {
+export const createReleaseFromApp = async (app: IApp, env: string, buildTag: string, ownership?: OwnershipParams) => {
 	const { DB } = await import("@/modules/api/DB");
 
 	const deployedEnvironment = await getDeployEvironmentByApp(app, env);
 	const { imageURL: IMAGE_NAME } = deployedEnvironment;
-	// const { BUILD_NUMBER } = fetchDeploymentFromContent(deployedEnvironment.deploymentYaml);
 
-	if (!buildNumber) throw new Error(`Build not found due to "undefined" build number (app: "${app.slug}" - env: "${env}")`);
+	if (!buildTag) throw new Error(`Build not found due to "undefined" build number (app: "${app.slug}" - env: "${env}")`);
 
 	console.log("createReleaseFromApp() > IMAGE_NAME :>> ", IMAGE_NAME);
-	console.log("createReleaseFromApp() > BUILD_NUMBER :>> ", buildNumber);
+	console.log("createReleaseFromApp() > buildTag :>> ", buildTag);
 
-	const build = await DB.findOne("build", { image: IMAGE_NAME, tag: buildNumber }, { order: { createdAt: -1 } });
+	const build = await DB.findOne("build", { image: IMAGE_NAME, tag: buildTag }, { order: { createdAt: -1 } });
 	if (!build) throw new Error(`Unable to create new release: build image "${IMAGE_NAME}" not found.`);
 
 	const project = await DB.findOne("project", { slug: app.projectSlug });
 	if (!project) throw new Error(`Unable to create new release: project "${app.projectSlug}" not found.`);
-	// console.log("project :>> ", project);
 
 	// get deployment data
 	const { branch, cliVersion } = build;
 	const { slug: projectSlug } = project;
 	const { owner, workspace, slug: appSlug } = app;
 	const { slug: workspaceSlug, _id: workspaceId } = workspace as IWorkspace;
-
-	// const buildNumber = tag ?? image.split(":")[1];
-
-	// console.log(`deployedEnvironment > ${env} :>>`, deployedEnvironment);
-
 	const { deploymentYaml, prereleaseDeploymentYaml, namespace, provider, project: providerProject, cluster } = deployedEnvironment;
 
 	const deploymentData = fetchDeploymentFromContent(deploymentYaml);
 	const prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentYaml);
-
-	// log({ deploymentData });
-	// log({ prereleaseDeploymentData });
-	// const { IMAGE_NAME } = deploymentData;
 
 	let defaultAuthor = owner as IUser;
 	if (!defaultAuthor) defaultAuthor = await DB.findOne("api_key_user", { workspaces: workspaceId });
@@ -69,7 +58,7 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildNumber: 
 	const data = {
 		env,
 		cliVersion: ownership?.cliVersion || cliVersion,
-		name: `${projectSlug}/${appSlug}:${buildNumber}`,
+		name: `${projectSlug}/${appSlug}:${buildTag}`,
 		image: IMAGE_NAME,
 		appConfig: appConfig,
 		// build status

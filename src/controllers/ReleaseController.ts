@@ -68,23 +68,23 @@ export default class ReleaseController extends BaseController<IRelease> {
 			 */
 			env: string;
 			/**
-			 * Build number is image's tag (no special characters, eg. "dot" or "comma")
+			 * Build tag is image's tag (no special characters, eg. "dot" or "comma")
 			 * @example latest, v01, prerelease, alpha, beta,...
 			 */
-			buildNumber: string;
+			buildTag: string;
 		}
 	) {
 		const { DB } = await import("@/modules/api/DB");
 
 		if (!body.env) return respondFailure({ msg: `Param "env" (deploy environment code) is required.` });
-		if (!body.buildNumber) return respondFailure({ msg: `Param "buildNumber" (image's tag) is required.` });
+		if (!body.buildTag) return respondFailure({ msg: `Param "buildTag" (image's tag) is required.` });
 
-		const { app: appSlug, buildNumber } = body;
+		const { app: appSlug, buildTag } = body;
 
 		const app = await DB.findOne("app", { slug: appSlug });
 		if (!app) return respondFailure(`App "${appSlug}" not found.`);
 
-		const newRelease = await createReleaseFromApp(app, body.env, buildNumber, { author: this.user, workspace: this.workspace });
+		const newRelease = await createReleaseFromApp(app, body.env, buildTag, { author: this.user, workspace: this.workspace });
 		if (!newRelease) return respondFailure({ msg: `Failed to create new release from build data.` });
 
 		return respondSuccess({ data: newRelease });

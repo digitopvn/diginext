@@ -44,7 +44,7 @@ router
 	// environment variables
 	.get("/environment/variables", processApiRequest(controller.getEnvVarsOnDeployEnvironment.bind(controller)))
 	.post("/environment/variables", processApiRequest(controller.createEnvVarsOnDeployEnvironment.bind(controller)))
-	.patch("/environment/variables", processApiRequest(controller.updateSingleEnvVarOnDeployEnvironment.bind(controller)))
+	.patch("/environment/variables", processApiRequest(controller.updateEnvVarsOnDeployEnvironment.bind(controller)))
 	.delete("/environment/variables", processApiRequest(controller.deleteEnvVarsOnDeployEnvironment.bind(controller)));
 
 export default router;

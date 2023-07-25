@@ -7,7 +7,7 @@ import type { IApp, IBuild, ICluster, IProject } from "@/entities";
 import { AppDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
 import type { AppInputSchema } from "@/interfaces/AppInterfaces";
-import { CreateEnvVarsDto, DeployEnvironmentData } from "@/interfaces/AppInterfaces";
+import { CreateEnvVarsDto, DeployEnvironmentData, UpdateEnvVarsDto } from "@/interfaces/AppInterfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -572,9 +572,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const currentDeployEnvData = app.deployEnvironment[env];
 
 		// build number
-		if (!deployEnvironmentData.buildNumber) deployEnvironmentData.buildNumber = app.deployEnvironment[env].buildNumber;
+		if (!deployEnvironmentData.buildTag) deployEnvironmentData.buildTag = app.deployEnvironment[env].buildTag;
 
-		if (!deployEnvironmentData.buildNumber) {
+		if (!deployEnvironmentData.buildTag) {
 			const releaseFilter = { appSlug: app.slug, buildStatus: "success", env, active: true };
 			console.log("updateDeployEnvironment() > releaseFilter :>> ", releaseFilter);
 
@@ -588,13 +588,13 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 			const latestBuild = latestRelease.build as IBuild;
 			if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Latest build not found (app: "${app.slug}" - env: "${env}")`);
-			deployEnvironmentData.buildNumber = latestBuild.tag;
+			deployEnvironmentData.buildTag = latestBuild.tag;
 		}
 
-		if (!deployEnvironmentData.buildNumber) return respondFailure({ msg: `Build number (image's tag) is required.` });
+		if (!deployEnvironmentData.buildTag) return respondFailure({ msg: `Build number (image's tag) is required.` });
 
 		// finish checking build number
-		const { buildNumber } = deployEnvironmentData;
+		const { buildTag } = deployEnvironmentData;
 
 		const project = app.project as IProject;
 		const { slug: projectSlug } = project;
@@ -687,19 +687,13 @@ export default class AppController extends BaseController<IApp, AppService> {
 			updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
 		}
 
-		// if (updatedApp.deployEnvironment[env].deploymentYaml) {
-		// 	const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		// 	console.log("buildNumber :>> ", buildNumber);
-		// 	console.log("this.user :>> ", this.user);
-		// }
-
 		// generate deployment files and apply new config
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
 			env,
 			username: this.user.slug,
 			workspace: this.workspace,
-			buildNumber,
+			buildTag: buildTag,
 		});
 
 		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
@@ -739,7 +733,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (workloads && workloads.length > 0) {
 			// create new release and roll out
-			const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			const release = await createReleaseFromApp(updatedApp, env, buildTag, {
 				author: this.user,
 				cliVersion: currentVersion(),
 				workspace: this.workspace,
@@ -886,14 +880,14 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// generate deployment files and apply new config
 		if (updatedApp.deployEnvironment && updatedApp.deployEnvironment[env] && updatedApp.deployEnvironment[env].deploymentYaml) {
-			const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+			const { BUILD_TAG } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
 
 			let deployment: GenerateDeploymentResult = await generateDeployment({
 				appSlug: app.slug,
 				env,
 				username: this.user.slug,
 				workspace: this.workspace,
-				buildNumber,
+				buildTag: BUILD_TAG,
 			});
 
 			const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
@@ -945,112 +939,26 @@ export default class AppController extends BaseController<IApp, AppService> {
 	}
 
 	/**
-	 * Update a variable on the deploy environment of the application.
+	 * Update environment variables on the deploy environment.
 	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/environment/variables")
-	async updateSingleEnvVarOnDeployEnvironment(
-		@Body()
-		body: {
-			/**
-			 * App slug
-			 */
-			slug: string;
-			/**
-			 * Deploy environment name
-			 * @example "dev" | "prod"
-			 */
-			env: string;
-			/**
-			 * A variables to be created on deploy environment
-			 */
-			envVar: KubeEnvironmentVariable;
-		},
-		@Queries() queryParams?: IPostQueryParams
-	) {
-		const { DB } = await import("@/modules/api/DB");
-		let { slug, env, envVar } = body;
-		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
-		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
-		if (!envVar) return { status: 0, messages: [`A variable (envVar { name, value }) is required.`] };
-		// if (!isJSON(envVar)) return { status: 0, messages: [`A variable (envVar { name, value }) should be a valid JSON format.`] };
+	async updateEnvVarsOnDeployEnvironment(@Body() body: UpdateEnvVarsDto, @Queries() queryParams?: IPostQueryParams) {
+		let { slug, env, envVars } = body;
+		if (!slug) return respondFailure(`App slug (slug) is required.`);
+		if (!env) return respondFailure(`Deploy environment name (env) is required.`);
+		if (!envVars) return respondFailure(`Array of environment variables (envVars) is required.`);
 
 		const app = await this.service.findOne({ ...this.filter, slug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
-		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${slug}" doesn't have any deploy environment named "${env}".`] };
 
-		const mainAppName = await getDeploymentName(app);
-		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-
-		envVar = isJSON(envVar) ? (JSON.parse(envVar as unknown as string) as KubeEnvironmentVariable) : isArray(envVar) ? envVar : undefined;
-		if (!envVar) return respondFailure(`ENV VAR is invalid.`);
-
-		const envVars = app.deployEnvironment[env].envVars || [];
-		const varToBeUpdated = envVars.find((v) => v.name === envVar.name);
-
-		const deployEnvironment = app.deployEnvironment[env];
-		if (!deployEnvironment) return respondFailure(`Deploy environment "${env}" is not existed in "${slug}" app.`);
-		if (!deployEnvironment.namespace) return respondFailure(`Namespace not existed in deploy environment "${env}" of "${slug}" app.`);
-		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
-
-		const { namespace, cluster: clusterSlug } = deployEnvironment;
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
-		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
-
-		// check if deployment is existed in the cluster / namespace
-		let workloads = await ClusterManager.getDeploysByFilter(namespace, {
-			context: cluster.contextName,
-			filterLabel: `main-app=${mainAppName}`,
-		});
-		// Fallback support for deprecated mainAppName
-		if (!workloads || workloads.length === 0) {
-			workloads = await ClusterManager.getDeploysByFilter(namespace, {
-				context: cluster.contextName,
-				filterLabel: `main-app=${deprecatedMainAppName}`,
-			});
-		}
-		if (!workloads || workloads.length === 0)
-			return respondFailure(`There are no deployments in "${namespace}" namespace of "${clusterSlug}" cluster `);
-
-		// --- validation success ---
-
-		let updatedApp: IApp;
-
-		if (varToBeUpdated) {
-			// update old variable
-			const updatedEnvVars = envVars.map((v) => (v.name === envVar.name ? envVar : v));
-
-			[updatedApp] = await this.service.update(
-				{ slug },
-				{
-					[`deployEnvironment.${env}.envVars`]: updatedEnvVars,
-				}
-			);
-			if (!updatedApp)
-				return { status: 0, messages: [`Failed to update "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
-		} else {
-			// create new variable
-			envVars.push(envVar);
-
-			[updatedApp] = await this.service.update(
-				{ slug },
-				{
-					[`deployEnvironment.${env}.envVars`]: envVars,
-				}
-			);
-			if (!updatedApp) return { status: 0, messages: [`Failed to add "${varToBeUpdated.name}" to variables of "${env}" deploy environment.`] };
-		}
-
-		// Set environment variables to deployment in the cluster
 		try {
-			const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(envVars, namespace, {
-				context: cluster.contextName,
-				filterLabel: `main-app=${mainAppName}`,
-			});
+			const { DeployEnvironmentService } = await import("@/services");
+			const deployEnvSvc = new DeployEnvironmentService(this.ownership);
+			const data = await deployEnvSvc.updateEnvVars(app, env, envVars);
 
-			let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [setEnvVarsRes] };
-			return result;
+			return respondSuccess({ data: data.app, msg: data.message });
 		} catch (e) {
 			return respondFailure(e.toString());
 		}
@@ -1204,8 +1112,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		console.log("updatedApp.deployEnvironment[env] :>> ", updatedApp.deployEnvironment[env]);
 
 		// generate deployment files and apply new config
-		const { BUILD_NUMBER: buildNumber } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		console.log("buildNumber :>> ", buildNumber);
+		const { BUILD_TAG } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		console.log("BUILD_TAG :>> ", BUILD_TAG);
 		console.log("this.user :>> ", this.user);
 
 		let deployment: GenerateDeploymentResult = await generateDeployment({
@@ -1213,7 +1121,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			env,
 			username: this.user.slug,
 			workspace: this.workspace,
-			buildNumber,
+			buildTag: BUILD_TAG,
 		});
 
 		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
@@ -1248,7 +1156,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		if (workloads && workloads.length > 0) {
 			// create new release and roll out
-			const release = await createReleaseFromApp(updatedApp, env, buildNumber, {
+			const release = await createReleaseFromApp(updatedApp, env, BUILD_TAG, {
 				author: this.user,
 				cliVersion: currentVersion(),
 				workspace: this.workspace,

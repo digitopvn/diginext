@@ -26,7 +26,7 @@ export const seedFrameworks = async (workspace: IWorkspace, owner: IUser) => {
 			initialFrameworks.map(async (fw) => {
 				const framework = await DB.findOne("framework", { repoURL: fw.repoURL, workspace: workspace._id });
 				if (!framework) {
-					const seedFw = await DB.create("framework", { ...fw, owner: owner._id, workspace: workspace._id }, { isDebugging: true });
+					const seedFw = await DB.create("framework", { ...fw, owner: owner._id, workspace: workspace._id });
 					return seedFw;
 				}
 				return framework;

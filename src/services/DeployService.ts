@@ -1,5 +1,3 @@
-import { log } from "diginext-utils/dist/xconsole/log";
-
 import { Config } from "@/app.config";
 import type { DeployBuildParams } from "@/controllers/DeployController";
 import type { IBuild, IRelease, IUser, IWorkspace } from "@/entities";
@@ -26,6 +24,10 @@ export default class DeployService {
 	 */
 	ownership?: Ownership;
 
+	constructor(ownership?: Ownership) {
+		this.ownership = ownership;
+	}
+
 	/**
 	 * Build container image first, then deploy that build to target deploy environment.
 	 */
@@ -44,6 +46,8 @@ export default class DeployService {
 			const registry = await DB.findOne("registry", { slug: deployParams.registry, workspace: ownership.workspace._id });
 			if (registry) app = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${deployParams.env}.registry`]: registry.slug });
 		}
+		// fallback support deprecated "buildNumber" -> now "buildTag"
+		if (buildParams.buildNumber) buildParams.buildTag = buildParams.buildNumber;
 
 		// ownership
 		const author = ownership.owner || (await DB.findOne("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] }));
@@ -75,12 +79,12 @@ export default class DeployService {
 		// if (typeof buildParams.buildWatch === "undefined") buildParams.buildWatch = true;
 
 		// start build in background process:
-		log(`buildAndDeploy > buildParams.buildNumber :>>`, buildParams.buildNumber);
+		// log(`buildAndDeploy > buildParams.buildTag :>>`, buildParams.buildTag);
 		const { build, release } = await buildAndDeploy(buildParams, deployBuildOptions);
 
-		const { appSlug, buildNumber } = buildParams;
+		const { appSlug, buildTag } = buildParams;
 		const buildServerUrl = Config.BASE_URL;
-		const SOCKET_ROOM = `${appSlug}-${buildNumber}`;
+		const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}&env=${deployParams.env}`;
 
 		return { logURL, build, release };

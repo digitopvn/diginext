@@ -134,10 +134,15 @@ export interface ClientDeployEnvironmentConfig {
  */
 export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	/**
-	 * Build number is image's tag (no special characters, eg. "dot" or "comma")
+	 * Build tag is image's tag (no special characters, eg. "dot" or "comma")
 	 * @example latest, v01, prerelease, alpha, beta,...
 	 */
-	buildNumber: string;
+	buildTag: string;
+	/**
+	 * Alias of `buildTag`, use `buildTag` instead, this field will be removed soon.
+	 * @deprecated
+	 */
+	buildNumber?: string;
 
 	/**
 	 * The CLI version

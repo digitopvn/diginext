@@ -54,6 +54,8 @@ export class Logger {
 	append(str) {
 		this.content += "\n" + str;
 		const content = this.read();
-		fs.writeFileSync(this.filePath, content + "\n" + str, { flag: "w", encoding: "utf8" });
+		if (fs.existsSync(this.filePath)) {
+			fs.writeFileSync(this.filePath, content + "\n" + str, { flag: "w", encoding: "utf8" });
+		}
 	}
 }
