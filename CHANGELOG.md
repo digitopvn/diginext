@@ -1,3 +1,10 @@
+## [3.20.2-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.20.2-prerelease.2...v3.20.2-prerelease.3) (2023-07-25)
+
+
+### Bug Fixes
+
+* **server,dashboard:** app edit,list,yaml editor ([c34ff76](https://github.com/digitopvn/diginext/commit/c34ff76df4fc8dae0d3cc7f8151c57af66a6136e))
+
 ## [3.20.2-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.20.2-prerelease.1...v3.20.2-prerelease.2) (2023-07-25)
 
 
