@@ -1,3 +1,18 @@
+## [3.20.2](https://github.com/digitopvn/diginext/compare/v3.20.1...v3.20.2) (2023-07-25)
+
+
+### Bug Fixes
+
+* **cli new app:** hide console logs after fix git init ([f100fa5](https://github.com/digitopvn/diginext/commit/f100fa5e77e494f05c2e2054293b76f1337bfcd8))
+* **dashboard,monitoring:** delete resources ([8a36123](https://github.com/digitopvn/diginext/commit/8a36123cb331130f819fec0824230a61eb2db87f))
+* **server,dashboard:** app edit,list,yaml editor ([c34ff76](https://github.com/digitopvn/diginext/commit/c34ff76df4fc8dae0d3cc7f8151c57af66a6136e))
+* **server,git,ssh:** write custom ssh keys ([747e254](https://github.com/digitopvn/diginext/commit/747e2541271adc5a42748c4163ced0bac4b2b402))
+* **server,monitoring:** namespace delete,statefulset,swagger ([ce6f8a3](https://github.com/digitopvn/diginext/commit/ce6f8a3bc931f638bdd7b3a60ec3b2a5dab53c0b))
+* **server,ssh,monitoring:** endline private ssh key,delete k8s resourcecs ([3f725e8](https://github.com/digitopvn/diginext/commit/3f725e83238108ba0fb2eeeae25d6b8e8dfe49cf))
+* **server,ssh:** await subprocess initial ssh keys ([5c8be78](https://github.com/digitopvn/diginext/commit/5c8be783d0856999f60f8afb955f62e83f975734))
+* **server,test:** write initial ssh keys, verify ssh keys ([51f3a3b](https://github.com/digitopvn/diginext/commit/51f3a3b6b486bdcff5133ab0e0b2cb5389ae6cd7))
+* **swagger:** monitoring query options ([98c9186](https://github.com/digitopvn/diginext/commit/98c91863009bd9c607f4a1721337218c0f185d2d))
+
 ## [3.20.2-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.20.2-prerelease.2...v3.20.2-prerelease.3) (2023-07-25)
 
 
