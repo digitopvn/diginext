@@ -138,6 +138,11 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	 * @example latest, v01, prerelease, alpha, beta,...
 	 */
 	buildTag: string;
+	/**
+	 * Alias of `buildTag`, use `buildTag` instead, this field will be removed soon.
+	 * @deprecated
+	 */
+	buildNumber?: string;
 
 	/**
 	 * The CLI version

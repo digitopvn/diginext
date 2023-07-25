@@ -193,8 +193,13 @@ export default class BaseService<T = any> {
 		// populate
 		if (options?.populate && options?.populate.length > 0) {
 			options?.populate.forEach((collection) => {
-				const lookupCollection = this.model.schema.paths[collection].options.ref;
-				const isPopulatedFieldArray = Array.isArray(this.model.schema.paths[collection].options.type);
+				const collectionPath = this.model.schema.paths[collection];
+				if (!collectionPath) return;
+
+				const lookupCollection = collectionPath.options?.ref;
+				if (!lookupCollection) return;
+
+				const isPopulatedFieldArray = Array.isArray(collectionPath.options.type);
 
 				// use $lookup to find relation field
 				pipelines.push({
