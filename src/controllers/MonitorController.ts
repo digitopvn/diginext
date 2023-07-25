@@ -7,12 +7,12 @@ import type { IResponsePagination, KubeService } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import type { KubeNode } from "@/interfaces/KubeNode";
 import type { MonitoringQueryFilter } from "@/interfaces/MonitoringQuery";
-import { MonitoringQueryOptions, MonitoringQueryParams } from "@/interfaces/MonitoringQuery";
+import { MonitoringNamespaceQueryFilter, MonitoringQueryOptions, MonitoringQueryParams } from "@/interfaces/MonitoringQuery";
 import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
-import { MonitorService } from "@/services/MonitorService";
+import { MonitorNamespaceCreateData, MonitorService } from "@/services/MonitorService";
 
 @Tags("Monitor")
 @Route("monitor")
@@ -40,6 +40,7 @@ export default class MonitorController {
 			order, // @example: -updatedAt,-createdAt
 			search = false,
 			output,
+			full = false,
 			isDebugging = false,
 			access_token,
 			...filter
@@ -48,6 +49,7 @@ export default class MonitorController {
 		const options: MonitoringQueryOptions = {
 			isDebugging,
 			output: "json",
+			full,
 		};
 
 		// parse "search"
@@ -153,8 +155,8 @@ export default class MonitorController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/namespaces")
-	async getNamespaces(@Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorNamespaceService } = await import("@/services/MonitorNamespaceService");
+	async getNamespaces(@Queries() queryParams?: MonitoringNamespaceQueryFilter) {
+		const { MonitorNamespaceService } = await import("@/services/MonitorService");
 		const nsSvc = new MonitorNamespaceService(this.ownership);
 		const data = await nsSvc.find(this.filter, this.options);
 
@@ -163,24 +165,31 @@ export default class MonitorController {
 	}
 
 	/**
+	 * List of all resources of a namespace in a cluster
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/namespaces/all")
+	async allNamespaceResources(@Queries() queryParams?: MonitoringNamespaceQueryFilter) {
+		const { MonitorNamespaceService } = await import("@/services/MonitorService");
+		const nsSvc = new MonitorNamespaceService(this.ownership);
+		const data = await nsSvc.allResources(this.filter, this.options);
+		// process
+		return respondSuccess({ data });
+
+		// return respondSuccess({ data: 1 });
+	}
+
+	/**
 	 * Create namespace in a cluster
 	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/namespaces")
-	async createNamespace(
-		@Body()
-		body?: {
-			/**
-			 * Namespace's name
-			 */
-			name: string;
-		},
-		@Queries() queryParams?: MonitoringQueryParams
-	) {
-		const { MonitorNamespaceService } = await import("@/services/MonitorNamespaceService");
+	async createNamespace(@Body() body?: MonitorNamespaceCreateData) {
+		const { MonitorNamespaceService } = await import("@/services/MonitorService");
 		const nsSvc = new MonitorNamespaceService(this.ownership);
-		const data = await nsSvc.create(this.filter, body);
+		const data = await nsSvc.create(body);
 
 		// process
 		return respondSuccess({ data });
@@ -193,7 +202,7 @@ export default class MonitorController {
 	@Security("jwt")
 	@Delete("/namespaces")
 	async deleteNamespace(@Body() body?: MonitoringQueryOptions, @Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorNamespaceService } = await import("@/services/MonitorNamespaceService");
+		const { MonitorNamespaceService } = await import("@/services/MonitorService");
 		const nsSvc = new MonitorNamespaceService(this.ownership);
 		const data = await nsSvc.delete({ ...this.filter, ...body });
 
@@ -208,7 +217,7 @@ export default class MonitorController {
 	@Security("jwt")
 	@Get("/services")
 	async getServices(@Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorServiceService } = await import("@/services/MonitorServiceService");
+		const { MonitorServiceService } = await import("@/services/MonitorService");
 		const serviceSvc = new MonitorServiceService(this.ownership);
 		const data = await serviceSvc.find(this.filter, this.options);
 
@@ -247,7 +256,7 @@ export default class MonitorController {
 		@Queries()
 		queryParams?: MonitoringQueryParams
 	) {
-		const { MonitorServiceService } = await import("@/services/MonitorServiceService");
+		const { MonitorServiceService } = await import("@/services/MonitorService");
 		const serviceSvc = new MonitorServiceService(this.ownership);
 		const data = await serviceSvc.create(this.filter, body);
 
@@ -261,7 +270,7 @@ export default class MonitorController {
 	@Security("jwt")
 	@Delete("/services")
 	async deleteService(@Body() body?: MonitoringQueryOptions, @Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorServiceService } = await import("@/services/MonitorServiceService");
+		const { MonitorServiceService } = await import("@/services/MonitorService");
 		const serviceSvc = new MonitorServiceService(this.ownership);
 		const data = await serviceSvc.delete({ ...this.filter, ...body });
 
@@ -275,7 +284,7 @@ export default class MonitorController {
 	@Security("jwt")
 	@Get("/ingresses")
 	async getIngresses(@Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorIngressService } = await import("@/services/MonitorIngressService");
+		const { MonitorIngressService } = await import("@/services/MonitorService");
 		const ingressSvc = new MonitorIngressService(this.ownership);
 		const data = await ingressSvc.find(this.filter, this.options);
 
@@ -290,7 +299,7 @@ export default class MonitorController {
 	@Security("jwt")
 	@Delete("/ingresses")
 	async deleteIngresses(@Body() body?: MonitoringQueryOptions, @Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorIngressService } = await import("@/services/MonitorIngressService");
+		const { MonitorIngressService } = await import("@/services/MonitorService");
 		const ingressSvc = new MonitorIngressService(this.ownership);
 		const data = await ingressSvc.delete({ ...this.filter, ...body });
 
@@ -305,7 +314,7 @@ export default class MonitorController {
 	@Security("jwt")
 	@Get("/deployments")
 	async getDeploys(@Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorDeploymentService } = await import("@/services/MonitorDeploymentService");
+		const { MonitorDeploymentService } = await import("@/services/MonitorService");
 		const deploymentSvc = new MonitorDeploymentService(this.ownership);
 		const data = await deploymentSvc.find(this.filter, this.options);
 
@@ -320,9 +329,39 @@ export default class MonitorController {
 	@Security("jwt")
 	@Delete("/deployments")
 	async deleteDeploys(@Body() body?: MonitoringQueryOptions, @Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorDeploymentService } = await import("@/services/MonitorDeploymentService");
+		const { MonitorDeploymentService } = await import("@/services/MonitorService");
 		const deploymentSvc = new MonitorDeploymentService(this.ownership);
 		const data = await deploymentSvc.delete({ ...this.filter, ...body });
+
+		// process
+		return respondSuccess({ data });
+	}
+
+	/**
+	 * List of K8S StatefulSet
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/statefulsets")
+	async getStatefulSets(@Queries() queryParams?: MonitoringQueryParams) {
+		const { MonitorStatefulSetService } = await import("@/services/MonitorService");
+		const statefulSetSvc = new MonitorStatefulSetService(this.ownership);
+		const data = await statefulSetSvc.find(this.filter, this.options);
+
+		// process
+		return respondSuccess({ data });
+	}
+
+	/**
+	 * Delete K8S StatefulSet
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/statefulsets")
+	async deleteStatefulSets(@Body() body?: MonitoringQueryOptions, @Queries() queryParams?: MonitoringQueryParams) {
+		const { MonitorStatefulSetService } = await import("@/services/MonitorService");
+		const statefulSetSvc = new MonitorStatefulSetService(this.ownership);
+		const data = await statefulSetSvc.delete({ ...this.filter, ...body });
 
 		// process
 		return respondSuccess({ data });
@@ -335,7 +374,7 @@ export default class MonitorController {
 	@Security("jwt")
 	@Get("/pods")
 	async getPods(@Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorPodService } = await import("@/services/MonitorPodService");
+		const { MonitorPodService } = await import("@/services/MonitorService");
 		const podSvc = new MonitorPodService(this.ownership);
 		const data = await podSvc.find(this.filter, this.options);
 
@@ -350,7 +389,7 @@ export default class MonitorController {
 	@Security("jwt")
 	@Delete("/pods")
 	async deletePods(@Body() body?: MonitoringQueryOptions, @Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorPodService } = await import("@/services/MonitorPodService");
+		const { MonitorPodService } = await import("@/services/MonitorService");
 		const podSvc = new MonitorPodService(this.ownership);
 		const data = await podSvc.delete({ ...this.filter, ...body });
 
@@ -365,7 +404,7 @@ export default class MonitorController {
 	@Security("jwt")
 	@Get("/secrets")
 	async getSecrets(@Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorSecretService } = await import("@/services/MonitorSecretService");
+		const { MonitorSecretService } = await import("@/services/MonitorService");
 		const secretSvc = new MonitorSecretService(this.ownership);
 		const data = await secretSvc.find(this.filter, this.options);
 
@@ -380,7 +419,7 @@ export default class MonitorController {
 	@Security("jwt")
 	@Delete("/secrets")
 	async deleteSecrets(@Body() body?: MonitoringQueryOptions, @Queries() queryParams?: MonitoringQueryParams) {
-		const { MonitorSecretService } = await import("@/services/MonitorSecretService");
+		const { MonitorSecretService } = await import("@/services/MonitorService");
 		const secretSvc = new MonitorSecretService(this.ownership);
 		const data = await secretSvc.delete({ ...this.filter, ...body });
 

@@ -150,6 +150,7 @@
 		"@babel/runtime": "^7.15.4",
 		"@google-analytics/admin": "^1.2.3",
 		"@google-cloud/storage": "^5.5.0",
+		"@kubernetes/client-node": "^0.18.1",
 		"@supercharge/strings": "^1.16.0",
 		"@tsoa/runtime": "^5.0.0",
 		"@types/jest": "^26.0.22",

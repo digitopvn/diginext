@@ -12,5 +12,6 @@ export * from "./KubeNamespace";
 export * from "./KubeRegistrySecret";
 export * from "./KubeSecret";
 export * from "./KubeService";
+export * from "./KubeStatefulSet";
 export * from "./PackageConfig";
 export * from "./ResponseData";
