@@ -1,3 +1,10 @@
+## [3.20.2-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.20.2-prerelease.1...v3.20.2-prerelease.2) (2023-07-25)
+
+
+### Bug Fixes
+
+* **server,monitoring:** namespace delete,statefulset,swagger ([ce6f8a3](https://github.com/digitopvn/diginext/commit/ce6f8a3bc931f638bdd7b3a60ec3b2a5dab53c0b))
+
 ## [3.20.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.20.1...v3.20.2-prerelease.1) (2023-07-24)
 
 
