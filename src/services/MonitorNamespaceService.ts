@@ -1,9 +1,29 @@
 import type { IUser, IWorkspace } from "@/entities";
 import type { KubeNamespace } from "@/interfaces";
-import type { MonitoringQueryFilter, MonitoringQueryOptions, MonitoringQueryParams } from "@/interfaces/MonitoringQuery";
+import type {
+	MonitoringCreateOptions,
+	MonitoringNamespaceQueryFilter,
+	MonitoringQueryFilter,
+	MonitoringQueryOptions,
+} from "@/interfaces/MonitoringQuery";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
+
+export type MonitorNamespaceCreateData = {
+	/**
+	 * Namespace's name
+	 */
+	name: string;
+	/**
+	 * Cluster's ID or SLUG
+	 */
+	cluster?: string;
+	/**
+	 * Filter by labels
+	 */
+	labels?: Record<string, string>;
+};
 
 export class MonitorNamespaceService {
 	/**
@@ -27,18 +47,9 @@ export class MonitorNamespaceService {
 		this.workspace = ownership?.workspace;
 	}
 
-	async create(
-		filter: MonitoringQueryFilter,
-		data: {
-			/**
-			 * Namespace's name
-			 */
-			name: string;
-		}
-	) {
+	async create(data: MonitorNamespaceCreateData, options?: MonitoringCreateOptions) {
 		const { DB } = await import("@/modules/api/DB");
-		const { cluster: clusterSlugOrId } = filter;
-		const { name } = data;
+		const { name, cluster: clusterSlugOrId } = data;
 
 		if (!clusterSlugOrId) throw new Error(`Param "clusterSlug" is required.`);
 
@@ -60,7 +71,7 @@ export class MonitorNamespaceService {
 		return namespace;
 	}
 
-	async find(filter: MonitoringQueryFilter, options?: MonitoringQueryOptions) {
+	async find(filter: MonitoringNamespaceQueryFilter, options?: MonitoringQueryOptions) {
 		const { DB } = await import("@/modules/api/DB");
 		let { cluster: clusterIdOrSlug, name } = filter;
 
@@ -112,12 +123,57 @@ export class MonitorNamespaceService {
 		return data;
 	}
 
-	async findOne(filter: MonitoringQueryFilter, options?: MonitoringQueryOptions) {
+	async findOne(filter: MonitoringNamespaceQueryFilter, options?: MonitoringQueryOptions) {
 		const data = await this.find(filter, options);
 		return data[0];
 	}
 
-	async delete(params: MonitoringQueryParams) {
+	async allResources(filter: MonitoringNamespaceQueryFilter, options?: MonitoringQueryOptions) {
+		const {
+			MonitorDeploymentService,
+			MonitorIngressService,
+			MonitorPodService,
+			MonitorSecretService,
+			MonitorServiceService,
+			MonitorStatefulSetService,
+			// pvc
+		} = await import("./MonitorService");
+
+		const resourceFilter: MonitoringQueryFilter = {};
+		resourceFilter.cluster = filter.cluster;
+		resourceFilter.namespace = filter.name;
+		resourceFilter.labels = filter.labels;
+
+		// get ingresses
+		const ingSvc = new MonitorIngressService(this.ownership);
+		const ingresses = await ingSvc.find(resourceFilter, options);
+
+		// get services
+		const svcSvc = new MonitorServiceService(this.ownership);
+		const services = await svcSvc.find(resourceFilter, options);
+
+		// get deployments
+		const deploymentSvc = new MonitorDeploymentService(this.ownership);
+		const deployments = await deploymentSvc.find(resourceFilter, options);
+
+		// get statefulsets
+		const statefulSetSvc = new MonitorStatefulSetService(this.ownership);
+		const statefulSets = await statefulSetSvc.find(resourceFilter, options);
+
+		// get pods
+		const podSvc = new MonitorPodService(this.ownership);
+		const pods = await podSvc.find(resourceFilter, options);
+
+		// get persistent volume claims
+
+		// get secrets
+		const secretSvc = new MonitorSecretService(this.ownership);
+		const secrets = await secretSvc.find(resourceFilter, options);
+
+		return { ingresses, services, deployments, statefulSets, pods, secrets };
+	}
+
+	async delete(params: MonitoringNamespaceQueryFilter) {
 		const { DB } = await import("@/modules/api/DB");
 		const { cluster: clusterSlugOrId, name } = params;
 
@@ -132,7 +188,7 @@ export class MonitorNamespaceService {
 
 		// check name existed
 		const isExisted = await ClusterManager.isNamespaceExisted(name);
-		if (isExisted) throw new Error(`Namespace "${name}" is existed.`);
+		if (!isExisted) throw new Error(`Namespace "${name}" not found.`);
 
 		const namespace = await ClusterManager.deleteNamespace(name, { context });
 		// namespace.workspace = MongoDB.toString(this.workspace._id);

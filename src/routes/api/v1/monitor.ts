@@ -16,6 +16,7 @@ router
 	.get("/nodes", processApiRequest(controller.getNodes.bind(controller)))
 	// namespaces
 	.get("/namespaces", processApiRequest(controller.getNamespaces.bind(controller)))
+	.get("/namespaces/all", processApiRequest(controller.allNamespaceResources.bind(controller)))
 	.delete("/namespaces", processApiRequest(controller.deleteNamespace.bind(controller)))
 	// services
 	.get("/services", processApiRequest(controller.getServices.bind(controller)))
@@ -26,6 +27,9 @@ router
 	// deployments
 	.get("/deployments", processApiRequest(controller.getDeploys.bind(controller)))
 	.delete("/deployments", processApiRequest(controller.deleteDeploys.bind(controller)))
+	// statefulsets
+	.get("/statefulsets", processApiRequest(controller.getStatefulSets.bind(controller)))
+	.delete("/statefulsets", processApiRequest(controller.deleteStatefulSets.bind(controller)))
 	// pods
 	.get("/pods", processApiRequest(controller.getPods.bind(controller)))
 	.delete("/pods", processApiRequest(controller.deletePods.bind(controller)))

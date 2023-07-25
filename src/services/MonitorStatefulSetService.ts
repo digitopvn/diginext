@@ -1,12 +1,12 @@
 import type { IUser, IWorkspace } from "@/entities";
-import type { KubeIngress } from "@/interfaces";
+import type { KubeStatefulSet } from "@/interfaces";
 import type { MonitoringQueryFilter, MonitoringQueryOptions, MonitoringQueryParams } from "@/interfaces/MonitoringQuery";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import { objectToFilterLabels } from "@/modules/k8s/kubectl";
 import { MongoDB } from "@/plugins/mongodb";
 
-export class MonitorIngressService {
+export class MonitorStatefulSetService {
 	/**
 	 * Current login user
 	 */
@@ -44,18 +44,18 @@ export class MonitorIngressService {
 		const { DB } = await import("@/modules/api/DB");
 		const { namespace, cluster: clusterSlugOrId } = filter;
 
-		let data: KubeIngress[] = [];
+		let data: KubeStatefulSet[] = [];
 
 		if (!clusterSlugOrId) {
 			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
 					const { contextName: context } = cluster;
-					if (!context) return [] as KubeIngress[];
+					if (!context) return [] as KubeStatefulSet[];
 
 					let nsList = namespace
-						? await ClusterManager.getIngresses(namespace, { context })
-						: await ClusterManager.getAllIngresses({ context });
+						? await ClusterManager.getStatefulSets(namespace, { context, output: options?.output })
+						: await ClusterManager.getAllStatefulSets({ context, output: options?.output });
 
 					nsList = nsList.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
@@ -77,7 +77,10 @@ export class MonitorIngressService {
 			const { contextName: context } = cluster;
 			if (!context) throw new Error(`Unverified cluster: "${clusterSlugOrId}"`);
 
-			data = namespace ? await ClusterManager.getIngresses(namespace, { context }) : await ClusterManager.getAllIngresses({ context });
+			data = namespace
+				? await ClusterManager.getStatefulSets(namespace, { context, output: options?.output })
+				: await ClusterManager.getAllStatefulSets({ context, output: options?.output });
+
 			data = data.map((ns) => {
 				ns.workspace = MongoDB.toString(this.workspace._id);
 				ns.clusterSlug = cluster.slug;
@@ -85,9 +88,6 @@ export class MonitorIngressService {
 				return ns;
 			});
 		}
-
-		// TODO: compact or full
-		// if (options?.full)
 
 		return data;
 	}
@@ -101,7 +101,7 @@ export class MonitorIngressService {
 		const { DB } = await import("@/modules/api/DB");
 		const { cluster: clusterSlugOrId, namespace, name } = params;
 
-		if (!clusterSlugOrId) throw new Error(`Param "cluster" is required.`);
+		if (!clusterSlugOrId) throw new Error(`Param "cluster" (slug or id) is required.`);
 		if (!name) throw new Error(`Param "name" is required.`);
 
 		const cluster = await DB.findOne("cluster", { $or: [{ slug: clusterSlugOrId }, { _id: clusterSlugOrId }], workspace: this.workspace._id });
@@ -111,8 +111,8 @@ export class MonitorIngressService {
 		if (!context) throw new Error(`Unverified cluster: "${clusterSlugOrId}"`);
 
 		const result = name
-			? await ClusterManager.deleteIngress(name, namespace, { context })
-			: await ClusterManager.deleteIngressByFilter(namespace, { context, filterLabel: objectToFilterLabels(params.labels) });
+			? await ClusterManager.deleteStatefulSet(name, namespace, { context })
+			: await ClusterManager.deleteStatefulSetsByFilter(namespace, { context, filterLabel: objectToFilterLabels(params.labels) });
 
 		return result;
 	}

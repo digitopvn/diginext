@@ -6,7 +6,7 @@ import { isEmpty, round, startsWith, toInteger } from "lodash";
 import path from "path";
 
 import { CLI_DIR } from "@/config/const";
-import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService } from "@/interfaces";
+import type { KubeDeployment, KubeIngress, KubeNamespace, KubeSecret, KubeService, KubeStatefulSet } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { KubeIngressClass } from "@/interfaces/KubeIngressClass";
 import type { KubeNode } from "@/interfaces/KubeNode";
@@ -443,6 +443,149 @@ export async function deleteIngressByFilter(namespace = "default", options: Kube
 	}
 }
 
+export interface GetKubeDeployOptions extends KubeCommandOptions {
+	/**
+	 * If `TRUE`, it will get metrics of pods and include in the response.
+	 *
+	 * @default true
+	 */
+	metrics?: boolean;
+}
+
+/**
+ * Get all deployments of a namespace
+ * @param namespace @default "default"
+ */
+export async function getDeploys(namespace = "default", options: GetKubeDeployOptions = {}) {
+	const { context, filterLabel, skipOnError, metrics = true } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "get", "deploy");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		const deploys = items as KubeDeployment[];
+
+		// get pods usage
+		const usageStr = metrics ? execaCommandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`).stdout : "";
+		const podUsages = metrics
+			? usageStr.split("\n").map((line) => {
+					const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+					const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+					const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+					return { namespace: ns, name, cpu, memory, cpuInt, memInt };
+			  })
+			: [];
+
+		return deploys.map((deploy) => {
+			// resource usage average
+			const cpuAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.cpuInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.cpuAvg = `${round(cpuAvg)}m`;
+
+			const memAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.memInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.memoryAvg = `${round(memAvg)}Mi`;
+
+			if (deploy.cpuAvg === "NaNm") deploy.cpuAvg = "";
+			if (deploy.memoryAvg === "NaNMi") deploy.memoryAvg = "";
+
+			// resource usage recommend
+			deploy.cpuRecommend = (deploy.cpuAvg ? toInteger(deploy.cpuAvg.replace("m", "")) : 0) * 1.5 + "m";
+			deploy.memoryRecommend = (deploy.memoryAvg ? toInteger(deploy.memoryAvg.replace("Mi", "")) : 0) * 1.5 + "Mi";
+
+			// resource usage capacity
+			deploy.cpuCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.cpu !== "undefined")?.resources?.limits?.cpu || "";
+
+			deploy.memoryCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.memory !== "undefined")?.resources?.limits
+					?.memory || "";
+
+			return deploy;
+		});
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getDeploys >`, e);
+		return [];
+	}
+}
+
+/**
+ * Get all deployments of a cluster
+ */
+export async function getAllDeploys(options: GetKubeDeployOptions = {}) {
+	const { context, filterLabel, skipOnError, metrics = true } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("get", "deploy", "-A");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+
+		// get pods usage
+		const usageStr = metrics ? execaCommandSync(`kubectl --context=${context} top pod --no-headers=true -A`).stdout : "";
+		const podUsages = metrics
+			? usageStr.split("\n").map((line) => {
+					const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+					const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+					const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+					return { namespace: ns, name, cpu, memory, cpuInt, memInt };
+			  })
+			: [];
+
+		return (items as KubeDeployment[]).map((deploy) => {
+			// resource usage average
+			const cpuAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.cpuInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.cpuAvg = `${round(cpuAvg)}m`;
+
+			const memAvg =
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.memInt, 0) /
+				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).length;
+
+			deploy.memoryAvg = `${round(memAvg)}Mi`;
+
+			if (deploy.cpuAvg === "NaNm") deploy.cpuAvg = "";
+			if (deploy.memoryAvg === "NaNMi") deploy.memoryAvg = "";
+
+			// resource usage recommend
+			deploy.cpuRecommend = (deploy.cpuAvg ? toInteger(deploy.cpuAvg.replace("m", "")) : 0) * 1.5 + "m";
+			deploy.memoryRecommend = (deploy.memoryAvg ? toInteger(deploy.memoryAvg.replace("Mi", "")) : 0) * 1.5 + "Mi";
+
+			// resource usage capacity
+			deploy.cpuCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.cpu !== "undefined")?.resources?.limits?.cpu || "";
+
+			deploy.memoryCapacity =
+				deploy.spec.template.spec.containers.find((cont) => typeof cont.resources?.limits?.memory !== "undefined")?.resources?.limits
+					?.memory || "";
+
+			return deploy;
+		});
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllDeploys >`, e);
+		return [];
+	}
+}
+
 /**
  * Get a deployment in a namespace
  */
@@ -486,7 +629,7 @@ export async function getDeploysByFilter(namespace = "default", options: KubeCom
 }
 
 /**
- * Set image to a container of a deployment in a namespace
+ * Scale replicas of a deployment in a namespace
  */
 export async function scaleDeploy(name: string, replicas: number, namespace = "default", options: KubeGenericOptions = {}) {
 	const { context, skipOnError } = options;
@@ -505,7 +648,7 @@ export async function scaleDeploy(name: string, replicas: number, namespace = "d
 }
 
 /**
- * Set image to all containers of a deployment in a namespace
+ * Scale replicas of multiple deployments in a namespace by label filter
  * @param name - Deployment's name
  */
 export async function scaleDeployByFilter(replicas: number, namespace = "default", options: KubeCommandOptions = {}) {
@@ -672,26 +815,17 @@ export async function deleteDeploymentsByFilter(namespace = "default", options: 
 	}
 }
 
-export interface GetKubeDeployOptions extends KubeCommandOptions {
-	/**
-	 * If `TRUE`, it will get metrics of pods and include in the response.
-	 *
-	 * @default true
-	 */
-	metrics?: boolean;
-}
-
 /**
- * Get all deployments of a namespace
+ * Get all StatefulSets of a namespace
  * @param namespace @default "default"
  */
-export async function getDeploys(namespace = "default", options: GetKubeDeployOptions = {}) {
+export async function getStatefulSets(namespace = "default", options: GetKubeDeployOptions = {}) {
 	const { context, filterLabel, skipOnError, metrics = true } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 
-		args.push("-n", namespace, "get", "deploy");
+		args.push("-n", namespace, "get", "statefulset");
 
 		if (filterLabel) args.push("-l", filterLabel);
 
@@ -699,7 +833,7 @@ export async function getDeploys(namespace = "default", options: GetKubeDeployOp
 
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
-		const deploys = items as KubeDeployment[];
+		const deploys = items as KubeStatefulSet[];
 
 		// get pods usage
 		const usageStr = metrics ? execaCommandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`).stdout : "";
@@ -744,21 +878,21 @@ export async function getDeploys(namespace = "default", options: GetKubeDeployOp
 			return deploy;
 		});
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getDeploys >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getStatefulSets >`, e);
 		return [];
 	}
 }
 
 /**
- * Get all deployments of a cluster
+ * Get all statefulsets of a cluster
  */
-export async function getAllDeploys(options: GetKubeDeployOptions = {}) {
+export async function getAllStatefulSets(options: GetKubeDeployOptions = {}) {
 	const { context, filterLabel, skipOnError, metrics = true } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 
-		args.push("get", "deploy", "-A");
+		args.push("get", "statefulset", "-A");
 
 		if (filterLabel) args.push("-l", filterLabel);
 
@@ -778,7 +912,7 @@ export async function getAllDeploys(options: GetKubeDeployOptions = {}) {
 			  })
 			: [];
 
-		return (items as KubeDeployment[]).map((deploy) => {
+		return (items as KubeStatefulSet[]).map((deploy) => {
 			// resource usage average
 			const cpuAvg =
 				podUsages.filter((pod) => pod.name.indexOf(deploy.metadata.name) === 0).reduce((total, obj) => total + obj.cpuInt, 0) /
@@ -810,8 +944,107 @@ export async function getAllDeploys(options: GetKubeDeployOptions = {}) {
 			return deploy;
 		});
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllDeploys >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllStatefulSets >`, e);
 		return [];
+	}
+}
+
+/**
+ * Get a StatefulSet in a namespace
+ */
+export async function getStatefulSet(name: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError, output } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-n", namespace, "get", "statefulset", name);
+
+		if (!output || output === "json") args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return !output || output === "json" ? (JSON.parse(stdout) as KubeStatefulSet) : stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getStatefulSet >`, e);
+		return;
+	}
+}
+
+/**
+ * Get StatefulSets in a namespace by filter labels
+ */
+export async function getStatefulSetsByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-n", namespace, "get", "statefulset");
+
+		if (filterLabel) args.push(`-l`, filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout) as KubeStatefulSet[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getStatefulSet >`, e);
+		return;
+	}
+}
+
+/**
+ * Scale replicas of a StatefulSet in a namespace
+ */
+export async function scaleStatefulSet(name: string, replicas: number, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "scale", "statefulset", name, `--replicas=${replicas}`);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] scaleStatefulSet >`, e);
+		return;
+	}
+}
+
+/**
+ * Delete a StatefulSet in a namespace
+ */
+export async function deleteStatefulSet(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-n", namespace, "delete", "statefulset", name);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] deleteStatefulSet`, e);
+		return;
+	}
+}
+
+/**
+ * Delete StatefulSets in a namespace by label filter
+ */
+export async function deleteStatefulSetsByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+		args.push("-n", namespace, "delete", "statefulset");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] deleteStatefulSetsByFilter >`, e);
+		return;
 	}
 }
 
