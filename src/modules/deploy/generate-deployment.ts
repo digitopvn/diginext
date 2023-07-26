@@ -253,6 +253,8 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 					// labels
 					if (!doc.metadata.labels) doc.metadata.labels = {};
+					doc.metadata.labels.workspace = workspace.slug;
+					doc.metadata.labels["updated-by"] = username;
 					doc.metadata.labels.project = projectSlug;
 					doc.metadata.labels.app = appName;
 					doc.metadata.labels["main-app"] = mainAppName;
@@ -349,6 +351,8 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				doc.metadata.name = svcName;
 
 				if (!doc.metadata.labels) doc.metadata.labels = {};
+				doc.metadata.labels.workspace = workspace.slug;
+				doc.metadata.labels["updated-by"] = username;
 				doc.metadata.labels.project = projectSlug;
 				doc.metadata.labels.app = appName;
 				doc.metadata.labels["main-app"] = mainAppName;
@@ -391,13 +395,18 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				doc.spec.replicas = replicas;
 				doc.metadata.name = appName;
 
-				// tag "live" labels
+				// deployment's labels
 				if (!doc.metadata.labels) doc.metadata.labels = {};
+				doc.metadata.labels.workspace = workspace.slug;
+				doc.metadata.labels["updated-by"] = username;
 				doc.metadata.labels.project = projectSlug;
 				doc.metadata.labels.app = appName;
 				doc.metadata.labels["main-app"] = mainAppName;
 				doc.metadata.labels.phase = "live";
 
+				// pod's labels
+				doc.spec.template.metadata.labels.workspace = workspace.slug;
+				doc.spec.template.metadata.labels["updated-by"] = username;
 				doc.spec.template.metadata.labels.project = projectSlug;
 				doc.spec.template.metadata.labels.app = appName;
 				doc.spec.template.metadata.labels["main-app"] = mainAppName;
@@ -416,7 +425,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				// ! PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
 				doc.spec.template.spec.containers[0].ports = [{ containerPort: toNumber(deployEnvironmentConfig.port) }];
 
-				// clone deployment to prerelease:
+				// prerelease's deployment:
 				prereleaseDeployDoc = _.cloneDeep(doc);
 				prereleaseDeployDoc.metadata.namespace = nsName;
 				prereleaseDeployDoc.metadata.name = prereleaseAppName;
@@ -424,17 +433,21 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				prereleaseDeployDoc.metadata.labels["main-app"] = mainAppName;
 				prereleaseDeployDoc.metadata.labels.app = prereleaseAppName;
 				prereleaseDeployDoc.metadata.labels.project = projectSlug;
+				prereleaseDeployDoc.metadata.labels.workspace = workspace.slug;
+				prereleaseDeployDoc.metadata.labels["updated-by"] = username;
 
 				prereleaseDeployDoc.spec.replicas = 1;
 				prereleaseDeployDoc.spec.template.metadata.labels.phase = "prerelease";
 				prereleaseDeployDoc.spec.template.metadata.labels["main-app"] = mainAppName;
 				prereleaseDeployDoc.spec.template.metadata.labels.app = prereleaseAppName;
 				prereleaseDeployDoc.spec.template.metadata.labels.project = projectSlug;
+				prereleaseDeployDoc.spec.template.metadata.labels.workspace = workspace.slug;
+				prereleaseDeployDoc.spec.template.metadata.labels["updated-by"] = username;
 				prereleaseDeployDoc.spec.template.spec.containers[0].image = IMAGE_NAME;
 				prereleaseDeployDoc.spec.template.spec.containers[0].env = prereleaseEnvs;
 				prereleaseDeployDoc.spec.template.spec.containers[0].resources = {};
 
-				// selector
+				// prerelease's app selector
 				prereleaseDeployDoc.spec.selector.matchLabels.app = prereleaseAppName;
 
 				// ! no need roll out strategy for prerelease:
