@@ -950,6 +950,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!env) return respondFailure(`Deploy environment name (env) is required.`);
 		if (!envVars) return respondFailure(`Array of environment variables (envVars) is required.`);
 
+		console.log("updateEnvVarsOnDeployEnvironment() > envVars :>> ", envVars);
+
 		const app = await this.service.findOne({ ...this.filter, slug }, { populate: ["project"] });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 

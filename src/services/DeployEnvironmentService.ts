@@ -558,7 +558,7 @@ export class DeployEnvironmentService {
 
 		// just to make sure "value" is always "string"
 		variables = variables.map(({ name, value }) => ({ name, value: toString(value) }));
-
+		console.log("updateEnvVars() > variables :>> ", variables);
 		const deployEnvironment = app.deployEnvironment[env];
 		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
 
