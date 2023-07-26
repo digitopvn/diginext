@@ -1,3 +1,10 @@
+## [3.20.3-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.20.3-prerelease.3...v3.20.3-prerelease.4) (2023-07-26)
+
+
+### Bug Fixes
+
+* **server,env variables:** prevent round up number value ([ab16e86](https://github.com/digitopvn/diginext/commit/ab16e86b025c37cd507a805fb5b1426c583354eb))
+
 ## [3.20.3-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.20.3-prerelease.2...v3.20.3-prerelease.3) (2023-07-26)
 
 
