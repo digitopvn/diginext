@@ -1,3 +1,11 @@
+## [3.20.3-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.20.2...v3.20.3-prerelease.1) (2023-07-26)
+
+
+### Bug Fixes
+
+* **server,build start:** missing build name ([ffe08ea](https://github.com/digitopvn/diginext/commit/ffe08eab6e2f9106d93fc3d72c24626b2ed5280c))
+* **server,generate yaml:** add more labels metadata ([2d7b581](https://github.com/digitopvn/diginext/commit/2d7b58197ddc43d9ef7c7eae40b9055fe31ce7bb))
+
 ## [3.20.2](https://github.com/digitopvn/diginext/compare/v3.20.1...v3.20.2) (2023-07-25)
 
 
