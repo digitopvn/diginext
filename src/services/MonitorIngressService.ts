@@ -68,8 +68,9 @@ export class MonitorIngressService {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
+			const clusterFilter = MongoDB.isValidObjectId(clusterSlugOrId) ? { _id: clusterSlugOrId } : { slug: clusterSlugOrId };
 			const cluster = await DB.findOne("cluster", {
-				$or: [{ slug: clusterSlugOrId }, { _id: clusterSlugOrId }],
+				...clusterFilter,
 				workspace: this.workspace._id,
 			});
 			if (!cluster) throw new Error(`Cluster "${clusterSlugOrId}" not found.`);
@@ -104,7 +105,8 @@ export class MonitorIngressService {
 		if (!clusterSlugOrId) throw new Error(`Param "cluster" is required.`);
 		if (!name) throw new Error(`Param "name" is required.`);
 
-		const cluster = await DB.findOne("cluster", { $or: [{ slug: clusterSlugOrId }, { _id: clusterSlugOrId }], workspace: this.workspace._id });
+		const clusterFilter = MongoDB.isValidObjectId(clusterSlugOrId) ? { _id: clusterSlugOrId } : { slug: clusterSlugOrId };
+		const cluster = await DB.findOne("cluster", { ...clusterFilter, workspace: this.workspace._id });
 		if (!cluster) throw new Error(`Cluster "${clusterSlugOrId}" not found.`);
 
 		const { contextName: context } = cluster;
