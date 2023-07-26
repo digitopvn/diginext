@@ -2,7 +2,7 @@ import { isBooleanString, isJSON, isNumberString } from "class-validator";
 import { toBool, toInt } from "diginext-utils/dist/object";
 // import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
-import { cloneDeepWith, isBoolean, isDate, isEmpty, isNumber, isString, toNumber, trim } from "lodash";
+import { cloneDeepWith, isBoolean, isDate, isEmpty, isNumber, isString, toNumber, toString, trim } from "lodash";
 
 import { Config } from "@/app.config";
 import type { IUser, IWorkspace } from "@/entities";
@@ -116,7 +116,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 		req.body = cloneDeepWith(req.body, function (val) {
 			if (isValidObjectId(val)) return MongoDB.toString(toObjectId(val));
 			if (isObjectId(val)) return MongoDB.toString(val);
-			if (isNumberString(val)) return toNumber(val);
+			if (isNumberString(val)) return val.toString().length < 12 ? toNumber(val) : toString(val);
 			if (isBooleanString(val)) return toBool(val);
 			if (isJSON(val)) return JSON.parse(val);
 		});

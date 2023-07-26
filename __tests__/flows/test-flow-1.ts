@@ -505,6 +505,8 @@ export function testFlow1() {
 			expect(app.deployEnvironment.dev.cluster).toEqual(bareMetalCluster.slug);
 			expect(app.deployEnvironment.dev.registry).toEqual(gcr.slug);
 			expect(app.deployEnvironment.dev.port).toEqual(exposedPort);
+
+			return;
 		},
 		// timeout: 5 minutes
 		5 * 60000
@@ -548,6 +550,7 @@ export function testFlow1() {
 
 			// wait another 10 secs before closing tests, just to be sure :)
 			await wait(10000);
+			return true;
 		},
 		// timeout: 5 mins
 		5 * 60000
