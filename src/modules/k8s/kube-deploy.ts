@@ -316,16 +316,6 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	// log(`Rolling out > mainAppName:`, mainAppName);
 
 	// authenticate cluster's provider & switch kubectl to that cluster:
-	try {
-		await ClusterManager.authClusterBySlug(clusterSlug);
-		// log(`Rolling out > Checked connectivity of "${clusterSlug}" cluster.`);
-	} catch (e) {
-		logError(`[ROLL_OUT] Unable to authenticate the cluster:`, e);
-		// dispatch/trigger webhook
-		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
-		return { error: e.message };
-	}
-
 	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 	if (!cluster) {
 		logError(`Cluster "${clusterSlug}" not found.`);
@@ -333,9 +323,22 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		return { error: `Cluster "${clusterSlug}" not found.` };
 	}
-	const { name: context } = await ClusterManager.getKubeContextByCluster(cluster);
+
+	try {
+		await ClusterManager.authCluster(cluster);
+		// log(`Rolling out > Checked connectivity of "${clusterSlug}" cluster.`);
+	} catch (e) {
+		const error = `Unable to authenticate the cluster: ${e.message}`;
+		logError(`[ROLL_OUT] ${error}`);
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+		return { error };
+	}
+
+	const { contextName: context } = cluster;
 	if (options?.isDebugging) log(`Rolling out > Connected to "${clusterSlug}" cluster.`);
 
+	// create temporary directory to store release's yaml
 	const tmpDir = path.resolve(CLI_DIR, `storage/releases/${releaseSlug}`);
 	if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
 
@@ -480,8 +483,11 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 	// TODO: Check crashed / failed deployments -> delete them!
 	let oldDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${mainAppName}` });
-	if (oldDeploys.length === 0)
-		oldDeploys = await ClusterManager.getDeploys(namespace, { context, filterLabel: `phase!=prerelease,main-app=${deprecatedMainAppName}` });
+	const deprecatedMainAppDeploys = await ClusterManager.getDeploys(namespace, {
+		context,
+		filterLabel: `phase!=prerelease,main-app=${deprecatedMainAppName}`,
+	});
+	if (deprecatedMainAppDeploys && deprecatedMainAppDeploys.length > 0) oldDeploys.push(...deprecatedMainAppDeploys);
 
 	if (onUpdate && options?.isDebugging)
 		onUpdate(`Current app deployments (to be deleted later on): ${oldDeploys.map((d) => d.metadata.name).join(",")}`);
@@ -708,6 +714,9 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		throw new Error(error);
 	}
+
+	// Assign this release as "latestRelease" of this app's deploy environment
+	await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.latestRelease`]: latestRelease._id }, { select: ["_id"] });
 
 	/**
 	 * 5. Clean up > Delete old deployments
