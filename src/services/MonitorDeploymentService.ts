@@ -43,7 +43,7 @@ export class MonitorDeploymentService {
 	async find(filter: MonitoringQueryFilter, options?: MonitoringQueryOptions) {
 		const { DB } = await import("@/modules/api/DB");
 		const { namespace, cluster: clusterSlugOrId } = filter;
-
+		console.log("this.workspace._id :>> ", this.workspace._id);
 		let data: KubeDeployment[] = [];
 
 		if (!clusterSlugOrId) {
@@ -68,8 +68,9 @@ export class MonitorDeploymentService {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
+			const clusterFilter = MongoDB.isValidObjectId(clusterSlugOrId) ? { _id: clusterSlugOrId } : { slug: clusterSlugOrId };
 			const cluster = await DB.findOne("cluster", {
-				$or: [{ slug: clusterSlugOrId }, { _id: clusterSlugOrId }],
+				...clusterFilter,
 				workspace: this.workspace._id,
 			});
 			if (!cluster) throw new Error(`Cluster "${clusterSlugOrId}" not found.`);
@@ -104,7 +105,8 @@ export class MonitorDeploymentService {
 		if (!clusterSlugOrId) throw new Error(`Param "cluster" (slug or id) is required.`);
 		if (!name) throw new Error(`Param "name" is required.`);
 
-		const cluster = await DB.findOne("cluster", { $or: [{ slug: clusterSlugOrId }, { _id: clusterSlugOrId }], workspace: this.workspace._id });
+		const clusterFilter = MongoDB.isValidObjectId(clusterSlugOrId) ? { _id: clusterSlugOrId } : { slug: clusterSlugOrId };
+		const cluster = await DB.findOne("cluster", { ...clusterFilter, workspace: this.workspace._id });
 		if (!cluster) throw new Error(`Cluster "${clusterSlugOrId}" not found.`);
 
 		const { contextName: context } = cluster;

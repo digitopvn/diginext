@@ -286,7 +286,9 @@ export async function startBuild(
 	 * Create new build in database
 	 */
 	const buildData = {
+		name: buildImage,
 		slug: SOCKET_ROOM,
+		env, // <-- optional
 		tag: buildTag,
 		image: imageURL,
 		status: "building",

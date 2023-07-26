@@ -1,3 +1,32 @@
+## [3.20.3-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.20.3-prerelease.3...v3.20.3-prerelease.4) (2023-07-26)
+
+
+### Bug Fixes
+
+* **server,env variables:** prevent round up number value ([ab16e86](https://github.com/digitopvn/diginext/commit/ab16e86b025c37cd507a805fb5b1426c583354eb))
+
+## [3.20.3-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.20.3-prerelease.2...v3.20.3-prerelease.3) (2023-07-26)
+
+
+### Bug Fixes
+
+* **dashboard,monitoring:** filter by cluster and namespace ([9e28192](https://github.com/digitopvn/diginext/commit/9e28192743b49131923035923c22da7438db678f))
+
+## [3.20.3-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.20.3-prerelease.1...v3.20.3-prerelease.2) (2023-07-26)
+
+
+### Bug Fixes
+
+* **dashboard,smartform:** not hide and show fields by config ([cf0fb92](https://github.com/digitopvn/diginext/commit/cf0fb9224c0bcb4755e6be3e05abfba59a7f7051))
+
+## [3.20.3-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.20.2...v3.20.3-prerelease.1) (2023-07-26)
+
+
+### Bug Fixes
+
+* **server,build start:** missing build name ([ffe08ea](https://github.com/digitopvn/diginext/commit/ffe08eab6e2f9106d93fc3d72c24626b2ed5280c))
+* **server,generate yaml:** add more labels metadata ([2d7b581](https://github.com/digitopvn/diginext/commit/2d7b58197ddc43d9ef7c7eae40b9055fe31ce7bb))
+
 ## [3.20.2](https://github.com/digitopvn/diginext/compare/v3.20.1...v3.20.2) (2023-07-25)
 
 

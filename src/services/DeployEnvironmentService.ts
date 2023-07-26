@@ -565,6 +565,7 @@ export class DeployEnvironmentService {
 		const { AppService, ClusterService } = await import("./index");
 
 		const appSvc = new AppService(this.ownership);
+		const appSlug = app.slug;
 
 		// process
 		let updatedApp = await appSvc.updateOne(
@@ -575,7 +576,7 @@ export class DeployEnvironmentService {
 				[`deployEnvironment.${env}.updatedAt`]: new Date(),
 			}
 		);
-		if (!updatedApp) throw new Error(`Unable to update variables of "${env}" deploy environment (App: "${app.slug}").`);
+		if (!updatedApp) throw new Error(`Unable to update variables of "${env}" deploy environment (App: "${appSlug}").`);
 
 		// TO BE REMOVED SOON: Fallback support "buildNumber"
 		if (!deployEnvironment.buildTag && deployEnvironment.buildNumber) deployEnvironment.buildTag = deployEnvironment.buildNumber;
@@ -595,15 +596,14 @@ export class DeployEnvironmentService {
 				// generate new deployment YAML
 				let deployment: GenerateDeploymentResult = await generateDeployment({
 					env,
-					appSlug: app.slug,
-					buildTag: buildTag,
+					appSlug,
+					buildTag,
 					username: this.user.slug,
 					workspace: this.workspace,
 				});
 
 				// apply deployment YAML
-				const result = await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context });
-				console.log("DeployEnvironmentService > updateEnvVars > result :>> ", result);
+				await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context });
 
 				// update to database
 				updatedApp = await appSvc.updateOne(

@@ -472,16 +472,16 @@ export async function getDeploys(namespace = "default", options: GetKubeDeployOp
 		const { items } = JSON.parse(stdout);
 		const deploys = items as KubeDeployment[];
 
+		if (!metrics) return items;
+
 		// get pods usage
-		const usageStr = metrics ? execaCommandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`).stdout : "";
-		const podUsages = metrics
-			? usageStr.split("\n").map((line) => {
-					const [ns, name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
-					const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
-					const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
-					return { namespace: ns, name, cpu, memory, cpuInt, memInt };
-			  })
-			: [];
+		const usageStr = execaCommandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`).stdout;
+		const podUsages = usageStr.split("\n").map((line) => {
+			const [name, cpu = "0m", memory = "0Mi"] = line.trim().split(/\s+/);
+			const cpuInt = toInteger(cpu.replace("m", "")) ?? 0;
+			const memInt = toInteger(memory.replace("Mi", "")) ?? 0;
+			return { namespace, name, cpu, memory, cpuInt, memInt };
+		});
 
 		return deploys.map((deploy) => {
 			// resource usage average
@@ -1213,8 +1213,8 @@ export async function getPod(name, namespace = "default", options: KubeGenericOp
  * Get pods in a namespace
  * @param namespace @default "default"
  */
-export async function getPods(namespace = "default", options: KubeCommandOptions = {}) {
-	const { context, filterLabel, skipOnError } = options;
+export async function getPods(namespace = "default", options: GetKubeDeployOptions = {}) {
+	const { context, filterLabel, skipOnError, metrics = true } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
@@ -1228,11 +1228,13 @@ export async function getPods(namespace = "default", options: KubeCommandOptions
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
 
+		if (!metrics) return items as KubePod[];
+
 		// get resource usage
 		const { stdout: usageStr } = execaCommandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`);
 		const usage = usageStr.split("\n").map((line) => {
-			const [ns, name, cpu, memory] = line.trim().split(/\s+/);
-			return { namespace: ns, name, cpu, memory };
+			const [name, cpu, memory] = line.trim().split(/\s+/);
+			return { namespace, name, cpu, memory };
 		});
 
 		return (items as KubePod[]).map((item) => {

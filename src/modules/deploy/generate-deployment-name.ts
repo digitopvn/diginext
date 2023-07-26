@@ -17,9 +17,6 @@ export default async function getDeploymentName(app: IApp) {
 	if (!app.name) throw new Error(`Invalid app: app must have name.`);
 
 	let name = `${makeSlug(project.name.toLowerCase())}-${makeSlug(app.name).toLowerCase()}`;
-	// if (name.length > 63) name = `${project.name}-app-${makeDaySlug({ divider: "" })}`;
-	// console.log("getDeploymentName > name :>> ", name);
-
 	if (name.length > 63)
 		throw new Error(`Deployment name "${name}" is longer than 64 characters, change the app name or project name to something shorter.`);
 

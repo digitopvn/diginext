@@ -145,6 +145,11 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	buildNumber?: string;
 
 	/**
+	 * ID of the latest release associated with this deploy environment.
+	 */
+	latestRelease?: string;
+
+	/**
 	 * The CLI version
 	 */
 	cliVersion?: string;
