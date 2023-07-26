@@ -288,6 +288,7 @@ export async function startBuild(
 	const buildData = {
 		name: buildImage,
 		slug: SOCKET_ROOM,
+		env, // <-- optional
 		tag: buildTag,
 		image: imageURL,
 		status: "building",
