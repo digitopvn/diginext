@@ -1,3 +1,10 @@
+## [3.20.3-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.20.3-prerelease.1...v3.20.3-prerelease.2) (2023-07-26)
+
+
+### Bug Fixes
+
+* **dashboard,smartform:** not hide and show fields by config ([cf0fb92](https://github.com/digitopvn/diginext/commit/cf0fb9224c0bcb4755e6be3e05abfba59a7f7051))
+
 ## [3.20.3-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.20.2...v3.20.3-prerelease.1) (2023-07-26)
 
 
