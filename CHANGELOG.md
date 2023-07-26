@@ -1,3 +1,10 @@
+## [3.20.3-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.20.3-prerelease.2...v3.20.3-prerelease.3) (2023-07-26)
+
+
+### Bug Fixes
+
+* **dashboard,monitoring:** filter by cluster and namespace ([9e28192](https://github.com/digitopvn/diginext/commit/9e28192743b49131923035923c22da7438db678f))
+
 ## [3.20.3-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.20.3-prerelease.1...v3.20.3-prerelease.2) (2023-07-26)
 
 
