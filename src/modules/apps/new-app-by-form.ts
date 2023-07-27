@@ -6,11 +6,12 @@ import type { AppGitInfo, IApp } from "@/entities";
 import type { IFramework } from "@/entities/Framework";
 import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
-import { getCurrentGitRepoData, parseGitRepoDataFromRepoSSH } from "@/plugins";
+import { getCurrentGitRepoData } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
 import { askForGitProvider } from "../git/ask-for-git-provider";
 import type { GitRepositoryDto } from "../git/git-provider-api";
+import { parseGitRepoDataFromRepoSSH } from "../git/git-utils";
 import { createOrSelectProject } from "./create-or-select-project";
 import { updateAppConfig } from "./update-config";
 

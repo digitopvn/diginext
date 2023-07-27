@@ -18,6 +18,7 @@ import { WebhookService } from "@/services";
 
 import builder from "../builder";
 import { verifySSH } from "../git";
+import { pullOrCloneGitRepoHTTP, repoSshToRepoURL } from "../git/git-utils";
 import { connectRegistry } from "../registry/connect-registry";
 import { sendLog } from "./send-log-message";
 import { updateBuildStatus, updateBuildStatusByAppSlug } from "./update-build-status";
@@ -365,19 +366,42 @@ export async function startBuild(
 	// Git SSH verified -> start pulling now...
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Pulling latest source code from "${repoSSH}" at "${gitBranch}" branch...` });
 
-	try {
-		await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, {
-			// useAccessToken: {},
-			onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
-		});
-	} catch (e) {
+	async function notifyClientGitPullFailure(e) {
 		// print the logs to client (Dashboard & CLI)
 		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `Failed to pull "${repoSSH}": ${e}` });
 		if (options?.onError) options?.onError(`Failed to pull "${repoSSH}": ${e}`);
+
 		// update build status
 		await updateBuildStatus(newBuild, "failed");
+
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+	}
+
+	// Clone/pull with repoSSH first, if failed, try repoURL...
+	try {
+		await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, {
+			onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
+		});
+	} catch (e) {
+		// give another try with HTTPS and access token
+		if (app.gitProvider) {
+			const git = await DB.findOne("git", { _id: app.gitProvider });
+			const repoURL = repoSshToRepoURL(repoSSH);
+			try {
+				await pullOrCloneGitRepoHTTP(repoURL, buildDir, gitBranch, {
+					useAccessToken: {
+						type: git.method === "basic" ? "Basic" : "Bearer",
+						value: git.access_token,
+					},
+					onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
+				});
+			} catch (e2) {
+				notifyClientGitPullFailure(e2);
+			}
+		} else {
+			notifyClientGitPullFailure(e);
+		}
 	}
 
 	// emit socket message to "digirelease" app:
