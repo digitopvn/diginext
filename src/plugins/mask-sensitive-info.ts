@@ -29,7 +29,8 @@ export const mask = (str: string, leftUnmaskLength = 0, rightUnmaskLength?: numb
 	return `${unmaskedFirst}${maskedStr}${unmaskedLast}`;
 };
 
-export const maskSensitiveInfo = (data: any, user: IUser, role?: IRole) => {
+export const maskSensitiveInfo = (data: any, user: IUser, role?: IRole, route?: string) => {
+	if (route.indexOf("/api_key")) return data; // <-- exclude masking data for some specific routes
 	if (typeof data === "boolean" || typeof data === "number" || typeof data === "string") return data;
 
 	// parse role
