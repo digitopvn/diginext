@@ -1,3 +1,11 @@
+## [3.20.4-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.20.3...v3.20.4-prerelease.1) (2023-07-27)
+
+
+### Bug Fixes
+
+* **cli,build,deploy:** exit with error or success code ([829aea0](https://github.com/digitopvn/diginext/commit/829aea0b26dffcfa1730caafc7efae93fc56a1a4))
+* **server,api:** exclude api key from mask sensitive info ([5b32760](https://github.com/digitopvn/diginext/commit/5b3276006a3ccdd073b0f882af90fdc15a3f3c54))
+
 ## [3.20.3](https://github.com/digitopvn/diginext/compare/v3.20.2...v3.20.3) (2023-07-26)
 
 
