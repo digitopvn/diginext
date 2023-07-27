@@ -168,7 +168,6 @@ export async function requestBuild(options: InputOptions) {
 		socket.on("disconnect", () => {
 			// log("[CLI Server] Disconnected");
 			socket.emit("leave", { room: SOCKET_ROOM });
-			process.exit(1);
 		});
 
 		socket.on("connect", () => {
@@ -177,7 +176,7 @@ export async function requestBuild(options: InputOptions) {
 		});
 
 		return new Promise((resolve, reject) => {
-			socket.on("message", ({ action, message }) => {
+			socket.on("message", ({ action, message, type }) => {
 				if (message) {
 					const errorWordIndex = message.toLowerCase().indexOf("error");
 					if (errorWordIndex > -1) {
@@ -186,14 +185,21 @@ export async function requestBuild(options: InputOptions) {
 						log(message);
 					}
 				}
+
 				if (action == "end") {
 					socket.disconnect();
-					resolve(true);
+					if (type === "error") {
+						// process.exit(1);
+						reject(message);
+					} else {
+						// process.exit(0);
+						resolve(true);
+					}
 				}
 			});
 
 			// Max build duration: 30 mins
-			setTimeout(reject, 30 * 60 * 1000);
+			setTimeout(() => reject(`Request timeout (30 minutes)`), 30 * 60 * 1000);
 		});
 	} else {
 		return true;
