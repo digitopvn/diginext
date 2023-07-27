@@ -173,7 +173,7 @@ export async function requestDeploy(options: InputOptions) {
 		});
 
 		return new Promise((resolve, reject) => {
-			socket.on("message", ({ action, message }) => {
+			socket.on("message", ({ action, message, type }) => {
 				if (message) {
 					const errorWordIndex = message.toLowerCase().indexOf("error");
 					if (errorWordIndex > -1) {
@@ -184,13 +184,18 @@ export async function requestDeploy(options: InputOptions) {
 				}
 				if (action == "end") {
 					socket.disconnect();
-					process.exitCode = 1;
-					resolve(true);
+					if (type === "error") {
+						// process.exit(1);
+						reject(message);
+					} else {
+						// process.exit(0);
+						resolve(true);
+					}
 				}
 			});
 
 			// Max build duration: 30 mins
-			setTimeout(reject, 30 * 60 * 1000);
+			setTimeout(() => reject(`Request timeout (30 minutes)`), 30 * 60 * 1000);
 		});
 	} else {
 		return true;

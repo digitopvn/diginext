@@ -248,6 +248,9 @@ parseCliOptions().then((inputOptions) =>
 	!inputOptions.isDebugging
 		? processCLI(inputOptions)
 				.then(() => process.exit(0))
-				.catch((e) => logError(e.toString()))
-		: processCLI(inputOptions).then(() => process.exit(0))
+				.catch((e) => {
+					logError(e.toString());
+					process.exit(1);
+				})
+		: processCLI(inputOptions).then(() => process.exit(1))
 );

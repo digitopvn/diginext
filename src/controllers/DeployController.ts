@@ -12,7 +12,7 @@ import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import type { StartBuildParams } from "@/modules/build";
 import { startBuildV1 } from "@/modules/build/start-build";
 import type { DeployBuildOptions } from "@/modules/deploy/deploy-build";
-import { parseGitRepoDataFromRepoSSH } from "@/plugins";
+import { parseGitRepoDataFromRepoSSH } from "@/modules/git/git-utils";
 import { MongoDB } from "@/plugins/mongodb";
 import { AppService, ClusterService, ContainerRegistryService, GitProviderService } from "@/services";
 import DeployService from "@/services/DeployService";

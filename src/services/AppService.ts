@@ -11,10 +11,11 @@ import type { Ownership } from "@/interfaces/SystemTypes";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import GitProviderAPI from "@/modules/git/git-provider-api";
+import { parseGitRepoDataFromRepoSSH, pullOrCloneGitRepoHTTP, repoSshToRepoURL } from "@/modules/git/git-utils";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
-import { parseGitRepoDataFromRepoSSH, pullOrCloneGitRepo } from "@/plugins";
+import { pullOrCloneGitRepo } from "@/plugins";
 import { basicUserFields } from "@/plugins/mask-sensitive-info";
 import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
@@ -211,15 +212,26 @@ export class AppService extends BaseService<IApp> {
 		const branch = options?.gitBranch || "main";
 		const SOURCE_CODE_DIR = `cache/${project.slug}/${newRepoSlug}/${branch}`;
 		const APP_DIR = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
-		await pullOrCloneGitRepo(repoSSH, APP_DIR, branch, {
-			isDebugging: options?.isDebugging,
-			useAccessToken: { type: gitProvider.method === "bearer" ? "Bearer" : "Basic", value: gitProvider.access_token },
-			removeGitOnFinish: true,
-			removeCIOnFinish: options.removeCI,
-		});
+		// try with "repoSSH" first, if failed, try "repoURL"...
+		try {
+			await pullOrCloneGitRepo(repoSSH, APP_DIR, branch, {
+				isDebugging: options?.isDebugging,
+				removeGitOnFinish: true,
+				removeCIOnFinish: options.removeCI,
+			});
+		} catch (e) {
+			const repoURL = repoSshToRepoURL(repoSSH);
 
-		// delete current git
-		// await deleteFolderRecursive(path.join(APP_DIR, ".git"));
+			await pullOrCloneGitRepoHTTP(repoURL, APP_DIR, branch, {
+				isDebugging: options?.isDebugging,
+				removeGitOnFinish: true,
+				removeCIOnFinish: options.removeCI,
+				useAccessToken: {
+					type: gitProvider.method === "basic" ? "Basic" : "Bearer",
+					value: gitProvider.access_token,
+				},
+			});
+		}
 
 		if (options?.force) {
 			try {

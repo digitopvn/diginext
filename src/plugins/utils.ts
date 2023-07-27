@@ -12,7 +12,7 @@ import dotenv from "dotenv";
 import { execa, execaCommand } from "execa";
 import * as afs from "fs/promises";
 import yaml from "js-yaml";
-import _, { isArray, isEmpty, isString, toInteger, toNumber, trimEnd } from "lodash";
+import _, { isArray, isEmpty, isString, toInteger, toNumber } from "lodash";
 import * as m from "marked";
 import TerminalRenderer from "marked-terminal";
 import path from "path";
@@ -27,7 +27,8 @@ import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { generateRepoURL } from "@/modules/git";
-import { getCurrentGitBranch } from "@/modules/git/git-utils";
+import type { PullOrCloneGitRepoSSHOptions } from "@/modules/git/git-interfaces";
+import { getCurrentGitBranch, parseGitRepoDataFromRepoSSH } from "@/modules/git/git-utils";
 
 import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
 import { MongoDB } from "./mongodb";
@@ -492,114 +493,6 @@ export const savePackageConfig = (_config, options: SaveOpts) => {
 	}
 };
 
-export interface GitRepoData {
-	namespace: string;
-	repoSlug: string;
-	/**
-	 * @example org-slug/repo-slug
-	 */
-	fullSlug: string;
-	/**
-	 * @example github.com, bitbucket.org,...
-	 */
-	gitDomain: string;
-	/**
-	 * Git provider type
-	 */
-	providerType: GitProviderType;
-}
-
-/**
- * Read git data in a repo SSH url
- * @param {string} repoSSH - Example: `git@bitbucket.org:organization-name/git-repo-slug.git`
- */
-export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
-	let namespace: string, repoSlug: string, gitDomain: string, providerType: GitProviderType;
-
-	let fullSlug: string;
-
-	try {
-		namespace = repoSSH.split(":")[1].split("/")[0];
-	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
-		return;
-	}
-
-	try {
-		repoSlug = repoSSH.split(":")[1].split("/")[1].split(".")[0];
-	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
-		return;
-	}
-
-	try {
-		gitDomain = repoSSH.split(":")[0].split("@")[1];
-	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
-		return;
-	}
-
-	try {
-		providerType = gitDomain.split(".")[0] as GitProviderType;
-	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
-		return;
-	}
-
-	fullSlug = `${namespace}/${repoSlug}`;
-
-	return { namespace, repoSlug, fullSlug, gitDomain, providerType };
-}
-
-/**
- * Read git data in a git repo url
- * @param {string} repoURL - Example: `https://bitbucket.org/organization-name/git-repo-slug`
- */
-export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
-	let namespace: string, repoSlug: string, gitDomain: string, providerType: GitProviderType;
-
-	let fullSlug: string;
-
-	repoURL = trimEnd(repoURL, "/");
-	repoURL = trimEnd(repoURL, "#");
-	if (repoURL.indexOf(".git") > -1) repoURL = repoURL.substring(0, repoURL.indexOf(".git"));
-	if (repoURL.indexOf("?") > -1) repoURL = repoURL.substring(0, repoURL.indexOf("?"));
-	console.log(repoURL);
-
-	[gitDomain, namespace, repoSlug] = repoURL.split("://")[1].split("/");
-
-	try {
-		providerType = gitDomain.split(".")[0] as GitProviderType;
-	} catch (e) {
-		console.error(`Repository SSH (${repoURL}) is invalid`);
-		return;
-	}
-
-	fullSlug = `${namespace}/${repoSlug}`;
-
-	return { namespace, repoSlug, fullSlug, gitDomain, providerType };
-}
-
-/**
- * Generate git repo SSH url from a git repo URL
- * @example "git@github.com:digitopvn/diginext.git" -> "https://github.com/digitopvn/diginext"
- */
-export function repoSshToRepoURL(repoSSH: string) {
-	const repoData = parseGitRepoDataFromRepoSSH(repoSSH);
-	if (!repoData) throw new Error(`Unable to parse: ${repoSSH}`);
-	return `https://${repoData.gitDomain}/${repoData.fullSlug}.git`;
-}
-
-/**
- * Generate git repo URL from a git repo SSH url
- * @example "https://github.com/digitopvn/diginext" -> "git@github.com:digitopvn/diginext.git"
- */
-export function repoUrlToRepoSSH(repoURL: string) {
-	const repoData = parseGitRepoDataFromRepoURL(repoURL);
-	if (!repoData) throw new Error(`Unable to parse: ${repoURL}`);
-	return `git@${repoData.gitDomain}:${repoData.fullSlug}.git`;
-}
-
 /**
  * Process `npm install` or `yarn install` or `pnpm install` on current directory
  */
@@ -631,31 +524,7 @@ export const installPackages = async () => {
 	}
 };
 
-interface PullOrCloneGitRepoOptions extends Pick<InputOptions, "ci" | "isDebugging"> {
-	/**
-	 * Should remove ".git" directory after finished pull/clone repo
-	 * @default false
-	 */
-	removeGitOnFinish?: boolean;
-	/**
-	 * Should remove ".github" directory after finished pull/clone repo
-	 * @default false
-	 */
-	removeCIOnFinish?: boolean;
-	/**
-	 * Use git provider's access_token to authenticate before pulling/cloneing repo
-	 */
-	useAccessToken?: {
-		type: "Bearer" | "Basic";
-		value: string;
-	};
-	/**
-	 * Callback for in progressing events
-	 */
-	onUpdate?: (msg: string, progress?: number) => void;
-}
-
-export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOrCloneGitRepoOptions = {}) => {
+export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOrCloneGitRepoSSHOptions = {}) => {
 	//
 	let git: SimpleGit;
 
@@ -677,7 +546,7 @@ export const cloneGitRepo = async (repoSSH: string, dir: string, options: PullOr
 };
 //
 
-export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoOptions = {}) => {
+export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: string, options: PullOrCloneGitRepoSSHOptions = {}) => {
 	let git: SimpleGit;
 	let success: boolean = false;
 
