@@ -67,7 +67,6 @@ export default async function createApp(options: InputOptions) {
 	}
 
 	// setup git remote & create initial commits, branches
-	options.isDebugging = true;
 	await initalizeAndCreateDefaultBranches(options);
 
 	// print project information:
