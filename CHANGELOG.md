@@ -1,3 +1,16 @@
+# [3.21.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.20.4-prerelease.1...v3.21.0-prerelease.1) (2023-07-28)
+
+
+### Bug Fixes
+
+* **cli,new app:** correct target directory options ([786c60f](https://github.com/digitopvn/diginext/commit/786c60f6b9ef583e91ded32d727e14f72c11eeb8))
+* **cli,new app:** force create git branch ([e583884](https://github.com/digitopvn/diginext/commit/e583884d5e1ac0101f6eeea89480211c49f7b76c))
+
+
+### Features
+
+* **server,cli:** ask ai to generate dockerfile ([0fed8b6](https://github.com/digitopvn/diginext/commit/0fed8b6df821031378d6872357b31d3267fd15c1))
+
 ## [3.20.4-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.20.3...v3.20.4-prerelease.1) (2023-07-27)
 
 
