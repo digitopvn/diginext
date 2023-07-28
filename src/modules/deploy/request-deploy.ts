@@ -26,14 +26,14 @@ export async function requestDeploy(options: InputOptions) {
 
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
-	console.log("requestDeploy() > options.targetDirectory :>> ", options.targetDirectory);
+	if (options.isDebugging) console.log("requestDeploy() > options.targetDirectory :>> ", options.targetDirectory);
 
 	const { buildServerUrl } = getCliConfig();
 	const { env, targetDirectory } = options;
 
 	// check Dockerfile -> no dockerfile, no build -> failed
 	let dockerFile = resolveDockerfilePath({ targetDirectory, env });
-	console.log("requestDeploy() > dockerFile :>> ", dockerFile);
+	if (options.isDebugging) console.log("requestDeploy() > dockerFile :>> ", dockerFile);
 	if (!dockerFile) return;
 
 	/**
@@ -122,7 +122,7 @@ export async function requestDeploy(options: InputOptions) {
 
 	try {
 		const url = `${buildServerUrl}/api/v1/deploy/from-source`;
-		console.log("requestDeploy() > deploy API url :>> ", url);
+		if (options.isDebugging) console.log("requestDeploy() > deploy API url :>> ", url);
 		const requestResult = await fetchApi({
 			url,
 			method: "POST",

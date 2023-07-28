@@ -24,6 +24,7 @@ import { execServer } from "@/modules/server";
 import generateSnippet from "@/modules/snippets/generateSnippet";
 import { currentVersion, freeUp } from "@/plugins";
 
+import { execAI } from "./modules/ai/exec-ai";
 import { execInitApp } from "./modules/apps/init-app";
 import { requestBuild } from "./modules/build/request-build";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
@@ -44,6 +45,8 @@ import { testCommand } from "./modules/test-command";
 // export const conf = new Configstore(pkg.name);
 
 export async function processCLI(options?: InputOptions) {
+	if (!options.targetDirectory) options.targetDirectory = process.cwd();
+
 	options.version = currentVersion();
 
 	let env = "dev";
@@ -98,6 +101,11 @@ export async function processCLI(options?: InputOptions) {
 
 		case "upgrade":
 			return logWarn(`This command is deprecated.`);
+
+		case "ask":
+			await cliAuthenticate(options);
+			await execAI(options);
+			break;
 
 		case "cdn":
 			await cliAuthenticate(options);

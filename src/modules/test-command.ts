@@ -1,4 +1,5 @@
 import type { InputOptions } from "@/interfaces";
+import { AIService } from "@/services/AIService";
 
 export const testCommand = async (options?: InputOptions) => {
 	// ----- PULL or CLONE GIT REPO -----
@@ -34,4 +35,7 @@ export const testCommand = async (options?: InputOptions) => {
 	// 		},
 	// 	}
 	// );
+
+	const aiSvc = new AIService();
+	await aiSvc.generateDockerfile(options.targetDirectory, options);
 };
