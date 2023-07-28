@@ -45,8 +45,6 @@ import { testCommand } from "./modules/test-command";
 // export const conf = new Configstore(pkg.name);
 
 export async function processCLI(options?: InputOptions) {
-	if (!options.targetDirectory) options.targetDirectory = process.cwd();
-
 	options.version = currentVersion();
 
 	let env = "dev";

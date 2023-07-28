@@ -15,6 +15,7 @@ const { buildServerUrl } = getCliConfig();
 export async function execAI(options?: InputOptions) {
 	const { DB } = await import("@/modules/api/DB");
 	const { secondAction: action, thirdAction: resource, isDebugging } = options;
+	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
 	switch (action) {
 		case "generate":
