@@ -4,6 +4,7 @@ import { isServerReady } from "@/server";
 
 import apiKeyUserRouter from "./api_key";
 import appRouter from "./app";
+import askAiRouter from "./ask-ai";
 import buildRouter from "./build";
 import clusterRouter from "./cluster";
 import cronjobRouter from "./cronjob";
@@ -65,5 +66,6 @@ router.use("/cronjob", cronjobRouter);
 router.use("/stats", statsRouter);
 router.use("/webhook", webhookRouter);
 router.use("/notification", notificationRouter);
+router.use("/ask-ai", askAiRouter);
 
 export default router;

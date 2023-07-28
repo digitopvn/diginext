@@ -87,10 +87,12 @@ export async function requestBuild(options: InputOptions) {
 	 */
 	const imageURL = `${registry.imageBaseURL}/${app.projectSlug}-${app.slug}`;
 	const tagInfo = await generateBuildTag(options.targetDirectory, { branch: options.gitBranch });
-	console.log("tagInfo :>> ", tagInfo);
+	if (options.isDebugging) console.log("tagInfo :>> ", tagInfo);
+
 	options.buildTag = tagInfo.tag;
 	options.buildImage = `${imageURL}:${options.buildTag}`;
-	console.log("options.buildTag :>> ", options.buildTag);
+
+	if (options.isDebugging) console.log("options.buildTag :>> ", options.buildTag);
 
 	const SOCKET_ROOM = `${app.slug}-${options.buildTag}`;
 
