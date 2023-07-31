@@ -6,3 +6,9 @@ export function contains(text: string, words: string[]): boolean {
 	}
 	return true;
 }
+
+export function extractTextBetweenBackticks(input: string): string {
+	const regex = /```(.*?)```/s;
+	const match = input.match(regex);
+	return match ? match[1].trim() : input;
+}

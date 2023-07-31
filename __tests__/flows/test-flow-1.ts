@@ -446,9 +446,9 @@ export function testFlow1() {
 			console.log("appDirs :>> ", appDirs);
 			expect(appDirs.join(",").indexOf(`testbitbucketproject`)).toBeGreaterThan(-1);
 
-			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
+			const appDir = path.resolve(CLI_TEST_DIR, "testbitbucketproject-web");
 			const sourceCodeFiles = readdirSync(appDir);
-			console.log("testgithubproject-web > files :>> ", sourceCodeFiles);
+			console.log("testbitbucketproject-web > files :>> ", sourceCodeFiles);
 			expect(sourceCodeFiles.length).toBeGreaterThan(0);
 			expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
 

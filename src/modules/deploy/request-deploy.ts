@@ -26,14 +26,14 @@ export async function requestDeploy(options: InputOptions) {
 
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
-	console.log("requestDeploy() > options.targetDirectory :>> ", options.targetDirectory);
+	if (options.isDebugging) console.log("requestDeploy() > options.targetDirectory :>> ", options.targetDirectory);
 
 	const { buildServerUrl } = getCliConfig();
 	const { env, targetDirectory } = options;
 
 	// check Dockerfile -> no dockerfile, no build -> failed
 	let dockerFile = resolveDockerfilePath({ targetDirectory, env });
-	console.log("requestDeploy() > dockerFile :>> ", dockerFile);
+	if (options.isDebugging) console.log("requestDeploy() > dockerFile :>> ", dockerFile);
 	if (!dockerFile) return;
 
 	/**
@@ -122,7 +122,7 @@ export async function requestDeploy(options: InputOptions) {
 
 	try {
 		const url = `${buildServerUrl}/api/v1/deploy/from-source`;
-		console.log("requestDeploy() > deploy API url :>> ", url);
+		if (options.isDebugging) console.log("requestDeploy() > deploy API url :>> ", url);
 		const requestResult = await fetchApi({
 			url,
 			method: "POST",
@@ -173,7 +173,7 @@ export async function requestDeploy(options: InputOptions) {
 		});
 
 		return new Promise((resolve, reject) => {
-			socket.on("message", ({ action, message }) => {
+			socket.on("message", ({ action, message, type }) => {
 				if (message) {
 					const errorWordIndex = message.toLowerCase().indexOf("error");
 					if (errorWordIndex > -1) {
@@ -184,13 +184,18 @@ export async function requestDeploy(options: InputOptions) {
 				}
 				if (action == "end") {
 					socket.disconnect();
-					process.exitCode = 1;
-					resolve(true);
+					if (type === "error") {
+						// process.exit(1);
+						reject(message);
+					} else {
+						// process.exit(0);
+						resolve(true);
+					}
 				}
 			});
 
 			// Max build duration: 30 mins
-			setTimeout(reject, 30 * 60 * 1000);
+			setTimeout(() => reject(`Request timeout (30 minutes)`), 30 * 60 * 1000);
 		});
 	} else {
 		return true;

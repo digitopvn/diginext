@@ -44,7 +44,7 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 			log("initalizeAndCreateDefaultBranches > remote :>> ", remote);
 		}
 
-		await git.push(["--set-upstream", "origin", "main"]);
+		await git.push(["--set-upstream", "origin", "main", "--force"]);
 
 		// Update main branch protection
 		/**
@@ -63,7 +63,7 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 			console.log("initalizeAndCreateDefaultBranches > devBranch :>> ", devBranch);
 		}
 		await git.checkout(["-b", devBranch]);
-		await git.push(["--set-upstream", "origin", devBranch]);
+		await git.push(["--set-upstream", "origin", devBranch, "--force"]);
 
 		if (options.isDebugging) console.log(`✅ Finished initializing git!`);
 

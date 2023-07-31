@@ -11,6 +11,8 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { cloneGitRepo, deleteFolderRecursive, pullOrCloneGitRepo, wait } from "@/plugins";
 
+import { parseGitRepoDataFromRepoSSH, pullOrCloneGitRepoHTTP, repoSshToRepoURL } from "./git/git-utils";
+
 /**
  * Delete temporary directory of the framework
  */
@@ -111,13 +113,9 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 	 * ---
 	 * Parse framework repo SSH url -> use git provider's credentials accordingly:
 	 */
-	// const { providerType } = parseGitRepoDataFromRepoSSH(repoSSH);
-	// const { DB } = await import("@/modules/api/DB");
-	// const gitProvider = await DB.findOne("git", { type: providerType });
-	// if (options.isDebugging) console.log("pullFrameworkVersion() > gitProvider :>> ", gitProvider);
 
 	// pull or clone git repo
-	const pullStatus = await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
+	let pullStatus = await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
 				console.log(msg);
@@ -133,6 +131,33 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 	if (options.isDebugging) console.log("pullFrameworkVersion() > tmpDir :>> ", tmpDir);
 	if (options.isDebugging) console.log("pullFrameworkVersion() > framework files :>> ", readdirSync(tmpDir));
 	if (options.isDebugging) console.log("✅ pullFrameworkVersion() > pullStatus :>> ", pullStatus);
+
+	// If failed to pull/clone with SSH, give another try with HTTPS method:
+	if (!pullStatus) {
+		const { providerType } = parseGitRepoDataFromRepoSSH(repoSSH);
+		const { DB } = await import("@/modules/api/DB");
+		const gitProvider = await DB.findOne("git", { type: providerType });
+		if (options.isDebugging) console.log("pullFrameworkVersion() > gitProvider :>> ", gitProvider);
+
+		const repoURL = repoSshToRepoURL(repoSSH);
+
+		pullStatus = await pullOrCloneGitRepoHTTP(repoURL, tmpDir, frameworkVersion, {
+			onUpdate: (msg, progress) => {
+				if (isServerMode) {
+					console.log(msg);
+				} else {
+					spin.text = `Pulling "${name}" framework... ${progress || 0}%`;
+				}
+			},
+			useAccessToken: {
+				type: gitProvider.method === "basic" ? "Basic" : "Bearer",
+				value: gitProvider.access_token,
+			},
+			// delete framework git
+			removeGitOnFinish: true,
+			removeCIOnFinish: !options.ci,
+		});
+	}
 
 	spin.stop();
 

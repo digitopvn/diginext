@@ -4,8 +4,8 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import { Config, IsTest } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
-import type { IRole, IUser, IWorkspace } from "@/entities";
-import type { IGetQueryParams, ResponseData } from "@/interfaces";
+import type { IApiKeyAccount, IRole, IServiceAccount, IWorkspace } from "@/entities";
+import type { ResponseData } from "@/interfaces";
 import * as interfaces from "@/interfaces";
 import { dxSendEmail } from "@/modules/diginext/dx-email";
 import type { DxPackage } from "@/modules/diginext/dx-package";
@@ -13,7 +13,7 @@ import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
 import type { DxSubsription } from "@/modules/diginext/dx-subscription";
 import { dxCreateWorkspace } from "@/modules/diginext/dx-workspace";
 import { filterUniqueItems } from "@/plugins/array";
-import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
+import { MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
 import { RoleService, UserService, WorkspaceService } from "@/services";
@@ -22,13 +22,6 @@ interface AddUserBody {
 	userId: Types.ObjectId;
 	workspaceId: Types.ObjectId;
 	roleId?: Types.ObjectId;
-}
-
-interface ApiUserAndServiceAccountQueries extends IGetQueryParams {
-	/**
-	 * Workspace ID or slug
-	 */
-	workspace: Types.ObjectId | string;
 }
 
 interface WorkspaceInputData {
@@ -288,22 +281,21 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Get("/service_account")
 	async getServiceAccounts(
 		@Queries()
-		queryParams?: ApiUserAndServiceAccountQueries
+		queryParams?: {
+			/**
+			 * ID of Service Account
+			 */
+			id?: string;
+		}
 	) {
 		const { DB } = await import("@/modules/api/DB");
-		const { workspace } = this.filter;
-		if (!workspace) return interfaces.respondFailure({ msg: `Workspace ID or slug is required.` });
+		const workspaceID = this.ownership.workspace._id;
 
-		let serviceAccounts: IUser[] = [];
-		if (isValidObjectId(workspace)) {
-			serviceAccounts = await DB.find("service_account", { workspaces: { $in: [workspace] } });
-		} else {
-			const ws = await DB.findOne("workspace", { slug: workspace });
-			if (!ws) return interfaces.respondFailure({ msg: `Workspace not found.` });
-			serviceAccounts = await DB.find("service_account", { workspaces: { $in: [ws._id] } });
-		}
+		let data: IServiceAccount | IServiceAccount[] = this.filter.id
+			? await DB.findOne("service_account", { _id: this.filter.id, workspaces: { $in: [workspaceID] } })
+			: await DB.find("service_account", { workspaces: { $in: [workspaceID] } });
 
-		return interfaces.respondSuccess({ data: serviceAccounts });
+		return interfaces.respondSuccess({ data });
 	}
 
 	/**
@@ -318,21 +310,20 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Get("/api_key")
 	async getApiKeyUsers(
 		@Queries()
-		queryParams?: ApiUserAndServiceAccountQueries
+		queryParams?: {
+			/**
+			 * ID of API key account
+			 */
+			id?: string;
+		}
 	) {
 		const { DB } = await import("@/modules/api/DB");
-		const { workspace } = this.filter;
-		if (!workspace) return interfaces.respondFailure({ msg: `Workspace ID or slug is required.` });
+		const workspaceID = this.ownership.workspace._id;
 
-		let list: IUser[] = [];
-		if (isValidObjectId(workspace)) {
-			list = await DB.find("api_key_user", { workspaces: { $in: [workspace] } });
-		} else {
-			const ws = await DB.findOne("workspace", { slug: workspace });
-			if (!ws) return interfaces.respondFailure({ msg: `Workspace not found.` });
-			list = await DB.find("api_key_user", { workspaces: { $in: [ws._id] } });
-		}
+		let data: IApiKeyAccount | IApiKeyAccount[] = this.filter.id
+			? await DB.findOne("api_key_user", { _id: this.filter.id, workspaces: { $in: [workspaceID] } })
+			: await DB.find("api_key_user", { workspaces: { $in: [workspaceID] } });
 
-		return interfaces.respondSuccess({ data: list });
+		return interfaces.respondSuccess({ data });
 	}
 }

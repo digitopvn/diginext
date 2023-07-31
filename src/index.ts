@@ -24,6 +24,7 @@ import { execServer } from "@/modules/server";
 import generateSnippet from "@/modules/snippets/generateSnippet";
 import { currentVersion, freeUp } from "@/plugins";
 
+import { execAI } from "./modules/ai/exec-ai";
 import { execInitApp } from "./modules/apps/init-app";
 import { requestBuild } from "./modules/build/request-build";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
@@ -98,6 +99,11 @@ export async function processCLI(options?: InputOptions) {
 
 		case "upgrade":
 			return logWarn(`This command is deprecated.`);
+
+		case "ask":
+			await cliAuthenticate(options);
+			await execAI(options);
+			break;
 
 		case "cdn":
 			await cliAuthenticate(options);
@@ -248,6 +254,9 @@ parseCliOptions().then((inputOptions) =>
 	!inputOptions.isDebugging
 		? processCLI(inputOptions)
 				.then(() => process.exit(0))
-				.catch((e) => logError(e.toString()))
-		: processCLI(inputOptions).then(() => process.exit(0))
+				.catch((e) => {
+					logError(e.toString());
+					process.exit(1);
+				})
+		: processCLI(inputOptions).then(() => process.exit(1))
 );

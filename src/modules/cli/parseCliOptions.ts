@@ -238,6 +238,18 @@ export async function parseCliOptions() {
 		.command(["transfer", "tf"], "Tranfer repo from other provider", newProjectOptions)
 		// command: snippets
 		.command(["snippets", "snpt"], "Generate snippets", newProjectOptions)
+		// command: Ask AI
+		.command(["ask", "ai"], "Ask AI to generate something.", (_yargs) =>
+			_yargs
+				.usage(
+					chalk.green("Ask AI to generate Dockerfile:\n") +
+						`$  $0 ask generate dockerfile \n` +
+						`> This will generate a Dockerfile for your project in the current working directory.`
+				)
+				.command(["generate", "gen"], "Generate something.", (__yargs) => __yargs.command("dockerfile", "Generate Dockerfile"))
+				.option("dir", { ...argvOptions.targetDir })
+				.option("output", { ...argvOptions.output })
+		)
 		// command: init
 		.command("init", "Initialize CLI in the current project directory")
 		// command: upgrade
