@@ -86,7 +86,7 @@ export const cliLogin = async (options: CliLoginOptions) => {
 	if (options.isDebugging) console.log("currentUser :>> ", currentUser);
 
 	// "access_token" is VALID -> save it to local machine!
-	saveCliConfig({ access_token, currentWorkspace: currentUser.activeWorkspace as IWorkspace });
+	saveCliConfig({ access_token, apiToken, currentWorkspace: currentUser.activeWorkspace as IWorkspace });
 
 	const { workspaces = [], activeWorkspace } = currentUser;
 	let currentWorkspace;
@@ -116,6 +116,7 @@ export const cliLogin = async (options: CliLoginOptions) => {
 export const cliLogout = async () => {
 	saveCliConfig({
 		access_token: null,
+		apiToken: null,
 		currentUser: null,
 		currentWorkspace: null,
 	});
