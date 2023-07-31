@@ -65,7 +65,13 @@ export async function processCLI(options?: InputOptions) {
 			break;
 
 		case "login":
-			await cliLogin({ secondAction: options.secondAction, url: options.url, accessToken: options.token });
+			await cliLogin({
+				secondAction: options.secondAction,
+				url: options.url,
+				accessToken: options.token,
+				apiToken: options.apiToken,
+				isDebugging: options.isDebugging,
+			});
 			break;
 
 		case "logout":

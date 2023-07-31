@@ -104,16 +104,6 @@ export type InputOptions = {
 	slug?: string;
 
 	/**
-	 * Flag: `--token`
-	 */
-	token?: string;
-
-	/**
-	 *
-	 */
-	refreshToken?: string;
-
-	/**
 	 * Flag: `-i`, `--input`
 	 */
 	input?: string;
@@ -122,6 +112,24 @@ export type InputOptions = {
 	 *
 	 */
 	data?: string;
+
+	/**
+	 * User access token
+	 * Flag: `--token`
+	 */
+	token?: string;
+
+	/**
+	 * User refresh token
+	 */
+	refreshToken?: string;
+
+	/**
+	 * API access token
+	 * - Flag: `--api-key`, `--api-token`
+	 */
+	apiToken?: string;
+
 	/**
 	 * Flag: `--key`, `--token`
 	 */

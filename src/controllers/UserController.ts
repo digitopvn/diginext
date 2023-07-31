@@ -3,8 +3,8 @@ import { isArray } from "lodash";
 
 import BaseController from "@/controllers/BaseController";
 import type { IUser } from "@/entities";
-import * as entities from "@/entities";
-import * as interfaces from "@/interfaces";
+import { UserDto } from "@/entities";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
 import { assignRoleByID, assignRoleByRoleID, filterSensitiveInfo, filterUsersByWorkspaceRole, getActiveRole } from "@/plugins/user-utils";
 import { UserService, WorkspaceService } from "@/services";
@@ -35,7 +35,7 @@ export default class UserController extends BaseController<IUser> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	async read(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	async read(@Queries() queryParams?: IGetQueryParams) {
 		const res = await super.read();
 
 		// console.log("[1] res.data :>> ", res.data);
@@ -53,21 +53,22 @@ export default class UserController extends BaseController<IUser> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/profile")
-	profile(@Queries() queryParams?: interfaces.IGetQueryParams) {
-		return this.user;
+	profile(@Queries() queryParams?: IGetQueryParams) {
+		console.log("this.user :>> ", this.user);
+		return this.user ? respondSuccess({ data: this.user }) : respondFailure(`Unauthenticated.`);
 	}
 
 	@Security("api_key2")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: entities.UserDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	create(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.create(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	async update(@Body() body: entities.UserDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		if (body.roles) {
 			try {
 				if (isArray(body.roles)) {
@@ -78,7 +79,7 @@ export default class UserController extends BaseController<IUser> {
 				}
 				delete body.roles;
 			} catch (e) {
-				return interfaces.respondFailure(e.toString());
+				return respondFailure(e.toString());
 			}
 		}
 
@@ -91,7 +92,7 @@ export default class UserController extends BaseController<IUser> {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
+	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
 	}
 
@@ -104,9 +105,9 @@ export default class UserController extends BaseController<IUser> {
 			if (!body.userId) throw new Error(`Param "userId" is required.`);
 
 			const { user, role } = await assignRoleByID(body.roleId, body.userId);
-			return interfaces.respondSuccess({ data: { user, role } });
+			return respondSuccess({ data: { user, role } });
 		} catch (e) {
-			return interfaces.respondFailure(e.toString());
+			return respondFailure(e.toString());
 		}
 	}
 
@@ -129,7 +130,7 @@ export default class UserController extends BaseController<IUser> {
 			// return undefined if can't convert to "ObjectId" -> it's a "slug" !!! (lol)
 			let workspaceSlug = !workspaceId ? workspaceIdOrSlug : undefined;
 
-			if (!workspaceId && !workspaceSlug) return interfaces.respondFailure(`Param "workspace" (ID or SLUG) is invalid`);
+			if (!workspaceId && !workspaceSlug) return respondFailure(`Param "workspace" (ID or SLUG) is invalid`);
 
 			const wsFilter: any = {};
 			if (workspaceId) wsFilter._id = workspaceId;
@@ -170,10 +171,10 @@ export default class UserController extends BaseController<IUser> {
 			user.activeRole = activeRole;
 
 			// return the updated user:
-			return interfaces.respondSuccess({ data: user });
+			return respondSuccess({ data: user });
 		} catch (e) {
 			console.log(e);
-			return interfaces.respondFailure({ msg: "Failed to join a workspace." });
+			return respondFailure({ msg: "Failed to join a workspace." });
 		}
 	}
 }
