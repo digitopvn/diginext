@@ -25,6 +25,7 @@ const httpsKeepAliveAgent = new HttpsAgent({
 interface FetchApiOptions<T = any> extends AxiosRequestConfig {
 	url: string;
 	access_token?: string;
+	api_key?: string;
 	method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 	data?: T | any;
 }
@@ -36,9 +37,9 @@ export interface FetchApiResponse<T extends Object> {
 }
 
 export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
-	const { access_token, method = "GET" } = options;
+	const { access_token, api_key, method = "GET" } = options;
 
-	const { buildServerUrl = process.env.BASE_URL, currentUser, access_token: cachedAccessToken } = getCliConfig();
+	const { buildServerUrl = process.env.BASE_URL, currentUser, access_token: cachedAccessToken, apiToken: cachedApiKey } = getCliConfig();
 
 	if (!buildServerUrl) {
 		logError(`"BUILD SERVER URL" not found. Please login with: "dx login <BUILD_SERVER_URL>"`);
@@ -64,6 +65,13 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 	} else {
 		options.headers = { ...options.headers };
 	}
+
+	// if "API_ACCESS_TOKEN" is defined, ignore "Bearer" token
+	if (api_key || cachedApiKey) {
+		delete options.headers.Authorization;
+		options.headers = { ...options.headers, "x-api-key": api_key || cachedApiKey };
+	}
+
 	// console.log("options.headers :>> ", options.headers);
 
 	if (!options.headers["content-type"]) options.headers["content-type"] = "application/json";
