@@ -1,3 +1,11 @@
+## [3.21.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.21.0...v3.21.1-prerelease.1) (2023-07-31)
+
+
+### Bug Fixes
+
+* **cli:** cache api key ([98180a4](https://github.com/digitopvn/diginext/commit/98180a43bea6915284c80cb44fec2abfa4114bc9))
+* **cli:** login using api key ([2044706](https://github.com/digitopvn/diginext/commit/204470621e8ed571e392c65f157e0f39e0b7e370))
+
 # [3.21.0](https://github.com/digitopvn/diginext/compare/v3.20.3...v3.21.0) (2023-07-31)
 
 
