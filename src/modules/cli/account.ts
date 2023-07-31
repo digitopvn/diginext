@@ -26,10 +26,17 @@ interface CliLoginOptions {
 	 * The access token to authenticate, specify with `--token` or `--key` flag
 	 */
 	accessToken?: string;
+
+	/**
+	 * The API_ACCESS_TOKEN to authenticate, specify with `--api-token` or `--api-key` flag
+	 */
+	apiToken?: string;
+
+	isDebugging?: boolean;
 }
 
 export const cliLogin = async (options: CliLoginOptions) => {
-	const { secondAction, url, accessToken } = options;
+	const { secondAction, url, accessToken, apiToken } = options;
 
 	const { buildServerUrl: currentServerUrl } = getCliConfig();
 
@@ -47,9 +54,9 @@ export const cliLogin = async (options: CliLoginOptions) => {
 	});
 
 	// open login page of build server:
-	if (!access_token) open(tokenDisplayUrl);
+	if (!access_token && !apiToken) {
+		open(tokenDisplayUrl);
 
-	if (!access_token) {
 		const { inputAccessToken } = await inquirer.prompt<{ inputAccessToken: string }>([
 			{
 				type: "password",
@@ -70,12 +77,13 @@ export const cliLogin = async (options: CliLoginOptions) => {
 	let currentUser: IUser;
 
 	// validate the "access_token" -> get "userId":
-	const { status, data } = await fetchApi({ url: `/auth/profile`, access_token });
+	const { status, data } = await fetchApi({ url: `/auth/profile`, access_token, api_key: apiToken });
 	if (status === 0) {
-		logError(`Authentication failed, "access_token" is not valid.`);
+		logError(`Authentication failed, invalid "access_token".`);
 		return;
 	}
 	currentUser = data as IUser;
+	if (options.isDebugging) console.log("currentUser :>> ", currentUser);
 
 	// "access_token" is VALID -> save it to local machine!
 	saveCliConfig({ access_token, currentWorkspace: currentUser.activeWorkspace as IWorkspace });
@@ -92,6 +100,7 @@ export const cliLogin = async (options: CliLoginOptions) => {
 	}
 
 	currentWorkspace = activeWorkspace;
+	if (options.isDebugging) console.log("currentWorkspace :>> ", currentWorkspace);
 
 	if (!currentUser.token) currentUser.token = {} as AccessTokenInfo;
 	currentUser.token.access_token = access_token;

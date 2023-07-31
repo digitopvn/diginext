@@ -33,6 +33,7 @@ const argvOptions = {
 	value: { describe: "Input value", alias: "val" },
 	file: { describe: "Input file path", alias: "f" },
 	key: { describe: "Input key in string", alias: "token" },
+	"api-token": { describe: "API access token", alias: "api-key" },
 	url: { describe: "Input URL address with http" },
 	host: { describe: "Input host address (withou http)" },
 	overwrite: { describe: "[DANGER] Force execute a command (skip any errors)", alias: "force" },
@@ -116,6 +117,7 @@ const userInputOptions = {
 	input: argvOptions.input,
 	key: argvOptions.key,
 	token: argvOptions.key,
+	"api-token": argvOptions["api-token"],
 	file: argvOptions.file,
 	url: argvOptions.url,
 	host: argvOptions.host,
@@ -221,7 +223,8 @@ export async function parseCliOptions() {
 			_yargs
 				.usage("$0 <server_url> --token=<access_token>")
 				.option("url", { ...argvOptions.url, describe: "URL of your Diginext server.", alias: "u" })
-				.option("token", { ...argvOptions.key, describe: "Value of ACCESS_TOKEN.", alias: "key" })
+				.option("token", { ...argvOptions.key, describe: "Value of User's ACCESS_TOKEN.", alias: "key" })
+				.option("api-token", { ...argvOptions.key, describe: "Value of API_ACCESS_TOKEN.", alias: "api-key" })
 		)
 		.command("logout", "Sign out Diginext CLI from BUILD server")
 		.usage("$0 login <build_server_url>", "Login into your build server")
@@ -497,6 +500,7 @@ export async function parseCliOptions() {
 		filePath: argv.file as string,
 		key: argv.key as string,
 		token: argv.key as string,
+		apiToken: argv["api-token"] as string,
 		url: argv.url as string,
 		host: argv.host as string,
 		name: argv.name as string,
