@@ -10,7 +10,6 @@ import { currentVersion, resolveDockerfilePath } from "@/plugins";
 
 import type { StartBuildParams } from "../build";
 import { generateBuildTag } from "../build/generate-build-tag";
-import { stageCommitAndPushAll } from "../git/git-utils";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
 import { parseOptionsToAppConfig } from "./parse-options-to-app-config";
 
@@ -79,16 +78,16 @@ export async function requestDeploy(options: InputOptions) {
 	/**
 	 * [4] Stage, commit & push configuration files (dx.json) to GIT repository:
 	 */
-	try {
-		await stageCommitAndPushAll({
-			directory: options.targetDirectory,
-			message: `build(${env}): ${options.buildImage}`,
-		});
-	} catch (e) {
-		// Stop the process if this throws any errors
-		logError(`Can't commit files for building this app: ${e}`);
-		return;
-	}
+	// try {
+	// 	await stageCommitAndPushAll({
+	// 		directory: options.targetDirectory,
+	// 		message: `build(${env}): ${options.buildImage}`,
+	// 	});
+	// } catch (e) {
+	// 	// Stop the process if this throws any errors
+	// 	logError(`Can't commit files for building this app: ${e}`);
+	// 	return;
+	// }
 
 	/**
 	 * [5] Notify the commander & call API to request server build:

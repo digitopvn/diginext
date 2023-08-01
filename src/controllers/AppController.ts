@@ -738,9 +738,12 @@ export default class AppController extends BaseController<IApp, AppService> {
 				cliVersion: currentVersion(),
 				workspace: this.workspace,
 			});
-			const result = await ClusterManager.rollout(release._id.toString());
 
-			if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
+			// const result = await ClusterManager.rollout(release._id.toString());
+			// if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
+
+			// apply deployment YAML
+			await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context: cluster.contextName });
 		}
 
 		return respondSuccess({ data: updatedApp.deployEnvironment[env] });
@@ -1161,8 +1164,12 @@ export default class AppController extends BaseController<IApp, AppService> {
 				cliVersion: currentVersion(),
 				workspace: this.workspace,
 			});
-			const result = await ClusterManager.rollout(release._id.toString());
-			if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
+
+			// apply deployment YAML
+			await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context: cluster.contextName });
+
+			// const result = await ClusterManager.rollout(release._id.toString());
+			// if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
 		}
 
 		return respondSuccess({ data: updatedApp });
