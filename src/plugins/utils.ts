@@ -26,9 +26,8 @@ import type { AppConfig } from "@/interfaces/AppConfig";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
-import { generateRepoURL } from "@/modules/git";
 import type { PullOrCloneGitRepoSSHOptions } from "@/modules/git/git-interfaces";
-import { getCurrentGitBranch, parseGitRepoDataFromRepoSSH } from "@/modules/git/git-utils";
+import { getCurrentGitBranch, isValidRepoURL, parseGitRepoDataFromRepoSSH, repoSshToRepoURL, repoUrlToRepoSSH } from "@/modules/git/git-utils";
 
 import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
 import { MongoDB } from "./mongodb";
@@ -648,15 +647,16 @@ export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isD
 			console.dir(remotes, { depth: 10 });
 		}
 
-		const repoSSH = (remotes[0] as any)?.refs?.fetch;
-		if (!repoSSH) return;
+		const repoSshOrUrl = (remotes[0] as any)?.refs?.fetch;
+		if (!repoSshOrUrl) return;
 
 		const branch = await getCurrentGitBranch(dir);
 		if (!branch) return;
 
-		const { repoSlug: slug, providerType: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(repoSSH);
+		const repoSSH = isValidRepoURL(repoSshOrUrl) ? repoUrlToRepoSSH(repoSshOrUrl) : repoSshOrUrl;
+		const repoURL = isValidRepoURL(repoSshOrUrl) ? repoSshOrUrl : repoSshToRepoURL(repoSshOrUrl);
 
-		const repoURL = generateRepoURL(provider, fullSlug);
+		const { repoSlug: slug, providerType: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(repoSSH);
 
 		return { repoSSH, repoURL, provider, slug, fullSlug, namespace, gitDomain, branch };
 	} catch (e) {
