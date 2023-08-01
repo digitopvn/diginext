@@ -651,12 +651,6 @@ export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isD
 		const repoSSH = (remotes[0] as any)?.refs?.fetch;
 		if (!repoSSH) return;
 
-		if (repoSSH.indexOf("https://") > -1) {
-			logError(`Git repository using HTTPS origin is not supported, please use SSH origin.`);
-			log(`For example: "git remote set-url origin git@bitbucket.org:<namespace>/<git-repo-slug>.git"`);
-			return;
-		}
-
 		const branch = await getCurrentGitBranch(dir);
 		if (!branch) return;
 
