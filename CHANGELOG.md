@@ -1,3 +1,11 @@
+## [3.21.2-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.4...v3.21.2-prerelease.5) (2023-08-01)
+
+
+### Bug Fixes
+
+* **cli:** add more debug log ([1fcf815](https://github.com/digitopvn/diginext/commit/1fcf8153c43e0e30c7e75615d63428241c05a7e0))
+* **cli:** remoge git extension in repo url ([dbd3d7f](https://github.com/digitopvn/diginext/commit/dbd3d7f214b4219ad4936efa703b0466f09d2e64))
+
 ## [3.21.2-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.3...v3.21.2-prerelease.4) (2023-08-01)
 
 
