@@ -138,7 +138,7 @@ export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
 export function repoSshToRepoURL(repoSSH: string) {
 	const repoData = parseGitRepoDataFromRepoSSH(repoSSH);
 	if (!repoData) throw new Error(`Unable to parse: ${repoSSH}`);
-	return `https://${repoData.gitDomain}/${repoData.fullSlug}.git`;
+	return `https://${repoData.gitDomain}/${repoData.fullSlug}`;
 }
 
 /**
