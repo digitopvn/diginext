@@ -126,7 +126,7 @@ export const cliLogout = async () => {
 
 export async function cliAuthenticate(options: InputOptions) {
 	let accessToken, workspace: IWorkspace, user: IUser;
-	const { access_token: currentAccessToken, buildServerUrl } = getCliConfig();
+	const { access_token: currentAccessToken, apiToken, buildServerUrl } = getCliConfig();
 	accessToken = currentAccessToken;
 	// workspace = currentWorkspace;
 
@@ -144,7 +144,7 @@ export async function cliAuthenticate(options: InputOptions) {
 		return _user;
 	};
 
-	if (!accessToken && buildServerUrl) {
+	if (!accessToken && !apiToken && buildServerUrl) {
 		user = await continueToLoginStep(buildServerUrl);
 		if (!user) return;
 	}
@@ -156,6 +156,7 @@ export async function cliAuthenticate(options: InputOptions) {
 	} = await fetchApi({
 		url: `/auth/profile`,
 		access_token: accessToken,
+		api_key: apiToken,
 	});
 	user = userData as IUser;
 
