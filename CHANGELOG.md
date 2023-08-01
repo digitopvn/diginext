@@ -1,3 +1,10 @@
+## [3.21.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.21.1...v3.21.2-prerelease.1) (2023-08-01)
+
+
+### Bug Fixes
+
+* **cli,auth:** fetch api key from cache ([c3e8fbb](https://github.com/digitopvn/diginext/commit/c3e8fbb9f7591b07545f5bb439265b5f753feb21))
+
 ## [3.21.1](https://github.com/digitopvn/diginext/compare/v3.21.0...v3.21.1) (2023-07-31)
 
 
