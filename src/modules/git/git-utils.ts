@@ -35,6 +35,18 @@ interface GitStageOptions {
 	message?: string;
 }
 
+export async function isUnstagedFiles(dir = process.cwd()) {
+	const git = simpleGit(dir);
+	try {
+		const status = await git.status();
+		// Extract the list of unstaged files from the status object
+		const unstagedFiles = status.files.filter((file) => file.index === "M" || file.working_dir === "M");
+		return unstagedFiles.length > 0;
+	} catch (error) {
+		return false;
+	}
+}
+
 /**
  * Stage all files, commit them & push to git origin.
  */
