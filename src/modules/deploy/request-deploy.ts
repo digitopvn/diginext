@@ -10,6 +10,7 @@ import { currentVersion, resolveDockerfilePath } from "@/plugins";
 
 import type { StartBuildParams } from "../build";
 import { generateBuildTag } from "../build/generate-build-tag";
+import { isUnstagedFiles } from "../git/git-utils";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
 import { parseOptionsToAppConfig } from "./parse-options-to-app-config";
 
@@ -34,6 +35,10 @@ export async function requestDeploy(options: InputOptions) {
 	let dockerFile = resolveDockerfilePath({ targetDirectory, env });
 	if (options.isDebugging) console.log("requestDeploy() > dockerFile :>> ", dockerFile);
 	if (!dockerFile) return;
+
+	// Warn about uncommited files
+	const shouldShowGitWarning = await isUnstagedFiles(options.targetDirectory);
+	if (shouldShowGitWarning) logWarn(`Please stage files & commit before deploying.`);
 
 	/**
 	 * [1] Parse cli options, validate the input params
