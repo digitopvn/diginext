@@ -26,9 +26,8 @@ import type { AppConfig } from "@/interfaces/AppConfig";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
-import { generateRepoURL } from "@/modules/git";
 import type { PullOrCloneGitRepoSSHOptions } from "@/modules/git/git-interfaces";
-import { getCurrentGitBranch, parseGitRepoDataFromRepoSSH } from "@/modules/git/git-utils";
+import { getCurrentGitBranch, isValidRepoURL, parseGitRepoDataFromRepoSSH, repoSshToRepoURL, repoUrlToRepoSSH } from "@/modules/git/git-utils";
 
 import { DIGITOP_CDN_URL, HOME_DIR } from "../config/const";
 import { MongoDB } from "./mongodb";
@@ -648,25 +647,29 @@ export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isD
 			console.dir(remotes, { depth: 10 });
 		}
 
-		const repoSSH = (remotes[0] as any)?.refs?.fetch;
-		if (!repoSSH) return;
-
-		if (repoSSH.indexOf("https://") > -1) {
-			logError(`Git repository using HTTPS origin is not supported, please use SSH origin.`);
-			log(`For example: "git remote set-url origin git@bitbucket.org:<namespace>/<git-repo-slug>.git"`);
-			return;
-		}
+		const repoSshOrUrl = (remotes[0] as any)?.refs?.fetch;
+		if (!repoSshOrUrl) return;
+		if (options?.isDebugging) console.log("getCurrentGitRepoData() > repoSshOrUrl :>> ", repoSshOrUrl);
 
 		const branch = await getCurrentGitBranch(dir);
 		if (!branch) return;
+		if (options?.isDebugging) console.log("getCurrentGitRepoData() > branch :>> ", branch);
 
-		const { repoSlug: slug, providerType: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(repoSSH);
+		const repoSSH = isValidRepoURL(repoSshOrUrl) ? repoUrlToRepoSSH(repoSshOrUrl) : repoSshOrUrl;
+		const repoURL = isValidRepoURL(repoSshOrUrl) ? repoSshOrUrl : repoSshToRepoURL(repoSshOrUrl);
 
-		const repoURL = generateRepoURL(provider, fullSlug);
+		if (options?.isDebugging) {
+			console.log("getCurrentGitRepoData() > repoSSH :>> ", repoSSH);
+			console.log("getCurrentGitRepoData() > repoURL :>> ", repoURL);
+		}
+		const gitData = parseGitRepoDataFromRepoSSH(repoSSH);
+		if (options?.isDebugging) console.log("getCurrentGitRepoData() > gitData :>> ", gitData);
+
+		const { repoSlug: slug, providerType: provider, namespace, gitDomain, fullSlug } = gitData;
 
 		return { repoSSH, repoURL, provider, slug, fullSlug, namespace, gitDomain, branch };
 	} catch (e) {
-		// logWarn(`getCurrentGitRepoData() :>>`, e.toString());
+		console.warn(`getCurrentGitRepoData() > error :>>`, e.toString());
 		return;
 	}
 };

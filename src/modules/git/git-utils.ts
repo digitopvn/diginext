@@ -1,6 +1,6 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
 import { existsSync } from "fs";
-import _, { endsWith, last, startsWith, trimEnd } from "lodash";
+import _, { last, startsWith, trimEnd } from "lodash";
 import path from "path";
 import type { SimpleGit, SimpleGitProgressEvent } from "simple-git";
 import { simpleGit } from "simple-git";
@@ -35,6 +35,18 @@ interface GitStageOptions {
 	message?: string;
 }
 
+export async function isUnstagedFiles(dir = process.cwd()) {
+	const git = simpleGit(dir);
+	try {
+		const status = await git.status();
+		// Extract the list of unstaged files from the status object
+		const unstagedFiles = status.files.filter((file) => file.index === "M" || file.working_dir === "M");
+		return unstagedFiles.length > 0;
+	} catch (error) {
+		return false;
+	}
+}
+
 /**
  * Stage all files, commit them & push to git origin.
  */
@@ -65,41 +77,41 @@ export async function stageCommitAndPushAll(options: GitStageOptions) {
  * @param {string} repoSSH - Example: `git@bitbucket.org:organization-name/git-repo-slug.git`
  */
 export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
-	let namespace: string, repoSlug: string, gitDomain: string, providerType: GitProviderType;
+	let org: string, repoSlug: string, gitDomain: string, providerType: GitProviderType;
 
 	let fullSlug: string;
 
 	try {
-		namespace = repoSSH.split(":")[1].split("/")[0];
+		org = repoSSH.split(":")[1].split("/")[0];
 	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
+		logError(`Unable to parse "org": Repository SSH (${repoSSH}) is invalid`);
 		return;
 	}
 
 	try {
-		repoSlug = repoSSH.split(":")[1].split("/")[1].split(".")[0];
+		repoSlug = repoSSH.indexOf(".") > -1 ? repoSSH.split(":")[1].split("/")[1].split(".")[0] : repoSSH.split(":")[1].split("/")[1];
 	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
+		logError(`Unable to parse "slug": Repository SSH (${repoSSH}) is invalid`);
 		return;
 	}
 
 	try {
 		gitDomain = repoSSH.split(":")[0].split("@")[1];
 	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
+		logError(`Unable to parse "domain": Repository SSH (${repoSSH}) is invalid`);
 		return;
 	}
 
 	try {
 		providerType = gitDomain.split(".")[0] as GitProviderType;
 	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
+		logError(`Unable to parse "provider": Repository SSH (${repoSSH}) is invalid`);
 		return;
 	}
 
-	fullSlug = `${namespace}/${repoSlug}`;
+	fullSlug = `${org}/${repoSlug}`;
 
-	return { namespace, repoSlug, fullSlug, gitDomain, providerType };
+	return { namespace: org, repoSlug, fullSlug, gitDomain, providerType };
 }
 
 /**
@@ -115,14 +127,14 @@ export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
 	repoURL = trimEnd(repoURL, "#");
 	if (repoURL.indexOf(".git") > -1) repoURL = repoURL.substring(0, repoURL.indexOf(".git"));
 	if (repoURL.indexOf("?") > -1) repoURL = repoURL.substring(0, repoURL.indexOf("?"));
-	console.log(repoURL);
+	// console.log(repoURL);
 
 	[gitDomain, namespace, repoSlug] = repoURL.split("://")[1].split("/");
 
 	try {
 		providerType = gitDomain.split(".")[0] as GitProviderType;
 	} catch (e) {
-		console.error(`Repository SSH (${repoURL}) is invalid`);
+		console.error(`Repository URL (${repoURL}) is invalid.`);
 		return;
 	}
 
@@ -138,7 +150,7 @@ export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
 export function repoSshToRepoURL(repoSSH: string) {
 	const repoData = parseGitRepoDataFromRepoSSH(repoSSH);
 	if (!repoData) throw new Error(`Unable to parse: ${repoSSH}`);
-	return `https://${repoData.gitDomain}/${repoData.fullSlug}.git`;
+	return `https://${repoData.gitDomain}/${repoData.fullSlug}`;
 }
 
 /**
@@ -154,7 +166,7 @@ export function repoUrlToRepoSSH(repoURL: string) {
 export function validateRepoURL(url: string) {
 	if (!url) throw new Error(`Repo URL is empty.`);
 	if (!startsWith(url, "https")) throw new Error(`Repo URL should start with "https".`);
-	if (!endsWith(url, ".git")) throw new Error(`Repo URL should end with ".git".`);
+	// if (!endsWith(url, ".git")) throw new Error(`Repo URL should end with ".git".`);
 }
 
 export function isValidRepoURL(url: string) {
