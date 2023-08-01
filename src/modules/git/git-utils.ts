@@ -1,6 +1,6 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
 import { existsSync } from "fs";
-import _, { endsWith, last, startsWith, trimEnd } from "lodash";
+import _, { last, startsWith, trimEnd } from "lodash";
 import path from "path";
 import type { SimpleGit, SimpleGitProgressEvent } from "simple-git";
 import { simpleGit } from "simple-git";
@@ -65,41 +65,41 @@ export async function stageCommitAndPushAll(options: GitStageOptions) {
  * @param {string} repoSSH - Example: `git@bitbucket.org:organization-name/git-repo-slug.git`
  */
 export function parseGitRepoDataFromRepoSSH(repoSSH: string): GitRepoData {
-	let namespace: string, repoSlug: string, gitDomain: string, providerType: GitProviderType;
+	let org: string, repoSlug: string, gitDomain: string, providerType: GitProviderType;
 
 	let fullSlug: string;
 
 	try {
-		namespace = repoSSH.split(":")[1].split("/")[0];
+		org = repoSSH.split(":")[1].split("/")[0];
 	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
+		logError(`Unable to parse "org": Repository SSH (${repoSSH}) is invalid`);
 		return;
 	}
 
 	try {
-		repoSlug = repoSSH.split(":")[1].split("/")[1].split(".")[0];
+		repoSlug = repoSSH.indexOf(".") > -1 ? repoSSH.split(":")[1].split("/")[1].split(".")[0] : repoSSH.split(":")[1].split("/")[1];
 	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
+		logError(`Unable to parse "slug": Repository SSH (${repoSSH}) is invalid`);
 		return;
 	}
 
 	try {
 		gitDomain = repoSSH.split(":")[0].split("@")[1];
 	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
+		logError(`Unable to parse "domain": Repository SSH (${repoSSH}) is invalid`);
 		return;
 	}
 
 	try {
 		providerType = gitDomain.split(".")[0] as GitProviderType;
 	} catch (e) {
-		logError(`Repository SSH (${repoSSH}) is invalid`);
+		logError(`Unable to parse "provider": Repository SSH (${repoSSH}) is invalid`);
 		return;
 	}
 
-	fullSlug = `${namespace}/${repoSlug}`;
+	fullSlug = `${org}/${repoSlug}`;
 
-	return { namespace, repoSlug, fullSlug, gitDomain, providerType };
+	return { namespace: org, repoSlug, fullSlug, gitDomain, providerType };
 }
 
 /**
@@ -122,7 +122,7 @@ export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
 	try {
 		providerType = gitDomain.split(".")[0] as GitProviderType;
 	} catch (e) {
-		console.error(`Repository SSH (${repoURL}) is invalid`);
+		console.error(`Repository URL (${repoURL}) is invalid.`);
 		return;
 	}
 
@@ -154,7 +154,7 @@ export function repoUrlToRepoSSH(repoURL: string) {
 export function validateRepoURL(url: string) {
 	if (!url) throw new Error(`Repo URL is empty.`);
 	if (!startsWith(url, "https")) throw new Error(`Repo URL should start with "https".`);
-	if (!endsWith(url, ".git")) throw new Error(`Repo URL should end with ".git".`);
+	// if (!endsWith(url, ".git")) throw new Error(`Repo URL should end with ".git".`);
 }
 
 export function isValidRepoURL(url: string) {

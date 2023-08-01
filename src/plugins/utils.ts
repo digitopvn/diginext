@@ -662,11 +662,14 @@ export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isD
 		console.log("getCurrentGitRepoData() > repoSSH :>> ", repoSSH);
 		console.log("getCurrentGitRepoData() > repoURL :>> ", repoURL);
 		// }
-		const { repoSlug: slug, providerType: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(repoSSH);
+		const gitData = parseGitRepoDataFromRepoSSH(repoSSH);
+		console.log("getCurrentGitRepoData() > gitData :>> ", gitData);
+
+		const { repoSlug: slug, providerType: provider, namespace, gitDomain, fullSlug } = gitData;
 
 		return { repoSSH, repoURL, provider, slug, fullSlug, namespace, gitDomain, branch };
 	} catch (e) {
-		// logWarn(`getCurrentGitRepoData() :>>`, e.toString());
+		console.warn(`getCurrentGitRepoData() > error :>>`, e.toString());
 		return;
 	}
 };

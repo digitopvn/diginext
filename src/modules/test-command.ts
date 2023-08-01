@@ -1,5 +1,6 @@
 import type { InputOptions } from "@/interfaces";
-import { AIService } from "@/services/AIService";
+
+import { isValidRepoURL, parseGitRepoDataFromRepoSSH, repoSshToRepoURL, repoUrlToRepoSSH } from "./git/git-utils";
 
 export const testCommand = async (options?: InputOptions) => {
 	// ----- PULL or CLONE GIT REPO -----
@@ -36,6 +37,15 @@ export const testCommand = async (options?: InputOptions) => {
 	// 	}
 	// );
 
-	const aiSvc = new AIService();
-	await aiSvc.generateDockerfile(options.targetDirectory, options);
+	// const aiSvc = new AIService();
+	// await aiSvc.generateDockerfile(options.targetDirectory, options);
+
+	const repoSshOrUrl = "https://github.com/digitopvn/diginext-docs";
+	const repoSSH = isValidRepoURL(repoSshOrUrl) ? repoUrlToRepoSSH(repoSshOrUrl) : repoSshOrUrl;
+	const repoURL = isValidRepoURL(repoSshOrUrl) ? repoSshOrUrl : repoSshToRepoURL(repoSshOrUrl);
+	console.log("repoSSH :>> ", repoSSH);
+	console.log("repoURL :>> ", repoURL);
+
+	const gitData = parseGitRepoDataFromRepoSSH(repoSSH);
+	console.log("gitData :>> ", gitData);
 };
