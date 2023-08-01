@@ -1,3 +1,10 @@
+## [3.21.2-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.5...v3.21.2-prerelease.6) (2023-08-01)
+
+
+### Bug Fixes
+
+* **cli:** turn off stage files when request deploy ([cc4bf18](https://github.com/digitopvn/diginext/commit/cc4bf182f10e616d492eb0e1db62939681e7864e))
+
 ## [3.21.2-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.4...v3.21.2-prerelease.5) (2023-08-01)
 
 
