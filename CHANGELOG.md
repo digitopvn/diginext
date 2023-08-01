@@ -1,3 +1,10 @@
+## [3.21.2-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.1...v3.21.2-prerelease.2) (2023-08-01)
+
+
+### Bug Fixes
+
+* **cli:** support https git repo ([5abc8ff](https://github.com/digitopvn/diginext/commit/5abc8ff632fb1cfd522987f5b153db63165ba763))
+
 ## [3.21.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.21.1...v3.21.2-prerelease.1) (2023-08-01)
 
 
