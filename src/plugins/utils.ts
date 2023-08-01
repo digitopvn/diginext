@@ -649,21 +649,21 @@ export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isD
 
 		const repoSshOrUrl = (remotes[0] as any)?.refs?.fetch;
 		if (!repoSshOrUrl) return;
-		console.log("getCurrentGitRepoData() > repoSshOrUrl :>> ", repoSshOrUrl);
+		if (options?.isDebugging) console.log("getCurrentGitRepoData() > repoSshOrUrl :>> ", repoSshOrUrl);
 
 		const branch = await getCurrentGitBranch(dir);
 		if (!branch) return;
-		console.log("getCurrentGitRepoData() > branch :>> ", branch);
+		if (options?.isDebugging) console.log("getCurrentGitRepoData() > branch :>> ", branch);
 
 		const repoSSH = isValidRepoURL(repoSshOrUrl) ? repoUrlToRepoSSH(repoSshOrUrl) : repoSshOrUrl;
 		const repoURL = isValidRepoURL(repoSshOrUrl) ? repoSshOrUrl : repoSshToRepoURL(repoSshOrUrl);
 
-		// if (options?.isDebugging) {
-		console.log("getCurrentGitRepoData() > repoSSH :>> ", repoSSH);
-		console.log("getCurrentGitRepoData() > repoURL :>> ", repoURL);
-		// }
+		if (options?.isDebugging) {
+			console.log("getCurrentGitRepoData() > repoSSH :>> ", repoSSH);
+			console.log("getCurrentGitRepoData() > repoURL :>> ", repoURL);
+		}
 		const gitData = parseGitRepoDataFromRepoSSH(repoSSH);
-		console.log("getCurrentGitRepoData() > gitData :>> ", gitData);
+		if (options?.isDebugging) console.log("getCurrentGitRepoData() > gitData :>> ", gitData);
 
 		const { repoSlug: slug, providerType: provider, namespace, gitDomain, fullSlug } = gitData;
 
