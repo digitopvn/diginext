@@ -1,3 +1,10 @@
+## [3.21.2-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.3...v3.21.2-prerelease.4) (2023-08-01)
+
+
+### Bug Fixes
+
+* **cli:** add debug info ([50a19af](https://github.com/digitopvn/diginext/commit/50a19af099df9a6d46f9346b2206298b77010e86))
+
 ## [3.21.2-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.2...v3.21.2-prerelease.3) (2023-08-01)
 
 
