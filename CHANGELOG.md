@@ -1,3 +1,10 @@
+## [3.21.2-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.6...v3.21.2-prerelease.7) (2023-08-01)
+
+
+### Bug Fixes
+
+* **cli,deploy:**  warn unstaged files ([0a60ddf](https://github.com/digitopvn/diginext/commit/0a60ddf897e881be9ca5a732d3a8c7ad4afb3be2))
+
 ## [3.21.2-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.5...v3.21.2-prerelease.6) (2023-08-01)
 
 
