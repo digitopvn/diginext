@@ -649,13 +649,19 @@ export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isD
 
 		const repoSshOrUrl = (remotes[0] as any)?.refs?.fetch;
 		if (!repoSshOrUrl) return;
+		console.log("getCurrentGitRepoData() > repoSshOrUrl :>> ", repoSshOrUrl);
 
 		const branch = await getCurrentGitBranch(dir);
 		if (!branch) return;
+		console.log("getCurrentGitRepoData() > branch :>> ", branch);
 
 		const repoSSH = isValidRepoURL(repoSshOrUrl) ? repoUrlToRepoSSH(repoSshOrUrl) : repoSshOrUrl;
 		const repoURL = isValidRepoURL(repoSshOrUrl) ? repoSshOrUrl : repoSshToRepoURL(repoSshOrUrl);
 
+		// if (options?.isDebugging) {
+		console.log("getCurrentGitRepoData() > repoSSH :>> ", repoSSH);
+		console.log("getCurrentGitRepoData() > repoURL :>> ", repoURL);
+		// }
 		const { repoSlug: slug, providerType: provider, namespace, gitDomain, fullSlug } = parseGitRepoDataFromRepoSSH(repoSSH);
 
 		return { repoSSH, repoURL, provider, slug, fullSlug, namespace, gitDomain, branch };
