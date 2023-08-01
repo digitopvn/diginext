@@ -1,3 +1,10 @@
+## [3.21.2-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.2...v3.21.2-prerelease.3) (2023-08-01)
+
+
+### Bug Fixes
+
+* **cli,git repo:** correct repo url and ssh when parsing ([eb45951](https://github.com/digitopvn/diginext/commit/eb45951d81ee7ed3784191822b3c6ebd288c0b44))
+
 ## [3.21.2-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.1...v3.21.2-prerelease.2) (2023-08-01)
 
 
