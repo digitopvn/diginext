@@ -1,3 +1,11 @@
+## [3.21.3](https://github.com/digitopvn/diginext/compare/v3.21.2...v3.21.3) (2023-08-02)
+
+
+### Bug Fixes
+
+* **server,deployment yaml:** increase limit rps to 10 ([a701a37](https://github.com/digitopvn/diginext/commit/a701a37b0f8ac0d1b7e58a23f3032e8c4554573e))
+* **server:** make screenshot async after 30s ([2838e5a](https://github.com/digitopvn/diginext/commit/2838e5a5546a815d6cc1aebccb1583dfcbe18628))
+
 ## [3.21.3-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.21.2...v3.21.3-prerelease.1) (2023-08-02)
 
 
