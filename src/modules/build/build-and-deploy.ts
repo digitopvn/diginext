@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import humanizeDuration from "humanize-duration";
 
 import { Config } from "@/app.config";
+import { wait } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 import MediaService from "@/services/MediaService";
@@ -24,7 +25,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	buildParams.shouldDeploy = true; // <-- keep this to disable webhook notification when build success
 
 	const buildInfo = await startBuild(buildParams);
-	if (!buildInfo) throw new Error(`Unable to build`);
+	if (!buildInfo) throw new Error(`[BUILD_AND_DEPLOY] Unable to build.`);
 
 	const { build, startTime, SOCKET_ROOM } = buildInfo;
 	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > buildTag :>> ${build.tag}` });
@@ -39,12 +40,12 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 
 	let errorMsg = ``;
 	if (deployRes?.error) {
-		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${buildParams.env}): ${deployRes?.error}`;
+		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${env}): ${deployRes?.error}`;
 		sendLog({ SOCKET_ROOM, message: errorMsg });
 		return;
 	}
 	if (!deployRes) {
-		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${buildParams.env}): UNKNOWN_REASON`;
+		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${env}): UNKNOWN_REASON`;
 		sendLog({ SOCKET_ROOM, message: errorMsg });
 		return;
 	}
@@ -62,24 +63,28 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 
 	sendLog({ SOCKET_ROOM, message: chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanDuration} 🎉`), type: "success" });
 
-	// capture a screenshot:
+	// [4] Capture a screenshot (scheduled after 30 seconds after the deployment):
 	try {
-		const result = await screenshot(env === "prod" ? prereleaseUrl : endpoint, { fullPage: false });
-		if (result) {
-			// success -> write to db
-			delete result.buffer;
-			const mediaSvc = new MediaService();
-			const media = await mediaSvc.create({ ...result, owner: deployParams.owner._id, workspace: deployParams.workspace._id });
-			if (media) {
-				// update screenshot to release
-				const updatedRelease = await DB.updateOne("release", { _id: releaseId }, { screenshot: media.url });
-				if (updatedRelease) sendLog({ SOCKET_ROOM, message: `Screenshot: ${media.url}` });
+		// let's this job run in background
+		wait(30 * 1000, () => {
+			screenshot(env === "prod" ? prereleaseUrl : endpoint, { fullPage: false }).then(async (result) => {
+				if (result) {
+					// success -> write to db
+					delete result.buffer;
+					const mediaSvc = new MediaService();
+					const media = await mediaSvc.create({ ...result, owner: deployParams.owner._id, workspace: deployParams.workspace._id });
+					if (media) {
+						// update screenshot to release
+						const updatedRelease = await DB.updateOne("release", { _id: releaseId }, { screenshot: media.url });
+						// if (updatedRelease) sendLog({ SOCKET_ROOM, message: `Screenshot: ${media.url}` });
 
-				// update screenshot to app's deploy environment
-				const app = await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
-				if (!app) sendLog({ SOCKET_ROOM, message: `Unable to update screenshot to app's deploy environment (${env})` });
-			}
-		}
+						// update screenshot to app's deploy environment
+						const app = await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
+						// if (!app) sendLog({ SOCKET_ROOM, message: `Unable to update screenshot to app's deploy environment (${env})` });
+					}
+				}
+			});
+		});
 	} catch (e) {
 		sendLog({
 			SOCKET_ROOM,
