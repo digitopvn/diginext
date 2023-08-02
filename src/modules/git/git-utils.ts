@@ -127,7 +127,7 @@ export function parseGitRepoDataFromRepoURL(repoURL: string): GitRepoData {
 	repoURL = trimEnd(repoURL, "#");
 	if (repoURL.indexOf(".git") > -1) repoURL = repoURL.substring(0, repoURL.indexOf(".git"));
 	if (repoURL.indexOf("?") > -1) repoURL = repoURL.substring(0, repoURL.indexOf("?"));
-	console.log(repoURL);
+	// console.log(repoURL);
 
 	[gitDomain, namespace, repoSlug] = repoURL.split("://")[1].split("/");
 

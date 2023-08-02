@@ -1,3 +1,17 @@
+## [3.21.2](https://github.com/digitopvn/diginext/compare/v3.21.1...v3.21.2) (2023-08-01)
+
+
+### Bug Fixes
+
+* **cli,auth:** fetch api key from cache ([c3e8fbb](https://github.com/digitopvn/diginext/commit/c3e8fbb9f7591b07545f5bb439265b5f753feb21))
+* **cli,deploy:**  warn unstaged files ([0a60ddf](https://github.com/digitopvn/diginext/commit/0a60ddf897e881be9ca5a732d3a8c7ad4afb3be2))
+* **cli,git repo:** correct repo url and ssh when parsing ([eb45951](https://github.com/digitopvn/diginext/commit/eb45951d81ee7ed3784191822b3c6ebd288c0b44))
+* **cli:** add debug info ([50a19af](https://github.com/digitopvn/diginext/commit/50a19af099df9a6d46f9346b2206298b77010e86))
+* **cli:** add more debug log ([1fcf815](https://github.com/digitopvn/diginext/commit/1fcf8153c43e0e30c7e75615d63428241c05a7e0))
+* **cli:** remoge git extension in repo url ([dbd3d7f](https://github.com/digitopvn/diginext/commit/dbd3d7f214b4219ad4936efa703b0466f09d2e64))
+* **cli:** support https git repo ([5abc8ff](https://github.com/digitopvn/diginext/commit/5abc8ff632fb1cfd522987f5b153db63165ba763))
+* **cli:** turn off stage files when request deploy ([cc4bf18](https://github.com/digitopvn/diginext/commit/cc4bf182f10e616d492eb0e1db62939681e7864e))
+
 ## [3.21.2-prerelease.7](https://github.com/digitopvn/diginext/compare/v3.21.2-prerelease.6...v3.21.2-prerelease.7) (2023-08-01)
 
 
