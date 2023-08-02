@@ -154,6 +154,17 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		});
 	}
 
+	const onRolloutUpdate = (msg: string) => {
+		// if any errors on rolling out -> stop processing deployment
+		if (msg.indexOf("Error from server") > -1) {
+			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: msg });
+			throw new Error(msg);
+		} else {
+			// if normal log message -> print out to the Web UI
+			sendLog({ SOCKET_ROOM, message: msg });
+		}
+	};
+
 	if (skipReadyCheck) {
 		sendLog({
 			SOCKET_ROOM,
@@ -165,20 +176,12 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 
 		try {
 			if (forceRollOut) {
-				ClusterManager.rollout(releaseId);
+				ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
 			} else {
 				if (env === "prod") {
-					ClusterManager.previewPrerelease(releaseId, {
-						onUpdate: (msg) => {
-							sendLog({ SOCKET_ROOM, message: msg });
-						},
-					});
+					ClusterManager.previewPrerelease(releaseId, { onUpdate: onRolloutUpdate });
 				} else {
-					ClusterManager.rollout(releaseId, {
-						onUpdate: (msg) => {
-							sendLog({ SOCKET_ROOM, message: msg });
-						},
-					});
+					ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
 				}
 			}
 		} catch (e) {
@@ -200,17 +203,6 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 			});
 
 			try {
-				const onRolloutUpdate = (msg: string) => {
-					// if any errors on rolling out -> stop processing deployment
-					if (msg.indexOf("Error from server") > -1) {
-						sendLog({ SOCKET_ROOM, type: "error", action: "end", message: msg });
-						throw new Error(msg);
-					} else {
-						// if normal log message -> print out to the Web UI
-						sendLog({ SOCKET_ROOM, message: msg });
-					}
-				};
-
 				const result =
 					env === "prod"
 						? forceRollOut

@@ -124,7 +124,7 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 }
 
 /**
- * Roll out a release - VER 1.0
+ * Roll out a prerelease environment
  * @param  {String} id - Release ID
  */
 export async function previewPrerelease(id: string, options: RolloutOptions = {}) {

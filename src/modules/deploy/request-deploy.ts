@@ -161,8 +161,8 @@ export async function requestDeploy(options: InputOptions) {
 	if (options.isTail) {
 		let socketURL = buildServerUrl.replace(/https/gi, "wss");
 		socketURL = buildServerUrl.replace(/http/gi, "ws");
-		const socket = io(socketURL, { transports: ["websocket"] });
 
+		const socket = io(socketURL, { transports: ["websocket"] });
 		socket.on("error", (e) => logError(e));
 		socket.on("connect_error", (e) => logError(e));
 
@@ -181,9 +181,9 @@ export async function requestDeploy(options: InputOptions) {
 				if (message) {
 					const errorWordIndex = message.toLowerCase().indexOf("error");
 					if (errorWordIndex > -1) {
-						logWarn(message);
+						console.warn(message);
 					} else {
-						log(message);
+						console.log(message);
 					}
 				}
 				if (action == "end") {
