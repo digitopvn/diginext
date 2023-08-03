@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.21.3",
+	"version": "3.21.4-prerelease.1",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"exports": "./index.js",
 	"bin": {
@@ -47,7 +47,7 @@
 		"email": "dev@wearetopgroup.com",
 		"url": "https://github.com/digitopvn/diginext"
 	},
-	"license": "GPL",
+	"license": "GPL-3.0",
 	"engines": {
 		"npm": ">=8.0.0",
 		"node": ">=16.0.0"
