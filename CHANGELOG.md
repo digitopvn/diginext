@@ -1,3 +1,10 @@
+## [3.21.4-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.21.3...v3.21.4-prerelease.1) (2023-08-03)
+
+
+### Bug Fixes
+
+* **server,generate yaml:** increase limit rps to 100 ([97ea3ee](https://github.com/digitopvn/diginext/commit/97ea3eef5db31b1760a6e902f81e6239bbb8c31b))
+
 ## [3.21.3](https://github.com/digitopvn/diginext/compare/v3.21.2...v3.21.3) (2023-08-02)
 
 
