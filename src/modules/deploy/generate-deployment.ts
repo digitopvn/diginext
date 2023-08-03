@@ -249,7 +249,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					if (ingressClass) ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
 
 					// requests per minute
-					if (env !== "prod") ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rps"] = `10`;
+					if (env !== "prod") ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rps"] = `100`;
 
 					// labels
 					if (!doc.metadata.labels) doc.metadata.labels = {};
