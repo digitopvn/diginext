@@ -14,7 +14,11 @@ const router = express.Router();
 export const signAndRedirect = (res: Response, data: { userId: string; workspaceId?: string }, redirectUrl: string) => {
 	const { userId, workspaceId } = data;
 	// console.log("[2] signAndRedirect > data :>> ", data);
-	const access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+
+	const { accessToken: access_token, refreshToken: refresh_token } = generateJWT(userId, {
+		expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
+		workspaceId,
+	});
 	// console.log("[2] signAndRedirect > access_token :>>", access_token);
 
 	// assign JWT access token to cookie and request headers:
@@ -24,11 +28,14 @@ export const signAndRedirect = (res: Response, data: { userId: string; workspace
 	// console.log("[2] signAndRedirect > redirectUrl :>> ", redirectUrl);
 	// logged in successfully -> redirect to workspace:
 	const url = new URL(redirectUrl);
-	const params = new URLSearchParams(url.search);
-	params.set("access_token", access_token);
+	// const params = new URLSearchParams(url.search);
+	// params.set("access_token", access_token);
 
-	const finalUrl = url.origin + "/workspace/select?access_token=" + access_token + "&redirect_url=" + redirectUrl;
+	const finalUrl =
+		url.origin + "/workspace/select?access_token=" + access_token + "&refresh_token=" + refresh_token + "&redirect_url=" + redirectUrl;
+
 	console.log("[2] signAndRedirect > finalUrl", finalUrl);
+
 	return res.redirect(endsWith(finalUrl, "%23") ? finalUrl.substring(0, finalUrl.length - 3) : finalUrl);
 };
 

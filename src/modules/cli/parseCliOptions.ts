@@ -218,6 +218,7 @@ export async function parseCliOptions() {
 		.command("test", "")
 		// command: CLI management
 		.command("info", "Show CLI & SERVER information")
+		.command("profile", "Show current login user information")
 		// command: login
 		.command("login", "Authenticate Diginext CLI with BUILD server", (_yargs) =>
 			_yargs
