@@ -67,8 +67,7 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 	}
 
 	// if "API_ACCESS_TOKEN" is defined, ignore "Bearer" token
-	if (api_key || cachedApiKey) {
-		delete options.headers.Authorization;
+	if (!options.headers.Authorization && (api_key || cachedApiKey)) {
 		options.headers = { ...options.headers, "x-api-key": api_key || cachedApiKey };
 	}
 

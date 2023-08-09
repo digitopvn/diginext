@@ -29,7 +29,7 @@ export const generateJWT = (userId: string, options?: JWTOptions) => {
 
 	const { expiresIn } = options;
 	const secret = Config.grab("JWT_SECRET", "123");
-	const refreshSecret = Config.grab("JWT_REFRESH_SECRET");
+	const refreshSecret = Config.grab("JWT_REFRESH_SECRET", secret);
 	const payload = { id: userId, ...options };
 
 	const accessToken = jwt.sign(payload, secret, {
@@ -44,7 +44,7 @@ export const generateJWT = (userId: string, options?: JWTOptions) => {
 export const refreshAccessToken = () => {};
 
 export const verifyRefreshToken = (refreshToken: string): Promise<{ error: boolean; tokenDetails?: any; message: string }> => {
-	const secret = Config.grab("JWT_REFRESH_SECRET");
+	const secret = Config.grab("JWT_REFRESH_SECRET") || Config.grab("JWT_SECRET", "123");
 
 	return new Promise(async (resolve, reject) => {
 		// const userTokenSvc = new UserTokenService();
@@ -131,21 +131,21 @@ export const jwtStrategy = new Strategy(
 		let access_token = req.query.access_token || req.cookies["x-auth-cookie"] || req.headers.authorization?.split(" ")[1];
 		let refresh_token = req.query.refresh_token as string;
 		// console.log("jwtStrategy > access_token :>> ", access_token);
-		console.log("jwtStrategy > refresh_token :>> ", refresh_token);
+		// console.log("jwtStrategy > refresh_token :>> ", refresh_token);
 		// console.log("jwtStrategy > payload :>> ", payload);
 		// console.log(`[1] jwtStrategy > payload.id :>> `, payload.id);
 
 		// 1. Extract token info
 		const tokenInfo = await extractAccessTokenInfo({ access_token, refresh_token }, payload);
-		console.log("jwtStrategy > tokenInfo :>> ", tokenInfo);
+		// console.log("jwtStrategy > tokenInfo :>> ", tokenInfo);
 		// validating token...
-		if (tokenInfo.isExpired) return done(JSON.stringify({ status: 0, messages: ["Access token was expired."] }), null);
-		if (!tokenInfo || !tokenInfo.token) return done(JSON.stringify({ status: 0, messages: ["Missing access token."] }), null);
+		if (tokenInfo?.isExpired) return done(JSON.stringify({ status: 0, messages: ["Access token was expired."] }), null);
+		if (!tokenInfo?.token) return done(JSON.stringify({ status: 0, messages: ["Missing access token."] }), null);
 
 		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
 		let user = await DB.findOne("user", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
-		console.log("jwtStrategy > user :>> ", user);
+		// console.log("jwtStrategy > user :>> ", user);
 		if (user) {
 			const isAccessTokenExisted = await DB.count("user", { _id: payload.id, "token.access_token": tokenInfo.token.access_token });
 			if (isAccessTokenExisted === 0) {

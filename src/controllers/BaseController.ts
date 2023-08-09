@@ -146,6 +146,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			full = false,
 			where = {},
 			access_token,
+			refresh_token,
 			isDebugging = false,
 			...filter
 		} = req.query as any;
@@ -236,6 +237,7 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			full = false,
 			isDebugging = false,
 			access_token,
+			refresh_token,
 			...filter
 		} = req.query;
 
