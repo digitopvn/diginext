@@ -1,3 +1,11 @@
+## [3.21.5](https://github.com/digitopvn/diginext/compare/v3.21.4...v3.21.5) (2023-08-10)
+
+
+### Bug Fixes
+
+* **server,cli:** add refresh token ([c598fea](https://github.com/digitopvn/diginext/commit/c598feaf355f0b22f2ed290e8c9d54ea3b81d437))
+* **server,cli:** exclude refresh token when parse query ([8db7fd9](https://github.com/digitopvn/diginext/commit/8db7fd9b614c53f323830deef73a6e0a8ad326d8))
+
 ## [3.21.5-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.21.4...v3.21.5-prerelease.1) (2023-08-10)
 
 
