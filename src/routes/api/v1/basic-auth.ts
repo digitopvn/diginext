@@ -44,7 +44,8 @@ router.post("/register", async (req, res) => {
 			workspaceId = MongoDB.toString(workspace._id);
 
 			// sign JWT
-			access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+			const { accessToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+			access_token = accessToken;
 
 			// assign JWT access token to cookie and request headers:
 			res.cookie("x-auth-cookie", access_token);
@@ -56,7 +57,9 @@ router.post("/register", async (req, res) => {
 		// if this user has no workspaces or multiple workspaces -> select one!
 		console.log("this user has no workspaces or multiple workspaces -> select one!");
 
-		access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
+		const { accessToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
+		access_token = accessToken;
+
 		// assign JWT access token to cookie and request headers:
 		res.cookie("x-auth-cookie", access_token);
 		res.header("Authorization", `Bearer ${access_token}`);
@@ -85,15 +88,6 @@ router.post(
 			// Compare the provided password with the stored hashed password
 			const passwordMatch = await bcrypt.compare(password, user.password);
 
-			// if (!passwordMatch) {
-			// 	// Check reCaptcha if failed more than 3 times
-			// 	if (req.recaptcha.error) {
-			// 		return res.status(401).json({ message: "Invalid credentials" });
-			// 	}
-
-			// 	return res.status(401).json({ message: "Invalid credentials. reCaptcha required." });
-			// }
-
 			if (!passwordMatch) {
 				return res.json(respondFailure("Invalid credentials."));
 			}
@@ -113,7 +107,8 @@ router.post(
 				workspaceId = MongoDB.toString(workspace._id);
 
 				// sign JWT
-				access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+				const { accessToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+				access_token = accessToken;
 
 				// assign JWT access token to cookie and request headers:
 				res.cookie("x-auth-cookie", access_token);
@@ -125,7 +120,8 @@ router.post(
 			// if this user has no workspaces or multiple workspaces -> select one!
 			console.log("this user has no workspaces or multiple workspaces -> select one!");
 
-			access_token = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
+			const { accessToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
+			access_token = accessToken;
 			// assign JWT access token to cookie and request headers:
 			res.cookie("x-auth-cookie", access_token);
 			res.header("Authorization", `Bearer ${access_token}`);

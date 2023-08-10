@@ -1,3 +1,4 @@
+import Table from "cli-table";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty, trimEnd } from "lodash";
@@ -5,6 +6,7 @@ import open from "open";
 
 import { Config } from "@/app.config";
 import { getCliConfig, saveCliConfig } from "@/config/config";
+import type { IRole } from "@/entities";
 import type { AccessTokenInfo, IUser } from "@/entities/User";
 import type { IWorkspace } from "@/entities/Workspace";
 import type InputOptions from "@/interfaces/InputOptions";
@@ -34,6 +36,27 @@ interface CliLoginOptions {
 
 	isDebugging?: boolean;
 }
+
+export const showProfile = async (options: InputOptions) => {
+	const { buildServerUrl, currentUser, apiToken } = getCliConfig();
+	if (!buildServerUrl || !currentUser || !currentUser.token?.access_token) return logError(`Unauthenticated.`);
+
+	const { status, data } = await fetchApi({ url: `/auth/profile`, access_token: currentUser.token.access_token, api_key: apiToken });
+	if (status === 0 || !data) return logError(`Authentication failed, invalid "access_token".`);
+	const user = data as IUser;
+	const ws = user.activeWorkspace as IWorkspace;
+	const role = user.activeRole as IRole;
+
+	const table = new Table();
+
+	table.push(["Name", user.name]);
+	table.push(["Username", user.slug]);
+	table.push(["Email", user.email]);
+	table.push(["Workspace", `${ws.name} (${ws.slug})`]);
+	table.push(["Role", `${role.name} (${role.type})`]);
+
+	console.log(table.toString());
+};
 
 export const cliLogin = async (options: CliLoginOptions) => {
 	const { secondAction, url, accessToken, apiToken } = options;

@@ -10,7 +10,7 @@ import { execAnalytics } from "@/modules/analytics";
 import createApp from "@/modules/apps/new-app";
 import transferRepo from "@/modules/apps/transferRepo";
 import { execCDN } from "@/modules/cdn";
-import { cliAuthenticate, cliLogin, cliLogout, parseCliOptions } from "@/modules/cli";
+import { cliAuthenticate, cliLogin, cliLogout, parseCliOptions, showProfile } from "@/modules/cli";
 import { execDatabase } from "@/modules/db";
 import * as deploy from "@/modules/deploy";
 import { execDomain } from "@/modules/domains/execDomain";
@@ -62,6 +62,10 @@ export async function processCLI(options?: InputOptions) {
 
 		case "info":
 			await showServerInfo(options);
+			break;
+
+		case "profile":
+			await showProfile(options);
 			break;
 
 		case "login":

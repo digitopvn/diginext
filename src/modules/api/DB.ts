@@ -56,7 +56,7 @@ export const dbCollections = [
 	"webhook",
 	"notification",
 ] as const;
-export type DBCollection = typeof dbCollections[number];
+export type DBCollection = (typeof dbCollections)[number];
 
 export function queryFilterToUrlFilter(filter: any = {}) {
 	return new URLSearchParams(filter).toString();
@@ -376,6 +376,7 @@ export class DB {
 			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
 			const res = await fetchApi<T>({ url });
+			if (options?.isDebugging) console.log("[DB] fetchApi > response :>> ", res);
 			const { data = [], status, messages = [""] } = res;
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] FIND ONE - ${url} :>>`, messages);
 			item = data[0];
