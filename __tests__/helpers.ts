@@ -187,13 +187,13 @@ export const createWorkspace = async (ownerId: string, name: string, isPublic = 
 };
 
 export const loginUser = async (userId: string, workspaceId?: string) => {
-	const access_token = generateJWT(userId, {
+	const { accessToken: access_token, refreshToken: refresh_token } = generateJWT(userId, {
 		expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
 		workspaceId: workspaceId,
 	});
 
 	const payload = jwt.decode(access_token, { json: true });
-	const tokenInfo = extractAccessTokenInfo(access_token, payload?.exp || 10000);
+	const tokenInfo = await extractAccessTokenInfo({ access_token, refresh_token }, { id: userId, workspaceId, exp: payload?.exp || 10000 });
 
 	let user: IUser = await userSvc.findOne({ _id: userId }, { populate: ["roles", "activeRole", "workspaces", "activeWorkspace"] });
 

@@ -26,6 +26,7 @@ export const parseRequestFilter = (requestQuery: any) => {
 		// others
 		where = {},
 		access_token,
+		refresh_token,
 		...filter
 	} = requestQuery;
 
