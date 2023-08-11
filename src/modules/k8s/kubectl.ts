@@ -621,7 +621,7 @@ export async function getDeploysByFilter(namespace = "default", options: KubeCom
 		args.push("-o", "json");
 
 		const { stdout } = await execa("kubectl", args);
-		return JSON.parse(stdout) as KubeDeployment[];
+		return JSON.parse(stdout).items as KubeDeployment[];
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getDeploy >`, e);
 		return;

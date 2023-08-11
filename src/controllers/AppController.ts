@@ -712,7 +712,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
 		updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
-		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
+		if (!updatedApp) return respondFailure("Unable to update " + env + " environment of " + app.slug + "app.");
 
 		if (!cluster) return respondSuccess({ data: updatedApp.deployEnvironment[env] });
 
@@ -723,28 +723,44 @@ export default class AppController extends BaseController<IApp, AppService> {
 			context: cluster.contextName,
 			filterLabel: `main-app=${mainAppName}`,
 		});
+
 		// Fallback support for deprecated mainAppName
-		if (!workloads || workloads.length === 0) {
-			workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
-				context: cluster.contextName,
-				filterLabel: `main-app=${deprecatedMainAppName}`,
-			});
+		const deprecatedWorkloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
+			context: cluster.contextName,
+			filterLabel: `main-app=${deprecatedMainAppName}`,
+		});
+		if (deprecatedWorkloads?.length > 0) workloads.push(...deprecatedWorkloads);
+
+		console.log("AppController > updateDeployEnvironment() > workloads :>> ", workloads);
+		console.log("AppController > updateDeployEnvironment() > workloads.length :>> ", workloads?.length);
+
+		// if (workloads && workloads.length > 0) {
+		console.log(`AppController > updateDeployEnvironment() > Applying new deployment yaml...`);
+
+		// create new release and roll out
+		const release = await createReleaseFromApp(updatedApp, env, buildTag, {
+			author: this.user,
+			cliVersion: currentVersion(),
+			workspace: this.workspace,
+		});
+
+		// const result = await ClusterManager.rollout(release._id.toString());
+		// if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
+
+		// apply deployment YAML
+		const applyResult = await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context: cluster.contextName });
+		console.log("AppController > updateDeployEnvironment() > Applied deployment yaml :>> ", applyResult);
+
+		// delete deprecated workloads
+		if (deprecatedWorkloads?.length > 0) {
+			const deleteResult = await Promise.all(
+				deprecatedWorkloads.map((workload) =>
+					ClusterManager.deleteDeploy(workload.metadata.name, workload.metadata.namespace, { context: cluster.contextName })
+				)
+			);
+			console.log("AppController > updateDeployEnvironment() > Deleted deprecated deployments :>> ", deleteResult);
 		}
-
-		if (workloads && workloads.length > 0) {
-			// create new release and roll out
-			const release = await createReleaseFromApp(updatedApp, env, buildTag, {
-				author: this.user,
-				cliVersion: currentVersion(),
-				workspace: this.workspace,
-			});
-
-			// const result = await ClusterManager.rollout(release._id.toString());
-			// if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
-
-			// apply deployment YAML
-			await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context: cluster.contextName });
-		}
+		// }
 
 		return respondSuccess({ data: updatedApp.deployEnvironment[env] });
 	}
@@ -1112,12 +1128,12 @@ export default class AppController extends BaseController<IApp, AppService> {
 		let updatedApp = await this.service.updateOne({ slug: app.slug }, updateData);
 		if (!updatedApp) return respondFailure("Failed to update new domains to " + app.slug + "app.");
 
-		console.log("updatedApp.deployEnvironment[env] :>> ", updatedApp.deployEnvironment[env]);
+		console.log("AppController > addEnvironmentDomain() > updatedApp.deployEnvironment[env] :>> ", updatedApp.deployEnvironment[env]);
 
 		// generate deployment files and apply new config
 		const { BUILD_TAG } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
-		console.log("BUILD_TAG :>> ", BUILD_TAG);
-		console.log("this.user :>> ", this.user);
+		console.log("AppController > addEnvironmentDomain() > BUILD_TAG :>> ", BUILD_TAG);
+		console.log("AppController > addEnvironmentDomain() > this.user :>> ", this.user);
 
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
@@ -1149,13 +1165,16 @@ export default class AppController extends BaseController<IApp, AppService> {
 			context: cluster.contextName,
 			filterLabel: `main-app=${mainAppName}`,
 		});
+
 		// Fallback support for deprecated mainAppName
-		if (!workloads || workloads.length === 0) {
-			workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
-				context: cluster.contextName,
-				filterLabel: `main-app=${deprecatedMainAppName}`,
-			});
-		}
+		let deprecatedWorkloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
+			context: cluster.contextName,
+			filterLabel: `main-app=${deprecatedMainAppName}`,
+		});
+		if (deprecatedWorkloads?.length > 0) workloads.push(...deprecatedWorkloads);
+
+		console.log("AppController > addEnvironmentDomain() > workloads :>> ", workloads);
+		console.log("AppController > addEnvironmentDomain() > workloads.length :>> ", workloads?.length);
 
 		if (workloads && workloads.length > 0) {
 			// create new release and roll out
