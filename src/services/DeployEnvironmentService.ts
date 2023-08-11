@@ -581,9 +581,12 @@ export class DeployEnvironmentService {
 		// TO BE REMOVED SOON: Fallback support "buildNumber"
 		if (!deployEnvironment.buildTag && deployEnvironment.buildNumber) deployEnvironment.buildTag = deployEnvironment.buildNumber;
 
+		console.log("deployEnvironment.buildTag :>> ", deployEnvironment.buildTag);
+
 		let message = "";
 		// update on cluster -> if it's failed, just ignore and return warning message!
 		if (deployEnvironment.cluster && deployEnvironment.buildTag) {
+			console.log("Applying new env vars..");
 			try {
 				const clusterSlug = deployEnvironment.cluster;
 				const clusterSvc = new ClusterService(this.ownership);
