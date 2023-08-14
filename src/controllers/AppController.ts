@@ -1214,8 +1214,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 			env?: string;
 		}
 	) {
-		if (!this.filter.slug) return respondFailure(`App's slug is required.`);
-		if (!this.filter.env) return respondFailure(`App's deploy environment code is required.`);
+		if (!this.filter.slug) return respondFailure(`App's slug (slug) is required.`);
+		if (!this.filter.env) return respondFailure(`App's deploy environment code (env) is required.`);
 
 		const app = await this.service.findOne({ slug: this.filter.slug }, this.options);
 		if (!app) return respondFailure("App not found.");

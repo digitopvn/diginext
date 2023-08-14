@@ -43,6 +43,7 @@ export const showProfile = async (options: InputOptions) => {
 
 	const { status, data } = await fetchApi({ url: `/auth/profile`, access_token: currentUser.token.access_token, api_key: apiToken });
 	if (status === 0 || !data) return logError(`Authentication failed, invalid "access_token".`);
+
 	const user = data as IUser;
 	const ws = user.activeWorkspace as IWorkspace;
 	const role = user.activeRole as IRole;
@@ -109,7 +110,12 @@ export const cliLogin = async (options: CliLoginOptions) => {
 	if (options.isDebugging) console.log("currentUser :>> ", currentUser);
 
 	// "access_token" is VALID -> save it to local machine!
-	saveCliConfig({ access_token, apiToken, currentWorkspace: currentUser.activeWorkspace as IWorkspace });
+	saveCliConfig({
+		access_token,
+		refresh_token: currentUser.token.refresh_token,
+		apiToken,
+		currentWorkspace: currentUser.activeWorkspace as IWorkspace,
+	});
 
 	const { workspaces = [], activeWorkspace } = currentUser;
 	let currentWorkspace;
@@ -139,9 +145,11 @@ export const cliLogin = async (options: CliLoginOptions) => {
 export const cliLogout = async () => {
 	saveCliConfig({
 		access_token: null,
+		refresh_token: null,
 		apiToken: null,
 		currentUser: null,
 		currentWorkspace: null,
+		github_access_token: null,
 	});
 
 	return logSuccess(`You're logged out.`);
@@ -190,16 +198,19 @@ export async function cliAuthenticate(options: InputOptions) {
 		if (buildServerUrl) user = await continueToLoginStep(buildServerUrl);
 	}
 
-	if (user.token?.access_token) saveCliConfig({ access_token: user.token.access_token });
-
 	// Assign user & workspace to use across all CLI commands
 	options.userId = MongoDB.toString(user._id);
 	options.username = user.username ?? user.slug;
 	options.workspace = user.activeWorkspace as IWorkspace;
 	options.workspaceId = MongoDB.toString(options.workspace._id);
 
-	// Save "currentUser" & "access_token" for next API requests
-	saveCliConfig({ currentUser: user, currentWorkspace: options.workspace });
+	// Save "currentUser", "access_token", "refresh_token" for next API requests
+	saveCliConfig({
+		currentUser: user,
+		currentWorkspace: options.workspace,
+		access_token: user.token.access_token,
+		refresh_token: user.token.refresh_token,
+	});
 
 	return user;
 }

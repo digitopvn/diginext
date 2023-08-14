@@ -93,6 +93,7 @@ const globalOptions = {
 	debug: { ...argvOptions.debug, global: true },
 	"show-options": { ...argvOptions["show-options"], global: true },
 	local: { ...argvOptions.local, global: true },
+	targetDir: argvOptions.targetDir,
 	// version: { ...argvOptions.version, global: true },
 };
 
@@ -256,6 +257,8 @@ export async function parseCliOptions() {
 		)
 		// command: init
 		.command("init", "Initialize CLI in the current project directory")
+		// command: logs
+		.command(["logs", "log"], "View application's logs")
 		// command: upgrade
 		.command("upgrade", "Update your project's framework version")
 		// command: cdn
