@@ -1,3 +1,16 @@
+# [3.22.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.22.0-prerelease.1...v3.22.0-prerelease.2) (2023-08-14)
+
+
+### Bug Fixes
+
+* **server,cli:** store refresh token at client ([6c15ac8](https://github.com/digitopvn/diginext/commit/6c15ac818229250c881a1d4c3a46bb6e1f61bad2))
+
+
+### Features
+
+* **api:** add github trends api ([50fdfd1](https://github.com/digitopvn/diginext/commit/50fdfd1adc9dc992e85d9fc0393c7dce8e139364))
+* **server,cli:** add view app logs command: dx logs ([d85cb46](https://github.com/digitopvn/diginext/commit/d85cb466334e0572a5144a1b5e296dd71740d3fb))
+
 # [3.22.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.21.5...v3.22.0-prerelease.1) (2023-08-11)
 
 
