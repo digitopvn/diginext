@@ -107,9 +107,9 @@ export async function extractAccessTokenInfo(
 		// If token is < 4 hours to expire, refresh it:
 		const expHourLeft = expiredTimestamp / 60 / 60 / 1000;
 		const { error: isInvalidRefreshToken, tokenDetails: refreshTokenDetails } = await verifyRefreshToken(refresh_token);
-		console.log("expHourLeft :>> ", expHourLeft);
-		console.log("tokenDetails :>> ", refreshTokenDetails);
-		console.log("isInvalidRefreshToken :>> ", isInvalidRefreshToken);
+		// console.log("expHourLeft :>> ", expHourLeft);
+		// console.log("tokenDetails :>> ", refreshTokenDetails);
+		// console.log("isInvalidRefreshToken :>> ", isInvalidRefreshToken);
 
 		if (isInvalidRefreshToken || refreshTokenDetails.isExpired) return { isExpired: true };
 

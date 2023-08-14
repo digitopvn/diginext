@@ -84,7 +84,7 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 		options.params = { refresh_token: cachedRefreshToken };
 	}
 
-	console.log("options.params :>> ", options.params);
+	// console.log("options.params :>> ", options.params);
 	// console.log("options.headers :>> ", options.headers);
 
 	if (!options.headers["content-type"]) options.headers["content-type"] = "application/json";

@@ -26,6 +26,7 @@ import { currentVersion, freeUp } from "@/plugins";
 
 import { execAI } from "./modules/ai/exec-ai";
 import { execInitApp } from "./modules/apps/init-app";
+import { viewAppLogs } from "./modules/apps/view-logs";
 import { requestBuild } from "./modules/build/request-build";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
 import { updateCli } from "./modules/cli/update-cli";
@@ -109,6 +110,10 @@ export async function processCLI(options?: InputOptions) {
 
 		case "upgrade":
 			return logWarn(`This command is deprecated.`);
+
+		case "log":
+		case "logs":
+			return viewAppLogs(options);
 
 		case "ask":
 			await cliAuthenticate(options);
