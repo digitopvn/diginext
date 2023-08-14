@@ -1,7 +1,7 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import * as entities from "@/entities";
-import * as interfaces from "@/interfaces";
+import { FrameworkDto } from "@/entities";
+import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { FrameworkService } from "@/services/FrameworkService";
 
 import BaseController from "./BaseController";
@@ -21,34 +21,49 @@ export default class FrameworkController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
+	read(@Queries() queryParams?: IGetQueryParams) {
 		return super.read();
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: entities.FrameworkDto) {
+	async create(@Body() body: FrameworkDto) {
 		try {
 			this.service.req = this.req;
 			const data = await this.service.create(body, { ...this.options });
-			return interfaces.respondSuccess({ data });
+			return respondSuccess({ data });
 		} catch (e) {
-			return interfaces.respondFailure(e.toString());
+			return respondFailure(e.toString());
 		}
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: entities.FrameworkDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	update(@Body() body: FrameworkDto, @Queries() queryParams?: IPostQueryParams) {
 		return super.update(body);
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
+	delete(@Queries() queryParams?: IDeleteQueryParams) {
 		return super.delete();
+	}
+
+	/**
+	 * List of trending repositories on Github
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/trends")
+	async getGithubTrends(@Queries() queryParams?: IGetQueryParams) {
+		try {
+			const data = await this.service.getGithubTrends();
+			return respondSuccess({ data });
+		} catch (e) {
+			return respondFailure(`Unable to get Github trending repositories: ${e}`);
+		}
 	}
 }

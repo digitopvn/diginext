@@ -2,6 +2,7 @@ import type { FrameworkDto, IFramework } from "@/entities/Framework";
 import { frameworkSchema } from "@/entities/Framework";
 import { type IQueryOptions } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
+import { fetchTrendingRepos } from "@/modules/frameworks/github-trends";
 
 import BaseService from "./BaseService";
 
@@ -31,5 +32,10 @@ export class FrameworkService extends BaseService<IFramework> {
 		// create
 		const item = await super.create(data, options);
 		return item;
+	}
+
+	async getGithubTrends() {
+		const repos = await fetchTrendingRepos();
+		return repos;
 	}
 }

@@ -16,7 +16,8 @@ router
 	.get("/", processApiRequest(controller.read.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
-	.delete("/", processApiRequest(controller.delete.bind(controller)));
+	.delete("/", processApiRequest(controller.delete.bind(controller)))
+	.get("/trends", processApiRequest(controller.getGithubTrends.bind(controller)));
 // .delete("/empty", processApiRequest(controller.empty.bind(controller)));
 
 export default router;
