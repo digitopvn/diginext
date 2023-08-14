@@ -39,7 +39,13 @@ export interface FetchApiResponse<T extends Object> {
 export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 	const { access_token, api_key, method = "GET" } = options;
 
-	const { buildServerUrl = process.env.BASE_URL, currentUser, access_token: cachedAccessToken, apiToken: cachedApiKey } = getCliConfig();
+	const {
+		buildServerUrl = process.env.BASE_URL,
+		currentUser,
+		access_token: cachedAccessToken,
+		refresh_token: cachedRefreshToken,
+		apiToken: cachedApiKey,
+	} = getCliConfig();
 
 	if (!buildServerUrl) {
 		logError(`"BUILD SERVER URL" not found. Please login with: "dx login <BUILD_SERVER_URL>"`);
@@ -72,9 +78,13 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 	}
 
 	// Inject "REFRESH_TOKEN" if any
-	if (currentUser?.token?.refresh_token) options.params = { refresh_token: currentUser.token.refresh_token };
+	if (currentUser?.token?.refresh_token) {
+		options.params = { refresh_token: currentUser.token.refresh_token };
+	} else if (cachedRefreshToken) {
+		options.params = { refresh_token: cachedRefreshToken };
+	}
 
-	// console.log("options.params :>> ", options.params);
+	console.log("options.params :>> ", options.params);
 	// console.log("options.headers :>> ", options.headers);
 
 	if (!options.headers["content-type"]) options.headers["content-type"] = "application/json";

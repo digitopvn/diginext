@@ -48,6 +48,7 @@ export type CliConfig = {
 	buildServerUrl?: string;
 
 	access_token?: string;
+	refresh_token?: string;
 	apiToken?: string;
 
 	currentUser?: IUser;
