@@ -1,4 +1,4 @@
-import { logError } from "diginext-utils/dist/xconsole/log";
+import { logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
 import type InputOptions from "@/interfaces/InputOptions";
@@ -30,6 +30,7 @@ export const execCluster = async (options?: InputOptions) => {
 
 		case "get":
 			// do something
+			logWarn(`This feature is under development.`);
 			break;
 
 		case "set":
@@ -37,6 +38,7 @@ export const execCluster = async (options?: InputOptions) => {
 				case "deploy":
 				case "deployment":
 					// do something
+					logWarn(`This feature is under development.`);
 					break;
 
 				default:
@@ -49,6 +51,7 @@ export const execCluster = async (options?: InputOptions) => {
 		case "rm":
 		case "delete":
 			// do something
+			logWarn(`This feature is under development.`);
 			break;
 
 		default:
