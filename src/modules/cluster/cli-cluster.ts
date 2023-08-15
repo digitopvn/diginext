@@ -46,6 +46,7 @@ export const execCluster = async (options?: InputOptions) => {
 			break;
 
 		case "del":
+		case "rm":
 		case "delete":
 			// do something
 			break;
