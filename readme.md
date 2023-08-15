@@ -75,9 +75,9 @@ https://diginext.site
 
 ## Getting Started
 
-- [Diginext website](https://diginext.site)
-- [Hobby Workspace](https://hobby.diginext.site)
-- [Documentation](https://topgroup.notion.site/Getting-Started-8d4155a1797641e6aa4ead9446868533?pvs=4)
+- [Diginext website](https://diginext.site/?ref=github)
+- [Hobby Workspace](https://hobby.diginext.site/?ref=github)
+- [Documentation](https://docs.diginext.site/?ref=github)
 
 #### CLI Installation
 
@@ -152,7 +152,7 @@ Access the admin (`http://localhost:6969`) to configure your new workspace.
 
 On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx up` (or `dx deploy`).
 
-👉 Read the [docs here](docs/docs.md).
+👉 Read the [docs here](https://docs.diginext.site/?ref=github).
 
 ### Other installation guides
 

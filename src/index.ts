@@ -190,6 +190,7 @@ export async function processCLI(options?: InputOptions) {
 			await execPipeline(options);
 			return;
 
+		case "kubectl":
 		case "kb":
 			await cliAuthenticate(options);
 			await execKubectl(options);
