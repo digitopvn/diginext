@@ -80,14 +80,14 @@ export default class DeployService {
 
 		// start build in background process:
 		// log(`buildAndDeploy > buildParams.buildTag :>>`, buildParams.buildTag);
-		const { build, release } = await buildAndDeploy(buildParams, deployBuildOptions);
+		buildAndDeploy(buildParams, deployBuildOptions);
 
 		const { appSlug, buildTag } = buildParams;
 		const buildServerUrl = Config.BASE_URL;
 		const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}&env=${deployParams.env}`;
 
-		return { logURL, build, release };
+		return { logURL };
 	}
 
 	/**

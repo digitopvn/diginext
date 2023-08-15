@@ -566,24 +566,30 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 		let isReady = false;
 		newDeploys.forEach((deploy) => {
-			// log(`[INTERVAL] deploy.status.conditions :>>`, deploy.status.conditions);
-			// log(`[INTERVAL] deploy.status.replicas :>>`, deploy.status.replicas);
-			// log(`[INTERVAL] deploy.status.unavailableReplicas :>>`, deploy.status.unavailableReplicas);
-			// log(`[INTERVAL] deploy.status.readyReplicas :>>`, deploy.status.readyReplicas);
+			log(`[ROLL OUT] ${deploymentName} > deploy.status.conditions :>>`, deploy.status.conditions);
+			// log(`[ROLL OUT] deploy.status.replicas :>>`, deploy.status.replicas);
+			// log(`[ROLL OUT] deploy.status.unavailableReplicas :>>`, deploy.status.unavailableReplicas);
+			// log(`[ROLL OUT] deploy.status.readyReplicas :>>`, deploy.status.readyReplicas);
 
 			if (onUpdate) {
 				deploy.status?.conditions?.map((condition) => {
 					// if (condition.type === "False") isReady = true;
-					if (condition.type.toLowerCase() === "progressing")
-						onUpdate(`DEPLOY STATUS: [${condition.type.toUpperCase()}] - ${condition.reason} - ${condition.message}`);
+					// if (condition.type.toLowerCase() === "progressing")
+					const msg = `[DEPLOY:${condition.type.toUpperCase()}] - ${condition.reason} - ${condition.message}`;
+					onUpdate(msg);
+
+					if (condition.type.toLowerCase() === "replicafailure") throw new Error(msg);
 				});
 			}
 
-			if (deploy.status.unavailableReplicas && deploy.status.unavailableReplicas >= 1) {
-				isReady = false;
-			} else if (deploy.status.readyReplicas && deploy.status.readyReplicas >= 1) {
-				isReady = true;
-			}
+			console.log(`[ROLL OUT] ${deploymentName} > deploy.status.readyReplicas :>> `, deploy.status.readyReplicas);
+			isReady = deploy.status.readyReplicas && deploy.status.readyReplicas >= 1;
+
+			// if (deploy.status.unavailableReplicas && deploy.status.unavailableReplicas >= 1) {
+			// 	isReady = false;
+			// } else if (deploy.status.readyReplicas && deploy.status.readyReplicas >= 1) {
+			// 	isReady = true;
+			// }
 		});
 
 		if (options?.isDebugging) log(`[ROLL OUT - INTERVAL] Checking new deployment's status -> Is Ready:`, isReady);
