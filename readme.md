@@ -116,7 +116,9 @@ dx new
 
 Available frameworks:
 ✓ Next.js
+✓ Nest.js
 ✓ Static website with NGINX
+✓ More to come!
 
 ## Running Diginext platform on your own infrastructure
 
