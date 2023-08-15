@@ -1,3 +1,11 @@
+## [3.22.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.0...v3.22.1-prerelease.1) (2023-08-15)
+
+
+### Bug Fixes
+
+* **cli:** add more alias to cluster and kubectl ([9bac701](https://github.com/digitopvn/diginext/commit/9bac701055b1889d754e50e6bd0d15d89293ecc6))
+* **dashboard:** store refresh token in cookie ([#344](https://github.com/digitopvn/diginext/issues/344)) ([40a7aed](https://github.com/digitopvn/diginext/commit/40a7aedc3a88ae859f0b78e2bac81a524859f96f))
+
 # [3.22.0](https://github.com/digitopvn/diginext/compare/v3.21.5...v3.22.0) (2023-08-15)
 
 
