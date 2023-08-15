@@ -1,3 +1,20 @@
+# [3.22.0](https://github.com/digitopvn/diginext/compare/v3.21.5...v3.22.0) (2023-08-15)
+
+
+### Bug Fixes
+
+* **dashboard:** store refresh token in cookie ([5c835ee](https://github.com/digitopvn/diginext/commit/5c835eeacb3bdc8c54910d96f4fa3207a56954b4))
+* **server,cli:** store refresh token at client ([6c15ac8](https://github.com/digitopvn/diginext/commit/6c15ac818229250c881a1d4c3a46bb6e1f61bad2))
+* **server,domain:** not update issue when add or remove domain ([45c0cb6](https://github.com/digitopvn/diginext/commit/45c0cb60c18229055fd1e5d20efaeb119e8e7b86))
+* **server:** delete rpm when generate ingress yaml ([703a19a](https://github.com/digitopvn/diginext/commit/703a19a3423b4d694afd21deb1b75ce46794e7d3))
+
+
+### Features
+
+* **api:** add github trends api ([50fdfd1](https://github.com/digitopvn/diginext/commit/50fdfd1adc9dc992e85d9fc0393c7dce8e139364))
+* **dashboard:** cmd k to search project and app ([f7eb7fa](https://github.com/digitopvn/diginext/commit/f7eb7fa2d871b605d654d2ad143ff680259ea889))
+* **server,cli:** add view app logs command: dx logs ([d85cb46](https://github.com/digitopvn/diginext/commit/d85cb466334e0572a5144a1b5e296dd71740d3fb))
+
 # [3.22.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.21.5...v3.22.0-prerelease.1) (2023-08-11)
 
 
