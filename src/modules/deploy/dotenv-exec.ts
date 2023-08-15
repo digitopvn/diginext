@@ -51,6 +51,7 @@ export const execDotenvCommand = async (options?: InputOptions) => {
 	switch (secondAction) {
 		// take down the whole project & all of its apps
 		case "push":
+		case "up":
 		case "upload":
 			try {
 				await uploadDotenvFile(env, { targetDir: targetDirectory, fileName: filePath });
@@ -61,6 +62,7 @@ export const execDotenvCommand = async (options?: InputOptions) => {
 
 		// take down the whole app & all of its environments
 		case "pull":
+		case "down":
 		case "download":
 			try {
 				await downloadDotenv(env, { targetDir: targetDirectory, fileName: filePath });

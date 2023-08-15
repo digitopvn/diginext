@@ -1,4 +1,4 @@
-import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
+import { logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import yargs from "yargs";
 
 import type InputOptions from "@/interfaces/InputOptions";
@@ -20,7 +20,13 @@ export const execKubectl = async (options?: InputOptions) => {
 	const { contextName: context, slug } = cluster;
 
 	switch (action) {
+		case "ls":
+		case "list":
+			logWarn(`This feature is under development.`);
+			break;
+
 		case "get":
+			logWarn(`This feature is under development.`);
 			break;
 
 		case "set":
@@ -76,8 +82,10 @@ export const execKubectl = async (options?: InputOptions) => {
 			}
 			break;
 
+		case "rm":
 		case "del":
 		case "delete":
+			logWarn(`This feature is under development.`);
 			break;
 
 		default:
