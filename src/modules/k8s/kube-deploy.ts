@@ -583,6 +583,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 			}
 
 			console.log(`[ROLL OUT] ${deploymentName} > deploy.status.readyReplicas :>> `, deploy.status.readyReplicas);
+			console.log(`[ROLL OUT] ${deploymentName} > deploy.status.unavailableReplicas :>> `, deploy.status.unavailableReplicas);
 			isReady = deploy.status.readyReplicas && deploy.status.readyReplicas >= 1;
 
 			// if (deploy.status.unavailableReplicas && deploy.status.unavailableReplicas >= 1) {
