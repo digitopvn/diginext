@@ -248,20 +248,35 @@ export class DeployEnvironmentService {
 		if (!cluster) return;
 
 		const { contextName: context } = cluster;
+		const mainAppName = await getDeploymentName(app);
+		const pods = await ClusterManager.getPodsByFilter(deployEnvironment.namespace, {
+			context,
+			filterLabel: `main-app=${mainAppName}`,
+			metrics: false,
+		});
 
-		const pods = await ClusterManager.getPodsByFilter(deployEnvironment.namespace, { context });
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+		const deprecatedApps = await ClusterManager.getPodsByFilter(deployEnvironment.namespace, {
+			context,
+			filterLabel: `main-app=${deprecatedMainAppName}`,
+			metrics: false,
+		});
+		pods.push(...deprecatedApps);
+
+		// console.log("pods :>> ", pods);
 		if (isEmpty(pods)) return;
 
 		const logs: { [pod: string]: string } = {};
 
 		await Promise.all(
 			pods.map(async (pod) => {
+				// console.log("pod.metadata :>> ", pod.metadata);
 				const podLogs = await ClusterManager.logPod(pod.metadata.name, deployEnvironment.namespace, { context });
 				logs[pod.metadata.name] = podLogs;
 				return podLogs;
 			})
 		);
-
+		// console.log("logs :>> ", logs);
 		return logs;
 	}
 
@@ -581,9 +596,12 @@ export class DeployEnvironmentService {
 		// TO BE REMOVED SOON: Fallback support "buildNumber"
 		if (!deployEnvironment.buildTag && deployEnvironment.buildNumber) deployEnvironment.buildTag = deployEnvironment.buildNumber;
 
+		console.log("deployEnvironment.buildTag :>> ", deployEnvironment.buildTag);
+
 		let message = "";
 		// update on cluster -> if it's failed, just ignore and return warning message!
 		if (deployEnvironment.cluster && deployEnvironment.buildTag) {
+			console.log("Applying new env vars..");
 			try {
 				const clusterSlug = deployEnvironment.cluster;
 				const clusterSvc = new ClusterService(this.ownership);

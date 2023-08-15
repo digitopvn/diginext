@@ -1,3 +1,16 @@
+# [3.22.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.21.5...v3.22.0-prerelease.1) (2023-08-11)
+
+
+### Bug Fixes
+
+* **server,domain:** not update issue when add or remove domain ([45c0cb6](https://github.com/digitopvn/diginext/commit/45c0cb60c18229055fd1e5d20efaeb119e8e7b86))
+* **server:** delete rpm when generate ingress yaml ([703a19a](https://github.com/digitopvn/diginext/commit/703a19a3423b4d694afd21deb1b75ce46794e7d3))
+
+
+### Features
+
+* **dashboard:** cmd k to search project and app ([f7eb7fa](https://github.com/digitopvn/diginext/commit/f7eb7fa2d871b605d654d2ad143ff680259ea889))
+
 ## [3.21.5](https://github.com/digitopvn/diginext/compare/v3.21.4...v3.21.5) (2023-08-10)
 
 
