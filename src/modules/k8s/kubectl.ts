@@ -259,7 +259,7 @@ export async function getSecrets(namespace: string = "default", options: KubeCom
 		);
 		return JSON.parse(stdout).items as KubeSecret[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllSecrets >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getSecrets >`, e);
 		return [];
 	}
 }

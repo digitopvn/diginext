@@ -19,7 +19,6 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	const { DB } = await import("@/modules/api/DB");
 
 	// [1] Build container image
-	if (!deployParams.env) deployParams.env = buildParams.env || "dev";
 	if (typeof buildParams.buildWatch === "undefined") buildParams.buildWatch = true;
 	buildParams.env = deployParams.env;
 	buildParams.shouldDeploy = true; // <-- keep this to disable webhook notification when build success
@@ -33,10 +32,13 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	if (!build) throw new Error(`Unable to build "${buildParams.appSlug}" app (${buildParams.env}).`);
 
 	const { appSlug, projectSlug } = build;
-	const { env } = deployParams;
 
 	// [2] Deploy the build to target deploy environment
+	if (!deployParams.env) deployParams.env = buildParams.env || "dev";
+	if (typeof deployParams.deployInBackground === "undefined") deployParams.deployInBackground = false;
 	const deployRes = await deployBuild(build, deployParams);
+
+	const { env } = deployParams;
 
 	let errorMsg = ``;
 	if (deployRes?.error) {
