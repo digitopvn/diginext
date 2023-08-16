@@ -67,7 +67,9 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 
 	// [4] Capture a screenshot (scheduled after 30 seconds after the deployment):
 	console.log("IsTestCI() :>> ", IsTestCI());
-	if (!IsTestCI()) {
+	console.log("Config.ENV :>> ", Config.ENV);
+	console.log("process.env.NODE_ENV :>> ", process.env.NODE_ENV);
+	if (process.env.NODE_ENV !== "test_ci") {
 		try {
 			// let's this job run in background
 			wait(30 * 1000, () => {
