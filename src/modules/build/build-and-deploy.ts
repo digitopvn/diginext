@@ -66,6 +66,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	sendLog({ SOCKET_ROOM, message: chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanDuration} 🎉`), type: "success" });
 
 	// [4] Capture a screenshot (scheduled after 30 seconds after the deployment):
+	console.log("IsTestCI() :>> ", IsTestCI());
 	if (!IsTestCI()) {
 		try {
 			// let's this job run in background
