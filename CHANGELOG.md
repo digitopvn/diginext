@@ -1,3 +1,13 @@
+## [3.22.2](https://github.com/digitopvn/diginext/compare/v3.22.1...v3.22.2) (2023-08-16)
+
+
+### Bug Fixes
+
+* **dashboard:** fix scroll issue of build logs mobile ([a6fc82a](https://github.com/digitopvn/diginext/commit/a6fc82a75fc0b0995464971757ffb8371af0c231))
+* **server,cli:** improve deploy logs with status ([6da8c59](https://github.com/digitopvn/diginext/commit/6da8c5906470b648b568bcfbf822c373981a3a70))
+* **server:** print unavailable replicas ([efc2044](https://github.com/digitopvn/diginext/commit/efc20445c056b59d08550b550ce25166dacfd434))
+* **server:** turn of deploy in background ([34f8fe2](https://github.com/digitopvn/diginext/commit/34f8fe25e2676bfe467c3f1babdd0a9c8be0f74e))
+
 ## [3.22.1](https://github.com/digitopvn/diginext/compare/v3.22.0...v3.22.1) (2023-08-15)
 
 
