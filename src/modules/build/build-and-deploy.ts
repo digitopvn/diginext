@@ -2,7 +2,7 @@ import chalk from "chalk";
 import dayjs from "dayjs";
 import humanizeDuration from "humanize-duration";
 
-import { Config, IsTestCI } from "@/app.config";
+import { Config, IsTest } from "@/app.config";
 import { wait } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
@@ -66,10 +66,10 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	sendLog({ SOCKET_ROOM, message: chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanDuration} 🎉`), type: "success" });
 
 	// [4] Capture a screenshot (scheduled after 30 seconds after the deployment):
-	console.log("IsTestCI() :>> ", IsTestCI());
-	console.log("Config.ENV :>> ", Config.ENV);
-	console.log("process.env.NODE_ENV :>> ", process.env.NODE_ENV);
-	if (process.env.NODE_ENV !== "test_ci") {
+	// console.log("IsTestCI() :>> ", IsTestCI());
+	// console.log("Config.ENV :>> ", Config.ENV);
+	// console.log("process.env.NODE_ENV :>> ", process.env.NODE_ENV);
+	if (!IsTest()) {
 		try {
 			// let's this job run in background
 			wait(30 * 1000, () => {
