@@ -23,6 +23,7 @@ export const signAndRedirect = (res: Response, data: { userId: string; workspace
 
 	// assign JWT access token to cookie and request headers:
 	res.cookie("x-auth-cookie", access_token);
+	res.cookie("refresh_token", refresh_token);
 	res.header("Authorization", `Bearer ${access_token}`);
 
 	// console.log("[2] signAndRedirect > redirectUrl :>> ", redirectUrl);
