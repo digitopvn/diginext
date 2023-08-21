@@ -1,3 +1,10 @@
+## [3.22.4-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.3...v3.22.4-prerelease.1) (2023-08-21)
+
+
+### Bug Fixes
+
+* **dashboard:** validate refresh token issue ([abfc2d7](https://github.com/digitopvn/diginext/commit/abfc2d7a15cd1985f552fa6ca065d4c87cf9a927))
+
 ## [3.22.3](https://github.com/digitopvn/diginext/compare/v3.22.2...v3.22.3) (2023-08-21)
 
 
