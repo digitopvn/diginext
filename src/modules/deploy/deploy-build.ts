@@ -112,7 +112,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 			SOCKET_ROOM,
 			type: "error",
 			action: "end",
-			message: `Can't create "imagePullSecrets" in the "${namespace}" namespace.`,
+			message: `Can't create "imagePullSecrets" in the "${namespace}" namespace: ${e}`,
 		});
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");

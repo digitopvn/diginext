@@ -82,7 +82,7 @@ export type StartBuildParams = {
 
 	/**
 	 * Enable async to watch the build process
-	 * @default false
+	 * @default true
 	 */
 	buildWatch?: boolean;
 
@@ -183,7 +183,7 @@ export async function startBuild(
 		args: buildArgs,
 		user,
 		env,
-		buildWatch = false,
+		buildWatch = true,
 		shouldDeploy = false,
 		isDebugging = false,
 		cliVersion,

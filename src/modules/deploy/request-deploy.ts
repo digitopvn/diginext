@@ -115,6 +115,7 @@ export async function requestDeploy(options: InputOptions) {
 		},
 		deployParams: {
 			env,
+			skipReadyCheck: false,
 			shouldUseFreshDeploy: options.shouldUseFreshDeploy,
 		},
 	};

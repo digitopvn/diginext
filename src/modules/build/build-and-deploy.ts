@@ -2,7 +2,7 @@ import chalk from "chalk";
 import dayjs from "dayjs";
 import humanizeDuration from "humanize-duration";
 
-import { Config } from "@/app.config";
+import { Config, IsTest } from "@/app.config";
 import { wait } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
@@ -19,7 +19,6 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	const { DB } = await import("@/modules/api/DB");
 
 	// [1] Build container image
-	if (!deployParams.env) deployParams.env = buildParams.env || "dev";
 	if (typeof buildParams.buildWatch === "undefined") buildParams.buildWatch = true;
 	buildParams.env = deployParams.env;
 	buildParams.shouldDeploy = true; // <-- keep this to disable webhook notification when build success
@@ -33,10 +32,13 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	if (!build) throw new Error(`Unable to build "${buildParams.appSlug}" app (${buildParams.env}).`);
 
 	const { appSlug, projectSlug } = build;
-	const { env } = deployParams;
 
 	// [2] Deploy the build to target deploy environment
+	if (!deployParams.env) deployParams.env = buildParams.env || "dev";
+	if (typeof deployParams.deployInBackground === "undefined") deployParams.deployInBackground = false;
 	const deployRes = await deployBuild(build, deployParams);
+
+	const { env } = deployParams;
 
 	let errorMsg = ``;
 	if (deployRes?.error) {
@@ -64,32 +66,37 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	sendLog({ SOCKET_ROOM, message: chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanDuration} 🎉`), type: "success" });
 
 	// [4] Capture a screenshot (scheduled after 30 seconds after the deployment):
-	try {
-		// let's this job run in background
-		wait(30 * 1000, () => {
-			screenshot(env === "prod" ? prereleaseUrl : endpoint, { fullPage: false }).then(async (result) => {
-				if (result) {
-					// success -> write to db
-					delete result.buffer;
-					const mediaSvc = new MediaService();
-					const media = await mediaSvc.create({ ...result, owner: deployParams.owner._id, workspace: deployParams.workspace._id });
-					if (media) {
-						// update screenshot to release
-						const updatedRelease = await DB.updateOne("release", { _id: releaseId }, { screenshot: media.url });
-						// if (updatedRelease) sendLog({ SOCKET_ROOM, message: `Screenshot: ${media.url}` });
+	// console.log("IsTestCI() :>> ", IsTestCI());
+	// console.log("Config.ENV :>> ", Config.ENV);
+	// console.log("process.env.NODE_ENV :>> ", process.env.NODE_ENV);
+	if (!IsTest()) {
+		try {
+			// let's this job run in background
+			wait(30 * 1000, () => {
+				screenshot(env === "prod" ? prereleaseUrl : endpoint, { fullPage: false }).then(async (result) => {
+					if (result) {
+						// success -> write to db
+						delete result.buffer;
+						const mediaSvc = new MediaService();
+						const media = await mediaSvc.create({ ...result, owner: deployParams.owner._id, workspace: deployParams.workspace._id });
+						if (media) {
+							// update screenshot to release
+							const updatedRelease = await DB.updateOne("release", { _id: releaseId }, { screenshot: media.url });
+							// if (updatedRelease) sendLog({ SOCKET_ROOM, message: `Screenshot: ${media.url}` });
 
-						// update screenshot to app's deploy environment
-						const app = await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
-						// if (!app) sendLog({ SOCKET_ROOM, message: `Unable to update screenshot to app's deploy environment (${env})` });
+							// update screenshot to app's deploy environment
+							const app = await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
+							// if (!app) sendLog({ SOCKET_ROOM, message: `Unable to update screenshot to app's deploy environment (${env})` });
+						}
 					}
-				}
+				});
 			});
-		});
-	} catch (e) {
-		sendLog({
-			SOCKET_ROOM,
-			message: `[BUILD_AND_DEPLOY] Unable to capture the webpage screenshot (${env === "prod" ? prereleaseUrl : endpoint}): ${e}`,
-		});
+		} catch (e) {
+			sendLog({
+				SOCKET_ROOM,
+				message: `[BUILD_AND_DEPLOY] Unable to capture the webpage screenshot (${env === "prod" ? prereleaseUrl : endpoint}): ${e}`,
+			});
+		}
 	}
 
 	if (env == "prod") {

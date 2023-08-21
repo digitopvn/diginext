@@ -259,7 +259,7 @@ export async function getSecrets(namespace: string = "default", options: KubeCom
 		);
 		return JSON.parse(stdout).items as KubeSecret[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllSecrets >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getSecrets >`, e);
 		return [];
 	}
 }
@@ -472,7 +472,7 @@ export async function getDeploys(namespace = "default", options: GetKubeDeployOp
 		const { items } = JSON.parse(stdout);
 		const deploys = items as KubeDeployment[];
 
-		if (!metrics) return items;
+		if (!metrics) return deploys;
 
 		// get pods usage
 		const usageStr = execaCommandSync(`kubectl --context=${context} -n ${namespace} top pod --no-headers=true`).stdout;
