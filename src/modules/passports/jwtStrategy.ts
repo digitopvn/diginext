@@ -100,20 +100,20 @@ export async function extractAccessTokenInfo(
 	let isExpired = expiredTimestamp <= 0;
 	let expToNow = dayjs(new Date(exp * 1000)).fromNow();
 
-	// log("Expired date >", expiredTimestamp, ">>:", expiredDate.format("YYYY-MM-DD HH:mm:ss"));
-	// log(`Is token expired >>:`, isExpired, `(will expire ${expToNow})`);
+	console.log("extractAccessTokenInfo() > Expired date >", expiredTimestamp, ">>:", expiredDate.format("YYYY-MM-DD HH:mm:ss"));
+	console.log(`extractAccessTokenInfo() > Is token expired >>:`, isExpired, `(will expire ${expToNow})`);
 
 	if (refresh_token) {
 		// If token is < 4 hours to expire, refresh it:
-		const expHourLeft = expiredTimestamp / 60 / 60 / 1000;
+		const accessTokenExpHourLeft = expiredTimestamp / 60 / 60 / 1000;
 		const { error: isInvalidRefreshToken, tokenDetails: refreshTokenDetails } = await verifyRefreshToken(refresh_token);
-		// console.log("expHourLeft :>> ", expHourLeft);
-		// console.log("tokenDetails :>> ", refreshTokenDetails);
-		// console.log("isInvalidRefreshToken :>> ", isInvalidRefreshToken);
+		console.log("extractAccessTokenInfo() > accessTokenExpHourLeft :>> ", accessTokenExpHourLeft);
+		console.log("extractAccessTokenInfo() > refreshTokenDetails :>> ", refreshTokenDetails);
+		console.log("extractAccessTokenInfo() > isInvalidRefreshToken :>> ", isInvalidRefreshToken);
 
 		if (isInvalidRefreshToken || refreshTokenDetails.isExpired) return { isExpired: true };
 
-		if (expHourLeft < 4) {
+		if (accessTokenExpHourLeft < 4) {
 			const userId = payload.id;
 			const { accessToken, refreshToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
 			access_token = accessToken;

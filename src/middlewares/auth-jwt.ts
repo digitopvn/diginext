@@ -15,7 +15,7 @@ import { MongoDB } from "@/plugins/mongodb";
 const jwt_auth = (req: AppRequest, res, next) =>
 	passport.authenticate("jwt", { session: false }, async function (err, user: IUser, info) {
 		const { DB } = await import("@/modules/api/DB");
-		// console.log(err, user, info);
+		// console.log(`PASSPORT AUTHENTICATE:`, err, user, info);
 		// console.log(`AUTHENTICATE: jwt_auth > user:`, user);
 
 		if (!user) {
@@ -23,8 +23,8 @@ const jwt_auth = (req: AppRequest, res, next) =>
 			 * If the token is expired or invalid,
 			 * we should delete it in the cookies or HTTP response
 			 */
-			res.cookie("x-auth-cookie", "");
-			res.header("Authorization", "");
+			// res.cookie("x-auth-cookie", "");
+			// res.header("Authorization", "");
 
 			return info?.toString().indexOf("TokenExpiredError") > -1
 				? Response.ignore(res, "Access token was expired.")
