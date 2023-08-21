@@ -1,4 +1,4 @@
-## [3.22.3-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.2...v3.22.3-prerelease.1) (2023-08-21)
+## [3.22.3](https://github.com/digitopvn/diginext/compare/v3.22.2...v3.22.3) (2023-08-21)
 
 
 ### Bug Fixes
