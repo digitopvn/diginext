@@ -202,7 +202,7 @@ export const getLongEnv = (env) => {
  * @param  {[{keyword:(RegExp|String), replacement:String}]} replacement=[]
  * @return {String} - New content
  */
-export const replaceInFile = async (filePath, replacement = []) => {
+export const replaceInFile = async (filePath, replacement: { keyword: RegExp | string; replacement: string }[] = []) => {
 	let fileContent = fs.readFileSync(filePath, "utf-8");
 	replacement.forEach(({ keyword, replacement: replaceWith }) => {
 		fileContent = fileContent.replace(keyword, replaceWith);
@@ -669,7 +669,7 @@ export const getCurrentGitRepoData = async (dir = process.cwd(), options?: { isD
 
 		return { repoSSH, repoURL, provider, slug, fullSlug, namespace, gitDomain, branch };
 	} catch (e) {
-		console.warn(`getCurrentGitRepoData() > error :>>`, e.toString());
+		if (options?.isDebugging) console.warn(`getCurrentGitRepoData() > error :>>`, e.toString());
 		return;
 	}
 };

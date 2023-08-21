@@ -10,6 +10,7 @@ import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCre
 import { printInformation } from "@/modules/project/printInformation";
 import { makeSlug } from "@/plugins/slug";
 
+import { createEmptyAppDirectory } from "./create-empty-app-dir";
 import { createAppByForm } from "./new-app-by-form";
 
 /**
@@ -53,7 +54,11 @@ export default async function createApp(options: InputOptions) {
 	if (options.isDebugging) console.log("createApp() > options.framework :>> ", options.framework);
 
 	// pull/clone framework...
-	if (options.framework && options.framework.slug !== "none") await pullingFramework(options);
+	if (options.framework && options.framework.slug !== "none") {
+		await pullingFramework(options);
+	} else {
+		await createEmptyAppDirectory(options);
+	}
 
 	// update git info to database
 	const updatedApp = await DB.updateOne(
