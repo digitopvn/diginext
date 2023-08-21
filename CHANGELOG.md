@@ -1,3 +1,11 @@
+## [3.22.4](https://github.com/digitopvn/diginext/compare/v3.22.3...v3.22.4) (2023-08-21)
+
+
+### Bug Fixes
+
+* **cli:** add --rollout flag to dx up ([d539e32](https://github.com/digitopvn/diginext/commit/d539e328655dd6452da6d4d16d3d273ec1a64154))
+* **dashboard:** validate refresh token issue ([abfc2d7](https://github.com/digitopvn/diginext/commit/abfc2d7a15cd1985f552fa6ca065d4c87cf9a927))
+
 ## [3.22.3](https://github.com/digitopvn/diginext/compare/v3.22.2...v3.22.3) (2023-08-21)
 
 
