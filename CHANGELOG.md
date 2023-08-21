@@ -1,3 +1,12 @@
+## [3.22.3](https://github.com/digitopvn/diginext/compare/v3.22.2...v3.22.3) (2023-08-21)
+
+
+### Bug Fixes
+
+* **cli:** generate readme for creating empty app ([147c390](https://github.com/digitopvn/diginext/commit/147c390fd219e4589b41d97f7316363144f7d6c9))
+* **dashboard:** store refresh token in cookie ([#344](https://github.com/digitopvn/diginext/issues/344)) ([40a7aed](https://github.com/digitopvn/diginext/commit/40a7aedc3a88ae859f0b78e2bac81a524859f96f))
+* **server,dashboard:** should not clear expired tokens ([9221a71](https://github.com/digitopvn/diginext/commit/9221a71aaa12ef147306a5af3279c5f9c6f8b0b7))
+
 ## [3.22.2](https://github.com/digitopvn/diginext/compare/v3.22.1...v3.22.2) (2023-08-16)
 
 
