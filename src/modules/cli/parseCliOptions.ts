@@ -87,6 +87,7 @@ const argvOptions = {
 	pipeline: { describe: "Should generate Bitbucket pipeline YAML or not" },
 	template: { describe: "Should replace current deployment with the templates or not", alias: "tpl" },
 	fresh: { describe: "Should do a fresh deploy [WARN - this will wipe out the current namespace]", alias: "fr" },
+	rollout: { describe: "Should skip PRE-RELEASE environment and roll out PROD release immediately", alias: "ro" },
 };
 
 const globalOptions = {
@@ -161,6 +162,7 @@ const deployOptions = {
 	create: argvOptions.create,
 	shouldUploadDotenv: argvOptions["upload-env"],
 	fresh: argvOptions.fresh,
+	rollout: argvOptions.rollout,
 };
 
 const kubectlDeploymentOptions = {
@@ -451,7 +453,7 @@ export async function parseCliOptions() {
 		// .command("deploy", "Request BUILD SERVER to build your project & deploy it", deployOptions)
 		.command({
 			command: "up",
-			aliases: ["dep", "deploy"],
+			aliases: ["go", "deploy"],
 			describe: "Request BUILD SERVER to build & deploy your app.",
 			builder: (_argv) => _argv.option(deployOptions),
 			handler: (_argv) => {},
@@ -552,6 +554,7 @@ export async function parseCliOptions() {
 		shouldInherit: (argv.inherit as boolean) ?? true,
 		shouldUploadDotenv: argv["upload-env"] as boolean,
 		shouldUseFreshDeploy: argv.fresh as boolean,
+		shouldRollOut: argv.rollout as boolean,
 		shouldCreate: (argv.create as boolean) ?? false,
 
 		// deployment
