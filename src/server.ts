@@ -167,6 +167,7 @@ function initialize(db?: typeof mongoose) {
 			secret: Config.grab(`JWT_SECRET`),
 			maxAge: 1000 * 60 * 100,
 			httpOnly: false,
+			secure: !IsDev() || !IsTest(),
 		})
 	);
 
