@@ -114,7 +114,8 @@ export class Config {
 	}
 
 	static get DX_API_URL() {
-		return trimNull(process.env.DX_API_URL) ? trimNull(process.env.DX_API_URL) : "https://diginext.site/api";
+		return trimNull(process.env.DX_API_URL) ? trimNull(process.env.DX_API_URL) : "hppt://localhost:3000/api";
+		// return trimNull(process.env.DX_API_URL) ? trimNull(process.env.DX_API_URL) : "https://diginext.site/api";
 	}
 
 	static get BUILDER() {

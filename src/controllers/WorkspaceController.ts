@@ -2,7 +2,7 @@ import { isUndefined } from "lodash";
 import type { Types } from "mongoose";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { Config, IsTest } from "@/app.config";
+import { Config } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { IApiKeyAccount, IRole, IServiceAccount, IWorkspace } from "@/entities";
 import type { ResponseData } from "@/interfaces";
@@ -23,6 +23,15 @@ interface AddUserBody {
 	workspaceId: Types.ObjectId;
 	roleId?: Types.ObjectId;
 }
+
+export type CreateWorkspaceParams = {
+	name: string;
+	type?: "default" | "hobby" | "self_hosted";
+	packageId: string;
+	userId: any;
+	email: string;
+	public: boolean;
+};
 
 interface WorkspaceInputData {
 	/**
@@ -73,7 +82,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		if (!owner) return interfaces.respondFailure({ msg: `Param "owner" (UserID) is required.` });
 
 		let dx_key: string = body.dx_key;
-
+		let pkgId: string;
 		// if no "dx_key" provided, subscribe to a DX package & obtain DX key
 		if (!dx_key) {
 			const pkgRes = await dxGetPackages();
@@ -83,15 +92,18 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 			const dxPackages = pkgRes.data as DxPackage[];
 			const pkg = dxPackages.find((p) => (Config.SERVER_TYPE === "hobby" ? "hobby" : "self_hosted"));
 			if (!pkg) return interfaces.respondFailure(`Diginext package plans not found.`);
-
-			const subscribeRes = await dxSubscribe({ userEmail: this.user.email, packageId: pkg.id });
+			pkgId = pkg.id;
+			const subscribeRes = await dxSubscribe({ email: this.user.email });
 			if (!subscribeRes || !subscribeRes.status)
 				return interfaces.respondFailure(
 					subscribeRes.messages?.join(", ") || `Unable to subscribe a Diginext package "${pkg.name}" (${pkg.id}).`
 				);
 
 			const dxSubscription = subscribeRes.data as DxSubsription;
+
 			dx_key = dxSubscription.key;
+			console.log("dxSubscription >>>>>>>>", dxSubscription);
+
 			if (!dx_key) return interfaces.respondFailure(`Unable to obtain "dx_key" from Diginext Package Subscribe API.`);
 
 			body.dx_key = dx_key;
@@ -105,14 +117,16 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		if (isUndefined(body.public)) body.public = true;
 
 		// ----- VERIFY DX KEY -----
-
-		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
-		// skip checking DX key for unit test
-		if (!IsTest()) {
-			const createWsRes = await dxCreateWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
-			// console.log("createWsRes :>> ", createWsRes);
-			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
-		}
+		// Create workspace in diginext-site
+		const dataCreateWorkSpace: CreateWorkspaceParams = {
+			name: name,
+			email: ownerUser.email,
+			packageId: pkgId,
+			userId: ownerUser._id,
+			public: body.public,
+		};
+		const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace, dx_key);
+		if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
 
 		// ----- END VERIFYING -----
 
@@ -325,5 +339,17 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 			: await DB.find("api_key_user", { workspaces: { $in: [workspaceID] } });
 
 		return interfaces.respondSuccess({ data });
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/update-package")
+	async updatePackageWorkspace(@Body() data: { workspaceId: string; dx_key: string }) {
+		const { DB } = await import("@/modules/api/DB");
+		const workspace = await this.service.findOne({ id: data.workspaceId });
+		if (!workspace) throw new Error(`This workspace is not existed.`);
+
+		const workspaceUpdate = await DB.updateOne("workspace", { id: data.workspaceId }, { dx_key: data.dx_key });
+		return interfaces.respondSuccess({ data: { workspaceUpdate } });
 	}
 }

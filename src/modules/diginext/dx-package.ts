@@ -20,10 +20,10 @@ export type DxPackage = {
 };
 
 export type SubscribeParams = {
-	userEmail: string;
+	email: string;
 	userName?: string;
 	name?: string;
-	packageId: string;
+	packageId?: string;
 };
 
 export type SubscribeResponse = ResponseData & {
@@ -39,5 +39,5 @@ export async function dxGetPackages() {
 }
 
 export async function dxSubscribe(params: SubscribeParams) {
-	return dxApi<SubscribeResponse>({ url: "/packages/subscribe", data: params, method: "POST" });
+	return dxApi<SubscribeResponse>({ url: "/dx/subscribe", data: params, method: "POST" });
 }
