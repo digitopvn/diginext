@@ -34,6 +34,7 @@ router.post("/register", async (req, res) => {
 		const userId = MongoDB.toString(newUser._id);
 		let workspaceId: string;
 		let access_token: string;
+		let refresh_token: string;
 
 		let redirectUrl = (req.query.state as string) || Config.BASE_URL;
 		const originUrl = new URL(redirectUrl).origin;
@@ -44,27 +45,31 @@ router.post("/register", async (req, res) => {
 			workspaceId = MongoDB.toString(workspace._id);
 
 			// sign JWT
-			const { accessToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+			const { accessToken, refreshToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
 			access_token = accessToken;
+			refresh_token = refreshToken;
 
 			// assign JWT access token to cookie and request headers:
 			res.cookie("x-auth-cookie", access_token);
+			res.cookie("refresh_token", refresh_token);
 			res.header("Authorization", `Bearer ${access_token}`);
 
-			return res.json(respondSuccess({ data: { user: newUser, access_token } }));
+			return res.json(respondSuccess({ data: { user: newUser, access_token, refresh_token } }));
 		}
 
 		// if this user has no workspaces or multiple workspaces -> select one!
 		console.log("this user has no workspaces or multiple workspaces -> select one!");
 
-		const { accessToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
+		const { accessToken, refreshToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
 		access_token = accessToken;
+		refresh_token = refreshToken;
 
 		// assign JWT access token to cookie and request headers:
 		res.cookie("x-auth-cookie", access_token);
+		res.cookie("refresh_token", refresh_token);
 		res.header("Authorization", `Bearer ${access_token}`);
 
-		return res.json(respondSuccess({ data: { user: newUser, access_token } }));
+		return res.json(respondSuccess({ data: { user: newUser, access_token, refresh_token } }));
 	} catch (error) {
 		console.error("Error during registration:", error);
 		return res.json(respondFailure("Internal server error"));
@@ -97,6 +102,7 @@ router.post(
 			const userId = MongoDB.toString(user._id);
 			let workspaceId: string;
 			let access_token: string;
+			let refresh_token: string;
 
 			let redirectUrl = (req.query.state as string) || Config.BASE_URL;
 			const originUrl = new URL(redirectUrl).origin;
@@ -107,11 +113,12 @@ router.post(
 				workspaceId = MongoDB.toString(workspace._id);
 
 				// sign JWT
-				const { accessToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+				const { accessToken, refreshToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
 				access_token = accessToken;
 
 				// assign JWT access token to cookie and request headers:
 				res.cookie("x-auth-cookie", access_token);
+				res.cookie("refresh_token", refreshToken);
 				res.header("Authorization", `Bearer ${access_token}`);
 
 				return res.json(respondSuccess({ data: { user, access_token } }));
@@ -120,10 +127,11 @@ router.post(
 			// if this user has no workspaces or multiple workspaces -> select one!
 			console.log("this user has no workspaces or multiple workspaces -> select one!");
 
-			const { accessToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
+			const { accessToken, refreshToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
 			access_token = accessToken;
 			// assign JWT access token to cookie and request headers:
 			res.cookie("x-auth-cookie", access_token);
+			res.cookie("refresh_token", refreshToken);
 			res.header("Authorization", `Bearer ${access_token}`);
 
 			return res.json(respondSuccess({ data: { user, access_token } }));
