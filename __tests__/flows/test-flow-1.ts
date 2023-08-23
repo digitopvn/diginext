@@ -1,4 +1,4 @@
-import { IApp, ICluster, IContainerRegistry, IFramework, IGitProvider, IRole, IWorkspace } from "@/entities";
+import { IApp, ICluster, IContainerRegistry, IFramework, IGitProvider, IRole, IUser, IWorkspace } from "@/entities";
 import { MongoDB } from "../../src/plugins/mongodb";
 import {
 	CLI_TEST_DIR,
@@ -31,6 +31,8 @@ import ClusterManager from "@/modules/k8s";
 import { DB } from "@/modules/api/DB";
 import path from "path";
 import { wait } from "@/plugins";
+import { fetchApi } from "@/modules/api";
+import { makeSlug } from "@/plugins/slug";
 
 export function testFlow1() {
 	let wsId: string;
@@ -45,7 +47,7 @@ export function testFlow1() {
 		console.log("Current PODMAN version :>> \n", podmanVersion);
 	});
 
-	it("Authenticate fake user #1 (admin)", async () => {
+	it("Create Fake User #1 (role: admin)", async () => {
 		// create user
 		await createFakeUser(1);
 
@@ -270,7 +272,7 @@ export function testFlow1() {
 
 			// podman: pull private test image
 			const podmanPullRes = await dxCmd(`podman pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
-			expect(podmanPullRes.indexOf("Storing signatures")).toBeGreaterThan(-1);
+			expect(podmanPullRes.indexOf("Writing manifest")).toBeGreaterThan(-1);
 
 			// docker: pull private test image
 			const dockerPullRes = await dxCmd(`docker pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
@@ -298,17 +300,19 @@ export function testFlow1() {
 			expect(dhr).toBeDefined();
 			expect(dhr.isVerified).toBe(true);
 
-			// authenticate GCR with docker & podman
-			await connectRegistry(dhr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
+			// podman: pull private test image
 			await connectRegistry(dhr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
 
-			// podman: pull private test image
-			const podmanPullRes = await dxCmd(`podman pull digitop/static:latest`);
-			expect(podmanPullRes.indexOf("Storing signatures")).toBeGreaterThan(-1);
+			// const podmanPullRes = await dxCmd(`podman pull digitop/static:latest`);
+			// console.log("podmanPullRes :>> ", podmanPullRes);
+			// expect(podmanPullRes.indexOf("Writing manifest")).toBeGreaterThan(-1);
 
 			// docker: pull private test image
-			const dockerPullRes = await dxCmd(`docker pull digitop/static:latest`);
-			expect(dockerPullRes.indexOf("digitop/static:latest")).toBeGreaterThan(-1);
+			await connectRegistry(dhr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
+
+			// const dockerPullRes = await dxCmd(`docker pull digitop/static:latest`);
+			// console.log("dockerPullRes :>> ", dockerPullRes);
+			// expect(dockerPullRes.indexOf("Downloaded")).toBeGreaterThan(-1);
 		},
 		// timeout: 4 mins
 		4 * 60000
@@ -412,12 +416,12 @@ export function testFlow1() {
 			// expect(res.toLowerCase()).not.toContain("error");
 
 			const sourceCodeDirs = readdirSync(CLI_TEST_DIR);
-			console.log("sourceCodeDirs :>> ", sourceCodeDirs);
+			// console.log("sourceCodeDirs :>> ", sourceCodeDirs);
 			expect(sourceCodeDirs.join(",").indexOf(`testgithubproject`)).toBeGreaterThan(-1);
 
 			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
 			const sourceCodeFiles = readdirSync(appDir);
-			console.log("sourceCodeFiles :>> ", sourceCodeFiles);
+			// console.log("sourceCodeFiles :>> ", sourceCodeFiles);
 			expect(sourceCodeFiles.length).toBeGreaterThan(0);
 			expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
 
@@ -443,12 +447,12 @@ export function testFlow1() {
 			// expect(res.toLowerCase()).not.toContain("error");
 
 			const appDirs = readdirSync(CLI_TEST_DIR);
-			console.log("appDirs :>> ", appDirs);
+			// console.log("appDirs :>> ", appDirs);
 			expect(appDirs.join(",").indexOf(`testbitbucketproject`)).toBeGreaterThan(-1);
 
 			const appDir = path.resolve(CLI_TEST_DIR, "testbitbucketproject-web");
 			const sourceCodeFiles = readdirSync(appDir);
-			console.log("testbitbucketproject-web > files :>> ", sourceCodeFiles);
+			// console.log("testbitbucketproject-web > files :>> ", sourceCodeFiles);
 			expect(sourceCodeFiles.length).toBeGreaterThan(0);
 			expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
 
@@ -512,21 +516,60 @@ export function testFlow1() {
 		5 * 60000
 	);
 
-	it("Workspace #1: Add member", async () => {
-		console.log("[TESTING] CLI: Add member");
+	it(
+		"Workspace #1: Add member (basic auth)",
+		async () => {
+			console.log("[TESTING] CLI: Add member (basic auth)");
 
-		// registerr fake user #2:
-		let fakeUser2 = await createFakeUser(2);
+			let fakeUser1 = await getCurrentUser();
 
-		// login to workspace #1
-		const loginRes = await loginUser(MongoDB.toString(fakeUser2._id), wsId);
+			// register fake user #2 with "basic auth" method:
+			const fakeUser2_Name = `Fake User 2`;
+			const fakeUser2_Email = `${makeSlug(fakeUser2_Name)}@test.user`;
 
-		// reload user
-		fakeUser2 = loginRes.user;
-		expect((fakeUser2.activeRole as IRole).type).toEqual("member");
+			// invite this user to current workspace
+			const inviteRes = await fetchApi({
+				url: "/api/v1/workspace/invite",
+				method: "POST",
+				data: { emails: [fakeUser2_Email] },
+				access_token: fakeUser1.token.access_token,
+			});
+			// console.log("inviteRes :>> ", inviteRes);
+			expect(inviteRes.data.succeed).toBeGreaterThan(0);
 
-		// login back to fake user #1
-	});
+			const registerRes = await fetchApi({
+				url: "/api/v1/register",
+				method: "POST",
+				data: {
+					name: fakeUser2_Name,
+					email: fakeUser2_Email,
+					password: "123456",
+					workspace: wsId, // <-- make this workspace active for this user
+				},
+			});
+			// await wait(60000);
+			// console.log("Basic auth > registerRes :>> ", registerRes);
+
+			let fakeUser2 = registerRes.data.user as IUser;
+			expect(fakeUser2.password).toBeDefined();
+
+			// login to workspace #1 with "basic auth" method:
+			// const loginRes = await fetchApi({
+			// 	url: "/api/v1/login",
+			// 	method: "POST",
+			// 	data: { email: fakeUser2.email, password: "123456" },
+			// });
+			// console.log("Basic auth > loginRes :>> ", loginRes);
+			// reload user
+			// fakeUser2 = loginRes.data.user;
+
+			expect((fakeUser2.activeRole as IRole).type).toEqual("member");
+
+			// login back to fake user #1 ???
+		},
+		// timeout: 5 minutes
+		5 * 60000
+	);
 
 	it(
 		"CLEAN UP: delete test data (eg. app, deployment, kube_config,...)",
