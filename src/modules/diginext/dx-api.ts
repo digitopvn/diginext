@@ -12,6 +12,7 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 
 	options.baseURL = Config.DX_API_URL;
 
+	console.log("ALL OPTIONS:", options);
 	// options.headers.Authorization = `Bearer ${licenseKey}`;
 	if (dxKey) options.headers["X-API-Key"] = dxKey;
 

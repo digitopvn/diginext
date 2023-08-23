@@ -344,12 +344,12 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/update-package")
-	async updatePackageWorkspace(@Body() data: { workspaceId: string; dx_key: string }) {
+	async updatePackageWorkspace(@Body() data: { old_key: string; new_key: string }) {
 		const { DB } = await import("@/modules/api/DB");
-		const workspace = await this.service.findOne({ id: data.workspaceId });
+		const workspace = await this.service.findOne({ dx_key: data.old_key });
 		if (!workspace) throw new Error(`This workspace is not existed.`);
-
-		const workspaceUpdate = await DB.updateOne("workspace", { id: data.workspaceId }, { dx_key: data.dx_key });
+		const workspaceUpdate = await DB.updateOne("workspace", { dx_key: data.old_key }, { dx_key: data.new_key });
+		console.log(workspaceUpdate);
 		return interfaces.respondSuccess({ data: { workspaceUpdate } });
 	}
 }

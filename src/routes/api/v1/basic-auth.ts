@@ -4,6 +4,7 @@ import express from "express";
 import { Config } from "@/app.config";
 import type { IWorkspace } from "@/entities";
 import { respondFailure, respondSuccess } from "@/interfaces";
+import { dxCreateUser } from "@/modules/diginext/dx-user";
 import { generateJWT } from "@/modules/passports";
 import { MongoDB } from "@/plugins/mongodb";
 
@@ -15,7 +16,6 @@ const router = express.Router();
 router.post("/register", async (req, res) => {
 	const { email, password } = req.body;
 	const { DB } = await import("@/modules/api/DB");
-
 	try {
 		const existingUser = await DB.findOne("user", { email });
 		if (existingUser) return res.json(respondFailure(`Email is existed.`));
@@ -26,8 +26,21 @@ router.post("/register", async (req, res) => {
 		// auto-generated name
 		const name = (email as string).split("@")[0];
 
+		// create user with DX Site
+		const createUserRes = await dxCreateUser({
+			email: email,
+			name: name,
+			password: password,
+		});
+		console.log("Create response data:", createUserRes);
+		// DX
 		// Create a new user
-		const newUser = await DB.create("user", { name, email, password: hashedPassword });
+		let newUser;
+		if (createUserRes.status) {
+			newUser = await DB.create("user", { name, email, password: hashedPassword });
+		} else {
+			return res.json(respondFailure("Internal server error"));
+		}
 
 		// sign JWT and redirect
 		let workspace: IWorkspace;
