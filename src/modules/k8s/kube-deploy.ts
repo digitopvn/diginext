@@ -597,13 +597,13 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		return isReady;
 	};
 
-	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 2 * 60);
+	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 4 * 60);
 	if (options?.isDebugging) log(`[ROLL OUT] Checking new deployment's status -> Is Fully Ready:`, isReallyReady);
 
 	// TODO: check app's health instead of 15 seconds
-	// Wait another 15s to make sure app is not crashing...
 	if (isReallyReady) {
 		if (onUpdate) onUpdate(`App is being started up right now, please wait...`);
+		// Wait another 15s to make sure app is not crashing...
 		await wait(15 * 1000);
 	}
 	let isCrashed = false;
