@@ -39,6 +39,7 @@ import path from "path";
 import { existsSync, mkdirSync } from "fs";
 import CloudDatabaseBackupController from "@/controllers/CloudDatabaseBackupController";
 import { DeployEnvironmentService } from "@/services";
+import { fetchApi } from "@/modules/api";
 
 const user1 = { name: "Test User 1", email: "user1@test.local" } as IUser;
 const user2 = { name: "Test User 2", email: "user2@test.local" } as IUser;
@@ -138,13 +139,32 @@ export const createUser = async (data: UserDto) => {
 	return user as IUser;
 };
 
-export const createFakeUser = async (id: number = randomInt(100)) => {
+export const createFakeUser = async (
+	id: number = randomInt(1000000),
+	options: { method: "jwt" | "basic"; email?: string; workspace?: string } = { method: "jwt" }
+) => {
+	const { method = "jwt", email, workspace } = options;
+
 	const name = `Fake User ${id}`;
 	const userDto: UserDto = {
 		name,
-		email: `${makeSlug(name)}@test.user`,
+		email: email || `${makeSlug(name)}@test.user`,
 	};
-	return createUser(userDto);
+
+	if (method === "jwt") {
+		return createUser(userDto);
+	} else {
+		const response = await fetchApi({
+			url: "/api/v1/register",
+			method: "POST",
+			data: {
+				email: `${makeSlug(name)}@test.user`,
+				password: "123456",
+				workspace,
+			},
+		});
+		return response.data.user as IUser;
+	}
 };
 
 export const getCurrentUser = async () => {

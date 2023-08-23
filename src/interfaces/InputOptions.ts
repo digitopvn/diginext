@@ -403,6 +403,13 @@ export type InputOptions = {
 	shouldApply?: boolean;
 
 	/**
+	 * Should roll out release (skip `prerelease` environment)
+	 * - Flags: `--rollout`
+	 * @default false
+	 */
+	shouldRollOut?: boolean;
+
+	/**
 	 * ! Should deploy app from a fresh namespace
 	 * - Flags: `--fresh`
 	 * ## [WARNING]
@@ -574,6 +581,7 @@ export type InputOptions = {
 	/**
 	 * Git provider type
 	 * - Flag: `--gp`, `--git-provider`
+	 * @example "github", "bitbucket"
 	 */
 	gitProvider?: GitProviderType;
 

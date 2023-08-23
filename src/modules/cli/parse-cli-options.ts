@@ -61,6 +61,7 @@ const argvOptions = {
 	git: { describe: "Specify GIT provider's slug" },
 	"git-provider": { describe: "Specify GIT provider type", alias: "gp" },
 	"git-org": { describe: "Specify GIT workspace slug", alias: "org" },
+	branch: { describe: "Specify GIT branch", alias: "git-branch" },
 	provider: { describe: "Specify selected cloud provider", alias: "pro" },
 	custom: { describe: "Select a custom provider", alias: "custom" },
 	do: { describe: "Select Digital Ocean as a provider", alias: "digitalocean" },
@@ -87,6 +88,7 @@ const argvOptions = {
 	pipeline: { describe: "Should generate Bitbucket pipeline YAML or not" },
 	template: { describe: "Should replace current deployment with the templates or not", alias: "tpl" },
 	fresh: { describe: "Should do a fresh deploy [WARN - this will wipe out the current namespace]", alias: "fr" },
+	rollout: { describe: "Should skip PRE-RELEASE environment and roll out PROD release immediately", alias: "ro" },
 };
 
 const globalOptions = {
@@ -161,6 +163,7 @@ const deployOptions = {
 	create: argvOptions.create,
 	shouldUploadDotenv: argvOptions["upload-env"],
 	fresh: argvOptions.fresh,
+	rollout: argvOptions.rollout,
 };
 
 const kubectlDeploymentOptions = {
@@ -451,7 +454,7 @@ export async function parseCliOptions() {
 		// .command("deploy", "Request BUILD SERVER to build your project & deploy it", deployOptions)
 		.command({
 			command: "up",
-			aliases: ["dep", "deploy"],
+			aliases: ["go", "deploy"],
 			describe: "Request BUILD SERVER to build & deploy your app.",
 			builder: (_argv) => _argv.option(deployOptions),
 			handler: (_argv) => {},
@@ -521,13 +524,14 @@ export async function parseCliOptions() {
 		isLocal: (argv.local as boolean) ?? false,
 		overwrite: (argv.overwrite as boolean) ?? false,
 		gitProvider: argv["git-provider"] as GitProviderType,
+		gitBranch: argv.branch as string,
+		gitOrg: argv["git-org"] as string,
 
 		// project & app
 		projectName: argv.projectName as string,
 		projectSlug: argv.projectSlug as string,
 		targetDirectory: argv.targetDir as string,
 		isPublic: (argv.public as boolean) ?? false,
-		gitOrg: argv["git-org"] as string,
 
 		// environment
 		env: (argv.env as string) ?? "dev",
@@ -552,6 +556,7 @@ export async function parseCliOptions() {
 		shouldInherit: (argv.inherit as boolean) ?? true,
 		shouldUploadDotenv: argv["upload-env"] as boolean,
 		shouldUseFreshDeploy: argv.fresh as boolean,
+		shouldRollOut: argv.rollout as boolean,
 		shouldCreate: (argv.create as boolean) ?? false,
 
 		// deployment

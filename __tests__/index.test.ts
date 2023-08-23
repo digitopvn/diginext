@@ -3,7 +3,7 @@ import { checkInitialData } from "./core/initial-data";
 import { checkSystemStatus } from "./core/system-status";
 import { testFlow1 } from "./flows/test-flow-1";
 
-describe("Diginext", () => {
+describe("Diginext E2E", () => {
 	// Start
 	beforeAll(async () => await setupStartTestEnvironment(), 15000);
 

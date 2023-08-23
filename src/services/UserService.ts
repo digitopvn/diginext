@@ -23,9 +23,9 @@ export class UserService extends BaseService<IUser> {
 		return super.findOne(filter, options);
 	}
 
-	async create(data) {
+	async create(data, options: IQueryOptions = {}) {
 		if (!data.username) data.username = data.slug;
-		return super.create(data);
+		return super.create(data, options);
 	}
 
 	async update(filter: IQueryFilter<IUser>, data: IUser | any, options?: IQueryOptions) {

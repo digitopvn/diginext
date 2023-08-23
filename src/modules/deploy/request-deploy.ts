@@ -115,6 +115,7 @@ export async function requestDeploy(options: InputOptions) {
 		},
 		deployParams: {
 			env,
+			forceRollOut: options.shouldRollOut,
 			skipReadyCheck: false,
 			shouldUseFreshDeploy: options.shouldUseFreshDeploy,
 		},
