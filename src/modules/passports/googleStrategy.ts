@@ -5,8 +5,6 @@ import { Config } from "@/app.config";
 import type { ProviderInfo, UserDto } from "@/entities/User";
 import { UserService } from "@/services";
 
-import { dxCreateUser } from "../diginext/dx-user";
-
 export const googleStrategy = new GoogleStrategy(
 	{
 		clientID: Config.grab("GOOGLE_CLIENT_ID", "g0fTFGUDWCjmH21MnxTIcsPtD8JHDa2aA8UNgCpp2r2cf58aMlIut1gJ7abGotPi"),
@@ -44,32 +42,22 @@ export const googleStrategy = new GoogleStrategy(
 				access_token: accessToken,
 			};
 
-			// Create user with Dx Site
-			const createUserRes = await dxCreateUser({
-				email: profile.email,
-				image: profile.picture,
-				name: profile.displayName,
-				username: profile.displayName,
-				providers: [provider],
-			});
-
 			// console.log("RES Create User DX Site:", createUserRes);
 			// Create user successfully in DX site then continue to create DX CLI
-			if (createUserRes) {
-				const newUser = await userSvc.create({
-					providers: [provider],
-					name: profile.displayName,
-					email: profile.email,
-					image: profile.picture,
-					verified: profile.verified,
-				});
-				if (newUser) {
-					user = newUser;
-					request.user = user;
-					return done(null, { ...user, accessToken, refreshToken });
-				} else {
-					return done(null, newUser);
-				}
+			const newUser = await userSvc.create({
+				providers: [provider],
+				name: profile.displayName,
+				email: profile.email,
+				image: profile.picture,
+				verified: profile.verified,
+				isActive: true,
+			});
+			if (newUser) {
+				user = newUser;
+				request.user = user;
+				return done(null, { ...user, accessToken, refreshToken });
+			} else {
+				return done(null, newUser);
 			}
 		});
 	}

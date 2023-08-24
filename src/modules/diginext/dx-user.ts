@@ -12,9 +12,10 @@ export type IBodyCreateUser = {
 	username?: string;
 	password?: string;
 	metadata?: any;
-	providers?: ProviderInfo[];
+	providers?: ProviderInfo;
 	workspaces?: Types.Array<any>;
 	roles?: Types.Array<any>;
+	isActive: boolean;
 };
 
 export type CreateUserResponse = ResponseData & {

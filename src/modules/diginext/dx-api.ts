@@ -11,7 +11,6 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 	if (isEmpty(options.headers)) options.headers = {};
 
 	options.baseURL = Config.DX_API_URL;
-
 	console.log("ALL OPTIONS:", options);
 	// options.headers.Authorization = `Bearer ${licenseKey}`;
 	if (dxKey) options.headers["X-API-Key"] = dxKey;
@@ -28,7 +27,7 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 		const { data: responseData } = res;
 		return responseData as T;
 	} catch (e) {
-		console.log("e :>> ", e);
+		// console.log("e :>> ", e);
 		const err: string = e.response || e.data?.message === "UNAUTHORIZED" || e.data?.status === 401 ? "Invalid DX Key." : e.message;
 		return { status: 0, messages: [`${err}`] } as T;
 	}

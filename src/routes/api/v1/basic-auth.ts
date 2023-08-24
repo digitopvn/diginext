@@ -6,7 +6,6 @@ import { Config } from "@/app.config";
 import type { IRole } from "@/entities";
 import { type IUser, type IWorkspace, userSchema } from "@/entities";
 import { respondFailure, respondSuccess } from "@/interfaces";
-import { dxCreateUser } from "@/modules/diginext/dx-user";
 import { extractAccessTokenInfo, generateJWT } from "@/modules/passports";
 import { MongoDB } from "@/plugins/mongodb";
 import { UserService, WorkspaceService } from "@/services";
@@ -71,17 +70,7 @@ router.post("/register", async (req, res) => {
 
 			newUser = updatedUser;
 		} else {
-			// create user with DX Site
-			const createUserRes = await dxCreateUser({
-				email: email,
-				name: userName,
-				password: password,
-			});
-			if (createUserRes.status) {
-				newUser = await userSvc.create({ name: userName, email, password: hashedPassword }, { populate: ["workspaces", "roles"] });
-			} else {
-				return res.json(respondFailure("Internal server error"));
-			}
+			newUser = await userSvc.create({ name: userName, email, password: hashedPassword }, { populate: ["workspaces", "roles"] });
 		}
 
 		// console.log("REGISTER > newUser :>> ", newUser);
