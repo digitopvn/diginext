@@ -41,7 +41,7 @@ export const generateJWT = (userId: string, options?: JWTOptions) => {
 		expiresIn: "7d",
 	});
 
-	return { accessToken, refreshToken };
+	return { accessToken, refreshToken, expiresIn };
 };
 
 export const refreshAccessToken = () => {};
@@ -100,16 +100,16 @@ export async function extractAccessTokenInfo(
 	let isExpired = expiredTimestamp <= 0;
 	let expToNow = dayjs(new Date(exp * 1000)).fromNow();
 
-	console.log("extractAccessTokenInfo() > Expired date >", expiredTimestamp, ">>:", expiredDate.format("YYYY-MM-DD HH:mm:ss"));
-	console.log(`extractAccessTokenInfo() > Is token expired >>:`, isExpired, `(will expire ${expToNow})`);
+	// console.log("extractAccessTokenInfo() > Expired date >", expiredTimestamp, ">>:", expiredDate.format("YYYY-MM-DD HH:mm:ss"));
+	// console.log(`extractAccessTokenInfo() > Is token expired >>:`, isExpired, `(will expire ${expToNow})`);
 
 	if (refresh_token) {
 		// If token is < 4 hours to expire, refresh it:
 		const accessTokenExpHourLeft = expiredTimestamp / 60 / 60 / 1000;
 		const { error: isInvalidRefreshToken, tokenDetails: refreshTokenDetails } = await verifyRefreshToken(refresh_token);
-		console.log("extractAccessTokenInfo() > accessTokenExpHourLeft :>> ", accessTokenExpHourLeft);
-		console.log("extractAccessTokenInfo() > refreshTokenDetails :>> ", refreshTokenDetails);
-		console.log("extractAccessTokenInfo() > isInvalidRefreshToken :>> ", isInvalidRefreshToken);
+		// console.log("extractAccessTokenInfo() > accessTokenExpHourLeft :>> ", accessTokenExpHourLeft);
+		// console.log("extractAccessTokenInfo() > refreshTokenDetails :>> ", refreshTokenDetails);
+		// console.log("extractAccessTokenInfo() > isInvalidRefreshToken :>> ", isInvalidRefreshToken);
 
 		if (isInvalidRefreshToken || refreshTokenDetails.isExpired) return { isExpired: true };
 
@@ -124,7 +124,7 @@ export async function extractAccessTokenInfo(
 			expiredTimestamp = dayjs(new Date(payload.exp * 1000)).diff(dayjs());
 			expToNow = dayjs(new Date(payload.exp * 1000)).fromNow();
 
-			console.log(`The token of ${userId} is about to expired ${expToNow} > Refreshed it!`);
+			// console.log(`The token of ${userId} is about to expired ${expToNow} > Refreshed it!`);
 		}
 	}
 

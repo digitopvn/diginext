@@ -430,10 +430,10 @@ export default class BaseService<T = any> {
 		// set updated date
 		if (convertedData.$set) {
 			convertedData.$set.updatedAt = new Date();
-			convertedData.$set.updatedBy = this.ownership?.owner._id;
+			if (this.ownership?.owner) convertedData.$set.updatedBy = this.ownership?.owner._id;
 		} else {
 			convertedData.updatedAt = new Date();
-			convertedData.updatedBy = this.ownership?.owner._id;
+			if (this.ownership?.owner) convertedData.updatedBy = this.ownership?.owner._id;
 		}
 
 		// Notes: keep the square brackets in [updateData] -> it's the pipelines for update query
@@ -441,16 +441,20 @@ export default class BaseService<T = any> {
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateFilter :>> `, updateFilter);
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateData :>> `, updateData);
 
-		const affectedIds = (await this.find(updateFilter, { ...options, select: ["_id"] })).map((item) => (item as any)._id);
+		const affectedIds = (await this.find(filter, { ...options, select: ["_id"] })).map((item) => (item as any)._id);
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > affectedIds :>> `, affectedIds);
 
-		const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
-		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateRes :>> `, updateRes);
+		try {
+			const updateRes = await this.model.updateMany(updateFilter, updateData).exec();
+			if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateRes :>> `, updateRes);
 
-		// response > results
-		const affectedItems = await this.find({ _id: { $in: affectedIds } }, options);
-		if (options?.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > affectedItems :>> `, affectedItems);
-		return updateRes.acknowledged ? affectedItems : [];
+			// response > results
+			const affectedItems = await this.find({ _id: { $in: affectedIds } }, options);
+			if (options?.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > affectedItems :>> `, affectedItems);
+			return updateRes.acknowledged ? affectedItems : [];
+		} catch (e) {
+			console.error("Something went wrong when updating data:", e);
+		}
 	}
 
 	async updateOne(filter: IQueryFilter<T>, data: any, options: IQueryOptions = {}) {

@@ -20,8 +20,6 @@ export async function connect(onConnected?: (_db?: typeof mongoose, connection?:
 
 		db = mongoDB;
 
-		// const dataSource = await appDataSource.initialize();
-		// if (process.env.CLI_MODE == "server") logSuccess("[DATABASE] MongoDB is connected!");
 		if (typeof onConnected != "undefined") onConnected(db, mongoDB.connection);
 
 		return db;
