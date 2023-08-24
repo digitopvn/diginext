@@ -61,6 +61,7 @@ const argvOptions = {
 	git: { describe: "Specify GIT provider's slug" },
 	"git-provider": { describe: "Specify GIT provider type", alias: "gp" },
 	"git-org": { describe: "Specify GIT workspace slug", alias: "org" },
+	branch: { describe: "Specify GIT branch", alias: "git-branch" },
 	provider: { describe: "Specify selected cloud provider", alias: "pro" },
 	custom: { describe: "Select a custom provider", alias: "custom" },
 	do: { describe: "Select Digital Ocean as a provider", alias: "digitalocean" },
@@ -523,13 +524,14 @@ export async function parseCliOptions() {
 		isLocal: (argv.local as boolean) ?? false,
 		overwrite: (argv.overwrite as boolean) ?? false,
 		gitProvider: argv["git-provider"] as GitProviderType,
+		gitBranch: argv.branch as string,
+		gitOrg: argv["git-org"] as string,
 
 		// project & app
 		projectName: argv.projectName as string,
 		projectSlug: argv.projectSlug as string,
 		targetDirectory: argv.targetDir as string,
 		isPublic: (argv.public as boolean) ?? false,
-		gitOrg: argv["git-org"] as string,
 
 		// environment
 		env: (argv.env as string) ?? "dev",

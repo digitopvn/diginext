@@ -1,0 +1,35 @@
+name: Deploy Workflow
+
+# TRIGGERS
+on:
+  push:
+    branches:
+      - {{branch}}
+
+# ENVIRONMENT VARIABLES
+env:
+  DX_API_KEY: ${{ secrets.DX_API_KEY }}
+  GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+  BRANCH_NAME: ${{ github.head_ref || github.ref }}
+
+# CI/CD STEPS
+jobs:
+  deploy:
+    name: Deploy to [{{deploy_env_url}}]
+    runs-on: ubuntu-latest
+    if: always() && !cancelled() && !failure() && contains(github.ref, '{{branch}}')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Deploy to Diginext
+        uses: digitopvn/diginext-actions@v0
+        with:
+          workspace_url: https://apps.diginext.site
+          api_key: ${{ env.DX_API_KEY }}
+          cluster: {{cluster}}
+          registry: {{registry}}
+          deploy_env: {{env}}
+          port: {{port}}

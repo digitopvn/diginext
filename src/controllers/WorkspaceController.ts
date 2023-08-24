@@ -2,11 +2,12 @@ import { isUndefined } from "lodash";
 import type { Types } from "mongoose";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { Config } from "@/app.config";
+import { Config, IsTest } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { IApiKeyAccount, IRole, IServiceAccount, IWorkspace } from "@/entities";
 import type { ResponseData } from "@/interfaces";
 import * as interfaces from "@/interfaces";
+import type { SendDiginextEmailResponse } from "@/modules/diginext/dx-email";
 import { dxSendEmail } from "@/modules/diginext/dx-email";
 import type { DxPackage } from "@/modules/diginext/dx-package";
 import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
@@ -219,7 +220,13 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 				let existingUser = await DB.findOne("user", { email });
 				if (!existingUser) {
 					const username = email.split("@")[0] || "New User";
-					const invitedMember = await DB.create("user", { name: username, email: email, workspaces: [wsId], roles: [memberRole._id] });
+					const invitedMember = await DB.create("user", {
+						// active: false,
+						name: username,
+						email: email,
+						workspaces: [wsId],
+						roles: [memberRole._id],
+					});
 					return invitedMember;
 				} else {
 					const workspaces = existingUser.workspaces || [];
@@ -229,22 +236,27 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 				}
 			})
 		);
+		// console.log("invitedMembers :>> ", invitedMembers);
 
-		const mailContent = `Dear,<br/><br/>You've been invited to <strong>"${workspace.name}"</strong> workspace, please <a href="${Config.BASE_URL}" target="_blank">click here</a> to login.<br/><br/>Cheers,<br/>Diginext System`;
+		if (!IsTest()) {
+			const mailContent = `Dear,<br/><br/>You've been invited to <strong>"${workspace.name}"</strong> workspace, please <a href="${Config.BASE_URL}" target="_blank">click here</a> to login.<br/><br/>Cheers,<br/>Diginext System`;
 
-		// send invitation email to those users:
-		const result = await dxSendEmail(
-			{
-				recipients: invitedMembers.map((member) => {
-					return { email: member.email };
-				}),
-				subject: `[DIGINEXT] "${this.user.name}" has invited you to join "${workspace.name}" workspace.`,
-				content: mailContent,
-			},
-			workspace.dx_key
-		);
+			// send invitation email to those users:
+			const result = await dxSendEmail(
+				{
+					recipients: invitedMembers.map((member) => {
+						return { email: member.email };
+					}),
+					subject: `[DIGINEXT] "${this.user.name}" has invited you to join "${workspace.name}" workspace.`,
+					content: mailContent,
+				},
+				workspace.dx_key
+			);
 
-		return result;
+			return result;
+		} else {
+			return { data: { succeed: 1 } } as SendDiginextEmailResponse;
+		}
 	}
 
 	@Security("api_key")

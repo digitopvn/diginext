@@ -167,6 +167,7 @@ function initialize(db?: typeof mongoose) {
 			secret: Config.grab(`JWT_SECRET`),
 			maxAge: 1000 * 60 * 100,
 			httpOnly: false,
+			secure: !IsDev() || !IsTest(),
 		})
 	);
 
@@ -210,13 +211,13 @@ function initialize(db?: typeof mongoose) {
 		rateLimiter
 			.consume(`${req.ip}-${req.headers["user-agent"]}`)
 			.then(() => {
-				console.log("req.ip :>> ", req.ip);
-				console.log("req.headers['user-agent'] :>> ", req.headers["user-agent"]);
+				// console.log("req.ip :>> ", req.ip);
+				// console.log("req.headers['user-agent'] :>> ", req.headers["user-agent"]);
 				next();
 			})
 			.catch(() => {
-				if (!IsDev()) {
-					res.status(429).send("Too Many Requests");
+				if (!IsDev() && !IsTest()) {
+					res.status(429).send("[BASIC AUTH] Too Many Requests");
 				} else {
 					next();
 				}

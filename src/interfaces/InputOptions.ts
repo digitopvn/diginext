@@ -581,6 +581,7 @@ export type InputOptions = {
 	/**
 	 * Git provider type
 	 * - Flag: `--gp`, `--git-provider`
+	 * @example "github", "bitbucket"
 	 */
 	gitProvider?: GitProviderType;
 
