@@ -208,6 +208,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		const workspace = this.user.activeWorkspace as IWorkspace;
 		const wsId = workspace._id;
+		console.log(workspace);
 		const userId = this.user._id;
 
 		// check if this user is admin of the workspace:
@@ -216,13 +217,11 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		const memberRole = await DB.findOne("role", { type: "member", workspace: wsId });
 
-		console.log(wsId);
 		// create temporary users of invited members:
 		const invitedMembers = await Promise.all(
 			emails.map(async (email) => {
 				let existingUser = await DB.findOne("user", { email });
 				if (!existingUser) {
-					console.log("Why ?????");
 					const username = email.split("@")[0] || "New User";
 					const invitedMember = await userSvc.create({
 						active: false,
@@ -234,11 +233,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 					return invitedMember;
 				} else {
 					// Set user to workspace in Dx site
-
-					const ws = await WcSvc.findOne({ _id: wsId });
-					console.log("HERE", ws.dx_key);
-					const joinWorkspaceRes = await dxJoinWorkspace(email, ws.dx_key);
-					console.log(joinWorkspaceRes);
+					const joinWorkspaceRes = await dxJoinWorkspace(email, workspace.slug, workspace.dx_key);
 					const workspaces = existingUser.workspaces || [];
 					workspaces.push(wsId);
 					existingUser = await DB.updateOne("user", { _id: existingUser._id }, { workspaces: filterUniqueItems(workspaces) });

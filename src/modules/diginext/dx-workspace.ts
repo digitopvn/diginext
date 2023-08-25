@@ -24,7 +24,7 @@ export async function dxCreateWorkspace(params: CreateWorkspaceParams, dxKey: st
 	return dxApi<CreateWorkspaceResponse>({ url: "/dx/workspaces", data: params, method: "POST", dxKey });
 }
 
-export async function dxJoinWorkspace(email: string, dxKey: string) {
+export async function dxJoinWorkspace(email: string, slug: string, dxKey: string) {
 	console.log("JOIN WORKSPACE", dxKey);
-	return dxApi<JoinWorkspaceResponse>({ url: "/dx/join-workspace", data: { email }, method: "POST", dxKey });
+	return dxApi<JoinWorkspaceResponse>({ url: "/dx/join-workspace", data: { email, slug }, method: "POST", dxKey });
 }
