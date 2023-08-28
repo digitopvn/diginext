@@ -1,5 +1,7 @@
+import dayjs from "dayjs";
 import type { Types } from "mongoose";
 
+import { IsTest } from "@/app.config";
 import type { ResponseData } from "@/interfaces";
 
 import { dxApi } from "./dx-api";
@@ -26,5 +28,17 @@ export async function dxCreateWorkspace(params: CreateWorkspaceParams, dxKey: st
 
 export async function dxJoinWorkspace(email: string, slug: string, dxKey: string) {
 	console.log("JOIN WORKSPACE", dxKey);
+	if (IsTest())
+		return {
+			status: 1,
+			data: {
+				name: email,
+				slug: slug,
+				subscriptionId: "xxx",
+				createdAt: dayjs().format(),
+				updatedAt: dayjs().format(),
+			},
+			messages: ["Ok"],
+		} as CreateWorkspaceResponse;
 	return dxApi<JoinWorkspaceResponse>({ url: "/dx/join-workspace", data: { email, slug }, method: "POST", dxKey });
 }

@@ -1,5 +1,6 @@
 import type { Types } from "mongoose";
 
+import { IsTest } from "@/app.config";
 import type { ProviderInfo } from "@/entities/User";
 import type { ResponseData } from "@/interfaces";
 
@@ -24,5 +25,7 @@ export type CreateUserResponse = ResponseData & {
 
 export async function dxCreateUser(params: IBodyCreateUser) {
 	console.log("CREATE USER PARAMS POST TO DX SITE", params);
+	if (IsTest()) return { status: 1, data: {} } as CreateUserResponse;
+
 	return dxApi<CreateUserResponse>({ url: "/dx/user", data: params, method: "POST" });
 }
