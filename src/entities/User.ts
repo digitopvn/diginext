@@ -112,7 +112,7 @@ export const userSchema = new Schema<IUser>(
 			type: String,
 		},
 		token: {
-			type: Object,
+			type: Schema.Types.Mixed,
 		},
 		roles: {
 			type: [Schema.Types.ObjectId],
