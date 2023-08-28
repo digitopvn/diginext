@@ -105,7 +105,7 @@ export const userSchema = new Schema<IUser>(
 			type: String,
 		},
 		providers: {
-			type: [],
+			type: [Object],
 			default: [],
 		},
 		password: {
