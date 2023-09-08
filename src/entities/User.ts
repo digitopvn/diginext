@@ -16,6 +16,12 @@ export interface ProviderInfo {
 	access_token?: string;
 }
 
+const providerInfoSchema = new Schema<ProviderInfo>({
+	name: String,
+	user_id: String,
+	access_token: String,
+});
+
 export interface AccessTokenInfo {
 	access_token: string;
 	refresh_token?: string;
@@ -23,6 +29,28 @@ export interface AccessTokenInfo {
 	expiredDate: Date;
 	expiredDateGTM7: string;
 }
+
+const accessTokenInfoSchema = new Schema<AccessTokenInfo>({
+	access_token: {
+		type: String,
+		required: true,
+	},
+	refresh_token: {
+		type: String,
+	},
+	expiredTimestamp: {
+		type: Number,
+		required: true,
+	},
+	expiredDate: {
+		type: Date,
+		required: true,
+	},
+	expiredDateGTM7: {
+		type: String,
+		required: true,
+	},
+});
 
 export type UserDto = Omit<IUser, keyof HiddenBodyKeys>;
 
@@ -105,17 +133,17 @@ export const userSchema = new Schema<IUser>(
 			type: String,
 		},
 		providers: {
-			type: [Object],
+			type: [providerInfoSchema],
 			default: [],
 		},
 		password: {
 			type: String,
 		},
 		token: {
-			type: Object,
+			type: accessTokenInfoSchema,
 		},
 		roles: {
-			type: [Schema.Types.ObjectId],
+			type: [{ type: Schema.Types.ObjectId, ref: "roles" }],
 			ref: "roles",
 			default: [],
 		},
@@ -124,12 +152,12 @@ export const userSchema = new Schema<IUser>(
 			ref: "roles",
 		},
 		teams: {
-			type: [Schema.Types.ObjectId],
+			type: [{ type: Schema.Types.ObjectId, ref: "teams" }],
 			ref: "teams",
 			default: [],
 		},
 		workspaces: {
-			type: [Schema.Types.ObjectId],
+			type: [{ type: Schema.Types.ObjectId, ref: "workspaces" }],
 			ref: "workspaces",
 			default: [],
 		},
