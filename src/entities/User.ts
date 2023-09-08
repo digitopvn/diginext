@@ -16,10 +16,16 @@ export interface ProviderInfo {
 	access_token?: string;
 }
 
-const providerInfoSchema = new Schema<ProviderInfo>({
-	name: String,
-	user_id: String,
-	access_token: String,
+const providerInfoSchema = new Schema({
+	name: {
+		type: String,
+	},
+	user_id: {
+		type: String,
+	},
+	access_token: {
+		type: String,
+	},
 });
 
 export interface AccessTokenInfo {
@@ -30,7 +36,7 @@ export interface AccessTokenInfo {
 	expiredDateGTM7: string;
 }
 
-const accessTokenInfoSchema = new Schema<AccessTokenInfo>({
+const accessTokenInfoSchema = new Schema({
 	access_token: {
 		type: String,
 		required: true,
@@ -107,7 +113,7 @@ export interface IUser extends IBase {
 	};
 }
 
-export const userSchema = new Schema<IUser>(
+export const userSchema = new Schema(
 	{
 		...baseSchemaDefinitions,
 		name: {
