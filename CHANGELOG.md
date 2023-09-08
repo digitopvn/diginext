@@ -1,3 +1,13 @@
+## [3.22.5](https://github.com/digitopvn/diginext/compare/v3.22.4...v3.22.5) (2023-08-24)
+
+
+### Bug Fixes
+
+* **security:** enable secure cookie ([52bae79](https://github.com/digitopvn/diginext/commit/52bae79bccbfb1d99bab8b744a200af1c32d71be))
+* **server,api:** add refresh token to basic auth ([52c036c](https://github.com/digitopvn/diginext/commit/52c036caaeaea29c592167da8a1a9db7b8a34d62))
+* **server,deploy:** increase max wait time app start up to 4min ([dc186eb](https://github.com/digitopvn/diginext/commit/dc186ebdc593412117c5136cc99f27bdc17822c6))
+* **server,register,login:** invited user,active workspace,role,jwt ([b5d8bcc](https://github.com/digitopvn/diginext/commit/b5d8bcc5a5885fa633370a19efd6185574e5f822))
+
 ## [3.22.5-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.4...v3.22.5-prerelease.1) (2023-08-23)
 
 
