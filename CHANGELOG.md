@@ -1,3 +1,13 @@
+## [3.22.6-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.5...v3.22.6-prerelease.1) (2023-09-08)
+
+
+### Bug Fixes
+
+* **cli:** invalid access_token when tokens are expired ([773ce2c](https://github.com/digitopvn/diginext/commit/773ce2cf3b0af0a06bc2d06e3ba332dd28e3a455)), closes [#390](https://github.com/digitopvn/diginext/issues/390)
+* **cli:** invalid access_token when tokens are expired ([#391](https://github.com/digitopvn/diginext/issues/391)) ([47a33cf](https://github.com/digitopvn/diginext/commit/47a33cf0675091d7296c480b6a3138650e864a6b))
+* **server:** remove user interface in mongoose schema ([fb48596](https://github.com/digitopvn/diginext/commit/fb48596205f38128346064bfd3c449e702b0bd34))
+* **user:** issue of interface and schema ([ea7810f](https://github.com/digitopvn/diginext/commit/ea7810f57c9ea738fc72e8357f552a29deda8b6a))
+
 ## [3.22.5](https://github.com/digitopvn/diginext/compare/v3.22.4...v3.22.5) (2023-08-24)
 
 
