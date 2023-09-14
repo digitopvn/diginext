@@ -1,3 +1,11 @@
+## [3.22.6-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.2...v3.22.6-prerelease.3) (2023-09-14)
+
+
+### Bug Fixes
+
+* **server,auth:** token debug jwt auth ([946b6ab](https://github.com/digitopvn/diginext/commit/946b6abb35a1738e5c17713b6f138db0b1d10041))
+* **server,auth:** token debug jwt auth ([#393](https://github.com/digitopvn/diginext/issues/393)) ([703cbb6](https://github.com/digitopvn/diginext/commit/703cbb601faf621517191d0b4036e2714617a7ad))
+
 ## [3.22.6-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.1...v3.22.6-prerelease.2) (2023-09-11)
 
 
