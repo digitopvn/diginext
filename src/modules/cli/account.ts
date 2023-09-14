@@ -195,7 +195,7 @@ export async function cliAuthenticate(options: InputOptions) {
 		url: `/auth/profile`,
 		access_token: accessToken,
 		api_key: apiToken,
-		isDebugging: true,
+		isDebugging: options.isDebugging,
 	});
 	const { status, data: userData, messages } = profileRes;
 	user = userData as IUser;

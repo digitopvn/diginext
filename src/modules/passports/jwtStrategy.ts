@@ -164,7 +164,8 @@ export const jwtStrategy = new Strategy(
 
 		// 1. Extract token info
 		const tokenInfo = await extractAccessTokenInfo({ access_token, refresh_token }, payload);
-		// console.log("jwtStrategy > tokenInfo :>> ", tokenInfo);
+		console.log("[DEBUG] jwtStrategy > tokenInfo :>> ", tokenInfo);
+
 		// validating token...
 		if (tokenInfo?.isExpired) return done(JSON.stringify({ status: 0, messages: ["Access token was expired."] }), null);
 		if (!tokenInfo?.token) return done(JSON.stringify({ status: 0, messages: ["Missing access token."] }), null);
