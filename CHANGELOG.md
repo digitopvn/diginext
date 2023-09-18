@@ -1,3 +1,11 @@
+## [3.22.6-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.4...v3.22.6-prerelease.5) (2023-09-18)
+
+
+### Bug Fixes
+
+* **auth:** delete old cookie if refresh new tokens ([a95dbb1](https://github.com/digitopvn/diginext/commit/a95dbb1736b8f887d02f006679332d2b9103cfea))
+* **auth:** delete old cookie if refresh new tokens ([#395](https://github.com/digitopvn/diginext/issues/395)) ([a4f272d](https://github.com/digitopvn/diginext/commit/a4f272db9dc559b72f20507be04ead72e46cf409))
+
 ## [3.22.6-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.3...v3.22.6-prerelease.4) (2023-09-18)
 
 
