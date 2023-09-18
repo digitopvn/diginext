@@ -1,3 +1,21 @@
+## [3.22.6](https://github.com/digitopvn/diginext/compare/v3.22.5...v3.22.6) (2023-09-18)
+
+
+### Bug Fixes
+
+* **auth jwt:** add debug info ([a417b1a](https://github.com/digitopvn/diginext/commit/a417b1aab8804f5e8a19f75905e176b95c872ba6))
+* **auth jwt:** add debug info ([#392](https://github.com/digitopvn/diginext/issues/392)) ([92ff844](https://github.com/digitopvn/diginext/commit/92ff844e2092c92f7e42ce927f0242703ece7362))
+* **auth:** crash loop generate new jwt tokens ([c85f7c6](https://github.com/digitopvn/diginext/commit/c85f7c661a2c077d13f47c7ba375a6e34ffbcd6a))
+* **auth:** crash loop generate new jwt tokens ([#394](https://github.com/digitopvn/diginext/issues/394)) ([f7beea3](https://github.com/digitopvn/diginext/commit/f7beea320d3acda14a3b0ef655183eca3f9b6ba6))
+* **auth:** delete old cookie if refresh new tokens ([a95dbb1](https://github.com/digitopvn/diginext/commit/a95dbb1736b8f887d02f006679332d2b9103cfea))
+* **auth:** delete old cookie if refresh new tokens ([#395](https://github.com/digitopvn/diginext/issues/395)) ([a4f272d](https://github.com/digitopvn/diginext/commit/a4f272db9dc559b72f20507be04ead72e46cf409))
+* **cli:** invalid access_token when tokens are expired ([773ce2c](https://github.com/digitopvn/diginext/commit/773ce2cf3b0af0a06bc2d06e3ba332dd28e3a455)), closes [#390](https://github.com/digitopvn/diginext/issues/390)
+* **cli:** invalid access_token when tokens are expired ([#391](https://github.com/digitopvn/diginext/issues/391)) ([47a33cf](https://github.com/digitopvn/diginext/commit/47a33cf0675091d7296c480b6a3138650e864a6b))
+* **server,auth:** token debug jwt auth ([946b6ab](https://github.com/digitopvn/diginext/commit/946b6abb35a1738e5c17713b6f138db0b1d10041))
+* **server,auth:** token debug jwt auth ([#393](https://github.com/digitopvn/diginext/issues/393)) ([703cbb6](https://github.com/digitopvn/diginext/commit/703cbb601faf621517191d0b4036e2714617a7ad))
+* **server:** remove user interface in mongoose schema ([fb48596](https://github.com/digitopvn/diginext/commit/fb48596205f38128346064bfd3c449e702b0bd34))
+* **user:** issue of interface and schema ([ea7810f](https://github.com/digitopvn/diginext/commit/ea7810f57c9ea738fc72e8357f552a29deda8b6a))
+
 ## [3.22.6-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.4...v3.22.6-prerelease.5) (2023-09-18)
 
 
