@@ -1,3 +1,11 @@
+## [3.22.6-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.3...v3.22.6-prerelease.4) (2023-09-18)
+
+
+### Bug Fixes
+
+* **auth:** crash loop generate new jwt tokens ([c85f7c6](https://github.com/digitopvn/diginext/commit/c85f7c661a2c077d13f47c7ba375a6e34ffbcd6a))
+* **auth:** crash loop generate new jwt tokens ([#394](https://github.com/digitopvn/diginext/issues/394)) ([f7beea3](https://github.com/digitopvn/diginext/commit/f7beea320d3acda14a3b0ef655183eca3f9b6ba6))
+
 ## [3.22.6-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.2...v3.22.6-prerelease.3) (2023-09-14)
 
 
