@@ -1,3 +1,10 @@
+## [3.22.7](https://github.com/digitopvn/diginext/compare/v3.22.6...v3.22.7) (2023-09-18)
+
+
+### Bug Fixes
+
+* **auth:** catch error when verify refresh token ([fd81cd6](https://github.com/digitopvn/diginext/commit/fd81cd63bdb12d3a48ea2589c655ef0be01bd072))
+
 ## [3.22.7-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.6...v3.22.7-prerelease.1) (2023-09-18)
 
 
