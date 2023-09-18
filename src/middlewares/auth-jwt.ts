@@ -33,29 +33,36 @@ const jwt_auth = (req: AppRequest, res, next) =>
 				let refresh_token = req.query.refresh_token as string;
 				// console.log("jwt_auth > refresh_token :>> ", refresh_token);
 
-				const { error: isInvalidRefreshToken, tokenDetails: refreshTokenDetails } = await verifyRefreshToken(refresh_token);
-				// console.log("jwt_auth > isInvalidRefreshToken :>> ", isInvalidRefreshToken);
-				// console.log("jwt_auth > refreshTokenDetails :>> ", refreshTokenDetails);
+				if (!refresh_token) return Response.ignore(res, "Access token was expired.");
 
-				if (isInvalidRefreshToken || refreshTokenDetails.isExpired) return Response.ignore(res, "Access token was expired.");
+				try {
+					const { error: isInvalidRefreshToken, tokenDetails: refreshTokenDetails } = await verifyRefreshToken(refresh_token);
 
-				// refresh token is valid -> generate new access token
-				// console.log("jwt_auth > refresh token is valid > generate new access token");
-				const { accessToken, refreshToken } = generateJWT(refreshTokenDetails.id, {
-					expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
-					workspaceId: refreshTokenDetails.workspaceId,
-				});
+					// console.log("jwt_auth > isInvalidRefreshToken :>> ", isInvalidRefreshToken);
+					// console.log("jwt_auth > refreshTokenDetails :>> ", refreshTokenDetails);
 
-				// assign new access token to cookie and request & response headers:
-				res.cookie("x-auth-cookie", accessToken);
-				res.cookie("refresh_token", refreshToken);
-				res.header("Authorization", `Bearer ${accessToken}`);
-				req.headers.authorization = `Bearer ${accessToken}`;
-				delete req.headers.cookie;
-				req.query.access_token = accessToken;
-				req.query.refresh_token = refreshToken;
+					if (isInvalidRefreshToken || refreshTokenDetails.isExpired) return Response.ignore(res, "Access token was expired.");
 
-				return jwt_auth(req, res, next);
+					// refresh token is valid -> generate new access token
+					// console.log("jwt_auth > refresh token is valid > generate new access token");
+					const { accessToken, refreshToken } = generateJWT(refreshTokenDetails.id, {
+						expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
+						workspaceId: refreshTokenDetails.workspaceId,
+					});
+
+					// assign new access token to cookie and request & response headers:
+					res.cookie("x-auth-cookie", accessToken);
+					res.cookie("refresh_token", refreshToken);
+					res.header("Authorization", `Bearer ${accessToken}`);
+					req.headers.authorization = `Bearer ${accessToken}`;
+					delete req.headers.cookie;
+					req.query.access_token = accessToken;
+					req.query.refresh_token = refreshToken;
+
+					return jwt_auth(req, res, next);
+				} catch (e) {
+					return Response.ignore(res, "Invalid refresh token.");
+				}
 			}
 
 			return isAccessTokenExpired ? Response.ignore(res, "Access token was expired.") : Response.ignore(res, info?.toString());
