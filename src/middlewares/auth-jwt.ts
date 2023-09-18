@@ -53,7 +53,8 @@ const jwt_auth = (req: AppRequest, res, next) =>
 
 				console.log("jwt_auth > req.headers :>> ", req.headers);
 				console.log("jwt_auth > req.query :>> ", req.query);
-				req.headers.Authorization = `Bearer ${accessToken}`;
+				req.headers.authorization = `Bearer ${accessToken}`;
+				delete req.headers.cookie;
 				req.query.access_token = accessToken;
 				req.query.refresh_token = refreshToken;
 
