@@ -137,7 +137,7 @@ export default class UserController extends BaseController<IUser> {
 			if (workspaceSlug) wsFilter.slug = workspaceSlug;
 
 			// find the workspace
-			const workspaceSvc = new WorkspaceService();
+			const workspaceSvc = new WorkspaceService(this.ownership);
 			const workspace = await workspaceSvc.findOne(wsFilter);
 			if (!workspace) throw new Error(`Workspace not found.`);
 

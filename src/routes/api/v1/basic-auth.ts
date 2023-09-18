@@ -16,7 +16,6 @@ const router = express.Router();
  * Basic auth - REGISTER: /api/v1/register
  */
 router.post("/register", async (req, res) => {
-	// TODO: add "workspace" into register API
 	const { name, email, password, workspace: wsId } = req.body;
 	// const { DB } = await import("@/modules/api/DB");
 	const userSvc = new UserService();

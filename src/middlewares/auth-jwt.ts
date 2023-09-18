@@ -5,6 +5,7 @@ import passport from "passport";
 
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
+import { generateJWT, verifyRefreshToken } from "@/modules/passports";
 import { MongoDB } from "@/plugins/mongodb";
 
 /**
@@ -15,7 +16,7 @@ import { MongoDB } from "@/plugins/mongodb";
 const jwt_auth = (req: AppRequest, res, next) =>
 	passport.authenticate("jwt", { session: false }, async function (err, user: IUser, info) {
 		const { DB } = await import("@/modules/api/DB");
-		// console.log(`PASSPORT AUTHENTICATE:`, err, user, info);
+		console.log(`[DEBUG] PASSPORT AUTHENTICATE:`, err, user, info);
 		// console.log(`AUTHENTICATE: jwt_auth > user:`, user);
 
 		if (!user) {
@@ -26,9 +27,41 @@ const jwt_auth = (req: AppRequest, res, next) =>
 			// res.cookie("x-auth-cookie", "");
 			// res.header("Authorization", "");
 
-			return info?.toString().indexOf("TokenExpiredError") > -1
-				? Response.ignore(res, "Access token was expired.")
-				: Response.ignore(res, info?.toString());
+			// check refresh token here:
+			const isAccessTokenExpired = info?.toString().indexOf("TokenExpiredError") > -1;
+			if (isAccessTokenExpired) {
+				let refresh_token = req.query.refresh_token as string;
+				console.log("jwt_auth > refresh_token :>> ", refresh_token);
+
+				const { error: isInvalidRefreshToken, tokenDetails: refreshTokenDetails } = await verifyRefreshToken(refresh_token);
+				console.log("jwt_auth > isInvalidRefreshToken :>> ", isInvalidRefreshToken);
+				console.log("jwt_auth > refreshTokenDetails :>> ", refreshTokenDetails);
+
+				if (isInvalidRefreshToken || refreshTokenDetails.isExpired) return Response.ignore(res, "Access token was expired.");
+
+				// refresh token is valid -> generate new access token
+				console.log("jwt_auth > refresh token is valid > generate new access token");
+				const { accessToken, refreshToken } = generateJWT(refreshTokenDetails.id, {
+					expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
+					workspaceId: refreshTokenDetails.workspaceId,
+				});
+
+				// assign new access token to cookie and request & response headers:
+				res.cookie("x-auth-cookie", accessToken);
+				res.cookie("refresh_token", refreshToken);
+				res.header("Authorization", `Bearer ${accessToken}`);
+
+				console.log("jwt_auth > req.headers :>> ", req.headers);
+				console.log("jwt_auth > req.query :>> ", req.query);
+				req.headers.authorization = `Bearer ${accessToken}`;
+				delete req.headers.cookie;
+				req.query.access_token = accessToken;
+				req.query.refresh_token = refreshToken;
+
+				return jwt_auth(req, res, next);
+			}
+
+			return isAccessTokenExpired ? Response.ignore(res, "Access token was expired.") : Response.ignore(res, info?.toString());
 		} else {
 			// check active workspace
 			// console.log("user :>> ", user);
