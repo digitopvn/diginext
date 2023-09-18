@@ -46,10 +46,16 @@ const jwt_auth = (req: AppRequest, res, next) =>
 					workspaceId: refreshTokenDetails.workspaceId,
 				});
 
-				// assign new access token to cookie and request headers:
+				// assign new access token to cookie and request & response headers:
 				res.cookie("x-auth-cookie", accessToken);
 				res.cookie("refresh_token", refreshToken);
 				res.header("Authorization", `Bearer ${accessToken}`);
+
+				console.log("jwt_auth > req.headers :>> ", req.headers);
+				console.log("jwt_auth > req.query :>> ", req.query);
+				req.headers.Authorization = `Bearer ${accessToken}`;
+				req.query.access_token = accessToken;
+				req.query.refresh_token = refreshToken;
 
 				return jwt_auth(req, res, next);
 			}
