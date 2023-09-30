@@ -289,17 +289,11 @@ export class AppService extends BaseService<IApp> {
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<IApp[]> {
 		const { status = false } = options || {};
 
-		// always populate "project" field
-		// options.populate =
-		// 	!options.populate || options.populate.length === 0
-		// 		? (options.populate = ["project"])
-		// 		: [...options.populate.filter((field) => field !== "project"), "project"];
-
 		const apps = await super.find(filter, options, pagination);
 
 		if (!status) return apps;
 
-		const { WorkspaceService, ProjectService, GitProviderService, ClusterService } = await import("./index");
+		const { ClusterService } = await import("./index");
 		const clusterSvc = new ClusterService();
 		const clusterFilter: any = {};
 		if (filter?.workspace) clusterFilter.workspace = filter.workspace;
