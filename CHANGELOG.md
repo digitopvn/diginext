@@ -1,3 +1,11 @@
+## [3.22.8-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.4...v3.22.8-prerelease.5) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server,deploy:** format all env vars ([fd61ae6](https://github.com/digitopvn/diginext/commit/fd61ae65b890b4be4b1f5bc0eacfc3596e11aa10))
+* **server,deploy:** format all env vars ([#404](https://github.com/digitopvn/diginext/issues/404)) ([97f5a7e](https://github.com/digitopvn/diginext/commit/97f5a7ed3ef5212997f44e441a470d3eab45e780))
+
 ## [3.22.8-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.3...v3.22.8-prerelease.4) (2023-09-30)
 
 
