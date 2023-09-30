@@ -1,3 +1,10 @@
+## [3.22.8-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.7...v3.22.8-prerelease.1) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server:** env var obj to json string ([aa5d99e](https://github.com/digitopvn/diginext/commit/aa5d99ec5a41503cda356d4a9e42dbe677ef5946))
+
 ## [3.22.7](https://github.com/digitopvn/diginext/compare/v3.22.6...v3.22.7) (2023-09-18)
 
 
