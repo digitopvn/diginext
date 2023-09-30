@@ -1,3 +1,11 @@
+## [3.22.8-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.3...v3.22.8-prerelease.4) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server:** force cast env var obj to json string ([956d0b6](https://github.com/digitopvn/diginext/commit/956d0b6d34410455a61fea9b25ccd002fa328700))
+* **server:** obj to json in deploy env update ([3dd00e0](https://github.com/digitopvn/diginext/commit/3dd00e016c903b62fb37cc35bff54617b8e6bfc5))
+
 ## [3.22.8-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.2...v3.22.8-prerelease.3) (2023-09-30)
 
 
