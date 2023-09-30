@@ -155,7 +155,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 	// kubernetes YAML only accept string as env variable value
 	containerEnvs = containerEnvs.map(({ name, value }) => {
-		return { name, value: value.toString() };
+		return { name, value: isObject(value) ? JSON.stringify(value) : value.toString() };
 	});
 
 	// console.log("[2] containerEnvs :>> ", containerEnvs);

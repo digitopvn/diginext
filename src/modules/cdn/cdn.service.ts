@@ -14,7 +14,6 @@ import { getAppConfig, invalidateCache, uploadFile } from "../../plugins";
 // const defaultPattern = "./{public,.next/static}/**/*.*";
 const defaultPattern = "./public/**/*.*";
 // const pattern = "./public/**/*.*";
-const url = "https://cdn.digitop.vn/api/files/upload";
 
 let projectName = "cli-test-project";
 // let projectSlug = "";
