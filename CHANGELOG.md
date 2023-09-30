@@ -1,3 +1,11 @@
+## [3.22.8-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.1...v3.22.8-prerelease.2) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server,admin:** envvar obj to json, rm debug logs ([ac84aab](https://github.com/digitopvn/diginext/commit/ac84aabfa95ba69d1f11f40267e8fb2aa28d756d))
+* **server,admin:** envvar obj to json, rm debug logs ([#401](https://github.com/digitopvn/diginext/issues/401)) ([f4ff2e8](https://github.com/digitopvn/diginext/commit/f4ff2e83130201414947065a4788a0e7b1da1557))
+
 ## [3.22.8-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.7...v3.22.8-prerelease.1) (2023-09-30)
 
 
