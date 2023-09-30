@@ -1,3 +1,11 @@
+## [3.22.8-prerelease.6](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.5...v3.22.8-prerelease.6) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server,api:** format env vars in get app api ([0663119](https://github.com/digitopvn/diginext/commit/0663119bd6ad02dbd595676c8ac82565cee38284))
+* **server,api:** format env vars in get app api ([#405](https://github.com/digitopvn/diginext/issues/405)) ([83aad07](https://github.com/digitopvn/diginext/commit/83aad074604bb51cdc5c72a0feb5d58d6f9347da))
+
 ## [3.22.8-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.4...v3.22.8-prerelease.5) (2023-09-30)
 
 
