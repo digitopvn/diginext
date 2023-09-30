@@ -1,7 +1,7 @@
 import { isJSON } from "class-validator";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { logWarn } from "diginext-utils/dist/xconsole/log";
-import { isArray, isBoolean, isEmpty, isUndefined, toString } from "lodash";
+import { isArray, isBoolean, isEmpty, isUndefined } from "lodash";
 import type { QuerySelector } from "mongoose";
 
 import type { ICluster, IProject, IUser, IWorkspace } from "@/entities";
@@ -22,6 +22,7 @@ import { dxCreateDomain } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
+import { formatEnvVars } from "@/plugins/env-var";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -572,14 +573,7 @@ export class DeployEnvironmentService {
 		if (!isArray(variables)) throw new Error(`Params "variables" should be an array.`);
 
 		// just to make sure "value" is always "string"
-		variables = variables.map(({ name, value }) => {
-			let valueStr: string;
-			// try to cast {Object} to {string}
-			try {
-				valueStr = JSON.stringify(value);
-			} catch (e: any) {}
-			return { name, value: valueStr ?? toString(value) };
-		});
+		variables = formatEnvVars(variables);
 
 		const deployEnvironment = app.deployEnvironment[env];
 		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);

@@ -2,6 +2,7 @@ import { isJSON } from "class-validator";
 
 import type { IApp } from "@/entities";
 import type { DeployEnvironment } from "@/interfaces";
+import { formatEnvVars } from "@/plugins/env-var";
 // import { migrateDeployEnvironmentOfSpecificApps } from "@/migration/migrate-app-environment";
 
 /**
@@ -21,16 +22,9 @@ export const getDeployEnvironmentFromJSON = async (app: IApp, env: string) => {
 
 export const getDeployEvironmentByApp = async (app: IApp, env: string) => {
 	const deployEnvironment = ((app.deployEnvironment || {})[env] || {}) as DeployEnvironment;
-	if (deployEnvironment.envVars) {
-		deployEnvironment.envVars = deployEnvironment.envVars.map(({ name, value }) => {
-			let valueStr: string;
-			// try to cast {Object} to {string}
-			try {
-				valueStr = JSON.stringify(value);
-			} catch (e: any) {}
 
-			return { name, value: valueStr ?? value.toString() };
-		});
-	}
+	// format environment variables
+	if (deployEnvironment.envVars) deployEnvironment.envVars = formatEnvVars(deployEnvironment.envVars);
+
 	return deployEnvironment;
 };
