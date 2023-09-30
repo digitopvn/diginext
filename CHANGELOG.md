@@ -1,3 +1,11 @@
+## [3.22.8-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.2...v3.22.8-prerelease.3) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server:** cast obj to string when generate yaml ([60cbb06](https://github.com/digitopvn/diginext/commit/60cbb06390feb6917bbd2d8a028cfefbb88f8796))
+* **server:** cast obj to string when generate yaml ([#402](https://github.com/digitopvn/diginext/issues/402)) ([305a9da](https://github.com/digitopvn/diginext/commit/305a9da2b3c778d827710b875b463e025bf2465a))
+
 ## [3.22.8-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.1...v3.22.8-prerelease.2) (2023-09-30)
 
 
