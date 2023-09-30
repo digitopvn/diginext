@@ -20,11 +20,17 @@ export const getDeployEnvironmentFromJSON = async (app: IApp, env: string) => {
 };
 
 export const getDeployEvironmentByApp = async (app: IApp, env: string) => {
-	// let deployEnvironment = app.deployEnvironment || {};
-	// if (isEmpty(deployEnvironment) || isEmpty(deployEnvironment[env])) {
-	// 	// try to fetch from old CLI version if any...
-	// 	deployEnvironment[env] = await getDeployEnvironmentFromJSON(app, env);
-	// 	// migrateDeployEnvironmentOfSpecificApps({ _id: app._id });
-	// }
-	return ((app.deployEnvironment || {})[env] || {}) as DeployEnvironment;
+	const deployEnvironment = ((app.deployEnvironment || {})[env] || {}) as DeployEnvironment;
+	if (deployEnvironment.envVars) {
+		deployEnvironment.envVars = deployEnvironment.envVars.map(({ name, value }) => {
+			let valueStr: string;
+			// try to cast {Object} to {string}
+			try {
+				valueStr = JSON.stringify(value);
+			} catch (e: any) {}
+
+			return { name, value: valueStr ?? value.toString() };
+		});
+	}
+	return deployEnvironment;
 };

@@ -892,7 +892,15 @@ export default class AppController extends BaseController<IApp, AppService> {
 		let [updatedApp] = await this.service.update(
 			{ slug },
 			{
-				[`deployEnvironment.${env}.envVars`]: newEnvVars,
+				[`deployEnvironment.${env}.envVars`]: newEnvVars.map(({ name, value }) => {
+					let valueStr: string;
+					// try to cast {Object} to {string}
+					try {
+						valueStr = JSON.stringify(value);
+					} catch (e: any) {}
+
+					return { name, value: valueStr ?? value.toString() };
+				}),
 			}
 		);
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
