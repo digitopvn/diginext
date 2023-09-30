@@ -2,6 +2,7 @@ import { isEmpty } from "lodash";
 
 import type { IBuild, IRelease, IUser, IWorkspace } from "@/entities";
 import type { AppConfig } from "@/interfaces/AppConfig";
+import { formatEnvVars } from "@/plugins/env-var";
 
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { fetchDeploymentFromContent } from "../deploy/fetch-deployment";
@@ -78,7 +79,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 		// deployment
 		endpoint: !isEmpty(deploymentData.domains) ? deploymentData.domains[0] : "",
 		deploymentYaml: deploymentData.deployContent,
-		envVars: app.deployEnvironment[env].envVars || [],
+		envVars: formatEnvVars(app.deployEnvironment[env].envVars || []),
 		// production
 		productionUrl: !isEmpty(deploymentData.domains) ? deploymentData.domains[0] : "",
 		// relationship
