@@ -3,6 +3,7 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import type { IApp, IBuild, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
+import { formatEnvVars } from "@/plugins/env-var";
 import { MongoDB } from "@/plugins/mongodb";
 
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
@@ -74,7 +75,7 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	// log({ targetEnvironment });
 
 	// DOTENV variables
-	const serverEnvironmentVariables = envVars || targetEnvironment?.envVars || [];
+	const serverEnvironmentVariables = formatEnvVars(envVars || targetEnvironment?.envVars || []);
 
 	// generate YAML deployment files
 	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = await generateDeployment({
