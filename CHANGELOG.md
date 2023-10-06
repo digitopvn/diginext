@@ -1,3 +1,12 @@
+## [3.22.9-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.8...v3.22.9-prerelease.1) (2023-10-06)
+
+
+### Bug Fixes
+
+* **cli:** add server down error ([7eaeabe](https://github.com/digitopvn/diginext/commit/7eaeabe2d17960b9bdf814491806650400d58779))
+* **server,api:** format env vars in get app api ([#405](https://github.com/digitopvn/diginext/issues/405)) ([83aad07](https://github.com/digitopvn/diginext/commit/83aad074604bb51cdc5c72a0feb5d58d6f9347da))
+* **server:** compare update changes on auth cluster ([d0a49c6](https://github.com/digitopvn/diginext/commit/d0a49c6f3ae2e3f1a4d69046cda9b9783f99a21a))
+
 ## [3.22.8](https://github.com/digitopvn/diginext/compare/v3.22.7...v3.22.8) (2023-10-02)
 
 
