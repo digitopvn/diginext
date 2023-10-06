@@ -20,6 +20,7 @@ export * from "./ReleaseService";
 export * from "./RoleService";
 export * from "./RouteService";
 export * from "./ServiceAccountService";
+export * from "./SystemLogService";
 export * from "./TeamService";
 export * from "./UserService";
 export * from "./WebhookService";

@@ -323,9 +323,16 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 			targetDirectory: buildDirectory,
 		});
 	} catch (e) {
-		console.error("Deploy build > generate YAML > error :>> ", e);
-		sendLog({ SOCKET_ROOM, type: "error", message: e.message, action: "end" });
-		return { error: e.message };
+		const errMsg = `[DEPLOY_BUILD] Generate YAML > error :>>\n${e.stack}`;
+
+		// save log to database
+		const { SystemLogService } = await import("@/services");
+		const logSvc = new SystemLogService({ owner, workspace });
+		logSvc.saveError(e, { name: "deploy-build" });
+
+		console.error(errMsg);
+		sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
+		return { error: errMsg };
 	}
 	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
 
