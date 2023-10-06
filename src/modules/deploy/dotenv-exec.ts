@@ -54,7 +54,7 @@ export const execDotenvCommand = async (options?: InputOptions) => {
 		case "up":
 		case "upload":
 			try {
-				await uploadDotenvFile(env, { targetDir: targetDirectory, fileName: filePath });
+				await uploadDotenvFile(env, { targetDir: targetDirectory, fileName: filePath, isDebugging: options?.isDebugging });
 			} catch (e) {
 				logError(e);
 			}
@@ -65,7 +65,7 @@ export const execDotenvCommand = async (options?: InputOptions) => {
 		case "down":
 		case "download":
 			try {
-				await downloadDotenv(env, { targetDir: targetDirectory, fileName: filePath });
+				await downloadDotenv(env, { targetDir: targetDirectory, fileName: filePath, isDebugging: options?.isDebugging });
 			} catch (e) {
 				logError(e);
 			}
