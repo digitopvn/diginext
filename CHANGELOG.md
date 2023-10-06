@@ -1,3 +1,10 @@
+# [3.23.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.23.0-prerelease.1...v3.23.0-prerelease.2) (2023-10-06)
+
+
+### Bug Fixes
+
+* **cli:** updateBranchProtection ([54cbd46](https://github.com/digitopvn/diginext/commit/54cbd460d64e460c4a867b7fc5688e3bde1165f1))
+
 # [3.23.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.9-prerelease.1...v3.23.0-prerelease.1) (2023-10-06)
 
 
