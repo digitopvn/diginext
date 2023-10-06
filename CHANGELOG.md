@@ -1,3 +1,11 @@
+# [3.23.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.9-prerelease.1...v3.23.0-prerelease.1) (2023-10-06)
+
+
+### Features
+
+* **db backup, system log:** data retention handling ([062f1b5](https://github.com/digitopvn/diginext/commit/062f1b5432878de39704326640e2500698eef3ca))
+* **db backup, system log:** data retention handling ([#409](https://github.com/digitopvn/diginext/issues/409)) ([3bf0915](https://github.com/digitopvn/diginext/commit/3bf09152938fa98c2b092189f79a36a8668279c6))
+
 ## [3.22.9-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.8...v3.22.9-prerelease.1) (2023-10-06)
 
 

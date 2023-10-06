@@ -1,6 +1,7 @@
 import { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
+import type { RetentionType } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
@@ -31,6 +32,35 @@ export interface IWorkspace extends IBase {
 	 * Diginext API Key
 	 */
 	dx_key?: string;
+
+	/**
+	 * Workspace Settings
+	 */
+	settings?: {
+		database?: any;
+		database_backup?: {
+			/**
+			 * Data retention information
+			 * - `type` is "duration", value is "miliseconds"
+			 * - `type` is "limit", value is "MAX AMOUNT OF BACKUPS"
+			 */
+			retention?: {
+				type: RetentionType;
+				value: number;
+			};
+		};
+		system_log?: {
+			/**
+			 * Data retention information
+			 * - `type` is "duration", value is "miliseconds"
+			 * - `type` is "limit", value is "MAX AMOUNT OF BACKUPS"
+			 */
+			retention?: {
+				type: RetentionType;
+				value: number;
+			};
+		};
+	};
 }
 
 export type WorkspaceDto = Omit<IWorkspace, keyof HiddenBodyKeys>;
@@ -45,6 +75,21 @@ export const workspaceSchema = new Schema(
 		domain: { type: String },
 		dx_key: { type: String },
 		owner: { type: Schema.Types.ObjectId, ref: "users" },
+		settings: {
+			database: Schema.Types.Mixed,
+			database_backup: {
+				retention: {
+					type: { type: String },
+					value: { type: Number },
+				},
+			},
+			system_log: {
+				retention: {
+					type: { type: String },
+					value: { type: Number },
+				},
+			},
+		},
 	},
 	{ collection: "workspaces", timestamps: true }
 );

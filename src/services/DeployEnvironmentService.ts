@@ -12,7 +12,6 @@ import type { DeployEnvironmentData } from "@/interfaces/AppInterfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
-import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import type { GenerateDeploymentResult } from "@/modules/deploy";
@@ -180,8 +179,8 @@ export class DeployEnvironmentService {
 		// console.log("updatedApp :>> ", updatedApp);
 		if (!updatedApp) throw new Error(`Failed to create "${env}" deploy environment.`);
 
-		const appConfig = await getAppConfigFromApp(updatedApp);
-		console.log("buildTag :>> ", buildTag);
+		// const appConfig = await getAppConfigFromApp(updatedApp);
+		// console.log("buildTag :>> ", buildTag);
 
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
@@ -557,6 +556,18 @@ export class DeployEnvironmentService {
 
 		// return
 		return { build, release, app };
+	}
+
+	/**
+	 * Get environment variables of a deploy environment
+	 * @param app - IApp
+	 * @param env - Deploy environment (dev, prod,...)
+	 * @returns
+	 */
+	async getEnvVars(app: IApp, env: string) {
+		// validate
+		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
+		return formatEnvVars(app.deployEnvironment[env].envVars);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { ICloudProvider, ICluster } from "@/entities";
+import type { ICluster } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
@@ -88,31 +88,8 @@ export default class ClusterController extends BaseController<ICluster, ClusterS
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: entities.ClusterDto, @Queries() queryParams?: interfaces.IPostQueryParams) {
-		// console.log("[CLUSTER CONTROLLER] this.filter :>> ", this.filter);
 		// find cluster to update
 		let cluster = await this.service.findOne(this.filter, { ...this.options, populate: ["provider"] });
-		if (!cluster) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Cluster not found.` });
-
-		// get cloud provider of this cluster
-		const cloudProvider = cluster.provider as ICloudProvider;
-		if (!cloudProvider) return respondFailure(`Cloud Provider not found.`);
-
-		// validation - check cluster accessibility
-		let errors: string[] = [];
-		if (cloudProvider.shortName === "gcloud") {
-			if (!cluster.serviceAccount && !body.serviceAccount) errors.push(`Google Service Account (JSON) is required.`);
-			// if (!cluster.projectID && !body.projectID) errors.push(`Google Project ID is required.`);
-			// if (!cluster.region && !body.region) errors.push(`Google cluster region is required.`);
-			if (!cluster.zone && !body.zone) errors.push(`Google cluster zone is required.`);
-		}
-		if (cloudProvider.shortName === "digitalocean") {
-			if (!cluster.apiAccessToken) errors.push(`Digital Ocean API Access Token is required.`);
-			// if (!cluster.region && !body.region) errors.push(`Digital Ocean cluster region is required.`);
-		}
-		if (cloudProvider.shortName === "custom") {
-			if (!cluster.kubeConfig && !body.kubeConfig) errors.push(`Kube config data (YAML) is required.`);
-		}
-		if (errors.length > 0) return respondFailure(errors);
 
 		// update to database
 		cluster = await this.service.updateOne({ _id: cluster._id }, body);
