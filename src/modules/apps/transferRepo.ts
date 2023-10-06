@@ -48,6 +48,7 @@ export default async function transferRepo(options: InputOptions) {
 	// 	console.log("updatedApp :>> ", updatedApp);
 	// }
 	// return;
+
 	let gitProvider = await askForGitProvider();
 
 	options.targetDirectory = path.resolve(process.cwd(), options.repoSlug);
