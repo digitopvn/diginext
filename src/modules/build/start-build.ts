@@ -260,6 +260,11 @@ export async function startBuildV1(
 			targetDirectory: options.targetDirectory,
 		});
 	} catch (e) {
+		// save log to database
+		const { SystemLogService } = await import("@/services");
+		const logSvc = new SystemLogService({ owner: author, workspace });
+		logSvc.saveError(e, { name: "start-build" });
+
 		sendLog({ SOCKET_ROOM, type: "error", message: e.message });
 		return;
 	}

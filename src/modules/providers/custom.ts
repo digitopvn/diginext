@@ -64,20 +64,35 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 	}
 
 	// Only add new value if it's not existed
-	let currentKubeConfig = yaml.load(currentKubeConfigContent);
+	let currentKubeConfig = yaml.load(currentKubeConfigContent) as KubeConfig;
 	if (!currentKubeConfig.clusters) currentKubeConfig.clusters = [];
 	if (!currentKubeConfig.contexts) currentKubeConfig.contexts = [];
 	if (!currentKubeConfig.users) currentKubeConfig.users = [];
 
 	// add cluster
-	newKubeConfig.clusters.forEach((newItem) => {
+	newKubeConfig.clusters.forEach((newItem, index) => {
 		const existedItem = currentKubeConfig.clusters.find((item) => item.name == newItem.name);
-		if (!existedItem) currentKubeConfig.clusters.push(newItem);
+		if (!existedItem) {
+			currentKubeConfig.clusters.push(newItem);
+		} else {
+			// compare OLD & NEW values
+			if (existedItem.cluster.server !== newItem.cluster.server) currentKubeConfig.clusters[index].cluster.server = newItem.cluster.server;
+			if (existedItem.cluster["certificate-authority-data"] !== newItem.cluster["certificate-authority-data"])
+				currentKubeConfig.clusters[index].cluster["certificate-authority-data"] = newItem.cluster["certificate-authority-data"];
+		}
 	});
 	// add user
-	newKubeConfig.users.forEach((newItem) => {
+	newKubeConfig.users.forEach((newItem, index) => {
 		const existedItem = currentKubeConfig.users.find((item) => item.name == newItem.name);
-		if (!existedItem) currentKubeConfig.users.push(newItem);
+		if (!existedItem) {
+			currentKubeConfig.users.push(newItem);
+		} else {
+			// compare OLD & NEW values
+			if (existedItem.user["client-certificate-data"] !== newItem.user["client-certificate-data"])
+				currentKubeConfig.users[index].user["client-certificate-data"] = newItem.user["client-certificate-data"];
+			if (existedItem.user["client-key-data"] !== newItem.user["client-key-data"])
+				currentKubeConfig.users[index].user["client-key-data"] = newItem.user["client-key-data"];
+		}
 	});
 	// add context
 	newKubeConfig.contexts.forEach((newItem) => {

@@ -26,6 +26,7 @@ type DownloadDotenvOptions = {
 	 * Should overwrite the existing file
 	 */
 	overwrite?: boolean;
+	isDebugging?: boolean;
 };
 
 export const getDotenvContentByApp = (app: IApp, env: string = "dev") => {

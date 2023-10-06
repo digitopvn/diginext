@@ -204,6 +204,10 @@ export async function cliAuthenticate(options: InputOptions) {
 
 	if (!status || isEmpty(user) || isEmpty(user?.activeWorkspace)) {
 		console.log(`[ACCOUNT] profileRes :>>`, profileRes);
+		if (profileRes.messages.join(".").indexOf("ENETDOWN") > -1) {
+			logError(`Unable to connect: ${buildServerUrl} is down.`);
+			return;
+		}
 		// don't give up, keep trying...
 		if (buildServerUrl) user = await continueToLoginStep(buildServerUrl);
 	}

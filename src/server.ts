@@ -1,10 +1,11 @@
 import "reflect-metadata";
 
 import bodyParser from "body-parser";
+import console from "console";
 import cookieParser from "cookie-parser";
 import session from "cookie-session";
 import cors from "cors";
-import { log, logWarn } from "diginext-utils/dist/xconsole/log";
+import { logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import type { Express, Request, Response } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";
@@ -29,6 +30,7 @@ import AppDatabase from "./modules/AppDatabase";
 import { startupScripts } from "./modules/server/startup-scripts";
 import basicAuthRouter from "./routes/api/v1/basic-auth";
 import routes from "./routes/routes";
+import { SystemLogService } from "./services/SystemLogService";
 /**
  * ENVIRONMENT CONFIG
  */
@@ -183,12 +185,20 @@ function initialize(db?: typeof mongoose) {
 	 */
 	morgan.token("user", (req: AppRequest) => (req.user ? `[${req.user.slug}]` : "[unauthenticated]"));
 	morgan.token("req-headers", (req: AppRequest) => JSON.stringify(req.headers));
+
 	const morganMessage = IsDev()
 		? "[REQUEST :date[clf]] :method - :user - :url :status :response-time ms - :res[content-length]"
-		: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent" :req-headers`;
+		: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;
 	const morganOptions = {
-		skip: (req) => req.method.toUpperCase() === "OPTIONS",
-		// stream: logger,
+		skip: (req: AppRequest, res) => {
+			return (
+				req.method.toUpperCase() === "OPTIONS" ||
+				req.baseUrl?.indexOf("/.well-known") > -1 ||
+				req.baseUrl?.indexOf("/api/v1/stats/version") > -1
+			);
+		},
+		// write logs to file
+		// stream: accessLogStream,
 	} as unknown as morgan.Options<Request, Response>;
 
 	if (!IsTest()) app.use(morgan(morganMessage, morganOptions));
@@ -240,7 +250,14 @@ function initialize(db?: typeof mongoose) {
 		console.log(`Server is UP & listening at port ${PORT}...`);
 	}
 
-	server.on("error", (e: any) => log(`ERROR:`, e));
+	server.on("error", async (error: any) => {
+		logError(`[FAIL_SAFE_2]`, error);
+
+		// save log to database
+		// const { SystemLogService } = await import("@/services");
+		const logSvc = new SystemLogService();
+		logSvc.saveError(error, { name: "server-error" });
+	});
 	server.listen(PORT, onConnect);
 
 	/**

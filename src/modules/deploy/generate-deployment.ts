@@ -184,7 +184,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				if (doc && doc.kind == "Ingress") previousIng = doc;
 			});
 		} catch (e) {
-			logWarn(e);
+			logWarn(`Unable to parse previous deployment YAML:`, e, `\n=> Previous YAML:\n`, deployEnvironment.deploymentYaml);
 		}
 	}
 
@@ -192,11 +192,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const ingressClasses = (await ClusterManager.getIngressClasses({ context })) || [];
 
 	// write namespace.[env].yaml
+	if (!fs.existsSync(NAMESPACE_TEMPLATE_PATH)) throw new Error(`Namespace template not found: "${NAMESPACE_TEMPLATE_PATH}"`);
 	let namespaceContent = fs.readFileSync(NAMESPACE_TEMPLATE_PATH, "utf8");
-
 	let namespaceObject = yaml.load(namespaceContent);
 	namespaceObject.metadata.name = nsName;
-	namespaceObject.metadata.labels = namespaceObject.metadata.labels || {};
+	namespaceObject.metadata.labels = namespaceObject.metadata?.labels || {};
 	namespaceObject.metadata.labels.project = projectSlug.toLowerCase();
 	namespaceObject.metadata.labels.owner = username.toLowerCase();
 	namespaceObject.metadata.labels.workspace = workspace.slug.toLowerCase();
@@ -210,14 +210,13 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (deploymentCfg.length) {
 		deploymentCfg.forEach((doc, index) => {
 			// Make sure all objects stay in the same namespace:
-			if (doc && doc.metadata && doc.metadata.namespace) {
-				doc.metadata.namespace = nsName;
-			}
+			if (doc && doc.metadata && doc.metadata.namespace) doc.metadata.namespace = nsName;
 
 			// INGRESS
 			if (doc && doc.kind == "Ingress") {
 				if (domains.length > 0) {
 					const ingCfg = doc;
+					if (ingCfg.metadata) ingCfg.metadata = {};
 					ingCfg.metadata.name = ingName;
 					ingCfg.metadata.namespace = nsName;
 
