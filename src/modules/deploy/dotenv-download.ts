@@ -26,6 +26,7 @@ type DownloadDotenvOptions = {
 	 * Should overwrite the existing file
 	 */
 	overwrite?: boolean;
+	isDebugging?: boolean;
 };
 
 export const getDotenvContentByApp = (app: IApp, env: string = "dev") => {
@@ -35,6 +36,7 @@ export const getDotenvContentByApp = (app: IApp, env: string = "dev") => {
 		throw new Error(`Can't download dotenv variables to ".env.${env}" locally due to deploy environment of "${appSlug}" app not existed.`);
 
 	const envVars = deployEnvironment[env].envVars || [];
+
 	return kubeEnvToDotenv(envVars);
 };
 

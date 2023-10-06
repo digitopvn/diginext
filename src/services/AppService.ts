@@ -16,6 +16,7 @@ import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCre
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { pullOrCloneGitRepo } from "@/plugins";
+import { formatEnvVars } from "@/plugins/env-var";
 import { basicUserFields } from "@/plugins/mask-sensitive-info";
 import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
@@ -289,17 +290,20 @@ export class AppService extends BaseService<IApp> {
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<IApp[]> {
 		const { status = false } = options || {};
 
-		// always populate "project" field
-		// options.populate =
-		// 	!options.populate || options.populate.length === 0
-		// 		? (options.populate = ["project"])
-		// 		: [...options.populate.filter((field) => field !== "project"), "project"];
-
 		const apps = await super.find(filter, options, pagination);
 
-		if (!status) return apps;
+		if (!status)
+			return apps.map((app) => {
+				if (app && app.deployEnvironment) {
+					for (const env of Object.keys(app.deployEnvironment)) {
+						if (app.deployEnvironment[env] && app.deployEnvironment[env].envVars)
+							app.deployEnvironment[env].envVars = formatEnvVars(app.deployEnvironment[env].envVars);
+					}
+				}
+				return app;
+			});
 
-		const { WorkspaceService, ProjectService, GitProviderService, ClusterService } = await import("./index");
+		const { ClusterService } = await import("./index");
 		const clusterSvc = new ClusterService();
 		const clusterFilter: any = {};
 		if (filter?.workspace) clusterFilter.workspace = filter.workspace;
@@ -312,6 +316,10 @@ export class AppService extends BaseService<IApp> {
 					if (app && app.deployEnvironment) {
 						for (const env of Object.keys(app.deployEnvironment)) {
 							if (!app.deployEnvironment[env]) app.deployEnvironment[env] = { buildTag: "" };
+
+							// environment variables
+							if (app.deployEnvironment[env] && app.deployEnvironment[env].envVars)
+								app.deployEnvironment[env].envVars = formatEnvVars(app.deployEnvironment[env].envVars);
 
 							// default values
 							app.deployEnvironment[env].readyCount = 0;

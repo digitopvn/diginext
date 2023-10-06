@@ -9,6 +9,7 @@ import type { IContainerRegistry, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { objectToDeploymentYaml } from "@/plugins";
+import { formatEnvVars } from "@/plugins/env-var";
 import { makeSlug } from "@/plugins/slug";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
@@ -154,9 +155,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (isObject(containerEnvs)) containerEnvs = Object.entries(containerEnvs).map(([key, val]) => val);
 
 	// kubernetes YAML only accept string as env variable value
-	containerEnvs = containerEnvs.map(({ name, value }) => {
-		return { name, value: value.toString() };
-	});
+	containerEnvs = formatEnvVars(containerEnvs);
 
 	// console.log("[2] containerEnvs :>> ", containerEnvs);
 

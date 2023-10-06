@@ -291,7 +291,7 @@ To expose this app to the internet later, you can add your own domain to deploy 
 		if (!envFile) {
 			logWarn(`Can't upload DOTENV since there are no DOTENV files (.env.*) in this directory`);
 		} else {
-			await uploadDotenvFileByApp(envFile, app, env);
+			await uploadDotenvFileByApp(envFile, app, env, options);
 		}
 	} else {
 		// if ENV file is existed on local & not available on server -> ask to upload local ENV to server:
@@ -308,7 +308,7 @@ To expose this app to the internet later, you can add your own domain to deploy 
 				message: `Do you want to use your "${envFile}" on ${env.toUpperCase()} environment?`,
 			});
 
-			if (shouldUploadEnv) await uploadDotenvFileByApp(envFile, app, env);
+			if (shouldUploadEnv) await uploadDotenvFileByApp(envFile, app, env, options);
 		}
 	}
 

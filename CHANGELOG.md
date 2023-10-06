@@ -1,3 +1,74 @@
+## [3.22.9-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.8...v3.22.9-prerelease.1) (2023-10-06)
+
+
+### Bug Fixes
+
+* **cli:** add server down error ([7eaeabe](https://github.com/digitopvn/diginext/commit/7eaeabe2d17960b9bdf814491806650400d58779))
+* **server,api:** format env vars in get app api ([#405](https://github.com/digitopvn/diginext/issues/405)) ([83aad07](https://github.com/digitopvn/diginext/commit/83aad074604bb51cdc5c72a0feb5d58d6f9347da))
+* **server:** compare update changes on auth cluster ([d0a49c6](https://github.com/digitopvn/diginext/commit/d0a49c6f3ae2e3f1a4d69046cda9b9783f99a21a))
+
+## [3.22.8](https://github.com/digitopvn/diginext/compare/v3.22.7...v3.22.8) (2023-10-02)
+
+
+### Bug Fixes
+
+* **server,admin:** envvar obj to json, rm debug logs ([ac84aab](https://github.com/digitopvn/diginext/commit/ac84aabfa95ba69d1f11f40267e8fb2aa28d756d))
+* **server,admin:** envvar obj to json, rm debug logs ([#401](https://github.com/digitopvn/diginext/issues/401)) ([f4ff2e8](https://github.com/digitopvn/diginext/commit/f4ff2e83130201414947065a4788a0e7b1da1557))
+* **server,api:** format env vars in get app api ([0663119](https://github.com/digitopvn/diginext/commit/0663119bd6ad02dbd595676c8ac82565cee38284))
+* **server,deploy:** format all env vars ([fd61ae6](https://github.com/digitopvn/diginext/commit/fd61ae65b890b4be4b1f5bc0eacfc3596e11aa10))
+* **server,deploy:** format all env vars ([#404](https://github.com/digitopvn/diginext/issues/404)) ([97f5a7e](https://github.com/digitopvn/diginext/commit/97f5a7ed3ef5212997f44e441a470d3eab45e780))
+* **server:** cast obj to string when generate yaml ([60cbb06](https://github.com/digitopvn/diginext/commit/60cbb06390feb6917bbd2d8a028cfefbb88f8796))
+* **server:** cast obj to string when generate yaml ([#402](https://github.com/digitopvn/diginext/issues/402)) ([305a9da](https://github.com/digitopvn/diginext/commit/305a9da2b3c778d827710b875b463e025bf2465a))
+* **server:** env var obj to json string ([aa5d99e](https://github.com/digitopvn/diginext/commit/aa5d99ec5a41503cda356d4a9e42dbe677ef5946))
+* **server:** force cast env var obj to json string ([956d0b6](https://github.com/digitopvn/diginext/commit/956d0b6d34410455a61fea9b25ccd002fa328700))
+* **server:** obj to json in deploy env update ([3dd00e0](https://github.com/digitopvn/diginext/commit/3dd00e016c903b62fb37cc35bff54617b8e6bfc5))
+
+## [3.22.8-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.4...v3.22.8-prerelease.5) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server,deploy:** format all env vars ([fd61ae6](https://github.com/digitopvn/diginext/commit/fd61ae65b890b4be4b1f5bc0eacfc3596e11aa10))
+* **server,deploy:** format all env vars ([#404](https://github.com/digitopvn/diginext/issues/404)) ([97f5a7e](https://github.com/digitopvn/diginext/commit/97f5a7ed3ef5212997f44e441a470d3eab45e780))
+
+## [3.22.8-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.3...v3.22.8-prerelease.4) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server:** force cast env var obj to json string ([956d0b6](https://github.com/digitopvn/diginext/commit/956d0b6d34410455a61fea9b25ccd002fa328700))
+* **server:** obj to json in deploy env update ([3dd00e0](https://github.com/digitopvn/diginext/commit/3dd00e016c903b62fb37cc35bff54617b8e6bfc5))
+
+## [3.22.8-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.2...v3.22.8-prerelease.3) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server:** cast obj to string when generate yaml ([60cbb06](https://github.com/digitopvn/diginext/commit/60cbb06390feb6917bbd2d8a028cfefbb88f8796))
+* **server:** cast obj to string when generate yaml ([#402](https://github.com/digitopvn/diginext/issues/402)) ([305a9da](https://github.com/digitopvn/diginext/commit/305a9da2b3c778d827710b875b463e025bf2465a))
+
+## [3.22.8-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.1...v3.22.8-prerelease.2) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server,admin:** envvar obj to json, rm debug logs ([ac84aab](https://github.com/digitopvn/diginext/commit/ac84aabfa95ba69d1f11f40267e8fb2aa28d756d))
+* **server,admin:** envvar obj to json, rm debug logs ([#401](https://github.com/digitopvn/diginext/issues/401)) ([f4ff2e8](https://github.com/digitopvn/diginext/commit/f4ff2e83130201414947065a4788a0e7b1da1557))
+
+## [3.22.8-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.7...v3.22.8-prerelease.1) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server:** env var obj to json string ([aa5d99e](https://github.com/digitopvn/diginext/commit/aa5d99ec5a41503cda356d4a9e42dbe677ef5946))
+
+## [3.22.7](https://github.com/digitopvn/diginext/compare/v3.22.6...v3.22.7) (2023-09-18)
+
+
+### Bug Fixes
+
+* **auth:** catch error when verify refresh token ([fd81cd6](https://github.com/digitopvn/diginext/commit/fd81cd63bdb12d3a48ea2589c655ef0be01bd072))
+
 ## [3.22.7-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.6...v3.22.7-prerelease.1) (2023-09-18)
 
 
