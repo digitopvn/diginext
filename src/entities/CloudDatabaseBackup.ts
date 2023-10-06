@@ -8,9 +8,6 @@ import { backupStatusList, cloudDatabaseList } from "@/interfaces/SystemTypes";
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
 
-export const retentionTypes = ["limit", "duration"] as const;
-export type BackupRetentionType = (typeof retentionTypes)[number];
-
 export interface ICloudDatabaseBackup extends IBase {
 	name?: string;
 	status?: BackupStatus;
@@ -25,14 +22,6 @@ export interface ICloudDatabaseBackup extends IBase {
 	type?: CloudDatabaseType;
 	dbSlug?: string;
 	database?: string | ObjectId;
-	retention?: {
-		type: BackupRetentionType;
-		/**
-		 * - `type` is "duration", value is "miliseconds"
-		 * - `type` is "limit", value is "MAX AMOUNT OF BACKUPS"
-		 */
-		value: number;
-	};
 }
 export type CloudDatabaseBackupDto = Omit<ICloudDatabaseBackup, keyof HiddenBodyKeys>;
 
@@ -46,10 +35,6 @@ export const cloudDatabaseBackupSchema = new Schema(
 		type: { type: String, enum: cloudDatabaseList },
 		dbSlug: String,
 		database: { type: Schema.Types.ObjectId, ref: "cloud_databases" },
-		retention: {
-			type: String,
-			value: Number,
-		},
 	},
 	{ collection: "cloud_database_backups", timestamps: true }
 );
