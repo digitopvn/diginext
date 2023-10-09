@@ -69,7 +69,8 @@ export const migrateAllRoles = async () => {
 
 	// notify migration results...
 	results.forEach((affects, i) => {
-		if (affects.length > 0) log(`[MIGRATION] migrateAllRoles() > ${roleTypes[i].toUpperCase()} >> Affected ${affects.length} items.`);
+		if (affects.length > 0 && roleTypes[i])
+			log(`[MIGRATION] migrateAllRoles() > ${roleTypes[i].toUpperCase()} >> Affected ${affects.length} items.`);
 	});
 
 	return results;
