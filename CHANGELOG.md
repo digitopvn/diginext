@@ -1,17 +1,17 @@
-# [3.23.0](https://github.com/digitopvn/diginext/compare/v3.22.8...v3.23.0) (2023-10-06)
+## [3.23.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.23.0...v3.23.1-prerelease.1) (2023-10-09)
 
 
 ### Bug Fixes
 
-* **cli:** add server down error ([7eaeabe](https://github.com/digitopvn/diginext/commit/7eaeabe2d17960b9bdf814491806650400d58779))
-* **server,api:** format env vars in get app api ([#405](https://github.com/digitopvn/diginext/issues/405)) ([83aad07](https://github.com/digitopvn/diginext/commit/83aad074604bb51cdc5c72a0feb5d58d6f9347da))
-* **server:** compare update changes on auth cluster ([d0a49c6](https://github.com/digitopvn/diginext/commit/d0a49c6f3ae2e3f1a4d69046cda9b9783f99a21a))
+* **cli:** updateBranchProtection ([54cbd46](https://github.com/digitopvn/diginext/commit/54cbd460d64e460c4a867b7fc5688e3bde1165f1))
+* **server,k8s auth:** compare kube_config when updating cluster ([51c9eea](https://github.com/digitopvn/diginext/commit/51c9eeaf8ad35d0d070dfaec663b3411d18f73d1))
+
+# [3.23.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.23.0-prerelease.1...v3.23.0-prerelease.2) (2023-10-06)
 
 
-### Features
+### Bug Fixes
 
-* **db backup, system log:** data retention handling ([062f1b5](https://github.com/digitopvn/diginext/commit/062f1b5432878de39704326640e2500698eef3ca))
-* **db backup, system log:** data retention handling ([#409](https://github.com/digitopvn/diginext/issues/409)) ([3bf0915](https://github.com/digitopvn/diginext/commit/3bf09152938fa98c2b092189f79a36a8668279c6))
+* **cli:** updateBranchProtection ([54cbd46](https://github.com/digitopvn/diginext/commit/54cbd460d64e460c4a867b7fc5688e3bde1165f1))
 
 # [3.23.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.9-prerelease.1...v3.23.0-prerelease.1) (2023-10-06)
 

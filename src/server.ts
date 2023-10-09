@@ -191,11 +191,7 @@ function initialize(db?: typeof mongoose) {
 		: `[REQUEST :date[clf]] :method - :user - ":url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"`;
 	const morganOptions = {
 		skip: (req: AppRequest, res) => {
-			return (
-				req.method.toUpperCase() === "OPTIONS" ||
-				req.baseUrl?.indexOf("/.well-known") > -1 ||
-				req.baseUrl?.indexOf("/api/v1/stats/version") > -1
-			);
+			return req.method.toUpperCase() === "OPTIONS" || req.url?.indexOf("/.well-known") > -1 || req.url?.indexOf("/api/v1/stats/version") > -1;
 		},
 		// write logs to file
 		// stream: accessLogStream,

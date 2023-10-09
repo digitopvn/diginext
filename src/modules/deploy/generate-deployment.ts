@@ -194,7 +194,8 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// write namespace.[env].yaml
 	if (!fs.existsSync(NAMESPACE_TEMPLATE_PATH)) throw new Error(`Namespace template not found: "${NAMESPACE_TEMPLATE_PATH}"`);
 	let namespaceContent = fs.readFileSync(NAMESPACE_TEMPLATE_PATH, "utf8");
-	let namespaceObject = yaml.load(namespaceContent);
+	let namespaceObject = yaml.load(namespaceContent) || {};
+	if (params.isDebugging) console.log("Generate deployment > namespace > template YAML :>> ", namespaceContent);
 	namespaceObject.metadata.name = nsName;
 	namespaceObject.metadata.labels = namespaceObject.metadata?.labels || {};
 	namespaceObject.metadata.labels.project = projectSlug.toLowerCase();
@@ -202,6 +203,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	namespaceObject.metadata.labels.workspace = workspace.slug.toLowerCase();
 
 	namespaceContent = objectToDeploymentYaml(namespaceObject);
+	if (params.isDebugging) console.log("Generate deployment > namespace > final YAML :>> ", namespaceContent);
 
 	// write deployment.[env].yaml (ing, svc, deployment)
 	let deploymentContent = fs.readFileSync(FULL_DEPLOYMENT_TEMPLATE_PATH, "utf8");
@@ -223,7 +225,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					// inherit config from previous deployment
 					if (deployEnvironmentConfig.shouldInherit) {
 						ingCfg.metadata.annotations = {
-							...previousIng.metadata.annotations,
+							...previousIng?.metadata.annotations,
 							...ingCfg.metadata.annotations,
 						};
 					}
@@ -238,11 +240,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					let ingressClass = "";
 					if (
 						deployEnvironmentConfig.ingress &&
-						ingressClasses.map((ingClass) => ingClass.metadata?.name).includes(deployEnvironmentConfig.ingress)
+						(ingressClasses.map((ingClass) => ingClass?.metadata?.name) || []).includes(deployEnvironmentConfig.ingress)
 					) {
 						ingressClass = deployEnvironmentConfig.ingress;
 					} else {
-						ingressClass = ingressClasses[0].metadata.name;
+						ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
 					}
 					if (ingressClass) ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
 
