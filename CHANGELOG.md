@@ -1,3 +1,11 @@
+## [3.23.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.23.0...v3.23.1-prerelease.1) (2023-10-09)
+
+
+### Bug Fixes
+
+* **cli:** updateBranchProtection ([54cbd46](https://github.com/digitopvn/diginext/commit/54cbd460d64e460c4a867b7fc5688e3bde1165f1))
+* **server,k8s auth:** compare kube_config when updating cluster ([51c9eea](https://github.com/digitopvn/diginext/commit/51c9eeaf8ad35d0d070dfaec663b3411d18f73d1))
+
 # [3.23.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.23.0-prerelease.1...v3.23.0-prerelease.2) (2023-10-06)
 
 
