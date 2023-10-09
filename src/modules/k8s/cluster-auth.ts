@@ -164,6 +164,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			const { kubeConfig } = cluster;
 			if (cluster.isVerified && !kubeConfig) throw new Error(`Permissions denied, please contact your administrator.`);
 			if (!kubeConfig) throw new Error(`This cluster doesn't have any "kube-config" data to authenticate.`);
+			// if (!kubeConfig) throw new Error(`KUBE_CONFIG not found, might due to the lack of permissions.`);
 
 			filePath = createTmpFile(`${clusterSlug}-kube-config.yaml`, kubeConfig);
 

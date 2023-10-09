@@ -20,9 +20,10 @@ import { seedDefaultRoles } from "@/seeds";
 import { seedDefaultProjects } from "@/seeds/seed-projects";
 import { seedSystemInitialData } from "@/seeds/seed-system";
 import { setServerStatus } from "@/server";
-import { ContainerRegistryService, WorkspaceService } from "@/services";
+import { ClusterService, ContainerRegistryService, WorkspaceService } from "@/services";
 
 import { findAndRunCronjob } from "../cronjob/find-and-run-job";
+import ClusterManager from "../k8s";
 
 /**
  * BUILD SERVER INITIAL START-UP SCRIPTS:
@@ -122,13 +123,13 @@ export async function startupScripts() {
 	}
 
 	// connect clusters
-	// const clusterSvc = new ClusterService();
-	// const clusters = await clusterSvc.find({});
-	// if (clusters.length > 0) {
-	// 	for (const cluster of clusters) {
-	// 		await ClusterManager.authCluster(cluster, { shouldSwitchContextToThisCluster: false });
-	// 	}
-	// }
+	const clusterSvc = new ClusterService();
+	const clusters = await clusterSvc.find({});
+	if (clusters.length > 0) {
+		for (const cluster of clusters) {
+			await ClusterManager.authCluster(cluster, { shouldSwitchContextToThisCluster: false, isDebugging: true });
+		}
+	}
 
 	/**
 	 * CRONJOBS
