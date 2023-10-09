@@ -225,7 +225,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					// inherit config from previous deployment
 					if (deployEnvironmentConfig.shouldInherit) {
 						ingCfg.metadata.annotations = {
-							...previousIng.metadata.annotations,
+							...previousIng?.metadata.annotations,
 							...ingCfg.metadata.annotations,
 						};
 					}
@@ -240,11 +240,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					let ingressClass = "";
 					if (
 						deployEnvironmentConfig.ingress &&
-						ingressClasses.map((ingClass) => ingClass.metadata?.name).includes(deployEnvironmentConfig.ingress)
+						(ingressClasses.map((ingClass) => ingClass?.metadata?.name) || []).includes(deployEnvironmentConfig.ingress)
 					) {
 						ingressClass = deployEnvironmentConfig.ingress;
 					} else {
-						ingressClass = ingressClasses[0].metadata.name;
+						ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
 					}
 					if (ingressClass) ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
 
