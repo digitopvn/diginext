@@ -1,3 +1,13 @@
+## [3.23.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.23.1...v3.23.2-prerelease.1) (2023-10-09)
+
+
+### Bug Fixes
+
+* **dashboard:** fix unable to scroll in build logs mobile screen ([0766da6](https://github.com/digitopvn/diginext/commit/0766da60602cdc53b4b115f49ae9c37560399733)), closes [#388](https://github.com/digitopvn/diginext/issues/388)
+* **server,dashboard:** fix crashed when deleting app or deploy env ([0bf379c](https://github.com/digitopvn/diginext/commit/0bf379c4794b6adefe04ae15fac6966434eb1c0a)), closes [#400](https://github.com/digitopvn/diginext/issues/400)
+* **server:** generate default container size as none ([5f26f03](https://github.com/digitopvn/diginext/commit/5f26f03b2e4121b1cbf81d36004d9dd7a7efec8d))
+* **server:** issue container size reset after deploying ([cafe2be](https://github.com/digitopvn/diginext/commit/cafe2beedd65c9b1527f6d6764a8644b6f9996aa))
+
 ## [3.23.1](https://github.com/digitopvn/diginext/compare/v3.23.0...v3.23.1) (2023-10-09)
 
 
