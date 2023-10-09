@@ -475,7 +475,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		@Queries()
 		queryParams?: {
 			/**
-			 * App slug
+			 * App's ID
+			 */
+			id?: string;
+			/**
+			 * App's SLUG
 			 */
 			slug: string;
 			/**
@@ -485,8 +489,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 			env: string;
 		}
 	) {
-		const { slug, env } = this.filter;
-		return this.deleteDeployEnvironment({ slug, env });
+		const { _id, id, slug, env } = this.filter;
+		return this.deleteDeployEnvironment({ _id, id, slug, env });
 	}
 
 	/**
