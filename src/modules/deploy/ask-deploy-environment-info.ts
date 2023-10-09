@@ -6,8 +6,6 @@ import { isEmpty, isNaN } from "lodash";
 import type { AppGitInfo, ICloudProvider, ICluster, IContainerRegistry } from "@/entities";
 import type { InputOptions, SslType } from "@/interfaces";
 import { availableSslTypes } from "@/interfaces";
-import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
-import { availableResourceSizes } from "@/interfaces/SystemTypes";
 import { getCurrentGitRepoData, resolveEnvFilePath } from "@/plugins";
 import { isNumeric } from "@/plugins/number";
 
@@ -217,15 +215,16 @@ To expose this app to the internet later, you can add your own domain to deploy 
 
 	// request container size
 	if (typeof serverDeployEnvironment.size === "undefined") {
-		const { selectedSize } = await inquirer.prompt<{ selectedSize: ResourceQuotaSize }>({
-			type: "list",
-			name: "selectedSize",
-			message: "Please select your default container registry:",
-			choices: availableResourceSizes.map((r) => {
-				return { name: r, value: r };
-			}),
-		});
-		serverDeployEnvironment.size = selectedSize;
+		// const { selectedSize } = await inquirer.prompt<{ selectedSize: ResourceQuotaSize }>({
+		// 	type: "list",
+		// 	name: "selectedSize",
+		// 	message: "Please select your default container registry:",
+		// 	choices: availableResourceSizes.map((r) => {
+		// 		return { name: r, value: r };
+		// 	}),
+		// });
+		// serverDeployEnvironment.size = selectedSize;
+		serverDeployEnvironment.size = "none";
 	}
 	options.size = serverDeployEnvironment.size;
 
