@@ -1,3 +1,11 @@
+## [3.23.3](https://github.com/digitopvn/diginext/compare/v3.23.2...v3.23.3) (2023-10-09)
+
+
+### Bug Fixes
+
+* **hotfix:** jwt tokens catch error ([56b3e1d](https://github.com/digitopvn/diginext/commit/56b3e1d6ad8d91bb190d27f4b0bf4cea5ec34d70))
+* **hotfix:** jwt tokens catch error ([#416](https://github.com/digitopvn/diginext/issues/416)) ([0c1ef2a](https://github.com/digitopvn/diginext/commit/0c1ef2a8b69b7b23b28d62edfc2fef745e3e0732))
+
 ## [3.23.2](https://github.com/digitopvn/diginext/compare/v3.23.1...v3.23.2) (2023-10-09)
 
 
