@@ -70,23 +70,26 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 	if (!currentKubeConfig.users) currentKubeConfig.users = [];
 
 	// add cluster
-	newKubeConfig.clusters.forEach((newItem, index) => {
+	newKubeConfig.clusters.forEach((newItem) => {
 		const existedItem = currentKubeConfig.clusters.find((item) => item.name == newItem.name);
 		if (!existedItem) {
 			currentKubeConfig.clusters.push(newItem);
 		} else {
+			let index = currentKubeConfig.clusters.findIndex((item) => item.name == newItem.name);
 			// compare OLD & NEW values
 			if (existedItem.cluster.server !== newItem.cluster.server) currentKubeConfig.clusters[index].cluster.server = newItem.cluster.server;
 			if (existedItem.cluster["certificate-authority-data"] !== newItem.cluster["certificate-authority-data"])
 				currentKubeConfig.clusters[index].cluster["certificate-authority-data"] = newItem.cluster["certificate-authority-data"];
 		}
 	});
+
 	// add user
-	newKubeConfig.users.forEach((newItem, index) => {
+	newKubeConfig.users.forEach((newItem) => {
 		const existedItem = currentKubeConfig.users.find((item) => item.name == newItem.name);
 		if (!existedItem) {
 			currentKubeConfig.users.push(newItem);
 		} else {
+			let index = currentKubeConfig.users.findIndex((item) => item.name == newItem.name);
 			// compare OLD & NEW values
 			if (existedItem.user["client-certificate-data"] !== newItem.user["client-certificate-data"])
 				currentKubeConfig.users[index].user["client-certificate-data"] = newItem.user["client-certificate-data"];
@@ -94,6 +97,7 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 				currentKubeConfig.users[index].user["client-key-data"] = newItem.user["client-key-data"];
 		}
 	});
+
 	// add context
 	newKubeConfig.contexts.forEach((newItem) => {
 		const existedItem = currentKubeConfig.contexts.find((item) => item.name == newItem.name);
@@ -101,10 +105,11 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 	});
 
 	// currentKubeConfig["current-context"] = newKubeConfig["current-context"];
-	// log({ currentKubeConfig });
+	// console.log(`[CLUSTER_AUTH] KUBE_CONFIG :>>`, currentKubeConfig);
 
 	const finalKubeConfigContent = yaml.dump(currentKubeConfig);
 	// log(finalKubeConfigContent);
+	console.log(`[CLUSTER_AUTH] KUBE_CONFIG :>>`, finalKubeConfigContent);
 
 	const kubeConfigDir = path.resolve(HOME_DIR, ".kube");
 	if (!fs.existsSync(kubeConfigDir)) fs.mkdirSync(kubeConfigDir, { recursive: true });
