@@ -215,3 +215,4 @@ export const memberRoleRoutes: RoleRoute[] = [
 ];
 export const moderatorRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["own", "read", "create", "update"], scope: [] }];
 export const adminRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["full"], scope: [] }];
+export const guestRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["own", "create", "update"], scope: [] }];

@@ -106,6 +106,9 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 		}
 	}
 
+	// TODO: Check if a specific projects assigned:
+	// TODO: Check if a specific apps assigned:
+
 	// print the debug info
 	// console.log(
 	// 	`authorize > [${requestPermission}] ${routePath} > role :>> [WS: ${activeRole.workspace}] ${activeRole.name}:`,

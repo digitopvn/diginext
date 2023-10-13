@@ -92,9 +92,8 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		await ClusterManager.authCluster(cluster);
 		sendLog({ SOCKET_ROOM, message: `✓ Connected to "${cluster.name}" (context: ${cluster.contextName}).` });
 	} catch (e) {
-		console.log("e :>> ", e);
 		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error", action: "end" });
-		return { error: e.message };
+		throw new Error(e.message);
 	}
 
 	// target environment info
@@ -108,7 +107,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 	if (!isNsExisted) {
 		const createNsResult = await ClusterManager.createNamespace(namespace, { context });
-		if (!createNsResult) return { error: `Unable to create new namespace: ${namespace}` };
+		if (!createNsResult) throw new Error(`Unable to create new namespace: ${namespace}`);
 	}
 
 	try {
@@ -126,7 +125,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		});
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
-		return { error: `Can't create "imagePullSecrets" in the "${namespace}" namespace.` };
+		throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
 	}
 
 	// Start rolling out new release
@@ -153,9 +152,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 			// dispatch/trigger webhook
 			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
-			return {
-				error: `Unable to delete "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
-			};
+			throw new Error(`Unable to delete "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`);
 		}
 
 		sendLog({
@@ -195,12 +192,13 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 				}
 			}
 		} catch (e) {
-			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `Failed to roll out the release :>> ${e.message}:` });
+			const errMsg = `Failed to roll out the release :>> ${e.message}:`;
+			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: errMsg });
 
 			// dispatch/trigger webhook
 			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
-			return { error: `Failed to roll out the release :>> ${e.message}:` };
+			throw new Error(errMsg);
 		}
 	} else {
 		if (release._id) {
@@ -223,7 +221,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 				if (result.error) {
 					const errMsg = `Failed to roll out the release :>> ${result.error}.`;
 					sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
-					return { error: errMsg };
+					throw new Error(errMsg);
 				}
 
 				release = result.data;
@@ -233,12 +231,13 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 				// dispatch/trigger webhook
 				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
 			} catch (e) {
-				sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `Failed to roll out the release :>> ${e.message}` });
+				const errMsg = `Failed to roll out the release :>> ${e.message}`;
+				sendLog({ SOCKET_ROOM, type: "error", action: "end", message: errMsg });
 
 				// dispatch/trigger webhook
 				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
-				return { error: `Failed to roll out the release :>> ${e.message}` };
+				throw new Error(errMsg);
 			}
 		}
 	}
