@@ -1,3 +1,11 @@
+## [3.23.4](https://github.com/digitopvn/diginext/compare/v3.23.3...v3.23.4) (2023-10-13)
+
+
+### Bug Fixes
+
+* **server:** catch errors on build and deploy process ([bedd5d6](https://github.com/digitopvn/diginext/commit/bedd5d62ac253d3984df2a709d65a673ed9aa2e0))
+* **server:** catch errors on build and deploy process ([#417](https://github.com/digitopvn/diginext/issues/417)) ([fca0c23](https://github.com/digitopvn/diginext/commit/fca0c23aa0f286b0d3929c53e9661e2168ebd336))
+
 ## [3.23.3](https://github.com/digitopvn/diginext/compare/v3.23.2...v3.23.3) (2023-10-09)
 
 
