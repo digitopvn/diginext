@@ -16,7 +16,7 @@ import { MongoDB } from "@/plugins/mongodb";
 const jwt_auth = (req: AppRequest, res, next) =>
 	passport.authenticate("jwt", { session: false }, async function (err, user: IUser, info) {
 		const { DB } = await import("@/modules/api/DB");
-		console.log(`[DEBUG] PASSPORT AUTHENTICATE:`, err, user, info);
+		// console.log(`[DEBUG] PASSPORT AUTHENTICATE:`, err, user, info);
 		// console.log(`AUTHENTICATE: jwt_auth > user:`, user);
 
 		// Handle error
