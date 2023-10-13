@@ -544,15 +544,15 @@ export class DeployEnvironmentService {
 		const { default: DeployService } = await import("./DeployService");
 		const buildSvc = new BuildService(this.ownership);
 		const deploySvc = new DeployService(this.ownership);
+
 		// deploy to new cluster
 		const latestBuild = await buildSvc.findOne({ slug: app.latestBuild });
-		const { build, release, error } = await deploySvc.deployBuild(latestBuild, {
+		const { build, release } = await deploySvc.deployBuild(latestBuild, {
 			env,
 			owner: options.user,
 			workspace: options.workspace,
 			forceRollOut: true,
 		});
-		if (error) throw new Error(`Unable to deploy new cluster: ${error}`);
 
 		// return
 		return { build, release, app };
