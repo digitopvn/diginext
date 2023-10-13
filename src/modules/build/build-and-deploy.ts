@@ -9,9 +9,9 @@ import { socketIO } from "@/server";
 import MediaService from "@/services/MediaService";
 
 import screenshot from "../capture/screenshot";
-import type { DeployBuildOptions } from "../deploy/deploy-build";
+import type { DeployBuildOptions, DeployBuildResult } from "../deploy/deploy-build";
 import { deployBuild } from "../deploy/deploy-build";
-import type { StartBuildParams } from "./build";
+import type { StartBuildParams, StartBuildResult } from "./build";
 import { startBuild } from "./build";
 import { sendLog } from "./send-log-message";
 
@@ -23,8 +23,15 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	buildParams.env = deployParams.env;
 	buildParams.shouldDeploy = true; // <-- keep this to disable webhook notification when build success
 
-	const buildInfo = await startBuild(buildParams);
-	if (!buildInfo) throw new Error(`[BUILD_AND_DEPLOY] Unable to build.`);
+	let buildInfo: StartBuildResult;
+	try {
+		buildInfo = await startBuild(buildParams);
+		if (!buildInfo) throw new Error(`[BUILD_AND_DEPLOY] Unable to build.`);
+	} catch (e) {
+		const SOCKET_ROOM = `${buildParams.appSlug}-${buildParams.buildTag}`;
+		sendLog({ SOCKET_ROOM, type: "error", message: `Build error: ${e.stack}` });
+		return;
+	}
 
 	const { build, startTime, SOCKET_ROOM } = buildInfo;
 	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > buildTag :>> ${build.tag}` });
@@ -36,21 +43,16 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	// [2] Deploy the build to target deploy environment
 	if (!deployParams.env) deployParams.env = buildParams.env || "dev";
 	if (typeof deployParams.deployInBackground === "undefined") deployParams.deployInBackground = false;
-	const deployRes = await deployBuild(build, deployParams);
+
+	let deployRes: DeployBuildResult;
+	try {
+		deployRes = await deployBuild(build, deployParams);
+	} catch (e) {
+		sendLog({ SOCKET_ROOM, type: "error", message: `Deploy error: ${e.stack}` });
+		return;
+	}
 
 	const { env } = deployParams;
-
-	let errorMsg = ``;
-	if (deployRes?.error) {
-		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${env}): ${deployRes?.error}`;
-		sendLog({ SOCKET_ROOM, message: errorMsg });
-		return;
-	}
-	if (!deployRes) {
-		errorMsg = `Unable to deploy "${buildParams.appSlug}" app (${env}): UNKNOWN_REASON`;
-		sendLog({ SOCKET_ROOM, message: errorMsg });
-		return;
-	}
 
 	const { release, deployment } = deployRes;
 	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > Release ID :>> ${release._id}` });

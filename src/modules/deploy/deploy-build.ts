@@ -13,6 +13,7 @@ import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { updateAppConfig } from "../apps/update-config";
 import { createReleaseFromBuild, sendLog } from "../build";
 import ClusterManager from "../k8s";
+import type { FetchDeploymentResult } from "./fetch-deployment";
 import { fetchDeploymentFromContent } from "./fetch-deployment";
 import type { GenerateDeploymentResult } from "./generate-deployment";
 import { generateDeployment } from "./generate-deployment";
@@ -61,6 +62,15 @@ export type DeployBuildOptions = {
 	 * @default true
 	 */
 	deployInBackground?: boolean;
+};
+
+export type DeployBuildResult = {
+	app: IApp;
+	build: IBuild;
+	release: IRelease;
+	deployment: GenerateDeploymentResult;
+	endpoint: string;
+	prerelease: FetchDeploymentResult;
 };
 
 export const processDeployBuild = async (build: IBuild, release: IRelease, cluster: ICluster, options: DeployBuildOptions) => {
@@ -234,7 +244,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 	}
 };
 
-export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
+export const deployBuild = async (build: IBuild, options: DeployBuildOptions): Promise<DeployBuildResult> => {
 	const { DB } = await import("@/modules/api/DB");
 
 	// parse options
@@ -254,7 +264,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 			type: "error",
 			message: `[DEPLOY BUILD] App "${appSlug}" not found.`,
 		});
-		return { error: `[DEPLOY BUILD] App "${appSlug}" not found.` };
+		throw new Error(`[DEPLOY BUILD] App "${appSlug}" not found.`);
 	}
 
 	const project = app.project as IProject;
@@ -296,7 +306,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		errMsgs.push(`Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`);
 	}
 
-	if (!isPassedDeployEnvironmentValidation) return { error: errMsgs.join(",") };
+	if (!isPassedDeployEnvironmentValidation) throw new Error(errMsgs.join(","));
 
 	// find cluster
 	const { cluster: clusterSlug } = serverDeployEnvironment;
@@ -332,7 +342,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 
 		console.error(errMsg);
 		sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
-		return { error: errMsg };
+		throw new Error(errMsg);
 	}
 	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
 
@@ -365,7 +375,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	} catch (e) {
 		console.error("Deploy build > error :>> ", e);
 		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error", action: "end" });
-		return { error: e.message };
+		throw new Error(e.message);
 	}
 
 	// create webhook

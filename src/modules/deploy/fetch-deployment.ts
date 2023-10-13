@@ -7,8 +7,24 @@ import type { KubeDeployment } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { InputOptions } from "@/interfaces/InputOptions";
 
-export const fetchDeploymentFromContent = (content: string) => {
-	let domains = [];
+export type FetchDeploymentResult = {
+	domains: string[];
+	endpoint: string;
+	deployContent: string;
+	deployYaml: string;
+	NAMESPACE: string;
+	SERVICE_NAME: string;
+	INGRESS_NAME: string;
+	IMAGE_NAME: string;
+	ENV_VARS: KubeEnvironmentVariable[];
+	APP_NAME: string;
+	REPLICAS: number;
+	PORT: number;
+	BUILD_TAG: string;
+};
+
+export const fetchDeploymentFromContent = (content: string): FetchDeploymentResult => {
+	let domains: string[] = [];
 	let deployContent = content;
 	let deploymentData = yaml.loadAll(deployContent);
 	// console.log("deploymentData :>> ", deploymentData);

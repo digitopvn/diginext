@@ -118,6 +118,15 @@ export type StartBuildParams = {
 
 export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildTag" | "buildWatch">;
 
+export type StartBuildResult = {
+	SOCKET_ROOM: string;
+	build: IBuild;
+	imageURL: string;
+	buildImage: string;
+	startTime: dayjs.Dayjs;
+	builder: string;
+};
+
 export async function testBuild() {
 	let socketServer = getIO();
 	log("socketServer:", socketServer);
@@ -166,7 +175,7 @@ export async function startBuild(
 		onSucceed?: (build: IBuild) => void;
 		onError?: (msg: string) => void;
 	}
-) {
+): Promise<StartBuildResult> {
 	const { DB } = await import("@/modules/api/DB");
 
 	// parse variables
