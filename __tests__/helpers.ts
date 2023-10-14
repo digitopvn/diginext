@@ -118,6 +118,13 @@ export let currentWorkspace: IWorkspace;
 const dbName = Config.DB_NAME;
 
 export async function setupStartTestEnvironment() {
+	// drop the test database
+	try {
+		const dropDbResult = await mongoose.connection.db.dropDatabase({ dbName });
+		const dropMessage = dropDbResult ? `Database "${dbName}" was dropped.` : `Unable to drop database "${dbName}".`;
+		console.log(chalk.red(dropMessage));
+	} catch (e) {}
+
 	// wait until the server is completely READY...
 	await waitUntil(() => isServerReady === true, 1, 2 * 60);
 }

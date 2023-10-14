@@ -1,3 +1,6 @@
+/**
+ * @type {import("ts-jest").JestConfigWithTsJest}
+ */
 module.exports = {
 	transform: {
 		"^.+\\.tsx?$": "ts-jest"
@@ -12,5 +15,6 @@ module.exports = {
 	collectCoverage: false,
 	testEnvironment: "node",
 	coverageReporters: ["json", "lcov", "text", "clover"], // "text-summary"
-	modulePathIgnorePatterns: ["node_modules", ".temp"]
+	modulePathIgnorePatterns: ["node_modules", ".temp"],
+	bail: 1,
 };

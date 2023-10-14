@@ -412,9 +412,11 @@ export function testFlow1() {
 
 			// create new app...
 			const res = await dxCmd(`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force`);
-
 			expect(res).toBeDefined();
-			// expect(res.toLowerCase()).not.toContain("error");
+
+			// reload app's data
+			appOnGithub = await appSvc.findOne({}, { order: { createdAt: -1 } });
+			expect(appOnGithub).toBeDefined();
 
 			const sourceCodeDirs = readdirSync(CLI_TEST_DIR);
 			// console.log("sourceCodeDirs :>> ", sourceCodeDirs);
@@ -425,9 +427,6 @@ export function testFlow1() {
 			// console.log("sourceCodeFiles :>> ", sourceCodeFiles);
 			expect(sourceCodeFiles.length).toBeGreaterThan(0);
 			expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
-
-			// reload app's data
-			appOnGithub = await appSvc.findOne({}, { order: { createdAt: -1 } });
 		},
 		5 * 60000
 	);

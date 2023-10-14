@@ -248,8 +248,9 @@ export async function filterUsersByWorkspaceRole(workspaceId: string, list: IUse
 
 export function checkProjectPermissionsById(projectId: any, user?: IUser) {
 	if (!MongoDB.isValidObjectId(projectId)) throw new Error(`Project ID is invalid: "${projectId}"`);
-	if (user && !user.allowAccess?.projects?.map((p) => MongoDB.toString(p)).includes(MongoDB.toString(projectId))) {
-		throw new Error(`You don't have permissions to update in this project.`);
+	if (user && user.allowAccess?.projects?.length > 0) {
+		if (!user.allowAccess?.projects?.map((p) => MongoDB.toString(p)).includes(MongoDB.toString(projectId)))
+			throw new Error(`You don't have permissions in this project.`);
 	}
 }
 
@@ -269,8 +270,10 @@ export async function checkProjectPermissionsByFilter(svc: ProjectService, filte
 
 export function checkAppPermissionsById(appId: any, user?: IUser) {
 	if (!MongoDB.isValidObjectId(appId)) throw new Error(`App ID is invalid: "${appId}"`);
-	if (!user?.allowAccess?.apps?.map((p) => MongoDB.toString(p)).includes(MongoDB.toString(appId))) {
-		throw new Error(`Permission denied.`);
+	if (user && user?.allowAccess?.apps?.length > 0) {
+		if (!user?.allowAccess?.apps?.map((p) => MongoDB.toString(p)).includes(MongoDB.toString(appId))) {
+			throw new Error(`Permission denied.`);
+		}
 	}
 }
 
@@ -293,9 +296,9 @@ export async function checkProjectAndAppPermissions(svc: AppService, filter: IQu
 		const apps = await svc.find(filter);
 		apps.forEach((app) => {
 			// check PROJECT access permissions
-			if (user.allowAccess.projects) checkProjectPermissionsById(app.project, user);
+			checkProjectPermissionsById(app.project, user);
 			// check APP access permissions
-			if (user.allowAccess.apps) checkAppPermissions(app, user);
+			checkAppPermissions(app, user);
 		});
 	}
 }
@@ -308,8 +311,10 @@ export function checkPermissionsById(
 	if (!MongoDB.isValidObjectId(id)) throw new Error(`${upperFirst(resource)} ID is invalid: "${id}"`);
 	if (user && user.allowAccess) {
 		const allowedResources = user.allowAccess[resource];
-		if (!allowedResources?.map((item) => MongoDB.toString(item)).includes(MongoDB.toString(id)))
-			throw new Error(`You don't have permissions to update in this ${resource}.`);
+		if (allowedResources?.length > 0) {
+			if (!allowedResources?.map((item) => MongoDB.toString(item)).includes(MongoDB.toString(id)))
+				throw new Error(`You don't have permissions in this ${resource}.`);
+		}
 	}
 }
 
