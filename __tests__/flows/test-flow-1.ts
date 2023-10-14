@@ -113,12 +113,13 @@ export function testFlow1() {
 		// check 3 initial roles
 		const initialRoles = await roleSvc.find({ workspace: wsId });
 		// console.log("initialRoles :>> ", initialRoles);
-		expect(initialRoles.length).toEqual(3);
+		expect(initialRoles.length).toEqual(4);
 
 		const roleNames = initialRoles.map((role) => (role as IRole).name);
 		expect(roleNames).toContain("Administrator");
 		expect(roleNames).toContain("Moderator");
 		expect(roleNames).toContain("Member");
+		expect(roleNames).toContain("Guest");
 
 		// check default API key
 		const apiKeys = await apiKeySvc.find({ workspaces: wsId }, { populate: ["roles"] });
