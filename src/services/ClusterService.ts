@@ -7,7 +7,7 @@ import ClusterManager from "@/modules/k8s";
 import type { ClusterAuthOptions } from "@/modules/k8s/cluster-auth";
 import { deleteClusterInKubeConfig } from "@/modules/k8s/kube-config";
 import type { InstallStackOptions } from "@/modules/k8s/stack-install";
-import { checkPermissionsByFilter, checkPermissionsById } from "@/plugins/user-utils";
+import { checkPermissions, checkPermissionsByFilter, checkPermissionsById } from "@/plugins/user-utils";
 
 import BaseService from "./BaseService";
 
@@ -41,7 +41,7 @@ export class ClusterService extends BaseService<ICluster> {
 		}
 
 		// check permissions
-		await checkPermissionsById("clusters", cluster._id, this.user);
+		await checkPermissions("clusters", cluster, this.user);
 
 		// get cloud provider of this cluster
 		const cloudProvider = cluster.provider as ICloudProvider;

@@ -72,7 +72,7 @@ export default class ClusterController extends BaseController<ICluster, ClusterS
 
 		if (newCluster) {
 			try {
-				newCluster = await ClusterManager.authCluster(newCluster);
+				newCluster = await ClusterManager.authCluster(newCluster, { ownership: this.ownership });
 				if (!newCluster) return respondFailure(`Failed to connect to the cluster, please double check your information.`);
 
 				return respondSuccess({ data: newCluster });
@@ -122,7 +122,11 @@ export default class ClusterController extends BaseController<ICluster, ClusterS
 		if (!cluster) return respondFailure(`Cluster not found.`);
 
 		try {
-			cluster = await this.service.authCluster(cluster, { isDebugging: this.options.isDebugging, shouldSwitchContextToThisCluster: true });
+			cluster = await this.service.authCluster(cluster, {
+				isDebugging: this.options.isDebugging,
+				shouldSwitchContextToThisCluster: true,
+				ownership: this.ownership,
+			});
 			return respondSuccess({ data: cluster });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -142,7 +146,11 @@ export default class ClusterController extends BaseController<ICluster, ClusterS
 
 		try {
 			// verify but won't
-			cluster = await this.service.authCluster(cluster, { isDebugging: this.options.isDebugging, shouldSwitchContextToThisCluster: false });
+			cluster = await this.service.authCluster(cluster, {
+				isDebugging: this.options.isDebugging,
+				shouldSwitchContextToThisCluster: false,
+				ownership: this.ownership,
+			});
 			return respondSuccess({ data: cluster });
 		} catch (e) {
 			return respondFailure(e.toString());

@@ -52,7 +52,7 @@ export const addInitialBareMetalCluster = async (kubeConfig: string, workspace: 
 	// console.log("initialCluster.slug :>> ", initialCluster.slug);
 
 	// verfify cluster
-	initialCluster = await ClusterManager.authCluster(initialCluster);
+	initialCluster = await ClusterManager.authCluster(initialCluster, { ownership: { owner, workspace } });
 
 	// done
 	return initialCluster;

@@ -89,7 +89,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 
 	// authenticate cluster & switch to that cluster's context
 	try {
-		await ClusterManager.authCluster(cluster);
+		await ClusterManager.authCluster(cluster, { ownership: { owner, workspace } });
 		sendLog({ SOCKET_ROOM, message: `✓ Connected to "${cluster.name}" (context: ${cluster.contextName}).` });
 	} catch (e) {
 		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error", action: "end" });

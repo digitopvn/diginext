@@ -308,7 +308,7 @@ export class DeployEnvironmentService {
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		// switch to the cluster of this environment
-		await ClusterManager.authCluster(cluster);
+		await ClusterManager.authCluster(cluster, { ownership: this.ownership });
 
 		let success = false;
 		let message = "";
@@ -369,7 +369,7 @@ export class DeployEnvironmentService {
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		// switch to the cluster of this environment
-		await ClusterManager.authCluster(cluster);
+		await ClusterManager.authCluster(cluster, { ownership: this.ownership });
 
 		let success = false;
 		let message = "";
@@ -431,7 +431,7 @@ export class DeployEnvironmentService {
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		// double check cluster's accessibility
-		await ClusterManager.authCluster(cluster);
+		await ClusterManager.authCluster(cluster, { ownership: this.ownership });
 
 		/**
 		 * IMPORTANT

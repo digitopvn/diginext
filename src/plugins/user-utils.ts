@@ -309,12 +309,10 @@ export function checkPermissionsById(
 	user?: IUser
 ) {
 	if (!MongoDB.isValidObjectId(id)) throw new Error(`${upperFirst(resource)} ID is invalid: "${id}"`);
-	if (user && user.allowAccess) {
+	if (user && user.allowAccess && user.allowAccess[resource] && user.allowAccess[resource].length > 0) {
 		const allowedResources = user.allowAccess[resource];
-		if (allowedResources?.length > 0) {
-			if (!allowedResources?.map((item) => MongoDB.toString(item)).includes(MongoDB.toString(id)))
-				throw new Error(`You don't have permissions in this ${resource}.`);
-		}
+		if (!allowedResources?.map((item) => MongoDB.toString(item)).includes(MongoDB.toString(id)))
+			throw new Error(`You don't have permissions in this ${resource}.`);
 	}
 }
 
@@ -332,7 +330,7 @@ export async function checkPermissionsByFilter(
 	filter: IQueryFilter<any>,
 	user?: IUser
 ) {
-	if (user && user.allowAccess) {
+	if (user && user.allowAccess && user.allowAccess[resource] && user.allowAccess[resource].length > 0) {
 		const items = await svc.find(filter);
 		items.forEach((item) => {
 			checkPermissions(resource, item, user);

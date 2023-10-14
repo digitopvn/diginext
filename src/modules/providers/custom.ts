@@ -8,13 +8,14 @@ import { HOME_DIR } from "@/config/const";
 import type { ICluster } from "@/entities";
 import type { KubeConfig } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
+import type { Ownership } from "@/interfaces/SystemTypes";
 
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
 
 /**
  * Authenticate custom Kubernetes cluster access
  */
-export const authenticate = async (cluster: ICluster, options?: InputOptions) => {
+export const authenticate = async (cluster: ICluster, options?: InputOptions & { ownership: Ownership }) => {
 	const { execaCommand } = await import("execa");
 
 	const kubeConfigPath = options.filePath;
@@ -53,8 +54,6 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 	let currentKubeConfigContent;
 	try {
 		/** FOR TEST */
-		// const currentKubeConfigFile = path.resolve(CLI_DIR, "keys/kbconf.yaml");
-		// const { stdout } = await execaCommand(`kubectl config --kubeconfig ${currentKubeConfigFile} view --flatten`);
 		const { stdout } = await execaCommand(`kubectl config view --flatten`);
 		currentKubeConfigContent = stdout;
 	} catch (e) {
@@ -108,7 +107,7 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 
 	const finalKubeConfigContent = yaml.dump(currentKubeConfig);
 	// log(finalKubeConfigContent);
-	// console.log(`[CLUSTER_AUTH] KUBE_CONFIG :>>`, finalKubeConfigContent);
+	console.log(`[CLUSTER_AUTH] KUBE_CONFIG :>>`, finalKubeConfigContent);
 
 	const kubeConfigDir = path.resolve(HOME_DIR, ".kube");
 	if (!fs.existsSync(kubeConfigDir)) fs.mkdirSync(kubeConfigDir, { recursive: true });
@@ -120,7 +119,8 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 	cluster = await DB.updateOne(
 		"cluster",
 		{ _id: cluster._id },
-		{ isVerified: true, kubeConfig: newKubeConfigContent, contextName: currentContext, shortName: currentContext }
+		{ isVerified: true, kubeConfig: newKubeConfigContent, contextName: currentContext, shortName: currentContext },
+		{ ownership: options.ownership }
 	);
 
 	return cluster;

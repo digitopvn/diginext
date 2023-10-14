@@ -213,6 +213,7 @@ export async function cliAuthenticate(options: InputOptions) {
 	}
 
 	// Assign user & workspace to use across all CLI commands
+	options.author = user;
 	options.userId = MongoDB.toString(user._id);
 	options.username = user.username ?? user.slug;
 	options.workspace = user.activeWorkspace as IWorkspace;
