@@ -102,7 +102,7 @@ export default class BuildController extends BaseController<IBuild, BuildService
 
 	@Security("api_key")
 	@Security("jwt")
-	@Patch("/stop")
+	@Post("/stop")
 	async stopBuild(@Body() body: { slug: string }) {
 		try {
 			const build = await this.service.stopBuild(body.slug, this.ownership);

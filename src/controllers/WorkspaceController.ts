@@ -2,12 +2,11 @@ import { isUndefined } from "lodash";
 import type { Types } from "mongoose";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { Config, IsTest } from "@/app.config";
+import { Config, IsDev, IsTest } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { IApiKeyAccount, IRole, IServiceAccount, IWorkspace } from "@/entities";
 import type { ResponseData } from "@/interfaces";
 import * as interfaces from "@/interfaces";
-import type { SendDiginextEmailResponse } from "@/modules/diginext/dx-email";
 import { dxSendEmail } from "@/modules/diginext/dx-email";
 import type { DxPackage } from "@/modules/diginext/dx-package";
 import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
@@ -183,22 +182,38 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/invite")
-	async inviteMember(@Body() data: { emails: string[] }) {
+	async inviteMember(
+		@Body()
+		data: {
+			/**
+			 * List of invited emails
+			 */
+			emails: string[];
+			/**
+			 * Assign role:
+			 * - "member"
+			 * - "guest"
+			 * @default "member"
+			 */
+			role?: string;
+		}
+	) {
 		if (!data.emails || data.emails.length === 0) return interfaces.respondFailure({ msg: `List of email is required.` });
 		if (!this.user) return interfaces.respondFailure({ msg: `Unauthenticated.` });
 		const { DB } = await import("@/modules/api/DB");
 
-		const { emails } = data;
+		const { emails, role: roleType = "member" } = data;
 
 		const workspace = this.user.activeWorkspace as IWorkspace;
 		const wsId = workspace._id;
-		const userId = this.user._id;
 
 		// check if this user is admin of the workspace:
 		const activeRole = this.user.activeRole as IRole;
-		if (activeRole.type !== "admin" && activeRole.type !== "moderator") return interfaces.respondFailure(`Unauthorized.`);
+		if (activeRole.type !== "admin" && activeRole.type !== "moderator")
+			return interfaces.respondFailure(`You don't have permissions to invite users, please contact administrator.`);
 
-		const memberRole = await DB.findOne("role", { type: "member", workspace: wsId });
+		const assignedRole = await DB.findOne("role", { type: roleType, workspace: wsId });
+		// console.log("assignedRole :>> ", assignedRole);
 
 		// create temporary users of invited members:
 		const invitedMembers = await Promise.all(
@@ -211,7 +226,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 						name: username,
 						email: email,
 						workspaces: [wsId],
-						roles: [memberRole._id],
+						roles: [assignedRole._id],
 					});
 					return invitedMember;
 				} else {
@@ -224,7 +239,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		);
 		// console.log("invitedMembers :>> ", invitedMembers);
 
-		if (!IsTest()) {
+		if (!IsTest() && !IsDev()) {
 			const mailContent = `Dear,<br/><br/>You've been invited to <strong>"${workspace.name}"</strong> workspace, please <a href="${Config.BASE_URL}" target="_blank">click here</a> to login.<br/><br/>Cheers,<br/>Diginext System`;
 
 			// send invitation email to those users:
@@ -239,9 +254,9 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 				workspace.dx_key
 			);
 
-			return result;
+			return interfaces.respondSuccess({ data: result });
 		} else {
-			return { data: { succeed: 1 } } as SendDiginextEmailResponse;
+			return interfaces.respondSuccess({ data: { succeed: 1 } });
 		}
 	}
 

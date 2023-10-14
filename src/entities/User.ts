@@ -4,8 +4,12 @@ import { Schema } from "mongoose";
 import type { HiddenBodyKeys } from "@/interfaces";
 import type { WebhookChannel } from "@/interfaces/SystemTypes";
 
+import type { ICloudDatabase, ICloudDatabaseBackup, IContainerRegistry, IFramework, IGitProvider } from ".";
+import type { IApp } from "./App";
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
+import type { ICluster } from "./Cluster";
+import type { IProject } from "./Project";
 import type { IRole } from "./Role";
 import type { ITeam } from "./Team";
 import type { IWorkspace } from "./Workspace";
@@ -100,6 +104,22 @@ export interface IUser extends IBase {
 	workspaces?: (IWorkspace | Types.ObjectId | string)[];
 	activeWorkspace?: IWorkspace | Types.ObjectId | string;
 	/**
+	 * User access permission settings:
+	 * - `undefined`: all
+	 * - `[]`: none
+	 * - `[ ...project_id... ]`: some
+	 */
+	allowAccess?: {
+		projects?: (IProject | Types.ObjectId | string)[];
+		apps?: (IApp | Types.ObjectId | string)[];
+		clusters?: (ICluster | Types.ObjectId | string)[];
+		databases?: (ICloudDatabase | Types.ObjectId | string)[];
+		database_backups?: (ICloudDatabaseBackup | Types.ObjectId | string)[];
+		gits?: (IGitProvider | Types.ObjectId | string)[];
+		frameworks?: (IFramework | Types.ObjectId | string)[];
+		container_registries?: (IContainerRegistry | Types.ObjectId | string)[];
+	};
+	/**
 	 * User settings
 	 */
 	settings?: {
@@ -176,6 +196,16 @@ export const userSchema = new Schema(
 			ref: "users",
 		},
 		ownerSlug: String,
+		allowAccess: {
+			projects: [{ type: Schema.Types.ObjectId, ref: "projects" }],
+			apps: [{ type: Schema.Types.ObjectId, ref: "apps" }],
+			clusters: [{ type: Schema.Types.ObjectId, ref: "clusters" }],
+			databases: [{ type: Schema.Types.ObjectId, ref: "cloud_databases" }],
+			database_backups: [{ type: Schema.Types.ObjectId, ref: "cloud_database_backups" }],
+			gits: [{ type: Schema.Types.ObjectId, ref: "git_providers" }],
+			frameworks: [{ type: Schema.Types.ObjectId, ref: "frameworks" }],
+			container_registries: [{ type: Schema.Types.ObjectId, ref: "container_registries" }],
+		},
 		settings: { type: Schema.Types.Mixed },
 	},
 	{

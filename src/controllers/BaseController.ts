@@ -51,8 +51,8 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 			data = await this.service.findOne(this.filter, this.options);
 			if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `Item not found.` });
 		} else {
-			data = await this.service.find(this.filter, this.options, this.pagination);
-			if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: "" });
+			data = (await this.service.find(this.filter, this.options, this.pagination)) || [];
+			// if (isEmpty(data)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: "" });
 		}
 
 		return respondSuccess({ data, ...this.pagination });
@@ -177,11 +177,6 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 						: val;
 			});
 		}
-		// else {
-		// 	Object.entries(filter).forEach(([key, val]) => {
-		// 		filter[key] = isString(val) ? trim(val) : val;
-		// 	});
-		// }
 
 		// parse "sort" (or "order") from the query url:
 		let _sortOptions: string[];

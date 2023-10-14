@@ -1,5 +1,6 @@
 import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
+import { trimEnd } from "lodash";
 
 import type { IRole, IWorkspace } from "@/entities";
 import type { IRoutePermission } from "@/interfaces";
@@ -10,7 +11,8 @@ import { filterUsersByWorkspaceRole } from "@/plugins/user-utils";
 export async function authorize(req: AppRequest, res: Response, next: NextFunction) {
 	let { user } = req;
 
-	const { baseUrl: routePath, method } = req;
+	const { baseUrl, method, url, path } = req;
+	const routePath = trimEnd(`${baseUrl}${path}`, "/");
 	// console.log("authorize > route :>> ", route);
 
 	// filter roles
@@ -100,20 +102,25 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 			} else if (routeRole.permissions.includes("own")) {
 				req.query.owner = MongoDB.toString(user._id);
 				isAllowed = true;
+			} else if (routeRole.permissions.includes("read")) {
+				delete req.query.owner;
 			} else {
 				isAllowed = false;
 			}
 		}
 	}
 
-	// TODO: Check if a specific projects assigned:
-	// TODO: Check if a specific apps assigned:
-
 	// print the debug info
 	// console.log(
-	// 	`authorize > [${requestPermission}] ${routePath} > role :>> [WS: ${activeRole.workspace}] ${activeRole.name}:`,
-	// 	`${activeRole.routes.map((r) => `· ${r.path} - ${r.permissions.join(",") || "none"}`).join("\n")}`,
-	// 	`>> ALLOW:`,
+	// 	chalk.cyan(`=====> AUTHORIZING : Request for permission > [${requestPermission}]`),
+	// 	`\n> API URL: ${routePath}`,
+	// 	`\n> URL Query:`,
+	// 	req.query,
+	// 	`\n> ROLE :>> [WS: ${activeRole.workspace}] ${activeRole.name}:`,
+	// 	`\n> routeRole:`,
+	// 	routeRole,
+	// 	`\n> Allowed permissions & routes: \n${activeRole.routes.map((r) => `  · ${r.path} - ${r.permissions.join(",") || "none"}`).join("\n")}`,
+	// 	`\n>>> ALLOW:`,
 	// 	isAllowed
 	// );
 

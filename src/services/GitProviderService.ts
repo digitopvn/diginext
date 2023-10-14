@@ -1,14 +1,54 @@
 import type { GitProviderDto, IGitProvider } from "@/entities/GitProvider";
 import { gitProviderSchema } from "@/entities/GitProvider";
-import type { IQueryOptions } from "@/interfaces";
+import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import GitProviderAPI from "@/modules/git/git-provider-api";
+import { checkPermissionsByFilter } from "@/plugins/user-utils";
 
 import BaseService from "./BaseService";
 
 export class GitProviderService extends BaseService<IGitProvider> {
 	constructor(ownership?: Ownership) {
 		super(gitProviderSchema, ownership);
+	}
+
+	async find(
+		filter?: IQueryFilter<IGitProvider>,
+		options?: IQueryOptions & IQueryPagination,
+		pagination?: IQueryPagination
+	): Promise<IGitProvider[]> {
+		// check access permissions
+		if (this.user?.allowAccess?.gits?.length > 0) filter = { $or: [filter, { _id: { $in: this.user?.allowAccess?.gits } }] };
+
+		return super.find(filter, options, pagination);
+	}
+
+	async update(filter: IQueryFilter<IGitProvider>, data: any, options?: IQueryOptions): Promise<IGitProvider[]> {
+		// check permissions
+		await checkPermissionsByFilter("gits", this, filter, this.user);
+
+		return super.update(filter, data, options);
+	}
+
+	async updateOne(filter: IQueryFilter<IGitProvider>, data: any, options?: IQueryOptions): Promise<IGitProvider> {
+		// check permissions
+		await checkPermissionsByFilter("gits", this, filter, this.user);
+
+		return super.updateOne(filter, data, options);
+	}
+
+	async delete(filter?: IQueryFilter<IGitProvider>, options?: IQueryOptions): Promise<{ ok: boolean; affected: number }> {
+		// check permissions
+		await checkPermissionsByFilter("gits", this, filter, this.user);
+
+		return super.delete(filter, options);
+	}
+
+	async softDelete(filter?: IQueryFilter<IGitProvider>, options?: IQueryOptions): Promise<{ ok: boolean; affected: number }> {
+		// check permissions
+		await checkPermissionsByFilter("gits", this, filter, this.user);
+
+		return super.softDelete(filter, options);
 	}
 
 	async verify(provider: IGitProvider) {

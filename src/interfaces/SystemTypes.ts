@@ -189,6 +189,9 @@ export const credentialFields: string[] = [
 /**
  * ROLES & PERMISSIONS: API Routes
  */
+export const adminRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["full"], scope: [] }];
+export const moderatorRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["own", "read", "create", "update"], scope: [] }];
+
 export const memberRoleRoutes: RoleRoute[] = [
 	{ path: "*", permissions: ["own", "read"], scope: [] },
 	{ path: "/api/v1/deploy", permissions: ["read", "create", "update"], scope: [] },
@@ -208,11 +211,29 @@ export const memberRoleRoutes: RoleRoute[] = [
 	{ path: "/api/v1/git/ssh/create", permissions: [], scope: [] },
 	{ path: "/api/v1/git/ssh/generate", permissions: [], scope: [] },
 	{ path: "/api/v1/git/ssh/verify", permissions: [], scope: [] },
+	{ path: "/api/v1/user", permissions: ["read"], scope: [] },
 	{ path: "/api/v1/user/join-workspace", permissions: ["update"], scope: [] },
 	{ path: "/api/v1/role", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/workspace", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/workspace/invite", permissions: ["create"], scope: [] },
 	{ path: "/api/v1/api_key", permissions: [], scope: [] },
 	{ path: "/api/v1/service_account", permissions: ["own", "public"], scope: [] },
 ];
-export const moderatorRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["own", "read", "create", "update"], scope: [] }];
-export const adminRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["full"], scope: [] }];
-export const guestRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["own", "create", "update"], scope: [] }];
+
+export const guestRoleRoutes: RoleRoute[] = [
+	{ path: "*", permissions: ["own", "create"], scope: [] },
+	{ path: "/api/v1/deploy", permissions: ["create"], scope: [] },
+	{ path: "/api/v1/build", permissions: ["own"], scope: [] },
+	{ path: "/api/v1/build/start", permissions: ["create"], scope: [] },
+	{ path: "/api/v1/build/stop", permissions: ["create", "update"], scope: [] },
+	{ path: "/api/v1/release", permissions: ["read", "create", "update"], scope: [] },
+	{ path: "/api/v1/release/from-build", permissions: ["own", "read", "create", "update"], scope: [] },
+	{ path: "/api/v1/release/preview", permissions: ["own", "read", "create", "update"], scope: [] },
+	{ path: "/api/v1/user", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/user/join-workspace", permissions: ["update"], scope: [] },
+	{ path: "/api/v1/role", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/workspace", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/workspace/invite", permissions: [], scope: [] },
+	{ path: "/api/v1/api_key", permissions: [], scope: [] },
+	{ path: "/api/v1/service_account", permissions: [], scope: [] },
+];
