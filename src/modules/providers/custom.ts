@@ -20,8 +20,7 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 	const kubeConfigPath = options.filePath;
 
 	if (!fs.existsSync(kubeConfigPath)) {
-		logError(`KUBECONFIG file not found. Try: "dx custom auth -f /path/to/your-kube-config.yaml"`);
-		return;
+		throw new Error(`KUBECONFIG file not found. Try: "dx custom auth -f /path/to/your-kube-config.yaml"`);
 	}
 
 	// load new kubeconfig yaml:

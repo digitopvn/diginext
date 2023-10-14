@@ -12,7 +12,11 @@ export const addInitialBareMetalCluster = async (kubeConfig: string, workspace: 
 	const { DB } = await import("@/modules/api/DB");
 
 	// skip if it's existed
-	let initialCluster = await DB.findOne("cluster", { kubeConfig: initialClusterKubeConfig, workspace: workspace._id });
+	let initialCluster = await DB.findOne(
+		"cluster",
+		{ kubeConfig: initialClusterKubeConfig, workspace: workspace._id },
+		{ ownership: { owner, workspace } }
+	);
 	if (initialCluster) return;
 
 	// validate YAML
@@ -29,7 +33,7 @@ export const addInitialBareMetalCluster = async (kubeConfig: string, workspace: 
 	// console.log("clusterIP :>> ", clusterIP);
 
 	// get custom provider
-	const customCloudProvider = await DB.findOne("provider", { shortName: "custom" });
+	const customCloudProvider = await DB.findOne("provider", { shortName: "custom" }, { ownership: { owner, workspace } });
 	// console.log("customCloudProvider :>> ", customCloudProvider);
 
 	// insert new cluster
@@ -44,7 +48,7 @@ export const addInitialBareMetalCluster = async (kubeConfig: string, workspace: 
 		owner: owner._id,
 		workspace: workspace._id,
 	};
-	initialCluster = await DB.create("cluster", initialClusterDto);
+	initialCluster = await DB.create("cluster", initialClusterDto, { ownership: { owner, workspace } });
 	// console.log("initialCluster.slug :>> ", initialCluster.slug);
 
 	// verfify cluster

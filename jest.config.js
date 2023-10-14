@@ -16,5 +16,5 @@ module.exports = {
 	testEnvironment: "node",
 	coverageReporters: ["json", "lcov", "text", "clover"], // "text-summary"
 	modulePathIgnorePatterns: ["node_modules", ".temp"],
-	bail: 1,
+	// bail: 1,
 };

@@ -1,5 +1,3 @@
-import type { AppGitInfo, IFramework } from "@/entities";
-
 import type { SslType } from "./DeployEnvironment";
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
 import type { ResourceQuotaSize } from "./SystemTypes";
@@ -63,7 +61,7 @@ export interface AppInputSchema {
 	 * ---
 	 * Framework's ID or slug or {Framework} instance
 	 */
-	framework?: string | IFramework;
+	// framework?: string | IFramework;
 
 	/**
 	 * `OPTIONAL`
@@ -71,7 +69,7 @@ export interface AppInputSchema {
 	 * A SSH URI of the source code repository or a detail information of this repository
 	 * @example git@bitbucket.org:digitopvn/example-repo.git
 	 */
-	git?: string | AppGitInfo;
+	// git?: string | AppGitInfo;
 
 	/**
 	 * `OPTIONAL`

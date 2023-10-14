@@ -69,7 +69,6 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 
 		return options;
 	} catch (error) {
-		console.error(`initalizeAndCreateDefaultBranches error`, error);
-		return;
+		throw new Error(`[GIT] Unable to initialize default branches: ${error}`);
 	}
 };

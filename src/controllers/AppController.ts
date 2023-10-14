@@ -6,8 +6,7 @@ import { isArray, isBoolean, isEmpty, isNumber, isUndefined } from "lodash";
 import type { IApp, IBuild, ICluster, IProject } from "@/entities";
 import { AppDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
-import type { AppInputSchema } from "@/interfaces/AppInterfaces";
-import { CreateEnvVarsDto, DeployEnvironmentData, UpdateEnvVarsDto } from "@/interfaces/AppInterfaces";
+import { AppInputSchema, CreateEnvVarsDto, DeployEnvironmentData, UpdateEnvVarsDto } from "@/interfaces/AppInterfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -80,12 +79,16 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: AppInputSchema & Partial<IApp>, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: AppInputSchema, @Queries() queryParams?: IPostQueryParams) {
 		try {
-			const newApp = await this.service.create(body, { ...this.options, force: body.force, shouldCreateGitRepo: body.shouldCreateGitRepo });
+			const newApp = await this.service.create(body as any, {
+				...this.options,
+				force: body.force,
+				shouldCreateGitRepo: body.shouldCreateGitRepo,
+			});
 
-			delete body.force;
-			delete body.shouldCreateGitRepo;
+			// delete body.force;
+			// delete body.shouldCreateGitRepo;
 
 			return respondSuccess({ data: newApp });
 		} catch (e) {

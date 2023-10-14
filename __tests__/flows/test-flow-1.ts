@@ -363,6 +363,7 @@ export function testFlow1() {
 			expect(bareMetalCluster.contextName).toBeDefined();
 			expect(bareMetalCluster.provider).toBeDefined();
 			expect(bareMetalCluster.isVerified).toBeTruthy();
+			console.log("bareMetalCluster :>> ", bareMetalCluster);
 
 			const context = bareMetalCluster.contextName;
 			if (!context) throw new Error(`Cluster is not verifed (no "contextName")`);
@@ -470,7 +471,7 @@ export function testFlow1() {
 
 			if (!appOnGithub || !bareMetalCluster) throw new Error(`Failed to request deploy: no apps or clusters.`);
 
-			console.log("appOnGithub :>> ", appOnGithub);
+			// console.log("appOnGithub :>> ", appOnGithub);
 
 			// get app directory
 			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
