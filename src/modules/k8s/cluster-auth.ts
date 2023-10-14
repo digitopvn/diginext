@@ -170,7 +170,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			filePath = createTmpFile(`${clusterSlug}-kube-config.yaml`, kubeConfig);
 
 			// start authenticating & save cluster access info to "kubeconfig"...
-			cluster = await custom.authenticate(cluster, { filePath, isDebugging: options.isDebugging, ownership: options.ownership });
+			cluster = await custom.authenticate(cluster, { filePath, isDebugging: true, ownership: options.ownership });
 			if (!cluster) throw new Error(`Unable to authenticate this cluster: ${cluster.name}`);
 
 			const { contextName, isVerified } = cluster;

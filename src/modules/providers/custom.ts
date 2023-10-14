@@ -46,10 +46,6 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions & {
 	newKubeConfig["current-context"] = cluster.slug;
 	newKubeConfigContent = yaml.dump(newKubeConfig);
 
-	// [ONLY] for "custom" cluster -> context name == slug == short name
-	const currentContext = newKubeConfig["current-context"];
-	if (options.isDebugging) console.log("[CUSTOM CLUSTER] Auth > currentContext :>> ", currentContext);
-
 	// generate current kubeconfig file:
 	let currentKubeConfigContent;
 	try {
@@ -102,7 +98,11 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions & {
 		if (!existedItem) currentKubeConfig.contexts.push(newItem);
 	});
 
-	// currentKubeConfig["current-context"] = newKubeConfig["current-context"];
+	// [ONLY] for "custom" cluster -> context name == slug == short name
+	const currentContext = newKubeConfig["current-context"];
+	if (options.isDebugging) console.log("[CUSTOM CLUSTER] Auth > currentContext :>> ", currentContext);
+
+	currentKubeConfig["current-context"] = newKubeConfig["current-context"];
 	// console.log(`[CLUSTER_AUTH] KUBE_CONFIG :>>`, currentKubeConfig);
 
 	const finalKubeConfigContent = yaml.dump(currentKubeConfig);
@@ -115,13 +115,21 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions & {
 
 	// if authentication is success -> update cluster as verified:
 	const { DB } = await import("@/modules/api/DB");
+	console.log("currentContext :>> ", currentContext);
 
 	cluster = await DB.updateOne(
 		"cluster",
 		{ _id: cluster._id },
-		{ isVerified: true, kubeConfig: newKubeConfigContent, contextName: currentContext, shortName: currentContext },
-		{ ownership: options.ownership }
+		{
+			isVerified: true,
+			kubeConfig: newKubeConfigContent,
+			contextName: currentContext,
+			shortName: currentContext,
+		},
+		{ ownership: options.ownership, isDebugging: true }
 	);
+	console.log("cluster :>> ", cluster);
+	if (!cluster) throw new Error(`Unable to update context to cluster: "${cluster.slug}"`);
 
 	return cluster;
 };

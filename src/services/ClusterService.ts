@@ -27,7 +27,7 @@ export class ClusterService extends BaseService<ICluster> {
 		// check permissions
 		await checkPermissionsByFilter("clusters", this, filter, this.user);
 
-		return super.update(filter, options);
+		return super.update(filter, data, options);
 	}
 
 	async updateOne(filter: IQueryFilter<ICluster>, data: any, options?: IQueryOptions): Promise<ICluster> {
