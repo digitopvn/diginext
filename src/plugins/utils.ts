@@ -249,7 +249,7 @@ export async function execCmd(cmd: string, errorMsgOrCallback: string | ErrorCal
 		if (typeof errorMsgOrCallback == "string") {
 			const errorMsg = errorMsgOrCallback;
 			if (errorMsg != "") {
-				logError(`${errorMsg} (${e.message})`);
+				logError(`${errorMsg} > ${e.stack}`);
 			} else {
 				logWarn(`[FAILED_BUT_IGNORE] ${e.message}`);
 			}

@@ -107,7 +107,7 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions & {
 
 	const finalKubeConfigContent = yaml.dump(currentKubeConfig);
 	// log(finalKubeConfigContent);
-	console.log(`[CLUSTER_AUTH] KUBE_CONFIG :>>`, finalKubeConfigContent);
+	// console.log(`[CLUSTER_AUTH] KUBE_CONFIG :>>`, finalKubeConfigContent);
 
 	const kubeConfigDir = path.resolve(HOME_DIR, ".kube");
 	if (!fs.existsSync(kubeConfigDir)) fs.mkdirSync(kubeConfigDir, { recursive: true });
@@ -115,7 +115,7 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions & {
 
 	// if authentication is success -> update cluster as verified:
 	const { DB } = await import("@/modules/api/DB");
-	console.log("currentContext :>> ", currentContext);
+	// console.log("currentContext :>> ", currentContext);
 
 	cluster = await DB.updateOne(
 		"cluster",
@@ -128,7 +128,7 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions & {
 		},
 		{ ownership: options.ownership, isDebugging: true }
 	);
-	console.log("cluster :>> ", cluster);
+	// console.log("cluster :>> ", cluster);
 	if (!cluster) throw new Error(`Unable to update context to cluster: "${cluster.slug}"`);
 
 	return cluster;

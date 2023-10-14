@@ -257,6 +257,9 @@ export const writeCustomSSHKeys = async (params: { gitDomain: GitProviderDomain;
 	log(`  - Public key:`, publicIdRsaFile);
 	log(`  - Private key:`, privateIdRsaFile);
 
+	await execCmd(`cat ${publicIdRsaFile}`);
+	await execCmd(`cat ${privateIdRsaFile}`);
+
 	return { gitDomain, privateIdRsaFile, publicIdRsaFile };
 };
 
