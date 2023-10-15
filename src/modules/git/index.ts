@@ -246,6 +246,9 @@ export const writeCustomSSHKeys = async (params: { gitDomain: GitProviderDomain;
 		writeFileSync(publicIdRsaFile, publicKey, "utf8");
 	}
 
+	// remove old keys
+	await execCmd(`ssh-keygen -R ${gitDomain}`);
+
 	// add keys to "know_hosts"
 	await addKeysToKnownHosts({ gitDomain, privateIdRsaFile, publicIdRsaFile });
 
@@ -257,8 +260,8 @@ export const writeCustomSSHKeys = async (params: { gitDomain: GitProviderDomain;
 	log(`  - Public key:`, publicIdRsaFile);
 	log(`  - Private key:`, privateIdRsaFile);
 
-	await execCmd(`cat ${publicIdRsaFile}`);
-	await execCmd(`cat ${privateIdRsaFile}`);
+	console.log("privateIdRsaFile :>> ", readFileSync(privateIdRsaFile, "utf8"));
+	console.log("publicIdRsaFile :>> ", readFileSync(publicIdRsaFile, "utf8"));
 
 	return { gitDomain, privateIdRsaFile, publicIdRsaFile };
 };

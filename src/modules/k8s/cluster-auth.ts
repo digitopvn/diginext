@@ -64,16 +64,15 @@ export const switchContextToCluster = async (clusterSlug: string, providerShortN
  */
 export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions) => {
 	const { DB } = await import("@/modules/api/DB");
-	let filePath: string;
+	const { shouldSwitchContextToThisCluster = true, isDebugging } = options;
 
 	const { providerShortName, slug: clusterSlug } = cluster;
-	if (options?.isDebugging) console.log("[AUTH CLUSTER] cluster :>> ", cluster);
+	if (isDebugging) console.log("[AUTH CLUSTER] cluster :>> ", cluster);
 
 	if (!clusterSlug) throw new Error(`Param "slug" (cluster's slug) is required.`);
 	if (!providerShortName) throw new Error(`Param "provider" (Cloud Provider's short name) is required.`);
 
-	const { shouldSwitchContextToThisCluster = true } = options;
-
+	let filePath: string;
 	let context: KubeConfigContext;
 
 	// Check if Kubernetes context of the cluster is existed in KUBE_CONFIG -> skip cluster authentication
@@ -170,7 +169,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			filePath = createTmpFile(`${clusterSlug}-kube-config.yaml`, kubeConfig);
 
 			// start authenticating & save cluster access info to "kubeconfig"...
-			cluster = await custom.authenticate(cluster, { filePath, isDebugging: true, ownership: options.ownership });
+			cluster = await custom.authenticate(cluster, { filePath, isDebugging, ownership: options.ownership });
 			if (!cluster) throw new Error(`Unable to authenticate this cluster: ${cluster.name}`);
 
 			const { contextName, isVerified } = cluster;
