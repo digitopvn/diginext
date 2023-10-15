@@ -12,7 +12,7 @@ import screenshot from "../capture/screenshot";
 import type { DeployBuildOptions, DeployBuildResult } from "../deploy/deploy-build";
 import { deployBuild } from "../deploy/deploy-build";
 import type { StartBuildParams, StartBuildResult } from "./build";
-import { startBuild } from "./build";
+import { startBuild, stopBuild } from "./build";
 import { sendLog } from "./send-log-message";
 
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildOptions) => {
@@ -28,7 +28,9 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 		buildInfo = await startBuild(buildParams);
 		if (!buildInfo) throw new Error(`[BUILD_AND_DEPLOY] Unable to build.`);
 	} catch (e) {
+		const app = await DB.findOne("app", { slug: buildParams.appSlug });
 		const SOCKET_ROOM = `${buildParams.appSlug}-${buildParams.buildTag}`;
+		stopBuild(app.projectSlug, app.slug, SOCKET_ROOM);
 		sendLog({ SOCKET_ROOM, type: "error", message: `Build error: ${e.stack}` });
 		return;
 	}
@@ -48,6 +50,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	try {
 		deployRes = await deployBuild(build, deployParams);
 	} catch (e) {
+		stopBuild(projectSlug, appSlug, SOCKET_ROOM);
 		sendLog({ SOCKET_ROOM, type: "error", message: `Deploy error: ${e.stack}` });
 		return;
 	}

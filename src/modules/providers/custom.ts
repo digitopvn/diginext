@@ -8,20 +8,20 @@ import { HOME_DIR } from "@/config/const";
 import type { ICluster } from "@/entities";
 import type { KubeConfig } from "@/interfaces";
 import type { InputOptions } from "@/interfaces/InputOptions";
+import type { Ownership } from "@/interfaces/SystemTypes";
 
 import type { ContainerRegistrySecretOptions } from "../registry/ContainerRegistrySecretOptions";
 
 /**
  * Authenticate custom Kubernetes cluster access
  */
-export const authenticate = async (cluster: ICluster, options?: InputOptions) => {
+export const authenticate = async (cluster: ICluster, options?: InputOptions & { ownership: Ownership }) => {
 	const { execaCommand } = await import("execa");
 
 	const kubeConfigPath = options.filePath;
 
 	if (!fs.existsSync(kubeConfigPath)) {
-		logError(`KUBECONFIG file not found. Try: "dx custom auth -f /path/to/your-kube-config.yaml"`);
-		return;
+		throw new Error(`KUBECONFIG file not found. Try: "dx custom auth -f /path/to/your-kube-config.yaml"`);
 	}
 
 	// load new kubeconfig yaml:
@@ -46,16 +46,10 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 	newKubeConfig["current-context"] = cluster.slug;
 	newKubeConfigContent = yaml.dump(newKubeConfig);
 
-	// [ONLY] for "custom" cluster -> context name == slug == short name
-	const currentContext = newKubeConfig["current-context"];
-	if (options.isDebugging) console.log("[CUSTOM CLUSTER] Auth > currentContext :>> ", currentContext);
-
 	// generate current kubeconfig file:
 	let currentKubeConfigContent;
 	try {
 		/** FOR TEST */
-		// const currentKubeConfigFile = path.resolve(CLI_DIR, "keys/kbconf.yaml");
-		// const { stdout } = await execaCommand(`kubectl config --kubeconfig ${currentKubeConfigFile} view --flatten`);
 		const { stdout } = await execaCommand(`kubectl config view --flatten`);
 		currentKubeConfigContent = stdout;
 	} catch (e) {
@@ -104,7 +98,11 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 		if (!existedItem) currentKubeConfig.contexts.push(newItem);
 	});
 
-	// currentKubeConfig["current-context"] = newKubeConfig["current-context"];
+	// [ONLY] for "custom" cluster -> context name == slug == short name
+	const currentContext = newKubeConfig["current-context"];
+	if (options.isDebugging) console.log("[CUSTOM CLUSTER] Auth > currentContext :>> ", currentContext);
+
+	currentKubeConfig["current-context"] = newKubeConfig["current-context"];
 	// console.log(`[CLUSTER_AUTH] KUBE_CONFIG :>>`, currentKubeConfig);
 
 	const finalKubeConfigContent = yaml.dump(currentKubeConfig);
@@ -117,12 +115,21 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions) =>
 
 	// if authentication is success -> update cluster as verified:
 	const { DB } = await import("@/modules/api/DB");
+	// console.log("currentContext :>> ", currentContext);
 
 	cluster = await DB.updateOne(
 		"cluster",
 		{ _id: cluster._id },
-		{ isVerified: true, kubeConfig: newKubeConfigContent, contextName: currentContext, shortName: currentContext }
+		{
+			isVerified: true,
+			kubeConfig: newKubeConfigContent,
+			contextName: currentContext,
+			shortName: currentContext,
+		},
+		{ ownership: options.ownership, isDebugging: options.isDebugging }
 	);
+	// console.log("cluster :>> ", cluster);
+	if (!cluster) throw new Error(`Unable to update context to cluster: "${cluster.slug}"`);
 
 	return cluster;
 };

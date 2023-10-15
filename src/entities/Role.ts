@@ -31,9 +31,10 @@ export interface IRole extends IBase {
 	/**
 	 * One of:
 	 * - undefined | "custom": custom role
-	 * - "admin": default super admin role
-	 * - "member": default member role
-	 * - "moderator": default moderator role
+	 * - "admin"		: 	default super admin role
+	 * - "moderator"	: 	default moderator role
+	 * - "member"		: 	default member role
+	 * - "guest"		: 	default guest role
 	 */
 	type?: string;
 }

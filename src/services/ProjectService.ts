@@ -3,9 +3,11 @@ import { isEmpty } from "lodash";
 
 import type { IProject } from "@/entities/Project";
 import { projectSchema } from "@/entities/Project";
-import type { IQueryFilter } from "@/interfaces";
+import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
+import { MongoDB } from "@/plugins/mongodb";
+import { checkProjectPermissions, checkProjectPermissionsByFilter } from "@/plugins/user-utils";
 
 import { AppService } from "./AppService";
 import BaseService from "./BaseService";
@@ -15,11 +17,53 @@ export class ProjectService extends BaseService<IProject> {
 		super(projectSchema, ownership);
 	}
 
+	async find(filter?: IQueryFilter<IProject>, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<IProject[]> {
+		if (this.user?.allowAccess?.projects?.length > 0) filter = { $or: [filter, { _id: { $in: this.user?.allowAccess?.projects } }] };
+
+		return super.find(filter, options, pagination);
+	}
+
+	async create(data: any, options?: IQueryOptions): Promise<IProject> {
+		return super.create(data, options);
+	}
+
+	async update(filter: IQueryFilter<IProject>, data: any, options?: IQueryOptions): Promise<IProject[]> {
+		// check access permissions
+		await checkProjectPermissionsByFilter(this, filter, this.user);
+
+		return super.update(filter, data, options);
+	}
+
+	async updateOne(filter: IQueryFilter<IProject>, data: any, options?: IQueryOptions): Promise<IProject> {
+		// check permissions
+		await checkProjectPermissionsByFilter(this, filter, this.user);
+
+		return super.updateOne(filter, data, options);
+	}
+
+	async delete(filter?: IQueryFilter<IProject>, options?: IQueryOptions): Promise<{ ok: boolean; affected: number }> {
+		// check permissions
+		await checkProjectPermissionsByFilter(this, filter, this.user);
+
+		return super.delete(filter, options);
+	}
+
 	async softDelete(filter?: IQueryFilter) {
 		const { DB } = await import("@/modules/api/DB");
+
 		// find the project:
 		const project = await this.findOne(filter);
 		if (!project) return { ok: false, affected: 0 };
+
+		// check access permissions
+		checkProjectPermissions(project);
+
+		// check access permissions
+		if (this.user && this.user.allowAccess?.projects) {
+			if (!this.user.allowAccess?.projects.map((p) => MongoDB.toString(p)).includes(MongoDB.toString(project._id))) {
+				throw new Error(`Permission denied.`);
+			}
+		}
 
 		// find all apps & environments, then take down all namespaces:
 		const appSvc = new AppService();

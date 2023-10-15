@@ -12,6 +12,7 @@ import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
+import { ClusterService } from "@/services";
 import { MonitorNamespaceCreateData, MonitorService } from "@/services/MonitorService";
 
 @Tags("Monitor")
@@ -105,12 +106,14 @@ export default class MonitorController {
 	@Get("/nodes")
 	async getNodes(@Queries() queryParams?: MonitoringQueryParams) {
 		const { DB } = await import("@/modules/api/DB");
-		let { cluster: clusterSlugOrId } = this.filter;
+		// console.log("this.filter :>> ", this.filter);
+		const clusterSvc = new ClusterService(this.ownership);
+		let { cluster: clusterSlugOrId, ...restFilter } = this.filter;
 
 		let data: KubeNode[] = [];
 
 		if (!clusterSlugOrId) {
-			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
+			const clusters = await clusterSvc.find({ workspace: this.workspace._id, ...restFilter });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
 					const { contextName: context } = cluster;
@@ -127,9 +130,10 @@ export default class MonitorController {
 			);
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
-			const cluster = await DB.findOne("cluster", {
+			const cluster = await clusterSvc.findOne({
 				$or: [{ slug: clusterSlugOrId }, { _id: clusterSlugOrId }],
 				workspace: this.workspace._id,
+				...restFilter,
 			});
 			if (!cluster) return respondFailure(`Cluster "${clusterSlugOrId}" not found.`);
 

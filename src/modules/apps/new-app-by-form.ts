@@ -96,21 +96,6 @@ export async function createAppByForm(
 		const { providerType: gitProvider } = parseGitRepoDataFromRepoSSH(repoSSH);
 		frameworkGitProvider = gitProvider;
 
-		// const { namespace } = parseGitRepoDataFromRepoSSH(fwRepoSSH);
-		// if (!isFwPrivate) {
-		// 	const canAccessPublicRepo = await checkGitProviderAccess(frameworkGitProvider);
-		// 	if (!canAccessPublicRepo) {
-		// 		logError(`You need to authenticate ${upperFirst(frameworkGitProvider)} first to be able to pull this framework.`);
-		// 		return;
-		// 	}
-		// } else {
-		// 	const canAccessPrivateRepo = await checkGitRepoAccess(fwRepoSSH);
-		// 	if (!canAccessPrivateRepo) {
-		// 		logError(`You may not have access to this private repository or ${namespace} organization, please authenticate first.`);
-		// 		return;
-		// 	}
-		// }
-
 		// Request select specific version
 		if (!options.frameworkVersion) {
 			const { frameworkVersion } = await inquirer.prompt({
@@ -168,10 +153,8 @@ export async function createAppByForm(
 		});
 		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > newRepo :>> ", newRepo);
 
-		if (!newRepo) {
-			logError("Something went wrong!");
-			return;
-		}
+		if (!newRepo) throw new Error(`Unable to create new ${gitProvider.type} repository.`);
+
 		options.gitProvider = newRepo.provider;
 		options.repoSSH = newRepo.ssh_url;
 		options.repoURL = newRepo.repo_url;

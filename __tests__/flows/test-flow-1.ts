@@ -34,6 +34,8 @@ import { wait } from "@/plugins";
 import { fetchApi } from "@/modules/api";
 import { makeSlug } from "@/plugins/slug";
 
+const cliDebugFlag = process.env.TEST_DEBUG === "1" ? "--debug" : "";
+
 export function testFlow1() {
 	let wsId: string;
 
@@ -113,12 +115,13 @@ export function testFlow1() {
 		// check 3 initial roles
 		const initialRoles = await roleSvc.find({ workspace: wsId });
 		// console.log("initialRoles :>> ", initialRoles);
-		expect(initialRoles.length).toEqual(3);
+		expect(initialRoles.length).toEqual(4);
 
 		const roleNames = initialRoles.map((role) => (role as IRole).name);
 		expect(roleNames).toContain("Administrator");
 		expect(roleNames).toContain("Moderator");
 		expect(roleNames).toContain("Member");
+		expect(roleNames).toContain("Guest");
 
 		// check default API key
 		const apiKeys = await apiKeySvc.find({ workspaces: wsId }, { populate: ["roles"] });
@@ -138,6 +141,7 @@ export function testFlow1() {
 	}, 60000);
 
 	it("Workspace #1: Git Provider - Bitbucket", async () => {
+		console.log("[TESTING] Workspace #1: Git Provider - Bitbucket");
 		const curUser = await getCurrentUser();
 
 		// seed git provider: bitbucket
@@ -151,6 +155,7 @@ export function testFlow1() {
 				app_password: process.env.TEST_BITBUCKET_APP_PASS,
 			},
 		});
+		console.log("createRes :>> ", createRes);
 
 		// verify bitbucket api
 		let bitbucket = createRes.data as IGitProvider;
@@ -168,9 +173,11 @@ export function testFlow1() {
 		const profile = await GitProviderAPI.getProfile(bitbucket);
 		expect(profile).toBeDefined();
 		expect(profile.username).toBe(process.env.TEST_BITBUCKET_USER);
+		console.log("profile :>> ", profile);
 	}, 60000);
 
 	it("Workspace #1: Git Provider - Github", async () => {
+		console.log("[TESTING] Workspace #1: Git Provider - Github");
 		const curUser = await getCurrentUser();
 		// seed git provider: github
 		const createRes = await gitCtl.create({
@@ -362,12 +369,13 @@ export function testFlow1() {
 			expect(bareMetalCluster.contextName).toBeDefined();
 			expect(bareMetalCluster.provider).toBeDefined();
 			expect(bareMetalCluster.isVerified).toBeTruthy();
+			console.log("bareMetalCluster :>> ", bareMetalCluster);
 
 			const context = bareMetalCluster.contextName;
 			if (!context) throw new Error(`Cluster is not verifed (no "contextName")`);
 
 			// switch context to this cluster
-			const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${bareMetalCluster.slug}`);
+			const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${bareMetalCluster.slug} ${cliDebugFlag}`);
 			expect(switchCtxRes.toLowerCase().indexOf("connected")).toBeGreaterThan(-1);
 
 			// check test namespace exists
@@ -410,10 +418,14 @@ export function testFlow1() {
 			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
 
 			// create new app...
-			const res = await dxCmd(`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force`);
-
+			const res = await dxCmd(
+				`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force ${cliDebugFlag}`
+			);
 			expect(res).toBeDefined();
-			// expect(res.toLowerCase()).not.toContain("error");
+
+			// reload app's data
+			appOnGithub = await appSvc.findOne({}, { order: { createdAt: -1 } });
+			expect(appOnGithub).toBeDefined();
 
 			const sourceCodeDirs = readdirSync(CLI_TEST_DIR);
 			// console.log("sourceCodeDirs :>> ", sourceCodeDirs);
@@ -424,9 +436,6 @@ export function testFlow1() {
 			// console.log("sourceCodeFiles :>> ", sourceCodeFiles);
 			expect(sourceCodeFiles.length).toBeGreaterThan(0);
 			expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
-
-			// reload app's data
-			appOnGithub = await appSvc.findOne({}, { order: { createdAt: -1 } });
 		},
 		5 * 60000
 	);
@@ -441,7 +450,7 @@ export function testFlow1() {
 
 			// create new app...
 			const res = await dxCmd(
-				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
+				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force ${cliDebugFlag}`
 			);
 			expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
@@ -470,7 +479,7 @@ export function testFlow1() {
 
 			if (!appOnGithub || !bareMetalCluster) throw new Error(`Failed to request deploy: no apps or clusters.`);
 
-			console.log("appOnGithub :>> ", appOnGithub);
+			// console.log("appOnGithub :>> ", appOnGithub);
 
 			// get app directory
 			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");

@@ -1,4 +1,4 @@
-import type { IApp, IFramework, IGitProvider, IProject, IWorkspace } from "@/entities";
+import type { IApp, IFramework, IGitProvider, IProject, IUser, IWorkspace } from "@/entities";
 
 import type { GitProviderType, ResourceQuotaSize } from "./SystemTypes";
 
@@ -49,6 +49,7 @@ export type InputOptions = {
 	/**
 	 * Ownership
 	 */
+	author?: IUser;
 	username?: string;
 	userId?: string;
 	workspace?: IWorkspace;
