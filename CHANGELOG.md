@@ -1,3 +1,10 @@
+## [3.24.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.0...v3.24.1-prerelease.1) (2023-10-15)
+
+
+### Bug Fixes
+
+* **server:** add try catch to all then case ([dd86922](https://github.com/digitopvn/diginext/commit/dd869221730002d052afb7d4de6d7ea8ba4dce6a))
+
 # [3.24.0](https://github.com/digitopvn/diginext/compare/v3.23.4...v3.24.0) (2023-10-15)
 
 
