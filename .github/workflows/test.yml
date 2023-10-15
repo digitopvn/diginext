@@ -11,6 +11,7 @@ on:
   #     - "!beta"         # exclude "beta"
   #     - "!prerelease"   # exclude "prerelease"
   pull_request:
+    types: [synchronize]
     branches:
       - main
       - beta
