@@ -78,23 +78,27 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 		try {
 			// let's this job run in background
 			wait(30 * 1000, () => {
-				screenshot(env === "prod" ? prereleaseUrl : endpoint, { fullPage: false }).then(async (result) => {
-					if (result) {
-						// success -> write to db
-						delete result.buffer;
-						const mediaSvc = new MediaService();
-						const media = await mediaSvc.create({ ...result, owner: deployParams.owner._id, workspace: deployParams.workspace._id });
-						if (media) {
-							// update screenshot to release
-							const updatedRelease = await DB.updateOne("release", { _id: releaseId }, { screenshot: media.url });
-							// if (updatedRelease) sendLog({ SOCKET_ROOM, message: `Screenshot: ${media.url}` });
+				screenshot(env === "prod" ? prereleaseUrl : endpoint, { fullPage: false })
+					.then(async (result) => {
+						if (result) {
+							// success -> write to db
+							delete result.buffer;
+							const mediaSvc = new MediaService();
+							const media = await mediaSvc.create({ ...result, owner: deployParams.owner._id, workspace: deployParams.workspace._id });
+							if (media) {
+								// update screenshot to release
+								const updatedRelease = await DB.updateOne("release", { _id: releaseId }, { screenshot: media.url });
+								// if (updatedRelease) sendLog({ SOCKET_ROOM, message: `Screenshot: ${media.url}` });
 
-							// update screenshot to app's deploy environment
-							const app = await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
-							// if (!app) sendLog({ SOCKET_ROOM, message: `Unable to update screenshot to app's deploy environment (${env})` });
+								// update screenshot to app's deploy environment
+								const app = await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
+								// if (!app) sendLog({ SOCKET_ROOM, message: `Unable to update screenshot to app's deploy environment (${env})` });
+							}
 						}
-					}
-				});
+					})
+					.catch((e) => {
+						console.error(e);
+					});
 			});
 		} catch (e) {
 			sendLog({
