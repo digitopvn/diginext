@@ -31,8 +31,8 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		await wait(1000);
 
 		// add git origin remote:
-		// await git.addRemote("origin", options.repoSSH);
-		await git.addRemote("origin", options.repoURL);
+		await git.addRemote("origin", options.repoSSH);
+		// await git.addRemote("origin", options.repoURL);
 
 		// stage all deployment files & commit it
 		await git.fetch(["--all"]);
