@@ -1,3 +1,11 @@
+## [3.24.1](https://github.com/digitopvn/diginext/compare/v3.24.0...v3.24.1) (2023-10-15)
+
+
+### Bug Fixes
+
+* **github actions:** rm ski p c i ([02cd645](https://github.com/digitopvn/diginext/commit/02cd645d342400f6d94bdddcab902700caffdbbc))
+* **server:** add try catch to all then case ([dd86922](https://github.com/digitopvn/diginext/commit/dd869221730002d052afb7d4de6d7ea8ba4dce6a))
+
 ## [3.24.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.0...v3.24.1-prerelease.1) (2023-10-15)
 
 
