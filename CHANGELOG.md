@@ -1,3 +1,22 @@
+# [3.24.0](https://github.com/digitopvn/diginext/compare/v3.23.4...v3.24.0) (2023-10-15)
+
+
+### Bug Fixes
+
+* **bitbucket:** write custom id_rsa for bitbucket auth ([39865cf](https://github.com/digitopvn/diginext/commit/39865cf8fce8b7ffd0d1b608f3ba414800c2da82))
+* **cluster:** fix permissions on update cluster ([ec3eb2e](https://github.com/digitopvn/diginext/commit/ec3eb2e60232f8c50d06001f4c350020f9ec5ded))
+* **hotfix:** make build deploy error easier to understand ([b2d1f15](https://github.com/digitopvn/diginext/commit/b2d1f15f63f4f063174aac5d4246a1f6290e2fd4))
+* **permissions:** cluster auth not update context ([67b917a](https://github.com/digitopvn/diginext/commit/67b917a31572f84db3c38c19e66df97f4e82ae65))
+* **server:** clear old ssh keys ([f2347f4](https://github.com/digitopvn/diginext/commit/f2347f4e4b7027552e4b83be4b46400dcce2fa1f))
+* **server:** kill build process on error ([1fa1154](https://github.com/digitopvn/diginext/commit/1fa115449cd946b2820ca2667efaf51cebef4f19))
+* **test:** cluster auth failed ([2d8fa3a](https://github.com/digitopvn/diginext/commit/2d8fa3a6b1866a022a161b82ef580a8498f0ebcd))
+* **test:** turn off debug ([777ae81](https://github.com/digitopvn/diginext/commit/777ae812d58f5a1c7d59e25a82821100842cb0d4))
+
+
+### Features
+
+* **server,admin:** add guest role ([9692bca](https://github.com/digitopvn/diginext/commit/9692bca46ff16373d23e1f83d9a9352507151082))
+
 # [3.24.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.23.4...v3.24.0-prerelease.1) (2023-10-15)
 
 

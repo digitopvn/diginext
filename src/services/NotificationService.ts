@@ -125,13 +125,17 @@ export class NotificationService extends BaseService<INotification> {
 					notiData.references = data.references;
 					return this.create(notiData, options);
 				})
-			).then((notifications) => {
-				// emit websocket to clients
-				notifications.map(({ owner: recipientId }) => {
-					socketIO?.to(recipientId).emit("notification", { action: "new", message: "You have new notification" });
+			)
+				.then((notifications) => {
+					// emit websocket to clients
+					notifications.map(({ owner: recipientId }) => {
+						socketIO?.to(recipientId).emit("notification", { action: "new", message: "You have new notification" });
+					});
+					return notifications;
+				})
+				.catch((e) => {
+					console.error(`Unable to send notification:`, e);
 				});
-				return notifications;
-			});
 		} else {
 			// create notification -> single recipient
 			const notiData: Partial<INotification> = {};
@@ -142,11 +146,15 @@ export class NotificationService extends BaseService<INotification> {
 			notiData.events = data.events;
 			notiData.channels = data.channels;
 			notiData.references = data.references;
-			return this.create(notiData, options).then((noti) => {
-				// emit websocket to clients
-				socketIO?.to(noti.owner).emit("notification", { action: "new", message: "You have new notification" });
-				return noti;
-			});
+			return this.create(notiData, options)
+				.then((noti) => {
+					// emit websocket to clients
+					socketIO?.to(noti.owner).emit("notification", { action: "new", message: "You have new notification" });
+					return noti;
+				})
+				.catch((e) => {
+					console.error(`Unable to send notification:`, e);
+				});
 		}
 	}
 
