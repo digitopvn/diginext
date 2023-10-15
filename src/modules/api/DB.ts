@@ -468,7 +468,7 @@ export class DB {
 			const path = collection === "git_repo" ? "git" : collection;
 			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 			const updateData = data;
-			if (options.isDebugging) console.log(`[DB] UPDATE > ${url} >updateData :>> `, updateData);
+			if (options.isDebugging) console.log(`[DB] UPDATE > ${url} > updateData :>> `, updateData);
 
 			const {
 				status,

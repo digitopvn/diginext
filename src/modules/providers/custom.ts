@@ -126,7 +126,7 @@ export const authenticate = async (cluster: ICluster, options?: InputOptions & {
 			contextName: currentContext,
 			shortName: currentContext,
 		},
-		{ ownership: options.ownership, isDebugging: true }
+		{ ownership: options.ownership, isDebugging: options.isDebugging }
 	);
 	// console.log("cluster :>> ", cluster);
 	if (!cluster) throw new Error(`Unable to update context to cluster: "${cluster.slug}"`);

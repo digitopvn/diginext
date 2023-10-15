@@ -34,6 +34,8 @@ import { wait } from "@/plugins";
 import { fetchApi } from "@/modules/api";
 import { makeSlug } from "@/plugins/slug";
 
+const cliDebugFlag = process.env.TEST_DEBUG === "1" ? "--debug" : "";
+
 export function testFlow1() {
 	let wsId: string;
 
@@ -139,6 +141,7 @@ export function testFlow1() {
 	}, 60000);
 
 	it("Workspace #1: Git Provider - Bitbucket", async () => {
+		console.log("[TESTING] Workspace #1: Git Provider - Bitbucket");
 		const curUser = await getCurrentUser();
 
 		// seed git provider: bitbucket
@@ -152,6 +155,7 @@ export function testFlow1() {
 				app_password: process.env.TEST_BITBUCKET_APP_PASS,
 			},
 		});
+		console.log("createRes :>> ", createRes);
 
 		// verify bitbucket api
 		let bitbucket = createRes.data as IGitProvider;
@@ -169,9 +173,11 @@ export function testFlow1() {
 		const profile = await GitProviderAPI.getProfile(bitbucket);
 		expect(profile).toBeDefined();
 		expect(profile.username).toBe(process.env.TEST_BITBUCKET_USER);
+		console.log("profile :>> ", profile);
 	}, 60000);
 
 	it("Workspace #1: Git Provider - Github", async () => {
+		console.log("[TESTING] Workspace #1: Git Provider - Github");
 		const curUser = await getCurrentUser();
 		// seed git provider: github
 		const createRes = await gitCtl.create({
@@ -369,7 +375,7 @@ export function testFlow1() {
 			if (!context) throw new Error(`Cluster is not verifed (no "contextName")`);
 
 			// switch context to this cluster
-			const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${bareMetalCluster.slug}`);
+			const switchCtxRes = await dxCmd(`dx cluster connect --cluster=${bareMetalCluster.slug} ${cliDebugFlag}`);
 			expect(switchCtxRes.toLowerCase().indexOf("connected")).toBeGreaterThan(-1);
 
 			// check test namespace exists
@@ -412,7 +418,9 @@ export function testFlow1() {
 			const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
 
 			// create new app...
-			const res = await dxCmd(`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force`);
+			const res = await dxCmd(
+				`dx new --projectName=TestGithubProject --name=web --framework=${framework.slug} --git=${github.slug} --force ${cliDebugFlag}`
+			);
 			expect(res).toBeDefined();
 
 			// reload app's data
@@ -442,7 +450,7 @@ export function testFlow1() {
 
 			// create new app...
 			const res = await dxCmd(
-				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force`
+				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force ${cliDebugFlag}`
 			);
 			expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
