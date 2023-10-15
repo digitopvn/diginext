@@ -60,23 +60,34 @@ export class SystemLogService extends BaseService<ISystemLog> {
 							}
 						);
 					}
+				})
+				.catch((e) => {
+					console.error(`Unable to delete expired logs:`, e);
 				});
 		} else if (type === "limit") {
 			// Mark as deleted based on item count
-			return this.model.countDocuments({ deletedAt: null }).then((count) => {
-				const itemsToDelete = count - value;
-				if (itemsToDelete > 0) {
-					// We need to delete the oldest items, so we sort by 'createdAt'
-					return this.model
-						.find({ deletedAt: null })
-						.sort({ createdAt: 1 })
-						.limit(itemsToDelete)
-						.then((docs) => {
-							const idsToDelete = docs.map((doc) => doc._id);
-							return this.model.updateMany({ _id: { $in: idsToDelete } }, { $set: { deletedAt: now } });
-						});
-				}
-			});
+			return this.model
+				.countDocuments({ deletedAt: null })
+				.then((count) => {
+					const itemsToDelete = count - value;
+					if (itemsToDelete > 0) {
+						// We need to delete the oldest items, so we sort by 'createdAt'
+						return this.model
+							.find({ deletedAt: null })
+							.sort({ createdAt: 1 })
+							.limit(itemsToDelete)
+							.then((docs) => {
+								const idsToDelete = docs.map((doc) => doc._id);
+								return this.model.updateMany({ _id: { $in: idsToDelete } }, { $set: { deletedAt: now } });
+							})
+							.catch((e) => {
+								console.error(`Unable to delete expired logs:`, e);
+							});
+					}
+				})
+				.catch((e) => {
+					console.error(`Unable to delete expired logs:`, e);
+				});
 		}
 	}
 }

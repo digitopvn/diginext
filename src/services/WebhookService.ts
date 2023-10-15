@@ -83,63 +83,61 @@ export class WebhookService extends BaseService<IWebhook> {
 				switch (event) {
 					case "build_status":
 						if (webhook.status === "failed" || webhook.status === "success") {
-							return DB.findOne("build", { _id: webhook.build }, { populate: ["workspace", "owner", "project", "app"] }).then((ref) => {
-								const BUILD_LOG_ROOM = `${ref?.appSlug}-${ref?.tag}`;
-								const logURL = `${Config.BASE_URL}/build/logs?build_slug=${BUILD_LOG_ROOM}`;
-								const duration = humanizeDuration(ref.duration);
-								const owner = ref.owner as IUser;
-								return this.notiSvc.webhookSend(webhook, {
-									references: { build: MongoDB.toString(ref._id) },
-									url: logURL,
-									from: MongoDB.toString(webhook.owner),
-									to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
-									title: webhook.status === "failed" ? `Build failed: ${ref?.name}` : `Build success: ${ref?.name}`,
-									message: `- Workspace: ${this.ownership.workspace.name}<br/>- Project: ${
-										(ref?.project as IProject).name
-									}<br/>- App: ${(ref?.app as IApp).name}<br/>- User: ${owner.name} (${
-										owner.slug
-									})<br/>- Duration: ${duration}<br/>- View logs: <a href="${logURL}">CLICK HERE</a><br/>- Container image: ${
-										ref?.image
-									}`,
+							return DB.findOne("build", { _id: webhook.build }, { populate: ["workspace", "owner", "project", "app"] })
+								.then((ref) => {
+									const BUILD_LOG_ROOM = `${ref?.appSlug}-${ref?.tag}`;
+									const logURL = `${Config.BASE_URL}/build/logs?build_slug=${BUILD_LOG_ROOM}`;
+									const duration = humanizeDuration(ref.duration);
+									const owner = ref.owner as IUser;
+									return this.notiSvc.webhookSend(webhook, {
+										references: { build: MongoDB.toString(ref._id) },
+										url: logURL,
+										from: MongoDB.toString(webhook.owner),
+										to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
+										title: webhook.status === "failed" ? `Build failed: ${ref?.name}` : `Build success: ${ref?.name}`,
+										message: `- Workspace: ${this.ownership.workspace.name}<br/>- Project: ${
+											(ref?.project as IProject).name
+										}<br/>- App: ${(ref?.app as IApp).name}<br/>- User: ${owner.name} (${
+											owner.slug
+										})<br/>- Duration: ${duration}<br/>- View logs: <a href="${logURL}">CLICK HERE</a><br/>- Container image: ${ref?.image}`,
+									});
+								})
+								.catch((e) => {
+									console.error(`Unable to trigger webhook:`, e);
 								});
-							});
 						}
 						break;
 
 					case "deploy_status":
 						if (webhook.status === "failed" || webhook.status === "success") {
-							return DB.findOne(
-								"release",
-								{ _id: webhook.release },
-								{ populate: ["workspace", "owner", "project", "app", "build"] }
-							).then((ref) => {
-								const build = ref?.build as IBuild;
-								const BUILD_LOG_ROOM = `${build.appSlug}-${build.tag}`;
-								const logURL = `${Config.BASE_URL}/build/logs?build_slug=${BUILD_LOG_ROOM}`;
-								const duration = humanizeDuration(build.duration);
-								const owner = ref.owner as IUser;
-								return this.notiSvc.webhookSend(webhook, {
-									references: { release: MongoDB.toString(ref._id) },
-									url: logURL,
-									from: MongoDB.toString(webhook.owner),
-									to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
-									title: webhook.status === "failed" ? `Deploy failed: ${ref?.name}` : `Deploy success: ${ref?.name}`,
-									message:
-										webhook.status === "failed"
-											? `Failed to deploy "${ref?.appSlug}" app of "${
-													ref?.projectSlug
-											  }" project to "${ref?.env.toUpperCase()}" environment.`
-											: `<strong>App has been deployed to "${ref?.env.toUpperCase()}" environment successfully.</strong><br/><br/>- Workspace: ${
-													(ref?.workspace as IWorkspace).name
-											  }<br/>- User: ${owner.name} (${owner.slug})<br/>- App: ${ref?.appSlug}<br/>- Project: ${
-													ref?.projectSlug
-											  }<br/>- URL: <a href="https://${
-													ref?.env === "production" ? ref?.prereleaseUrl : ref?.productionUrl
-											  }">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${
-													ref?.image
-											  }`,
+							return DB.findOne("release", { _id: webhook.release }, { populate: ["workspace", "owner", "project", "app", "build"] })
+								.then((ref) => {
+									const build = ref?.build as IBuild;
+									const BUILD_LOG_ROOM = `${build.appSlug}-${build.tag}`;
+									const logURL = `${Config.BASE_URL}/build/logs?build_slug=${BUILD_LOG_ROOM}`;
+									const duration = humanizeDuration(build.duration);
+									const owner = ref.owner as IUser;
+									return this.notiSvc.webhookSend(webhook, {
+										references: { release: MongoDB.toString(ref._id) },
+										url: logURL,
+										from: MongoDB.toString(webhook.owner),
+										to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
+										title: webhook.status === "failed" ? `Deploy failed: ${ref?.name}` : `Deploy success: ${ref?.name}`,
+										message:
+											webhook.status === "failed"
+												? `Failed to deploy "${ref?.appSlug}" app of "${ref?.projectSlug}" project to "${ref?.env.toUpperCase()}" environment.`
+												: `<strong>App has been deployed to "${ref?.env.toUpperCase()}" environment successfully.</strong><br/><br/>- Workspace: ${
+														(ref?.workspace as IWorkspace).name
+												  }<br/>- User: ${owner.name} (${
+														owner.slug
+												  })<br/>- App: ${ref?.appSlug}<br/>- Project: ${ref?.projectSlug}<br/>- URL: <a href="https://${
+														ref?.env === "production" ? ref?.prereleaseUrl : ref?.productionUrl
+												  }">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${ref?.image}`,
+									});
+								})
+								.catch((e) => {
+									console.error(`Unable to trigger webhook:`, e);
 								});
-							});
 						}
 						break;
 

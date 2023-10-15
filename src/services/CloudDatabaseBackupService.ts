@@ -92,23 +92,34 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 							}
 						);
 					}
+				})
+				.catch((e) => {
+					console.error(`Unable to count DB backups:`, e);
 				});
 		} else if (type === "limit") {
 			// Mark as deleted based on item count
-			return this.model.countDocuments({ deletedAt: null }).then((count) => {
-				const itemsToDelete = count - value;
-				if (itemsToDelete > 0) {
-					// We need to delete the oldest items, so we sort by 'createdAt'
-					return this.model
-						.find({ deletedAt: null })
-						.sort({ createdAt: 1 })
-						.limit(itemsToDelete)
-						.then((docs) => {
-							const idsToDelete = docs.map((doc) => doc._id);
-							return this.softDelete({ _id: { $in: idsToDelete } }, { $set: { deletedAt: now } });
-						});
-				}
-			});
+			return this.model
+				.countDocuments({ deletedAt: null })
+				.then((count) => {
+					const itemsToDelete = count - value;
+					if (itemsToDelete > 0) {
+						// We need to delete the oldest items, so we sort by 'createdAt'
+						return this.model
+							.find({ deletedAt: null })
+							.sort({ createdAt: 1 })
+							.limit(itemsToDelete)
+							.then((docs) => {
+								const idsToDelete = docs.map((doc) => doc._id);
+								return this.softDelete({ _id: { $in: idsToDelete } }, { $set: { deletedAt: now } });
+							})
+							.catch((e) => {
+								console.error(`Unable to delete DB backups:`, e);
+							});
+					}
+				})
+				.catch((e) => {
+					console.error(`Unable to count DB backups:`, e);
+				});
 		}
 	}
 }
