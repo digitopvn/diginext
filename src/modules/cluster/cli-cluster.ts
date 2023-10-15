@@ -8,7 +8,7 @@ import { authCluster } from "../k8s/cluster-auth";
 
 export const execCluster = async (options?: InputOptions) => {
 	const { DB } = await import("@/modules/api/DB");
-	const { secondAction: action, thirdAction: resource, isDebugging } = options;
+	const { secondAction: action, thirdAction: resource, isDebugging, author: owner, workspace } = options;
 
 	switch (action) {
 		case "connect":
@@ -18,7 +18,7 @@ export const execCluster = async (options?: InputOptions) => {
 				: await askForCluster();
 			// if (options.isDebugging) console.log("[COMMAND] cluster > connect > cluster :>> ", cluster);
 			if (!cluster) throw new Error(`Unable to connect cluster, cluster "${options?.cluster}" not found.`);
-			await authCluster(cluster, { isDebugging });
+			await authCluster(cluster, { isDebugging, ownership: { owner, workspace } });
 			break;
 
 		case "list":

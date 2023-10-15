@@ -1,18 +1,33 @@
 import type { ICloudProvider } from "@/entities";
 import type { ICluster } from "@/entities/Cluster";
 import { clusterSchema } from "@/entities/Cluster";
-import type { IQueryFilter, IQueryOptions } from "@/interfaces";
+import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import type { ClusterAuthOptions } from "@/modules/k8s/cluster-auth";
 import { deleteClusterInKubeConfig } from "@/modules/k8s/kube-config";
 import type { InstallStackOptions } from "@/modules/k8s/stack-install";
+import { checkPermissions, checkPermissionsByFilter, checkPermissionsById } from "@/plugins/user-utils";
 
 import BaseService from "./BaseService";
 
 export class ClusterService extends BaseService<ICluster> {
 	constructor(ownership?: Ownership) {
 		super(clusterSchema, ownership);
+	}
+
+	find(filter?: IQueryFilter<ICluster>, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<ICluster[]> {
+		// check access permissions
+		if (this.user?.allowAccess?.clusters?.length) filter = { $or: [filter, { _id: { $in: this.user?.allowAccess?.clusters } }] };
+
+		return super.find(filter, options, pagination);
+	}
+
+	async update(filter: IQueryFilter<ICluster>, data: any, options?: IQueryOptions): Promise<ICluster[]> {
+		// check permissions
+		await checkPermissionsByFilter("clusters", this, filter, this.user);
+
+		return super.update(filter, data, options);
 	}
 
 	async updateOne(filter: IQueryFilter<ICluster>, data: any, options?: IQueryOptions): Promise<ICluster> {
@@ -24,6 +39,9 @@ export class ClusterService extends BaseService<ICluster> {
 				throw new Error(`Cluster not found.`);
 			}
 		}
+
+		// check permissions
+		await checkPermissions("clusters", cluster, this.user);
 
 		// get cloud provider of this cluster
 		const cloudProvider = cluster.provider as ICloudProvider;
@@ -51,9 +69,13 @@ export class ClusterService extends BaseService<ICluster> {
 		// try to delete "context" in "~/.kube/config"
 		try {
 			const cluster = await this.findOne(filter, options);
+
+			// check permissions
+			await checkPermissionsById("clusters", cluster._id, this.user);
+
 			await deleteClusterInKubeConfig(cluster);
 		} catch (e) {
-			console.log("Unable to delete cluster in KUBE_CONFIG :>> ", e);
+			throw new Error(`Unable to delete cluster: ${e}`);
 		}
 		return super.delete(filter, options);
 	}

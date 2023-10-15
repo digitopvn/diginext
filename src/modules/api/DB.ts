@@ -446,13 +446,17 @@ export class DB {
 				if (!options?.ignorable) logError(`[DB] UPDATE > Service "${collection}" :>> Service not found.`);
 				return;
 			}
+			svc.ownership = options.ownership;
 
+			if (options.isDebugging) console.log("[DB] data :>> ", data);
+			if (options.isDebugging) console.log("[DB] options :>> ", options);
 			try {
 				items = (await svc.update(filter, data, options)) || [];
 			} catch (e) {
 				if (!options?.ignorable) logError(`[DB] UPDATE > Service "${collection}" :>>`, e);
 				items = [];
 			}
+			if (options.isDebugging) console.log("[DB] items :>> ", items);
 		} else {
 			const { subpath = "" } = options;
 			delete options.subpath;
@@ -464,6 +468,7 @@ export class DB {
 			const path = collection === "git_repo" ? "git" : collection;
 			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 			const updateData = data;
+			if (options.isDebugging) console.log(`[DB] UPDATE > ${url} > updateData :>> `, updateData);
 
 			const {
 				status,

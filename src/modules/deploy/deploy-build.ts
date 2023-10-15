@@ -13,6 +13,7 @@ import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { updateAppConfig } from "../apps/update-config";
 import { createReleaseFromBuild, sendLog } from "../build";
 import ClusterManager from "../k8s";
+import type { FetchDeploymentResult } from "./fetch-deployment";
 import { fetchDeploymentFromContent } from "./fetch-deployment";
 import type { GenerateDeploymentResult } from "./generate-deployment";
 import { generateDeployment } from "./generate-deployment";
@@ -63,6 +64,15 @@ export type DeployBuildOptions = {
 	deployInBackground?: boolean;
 };
 
+export type DeployBuildResult = {
+	app: IApp;
+	build: IBuild;
+	release: IRelease;
+	deployment: GenerateDeploymentResult;
+	endpoint: string;
+	prerelease: FetchDeploymentResult;
+};
+
 export const processDeployBuild = async (build: IBuild, release: IRelease, cluster: ICluster, options: DeployBuildOptions) => {
 	const { env, owner, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
 	const { appSlug, projectSlug, tag: buildTag } = build;
@@ -79,12 +89,11 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 
 	// authenticate cluster & switch to that cluster's context
 	try {
-		await ClusterManager.authCluster(cluster);
+		await ClusterManager.authCluster(cluster, { ownership: { owner, workspace } });
 		sendLog({ SOCKET_ROOM, message: `✓ Connected to "${cluster.name}" (context: ${cluster.contextName}).` });
 	} catch (e) {
-		console.log("e :>> ", e);
 		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error", action: "end" });
-		return { error: e.message };
+		throw new Error(e.message);
 	}
 
 	// target environment info
@@ -98,7 +107,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 	if (!isNsExisted) {
 		const createNsResult = await ClusterManager.createNamespace(namespace, { context });
-		if (!createNsResult) return { error: `Unable to create new namespace: ${namespace}` };
+		if (!createNsResult) throw new Error(`Unable to create new namespace: ${namespace}`);
 	}
 
 	try {
@@ -116,7 +125,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		});
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
-		return { error: `Can't create "imagePullSecrets" in the "${namespace}" namespace.` };
+		throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
 	}
 
 	// Start rolling out new release
@@ -143,9 +152,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 			// dispatch/trigger webhook
 			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
-			return {
-				error: `Unable to delete "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
-			};
+			throw new Error(`Unable to delete "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`);
 		}
 
 		sendLog({
@@ -185,12 +192,13 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 				}
 			}
 		} catch (e) {
-			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `Failed to roll out the release :>> ${e.message}:` });
+			const errMsg = `Failed to roll out the release :>> ${e.message}:`;
+			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: errMsg });
 
 			// dispatch/trigger webhook
 			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
-			return { error: `Failed to roll out the release :>> ${e.message}:` };
+			throw new Error(errMsg);
 		}
 	} else {
 		if (release._id) {
@@ -213,7 +221,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 				if (result.error) {
 					const errMsg = `Failed to roll out the release :>> ${result.error}.`;
 					sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
-					return { error: errMsg };
+					throw new Error(errMsg);
 				}
 
 				release = result.data;
@@ -223,18 +231,19 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 				// dispatch/trigger webhook
 				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
 			} catch (e) {
-				sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `Failed to roll out the release :>> ${e.message}` });
+				const errMsg = `Failed to roll out the release :>> ${e.message}`;
+				sendLog({ SOCKET_ROOM, type: "error", action: "end", message: errMsg });
 
 				// dispatch/trigger webhook
 				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
-				return { error: `Failed to roll out the release :>> ${e.message}` };
+				throw new Error(errMsg);
 			}
 		}
 	}
 };
 
-export const deployBuild = async (build: IBuild, options: DeployBuildOptions) => {
+export const deployBuild = async (build: IBuild, options: DeployBuildOptions): Promise<DeployBuildResult> => {
 	const { DB } = await import("@/modules/api/DB");
 
 	// parse options
@@ -254,7 +263,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 			type: "error",
 			message: `[DEPLOY BUILD] App "${appSlug}" not found.`,
 		});
-		return { error: `[DEPLOY BUILD] App "${appSlug}" not found.` };
+		throw new Error(`[DEPLOY BUILD] App "${appSlug}" not found.`);
 	}
 
 	const project = app.project as IProject;
@@ -296,7 +305,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 		errMsgs.push(`Deploy environment (${env.toUpperCase()}) of "${appSlug}" app doesn't contain "cluster" name (probably deleted?).`);
 	}
 
-	if (!isPassedDeployEnvironmentValidation) return { error: errMsgs.join(",") };
+	if (!isPassedDeployEnvironmentValidation) throw new Error(errMsgs.join(","));
 
 	// find cluster
 	const { cluster: clusterSlug } = serverDeployEnvironment;
@@ -332,7 +341,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 
 		console.error(errMsg);
 		sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
-		return { error: errMsg };
+		throw new Error(errMsg);
 	}
 	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
 
@@ -365,7 +374,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions) =>
 	} catch (e) {
 		console.error("Deploy build > error :>> ", e);
 		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error", action: "end" });
-		return { error: e.message };
+		throw new Error(e.message);
 	}
 
 	// create webhook

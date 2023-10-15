@@ -10,6 +10,8 @@ import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
 
+import { ClusterService } from "./ClusterService";
+
 export type MonitorNamespaceCreateData = {
 	/**
 	 * Namespace's name
@@ -73,12 +75,14 @@ export class MonitorNamespaceService {
 
 	async find(filter: MonitoringNamespaceQueryFilter, options?: MonitoringQueryOptions) {
 		const { DB } = await import("@/modules/api/DB");
-		let { cluster: clusterIdOrSlug, name } = filter;
+		let { cluster: clusterIdOrSlug, name, ...rest } = filter;
 
 		let data: KubeNamespace[] = [];
 
+		const clusterSvc = new ClusterService(this.ownership);
+
 		if (!clusterIdOrSlug) {
-			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
+			const clusters = await clusterSvc.find({ workspace: this.workspace._id, ...rest });
 			const ls = await Promise.all(
 				clusters.map(async (_cluster) => {
 					const { contextName: context } = _cluster;
@@ -100,9 +104,10 @@ export class MonitorNamespaceService {
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
 			const clusterFilter = MongoDB.isValidObjectId(clusterIdOrSlug) ? { _id: clusterIdOrSlug } : { slug: clusterIdOrSlug };
-			const cluster = await DB.findOne("cluster", {
+			const cluster = await clusterSvc.findOne({
 				...clusterFilter,
 				workspace: this.workspace._id,
+				...rest,
 			});
 			if (!cluster) throw new Error(`Cluster "${cluster}" not found.`);
 

@@ -182,7 +182,10 @@ export default class BaseService<T = any> {
 
 		const where = { ..._filter };
 		if (!options?.deleted) where.deletedAt = { $exists: false };
-		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find > where :>>`, where);
+		if (options.isDebugging) {
+			console.log(`BaseService > "${this.model.collection.name}" > find > where :>>`);
+			console.dir(JSON.parse(JSON.stringify(where)), { depth: 10 });
+		}
 
 		const pipelines: PipelineStage[] = [
 			{
@@ -247,7 +250,12 @@ export default class BaseService<T = any> {
 		if (options?.select && options.select.length > 0) {
 			const project: any = {};
 			options.select.forEach((field) => {
-				project[field] = 1;
+				let shouldInclude = 1;
+				if (field.startsWith("-")) {
+					field = field.substring(1);
+					shouldInclude = 0;
+				}
+				project[field] = shouldInclude;
 			});
 			pipelines.push({ $project: project });
 		}

@@ -5,8 +5,6 @@ export function isObjectId(id) {
 }
 
 export function isValidObjectId(id) {
-	// return mongoose.isValidObjectId(id);
-	// if (mongoose.isValidObjectId(id)) return true;
 	if (mongoose.mongo.ObjectId.isValid(id)) {
 		if (String(new mongoose.mongo.ObjectId(id)) === id) return true;
 		return false;
@@ -15,8 +13,6 @@ export function isValidObjectId(id) {
 }
 
 export function toObjectId(id: any) {
-	// console.log(`isObjectId(${id})`, isObjectId(id));
-	// console.log(`isValidObjectId(${id})`, isValidObjectId(id));
 	if (isObjectId(id)) return id;
 	if (isValidObjectId(id)) return new mongoose.mongo.ObjectId(id);
 	return;

@@ -8,10 +8,10 @@ import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
 
 export const bitbucketAuthFlow = ["app_password", "oauth_consumer"] as const;
-export type BitbucketAuthFlow = typeof bitbucketAuthFlow[number];
+export type BitbucketAuthFlow = (typeof bitbucketAuthFlow)[number];
 
 export const githubAuthFlow = ["personal_access_token", "oauth_app"] as const;
-export type GithubAuthFlow = typeof githubAuthFlow[number];
+export type GithubAuthFlow = (typeof githubAuthFlow)[number];
 
 export interface BitbucketOAuthOptions {
 	/**

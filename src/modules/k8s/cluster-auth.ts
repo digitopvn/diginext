@@ -3,6 +3,7 @@ import { unlink } from "fs";
 
 import type { ICluster } from "@/entities";
 import type { KubeConfigContext } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import { createTmpFile, execCmd } from "@/plugins";
 
 import custom from "../providers/custom";
@@ -11,6 +12,7 @@ import gcloud from "../providers/gcloud";
 import { getKubeContextByCluster, getKubeContextByClusterSlug } from "./kube-config";
 
 export interface ClusterAuthOptions {
+	ownership: Ownership;
 	/**
 	 * Flag to switch to this cluster after finishing authentication
 	 * @default true
@@ -60,18 +62,17 @@ export const switchContextToCluster = async (clusterSlug: string, providerShortN
 /**
  * Authenticate current machine with the K8S cluster by its short name (context-name).
  */
-export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions = { shouldSwitchContextToThisCluster: true }) => {
+export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions) => {
 	const { DB } = await import("@/modules/api/DB");
-	let filePath: string;
+	const { shouldSwitchContextToThisCluster = true, isDebugging } = options;
 
 	const { providerShortName, slug: clusterSlug } = cluster;
-	if (options?.isDebugging) console.log("[AUTH CLUSTER] cluster :>> ", cluster);
+	if (isDebugging) console.log("[AUTH CLUSTER] cluster :>> ", cluster);
 
 	if (!clusterSlug) throw new Error(`Param "slug" (cluster's slug) is required.`);
 	if (!providerShortName) throw new Error(`Param "provider" (Cloud Provider's short name) is required.`);
 
-	const { shouldSwitchContextToThisCluster } = options;
-
+	let filePath: string;
 	let context: KubeConfigContext;
 
 	// Check if Kubernetes context of the cluster is existed in KUBE_CONFIG -> skip cluster authentication
@@ -111,7 +112,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			context = await getKubeContextByCluster(cluster);
 
 			if (context) {
-				cluster = await DB.updateOne("cluster", { slug: clusterSlug }, { contextName: context.name });
+				cluster = await DB.updateOne("cluster", { slug: clusterSlug }, { contextName: context.name }, { ownership: options.ownership });
 			} else {
 				throw new Error(`Context of "${clusterSlug}" cluster not found.`);
 			}
@@ -120,7 +121,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			if (shouldSwitchContextToThisCluster) await switchContext(context.name);
 
 			// mark this cluster verified
-			cluster = await DB.updateOne("cluster", { slug: clusterSlug }, { isVerified: true });
+			cluster = await DB.updateOne("cluster", { slug: clusterSlug }, { isVerified: true }, { ownership: options.ownership });
 
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterSlug}" cluster.`);
 
@@ -144,7 +145,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			context = await getKubeContextByCluster(cluster);
 
 			if (context) {
-				cluster = await DB.updateOne("cluster", { slug: clusterSlug }, { contextName: context.name });
+				cluster = await DB.updateOne("cluster", { slug: clusterSlug }, { contextName: context.name }, { ownership: options.ownership });
 			} else {
 				throw new Error(`Context of "${clusterSlug}" cluster not found.`);
 			}
@@ -164,12 +165,11 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			const { kubeConfig } = cluster;
 			if (cluster.isVerified && !kubeConfig) throw new Error(`Permissions denied, please contact your administrator.`);
 			if (!kubeConfig) throw new Error(`This cluster doesn't have any "kube-config" data to authenticate.`);
-			// if (!kubeConfig) throw new Error(`KUBE_CONFIG not found, might due to the lack of permissions.`);
 
 			filePath = createTmpFile(`${clusterSlug}-kube-config.yaml`, kubeConfig);
 
 			// start authenticating & save cluster access info to "kubeconfig"...
-			cluster = await custom.authenticate(cluster, { filePath, isDebugging: options.isDebugging });
+			cluster = await custom.authenticate(cluster, { filePath, isDebugging, ownership: options.ownership });
 			if (!cluster) throw new Error(`Unable to authenticate this cluster: ${cluster.name}`);
 
 			const { contextName, isVerified } = cluster;
@@ -195,7 +195,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
  * Authenticate current machine with the K8S cluster by its short name (context-name).
  * @param clusterSlug - A cluster name on the cloud provider (**NOT** a cluster in `kubeconfig`)
  */
-export const authClusterBySlug = async (clusterSlug: string, options: ClusterAuthOptions = { shouldSwitchContextToThisCluster: true }) => {
+export const authClusterBySlug = async (clusterSlug: string, options: ClusterAuthOptions) => {
 	if (!clusterSlug) throw new Error(`Param "clusterSlug" is required.`);
 
 	// find the cluster in the database:
@@ -208,7 +208,7 @@ export const authClusterBySlug = async (clusterSlug: string, options: ClusterAut
 		);
 	}
 
-	return authCluster(cluster);
+	return authCluster(cluster, options);
 };
 
 export default authCluster;

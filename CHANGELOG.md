@@ -1,3 +1,29 @@
+## [3.23.4](https://github.com/digitopvn/diginext/compare/v3.23.3...v3.23.4) (2023-10-13)
+
+
+### Bug Fixes
+
+* **server:** catch errors on build and deploy process ([bedd5d6](https://github.com/digitopvn/diginext/commit/bedd5d62ac253d3984df2a709d65a673ed9aa2e0))
+* **server:** catch errors on build and deploy process ([#417](https://github.com/digitopvn/diginext/issues/417)) ([fca0c23](https://github.com/digitopvn/diginext/commit/fca0c23aa0f286b0d3929c53e9661e2168ebd336))
+
+## [3.23.3](https://github.com/digitopvn/diginext/compare/v3.23.2...v3.23.3) (2023-10-09)
+
+
+### Bug Fixes
+
+* **hotfix:** jwt tokens catch error ([56b3e1d](https://github.com/digitopvn/diginext/commit/56b3e1d6ad8d91bb190d27f4b0bf4cea5ec34d70))
+* **hotfix:** jwt tokens catch error ([#416](https://github.com/digitopvn/diginext/issues/416)) ([0c1ef2a](https://github.com/digitopvn/diginext/commit/0c1ef2a8b69b7b23b28d62edfc2fef745e3e0732))
+
+## [3.23.2](https://github.com/digitopvn/diginext/compare/v3.23.1...v3.23.2) (2023-10-09)
+
+
+### Bug Fixes
+
+* **dashboard:** fix unable to scroll in build logs mobile screen ([0766da6](https://github.com/digitopvn/diginext/commit/0766da60602cdc53b4b115f49ae9c37560399733)), closes [#388](https://github.com/digitopvn/diginext/issues/388)
+* **server,dashboard:** fix crashed when deleting app or deploy env ([0bf379c](https://github.com/digitopvn/diginext/commit/0bf379c4794b6adefe04ae15fac6966434eb1c0a)), closes [#400](https://github.com/digitopvn/diginext/issues/400)
+* **server:** generate default container size as none ([5f26f03](https://github.com/digitopvn/diginext/commit/5f26f03b2e4121b1cbf81d36004d9dd7a7efec8d))
+* **server:** issue container size reset after deploying ([cafe2be](https://github.com/digitopvn/diginext/commit/cafe2beedd65c9b1527f6d6764a8644b6f9996aa))
+
 ## [3.23.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.23.1...v3.23.2-prerelease.1) (2023-10-09)
 
 

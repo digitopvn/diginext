@@ -6,6 +6,8 @@ import ClusterManager from "@/modules/k8s";
 import { objectToFilterLabels } from "@/modules/k8s/kubectl";
 import { MongoDB } from "@/plugins/mongodb";
 
+import { ClusterService } from "./ClusterService";
+
 export class MonitorDeploymentService {
 	/**
 	 * Current login user
@@ -42,12 +44,13 @@ export class MonitorDeploymentService {
 
 	async find(filter: MonitoringQueryFilter, options?: MonitoringQueryOptions) {
 		const { DB } = await import("@/modules/api/DB");
-		const { namespace, cluster: clusterSlugOrId } = filter;
-		console.log("this.workspace._id :>> ", this.workspace._id);
+		const { namespace, cluster: clusterSlugOrId, ...rest } = filter;
+		const clusterSvc = new ClusterService(this.ownership);
+
 		let data: KubeDeployment[] = [];
 
 		if (!clusterSlugOrId) {
-			const clusters = await DB.find("cluster", { workspace: this.workspace._id });
+			const clusters = await clusterSvc.find({ workspace: this.workspace._id, ...rest });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
 					const { contextName: context } = cluster;
@@ -69,9 +72,10 @@ export class MonitorDeploymentService {
 			ls.map((nsList) => nsList.map((ns) => data.push(ns)));
 		} else {
 			const clusterFilter = MongoDB.isValidObjectId(clusterSlugOrId) ? { _id: clusterSlugOrId } : { slug: clusterSlugOrId };
-			const cluster = await DB.findOne("cluster", {
+			const cluster = await clusterSvc.findOne({
 				...clusterFilter,
 				workspace: this.workspace._id,
+				...rest,
 			});
 			if (!cluster) throw new Error(`Cluster "${clusterSlugOrId}" not found.`);
 

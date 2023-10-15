@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import cronjob from "node-cron";
 
-import { Config, isDevMode, IsTest } from "@/app.config";
+import { isDevMode, IsTest } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
@@ -13,7 +13,6 @@ import { migrateServiceAccountAndApiKey } from "@/migration/migrate-all-sa-and-a
 import { migrateAllUsers } from "@/migration/migrate-all-users";
 import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
 import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
-import { generateSSH, sshKeyContainPassphase, sshKeysExisted, writeCustomSSHKeys } from "@/modules/git";
 import { connectRegistry } from "@/modules/registry/connect-registry";
 import { execCmd, wait } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
@@ -49,13 +48,13 @@ export async function startupScripts() {
 	}
 
 	// Generate SSH keys
-	if (!IsTest()) {
-		const isSSHKeysExisted = await sshKeysExisted();
-		if (!isSSHKeysExisted) await generateSSH();
-		// verify if generated SSH key should not require passphase
-		const keyHasPassphase = sshKeyContainPassphase();
-		if (keyHasPassphase) console.warn(`SSH key "id_rsa" should not contain passphase.`);
-	}
+	// if (!IsTest()) {
+	// 	const isSSHKeysExisted = await sshKeysExisted();
+	// 	if (!isSSHKeysExisted) await generateSSH();
+	// 	// verify if generated SSH key should not require passphase
+	// 	const keyHasPassphase = sshKeyContainPassphase();
+	// 	if (keyHasPassphase) console.warn(`SSH key "id_rsa" should not contain passphase.`);
+	// }
 
 	/**
 	 * Connect to git providers
@@ -71,20 +70,16 @@ export async function startupScripts() {
 	// 	}
 	// }
 
-	// migrate all git provider's db field: "gitWorkspace" -> "org"
-	// gitSvc.update({ org: { $exists: false } }, { org: "$gitWorkspace" }, { isDebugging: false }).then((res) => {
-	// 	if (res.length > 0) console.log(`[MIGRATION] Migrated "gitWorkspace" to "org" of ${res.length} git providers.`);
-	// });
-	// }
-
 	// set global identity
 	// [isDevMode == process.env.DEV_MODE == true] to make sure it won't override your current GIT config when developing Diginext
 	if (!isDevMode) {
 		// write initial private SSH keys if any
-		if (Config.grab("ID_RSA")) {
-			await writeCustomSSHKeys({ gitDomain: "github.com", privateKey: Config.grab("ID_RSA") });
-			await writeCustomSSHKeys({ gitDomain: "bitbucket.org", privateKey: Config.grab("ID_RSA") });
-		}
+		// if (Config.grab("ID_RSA")) {
+		// 	await writeCustomSSHKeys({ gitDomain: "github.com", privateKey: Config.grab("ID_RSA") });
+		// 	await writeCustomSSHKeys({ gitDomain: "bitbucket.org", privateKey: Config.grab("ID_RSA") });
+		// }
+		const result = await execCmd(`./scripts/custom_rsa.sh`);
+		console.log(result);
 
 		/**
 		 * REQUIRED: DO NOT TURN OFF THIS
