@@ -75,7 +75,7 @@ export class ClusterService extends BaseService<ICluster> {
 
 			await deleteClusterInKubeConfig(cluster);
 		} catch (e) {
-			console.log("Unable to delete cluster in KUBE_CONFIG :>> ", e);
+			throw new Error(`Unable to delete cluster: ${e}`);
 		}
 		return super.delete(filter, options);
 	}

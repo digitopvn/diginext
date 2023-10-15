@@ -193,8 +193,21 @@ export const addKeysToKnownHosts = async (data: { gitDomain: string; publicIdRsa
 
 	// only scan SSH key of git provider if it's not existed
 	const publicKeyContent = readFileSync(publicIdRsaFile, "utf8");
+	// const knownHostsContent = readFileSync(knownHostsPath, "utf8");
+	// await execCmd(`ssh-keyscan ${gitDomain} >> ${knownHostsPath}`);
+	// if (knownHostsContent.indexOf(publicKeyContent) === -1) await execCmd(`ssh-keyscan ${gitDomain} >> ${knownHostsPath}`);
+	try {
+		const writeStream = createWriteStream(knownHostsPath, { flags: "a" });
+		const subprocess = execa("ssh-keyscan", ["bitbucket.org"]);
+		subprocess.stdout.pipe(writeStream);
+		await subprocess;
+		console.log("Key scan complete. Appended to", knownHostsPath);
+	} catch (error) {
+		console.error("ADD KEY TO KNOWN_HOSTS > Error:", error);
+	}
+
 	const knownHostsContent = readFileSync(knownHostsPath, "utf8");
-	if (knownHostsContent.indexOf(publicKeyContent) === -1) await execCmd(`ssh-keyscan ${gitDomain} >> ${knownHostsPath}`);
+	console.log("knownHostsContent :>> ", knownHostsContent);
 
 	// SSH config
 	const sshConfigPath = path.join(SSH_DIR, "config");
@@ -246,22 +259,27 @@ export const writeCustomSSHKeys = async (params: { gitDomain: GitProviderDomain;
 		writeFileSync(publicIdRsaFile, publicKey, "utf8");
 	}
 
-	// remove old keys
-	await execCmd(`ssh-keygen -R ${gitDomain}`);
+	// [TEST] remove old keys
+	// await execCmd(`ssh-keygen -R ${gitDomain}`);
 
 	// add keys to "know_hosts"
 	await addKeysToKnownHosts({ gitDomain, privateIdRsaFile, publicIdRsaFile });
 
 	// Start SSH agent & add private keys: eval `ssh-agent`
-	await execCmd(`eval $(ssh-agent -s) && ssh-add ${privateIdRsaFile}`);
+	// await execCmd(`eval $(ssh-agent -s) && ssh-add ${privateIdRsaFile}`);
+	const sshAddResult = await execaCommand(`ssh-add ${privateIdRsaFile}`, {
+		// This is important to execute the command in a shell
+		shell: true,
+	});
+	console.log("[CUSTOM SSH] SSH Add Result :>> ", sshAddResult);
 
 	// print results
 	log(`[GIT] Added new SSH keys on this machine:`);
 	log(`  - Public key:`, publicIdRsaFile);
 	log(`  - Private key:`, privateIdRsaFile);
 
-	console.log("privateIdRsaFile :>> ", readFileSync(privateIdRsaFile, "utf8"));
-	console.log("publicIdRsaFile :>> ", readFileSync(publicIdRsaFile, "utf8"));
+	// console.log("privateIdRsaFile :>> ", readFileSync(privateIdRsaFile, "utf8"));
+	// console.log("publicIdRsaFile :>> ", readFileSync(publicIdRsaFile, "utf8"));
 
 	return { gitDomain, privateIdRsaFile, publicIdRsaFile };
 };
@@ -312,7 +330,12 @@ export const generateSSH = async (options?: InputOptions) => {
 	await execCmd(`chmod -R 400 ${privateIdRsaFile}`, `Can't set permission 400 to ${privateIdRsaFile}.`);
 
 	// Start SSH agent & add private keys: eval `ssh-agent`
-	await execCmd(`eval $(ssh-agent -s) && ssh-add ${privateIdRsaFile}`);
+	// await execCmd(`eval $(ssh-agent -s) && ssh-add ${privateIdRsaFile}`);
+	const sshAddResult = await execaCommand(`ssh-add ${privateIdRsaFile}`, {
+		// This is important to execute the command in a shell
+		shell: true,
+	});
+	console.log("[GENERATE SSH] SSH Add Result :>> ", sshAddResult);
 
 	// Return PUBLIC key to add to GIT provider
 	const publicKeyContent = readFileSync(publicIdRsaFile, "utf8");

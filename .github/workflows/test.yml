@@ -67,6 +67,9 @@ jobs:
           ssh-private-key: |
             ${{ secrets.ID_RSA }}
 
+      - name: Write custom ID_RSA
+        run: ./scripts/custom_rsa.sh
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
