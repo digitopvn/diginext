@@ -1,3 +1,11 @@
+## [3.24.2](https://github.com/digitopvn/diginext/compare/v3.24.1...v3.24.2) (2023-10-16)
+
+
+### Bug Fixes
+
+* **dashboard:** make login redirect url dynamic ([ac1532e](https://github.com/digitopvn/diginext/commit/ac1532e732b16fc7991476301346c16656725274))
+* **dashboard:** make login redirect url dynamic ([#427](https://github.com/digitopvn/diginext/issues/427)) ([af671ca](https://github.com/digitopvn/diginext/commit/af671ca2722220976370f2ecbd9e071a80ff5c03))
+
 ## [3.24.1](https://github.com/digitopvn/diginext/compare/v3.24.0...v3.24.1) (2023-10-15)
 
 
