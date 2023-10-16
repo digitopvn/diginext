@@ -86,4 +86,27 @@ export class UserService extends BaseService<IUser> {
 
 		return this.assignRole(role, user, options);
 	}
+
+	async updateAccessPermissions(userSlug: string, resource: { [name: string]: string }) {
+		// validation
+		if (!userSlug) throw new Error(`Param "userSlug" is required.`);
+		if (!resource) throw new Error(`Param "resource" is required.`);
+
+		// process
+		const updateData: { [key: string]: string[] } = {};
+		Object.entries(resource).forEach(([key, val]) => {
+			let resourceIds = !val ? [] : val.length > 0 && val.indexOf(",") > -1 ? val.split(",") : [val];
+			resourceIds.map((id) => {
+				if (!MongoDB.isValidObjectId(id)) throw new Error(`Invalid "resource" data, "${id}" is not a valid MongoDB ObjectID.`);
+				return id;
+			});
+			updateData[`allowAccess.${key}`] = resourceIds;
+		});
+
+		const updatedUser = this.updateOne({ slug: userSlug }, updateData);
+		if (!updatedUser) throw new Error(`Unable to update user's access permissions.`);
+
+		// result
+		return updatedUser;
+	}
 }

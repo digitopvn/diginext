@@ -461,7 +461,7 @@ export default class BaseService<T = any> {
 			if (options?.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > affectedItems :>> `, affectedItems);
 			return updateRes.acknowledged ? affectedItems : [];
 		} catch (e) {
-			console.error("Something went wrong when updating data:", e);
+			console.error(`[BASE_SERVICE] "${this.model.collection.name}" > Unable to update data:`, e.stack);
 		}
 	}
 
