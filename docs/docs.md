@@ -7,7 +7,7 @@
     ```bash
     dx login
     # is similar with
-    dx login https://hobby.diginext.site
+    dx login https://app.diginext.site
     ```
 
 - Authenticate your CLI with your **self-hosted** workspace:
@@ -119,7 +119,7 @@
 
     **New deployment of PROD environment will not be rolled out immediately like other environments.**
 
-    After the build process finished, access [Diginext Workspace](https://hobby.diginext.site) to preview the deployment, if everything is okay, you can process ROLLING OUT within the Admin UI.
+    After the build process finished, access [Diginext Workspace](https://app.diginext.site) to preview the deployment, if everything is okay, you can process ROLLING OUT within the Admin UI.
 
 -   Deploy to **custom enviroments**:
 

@@ -260,7 +260,7 @@ jobs:
           cache-to: type=registry,ref=digitop/diginext:cache-beta,mode=max
 
   deploy-topgroup:
-    name: Deploy to [hobby.diginext.site]
+    name: Deploy to [app.diginext.site]
     runs-on: ubuntu-latest
     needs: [docker-release-main]
     if: always() && !cancelled() && !failure() && contains(github.ref, 'main')
@@ -293,6 +293,7 @@ jobs:
       - name: Set image to [topgroup.diginext.site] deployment
         run: kubectl --context=topgroup-k3s -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
 
+      # DEPRECATED
       # - name: Set image to [hobby.diginext.site] deployment
       #   run: kubectl --context=topgroup-k3s -n diginext-hobby set image deployment/diginext-hobby diginext-hobby=digitop/diginext:$LATEST_TAG
 
