@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.24.1-prerelease.1",
+	"version": "3.24.3",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"exports": "./index.js",
 	"bin": {
@@ -84,7 +84,7 @@
 		"test:build": "pnpm build && CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false",
 		"coverage": "pnpm lint && pnpm build && jest --coverage",
 		"format": "prettier 'src/**/*.{js,ts,tsx,json,yaml}' --write && pnpm lint",
-		"commit": "git add . && cz && git push origin && exit 0",
+		"commit": "git add . && cz && git merge origin/prerelease && git merge origin/main && git push origin && exit 0",
 		"commit-build": "git add . && git commit --allow-empty -m 'chore(changelog.md): generate changelog [skip ci]' && git push -u origin || true",
 		"commit-pkgver": "git add . && git commit --allow-empty -m 'chore(package.json): update version [skip ci]' && git push -u origin || true",
 		"pkg-version": "npm pkg set version=$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-)",
@@ -261,6 +261,7 @@
 		"@types/bcrypt": "^5.0.0",
 		"@types/cli-table": "^0.3.1",
 		"@types/cookie-session": "^2.0.44",
+		"@types/cors": "^2.8.14",
 		"@types/express": "^4.17.17",
 		"@types/express-list-endpoints": "^6.0.0",
 		"@types/express-serve-static-core": "^4.17.33",

@@ -35,21 +35,26 @@ import { SystemLogService } from "./services/SystemLogService";
  * ENVIRONMENT CONFIG
  */
 const { BASE_PATH, PORT, CLI_MODE } = Config;
-const allowedOrigins = [
-	"http://localhost:3000",
-	"http://localhost:6969",
-	"http://localhost:4000",
-	"https://topgroup.diginext.site",
-	"https://topgroup-v2.diginext.site",
-	"https://diginext.vn",
-	"https://www.diginext.vn",
-	"https://diginext.site",
-	"https://www.diginext.site",
-	"https://hobby.diginext.site",
-	"https://app.diginext.site",
-	"https://wearetopgroup.com",
-	"https://digitop.vn",
+
+/**
+ * CORS configuration
+ */
+const allowedHosts = [
+	"localhost:3000",
+	"localhost:6969",
+	"localhost:4000",
+	"topgroup.diginext.site",
+	"topgroup-v2.diginext.site",
+	"diginext.vn",
+	"www.diginext.vn",
+	"diginext.site",
+	"www.diginext.site",
+	"hobby.diginext.site",
+	"app.diginext.site",
+	"wearetopgroup.com",
+	"digitop.vn",
 ];
+const subdomainWhitelist = /^https?:\/\/(\w+-?\w+\.)*diginext\.site$/;
 const allowedHeaders = [
 	"Origin",
 	"X-Requested-With",
@@ -63,6 +68,18 @@ const allowedHeaders = [
 	"User-Agent",
 ];
 const allowedMethods = ["OPTIONS", "GET", "PATCH", "POST", "DELETE"];
+
+const corsOptions: cors.CorsOptionsDelegate = (req, callback) => {
+	let _corsOptions: cors.CorsOptions = { allowedHeaders, methods: allowedMethods };
+	const host = req.headers.host;
+	if (subdomainWhitelist.test(host) || allowedHosts.includes(host)) {
+		_corsOptions.origin = true; // reflect (enable) the requested origin in the CORS response
+	} else {
+		_corsOptions.origin = false; // disable CORS for this request
+	}
+	// console.log("_corsOptions :>> ", _corsOptions);
+	callback(null, _corsOptions); // callback expects two parameters: error and options
+};
 
 /**
  * EXPRESS JS INITIALIZING
@@ -99,14 +116,15 @@ function initialize(db?: typeof mongoose) {
 	 * CORS MIDDLEWARE
 	 */
 	app.use(
-		cors({
-			// credentials: IsDev() ? false : true,
-			// allowedOrigins: IsDev() ? "*" : allowedOrigins,
-			credentials: true,
-			allowedOrigins,
-			allowedHeaders,
-			methods: allowedMethods,
-		})
+		// cors({
+		// 	// credentials: IsDev() ? false : true,
+		// 	// allowedOrigins: IsDev() ? "*" : allowedOrigins,
+		// 	credentials: true,
+		// 	allowedOrigins,
+		// 	allowedHeaders,
+		// 	methods: allowedMethods,
+		// })
+		cors(corsOptions)
 	);
 
 	// CREDITS

@@ -106,7 +106,7 @@ export class Config {
 	}
 
 	static get DEFAULT_DX_SERVER_URL() {
-		return "https://hobby.diginext.site";
+		return "https://app.diginext.site";
 	}
 
 	static get DX_SITE_URL() {

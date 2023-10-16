@@ -1,3 +1,26 @@
+## [3.24.3](https://github.com/digitopvn/diginext/compare/v3.24.2...v3.24.3) (2023-10-16)
+
+
+### Bug Fixes
+
+* **github actions:** release main ([48ca840](https://github.com/digitopvn/diginext/commit/48ca840b492c72b924915d20ba363e115eb1bf0e))
+
+## [3.24.2](https://github.com/digitopvn/diginext/compare/v3.24.1...v3.24.2) (2023-10-16)
+
+
+### Bug Fixes
+
+* **dashboard:** make login redirect url dynamic ([ac1532e](https://github.com/digitopvn/diginext/commit/ac1532e732b16fc7991476301346c16656725274))
+* **dashboard:** make login redirect url dynamic ([#427](https://github.com/digitopvn/diginext/issues/427)) ([af671ca](https://github.com/digitopvn/diginext/commit/af671ca2722220976370f2ecbd9e071a80ff5c03))
+
+## [3.24.1](https://github.com/digitopvn/diginext/compare/v3.24.0...v3.24.1) (2023-10-15)
+
+
+### Bug Fixes
+
+* **github actions:** rm ski p c i ([02cd645](https://github.com/digitopvn/diginext/commit/02cd645d342400f6d94bdddcab902700caffdbbc))
+* **server:** add try catch to all then case ([dd86922](https://github.com/digitopvn/diginext/commit/dd869221730002d052afb7d4de6d7ea8ba4dce6a))
+
 ## [3.24.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.0...v3.24.1-prerelease.1) (2023-10-15)
 
 

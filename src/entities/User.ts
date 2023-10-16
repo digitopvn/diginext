@@ -62,6 +62,23 @@ const accessTokenInfoSchema = new Schema({
 	},
 });
 
+/**
+ * ### User access permission settings:
+ * - `undefined`: all
+ * - `[]`: none
+ * - `[ ...project_id... ]`: some
+ */
+export type UserAccessPermissions = {
+	projects?: (IProject | Types.ObjectId | string)[];
+	apps?: (IApp | Types.ObjectId | string)[];
+	clusters?: (ICluster | Types.ObjectId | string)[];
+	databases?: (ICloudDatabase | Types.ObjectId | string)[];
+	database_backups?: (ICloudDatabaseBackup | Types.ObjectId | string)[];
+	gits?: (IGitProvider | Types.ObjectId | string)[];
+	frameworks?: (IFramework | Types.ObjectId | string)[];
+	container_registries?: (IContainerRegistry | Types.ObjectId | string)[];
+};
+
 export type UserDto = Omit<IUser, keyof HiddenBodyKeys>;
 
 // export type IUser = typeof User;
@@ -104,21 +121,9 @@ export interface IUser extends IBase {
 	workspaces?: (IWorkspace | Types.ObjectId | string)[];
 	activeWorkspace?: IWorkspace | Types.ObjectId | string;
 	/**
-	 * User access permission settings:
-	 * - `undefined`: all
-	 * - `[]`: none
-	 * - `[ ...project_id... ]`: some
+	 * User access permission settings
 	 */
-	allowAccess?: {
-		projects?: (IProject | Types.ObjectId | string)[];
-		apps?: (IApp | Types.ObjectId | string)[];
-		clusters?: (ICluster | Types.ObjectId | string)[];
-		databases?: (ICloudDatabase | Types.ObjectId | string)[];
-		database_backups?: (ICloudDatabaseBackup | Types.ObjectId | string)[];
-		gits?: (IGitProvider | Types.ObjectId | string)[];
-		frameworks?: (IFramework | Types.ObjectId | string)[];
-		container_registries?: (IContainerRegistry | Types.ObjectId | string)[];
-	};
+	allowAccess?: UserAccessPermissions;
 	/**
 	 * User settings
 	 */
