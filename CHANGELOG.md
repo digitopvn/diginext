@@ -1,3 +1,10 @@
+## [3.24.3](https://github.com/digitopvn/diginext/compare/v3.24.2...v3.24.3) (2023-10-16)
+
+
+### Bug Fixes
+
+* **github actions:** release main ([48ca840](https://github.com/digitopvn/diginext/commit/48ca840b492c72b924915d20ba363e115eb1bf0e))
+
 ## [3.24.2](https://github.com/digitopvn/diginext/compare/v3.24.1...v3.24.2) (2023-10-16)
 
 
