@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.24.1",
+	"version": "3.24.1-prerelease.1",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"exports": "./index.js",
 	"bin": {
@@ -84,9 +84,9 @@
 		"test:build": "pnpm build && CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false",
 		"coverage": "pnpm lint && pnpm build && jest --coverage",
 		"format": "prettier 'src/**/*.{js,ts,tsx,json,yaml}' --write && pnpm lint",
-		"commit": "git add . && cz && git push origin && exit 0",
-		"commit-build": "git add . && git commit --allow-empty -m 'chore(changelog.md): generate changelog' && git push -u origin || true",
-		"commit-pkgver": "git add . && git commit --allow-empty -m 'chore(package.json): update version' && git push -u origin || true",
+		"commit": "git merge origin/prerelease && git merge origin/main && git add . && cz && git push origin && exit 0",
+		"commit-build": "git add . && git commit --allow-empty -m 'chore(changelog.md): generate changelog [skip ci]' && git push -u origin || true",
+		"commit-pkgver": "git add . && git commit --allow-empty -m 'chore(package.json): update version [skip ci]' && git push -u origin || true",
 		"pkg-version": "npm pkg set version=$(echo $(git describe --tags $(git rev-list --tags --max-count=1)) | cut -c2-)",
 		"npm-publish": "npm publish --access=public",
 		"release": "npm run release:nobuild",
