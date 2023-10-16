@@ -169,7 +169,7 @@ export default class BaseService<T = any> {
 			// convert all {ObjectId} to {string}:
 			return replaceObjectIdsToStrings(newItem) as T;
 		} catch (e) {
-			logError(`[BASE_SERVICE] Create:`, e);
+			logError(`[BASE_SERVICE] "${this.model.collection.name}" > Unable to create:`, e.stack);
 			return;
 		}
 	}

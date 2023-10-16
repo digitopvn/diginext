@@ -293,8 +293,8 @@ jobs:
       - name: Set image to [topgroup.diginext.site] deployment
         run: kubectl --context=topgroup-k3s -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
 
-      - name: Set image to [hobby.diginext.site] deployment
-        run: kubectl --context=topgroup-k3s -n diginext-hobby set image deployment/diginext-hobby diginext-hobby=digitop/diginext:$LATEST_TAG
+      # - name: Set image to [hobby.diginext.site] deployment
+      #   run: kubectl --context=topgroup-k3s -n diginext-hobby set image deployment/diginext-hobby diginext-hobby=digitop/diginext:$LATEST_TAG
 
   deploy-topgroup-v2:
     name: Deploy to [topgroup-v2.diginext.site]
