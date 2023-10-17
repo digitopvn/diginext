@@ -24,8 +24,12 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 	}
 
 	async updateStatus(id: any, data: { status: BackupStatus; path?: string }) {
-		const url = `${Config.BASE_URL}/storage/${data.path.split("storage/")[1]}`;
-		const backup = await this.updateOne({ _id: id }, { status: "success", path: data.path, url });
+		const updateData: any = { status: data.status };
+		if (data.path) {
+			updateData.path = data.path;
+			updateData.url = `${Config.BASE_URL}/storage/${data.path.split("storage/")[1]}`;
+		}
+		const backup = await this.updateOne({ _id: id }, updateData);
 		return backup;
 	}
 
