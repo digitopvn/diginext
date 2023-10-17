@@ -177,4 +177,41 @@ export default class UserController extends BaseController<IUser> {
 			return respondFailure({ msg: "Failed to join a workspace." });
 		}
 	}
+
+	/**
+	 * Update user's access permissions
+	 * @param body - Example: `{ userId: "000", resource: { "projects": "1,2,3,4", "apps": "4,5,6" } }`
+	 * @returns
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/permissions")
+	async updateAccessPermissions(
+		@Body()
+		body: {
+			/**
+			 * User slug
+			 */
+			userSlug: string;
+			/**
+			 * Resource data:
+			 * - "name": `projects`, `apps`, `clusters`, `databases`, `database_backups`, `gits`, `frameworks`, `container_registries`
+			 * - "value": List of resource IDs in string, separated by commas without spacing. For example: `123,456,789`
+			 * @example { projects: "1,2,3", apps: "5,6,7" }
+			 */
+			resource: { [name: string]: string };
+		}
+	) {
+		try {
+			if (!body.userSlug) throw new Error(`Param "userSlug" is required.`);
+			if (!body.resource) throw new Error(`Param "resource" is required.`);
+
+			const { userSlug, resource } = body;
+			const updatedUser = await this.service.updateAccessPermissions(userSlug, resource);
+
+			return respondSuccess({ data: updatedUser });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
 }

@@ -76,7 +76,7 @@ https://diginext.site
 ## Getting Started
 
 - [Diginext website](https://diginext.site/?ref=github)
-- [Hobby Workspace](https://hobby.diginext.site/?ref=github)
+- [Official Workspace](https://app.diginext.site/?ref=github)
 - [Documentation](https://docs.diginext.site/?ref=github)
 
 #### CLI Installation
@@ -98,7 +98,9 @@ Login to your Diginext workspace:
 ```bash
 dx login 
 # is similar with:
-# dx login https://hobby.diginext.site
+# $ dx login https://app.diginext.site
+# in case you hosted Diginext yourself:
+# $ dx login https://<your-diginext-workspace-domain>
 cd /path/to/your/app
 dx init
 dx up
@@ -168,7 +170,7 @@ On the client side, use the CLI command `dx login http://your-workspace-domain.c
 
 ## Admin UI
 
-- Hobby workspace: https://hobby.diginext.site
+- Official workspace: https://app.diginext.site
 - Visit our [source code here](https://github.com/digitopvn/diginext-admin)
 
 ## Contributing [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)

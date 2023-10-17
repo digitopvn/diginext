@@ -21,6 +21,7 @@ router
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
 	// .delete("/empty", processApiRequest(controller.empty.bind(controller)))
-	.patch("/assign-role", processApiRequest(controller.assignRole.bind(controller)));
+	.patch("/assign-role", processApiRequest(controller.assignRole.bind(controller)))
+	.patch("/permissions", processApiRequest(controller.updateAccessPermissions.bind(controller)));
 
 export default router;
