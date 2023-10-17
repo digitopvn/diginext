@@ -1,3 +1,12 @@
+## [3.24.4](https://github.com/digitopvn/diginext/compare/v3.24.3...v3.24.4) (2023-10-17)
+
+
+### Bug Fixes
+
+* **dashboard:** add ui of user access permissions ([d249d29](https://github.com/digitopvn/diginext/commit/d249d293489cb406b506c44d85ef08a143100c42))
+* **server:** issue of update db backup status ([ecef5f7](https://github.com/digitopvn/diginext/commit/ecef5f7fdc5c6eb5f8b33e11d20ca0b7972acb72))
+* **server:** update cors, whitelist domains ([590f705](https://github.com/digitopvn/diginext/commit/590f70573f792d5f189d29ee75eb150bf1d84d1b))
+
 ## [3.24.4-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.3...v3.24.4-prerelease.1) (2023-10-16)
 
 
