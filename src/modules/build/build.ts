@@ -467,7 +467,7 @@ export async function startBuild(
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Start building the Docker image...` });
 
-	const notifyClientBuildSuccess = () => {
+	const notifyClientBuildSuccess = async () => {
 		const endTime = dayjs();
 		const buildDuration = endTime.diff(startTime, "millisecond");
 		const humanDuration = humanizeDuration(buildDuration);
@@ -489,14 +489,14 @@ export async function startBuild(
 		}
 
 		// dispatch/trigger webhook
-		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
+		if (webhook) await webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
 	};
 
 	// authenticate build engine with container registry before building & pushing image
 	try {
 		await connectRegistry(registry, { userId, workspaceId: workspace._id });
 	} catch (e) {
-		if (options?.onError) options?.onError(`Unable to authenticate with "${registry.name}" registry: ${e}`);
+		// notify dashboard client
 		sendLog({
 			SOCKET_ROOM,
 			message: chalk.green(`Unable to authenticate with "${registry.name}" registry: ${e}`),
@@ -504,7 +504,9 @@ export async function startBuild(
 		});
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook
-		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+		if (webhook) await webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+		// callback
+		if (options?.onError) options?.onError(`Unable to authenticate with "${registry.name}" registry: ${e}`);
 		return;
 	}
 
@@ -525,22 +527,25 @@ export async function startBuild(
 				onBuilding: (message) => sendLog({ SOCKET_ROOM, message }),
 			});
 
-			// update build status as "success"
-			await updateBuildStatus(newBuild, "success", { env });
-
+			// send notification message to dashboard client
 			sendLog({
 				SOCKET_ROOM,
 				message: `✓ Pushed "${buildImage}" to container registry (${registrySlug}) successfully!`,
 			});
 
-			notifyClientBuildSuccess();
+			// update build status as "success"
+			await updateBuildStatus(newBuild, "success", { env });
+
+			await notifyClientBuildSuccess();
 
 			if (options?.onSucceed) options?.onSucceed(newBuild);
 
 			return { SOCKET_ROOM, build: newBuild, imageURL, buildImage, startTime, builder: buildEngineName };
 		} catch (e) {
-			await updateBuildStatus(newBuild, "failed");
+			// send notification message to dashboard client
 			sendLog({ SOCKET_ROOM, message: e.message, type: "error", action: "end" });
+
+			await updateBuildStatus(newBuild, "failed");
 			if (options?.onError) options?.onError(`Build failed: ${e}`);
 
 			// dispatch/trigger webhook
@@ -561,21 +566,23 @@ export async function startBuild(
 				onBuilding: (message) => sendLog({ SOCKET_ROOM, message }),
 			})
 			.then(async () => {
-				// update build status as "success"
-				await updateBuildStatus(newBuild, "success", { env });
-
+				// send notification message to dashboard client
 				sendLog({
 					SOCKET_ROOM,
 					message: `✓ Pushed "${buildImage}" to container registry (${registrySlug}) successfully!`,
 				});
 
-				notifyClientBuildSuccess();
+				// update build status as "success"
+				await updateBuildStatus(newBuild, "success", { env });
+
+				await notifyClientBuildSuccess();
 
 				if (options?.onSucceed) options?.onSucceed(newBuild);
 			})
 			.catch(async (e) => {
-				await updateBuildStatus(newBuild, "failed");
 				sendLog({ SOCKET_ROOM, message: e.message, type: "error", action: "end" });
+				await updateBuildStatus(newBuild, "failed");
+
 				if (options?.onError) options?.onError(`Build failed: ${e}`);
 
 				// dispatch/trigger webhook
