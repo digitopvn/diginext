@@ -101,13 +101,27 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 		  })
 		: [];
 
+	/**
+	 * ulimit flag
+	 * - https://manpages.ubuntu.com/manpages/lunar/man1/podman-build.1.html
+	 */
+	const ulimitFlag = `--ulimit "nofile=65535:65535"`;
+
+	/**
+	 * Path to "Dockerfile" flag
+	 */
 	const dockerFileFlag = `-f ${dockerFile}`;
-	// const pushFlag = shouldPush ? "--push" : undefined;
+	/**
+	 * Image tag
+	 */
 	const tagFlag = `-t ${imageURL}`;
-	// const builderFlag = `--builder=${builder}`;
+	/**
+	 * Context directory
+	 */
 	const directoryFlag = buildDirectory ?? ".";
 
-	const optionFlags = [...argsFlags, platformFlag, dockerFileFlag, tagFlag, ...cacheFlags, directoryFlag]
+	// all build options tags
+	const optionFlags = [ulimitFlag, ...argsFlags, platformFlag, dockerFileFlag, tagFlag, ...cacheFlags, directoryFlag]
 		.filter((opt) => typeof opt !== "undefined") // <-- filter empty flags
 		.join(" ");
 
