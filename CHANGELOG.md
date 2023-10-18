@@ -1,3 +1,12 @@
+## [3.24.5](https://github.com/digitopvn/diginext/compare/v3.24.4...v3.24.5) (2023-10-18)
+
+
+### Bug Fixes
+
+* **builder:** increase ulimit for podman ([2e7d516](https://github.com/digitopvn/diginext/commit/2e7d516a3715cc82862e66186a36a3f2381be9e9))
+* **merged:** from origin/main ([dd38162](https://github.com/digitopvn/diginext/commit/dd3816258baacd35edf1828b843a5a0404c7ae78))
+* **server:** improve build finish status log ([83dfc13](https://github.com/digitopvn/diginext/commit/83dfc13057392cb4ac816b964e4987f0ae277a20))
+
 ## [3.24.4](https://github.com/digitopvn/diginext/compare/v3.24.3...v3.24.4) (2023-10-17)
 
 
