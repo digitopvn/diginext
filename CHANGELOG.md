@@ -1,3 +1,21 @@
+## [3.24.5](https://github.com/digitopvn/diginext/compare/v3.24.4...v3.24.5) (2023-10-18)
+
+
+### Bug Fixes
+
+* **builder:** increase ulimit for podman ([2e7d516](https://github.com/digitopvn/diginext/commit/2e7d516a3715cc82862e66186a36a3f2381be9e9))
+* **merged:** from origin/main ([dd38162](https://github.com/digitopvn/diginext/commit/dd3816258baacd35edf1828b843a5a0404c7ae78))
+* **server:** improve build finish status log ([83dfc13](https://github.com/digitopvn/diginext/commit/83dfc13057392cb4ac816b964e4987f0ae277a20))
+
+## [3.24.4](https://github.com/digitopvn/diginext/compare/v3.24.3...v3.24.4) (2023-10-17)
+
+
+### Bug Fixes
+
+* **dashboard:** add ui of user access permissions ([d249d29](https://github.com/digitopvn/diginext/commit/d249d293489cb406b506c44d85ef08a143100c42))
+* **server:** issue of update db backup status ([ecef5f7](https://github.com/digitopvn/diginext/commit/ecef5f7fdc5c6eb5f8b33e11d20ca0b7972acb72))
+* **server:** update cors, whitelist domains ([590f705](https://github.com/digitopvn/diginext/commit/590f70573f792d5f189d29ee75eb150bf1d84d1b))
+
 ## [3.24.4-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.3...v3.24.4-prerelease.1) (2023-10-16)
 
 

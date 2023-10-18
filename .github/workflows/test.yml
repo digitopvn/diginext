@@ -24,7 +24,7 @@ env:
   DEV_MODE: false
   CLI_MODE: server
   DB_URI: mongodb://localhost:27017
-  # BUILDER: podman
+  BUILDER: podman
   BASE_URL: http://localhost:6969
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
   JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
