@@ -1,10 +1,9 @@
-import bcrypt from "bcrypt";
 import express from "express";
 import { model } from "mongoose";
 
 import { Config } from "@/app.config";
-import type { IRole } from "@/entities";
-import { type IUser, type IWorkspace, userSchema } from "@/entities";
+import type { type IUser, type IWorkspace, IRole } from "@/entities";
+import { userSchema } from "@/entities";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import { extractAccessTokenInfo, generateJWT } from "@/modules/passports";
 import { MongoDB } from "@/plugins/mongodb";
@@ -47,7 +46,8 @@ router.post("/register", async (req, res) => {
 		}
 
 		// Hash the password
-		const hashedPassword = await bcrypt.hash(password, 10);
+		// const hashedPassword = await bcrypt.hash(password, 10);
+		const hashedPassword = await Bun.password.hash(password);
 
 		// auto-generated name
 		const userName = name || (email as string).split("@")[0];
@@ -164,7 +164,8 @@ router.post(
 			if (!user.password) return res.json(respondFailure("This account is using other authentication method."));
 
 			// Compare the provided password with the stored hashed password
-			const passwordMatch = await bcrypt.compare(password, user.password);
+			// const passwordMatch = await bcrypt.compare(password, user.password);
+			const passwordMatch = await Bun.password.verify(password, user.password);
 
 			if (!passwordMatch) {
 				return res.json(respondFailure("Invalid credentials."));

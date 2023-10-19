@@ -120,7 +120,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const registryYaml = await execaCommand(
 		`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} --access-token ${API_ACCESS_TOKEN} ${applyCommand}`
 	);
-	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
+	const registrySecretData = yaml.load(registryYaml.stdout) as KubeRegistrySecret;
 
 	if (!registrySecretData) {
 		logError(`[DIGITAL_OCEAN] Failed to create "imagePullSecrets" in "${namespace}" namespace of "${context}" cluster.`);

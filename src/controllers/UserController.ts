@@ -2,9 +2,9 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 import { isArray } from "lodash";
 
 import BaseController from "@/controllers/BaseController";
-import type { IUser } from "@/entities";
-import { UserDto } from "@/entities";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
+import type { IUser, UserDto } from "@/entities";
+import type { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import { respondFailure, respondSuccess } from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
 import { assignRoleByID, assignRoleByRoleID, filterSensitiveInfo, filterUsersByWorkspaceRole, getActiveRole } from "@/plugins/user-utils";
 import { UserService, WorkspaceService } from "@/services";
@@ -26,7 +26,8 @@ export default class UserController extends BaseController<IUser> {
 	service: UserService;
 
 	constructor() {
-		super(new UserService());
+		const service = new UserService();
+		super(service);
 	}
 
 	/**
@@ -146,6 +147,7 @@ export default class UserController extends BaseController<IUser> {
 			workspaceId = MongoDB.toString(workspace._id);
 
 			// find the user
+			console.log("this.service :>> ", this.service);
 			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId }, { populate: ["roles"] });
 			if (!user) throw new Error(`User not found.`);
 			// console.dir(user, { depth: 10 });

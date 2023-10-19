@@ -12,9 +12,9 @@ const controller = new UserController();
 
 router
 	.use(authenticate)
+	.use(registerController(controller))
 	.patch("/join-workspace", processApiRequest(controller.joinWorkspace.bind(controller)))
 	.use(authorize)
-	.use(registerController(controller))
 	.get("/profile", processApiRequest(controller.profile.bind(controller)))
 	.get("/", processApiRequest(controller.read.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))

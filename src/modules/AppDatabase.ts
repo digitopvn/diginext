@@ -12,11 +12,7 @@ export async function connect(onConnected?: (_db?: typeof mongoose, connection?:
 	console.log("Config.DB_URI :>> ", Config.DB_URI);
 	// console.log("Config.DB_NAME :>> ", Config.DB_NAME);
 	try {
-		const mongoDB = await mongoose.connect(Config.DB_URI, {
-			dbName,
-			useNewUrlParser: true,
-			useUnifiedTopology: true,
-		});
+		const mongoDB = await mongoose.connect(Config.DB_URI, { dbName });
 
 		db = mongoDB;
 
