@@ -43,7 +43,7 @@ RUN apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-releas
     apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose
 
 # Install Podman
-RUN apt-get install -y podman iptables
+RUN apt-get install -y podman iptables xfsprogs vim iputils-ping
 
 # Install Digital Ocean CLI
 RUN cd ~ && \
@@ -82,6 +82,8 @@ RUN mkdir -p /run/user/1000 && chmod 700 /run/user/1000
 RUN chown -R ${uid}:${gid} /run/user/1000 
 RUN chmod -R ug+rwx /run/user/1000
 
+ENV user=app
+
 # Configuration files for PODMAN to resolve "docker.io" registry shortname alias
 COPY ./podman/containers/registries.conf /etc/containers/registries.conf
 COPY ./podman/containers/registries.conf /home/${user}/share/containers/registries.conf
@@ -91,11 +93,13 @@ COPY ./podman/containers/registries.conf /home/${user}/.config/containers/regist
 COPY ./podman/containers/storage.conf /home/${user}/share/containers/storage.conf
 COPY ./podman/containers/storage.conf /home/${user}/.config/containers/storage.conf
 COPY ./podman/containers/storage.conf /root/.config/containers/storage.conf
+COPY ./podman/containers/storage.conf /etc/containers/storage.conf
 
 # PODMAN's container conf
 COPY ./podman/containers/containers.conf /etc/containers/containers.conf
 
 RUN chmod -R ug+rwx /home/${user}/.config/containers/storage.conf
+RUN mkdir -p /home/${user}/containers/storage
 RUN mkdir -p /var/tmp/${user}/containers/storage
 RUN chown -R ${uid}:${gid} /var/tmp/${user}/containers/storage
 RUN chmod -R ug+rwx /var/tmp/${user}/containers/storage
