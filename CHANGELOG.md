@@ -1,3 +1,10 @@
+## [3.24.6-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.5...v3.24.6-prerelease.1) (2023-10-18)
+
+
+### Bug Fixes
+
+* **github actions:** use podman as builder ([0085ae5](https://github.com/digitopvn/diginext/commit/0085ae5af688d8a04d6e50a96083a4a8209def8e))
+
 ## [3.24.5](https://github.com/digitopvn/diginext/compare/v3.24.4...v3.24.5) (2023-10-18)
 
 
