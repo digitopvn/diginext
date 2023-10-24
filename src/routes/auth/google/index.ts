@@ -35,7 +35,7 @@ export const signAndRedirect = (res: Response, data: { userId: string; workspace
 	const finalUrl =
 		url.origin + "/workspace/select?access_token=" + access_token + "&refresh_token=" + refresh_token + "&redirect_url=" + redirectUrl;
 
-	// console.log("[2] signAndRedirect > finalUrl", finalUrl);
+	console.log("[2] signAndRedirect > finalUrl", finalUrl);
 
 	return res.redirect(endsWith(finalUrl, "%23") ? finalUrl.substring(0, finalUrl.length - 3) : finalUrl);
 };
@@ -54,16 +54,17 @@ router
 			"google",
 			{
 				session: false,
-				successReturnToOrRedirect: req.query.redirect_url as string,
+				successReturnToOrRedirect: (req.query.redirect_url as string) || (req.query.state as string),
 				failureRedirect: Config.getBasePath("/login?type=failed"),
 			},
 			// callback function
 			async (error, user, info) => {
 				if (error) {
-					console.log("error :>> ", error);
+					console.log("[GOOGLE CALLBACK] error :>> ", error);
 					return res.redirect(req.get("origin") + Config.getBasePath("/login?type=failed"));
 				}
 
+				console.log("[GOOGLE CALLBACK] req.query.state :>> ", req.query.state);
 				let redirectUrl = (req.query.state as string) || Config.BASE_URL;
 				const originUrl = new URL(redirectUrl).origin;
 
@@ -73,7 +74,8 @@ router
 				const workspaceId =
 					user.activeWorkspace && MongoDB.isValidObjectId(user.activeWorkspace) ? MongoDB.toString(user.activeWorkspace) : undefined;
 
-				return signAndRedirect(res, { userId, workspaceId }, redirectUrl);
+				// sign JWT, save tokens to cookies
+				signAndRedirect(res, { userId, workspaceId }, redirectUrl);
 			}
 		)(req, res, next)
 	);
