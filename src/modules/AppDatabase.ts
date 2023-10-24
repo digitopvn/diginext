@@ -9,7 +9,7 @@ const dbName = Config.DB_NAME;
 let db: typeof mongoose;
 
 export async function connect(onConnected?: (_db?: typeof mongoose, connection?: mongoose.Connection) => void) {
-	console.log("Config.DB_URI :>> ", Config.DB_URI);
+	// console.log("Config.DB_URI :>> ", Config.DB_URI);
 	// console.log("Config.DB_NAME :>> ", Config.DB_NAME);
 	try {
 		const mongoDB = await mongoose.connect(Config.DB_URI, {

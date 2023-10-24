@@ -207,6 +207,8 @@ export const memberRoleRoutes: RoleRoute[] = [
 	{ path: "/api/v1/release/from-build", permissions: ["own", "read", "create", "update"], scope: [] },
 	{ path: "/api/v1/release/preview", permissions: ["own", "read", "create", "update"], scope: [] },
 	{ path: "/api/v1/git", permissions: ["own", "public"], scope: [] },
+	{ path: "/api/v1/git/orgs", permissions: ["own", "public"], scope: [] },
+	{ path: "/api/v1/git/orgs/repos", permissions: ["read", "create", "update"], scope: [] },
 	{ path: "/api/v1/git/public-key", permissions: [], scope: [] },
 	{ path: "/api/v1/git/ssh/create", permissions: [], scope: [] },
 	{ path: "/api/v1/git/ssh/generate", permissions: [], scope: [] },

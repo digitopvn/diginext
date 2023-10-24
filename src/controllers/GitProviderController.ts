@@ -8,8 +8,8 @@ import { GitProviderDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
-import type { GitProviderDomain } from "@/interfaces/SystemTypes";
-import { type GitProviderType, gitProviderDomain } from "@/interfaces/SystemTypes";
+import type { GitProviderDomain, GitProviderType } from "@/interfaces/SystemTypes";
+import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
 import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
 import { makeSlug } from "@/plugins/slug";
@@ -337,7 +337,7 @@ export default class GitProviderController extends BaseController {
 		// validation
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
-
+		this.options.isDebugging = true;
 		let provider = await this.service.findOne(this.filter, this.options);
 		if (!provider) return respondFailure(`Git provider not found.`);
 
