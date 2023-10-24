@@ -143,7 +143,7 @@ export async function requestBuild(options: InputOptions) {
 
 		if (!requestResult.status) logError(requestResult.messages[0] || `Unable to process Request Build API.`);
 
-		log(`-> Check build status here: ${requestResult.data.logURL} `);
+		log(`-> Check build status here: ${requestResult.data?.logURL} `);
 	} catch (e) {
 		logError(`Unable to call Build Deploy API:`, e);
 		return;

@@ -248,7 +248,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 				case "mysql":
 					MySQL.backup({ dbName: options?.dbName, host: db.host, port: toString(db.port), user: db.user, pass: db.pass })
 						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
-						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
+						.catch((e) => (backup ? bkSvc.updateStatus(backup._id, { status: "failed" }) : undefined));
 					break;
 				case "mongodb":
 					MongoShell.backup({
@@ -261,7 +261,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						pass: db.pass,
 					})
 						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
-						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
+						.catch((e) => (backup ? bkSvc.updateStatus(backup._id, { status: "failed" }) : undefined));
 					break;
 				case "postgresql":
 					PostgreSQL.backup({
@@ -273,7 +273,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						pass: db.pass,
 					})
 						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
-						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
+						.catch((e) => (backup ? bkSvc.updateStatus(backup._id, { status: "failed" }) : undefined));
 					break;
 				default:
 					throw new Error(`Database type "${db.type}" is not supported backing up at the moment.`);

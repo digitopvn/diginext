@@ -62,7 +62,7 @@ export default async function createApp(options: InputOptions) {
 
 	// update git info to database
 	const updateAppData = { git: { provider: options.gitProvider, repoSSH: options.repoSSH, repoURL: options.repoURL } };
-	if (options.isDev) console.log("[NEW APP] updateAppData :>> ", updateAppData);
+	if (options.isDebugging) console.log("[NEW APP] updateAppData :>> ", updateAppData);
 	const updatedApp = await DB.updateOne("app", { slug: options.slug }, updateAppData);
 	if (!updatedApp) throw new Error("Unable to create new app, try again with `--debug` flag to diagnose.");
 
