@@ -35,7 +35,7 @@ export const signAndRedirect = (res: Response, data: { userId: string; workspace
 	const finalUrl =
 		url.origin + "/workspace/select?access_token=" + access_token + "&refresh_token=" + refresh_token + "&redirect_url=" + redirectUrl;
 
-	// console.log("[2] signAndRedirect > finalUrl", finalUrl);
+	console.log("[2] signAndRedirect > finalUrl", finalUrl);
 
 	return res.redirect(endsWith(finalUrl, "%23") ? finalUrl.substring(0, finalUrl.length - 3) : finalUrl);
 };
@@ -74,7 +74,8 @@ router
 				const workspaceId =
 					user.activeWorkspace && MongoDB.isValidObjectId(user.activeWorkspace) ? MongoDB.toString(user.activeWorkspace) : undefined;
 
-				return signAndRedirect(res, { userId, workspaceId }, redirectUrl);
+				// sign JWT, save tokens to cookies
+				signAndRedirect(res, { userId, workspaceId }, redirectUrl);
 			}
 		)(req, res, next)
 	);
