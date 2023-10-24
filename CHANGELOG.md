@@ -1,3 +1,13 @@
+## [3.24.7](https://github.com/digitopvn/diginext/compare/v3.24.6...v3.24.7) (2023-10-24)
+
+
+### Bug Fixes
+
+* **cli:** request build error log url is null ([bb9f83e](https://github.com/digitopvn/diginext/commit/bb9f83e4a6055e73dd29d30fbaebe0df31b9efb9))
+* **cli:** rm debug log new app ([2cf0884](https://github.com/digitopvn/diginext/commit/2cf088481db00dd4a43d0ff5b0469d533fd6f818))
+* **server:** add proxy body size 100m to ingress ([0140220](https://github.com/digitopvn/diginext/commit/01402202a156bfcadc054514082c3f0f7ebb28d0))
+* **server:** issue of update failed status to db backup ([166291d](https://github.com/digitopvn/diginext/commit/166291d07d3372e930d52ff061b415d0c0d00b5e))
+
 ## [3.24.6](https://github.com/digitopvn/diginext/compare/v3.24.5...v3.24.6) (2023-10-19)
 
 
