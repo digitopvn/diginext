@@ -1,3 +1,10 @@
+## [3.24.8](https://github.com/digitopvn/diginext/compare/v3.24.7...v3.24.8) (2023-10-24)
+
+
+### Bug Fixes
+
+* **server,cli:** dx new github repo permission ([58c4f73](https://github.com/digitopvn/diginext/commit/58c4f73196abc709d53937a9d3d23dad0e48b0dd))
+
 ## [3.24.7](https://github.com/digitopvn/diginext/compare/v3.24.6...v3.24.7) (2023-10-24)
 
 
