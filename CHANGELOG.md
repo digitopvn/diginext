@@ -1,3 +1,12 @@
+## [3.24.9](https://github.com/digitopvn/diginext/compare/v3.24.8...v3.24.9) (2023-10-24)
+
+
+### Bug Fixes
+
+* **debug:** auth google redirect ([5bd24f9](https://github.com/digitopvn/diginext/commit/5bd24f9db162f0052fc64587227a936f2bebf1c1))
+* **server:** assign tokens to cookies in auth jwt ([687745b](https://github.com/digitopvn/diginext/commit/687745b49531b2f1c37cf5bd75f73b76187fa58f))
+* **server:** auth google callback not redirect correctly ([9b388d2](https://github.com/digitopvn/diginext/commit/9b388d2ec9ff3bda157bafde6e05eb2e4d6ea881))
+
 ## [3.24.8](https://github.com/digitopvn/diginext/compare/v3.24.7...v3.24.8) (2023-10-24)
 
 
