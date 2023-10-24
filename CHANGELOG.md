@@ -1,3 +1,11 @@
+## [3.24.10](https://github.com/digitopvn/diginext/compare/v3.24.9...v3.24.10) (2023-10-24)
+
+
+### Bug Fixes
+
+* **server,dashboard:** fix update role, build log dark mode ([2fdf737](https://github.com/digitopvn/diginext/commit/2fdf73762f800773a414322d518104d49ffc44a1))
+* update role issue & dark mode build logs ([#439](https://github.com/digitopvn/diginext/issues/439)) ([bae0dbf](https://github.com/digitopvn/diginext/commit/bae0dbff83fe1da7216dece4efce2b272b20a836))
+
 ## [3.24.9](https://github.com/digitopvn/diginext/compare/v3.24.8...v3.24.9) (2023-10-24)
 
 
