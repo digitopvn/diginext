@@ -6,8 +6,10 @@ import type { CloudDatabaseBackupDto, ICloudDatabaseBackup } from "@/entities/Cl
 import { cloudDatabaseBackupSchema } from "@/entities/CloudDatabaseBackup";
 import type { IQueryFilter, IQueryOptions } from "@/interfaces";
 import type { BackupStatus, Ownership } from "@/interfaces/SystemTypes";
+import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
+import { WorkspaceService } from "./WorkspaceService";
 
 export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup> {
 	constructor(ownership?: Ownership) {
@@ -18,7 +20,7 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 		const bk = await super.create(data);
 
 		// check expired backups and deleted expired ones
-		this.deleteExpiredBackups();
+		this.deleteExpiredBackups(MongoDB.toString(this.workspace._id));
 
 		return bk;
 	}
@@ -63,9 +65,14 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 		return this.softDelete(filter, options);
 	}
 
-	async deleteExpiredBackups() {
-		console.log("[DB_BACKUP] deleteExpiredBackups > this.workspace :>> ", this.workspace);
-		const { type, value } = this.workspace?.settings?.database_backup?.retention || {};
+	async deleteExpiredBackups(workspaceId: string) {
+		const workspaceSvc = new WorkspaceService();
+		const workspace = await workspaceSvc.findOne({ _id: workspaceId });
+		if (!workspace) throw new Error(`Unable to delete expired db backups of "${workspaceId}" workspace: Workspace not found.`);
+
+		console.log("[DB_BACKUP] deleteExpiredBackups > workspace :>> ", workspace);
+
+		const { type, value } = workspace.settings?.database_backup?.retention || {};
 		if (!type && !value) return;
 
 		console.log(`[DB_BACKUP] Deleting expired database backups...`);
