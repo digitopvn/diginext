@@ -7,6 +7,7 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces
 import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import { MongoDB } from "@/plugins/mongodb";
+import { containsSpecialCharacters } from "@/plugins/string";
 import { checkProjectPermissions, checkProjectPermissionsByFilter } from "@/plugins/user-utils";
 
 import { AppService } from "./AppService";
@@ -24,6 +25,10 @@ export class ProjectService extends BaseService<IProject> {
 	}
 
 	async create(data: any, options?: IQueryOptions): Promise<IProject> {
+		// validate
+		if (containsSpecialCharacters(data.name)) throw new Error(`Project name should not contain special characters.`);
+
+		// process
 		return super.create(data, options);
 	}
 

@@ -2,6 +2,7 @@ import inquirer from "inquirer";
 
 import type { IProject } from "@/entities/Project";
 import type { InputOptions } from "@/interfaces/InputOptions";
+import { containsSpecialCharacters } from "@/plugins/string";
 
 export async function askCreateProjectQuestions(options?: InputOptions) {
 	const project = {} as IProject;
@@ -12,11 +13,9 @@ export async function askCreateProjectQuestions(options?: InputOptions) {
 			name: "projectName",
 			message: "Enter your project name:",
 			validate: function (value) {
-				if (value.length > 3) {
-					return true;
-				} else {
-					return "Project name is required & contains more than 3 characters.";
-				}
+				if (value.length <= 3) return "Project name is required & contains more than 3 characters.";
+				if (containsSpecialCharacters(value)) return `Project name should not contain special characters.`;
+				return true;
 			},
 		});
 		options.projectName = projectName;
