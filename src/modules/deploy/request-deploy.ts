@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { log, logError, logWarn } from "diginext-utils/dist/xconsole/log";
+import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import { io } from "socket.io-client";
 
 import { getCliConfig } from "@/config/config";
@@ -11,6 +11,7 @@ import { currentVersion, resolveDockerfilePath } from "@/plugins";
 import type { StartBuildParams } from "../build";
 import { generateBuildTag } from "../build/generate-build-tag";
 import { isUnstagedFiles } from "../git/git-utils";
+import { askAiGenerateDockerfile } from "./ask-ai-generate-dockerfile";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
 import { parseOptionsToAppConfig } from "./parse-options-to-app-config";
 
@@ -34,7 +35,18 @@ export async function requestDeploy(options: InputOptions) {
 	// check Dockerfile -> no dockerfile, no build -> failed
 	let dockerFile = resolveDockerfilePath({ targetDirectory, env });
 	if (options.isDebugging) console.log("requestDeploy() > dockerFile :>> ", dockerFile);
-	if (!dockerFile) return;
+	if (!dockerFile) {
+		// ask to use AI for generating "Dockerfile"
+		await askAiGenerateDockerfile(options);
+		dockerFile = resolveDockerfilePath({ targetDirectory, env });
+
+		logSuccess(
+			`Double check your ${chalk.yellow(`"Dockerfile.${env}"`)}, test building container locally, for example:\n  ${chalk.cyan(
+				`$ docker build -t <project-name>/<app-name> -f Dockerfile.${env} .`
+			)}\nIf everything is good, commit & push the changes to the remote git, then deploy again: \n  ${chalk.cyan(`$ dx up --${env}`)}`
+		);
+		return;
+	}
 
 	// Warn about uncommited files
 	const shouldShowGitWarning = await isUnstagedFiles(options.targetDirectory);
