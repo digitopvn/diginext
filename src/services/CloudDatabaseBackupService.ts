@@ -9,6 +9,7 @@ import type { BackupStatus, Ownership } from "@/interfaces/SystemTypes";
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
+import { SystemLogService } from "./SystemLogService";
 import { WorkspaceService } from "./WorkspaceService";
 
 export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup> {
@@ -17,12 +18,17 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 	}
 
 	async create(data: CloudDatabaseBackupDto & { owner?: string; workspace?: string }): Promise<ICloudDatabaseBackup> {
-		const bk = await super.create(data);
+		try {
+			const bk = await super.create(data);
 
-		// check expired backups and deleted expired ones
-		this.deleteExpiredBackups(MongoDB.toString(this.workspace._id));
+			// check expired backups and deleted expired ones
+			this.deleteExpiredBackups(MongoDB.toString(this.workspace._id));
 
-		return bk;
+			return bk;
+		} catch (e) {
+			const logSvc = new SystemLogService();
+			logSvc.saveError(e, { level: 3, name: "[DB_BK_SERVICE] Unable to create new database backup", type: "error", workspace: this.workspace });
+		}
 	}
 
 	async updateStatus(id: any, data: { status: BackupStatus; path?: string }) {
@@ -45,6 +51,8 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 				});
 			} catch (e) {
 				console.error(`[DB_BK_SERVICE]`, e);
+				const logSvc = new SystemLogService();
+				logSvc.saveError(e, { level: 3, name: "[DB_BK_SERVICE] Unable to delete database backup", type: "error", workspace: this.workspace });
 			}
 		}
 		return super.delete(filter, options);
@@ -60,6 +68,8 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 				});
 			} catch (e) {
 				console.error(`[DB_BK_SERVICE]`, e);
+				const logSvc = new SystemLogService();
+				logSvc.saveError(e, { level: 3, name: "[DB_BK_SERVICE] Unable to delete database backup", type: "error", workspace: this.workspace });
 			}
 		}
 		return super.softDelete(filter, options);
@@ -105,7 +115,14 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 					}
 				})
 				.catch((e) => {
-					console.error(`Unable to count DB backups:`, e);
+					console.error(`Unable to delete expired DB backups (by DURATION):`, e);
+					const logSvc = new SystemLogService();
+					logSvc.saveError(e, {
+						level: 3,
+						name: "[DB_BK_SERVICE] Unable to delete expired DB backups (by DURATION)",
+						type: "error",
+						workspace: this.workspace,
+					});
 				});
 		} else if (type === "limit") {
 			// Mark as deleted based on item count
@@ -129,7 +146,14 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 					}
 				})
 				.catch((e) => {
-					console.error(`Unable to count DB backups:`, e);
+					console.error(`Unable to delete expired DB backups (by LIMIT):`, e);
+					const logSvc = new SystemLogService();
+					logSvc.saveError(e, {
+						level: 3,
+						name: "[DB_BK_SERVICE] Unable to delete expired DB backups (by LIMIT)",
+						type: "error",
+						workspace: this.workspace,
+					});
 				});
 		}
 	}
