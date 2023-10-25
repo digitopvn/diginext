@@ -1,3 +1,15 @@
+## [3.24.11-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.10...v3.24.11-prerelease.1) (2023-10-25)
+
+
+### Bug Fixes
+
+* **cli:** ask generate dockerfile using ai ([d606ead](https://github.com/digitopvn/diginext/commit/d606ead20fb37ad2d65c5ee27dc503055ce4f0f2))
+* **server,cli:** validate project and app name special chars ([7de20bf](https://github.com/digitopvn/diginext/commit/7de20bf0b44dc355a48299e8ab1994429938fa45))
+* **server,dashboard:** correct auth redirect select workspace with tokens ([cd3a2f4](https://github.com/digitopvn/diginext/commit/cd3a2f4f2a763a54d1850b60b4227e68fff4b9b4))
+* **server,dashboard:** edit db form, db backup system logs ([ddc92d1](https://github.com/digitopvn/diginext/commit/ddc92d11be229bf5630740172bb5e9defa4d1543))
+* **server:** issue of deleting expired db backups ([835a1d3](https://github.com/digitopvn/diginext/commit/835a1d34b8bb88d17e4f450636c385a7d9b5fe1b))
+* **server:** mistake super in delete db bk svc ([07a2ef8](https://github.com/digitopvn/diginext/commit/07a2ef83df8c50ffccc945bc6de47562cafec3f7))
+
 ## [3.24.10](https://github.com/digitopvn/diginext/compare/v3.24.9...v3.24.10) (2023-10-24)
 
 
