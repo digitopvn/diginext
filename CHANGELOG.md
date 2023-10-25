@@ -1,4 +1,4 @@
-## [3.24.11-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.10...v3.24.11-prerelease.1) (2023-10-25)
+## [3.24.11](https://github.com/digitopvn/diginext/compare/v3.24.10...v3.24.11) (2023-10-25)
 
 
 ### Bug Fixes
