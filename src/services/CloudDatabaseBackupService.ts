@@ -47,7 +47,7 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 				console.error(`[DB_BK_SERVICE]`, e);
 			}
 		}
-		return this.delete(filter, options);
+		return super.delete(filter, options);
 	}
 
 	async softDelete(filter?: IQueryFilter<ICloudDatabaseBackup>, options?: IQueryOptions): Promise<{ ok: boolean; affected: number }> {
@@ -62,7 +62,7 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 				console.error(`[DB_BK_SERVICE]`, e);
 			}
 		}
-		return this.softDelete(filter, options);
+		return super.softDelete(filter, options);
 	}
 
 	async deleteExpiredBackups(workspaceId: string) {

@@ -38,6 +38,17 @@ export interface IWorkspace extends IBase {
 	 */
 	settings?: {
 		database?: any;
+		activity?: {
+			/**
+			 * Data retention information
+			 * - `type` is "duration", value is "miliseconds"
+			 * - `type` is "limit", value is "MAX AMOUNT OF BACKUPS"
+			 */
+			retention?: {
+				type: RetentionType;
+				value: number;
+			};
+		};
 		database_backup?: {
 			/**
 			 * Data retention information
@@ -76,6 +87,12 @@ export const workspaceSchema = new Schema(
 		dx_key: { type: String },
 		owner: { type: Schema.Types.ObjectId, ref: "users" },
 		settings: {
+			activity: {
+				retention: {
+					type: { type: String },
+					value: { type: Number },
+				},
+			},
 			database: Schema.Types.Mixed,
 			database_backup: {
 				retention: {
