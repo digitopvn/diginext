@@ -20,6 +20,7 @@ import { formatEnvVars } from "@/plugins/env-var";
 import { basicUserFields } from "@/plugins/mask-sensitive-info";
 import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
+import { containsSpecialCharacters } from "@/plugins/string";
 import { checkAppPermissions, checkAppPermissionsByFilter, checkProjectAndAppPermissions, checkProjectPermissions } from "@/plugins/user-utils";
 
 import BaseService from "./BaseService";
@@ -56,6 +57,7 @@ export class AppService extends BaseService<IApp> {
 		// validate
 		if (!data.project) throw new Error(`Project ID or slug or instance is required.`);
 		if (!data.name) throw new Error(`App's name is required.`);
+		if (containsSpecialCharacters(data.name)) throw new Error(`App's name should not contain special characters.`);
 
 		// find parent project of this app
 		if (MongoDB.isValidObjectId(data.project)) {
