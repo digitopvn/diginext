@@ -114,6 +114,19 @@ const jwt_auth = (req: AppRequest, res, next) =>
 			req.user = user;
 			res.locals.user = user;
 
+			// try to assign tokens to cookies (test)
+			try {
+				const { access_token: accessToken, refresh_token: refreshToken } = user.token;
+				res.cookie("x-auth-cookie", accessToken);
+				res.cookie("refresh_token", refreshToken);
+				res.header("Authorization", `Bearer ${accessToken}`);
+				req.headers.authorization = `Bearer ${accessToken}`;
+				req.query.access_token = accessToken;
+				req.query.refresh_token = refreshToken;
+			} catch (e) {
+				console.error(`[AUTH_JWT] Unable to assign tokens to cookies: ${e.stack}`);
+			}
+
 			next();
 		}
 	})(req, res, next);

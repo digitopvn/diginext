@@ -27,9 +27,9 @@ https://diginext.site
 - Overcoming Kubernetes complexity by stripping Kubernetes away
 - Start developing new applications with frameworks or boilerplates
 - Manage, auto-backup & restore databases:
-    - Postgres
-    - MySQL
-    - MongoDB
+    ✅ Postgres
+    ✅ MySQL
+    ✅ MongoDB
 - Zero-downtime deploy and health checks
 - Monitor CPU, RAM, and Network usage per deployment, per node & per cluster
 - Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)

@@ -936,6 +936,9 @@ export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicat
 	filePath = path.resolve(targetDirectory, `deployment/${fileNamePrefix}`);
 	if (fs.existsSync(filePath)) return filePath;
 
+	filePath = path.resolve(targetDirectory, fileNamePrefix);
+	if (fs.existsSync(filePath)) return filePath;
+
 	if (!ignoreIfNotExisted) {
 		const message = `Missing "${targetDirectory}/${fileNamePrefix}" file, please create one.`;
 		logError(message);

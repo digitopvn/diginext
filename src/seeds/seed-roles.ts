@@ -5,7 +5,7 @@ import { MongoDB } from "@/plugins/mongodb";
 
 // seed default roles of a workspace
 export const seedDefaultRoles = async (workspace: IWorkspace, owner: IUser) => {
-	// console.log("Seed default roles...");
+	// console.log("Seeding default roles...");
 	const { DB } = await import("@/modules/api/DB");
 
 	// ADMIN

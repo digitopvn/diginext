@@ -1,8 +1,9 @@
 # Use Debian as the base image
-FROM digitop/diginext-base:5
+# FROM digitop/diginext-base:5
+FROM digitop/diginext-base:6
 
 # Additional extensions for edit file
-RUN apt-get install -y vim
+RUN apt-get install -y vim iputils-ping
 RUN alias ll="ls -al"
 
 # Set user and group

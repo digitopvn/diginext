@@ -3,8 +3,9 @@ import { upperFirst } from "lodash";
 import type { IApp, IProject, IRole, IUser, IWorkspace, UserDto } from "@/entities";
 import type { IBase } from "@/entities/Base";
 import type { IQueryFilter } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
 import type { AppService, BaseService, ProjectService } from "@/services";
-import { RoleService } from "@/services";
+import { RoleService, UserService } from "@/services";
 
 import { MongoDB } from "./mongodb";
 
@@ -130,8 +131,29 @@ export async function getActiveWorkspace(user: IUser) {
 	return workspace;
 }
 
+export async function assignRoleWithoutCheckingPermissions(roleId: string, toUser: IUser, ownership?: Ownership) {
+	const roleSvc = new RoleService();
+	const toBeUpdatedRole = await roleSvc.findOne({ _id: roleId });
+	const roleWorkspaceId = MongoDB.toString(toBeUpdatedRole.workspace);
+
+	// filter: same role & same workspace roles
+	const roles = toUser.roles
+		.map((role) => role as IRole)
+		.filter((role) => MongoDB.toString(role.workspace) !== roleWorkspaceId)
+		.filter((role) => MongoDB.toString(role._id) !== MongoDB.toString(roleId))
+		.map((role) => role._id);
+
+	// push new role id
+	roles.push(MongoDB.toObjectId(roleId));
+
+	// update user
+	const userSvc = new UserService(ownership);
+	return userSvc.updateOne({ _id: toUser._id }, { roles });
+}
+
 export async function assignRole(role: IRole, user: IUser, options?: { makeActive?: boolean }) {
-	const { DB } = await import("@/modules/api/DB");
+	const userSvc = new UserService();
+
 	// validate
 	if (!user.activeRole || !user.activeWorkspace) throw new Error(`Permissions denied.`);
 
@@ -139,7 +161,9 @@ export async function assignRole(role: IRole, user: IUser, options?: { makeActiv
 	if (!activeWorkspace) throw new Error(`Permissions denied.`);
 
 	const activeRole = await getActiveRole(user, activeWorkspace);
+	// current role "member" -> cannot assign any roles to others
 	if (!activeRole || activeRole.type === "member") throw new Error(`Permissions denied.`);
+	// current role "moderator" -> cannot assign "admin" role to others
 	if (!activeRole || (activeRole.type === "moderator" && role.type === "admin")) throw new Error(`Permissions denied.`);
 
 	// remove old roles
@@ -149,11 +173,11 @@ export async function assignRole(role: IRole, user: IUser, options?: { makeActiv
 
 	// push a new role
 	roles.push(role._id);
-
+	console.log("assignRole > new roles :>> ", roles);
 	// update database
 	const updateData: Partial<UserDto> = { roles };
 	if (options?.makeActive) updateData.activeRole = role;
-	user = await DB.updateOne("user", { _id: user._id }, { roles });
+	user = await userSvc.updateOne({ _id: user._id }, { roles });
 
 	// return
 	return { user, role };

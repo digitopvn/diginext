@@ -8,6 +8,7 @@ import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { getCurrentGitRepoData } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
+import { containsSpecialCharacters } from "@/plugins/string";
 
 import { askForGitProvider } from "../git/ask-for-git-provider";
 import type { GitRepositoryDto } from "../git/git-provider-api";
@@ -39,11 +40,10 @@ export async function createAppByForm(
 			name: "name",
 			message: "Enter your app name:",
 			validate: function (value) {
-				if (value.length >= 3) {
-					return true;
-				} else {
-					return "App name is required & has at least 3 characters.";
-				}
+				if (value.length <= 3) return "App name is required & has at least 3 characters.";
+				if (containsSpecialCharacters(value)) return `App name should not contain special characters.`;
+
+				return true;
 			},
 		});
 		// console.log("createAppByForm() > name :>> ", name);
