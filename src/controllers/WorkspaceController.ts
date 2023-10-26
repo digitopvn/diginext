@@ -75,7 +75,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		let dx_key: string = body.dx_key;
 
 		// if no "dx_key" provided, subscribe to a DX package & obtain DX key
-		if (!dx_key) {
+		if (!IsTest() && !IsDev() && !dx_key) {
 			const pkgRes = await dxGetPackages();
 			if (!pkgRes || !pkgRes.status)
 				return interfaces.respondFailure(pkgRes.messages?.join(", ") || `Unable to get the list of Diginext package plans.`);
@@ -108,10 +108,12 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
 		// skip checking DX key for unit test
-		if (!IsTest()) {
+		if (!IsTest() && !IsDev()) {
 			const createWsRes = await dxCreateWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
 			// console.log("createWsRes :>> ", createWsRes);
 			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+		} else {
+			dx_key = "some-random-key";
 		}
 
 		// ----- END VERIFYING -----
