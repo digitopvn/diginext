@@ -940,8 +940,8 @@ export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicat
 	if (fs.existsSync(filePath)) return filePath;
 
 	if (!ignoreIfNotExisted) {
-		const message = `Missing "${targetDirectory}/${fileNamePrefix}" file, please create one.`;
-		logError(message);
+		const message = `Missing "./${fileNamePrefix}" file, are you in the project directory?`;
+		throw new Error(message);
 	}
 	return;
 };
