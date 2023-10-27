@@ -1,7 +1,6 @@
 import type { FrameworkDto, IFramework } from "@/entities/Framework";
 import { frameworkSchema } from "@/entities/Framework";
-import type { IQueryFilter } from "@/interfaces";
-import { type IQueryOptions } from "@/interfaces";
+import type { IQueryFilter, IQueryOptions } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { fetchTrendingRepos } from "@/modules/frameworks/github-trends";
 import { checkPermissionsByFilter } from "@/plugins/user-utils";

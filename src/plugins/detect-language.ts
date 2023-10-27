@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 export const supportedLanguages = ["javascript", "typescript", "golang", "python", "rust", "php", "java"] as const;
-export type SupportedLanguage = typeof supportedLanguages[number];
+export type SupportedLanguage = (typeof supportedLanguages)[number];
 
 export const detectLanguage = (dir: string) => {
 	if (!existsSync(dir)) throw new Error(`Directory is not existed.`);

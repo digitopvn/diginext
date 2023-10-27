@@ -1,8 +1,7 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 
-import type { IProject } from "@/entities";
-import { type AppGitInfo, type IApp } from "@/entities";
+import type { AppGitInfo, IApp, IProject } from "@/entities";
 import type InputOptions from "@/interfaces/InputOptions";
 import { getCurrentGitRepoData } from "@/plugins";
 

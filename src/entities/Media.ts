@@ -6,7 +6,7 @@ import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
 
 export const mediaMimes = ["application/pdf", "image/png", "image/jpeg", "image/webp"] as const;
-export type MediaMime = typeof mediaMimes[number];
+export type MediaMime = (typeof mediaMimes)[number];
 
 export interface IMedia extends IBase {
 	name: string;
