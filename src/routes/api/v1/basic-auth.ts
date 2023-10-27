@@ -3,8 +3,8 @@ import express from "express";
 import { model } from "mongoose";
 
 import { Config } from "@/app.config";
-import type { IRole } from "@/entities";
-import { type IUser, type IWorkspace, userSchema } from "@/entities";
+import type { IRole, IUser, IWorkspace } from "@/entities";
+import { userSchema } from "@/entities";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import { extractAccessTokenInfo, generateJWT } from "@/modules/passports";
 import { MongoDB } from "@/plugins/mongodb";

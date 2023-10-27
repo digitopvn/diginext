@@ -18,7 +18,7 @@ export const aiModels = [
 	"meta-llama/llama-2-13b-chat",
 	"meta-llama/llama-2-70b-chat",
 ] as const;
-export type AIModel = typeof aiModels[number];
+export type AIModel = (typeof aiModels)[number];
 
 export interface AIDto {
 	model?: AIModel;
