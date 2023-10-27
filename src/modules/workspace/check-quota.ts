@@ -1,6 +1,6 @@
 import { toNumber } from "lodash";
 
-import { IsDev, IsTest } from "@/app.config";
+import { IsTest } from "@/app.config";
 import type { IWorkspace } from "@/entities";
 import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 
@@ -11,7 +11,7 @@ export async function checkQuota(workspace: IWorkspace, options: { resourceSize?
 	const { DB } = await import("../api/DB");
 
 	// SKIP on development and test environment
-	if (IsTest() || IsDev()) return { status: 1, data: { isExceed: false }, messages: ["Ok"] } as CheckQuotaResponse;
+	if (IsTest()) return { status: 1, data: { isExceed: false }, messages: ["Ok"] } as CheckQuotaResponse;
 
 	const { dx_key } = workspace;
 	const { resourceSize } = options;

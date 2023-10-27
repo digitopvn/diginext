@@ -1,4 +1,11 @@
-## [3.24.11-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.10...v3.24.11-prerelease.1) (2023-10-25)
+## [3.24.12](https://github.com/digitopvn/diginext/compare/v3.24.11...v3.24.12) (2023-10-26)
+
+
+### Bug Fixes
+
+* **server:** missing org when create new git provider ([6b9eaf1](https://github.com/digitopvn/diginext/commit/6b9eaf1916a96d42e9faa0657e0cc5b61934d260))
+
+## [3.24.11](https://github.com/digitopvn/diginext/compare/v3.24.10...v3.24.11) (2023-10-25)
 
 
 ### Bug Fixes

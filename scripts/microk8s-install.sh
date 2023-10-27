@@ -77,7 +77,7 @@ microk8s enable helm
 microk8s enable helm3
 microk8s enable cert-manager
 microk8s enable hostpath-storage
-microk8s enable prometheus
+microk8s enable observability
 
 # Install Grafana using Helm
 # microk8s kubectl create ns grafana
@@ -229,7 +229,7 @@ MONGODB_STATEFULSET_NAME=mongodb
 MONGODB_ROOT_PW=diginext
 MONGODB_URI=mongodb://root:${MONGODB_ROOT_PW}@mongodb.mongodb:27017/diginext?authSource=admin
 
-# microk8s kubectl create ns $MONGODB_NAMESPACEopenssl
+# microk8s kubectl create ns $MONGODB_NAMESPACE
 microk8s kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Namespace
