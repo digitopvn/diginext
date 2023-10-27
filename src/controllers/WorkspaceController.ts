@@ -2,7 +2,7 @@ import { isUndefined } from "lodash";
 import type { Types } from "mongoose";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { Config, IsDev, IsTest } from "@/app.config";
+import { Config, IsTest } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
 import type { IApiKeyAccount, IRole, IServiceAccount, IWorkspace } from "@/entities";
 import type { ResponseData } from "@/interfaces";
@@ -75,7 +75,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		let dx_key: string = body.dx_key;
 
 		// if no "dx_key" provided, subscribe to a DX package & obtain DX key
-		if (!IsTest() && !IsDev() && !dx_key) {
+		if (!IsTest() && !dx_key) {
 			const pkgRes = await dxGetPackages();
 			if (!pkgRes || !pkgRes.status)
 				return interfaces.respondFailure(pkgRes.messages?.join(", ") || `Unable to get the list of Diginext package plans.`);
@@ -108,7 +108,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
 		// skip checking DX key for unit test
-		if (!IsTest() && !IsDev()) {
+		if (!IsTest()) {
 			const createWsRes = await dxCreateWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
 			// console.log("createWsRes :>> ", createWsRes);
 			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
@@ -241,7 +241,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		);
 		// console.log("invitedMembers :>> ", invitedMembers);
 
-		if (!IsTest() && !IsDev()) {
+		if (!IsTest()) {
 			const mailContent = `Dear,<br/><br/>You've been invited to <strong>"${workspace.name}"</strong> workspace, please <a href="${Config.BASE_URL}" target="_blank">click here</a> to login.<br/><br/>Cheers,<br/>Diginext System`;
 
 			// send invitation email to those users:
