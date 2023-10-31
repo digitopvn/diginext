@@ -11,7 +11,7 @@ import { dxSendEmail } from "@/modules/diginext/dx-email";
 import type { DxPackage } from "@/modules/diginext/dx-package";
 import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
 import type { DxSubsription } from "@/modules/diginext/dx-subscription";
-import { dxCreateWorkspace } from "@/modules/diginext/dx-workspace";
+import { dxCreateWorkspace, dxJoinWorkspace } from "@/modules/diginext/dx-workspace";
 import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
@@ -23,6 +23,15 @@ interface AddUserBody {
 	workspaceId: Types.ObjectId;
 	roleId?: Types.ObjectId;
 }
+
+export type CreateWorkspaceParams = {
+	name: string;
+	type?: "default" | "hobby" | "self_hosted";
+	packageId: string;
+	userId: any;
+	email: string;
+	public: boolean;
+};
 
 interface WorkspaceInputData {
 	/**
@@ -73,7 +82,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		if (!owner) return interfaces.respondFailure({ msg: `Param "owner" (UserID) is required.` });
 
 		let dx_key: string = body.dx_key;
-
+		let pkgId: string;
 		// if no "dx_key" provided, subscribe to a DX package & obtain DX key
 		if (!IsTest() && !dx_key) {
 			const pkgRes = await dxGetPackages();
@@ -83,15 +92,18 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 			const dxPackages = pkgRes.data as DxPackage[];
 			const pkg = dxPackages.find((p) => (Config.SERVER_TYPE === "hobby" ? "hobby" : "self_hosted"));
 			if (!pkg) return interfaces.respondFailure(`Diginext package plans not found.`);
-
-			const subscribeRes = await dxSubscribe({ userEmail: this.user.email, packageId: pkg.id });
+			pkgId = pkg.id;
+			const subscribeRes = await dxSubscribe({ email: this.user.email });
 			if (!subscribeRes || !subscribeRes.status)
 				return interfaces.respondFailure(
 					subscribeRes.messages?.join(", ") || `Unable to subscribe a Diginext package "${pkg.name}" (${pkg.id}).`
 				);
 
 			const dxSubscription = subscribeRes.data as DxSubsription;
+
 			dx_key = dxSubscription.key;
+			console.log("dxSubscription >>>>>>>>", dxSubscription);
+
 			if (!dx_key) return interfaces.respondFailure(`Unable to obtain "dx_key" from Diginext Package Subscribe API.`);
 
 			body.dx_key = dx_key;
@@ -105,16 +117,22 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		if (isUndefined(body.public)) body.public = true;
 
 		// ----- VERIFY DX KEY -----
-
-		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
-		// skip checking DX key for unit test
+		// Create workspace in diginext-site
 		if (!IsTest()) {
-			const createWsRes = await dxCreateWorkspace({ name, type: Config.SERVER_TYPE }, dx_key);
-			// console.log("createWsRes :>> ", createWsRes);
+			const dataCreateWorkSpace: CreateWorkspaceParams = {
+				name: name,
+				email: ownerUser.email,
+				packageId: pkgId,
+				userId: ownerUser._id,
+				public: body.public,
+				type: Config.SERVER_TYPE,
+			};
+			const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace, dx_key);
 			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
 		} else {
 			dx_key = "some-random-key";
 		}
+		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
 
 		// ----- END VERIFYING -----
 
@@ -203,11 +221,15 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		if (!data.emails || data.emails.length === 0) return interfaces.respondFailure({ msg: `List of email is required.` });
 		if (!this.user) return interfaces.respondFailure({ msg: `Unauthenticated.` });
 		const { DB } = await import("@/modules/api/DB");
+		const userSvc = new UserService();
+		const WcSvc = new WorkspaceService();
 
 		const { emails, role: roleType = "member" } = data;
 
 		const workspace = this.user.activeWorkspace as IWorkspace;
 		const wsId = workspace._id;
+		console.log(`[WS_Controller] Invite Member > Workspace :>>`, workspace);
+		const userId = this.user._id;
 
 		// check if this user is admin of the workspace:
 		const activeRole = this.user.activeRole as IRole;
@@ -223,8 +245,8 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 				let existingUser = await DB.findOne("user", { email });
 				if (!existingUser) {
 					const username = email.split("@")[0] || "New User";
-					const invitedMember = await DB.create("user", {
-						// active: false,
+					const invitedMember = await userSvc.create({
+						active: false,
 						name: username,
 						email: email,
 						workspaces: [wsId],
@@ -232,14 +254,16 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 					});
 					return invitedMember;
 				} else {
+					// Set user to workspace in Dx site
+					const joinWorkspaceRes = await dxJoinWorkspace(email, workspace.slug, workspace.dx_key);
 					const workspaces = existingUser.workspaces || [];
 					workspaces.push(wsId);
 					existingUser = await DB.updateOne("user", { _id: existingUser._id }, { workspaces: filterUniqueItems(workspaces) });
+
 					return existingUser;
 				}
 			})
 		);
-		// console.log("invitedMembers :>> ", invitedMembers);
 
 		if (!IsTest()) {
 			const mailContent = `Dear,<br/><br/>You've been invited to <strong>"${workspace.name}"</strong> workspace, please <a href="${Config.BASE_URL}" target="_blank">click here</a> to login.<br/><br/>Cheers,<br/>Diginext System`;
@@ -354,5 +378,17 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 			: await DB.find("api_key_user", { workspaces: { $in: [workspaceID] } });
 
 		return interfaces.respondSuccess({ data });
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/update-package")
+	async updatePackageWorkspace(@Body() data: { old_key: string; new_key: string }) {
+		const { DB } = await import("@/modules/api/DB");
+		const workspace = await this.service.findOne({ dx_key: data.old_key });
+		if (!workspace) throw new Error(`This workspace is not existed.`);
+		const workspaceUpdate = await DB.updateOne("workspace", { dx_key: data.old_key }, { dx_key: data.new_key });
+		console.log(workspaceUpdate);
+		return interfaces.respondSuccess({ data: { workspaceUpdate } });
 	}
 }

@@ -42,14 +42,16 @@ export const googleStrategy = new GoogleStrategy(
 				access_token: accessToken,
 			};
 
+			// console.log("RES Create User DX Site:", createUserRes);
+			// Create user successfully in DX site then continue to create DX CLI
 			const newUser = await userSvc.create({
 				providers: [provider],
 				name: profile.displayName,
 				email: profile.email,
 				image: profile.picture,
 				verified: profile.verified,
+				isActive: true,
 			});
-
 			if (newUser) {
 				user = newUser;
 				request.user = user;
