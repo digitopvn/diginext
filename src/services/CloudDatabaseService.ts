@@ -239,9 +239,11 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 				type: db.type,
 				dbSlug: db.slug,
 				// ownerships
-				workspace: this.req.workspace._id as string,
-				owner: this.req.user._id as string,
+				workspace: this.req.workspace?._id as string,
+				owner: this.req.user?._id as string,
 			});
+
+			console.log(`[DB_BACKUP] Start backing up > ${db.slug} :>> `, bkName);
 
 			switch (db.type) {
 				case "mariadb":
@@ -281,7 +283,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 
 			return backup;
 		} catch (e) {
-			logError(e);
+			logError(`[DB_BACKUP_ERRROR]`, e);
 			return;
 		}
 	}
