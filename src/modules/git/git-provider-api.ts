@@ -463,12 +463,12 @@ export const listRepoBranches = async (provider: IGitProvider, org: string, slug
 
 	if (provider.type === "bitbucket") {
 		return (res as BitbucketResponse & { values: BitbucketRepoBranch[] }).values.map(
-			(branch) => ({ name: branch.name, url: branch.links.html.href } as GitRepoBranch)
+			(branch) => ({ name: branch.name, url: branch.links.html.href }) as GitRepoBranch
 		);
 	}
 	if (provider.type === "github") {
 		return (res as GithubRepoBranch[]).map(
-			(branch) => ({ name: branch.name, url: `https://github.com/${org}/${slug}/tree/${branch.name}` } as GitRepoBranch)
+			(branch) => ({ name: branch.name, url: `https://github.com/${org}/${slug}/tree/${branch.name}` }) as GitRepoBranch
 		);
 	}
 

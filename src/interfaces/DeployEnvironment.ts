@@ -9,7 +9,7 @@ export const availableSslTypes = ["letsencrypt", "custom", "none"] as const;
 /**
  * @default "letsencrypt"
  */
-export type SslType = typeof availableSslTypes[number];
+export type SslType = (typeof availableSslTypes)[number];
 
 export interface ClientDeployEnvironmentConfig {
 	/**
@@ -191,6 +191,7 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 
 	/**
 	 * ID of the creator
+	 * ! DO NOT REMOVE THIS, OTHERWISE "TSOA" (Swagger) WILL BE BROKEN
 	 */
 	creator?: ObjectId | IUser;
 

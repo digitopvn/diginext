@@ -1,3 +1,376 @@
+## [3.24.13](https://github.com/digitopvn/diginext/compare/v3.24.12...v3.24.13) (2023-10-27)
+
+
+### Bug Fixes
+
+* **types:** some format issues ([36768d0](https://github.com/digitopvn/diginext/commit/36768d03dfd26ad1841d909377d5584d4fde686f))
+
+## [3.24.12](https://github.com/digitopvn/diginext/compare/v3.24.11...v3.24.12) (2023-10-26)
+
+
+### Bug Fixes
+
+* **server:** missing org when create new git provider ([6b9eaf1](https://github.com/digitopvn/diginext/commit/6b9eaf1916a96d42e9faa0657e0cc5b61934d260))
+
+## [3.24.11](https://github.com/digitopvn/diginext/compare/v3.24.10...v3.24.11) (2023-10-25)
+
+
+### Bug Fixes
+
+* **cli:** ask generate dockerfile using ai ([d606ead](https://github.com/digitopvn/diginext/commit/d606ead20fb37ad2d65c5ee27dc503055ce4f0f2))
+* **server,cli:** validate project and app name special chars ([7de20bf](https://github.com/digitopvn/diginext/commit/7de20bf0b44dc355a48299e8ab1994429938fa45))
+* **server,dashboard:** correct auth redirect select workspace with tokens ([cd3a2f4](https://github.com/digitopvn/diginext/commit/cd3a2f4f2a763a54d1850b60b4227e68fff4b9b4))
+* **server,dashboard:** edit db form, db backup system logs ([ddc92d1](https://github.com/digitopvn/diginext/commit/ddc92d11be229bf5630740172bb5e9defa4d1543))
+* **server:** issue of deleting expired db backups ([835a1d3](https://github.com/digitopvn/diginext/commit/835a1d34b8bb88d17e4f450636c385a7d9b5fe1b))
+* **server:** mistake super in delete db bk svc ([07a2ef8](https://github.com/digitopvn/diginext/commit/07a2ef83df8c50ffccc945bc6de47562cafec3f7))
+
+## [3.24.10](https://github.com/digitopvn/diginext/compare/v3.24.9...v3.24.10) (2023-10-24)
+
+
+### Bug Fixes
+
+* **server,dashboard:** fix update role, build log dark mode ([2fdf737](https://github.com/digitopvn/diginext/commit/2fdf73762f800773a414322d518104d49ffc44a1))
+* update role issue & dark mode build logs ([#439](https://github.com/digitopvn/diginext/issues/439)) ([bae0dbf](https://github.com/digitopvn/diginext/commit/bae0dbff83fe1da7216dece4efce2b272b20a836))
+
+## [3.24.9](https://github.com/digitopvn/diginext/compare/v3.24.8...v3.24.9) (2023-10-24)
+
+
+### Bug Fixes
+
+* **debug:** auth google redirect ([5bd24f9](https://github.com/digitopvn/diginext/commit/5bd24f9db162f0052fc64587227a936f2bebf1c1))
+* **server:** assign tokens to cookies in auth jwt ([687745b](https://github.com/digitopvn/diginext/commit/687745b49531b2f1c37cf5bd75f73b76187fa58f))
+* **server:** auth google callback not redirect correctly ([9b388d2](https://github.com/digitopvn/diginext/commit/9b388d2ec9ff3bda157bafde6e05eb2e4d6ea881))
+
+## [3.24.8](https://github.com/digitopvn/diginext/compare/v3.24.7...v3.24.8) (2023-10-24)
+
+
+### Bug Fixes
+
+* **server,cli:** dx new github repo permission ([58c4f73](https://github.com/digitopvn/diginext/commit/58c4f73196abc709d53937a9d3d23dad0e48b0dd))
+
+## [3.24.7](https://github.com/digitopvn/diginext/compare/v3.24.6...v3.24.7) (2023-10-24)
+
+
+### Bug Fixes
+
+* **cli:** request build error log url is null ([bb9f83e](https://github.com/digitopvn/diginext/commit/bb9f83e4a6055e73dd29d30fbaebe0df31b9efb9))
+* **cli:** rm debug log new app ([2cf0884](https://github.com/digitopvn/diginext/commit/2cf088481db00dd4a43d0ff5b0469d533fd6f818))
+* **server:** add proxy body size 100m to ingress ([0140220](https://github.com/digitopvn/diginext/commit/01402202a156bfcadc054514082c3f0f7ebb28d0))
+* **server:** issue of update failed status to db backup ([166291d](https://github.com/digitopvn/diginext/commit/166291d07d3372e930d52ff061b415d0c0d00b5e))
+
+## [3.24.6](https://github.com/digitopvn/diginext/compare/v3.24.5...v3.24.6) (2023-10-19)
+
+
+### Bug Fixes
+
+* **github actions:** use podman as builder ([0085ae5](https://github.com/digitopvn/diginext/commit/0085ae5af688d8a04d6e50a96083a4a8209def8e))
+
+## [3.24.6-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.5...v3.24.6-prerelease.1) (2023-10-18)
+
+
+### Bug Fixes
+
+* **github actions:** use podman as builder ([0085ae5](https://github.com/digitopvn/diginext/commit/0085ae5af688d8a04d6e50a96083a4a8209def8e))
+
+## [3.24.5](https://github.com/digitopvn/diginext/compare/v3.24.4...v3.24.5) (2023-10-18)
+
+
+### Bug Fixes
+
+* **builder:** increase ulimit for podman ([2e7d516](https://github.com/digitopvn/diginext/commit/2e7d516a3715cc82862e66186a36a3f2381be9e9))
+* **merged:** from origin/main ([dd38162](https://github.com/digitopvn/diginext/commit/dd3816258baacd35edf1828b843a5a0404c7ae78))
+* **server:** improve build finish status log ([83dfc13](https://github.com/digitopvn/diginext/commit/83dfc13057392cb4ac816b964e4987f0ae277a20))
+
+## [3.24.4](https://github.com/digitopvn/diginext/compare/v3.24.3...v3.24.4) (2023-10-17)
+
+
+### Bug Fixes
+
+* **dashboard:** add ui of user access permissions ([d249d29](https://github.com/digitopvn/diginext/commit/d249d293489cb406b506c44d85ef08a143100c42))
+* **server:** issue of update db backup status ([ecef5f7](https://github.com/digitopvn/diginext/commit/ecef5f7fdc5c6eb5f8b33e11d20ca0b7972acb72))
+* **server:** update cors, whitelist domains ([590f705](https://github.com/digitopvn/diginext/commit/590f70573f792d5f189d29ee75eb150bf1d84d1b))
+
+## [3.24.4-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.3...v3.24.4-prerelease.1) (2023-10-16)
+
+
+### Bug Fixes
+
+* **dashboard:** add ui of user access permissions ([d249d29](https://github.com/digitopvn/diginext/commit/d249d293489cb406b506c44d85ef08a143100c42))
+* **server:** update cors, whitelist domains ([590f705](https://github.com/digitopvn/diginext/commit/590f70573f792d5f189d29ee75eb150bf1d84d1b))
+
+## [3.24.3](https://github.com/digitopvn/diginext/compare/v3.24.2...v3.24.3) (2023-10-16)
+
+
+### Bug Fixes
+
+* **github actions:** release main ([48ca840](https://github.com/digitopvn/diginext/commit/48ca840b492c72b924915d20ba363e115eb1bf0e))
+
+## [3.24.2](https://github.com/digitopvn/diginext/compare/v3.24.1...v3.24.2) (2023-10-16)
+
+
+### Bug Fixes
+
+* **dashboard:** make login redirect url dynamic ([ac1532e](https://github.com/digitopvn/diginext/commit/ac1532e732b16fc7991476301346c16656725274))
+* **dashboard:** make login redirect url dynamic ([#427](https://github.com/digitopvn/diginext/issues/427)) ([af671ca](https://github.com/digitopvn/diginext/commit/af671ca2722220976370f2ecbd9e071a80ff5c03))
+
+## [3.24.1](https://github.com/digitopvn/diginext/compare/v3.24.0...v3.24.1) (2023-10-15)
+
+
+### Bug Fixes
+
+* **github actions:** rm ski p c i ([02cd645](https://github.com/digitopvn/diginext/commit/02cd645d342400f6d94bdddcab902700caffdbbc))
+* **server:** add try catch to all then case ([dd86922](https://github.com/digitopvn/diginext/commit/dd869221730002d052afb7d4de6d7ea8ba4dce6a))
+
+## [3.24.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.0...v3.24.1-prerelease.1) (2023-10-15)
+
+
+### Bug Fixes
+
+* **server:** add try catch to all then case ([dd86922](https://github.com/digitopvn/diginext/commit/dd869221730002d052afb7d4de6d7ea8ba4dce6a))
+
+# [3.24.0](https://github.com/digitopvn/diginext/compare/v3.23.4...v3.24.0) (2023-10-15)
+
+
+### Bug Fixes
+
+* **bitbucket:** write custom id_rsa for bitbucket auth ([39865cf](https://github.com/digitopvn/diginext/commit/39865cf8fce8b7ffd0d1b608f3ba414800c2da82))
+* **cluster:** fix permissions on update cluster ([ec3eb2e](https://github.com/digitopvn/diginext/commit/ec3eb2e60232f8c50d06001f4c350020f9ec5ded))
+* **hotfix:** make build deploy error easier to understand ([b2d1f15](https://github.com/digitopvn/diginext/commit/b2d1f15f63f4f063174aac5d4246a1f6290e2fd4))
+* **permissions:** cluster auth not update context ([67b917a](https://github.com/digitopvn/diginext/commit/67b917a31572f84db3c38c19e66df97f4e82ae65))
+* **server:** clear old ssh keys ([f2347f4](https://github.com/digitopvn/diginext/commit/f2347f4e4b7027552e4b83be4b46400dcce2fa1f))
+* **server:** kill build process on error ([1fa1154](https://github.com/digitopvn/diginext/commit/1fa115449cd946b2820ca2667efaf51cebef4f19))
+* **test:** cluster auth failed ([2d8fa3a](https://github.com/digitopvn/diginext/commit/2d8fa3a6b1866a022a161b82ef580a8498f0ebcd))
+* **test:** turn off debug ([777ae81](https://github.com/digitopvn/diginext/commit/777ae812d58f5a1c7d59e25a82821100842cb0d4))
+
+
+### Features
+
+* **server,admin:** add guest role ([9692bca](https://github.com/digitopvn/diginext/commit/9692bca46ff16373d23e1f83d9a9352507151082))
+
+# [3.24.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.23.4...v3.24.0-prerelease.1) (2023-10-15)
+
+
+### Bug Fixes
+
+* **bitbucket:** write custom id_rsa for bitbucket auth ([39865cf](https://github.com/digitopvn/diginext/commit/39865cf8fce8b7ffd0d1b608f3ba414800c2da82))
+* **cluster:** fix permissions on update cluster ([ec3eb2e](https://github.com/digitopvn/diginext/commit/ec3eb2e60232f8c50d06001f4c350020f9ec5ded))
+* **hotfix:** make build deploy error easier to understand ([b2d1f15](https://github.com/digitopvn/diginext/commit/b2d1f15f63f4f063174aac5d4246a1f6290e2fd4))
+* **permissions:** cluster auth not update context ([67b917a](https://github.com/digitopvn/diginext/commit/67b917a31572f84db3c38c19e66df97f4e82ae65))
+* **server:** clear old ssh keys ([f2347f4](https://github.com/digitopvn/diginext/commit/f2347f4e4b7027552e4b83be4b46400dcce2fa1f))
+* **server:** kill build process on error ([1fa1154](https://github.com/digitopvn/diginext/commit/1fa115449cd946b2820ca2667efaf51cebef4f19))
+* **test:** cluster auth failed ([2d8fa3a](https://github.com/digitopvn/diginext/commit/2d8fa3a6b1866a022a161b82ef580a8498f0ebcd))
+* **test:** turn off debug ([777ae81](https://github.com/digitopvn/diginext/commit/777ae812d58f5a1c7d59e25a82821100842cb0d4))
+
+
+### Features
+
+* **server,admin:** add guest role ([9692bca](https://github.com/digitopvn/diginext/commit/9692bca46ff16373d23e1f83d9a9352507151082))
+
+## [3.23.4](https://github.com/digitopvn/diginext/compare/v3.23.3...v3.23.4) (2023-10-13)
+
+
+### Bug Fixes
+
+* **server:** catch errors on build and deploy process ([bedd5d6](https://github.com/digitopvn/diginext/commit/bedd5d62ac253d3984df2a709d65a673ed9aa2e0))
+* **server:** catch errors on build and deploy process ([#417](https://github.com/digitopvn/diginext/issues/417)) ([fca0c23](https://github.com/digitopvn/diginext/commit/fca0c23aa0f286b0d3929c53e9661e2168ebd336))
+
+## [3.23.3](https://github.com/digitopvn/diginext/compare/v3.23.2...v3.23.3) (2023-10-09)
+
+
+### Bug Fixes
+
+* **hotfix:** jwt tokens catch error ([56b3e1d](https://github.com/digitopvn/diginext/commit/56b3e1d6ad8d91bb190d27f4b0bf4cea5ec34d70))
+* **hotfix:** jwt tokens catch error ([#416](https://github.com/digitopvn/diginext/issues/416)) ([0c1ef2a](https://github.com/digitopvn/diginext/commit/0c1ef2a8b69b7b23b28d62edfc2fef745e3e0732))
+
+## [3.23.2](https://github.com/digitopvn/diginext/compare/v3.23.1...v3.23.2) (2023-10-09)
+
+
+### Bug Fixes
+
+* **dashboard:** fix unable to scroll in build logs mobile screen ([0766da6](https://github.com/digitopvn/diginext/commit/0766da60602cdc53b4b115f49ae9c37560399733)), closes [#388](https://github.com/digitopvn/diginext/issues/388)
+* **server,dashboard:** fix crashed when deleting app or deploy env ([0bf379c](https://github.com/digitopvn/diginext/commit/0bf379c4794b6adefe04ae15fac6966434eb1c0a)), closes [#400](https://github.com/digitopvn/diginext/issues/400)
+* **server:** generate default container size as none ([5f26f03](https://github.com/digitopvn/diginext/commit/5f26f03b2e4121b1cbf81d36004d9dd7a7efec8d))
+* **server:** issue container size reset after deploying ([cafe2be](https://github.com/digitopvn/diginext/commit/cafe2beedd65c9b1527f6d6764a8644b6f9996aa))
+
+## [3.23.2-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.23.1...v3.23.2-prerelease.1) (2023-10-09)
+
+
+### Bug Fixes
+
+* **dashboard:** fix unable to scroll in build logs mobile screen ([0766da6](https://github.com/digitopvn/diginext/commit/0766da60602cdc53b4b115f49ae9c37560399733)), closes [#388](https://github.com/digitopvn/diginext/issues/388)
+* **server,dashboard:** fix crashed when deleting app or deploy env ([0bf379c](https://github.com/digitopvn/diginext/commit/0bf379c4794b6adefe04ae15fac6966434eb1c0a)), closes [#400](https://github.com/digitopvn/diginext/issues/400)
+* **server:** generate default container size as none ([5f26f03](https://github.com/digitopvn/diginext/commit/5f26f03b2e4121b1cbf81d36004d9dd7a7efec8d))
+* **server:** issue container size reset after deploying ([cafe2be](https://github.com/digitopvn/diginext/commit/cafe2beedd65c9b1527f6d6764a8644b6f9996aa))
+
+## [3.23.1](https://github.com/digitopvn/diginext/compare/v3.23.0...v3.23.1) (2023-10-09)
+
+
+### Bug Fixes
+
+* **cli:** updateBranchProtection ([54cbd46](https://github.com/digitopvn/diginext/commit/54cbd460d64e460c4a867b7fc5688e3bde1165f1))
+* **server,k8s auth:** compare kube_config when updating cluster ([51c9eea](https://github.com/digitopvn/diginext/commit/51c9eeaf8ad35d0d070dfaec663b3411d18f73d1))
+
+## [3.23.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.23.0...v3.23.1-prerelease.1) (2023-10-09)
+
+
+### Bug Fixes
+
+* **cli:** updateBranchProtection ([54cbd46](https://github.com/digitopvn/diginext/commit/54cbd460d64e460c4a867b7fc5688e3bde1165f1))
+* **server,k8s auth:** compare kube_config when updating cluster ([51c9eea](https://github.com/digitopvn/diginext/commit/51c9eeaf8ad35d0d070dfaec663b3411d18f73d1))
+
+# [3.23.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.23.0-prerelease.1...v3.23.0-prerelease.2) (2023-10-06)
+
+
+### Bug Fixes
+
+* **cli:** updateBranchProtection ([54cbd46](https://github.com/digitopvn/diginext/commit/54cbd460d64e460c4a867b7fc5688e3bde1165f1))
+
+# [3.23.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.9-prerelease.1...v3.23.0-prerelease.1) (2023-10-06)
+
+
+### Features
+
+* **db backup, system log:** data retention handling ([062f1b5](https://github.com/digitopvn/diginext/commit/062f1b5432878de39704326640e2500698eef3ca))
+* **db backup, system log:** data retention handling ([#409](https://github.com/digitopvn/diginext/issues/409)) ([3bf0915](https://github.com/digitopvn/diginext/commit/3bf09152938fa98c2b092189f79a36a8668279c6))
+
+## [3.22.9-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.8...v3.22.9-prerelease.1) (2023-10-06)
+
+
+### Bug Fixes
+
+* **cli:** add server down error ([7eaeabe](https://github.com/digitopvn/diginext/commit/7eaeabe2d17960b9bdf814491806650400d58779))
+* **server,api:** format env vars in get app api ([#405](https://github.com/digitopvn/diginext/issues/405)) ([83aad07](https://github.com/digitopvn/diginext/commit/83aad074604bb51cdc5c72a0feb5d58d6f9347da))
+* **server:** compare update changes on auth cluster ([d0a49c6](https://github.com/digitopvn/diginext/commit/d0a49c6f3ae2e3f1a4d69046cda9b9783f99a21a))
+
+## [3.22.8](https://github.com/digitopvn/diginext/compare/v3.22.7...v3.22.8) (2023-10-02)
+
+
+### Bug Fixes
+
+* **server,admin:** envvar obj to json, rm debug logs ([ac84aab](https://github.com/digitopvn/diginext/commit/ac84aabfa95ba69d1f11f40267e8fb2aa28d756d))
+* **server,admin:** envvar obj to json, rm debug logs ([#401](https://github.com/digitopvn/diginext/issues/401)) ([f4ff2e8](https://github.com/digitopvn/diginext/commit/f4ff2e83130201414947065a4788a0e7b1da1557))
+* **server,api:** format env vars in get app api ([0663119](https://github.com/digitopvn/diginext/commit/0663119bd6ad02dbd595676c8ac82565cee38284))
+* **server,deploy:** format all env vars ([fd61ae6](https://github.com/digitopvn/diginext/commit/fd61ae65b890b4be4b1f5bc0eacfc3596e11aa10))
+* **server,deploy:** format all env vars ([#404](https://github.com/digitopvn/diginext/issues/404)) ([97f5a7e](https://github.com/digitopvn/diginext/commit/97f5a7ed3ef5212997f44e441a470d3eab45e780))
+* **server:** cast obj to string when generate yaml ([60cbb06](https://github.com/digitopvn/diginext/commit/60cbb06390feb6917bbd2d8a028cfefbb88f8796))
+* **server:** cast obj to string when generate yaml ([#402](https://github.com/digitopvn/diginext/issues/402)) ([305a9da](https://github.com/digitopvn/diginext/commit/305a9da2b3c778d827710b875b463e025bf2465a))
+* **server:** env var obj to json string ([aa5d99e](https://github.com/digitopvn/diginext/commit/aa5d99ec5a41503cda356d4a9e42dbe677ef5946))
+* **server:** force cast env var obj to json string ([956d0b6](https://github.com/digitopvn/diginext/commit/956d0b6d34410455a61fea9b25ccd002fa328700))
+* **server:** obj to json in deploy env update ([3dd00e0](https://github.com/digitopvn/diginext/commit/3dd00e016c903b62fb37cc35bff54617b8e6bfc5))
+
+## [3.22.8-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.4...v3.22.8-prerelease.5) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server,deploy:** format all env vars ([fd61ae6](https://github.com/digitopvn/diginext/commit/fd61ae65b890b4be4b1f5bc0eacfc3596e11aa10))
+* **server,deploy:** format all env vars ([#404](https://github.com/digitopvn/diginext/issues/404)) ([97f5a7e](https://github.com/digitopvn/diginext/commit/97f5a7ed3ef5212997f44e441a470d3eab45e780))
+
+## [3.22.8-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.3...v3.22.8-prerelease.4) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server:** force cast env var obj to json string ([956d0b6](https://github.com/digitopvn/diginext/commit/956d0b6d34410455a61fea9b25ccd002fa328700))
+* **server:** obj to json in deploy env update ([3dd00e0](https://github.com/digitopvn/diginext/commit/3dd00e016c903b62fb37cc35bff54617b8e6bfc5))
+
+## [3.22.8-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.2...v3.22.8-prerelease.3) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server:** cast obj to string when generate yaml ([60cbb06](https://github.com/digitopvn/diginext/commit/60cbb06390feb6917bbd2d8a028cfefbb88f8796))
+* **server:** cast obj to string when generate yaml ([#402](https://github.com/digitopvn/diginext/issues/402)) ([305a9da](https://github.com/digitopvn/diginext/commit/305a9da2b3c778d827710b875b463e025bf2465a))
+
+## [3.22.8-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.22.8-prerelease.1...v3.22.8-prerelease.2) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server,admin:** envvar obj to json, rm debug logs ([ac84aab](https://github.com/digitopvn/diginext/commit/ac84aabfa95ba69d1f11f40267e8fb2aa28d756d))
+* **server,admin:** envvar obj to json, rm debug logs ([#401](https://github.com/digitopvn/diginext/issues/401)) ([f4ff2e8](https://github.com/digitopvn/diginext/commit/f4ff2e83130201414947065a4788a0e7b1da1557))
+
+## [3.22.8-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.7...v3.22.8-prerelease.1) (2023-09-30)
+
+
+### Bug Fixes
+
+* **server:** env var obj to json string ([aa5d99e](https://github.com/digitopvn/diginext/commit/aa5d99ec5a41503cda356d4a9e42dbe677ef5946))
+
+## [3.22.7](https://github.com/digitopvn/diginext/compare/v3.22.6...v3.22.7) (2023-09-18)
+
+
+### Bug Fixes
+
+* **auth:** catch error when verify refresh token ([fd81cd6](https://github.com/digitopvn/diginext/commit/fd81cd63bdb12d3a48ea2589c655ef0be01bd072))
+
+## [3.22.7-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.6...v3.22.7-prerelease.1) (2023-09-18)
+
+
+### Bug Fixes
+
+* **auth:** catch error when verify refresh token ([fd81cd6](https://github.com/digitopvn/diginext/commit/fd81cd63bdb12d3a48ea2589c655ef0be01bd072))
+
+## [3.22.6](https://github.com/digitopvn/diginext/compare/v3.22.5...v3.22.6) (2023-09-18)
+
+
+### Bug Fixes
+
+* **auth jwt:** add debug info ([a417b1a](https://github.com/digitopvn/diginext/commit/a417b1aab8804f5e8a19f75905e176b95c872ba6))
+* **auth jwt:** add debug info ([#392](https://github.com/digitopvn/diginext/issues/392)) ([92ff844](https://github.com/digitopvn/diginext/commit/92ff844e2092c92f7e42ce927f0242703ece7362))
+* **auth:** crash loop generate new jwt tokens ([c85f7c6](https://github.com/digitopvn/diginext/commit/c85f7c661a2c077d13f47c7ba375a6e34ffbcd6a))
+* **auth:** crash loop generate new jwt tokens ([#394](https://github.com/digitopvn/diginext/issues/394)) ([f7beea3](https://github.com/digitopvn/diginext/commit/f7beea320d3acda14a3b0ef655183eca3f9b6ba6))
+* **auth:** delete old cookie if refresh new tokens ([a95dbb1](https://github.com/digitopvn/diginext/commit/a95dbb1736b8f887d02f006679332d2b9103cfea))
+* **auth:** delete old cookie if refresh new tokens ([#395](https://github.com/digitopvn/diginext/issues/395)) ([a4f272d](https://github.com/digitopvn/diginext/commit/a4f272db9dc559b72f20507be04ead72e46cf409))
+* **cli:** invalid access_token when tokens are expired ([773ce2c](https://github.com/digitopvn/diginext/commit/773ce2cf3b0af0a06bc2d06e3ba332dd28e3a455)), closes [#390](https://github.com/digitopvn/diginext/issues/390)
+* **cli:** invalid access_token when tokens are expired ([#391](https://github.com/digitopvn/diginext/issues/391)) ([47a33cf](https://github.com/digitopvn/diginext/commit/47a33cf0675091d7296c480b6a3138650e864a6b))
+* **server,auth:** token debug jwt auth ([946b6ab](https://github.com/digitopvn/diginext/commit/946b6abb35a1738e5c17713b6f138db0b1d10041))
+* **server,auth:** token debug jwt auth ([#393](https://github.com/digitopvn/diginext/issues/393)) ([703cbb6](https://github.com/digitopvn/diginext/commit/703cbb601faf621517191d0b4036e2714617a7ad))
+* **server:** remove user interface in mongoose schema ([fb48596](https://github.com/digitopvn/diginext/commit/fb48596205f38128346064bfd3c449e702b0bd34))
+* **user:** issue of interface and schema ([ea7810f](https://github.com/digitopvn/diginext/commit/ea7810f57c9ea738fc72e8357f552a29deda8b6a))
+
+## [3.22.6-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.4...v3.22.6-prerelease.5) (2023-09-18)
+
+
+### Bug Fixes
+
+* **auth:** delete old cookie if refresh new tokens ([a95dbb1](https://github.com/digitopvn/diginext/commit/a95dbb1736b8f887d02f006679332d2b9103cfea))
+* **auth:** delete old cookie if refresh new tokens ([#395](https://github.com/digitopvn/diginext/issues/395)) ([a4f272d](https://github.com/digitopvn/diginext/commit/a4f272db9dc559b72f20507be04ead72e46cf409))
+
+## [3.22.6-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.3...v3.22.6-prerelease.4) (2023-09-18)
+
+
+### Bug Fixes
+
+* **auth:** crash loop generate new jwt tokens ([c85f7c6](https://github.com/digitopvn/diginext/commit/c85f7c661a2c077d13f47c7ba375a6e34ffbcd6a))
+* **auth:** crash loop generate new jwt tokens ([#394](https://github.com/digitopvn/diginext/issues/394)) ([f7beea3](https://github.com/digitopvn/diginext/commit/f7beea320d3acda14a3b0ef655183eca3f9b6ba6))
+
+## [3.22.6-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.2...v3.22.6-prerelease.3) (2023-09-14)
+
+
+### Bug Fixes
+
+* **server,auth:** token debug jwt auth ([946b6ab](https://github.com/digitopvn/diginext/commit/946b6abb35a1738e5c17713b6f138db0b1d10041))
+* **server,auth:** token debug jwt auth ([#393](https://github.com/digitopvn/diginext/issues/393)) ([703cbb6](https://github.com/digitopvn/diginext/commit/703cbb601faf621517191d0b4036e2714617a7ad))
+
+## [3.22.6-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.22.6-prerelease.1...v3.22.6-prerelease.2) (2023-09-11)
+
+
+### Bug Fixes
+
+* **auth jwt:** add debug info ([a417b1a](https://github.com/digitopvn/diginext/commit/a417b1aab8804f5e8a19f75905e176b95c872ba6))
+* **auth jwt:** add debug info ([#392](https://github.com/digitopvn/diginext/issues/392)) ([92ff844](https://github.com/digitopvn/diginext/commit/92ff844e2092c92f7e42ce927f0242703ece7362))
+
+## [3.22.6-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.22.5...v3.22.6-prerelease.1) (2023-09-08)
+
+
+### Bug Fixes
+
+* **cli:** invalid access_token when tokens are expired ([773ce2c](https://github.com/digitopvn/diginext/commit/773ce2cf3b0af0a06bc2d06e3ba332dd28e3a455)), closes [#390](https://github.com/digitopvn/diginext/issues/390)
+* **cli:** invalid access_token when tokens are expired ([#391](https://github.com/digitopvn/diginext/issues/391)) ([47a33cf](https://github.com/digitopvn/diginext/commit/47a33cf0675091d7296c480b6a3138650e864a6b))
+* **server:** remove user interface in mongoose schema ([fb48596](https://github.com/digitopvn/diginext/commit/fb48596205f38128346064bfd3c449e702b0bd34))
+* **user:** issue of interface and schema ([ea7810f](https://github.com/digitopvn/diginext/commit/ea7810f57c9ea738fc72e8357f552a29deda8b6a))
+
 ## [3.22.5](https://github.com/digitopvn/diginext/compare/v3.22.4...v3.22.5) (2023-08-24)
 
 

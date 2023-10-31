@@ -6,3 +6,9 @@
 **/storage/**
 storage/**
 __tests__/**/*
+
+podman/**/*
+**/podman/**
+**/*.conf
+podman/
+**/podman/**

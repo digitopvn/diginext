@@ -1,5 +1,10 @@
 # Use Debian as the base image
-FROM digitop/diginext-base:5
+# FROM digitop/diginext-base:5
+FROM digitop/diginext-base:6
+
+# Additional extensions for edit file
+RUN apt-get install -y vim iputils-ping
+RUN alias ll="ls -al"
 
 # Set user and group
 ARG user=app
@@ -65,6 +70,9 @@ COPY ./templates ./templates
 
 RUN chown -R ${uid}:${gid} /usr/app && \
   chmod -R ug+rwx /usr/app
+
+# GCloud kubectl auth plugin
+ENV USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
 # Puppeteer
 ENV CHROMIUM_PATH /usr/bin/chromium

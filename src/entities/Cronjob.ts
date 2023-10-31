@@ -1,17 +1,17 @@
 import { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
-import type { CronjobStatus } from "@/interfaces/SystemTypes";
-import { type RequestMethodType, cronjobStatusList, requestMethodList } from "@/interfaces/SystemTypes";
+import type { CronjobStatus, RequestMethodType } from "@/interfaces/SystemTypes";
+import { cronjobStatusList, requestMethodList } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
 
 export const weekDays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
-export type WeekDay = typeof weekDays[number];
+export type WeekDay = (typeof weekDays)[number];
 
 export const cronjobRepeatUnitList = ["minute", "hour", "day", "month", "year"] as const;
-export type CronjobRepeatUnit = typeof cronjobRepeatUnitList[number];
+export type CronjobRepeatUnit = (typeof cronjobRepeatUnitList)[number];
 
 export type CronjobRequest = {
 	url?: string;

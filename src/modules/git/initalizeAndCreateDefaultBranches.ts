@@ -1,16 +1,19 @@
 // import { log } from "diginext-utils/dist/xconsole/log";
+import Timer from "diginext-utils/dist/Timer";
 import { log } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import path from "path";
 import { simpleGit } from "simple-git";
 
 import type InputOptions from "@/interfaces/InputOptions";
+import updateBranchProtection from "@/modules/git/updateBranchProtection";
 import { wait } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
 export const initalizeAndCreateDefaultBranches = async (options: InputOptions) => {
 	if (options.isDebugging) console.log("initalizeAndCreateDefaultBranches > directory :>> ", options.targetDirectory);
 	if (options.isDebugging) console.log("initalizeAndCreateDefaultBranches > repoSSH :>> ", options.repoSSH);
+	if (options.isDebugging) console.log("initalizeAndCreateDefaultBranches > repoURL :>> ", options.repoURL);
 
 	try {
 		// Remove current git (if any) & initialize new git...
@@ -29,6 +32,7 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 
 		// add git origin remote:
 		await git.addRemote("origin", options.repoSSH);
+		// await git.addRemote("origin", options.repoURL);
 
 		// stage all deployment files & commit it
 		await git.fetch(["--all"]);
@@ -47,14 +51,12 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		await git.push(["--set-upstream", "origin", "main", "--force"]);
 
 		// Update main branch protection
-		/**
-		 * @teexiii đang bị lỗi gì đó nên anh comment lại...
-		 * `Update main branch protection error AxiosError: Request failed with status code 404`
-		 * Chỗ nào chưa test thì đừng đẩy lên `main` nha, sau này nó ảnh hưởng nhiều người lắm.
-		 */
-		// await updateBranchProtection(options);
+		(async () => {
+			await Timer.wait(1000);
+			await updateBranchProtection(options);
+		})();
 
-		// create developer's branch
+		// create developer branches
 		const gitUsername = (await git.getConfig(`user.name`, "global")).value;
 		const username = options.username || (gitUsername ? makeSlug(gitUsername).toLowerCase() : undefined) || "developer";
 		const devBranch = `dev/${username}`;
@@ -69,7 +71,6 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 
 		return options;
 	} catch (error) {
-		console.error(`initalizeAndCreateDefaultBranches error`, error);
-		return;
+		throw new Error(`[GIT] Unable to initialize default branches: ${error}`);
 	}
 };

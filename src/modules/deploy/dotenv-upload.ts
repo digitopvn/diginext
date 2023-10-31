@@ -3,6 +3,7 @@ import { existsSync } from "fs";
 import path from "path";
 
 import type { IApp } from "@/entities";
+import type { InputOptions } from "@/interfaces";
 import type { CreateEnvVarsDto } from "@/interfaces/AppInterfaces";
 import { loadEnvFileAsContainerEnvVars } from "@/plugins";
 
@@ -22,9 +23,10 @@ type UploadDotenvOptions = {
 	 * @example ".env.dev" | ".env.prod"
 	 */
 	fileName?: string;
+	isDebugging?: boolean;
 };
 
-export const uploadDotenvFileByApp = async (envFile: string, app: IApp, env: string = "dev") => {
+export const uploadDotenvFileByApp = async (envFile: string, app: IApp, env: string = "dev", options?: InputOptions) => {
 	const { slug: appSlug } = app;
 
 	const containerEnvVars = loadEnvFileAsContainerEnvVars(envFile);
@@ -43,6 +45,7 @@ export const uploadDotenvFileByApp = async (envFile: string, app: IApp, env: str
 		url,
 		method: "POST",
 		data: updateAppData,
+		isDebugging: options?.isDebugging,
 	});
 
 	let updatedApp: IApp;
@@ -57,12 +60,12 @@ export const uploadDotenvFileByApp = async (envFile: string, app: IApp, env: str
 	return updatedApp;
 };
 
-export const uploadDotenvFileByAppSlug = async (envFile: string, appSlug: string, env: string = "dev") => {
+export const uploadDotenvFileByAppSlug = async (envFile: string, appSlug: string, env: string = "dev", options?: InputOptions) => {
 	const { DB } = await import("@/modules/api/DB");
 	const app = await DB.findOne("app", { slug: appSlug });
 	if (!app) throw new Error(`Can't upload dotenv variables to "${env}" deploy environment due to "${appSlug}" app not found.`);
 
-	return uploadDotenvFileByApp(envFile, app, env);
+	return uploadDotenvFileByApp(envFile, app, env, options);
 };
 
 export const uploadDotenvFile = async (env: string = "dev", options: UploadDotenvOptions = {}) => {
@@ -79,5 +82,5 @@ export const uploadDotenvFile = async (env: string = "dev", options: UploadDoten
 	// [SECURITY CHECK] warns if DOTENV files are not listed in ".gitignore" file
 	await checkGitignoreContainsDotenvFiles({ targetDir });
 
-	return uploadDotenvFileByApp(envFile, app, env);
+	return uploadDotenvFileByApp(envFile, app, env, options);
 };

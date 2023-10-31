@@ -169,7 +169,7 @@ export default class BaseService<T = any> {
 			// convert all {ObjectId} to {string}:
 			return replaceObjectIdsToStrings(newItem) as T;
 		} catch (e) {
-			logError(`[BASE_SERVICE] Create:`, e);
+			logError(`[BASE_SERVICE] "${this.model.collection.name}" > Unable to create:`, e.stack);
 			return;
 		}
 	}
@@ -182,7 +182,10 @@ export default class BaseService<T = any> {
 
 		const where = { ..._filter };
 		if (!options?.deleted) where.deletedAt = { $exists: false };
-		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > find > where :>>`, where);
+		if (options.isDebugging) {
+			console.log(`BaseService > "${this.model.collection.name}" > find > where :>>`);
+			console.dir(JSON.parse(JSON.stringify(where)), { depth: 10 });
+		}
 
 		const pipelines: PipelineStage[] = [
 			{
@@ -247,7 +250,12 @@ export default class BaseService<T = any> {
 		if (options?.select && options.select.length > 0) {
 			const project: any = {};
 			options.select.forEach((field) => {
-				project[field] = 1;
+				let shouldInclude = 1;
+				if (field.startsWith("-")) {
+					field = field.substring(1);
+					shouldInclude = 0;
+				}
+				project[field] = shouldInclude;
 			});
 			pipelines.push({ $project: project });
 		}
@@ -453,7 +461,7 @@ export default class BaseService<T = any> {
 			if (options?.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > affectedItems :>> `, affectedItems);
 			return updateRes.acknowledged ? affectedItems : [];
 		} catch (e) {
-			console.error("Something went wrong when updating data:", e);
+			console.error(`[BASE_SERVICE] "${this.model.collection.name}" > Unable to update data:`, e.stack);
 		}
 	}
 

@@ -34,25 +34,23 @@ export async function cleanUp(idOrRelease: string | IRelease) {
 	let releaseData: IRelease;
 
 	// validation
-	if (isValidObjectId(idOrRelease)) {
-		releaseData = await DB.findOne(
-			"release",
-			{ id: idOrRelease },
-			{ select: ["_id", "id", "slug", "workspace", "owner", "cluster", "appSlug", "projectSlug", "namespace"] }
-		);
+	releaseData = await DB.findOne(
+		"release",
+		{ id: isValidObjectId(idOrRelease) ? idOrRelease : (idOrRelease as IRelease)._id },
+		{
+			select: ["_id", "id", "slug", "workspace", "owner", "cluster", "appSlug", "projectSlug", "namespace"],
+			populate: ["workspace", "owner"],
+		}
+	);
 
-		if (!releaseData) throw new Error(`Release "${idOrRelease}" not found.`);
-	} else {
-		if (!(idOrRelease as IRelease).appSlug) throw new Error(`Release "${idOrRelease}" is invalid.`);
-		releaseData = idOrRelease as IRelease;
-	}
+	if (!releaseData) throw new Error(`Release "${idOrRelease}" not found.`);
 
-	const { cluster: clusterSlug, appSlug, namespace } = releaseData;
+	const { cluster: clusterSlug, appSlug, namespace, owner, workspace } = releaseData;
 
 	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		cluster = await ClusterManager.authClusterBySlug(clusterSlug);
+		cluster = await ClusterManager.authClusterBySlug(clusterSlug, { ownership: { owner: owner as IUser, workspace: workspace as IWorkspace } });
 	} catch (e) {
 		logError(`[KUBE_DEPLOY] Clean up > `, e);
 		return { error: e.message };
@@ -178,7 +176,7 @@ export async function previewPrerelease(id: string, options: RolloutOptions = {}
 	let cluster: ICluster;
 	// authenticate cluster's provider & switch kubectl to that cluster:
 	try {
-		cluster = await ClusterManager.authClusterBySlug(clusterSlug);
+		cluster = await ClusterManager.authClusterBySlug(clusterSlug, { ownership: { owner, workspace } });
 	} catch (e) {
 		const error = `Unable to roll out app to PRE-RELEASE environment: ${e}`;
 		logError(error);
@@ -325,7 +323,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 	}
 
 	try {
-		await ClusterManager.authCluster(cluster);
+		await ClusterManager.authCluster(cluster, { ownership: { owner, workspace } });
 		// log(`Rolling out > Checked connectivity of "${clusterSlug}" cluster.`);
 	} catch (e) {
 		const error = `Unable to authenticate the cluster: ${e.message}`;

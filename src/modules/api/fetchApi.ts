@@ -28,6 +28,7 @@ interface FetchApiOptions<T = any> extends AxiosRequestConfig {
 	api_key?: string;
 	method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 	data?: T | any;
+	isDebugging?: boolean;
 }
 
 export interface FetchApiResponse<T extends Object> {
@@ -37,7 +38,7 @@ export interface FetchApiResponse<T extends Object> {
 }
 
 export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
-	const { access_token, api_key, method = "GET" } = options;
+	const { access_token, api_key, method = "GET", isDebugging = false } = options;
 
 	const {
 		buildServerUrl = process.env.BASE_URL,
@@ -84,12 +85,13 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 		options.params = { refresh_token: cachedRefreshToken };
 	}
 
-	// console.log("options.params :>> ", options.params);
-	// console.log("options.headers :>> ", options.headers);
-
 	if (!options.headers["content-type"]) options.headers["content-type"] = "application/json";
 
 	if (options.data) options.data = JSON.stringify(options.data);
+
+	if (isDebugging) console.log("options.params :>> ", options.params);
+	if (isDebugging) console.log("options.headers :>> ", options.headers);
+	if (isDebugging) console.log("options.data :>> ", options.data);
 
 	try {
 		const { data: responseData } = await axios(options);

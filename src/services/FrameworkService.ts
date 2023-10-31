@@ -1,8 +1,9 @@
 import type { FrameworkDto, IFramework } from "@/entities/Framework";
 import { frameworkSchema } from "@/entities/Framework";
-import { type IQueryOptions } from "@/interfaces";
+import type { IQueryFilter, IQueryOptions } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { fetchTrendingRepos } from "@/modules/frameworks/github-trends";
+import { checkPermissionsByFilter } from "@/plugins/user-utils";
 
 import BaseService from "./BaseService";
 
@@ -32,6 +33,34 @@ export class FrameworkService extends BaseService<IFramework> {
 		// create
 		const item = await super.create(data, options);
 		return item;
+	}
+
+	async update(filter: IQueryFilter<IFramework>, data: any, options?: IQueryOptions): Promise<IFramework[]> {
+		// check permissions
+		await checkPermissionsByFilter("frameworks", this, filter, this.user);
+
+		return super.update(filter, data, options);
+	}
+
+	async updateOne(filter: IQueryFilter<IFramework>, data: any, options?: IQueryOptions): Promise<IFramework> {
+		// check permissions
+		await checkPermissionsByFilter("frameworks", this, filter, this.user);
+
+		return super.updateOne(filter, data, options);
+	}
+
+	async delete(filter?: IQueryFilter<IFramework>, options?: IQueryOptions): Promise<{ ok: boolean; affected: number }> {
+		// check permissions
+		await checkPermissionsByFilter("frameworks", this, filter, this.user);
+
+		return super.delete(filter, options);
+	}
+
+	async softDelete(filter?: IQueryFilter<IFramework>, options?: IQueryOptions): Promise<{ ok: boolean; affected: number }> {
+		// check permissions
+		await checkPermissionsByFilter("frameworks", this, filter, this.user);
+
+		return super.softDelete(filter, options);
 	}
 
 	async getGithubTrends() {

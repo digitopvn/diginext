@@ -8,6 +8,7 @@ import type InputOptions from "@/interfaces/InputOptions";
 import type { GitProviderType } from "@/interfaces/SystemTypes";
 import { getCurrentGitRepoData } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
+import { containsSpecialCharacters } from "@/plugins/string";
 
 import { askForGitProvider } from "../git/ask-for-git-provider";
 import type { GitRepositoryDto } from "../git/git-provider-api";
@@ -39,11 +40,10 @@ export async function createAppByForm(
 			name: "name",
 			message: "Enter your app name:",
 			validate: function (value) {
-				if (value.length >= 3) {
-					return true;
-				} else {
-					return "App name is required & has at least 3 characters.";
-				}
+				if (value.length <= 3) return "App name is required & has at least 3 characters.";
+				if (containsSpecialCharacters(value)) return `App name should not contain special characters.`;
+
+				return true;
 			},
 		});
 		// console.log("createAppByForm() > name :>> ", name);
@@ -95,21 +95,6 @@ export async function createAppByForm(
 
 		const { providerType: gitProvider } = parseGitRepoDataFromRepoSSH(repoSSH);
 		frameworkGitProvider = gitProvider;
-
-		// const { namespace } = parseGitRepoDataFromRepoSSH(fwRepoSSH);
-		// if (!isFwPrivate) {
-		// 	const canAccessPublicRepo = await checkGitProviderAccess(frameworkGitProvider);
-		// 	if (!canAccessPublicRepo) {
-		// 		logError(`You need to authenticate ${upperFirst(frameworkGitProvider)} first to be able to pull this framework.`);
-		// 		return;
-		// 	}
-		// } else {
-		// 	const canAccessPrivateRepo = await checkGitRepoAccess(fwRepoSSH);
-		// 	if (!canAccessPrivateRepo) {
-		// 		logError(`You may not have access to this private repository or ${namespace} organization, please authenticate first.`);
-		// 		return;
-		// 	}
-		// }
 
 		// Request select specific version
 		if (!options.frameworkVersion) {
@@ -168,10 +153,8 @@ export async function createAppByForm(
 		});
 		if (options.isDebugging) console.log("[newAppByForm] CREATE REPO > newRepo :>> ", newRepo);
 
-		if (!newRepo) {
-			logError("Something went wrong!");
-			return;
-		}
+		if (!newRepo) throw new Error(`Unable to create new ${gitProvider.type} repository.`);
+
 		options.gitProvider = newRepo.provider;
 		options.repoSSH = newRepo.ssh_url;
 		options.repoURL = newRepo.repo_url;

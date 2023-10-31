@@ -9,6 +9,7 @@ import type { IContainerRegistry, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { objectToDeploymentYaml } from "@/plugins";
+import { formatEnvVars } from "@/plugins/env-var";
 import { makeSlug } from "@/plugins/slug";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
@@ -154,9 +155,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (isObject(containerEnvs)) containerEnvs = Object.entries(containerEnvs).map(([key, val]) => val);
 
 	// kubernetes YAML only accept string as env variable value
-	containerEnvs = containerEnvs.map(({ name, value }) => {
-		return { name, value: value.toString() };
-	});
+	containerEnvs = formatEnvVars(containerEnvs);
 
 	// console.log("[2] containerEnvs :>> ", containerEnvs);
 
@@ -185,7 +184,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				if (doc && doc.kind == "Ingress") previousIng = doc;
 			});
 		} catch (e) {
-			logWarn(e);
+			logWarn(`Unable to parse previous deployment YAML:`, e, `\n=> Previous YAML:\n`, deployEnvironment.deploymentYaml);
 		}
 	}
 
@@ -193,16 +192,18 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const ingressClasses = (await ClusterManager.getIngressClasses({ context })) || [];
 
 	// write namespace.[env].yaml
+	if (!fs.existsSync(NAMESPACE_TEMPLATE_PATH)) throw new Error(`Namespace template not found: "${NAMESPACE_TEMPLATE_PATH}"`);
 	let namespaceContent = fs.readFileSync(NAMESPACE_TEMPLATE_PATH, "utf8");
-
-	let namespaceObject = yaml.load(namespaceContent);
+	let namespaceObject = yaml.load(namespaceContent) || {};
+	if (params.isDebugging) console.log("Generate deployment > namespace > template YAML :>> ", namespaceContent);
 	namespaceObject.metadata.name = nsName;
-	namespaceObject.metadata.labels = namespaceObject.metadata.labels || {};
+	namespaceObject.metadata.labels = namespaceObject.metadata?.labels || {};
 	namespaceObject.metadata.labels.project = projectSlug.toLowerCase();
 	namespaceObject.metadata.labels.owner = username.toLowerCase();
 	namespaceObject.metadata.labels.workspace = workspace.slug.toLowerCase();
 
 	namespaceContent = objectToDeploymentYaml(namespaceObject);
+	if (params.isDebugging) console.log("Generate deployment > namespace > final YAML :>> ", namespaceContent);
 
 	// write deployment.[env].yaml (ing, svc, deployment)
 	let deploymentContent = fs.readFileSync(FULL_DEPLOYMENT_TEMPLATE_PATH, "utf8");
@@ -211,21 +212,20 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	if (deploymentCfg.length) {
 		deploymentCfg.forEach((doc, index) => {
 			// Make sure all objects stay in the same namespace:
-			if (doc && doc.metadata && doc.metadata.namespace) {
-				doc.metadata.namespace = nsName;
-			}
+			if (doc && doc.metadata && doc.metadata.namespace) doc.metadata.namespace = nsName;
 
 			// INGRESS
 			if (doc && doc.kind == "Ingress") {
 				if (domains.length > 0) {
 					const ingCfg = doc;
+					if (ingCfg.metadata) ingCfg.metadata = {};
 					ingCfg.metadata.name = ingName;
 					ingCfg.metadata.namespace = nsName;
 
 					// inherit config from previous deployment
 					if (deployEnvironmentConfig.shouldInherit) {
 						ingCfg.metadata.annotations = {
-							...previousIng.metadata.annotations,
+							...previousIng?.metadata.annotations,
 							...ingCfg.metadata.annotations,
 						};
 					}
@@ -240,15 +240,18 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					let ingressClass = "";
 					if (
 						deployEnvironmentConfig.ingress &&
-						ingressClasses.map((ingClass) => ingClass.metadata?.name).includes(deployEnvironmentConfig.ingress)
+						(ingressClasses.map((ingClass) => ingClass?.metadata?.name) || []).includes(deployEnvironmentConfig.ingress)
 					) {
 						ingressClass = deployEnvironmentConfig.ingress;
 					} else {
-						ingressClass = ingressClasses[0].metadata.name;
+						ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
 					}
 					if (ingressClass) ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
 
-					// requests per minute
+					// limit file upload & body size
+					ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/proxy-body-size"] = "100m";
+
+					// limit requests per minute (DEV ONLY)
 					if (ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rpm"])
 						delete ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rpm"];
 					if (env !== "prod") ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rps"] = `100`;

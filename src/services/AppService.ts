@@ -16,9 +16,12 @@ import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCre
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { pullOrCloneGitRepo } from "@/plugins";
+import { formatEnvVars } from "@/plugins/env-var";
 import { basicUserFields } from "@/plugins/mask-sensitive-info";
 import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
+import { containsSpecialCharacters } from "@/plugins/string";
+import { checkAppPermissions, checkAppPermissionsByFilter, checkProjectAndAppPermissions, checkProjectPermissions } from "@/plugins/user-utils";
 
 import BaseService from "./BaseService";
 
@@ -54,6 +57,7 @@ export class AppService extends BaseService<IApp> {
 		// validate
 		if (!data.project) throw new Error(`Project ID or slug or instance is required.`);
 		if (!data.name) throw new Error(`App's name is required.`);
+		if (containsSpecialCharacters(data.name)) throw new Error(`App's name should not contain special characters.`);
 
 		// find parent project of this app
 		if (MongoDB.isValidObjectId(data.project)) {
@@ -66,6 +70,9 @@ export class AppService extends BaseService<IApp> {
 
 		if (!project) throw new Error(`Project "${data.project}" not found.`);
 		appDto.projectSlug = project.slug;
+
+		// check access permissions
+		checkProjectPermissions(project, this.user);
 
 		// framework
 		if (!data.framework) data.framework = { name: "none", slug: "none", repoURL: "unknown", repoSSH: "unknown" } as IFramework;
@@ -185,6 +192,9 @@ export class AppService extends BaseService<IApp> {
 		let project = await projectSvc.findOne({ isDefault: true, workspace: workspace._id }, options);
 		if (!project) project = await projectSvc.create({ name: "Default", isDefault: true, workspace: workspace._id, owner: owner._id });
 
+		// check permissions
+		checkProjectPermissions(project, this.user);
+
 		// git provider
 		const gitSvc = new GitProviderService();
 		const gitProvider = await gitSvc.findOne({ _id: gitProviderID });
@@ -287,19 +297,25 @@ export class AppService extends BaseService<IApp> {
 	}
 
 	async find(filter?: IQueryFilter, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<IApp[]> {
-		const { status = false } = options || {};
+		// check access permissions
+		if (this.user?.allowAccess?.apps?.length) filter = { $or: [filter, { _id: { $in: this.user?.allowAccess?.apps } }] };
 
-		// always populate "project" field
-		// options.populate =
-		// 	!options.populate || options.populate.length === 0
-		// 		? (options.populate = ["project"])
-		// 		: [...options.populate.filter((field) => field !== "project"), "project"];
+		const { status = false } = options || {};
 
 		const apps = await super.find(filter, options, pagination);
 
-		if (!status) return apps;
+		if (!status)
+			return apps.map((app) => {
+				if (app && app.deployEnvironment) {
+					for (const env of Object.keys(app.deployEnvironment)) {
+						if (app.deployEnvironment[env] && app.deployEnvironment[env].envVars)
+							app.deployEnvironment[env].envVars = formatEnvVars(app.deployEnvironment[env].envVars);
+					}
+				}
+				return app;
+			});
 
-		const { WorkspaceService, ProjectService, GitProviderService, ClusterService } = await import("./index");
+		const { ClusterService } = await import("./index");
 		const clusterSvc = new ClusterService();
 		const clusterFilter: any = {};
 		if (filter?.workspace) clusterFilter.workspace = filter.workspace;
@@ -312,6 +328,10 @@ export class AppService extends BaseService<IApp> {
 					if (app && app.deployEnvironment) {
 						for (const env of Object.keys(app.deployEnvironment)) {
 							if (!app.deployEnvironment[env]) app.deployEnvironment[env] = { buildTag: "" };
+
+							// environment variables
+							if (app.deployEnvironment[env] && app.deployEnvironment[env].envVars)
+								app.deployEnvironment[env].envVars = formatEnvVars(app.deployEnvironment[env].envVars);
 
 							// default values
 							app.deployEnvironment[env].readyCount = 0;
@@ -394,17 +414,23 @@ export class AppService extends BaseService<IApp> {
 		return appsWithStatus;
 	}
 
-	async takeDown(app: IApp, options?: IQueryOptions) {
-		const { DeployEnvironmentService } = await import("@/services");
-		const deployEnvSvc = new DeployEnvironmentService();
+	async update(filter: IQueryFilter<IApp>, data: any, options?: IQueryOptions): Promise<IApp[]> {
+		// permissions
+		await checkAppPermissionsByFilter(this, filter, this.user);
 
-		// take down all deploy environments
-		const deployEnvs = Object.keys(app.deployEnvironment);
-		console.log("AppSvc.takeDown() > deployEnvs :>> ", deployEnvs);
-		return Promise.all(deployEnvs.map((env) => deployEnvSvc.takeDownDeployEnvironment(app, env, options)));
+		return super.update(filter, data, options);
+	}
+
+	async updateOne(filter: IQueryFilter<IApp>, data: any, options?: IQueryOptions): Promise<IApp> {
+		// check permissions
+		await checkAppPermissionsByFilter(this, filter, this.user);
+		return super.updateOne(filter, data, options);
 	}
 
 	async delete(filter?: IQueryFilter<IApp>, options?: IQueryOptions) {
+		// permissions
+		await checkProjectAndAppPermissions(this, filter, this.user);
+
 		const app = await this.findOne(filter, options);
 		if (!app) throw new Error(`Unable to delete: App not found.`);
 
@@ -415,6 +441,9 @@ export class AppService extends BaseService<IApp> {
 	}
 
 	async softDelete(filter?: IQueryFilter<IApp>, options?: IQueryOptions) {
+		// permissions
+		await checkProjectAndAppPermissions(this, filter, this.user);
+
 		const app = await this.findOne(filter, options);
 		if (!app) throw new Error(`Unable to delete: App not found.`);
 
@@ -428,6 +457,9 @@ export class AppService extends BaseService<IApp> {
 		const app = await this.findOne(filter, { populate: ["gitProvider"] });
 		if (!app) throw new Error(`Unable to delete: App not found.`);
 
+		// permissions
+		checkAppPermissions(app, this.user);
+
 		const provider = app.gitProvider as IGitProvider;
 		const repoData = await parseGitRepoDataFromRepoSSH(app.git.repoSSH);
 		if (!repoData) throw new Error(`Unable to read repo data of "${app.slug}" app: ${app.git.repoSSH}`);
@@ -439,9 +471,25 @@ export class AppService extends BaseService<IApp> {
 		return gitSvc.deleteGitRepository(provider, repoData.repoSlug, options);
 	}
 
+	async takeDown(app: IApp, options?: IQueryOptions) {
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+
+		// permissions
+		checkAppPermissions(app, this.user);
+
+		// take down all deploy environments
+		const deployEnvs = Object.keys(app.deployEnvironment);
+		console.log("AppSvc.takeDown() > deployEnvs :>> ", deployEnvs);
+		return Promise.all(deployEnvs.map((env) => deployEnvSvc.takeDownDeployEnvironment(app, env, options)));
+	}
+
 	async archiveApp(app: IApp, ownership?: Ownership) {
 		const { DeployEnvironmentService } = await import("@/services");
 		const deployEnvSvc = new DeployEnvironmentService();
+
+		// permissions
+		checkAppPermissions(app, this.user);
 
 		// take down all deploy environments
 		const deployEnvs = Object.keys(app.deployEnvironment);
@@ -453,6 +501,9 @@ export class AppService extends BaseService<IApp> {
 	}
 
 	async unarchiveApp(app: IApp, ownership?: Ownership) {
+		// permissions
+		checkAppPermissions(app, this.user);
+
 		// update database
 		const unarchivedApp = await this.updateOne({ _id: app._id }, { $unset: { archivedAt: true } }, { raw: true });
 		return unarchivedApp;

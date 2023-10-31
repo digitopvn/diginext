@@ -24,25 +24,33 @@ export interface Ownership {
 	owner: IUser;
 }
 
+// log type
+export const logTypes = ["debug", "warn", "error", "fatal"] as const;
+export type LogType = (typeof logTypes)[number];
+
+// data retention
+export const retentionTypes = ["limit", "duration"] as const;
+export type RetentionType = (typeof retentionTypes)[number];
+
 // http methods
 export const requestMethodList = ["GET", "POST", "PATCH", "DELETE"] as const;
-export type RequestMethodType = typeof requestMethodList[number];
+export type RequestMethodType = (typeof requestMethodList)[number];
 
 // cloud providers
 export const cloudProviderList = ["gcloud", "digitalocean", "custom"] as const;
-export type CloudProviderType = typeof cloudProviderList[number];
+export type CloudProviderType = (typeof cloudProviderList)[number];
 
 // database providers
 export const cloudDatabaseList = ["mongodb", "mysql", "mariadb", "postgresql", "sqlserver", "sqlite", "redis", "dynamodb"] as const;
-export type CloudDatabaseType = typeof cloudDatabaseList[number];
+export type CloudDatabaseType = (typeof cloudDatabaseList)[number];
 
 // container registry providers
 export const registryProviderList = ["gcloud", "digitalocean", "dockerhub"] as const;
-export type RegistryProviderType = typeof registryProviderList[number];
+export type RegistryProviderType = (typeof registryProviderList)[number];
 
 // git providers
 export const availableGitProviders = ["bitbucket", "github" /**, "gitlab" */] as const;
-export type GitProviderType = typeof availableGitProviders[number];
+export type GitProviderType = (typeof availableGitProviders)[number];
 
 // resource types
 export const availableResourceSizes = ["none", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"] as const;
@@ -61,7 +69,7 @@ export const availableResourceSizes = ["none", "1x", "2x", "3x", "4x", "5x", "6x
  * "9x" - { requests: { cpu: "5120m", memory: "16232Mi" }, limits: { cpu: "5120m", memory: "16232Mi" } }
  * "10x" - { requests: { cpu: "10024m", memory: "32464Mi" }, limits: { cpu: "10024m", memory: "32464Mi" } }
  */
-export type ResourceQuotaSize = typeof availableResourceSizes[number];
+export type ResourceQuotaSize = (typeof availableResourceSizes)[number];
 
 // git provider domains
 export const gitProviderDomain = {
@@ -70,23 +78,23 @@ export const gitProviderDomain = {
 	gitlab: "gitlab.com",
 };
 export const gitProviderDomainList = ["bitbucket.org", "github.com"] as const;
-export type GitProviderDomain = typeof gitProviderDomainList[number];
+export type GitProviderDomain = (typeof gitProviderDomainList)[number];
 
 // build status
 export const buildStatusList = ["pending", "start", "building", "failed", "success", "cancelled"] as const;
-export type BuildStatus = typeof buildStatusList[number];
+export type BuildStatus = (typeof buildStatusList)[number];
 
 // deploy status
 export const deployStatusList = ["pending", "in_progress", "failed", "success", "cancelled"] as const;
-export type DeployStatus = typeof deployStatusList[number];
+export type DeployStatus = (typeof deployStatusList)[number];
 
 // backup status
 export const backupStatusList = ["start", "in_progress", "failed", "success", "cancelled"] as const;
-export type BackupStatus = typeof backupStatusList[number];
+export type BackupStatus = (typeof backupStatusList)[number];
 
 // cronjob status
 export const cronjobStatusList = ["in_progress", "failed", "success", "cancelled"] as const;
-export type CronjobStatus = typeof cronjobStatusList[number];
+export type CronjobStatus = (typeof cronjobStatusList)[number];
 
 /**
  * App status:
@@ -99,13 +107,13 @@ export type CronjobStatus = typeof cronjobStatusList[number];
  * - `unknown`: Other unknown errors.
  */
 export const appStatusList = ["deploying", "healthy", "partial_healthy", "undeployed", "failed", "crashed", "unknown"] as const;
-export type AppStatus = typeof appStatusList[number];
+export type AppStatus = (typeof appStatusList)[number];
 
 /**
  * @default "letsencrypt"
  */
 export const sslIssuerList = ["letsencrypt", "custom", "none"] as const;
-export type SslIssuer = typeof sslIssuerList[number];
+export type SslIssuer = (typeof sslIssuerList)[number];
 
 // build platforms
 export const buildPlatformList = [
@@ -121,7 +129,7 @@ export const buildPlatformList = [
 	"linux/arm/v7",
 	"linux/arm/v6",
 ] as const;
-export type BuildPlatform = typeof buildPlatformList[number];
+export type BuildPlatform = (typeof buildPlatformList)[number];
 
 // system status
 // export const systemStatusList = ["incident", "recover"] as const;
@@ -137,14 +145,14 @@ export const systemEventList = [
 	"project_status",
 	"environment_status",
 ] as const;
-export type SystemEvent = typeof systemEventList[number];
+export type SystemEvent = (typeof systemEventList)[number];
 
 // webhook channels
 export const webhookChannelList = ["http_callback", "email", "sms", "web_push", "push_notification", "instant_message"] as const;
-export type WebhookChannel = typeof webhookChannelList[number];
+export type WebhookChannel = (typeof webhookChannelList)[number];
 
 export const webhookEventStatusList = filterUniqueItems([...buildStatusList, ...deployStatusList, ...backupStatusList, ...appStatusList]);
-export type WebhookEventStatus = typeof webhookEventStatusList[number];
+export type WebhookEventStatus = (typeof webhookEventStatusList)[number];
 
 /**
  * Credential fields
@@ -181,28 +189,53 @@ export const credentialFields: string[] = [
 /**
  * ROLES & PERMISSIONS: API Routes
  */
+export const adminRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["full"], scope: [] }];
+export const moderatorRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["own", "read", "create", "update"], scope: [] }];
+
 export const memberRoleRoutes: RoleRoute[] = [
 	{ path: "*", permissions: ["own", "read"], scope: [] },
 	{ path: "/api/v1/deploy", permissions: ["read", "create", "update"], scope: [] },
 	{ path: "/api/v1/domain", permissions: ["read", "create", "update"], scope: [] },
 	{ path: "/api/v1/project", permissions: ["own", "read", "create", "update"], scope: [] },
 	{ path: "/api/v1/app", permissions: ["own", "read", "create", "update"], scope: [] },
-	{ path: "/api/v1/app/environment", permissions: ["full"], scope: [] },
-	{ path: "/api/v1/app/environment/variables", permissions: ["full"], scope: [] },
+	{ path: "/api/v1/app/environment", permissions: ["read", "create", "update"], scope: [] },
+	{ path: "/api/v1/app/deploy_environment", permissions: ["read", "create", "update"], scope: [] },
+	{ path: "/api/v1/app/environment/variables", permissions: ["read", "create", "update"], scope: [] },
 	{ path: "/api/v1/build/start", permissions: ["full"], scope: [] },
 	{ path: "/api/v1/build/stop", permissions: ["full"], scope: [] },
 	{ path: "/api/v1/release", permissions: ["own", "read", "create", "update"], scope: [] },
 	{ path: "/api/v1/release/from-build", permissions: ["own", "read", "create", "update"], scope: [] },
 	{ path: "/api/v1/release/preview", permissions: ["own", "read", "create", "update"], scope: [] },
 	{ path: "/api/v1/git", permissions: ["own", "public"], scope: [] },
+	{ path: "/api/v1/git/orgs", permissions: ["own", "public"], scope: [] },
+	{ path: "/api/v1/git/orgs/repos", permissions: ["read", "create", "update"], scope: [] },
 	{ path: "/api/v1/git/public-key", permissions: [], scope: [] },
 	{ path: "/api/v1/git/ssh/create", permissions: [], scope: [] },
 	{ path: "/api/v1/git/ssh/generate", permissions: [], scope: [] },
 	{ path: "/api/v1/git/ssh/verify", permissions: [], scope: [] },
+	{ path: "/api/v1/user", permissions: ["read"], scope: [] },
 	{ path: "/api/v1/user/join-workspace", permissions: ["update"], scope: [] },
 	{ path: "/api/v1/role", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/workspace", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/workspace/invite", permissions: ["create"], scope: [] },
 	{ path: "/api/v1/api_key", permissions: [], scope: [] },
 	{ path: "/api/v1/service_account", permissions: ["own", "public"], scope: [] },
 ];
-export const moderatorRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["own", "read", "create", "update"], scope: [] }];
-export const adminRoleRoutes: RoleRoute[] = [{ path: "*", permissions: ["full"], scope: [] }];
+
+export const guestRoleRoutes: RoleRoute[] = [
+	{ path: "*", permissions: ["own", "create"], scope: [] },
+	{ path: "/api/v1/deploy", permissions: ["create"], scope: [] },
+	{ path: "/api/v1/build", permissions: ["own"], scope: [] },
+	{ path: "/api/v1/build/start", permissions: ["create"], scope: [] },
+	{ path: "/api/v1/build/stop", permissions: ["create", "update"], scope: [] },
+	{ path: "/api/v1/release", permissions: ["read", "create", "update"], scope: [] },
+	{ path: "/api/v1/release/from-build", permissions: ["own", "read", "create", "update"], scope: [] },
+	{ path: "/api/v1/release/preview", permissions: ["own", "read", "create", "update"], scope: [] },
+	{ path: "/api/v1/user", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/user/join-workspace", permissions: ["update"], scope: [] },
+	{ path: "/api/v1/role", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/workspace", permissions: ["read"], scope: [] },
+	{ path: "/api/v1/workspace/invite", permissions: [], scope: [] },
+	{ path: "/api/v1/api_key", permissions: [], scope: [] },
+	{ path: "/api/v1/service_account", permissions: [], scope: [] },
+];

@@ -564,7 +564,7 @@ export async function parseCliOptions() {
 		domain: argv.domain as string,
 		port: argv.port as number,
 		replicas: argv.replicas as number,
-		size: (argv.size as ResourceQuotaSize) ?? "none",
+		size: argv.size as ResourceQuotaSize | undefined,
 		provider: argv.provider as string,
 		registry: argv.registry as string,
 		cluster: argv.cluster as string,

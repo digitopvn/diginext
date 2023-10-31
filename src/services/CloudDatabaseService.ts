@@ -10,6 +10,7 @@ import { cloudDatabaseSchema } from "@/entities/CloudDatabase";
 import type { ICloudDatabaseBackup } from "@/entities/CloudDatabaseBackup";
 import type { CronjobRepeat, CronjobRequest, CronjonRepeatCondition } from "@/entities/Cronjob";
 import { cronjobRepeatUnitList } from "@/entities/Cronjob";
+import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 import { respondFailure } from "@/interfaces";
 import type { CloudDatabaseType, Ownership } from "@/interfaces/SystemTypes";
 import { cloudDatabaseList } from "@/interfaces/SystemTypes";
@@ -18,6 +19,7 @@ import MongoShell from "@/modules/db/mongo";
 import MySQL from "@/modules/db/mysql";
 import PostgreSQL from "@/modules/db/pg";
 import { MongoDB } from "@/plugins/mongodb";
+import { checkPermissionsByFilter } from "@/plugins/user-utils";
 
 import BaseService from "./BaseService";
 import { CloudDatabaseBackupService } from "./CloudDatabaseBackupService";
@@ -118,6 +120,45 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		return newDb;
 	}
 
+	async find(
+		filter?: IQueryFilter<ICloudDatabase>,
+		options?: IQueryOptions & IQueryPagination,
+		pagination?: IQueryPagination
+	): Promise<ICloudDatabase[]> {
+		// check access permissions
+		if (this.user?.allowAccess?.databases?.length > 0) filter = { $or: [filter, { _id: { $in: this.user?.allowAccess?.databases } }] };
+
+		return super.find(filter, options, pagination);
+	}
+
+	async update(filter: IQueryFilter<ICloudDatabase>, data: any, options?: IQueryOptions): Promise<ICloudDatabase[]> {
+		// check permissions
+		await checkPermissionsByFilter("cloud_databases", this, filter, this.user);
+
+		return super.update(filter, data, options);
+	}
+
+	async updateOne(filter: IQueryFilter<ICloudDatabase>, data: any, options?: IQueryOptions): Promise<ICloudDatabase> {
+		// check permissions
+		await checkPermissionsByFilter("cloud_databases", this, filter, this.user);
+
+		return super.updateOne(filter, data, options);
+	}
+
+	async delete(filter?: IQueryFilter<ICloudDatabase>, options?: IQueryOptions): Promise<{ ok: boolean; affected: number }> {
+		// check permissions
+		await checkPermissionsByFilter("cloud_databases", this, filter, this.user);
+
+		return super.delete(filter, options);
+	}
+
+	async softDelete(filter?: IQueryFilter<ICloudDatabase>, options?: IQueryOptions): Promise<{ ok: boolean; affected: number }> {
+		// check permissions
+		await checkPermissionsByFilter("cloud_databases", this, filter, this.user);
+
+		return super.softDelete(filter, options);
+	}
+
 	// healthz
 	async checkHealthById(id: string) {
 		const { DB } = await import("@/modules/api/DB");
@@ -207,7 +248,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 				case "mysql":
 					MySQL.backup({ dbName: options?.dbName, host: db.host, port: toString(db.port), user: db.user, pass: db.pass })
 						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
-						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
+						.catch((e) => (backup ? bkSvc.updateStatus(backup._id, { status: "failed" }) : undefined));
 					break;
 				case "mongodb":
 					MongoShell.backup({
@@ -220,7 +261,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						pass: db.pass,
 					})
 						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
-						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
+						.catch((e) => (backup ? bkSvc.updateStatus(backup._id, { status: "failed" }) : undefined));
 					break;
 				case "postgresql":
 					PostgreSQL.backup({
@@ -232,7 +273,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						pass: db.pass,
 					})
 						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
-						.catch((e) => bkSvc.updateStatus(backup._id, { status: "failed" }));
+						.catch((e) => (backup ? bkSvc.updateStatus(backup._id, { status: "failed" }) : undefined));
 					break;
 				default:
 					throw new Error(`Database type "${db.type}" is not supported backing up at the moment.`);

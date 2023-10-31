@@ -6,7 +6,13 @@ import type { IUser } from "@/entities";
 import { UserDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
-import { assignRoleByID, assignRoleByRoleID, filterSensitiveInfo, filterUsersByWorkspaceRole, getActiveRole } from "@/plugins/user-utils";
+import {
+	assignRoleByID,
+	assignRoleWithoutCheckingPermissions,
+	filterSensitiveInfo,
+	filterUsersByWorkspaceRole,
+	getActiveRole,
+} from "@/plugins/user-utils";
 import { UserService, WorkspaceService } from "@/services";
 
 interface JoinWorkspaceBody {
@@ -69,21 +75,28 @@ export default class UserController extends BaseController<IUser> {
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
+		// console.log("body.roles :>> ", body.roles);
 		if (body.roles) {
 			try {
-				if (isArray(body.roles)) {
-					await Promise.all(body.roles.map((roleId) => assignRoleByRoleID(roleId, this.user)));
-				} else if (MongoDB.isValidObjectId(body.roles)) {
-					const roleId = body.roles;
-					await assignRoleByRoleID(roleId, this.user);
-				}
+				// find list of affected users
+				const users = await this.service.find(this.filter, { populate: ["roles"] });
+				users.forEach(async (user) => {
+					if (isArray(body.roles)) {
+						await Promise.all(
+							body.roles.map((roleId) => assignRoleWithoutCheckingPermissions(MongoDB.toString(roleId), user, this.ownership))
+						);
+					} else if (MongoDB.isValidObjectId(body.roles)) {
+						const roleId = body.roles;
+						return assignRoleWithoutCheckingPermissions(MongoDB.toString(roleId), user, this.ownership);
+					}
+				});
 				delete body.roles;
 			} catch (e) {
-				return respondFailure(e.toString());
+				return respondFailure(`Unable to update role: ${e}`);
 			}
 		}
 
-		// [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
+		// ! [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
 		if (this.filter.owner && MongoDB.toString(this.filter.owner) === MongoDB.toString(this.user._id)) delete this.filter.owner;
 
 		return super.update(body);
@@ -137,7 +150,7 @@ export default class UserController extends BaseController<IUser> {
 			if (workspaceSlug) wsFilter.slug = workspaceSlug;
 
 			// find the workspace
-			const workspaceSvc = new WorkspaceService();
+			const workspaceSvc = new WorkspaceService(this.ownership);
 			const workspace = await workspaceSvc.findOne(wsFilter);
 			if (!workspace) throw new Error(`Workspace not found.`);
 
@@ -175,6 +188,43 @@ export default class UserController extends BaseController<IUser> {
 		} catch (e) {
 			console.log(e);
 			return respondFailure({ msg: "Failed to join a workspace." });
+		}
+	}
+
+	/**
+	 * Update user's access permissions
+	 * @param body - Example: `{ userId: "000", resource: { "projects": "1,2,3,4", "apps": "4,5,6" } }`
+	 * @returns
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Patch("/permissions")
+	async updateAccessPermissions(
+		@Body()
+		body: {
+			/**
+			 * User slug
+			 */
+			userSlug: string;
+			/**
+			 * Resource data:
+			 * - "name": `projects`, `apps`, `clusters`, `databases`, `database_backups`, `gits`, `frameworks`, `container_registries`
+			 * - "value": List of resource IDs in string, separated by commas without spacing. For example: `123,456,789`
+			 * @example { projects: "1,2,3", apps: "5,6,7" }
+			 */
+			resource: { [name: string]: string };
+		}
+	) {
+		try {
+			if (!body.userSlug) throw new Error(`Param "userSlug" is required.`);
+			if (!body.resource) throw new Error(`Param "resource" is required.`);
+
+			const { userSlug, resource } = body;
+			const updatedUser = await this.service.updateAccessPermissions(userSlug, resource);
+
+			return respondSuccess({ data: updatedUser });
+		} catch (e) {
+			return respondFailure(e.toString());
 		}
 	}
 }

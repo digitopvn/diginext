@@ -4,6 +4,7 @@ import { Config } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IBuild } from "@/entities/Build";
 import { buildSchema } from "@/entities/Build";
+import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import type { RerunBuildParams, StartBuildParams } from "@/modules/build";
 import { generateBuildTag } from "@/modules/build/generate-build-tag";
@@ -18,6 +19,26 @@ export class BuildService extends BaseService<IBuild> {
 	constructor(ownership?: Ownership) {
 		super(buildSchema, ownership);
 		this.regSvc = new ContainerRegistryService(ownership);
+	}
+
+	async find(filter?: IQueryFilter<IBuild>, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<IBuild[]> {
+		if (this.user?.allowAccess?.projects?.length > 0) {
+			if (filter.$or) {
+				filter.$or.push({ project: { $in: this.user?.allowAccess?.projects } });
+			} else {
+				filter = { $or: [filter, { project: { $in: this.user?.allowAccess?.projects } }] };
+			}
+		}
+		if (this.user?.allowAccess?.apps?.length > 0) {
+			if (filter.$or) {
+				filter.$or.push({ app: { $in: this.user?.allowAccess?.apps } });
+			} else {
+				filter = { $or: [filter, { project: { $in: this.user?.allowAccess?.apps } }] };
+			}
+		}
+
+		// options.isDebugging = true;
+		return super.find(filter, options, pagination);
 	}
 
 	async startBuild(data: StartBuildParams, ownership: Ownership) {

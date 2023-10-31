@@ -3,8 +3,8 @@ import express from "express";
 import { model } from "mongoose";
 
 import { Config } from "@/app.config";
-import type { IRole } from "@/entities";
-import { type IUser, type IWorkspace, userSchema } from "@/entities";
+import type { IRole, IUser, IWorkspace } from "@/entities";
+import { userSchema } from "@/entities";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import { dxCreateUser } from "@/modules/diginext/dx-user";
 import { extractAccessTokenInfo, generateJWT } from "@/modules/passports";
@@ -17,7 +17,6 @@ const router = express.Router();
  * Basic auth - REGISTER: /api/v1/register
  */
 router.post("/register", async (req, res) => {
-	// TODO: add "workspace" into register API
 	const { name, email, password, workspace: wsId } = req.body;
 	// const { DB } = await import("@/modules/api/DB");
 	const userSvc = new UserService();

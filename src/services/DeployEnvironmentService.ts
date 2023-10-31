@@ -1,18 +1,16 @@
 import { isJSON } from "class-validator";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { logWarn } from "diginext-utils/dist/xconsole/log";
-import { isArray, isBoolean, isEmpty, isUndefined, toString } from "lodash";
+import { isArray, isBoolean, isEmpty, isUndefined } from "lodash";
 import type { QuerySelector } from "mongoose";
 
 import type { ICluster, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
-import type { IQueryOptions } from "@/interfaces";
-import { type DeployEnvironment, type KubeDeployment } from "@/interfaces";
+import type { DeployEnvironment, IQueryOptions, KubeDeployment } from "@/interfaces";
 import type { DeployEnvironmentData } from "@/interfaces/AppInterfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
-import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import type { GenerateDeploymentResult } from "@/modules/deploy";
@@ -22,6 +20,7 @@ import { dxCreateDomain } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
+import { formatEnvVars } from "@/plugins/env-var";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -179,8 +178,8 @@ export class DeployEnvironmentService {
 		// console.log("updatedApp :>> ", updatedApp);
 		if (!updatedApp) throw new Error(`Failed to create "${env}" deploy environment.`);
 
-		const appConfig = await getAppConfigFromApp(updatedApp);
-		console.log("buildTag :>> ", buildTag);
+		// const appConfig = await getAppConfigFromApp(updatedApp);
+		// console.log("buildTag :>> ", buildTag);
 
 		let deployment: GenerateDeploymentResult = await generateDeployment({
 			appSlug: app.slug,
@@ -308,7 +307,7 @@ export class DeployEnvironmentService {
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		// switch to the cluster of this environment
-		await ClusterManager.authCluster(cluster);
+		await ClusterManager.authCluster(cluster, { ownership: this.ownership });
 
 		let success = false;
 		let message = "";
@@ -369,7 +368,7 @@ export class DeployEnvironmentService {
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		// switch to the cluster of this environment
-		await ClusterManager.authCluster(cluster);
+		await ClusterManager.authCluster(cluster, { ownership: this.ownership });
 
 		let success = false;
 		let message = "";
@@ -431,7 +430,7 @@ export class DeployEnvironmentService {
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		// double check cluster's accessibility
-		await ClusterManager.authCluster(cluster);
+		await ClusterManager.authCluster(cluster, { ownership: this.ownership });
 
 		/**
 		 * IMPORTANT
@@ -544,24 +543,36 @@ export class DeployEnvironmentService {
 		const { default: DeployService } = await import("./DeployService");
 		const buildSvc = new BuildService(this.ownership);
 		const deploySvc = new DeployService(this.ownership);
+
 		// deploy to new cluster
 		const latestBuild = await buildSvc.findOne({ slug: app.latestBuild });
-		const { build, release, error } = await deploySvc.deployBuild(latestBuild, {
+		const { build, release } = await deploySvc.deployBuild(latestBuild, {
 			env,
 			owner: options.user,
 			workspace: options.workspace,
 			forceRollOut: true,
 		});
-		if (error) throw new Error(`Unable to deploy new cluster: ${error}`);
 
 		// return
 		return { build, release, app };
 	}
 
 	/**
+	 * Get environment variables of a deploy environment
+	 * @param app - IApp
+	 * @param env - Deploy environment (dev, prod,...)
+	 * @returns
+	 */
+	async getEnvVars(app: IApp, env: string) {
+		// validate
+		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
+		return formatEnvVars(app.deployEnvironment[env].envVars);
+	}
+
+	/**
 	 * Update environment variables of a deploy environment
-	 * @param app
-	 * @param env
+	 * @param app - IApp
+	 * @param env - Deploy environment (dev, prod,...)
 	 * @param variables - Array of environment variables: `[{name,value}]`
 	 * @returns
 	 */
@@ -572,7 +583,7 @@ export class DeployEnvironmentService {
 		if (!isArray(variables)) throw new Error(`Params "variables" should be an array.`);
 
 		// just to make sure "value" is always "string"
-		variables = variables.map(({ name, value }) => ({ name, value: toString(value) }));
+		variables = formatEnvVars(variables);
 
 		const deployEnvironment = app.deployEnvironment[env];
 		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);

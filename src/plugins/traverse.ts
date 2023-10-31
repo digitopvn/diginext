@@ -26,5 +26,5 @@ export function traverseObjectAndTransformValue(obj: any, transform: (keyPair: [
 }
 
 export function replaceObjectIdsToStrings(obj: any): any {
-	return JSON.parse(JSON.stringify(obj)) as typeof obj[];
+	return JSON.parse(JSON.stringify(obj)) as (typeof obj)[];
 }

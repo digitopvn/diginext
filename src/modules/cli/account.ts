@@ -156,12 +156,23 @@ export const cliLogout = async () => {
 };
 
 export async function cliAuthenticate(options: InputOptions) {
-	let accessToken, workspace: IWorkspace, user: IUser;
-	const { access_token: currentAccessToken, apiToken, buildServerUrl } = getCliConfig();
+	let accessToken, refreshToken, workspace: IWorkspace, user: IUser;
+	const { access_token: currentAccessToken, refresh_token: currentRefreshToken, apiToken, buildServerUrl } = getCliConfig();
 	accessToken = currentAccessToken;
 	// workspace = currentWorkspace;
 
 	const continueToLoginStep = async (url) => {
+		// clear old/expired/cached "access_token" and "refresh_token"
+		saveCliConfig({
+			access_token: null,
+			refresh_token: null,
+			apiToken: null,
+			currentUser: null,
+			currentWorkspace: null,
+			github_access_token: null,
+		});
+
+		// request login API
 		options.url = url;
 		const _user = await cliLogin(options);
 
@@ -180,25 +191,29 @@ export async function cliAuthenticate(options: InputOptions) {
 		if (!user) return;
 	}
 
-	const {
-		status,
-		data: userData,
-		messages,
-	} = await fetchApi({
+	const profileRes = await fetchApi({
 		url: `/auth/profile`,
 		access_token: accessToken,
 		api_key: apiToken,
+		isDebugging: options.isDebugging,
 	});
+	const { status, data: userData, messages } = profileRes;
 	user = userData as IUser;
 
 	if (options.isDebugging) console.log("[ACCOUNT] user :>> ", user);
 
 	if (!status || isEmpty(user) || isEmpty(user?.activeWorkspace)) {
+		console.log(`[ACCOUNT] profileRes :>>`, profileRes);
+		if (profileRes.messages.join(".").indexOf("ENETDOWN") > -1) {
+			logError(`Unable to connect: ${buildServerUrl} is down.`);
+			return;
+		}
 		// don't give up, keep trying...
 		if (buildServerUrl) user = await continueToLoginStep(buildServerUrl);
 	}
 
 	// Assign user & workspace to use across all CLI commands
+	options.author = user;
 	options.userId = MongoDB.toString(user._id);
 	options.username = user.username ?? user.slug;
 	options.workspace = user.activeWorkspace as IWorkspace;

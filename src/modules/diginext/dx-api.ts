@@ -28,7 +28,7 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 		const { data: responseData } = res;
 		return responseData as T;
 	} catch (e) {
-		console.log("e :>> ", e);
+		console.log("[DX_API] Error :>> ", e);
 		const err: string = e.response || e.data?.message === "UNAUTHORIZED" || e.data?.status === 401 ? "Invalid DX Key." : e.message;
 		return { status: 0, messages: [`${err}`] } as T;
 	}

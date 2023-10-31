@@ -6,8 +6,7 @@ import { isArray, isBoolean, isEmpty, isNumber, isUndefined } from "lodash";
 import type { IApp, IBuild, ICluster, IProject } from "@/entities";
 import { AppDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
-import type { AppInputSchema } from "@/interfaces/AppInterfaces";
-import { CreateEnvVarsDto, DeployEnvironmentData, UpdateEnvVarsDto } from "@/interfaces/AppInterfaces";
+import { AppInputSchema, CreateEnvVarsDto, DeployEnvironmentData, UpdateEnvVarsDto } from "@/interfaces/AppInterfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -21,6 +20,7 @@ import { dxCreateDomain } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
+import { formatEnvVars } from "@/plugins/env-var";
 import { makeSlug } from "@/plugins/slug";
 import { ProjectService } from "@/services";
 
@@ -65,7 +65,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 								 */
 								const convertedEnvVars = [];
 								Object.values(envVars).map((envVar) => convertedEnvVars.push(envVar));
-								app.deployEnvironment[env].envVars = convertedEnvVars;
+								app.deployEnvironment[env].envVars = formatEnvVars(convertedEnvVars);
 							}
 						}
 					});
@@ -79,12 +79,16 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")
-	async create(@Body() body: AppInputSchema & Partial<IApp>, @Queries() queryParams?: IPostQueryParams) {
+	async create(@Body() body: AppInputSchema, @Queries() queryParams?: IPostQueryParams) {
 		try {
-			const newApp = await this.service.create(body, { ...this.options, force: body.force, shouldCreateGitRepo: body.shouldCreateGitRepo });
+			const newApp = await this.service.create(body as any, {
+				...this.options,
+				force: body.force,
+				shouldCreateGitRepo: body.shouldCreateGitRepo,
+			});
 
-			delete body.force;
-			delete body.shouldCreateGitRepo;
+			// delete body.force;
+			// delete body.shouldCreateGitRepo;
 
 			return respondSuccess({ data: newApp });
 		} catch (e) {
@@ -474,7 +478,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 		@Queries()
 		queryParams?: {
 			/**
-			 * App slug
+			 * App's ID
+			 */
+			id?: string;
+			/**
+			 * App's SLUG
 			 */
 			slug: string;
 			/**
@@ -484,8 +492,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 			env: string;
 		}
 	) {
-		const { slug, env } = this.filter;
-		return this.deleteDeployEnvironment({ slug, env });
+		const { _id, id, slug, env } = this.filter;
+		return this.deleteDeployEnvironment({ _id, id, slug, env });
 	}
 
 	/**
@@ -842,7 +850,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const app = await this.service.findOne({ slug });
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const envVars = app.deployEnvironment[env].envVars || [];
+		const envVars = formatEnvVars(app.deployEnvironment[env].envVars || []);
 
 		let result = { status: 1, data: envVars, messages: [] };
 		return result;
@@ -892,7 +900,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		let [updatedApp] = await this.service.update(
 			{ slug },
 			{
-				[`deployEnvironment.${env}.envVars`]: newEnvVars,
+				[`deployEnvironment.${env}.envVars`]: formatEnvVars(newEnvVars),
 			}
 		);
 		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
@@ -1016,7 +1024,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		const mainAppName = await getDeploymentName(app);
 		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-		const envVars = app.deployEnvironment[env].envVars;
+		const envVars = formatEnvVars(app.deployEnvironment[env].envVars);
 		const deployEnvironment = app.deployEnvironment[env];
 
 		if (!deployEnvironment) return respondFailure(`Deploy environment "${env}" is not existed in "${slug}" app.`);
@@ -1059,7 +1067,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 				}
 			);
 
-			let result = { status: 1, data: updatedApp.deployEnvironment[env].envVars, messages: [deleteEnvVarsRes] };
+			let result = { status: 1, data: formatEnvVars(updatedApp.deployEnvironment[env].envVars), messages: [deleteEnvVarsRes] };
 			return result;
 		} catch (e) {
 			return respondFailure(e.toString());

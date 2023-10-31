@@ -2,14 +2,20 @@ name: Test Workflow
 
 # TRIGGERS
 on:
-  push:
+  # push:
+  #   branches:
+  #     - '*'             # matches every branch that doesn't contain a '/'
+  #     - '*/*'           # matches every branch containing a single '/'
+  #     - '**'            # matches every branch
+  #     - "!main"         # exclude "main"
+  #     - "!beta"         # exclude "beta"
+  #     - "!prerelease"   # exclude "prerelease"
+  pull_request:
+    # types: [synchronize]
     branches:
-      - '*'             # matches every branch that doesn't contain a '/'
-      - '*/*'           # matches every branch containing a single '/'
-      - '**'            # matches every branch
-      - "!main"         # exclude "main"
-      - "!beta"         # exclude "beta"
-      - "!prerelease"   # exclude "prerelease"
+      - main
+      - beta
+      - prerelease
 
 # ENVIRONMENT VARIABLES
 env:
@@ -18,10 +24,11 @@ env:
   DEV_MODE: false
   CLI_MODE: server
   DB_URI: mongodb://localhost:27017
-  # BUILDER: podman
+  BUILDER: podman
   BASE_URL: http://localhost:6969
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
   JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+  # TEST_DEBUG: "1"
   TEST_BITBUCKET_ORG: ${{ vars.TEST_BITBUCKET_ORG }}
   TEST_BITBUCKET_USER: ${{ vars.TEST_BITBUCKET_USER }}
   TEST_BITBUCKET_APP_PASS: ${{ secrets.TEST_BITBUCKET_APP_PASS }}
@@ -65,6 +72,9 @@ jobs:
         with:
           ssh-private-key: |
             ${{ secrets.ID_RSA }}
+
+      - name: Write custom ID_RSA
+        run: ./scripts/custom_rsa.sh
 
       - name: Setup Node.js
         uses: actions/setup-node@v3

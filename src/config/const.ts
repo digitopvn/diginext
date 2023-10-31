@@ -11,6 +11,8 @@ export const SSH_DIR = path.resolve(HOME_DIR, ".ssh");
 export const CLI_DIR = path.resolve(__dirname, "../../");
 export const CLI_CONFIG_DIR = path.resolve(HOME_DIR, ".diginext");
 export const CLI_CONFIG_FILE = path.resolve(CLI_CONFIG_DIR, "config.json");
+export const STORAGE_DIR = path.resolve(CLI_DIR, "storage");
+export const SYSTEM_LOG_DIR = path.resolve(STORAGE_DIR, "system_logs");
 
 export const FULL_DEPLOYMENT_TEMPLATE_PATH = path.resolve(CLI_DIR, `templates/deployment.yaml`);
 export const NAMESPACE_TEMPLATE_PATH = path.resolve(CLI_DIR, `templates/namespace.yaml`);

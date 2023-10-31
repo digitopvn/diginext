@@ -10,7 +10,7 @@ import { Config, isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IProject, IUser, IWebhook, IWorkspace } from "@/entities";
 import type { BuildPlatform } from "@/interfaces/SystemTypes";
-import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
+import { getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
 import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
 import { getIO, socketIO } from "@/server";
@@ -118,6 +118,15 @@ export type StartBuildParams = {
 
 export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildTag" | "buildWatch">;
 
+export type StartBuildResult = {
+	SOCKET_ROOM: string;
+	build: IBuild;
+	imageURL: string;
+	buildImage: string;
+	startTime: dayjs.Dayjs;
+	builder: string;
+};
+
 export async function testBuild() {
 	let socketServer = getIO();
 	log("socketServer:", socketServer);
@@ -166,7 +175,7 @@ export async function startBuild(
 		onSucceed?: (build: IBuild) => void;
 		onError?: (msg: string) => void;
 	}
-) {
+): Promise<StartBuildResult> {
 	const { DB } = await import("@/modules/api/DB");
 
 	// parse variables
@@ -379,29 +388,51 @@ export async function startBuild(
 	}
 
 	// Clone/pull with repoSSH first, if failed, try repoURL...
-	try {
-		await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, {
-			onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
-		});
-	} catch (e) {
-		// give another try with HTTPS and access token
-		if (app.gitProvider) {
-			const git = await DB.findOne("git", { _id: app.gitProvider });
-			const repoURL = repoSshToRepoURL(repoSSH);
-			try {
-				await pullOrCloneGitRepoHTTP(repoURL, buildDir, gitBranch, {
-					useAccessToken: {
-						type: git.method === "basic" ? "Basic" : "Bearer",
-						value: git.access_token,
-					},
-					onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
-				});
-			} catch (e2) {
-				notifyClientGitPullFailure(e2);
-			}
-		} else {
-			notifyClientGitPullFailure(e);
+	// try {
+	// 	await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, {
+	// 		onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
+	// 	});
+	// } catch (e) {
+	// 	// give another try with HTTPS and access token
+	// 	if (app.gitProvider) {
+	// 		const git = await DB.findOne("git", { _id: app.gitProvider });
+	// 		const repoURL = repoSshToRepoURL(repoSSH);
+	// 		try {
+	// 			await pullOrCloneGitRepoHTTP(repoURL, buildDir, gitBranch, {
+	// 				useAccessToken: {
+	// 					type: git.method === "basic" ? "Basic" : "Bearer",
+	// 					value: git.access_token,
+	// 				},
+	// 				onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
+	// 			});
+	// 		} catch (e2) {
+	// 			notifyClientGitPullFailure(e2);
+	// 		}
+	// 	} else {
+	// 		notifyClientGitPullFailure(e);
+	// 	}
+	// }
+
+	// Clone or pull repository with HTTPS + access token:
+	if (app.gitProvider) {
+		const git = await DB.findOne("git", { _id: app.gitProvider });
+		const repoURL = repoSshToRepoURL(repoSSH);
+		try {
+			await pullOrCloneGitRepoHTTP(repoURL, buildDir, gitBranch, {
+				isDebugging: true,
+				useAccessToken: {
+					type: git.method === "basic" ? "Basic" : "Bearer",
+					value: git.access_token,
+				},
+				onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
+			});
+		} catch (err) {
+			await notifyClientGitPullFailure(err);
+			return;
 		}
+	} else {
+		await notifyClientGitPullFailure("This app doesn't attach to any git provider.");
+		return;
 	}
 
 	// emit socket message to "digirelease" app:
@@ -458,7 +489,7 @@ export async function startBuild(
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Start building the Docker image...` });
 
-	const notifyClientBuildSuccess = () => {
+	const notifyClientBuildSuccess = async () => {
 		const endTime = dayjs();
 		const buildDuration = endTime.diff(startTime, "millisecond");
 		const humanDuration = humanizeDuration(buildDuration);
@@ -480,14 +511,14 @@ export async function startBuild(
 		}
 
 		// dispatch/trigger webhook
-		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
+		if (webhook) await webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
 	};
 
 	// authenticate build engine with container registry before building & pushing image
 	try {
 		await connectRegistry(registry, { userId, workspaceId: workspace._id });
 	} catch (e) {
-		if (options?.onError) options?.onError(`Unable to authenticate with "${registry.name}" registry: ${e}`);
+		// notify dashboard client
 		sendLog({
 			SOCKET_ROOM,
 			message: chalk.green(`Unable to authenticate with "${registry.name}" registry: ${e}`),
@@ -495,7 +526,9 @@ export async function startBuild(
 		});
 		await updateBuildStatus(newBuild, "failed");
 		// dispatch/trigger webhook
-		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+		if (webhook) await webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+		// callback
+		if (options?.onError) options?.onError(`Unable to authenticate with "${registry.name}" registry: ${e}`);
 		return;
 	}
 
@@ -516,22 +549,25 @@ export async function startBuild(
 				onBuilding: (message) => sendLog({ SOCKET_ROOM, message }),
 			});
 
-			// update build status as "success"
-			await updateBuildStatus(newBuild, "success", { env });
-
+			// send notification message to dashboard client
 			sendLog({
 				SOCKET_ROOM,
 				message: `✓ Pushed "${buildImage}" to container registry (${registrySlug}) successfully!`,
 			});
 
-			notifyClientBuildSuccess();
+			// update build status as "success"
+			await updateBuildStatus(newBuild, "success", { env });
+
+			await notifyClientBuildSuccess();
 
 			if (options?.onSucceed) options?.onSucceed(newBuild);
 
 			return { SOCKET_ROOM, build: newBuild, imageURL, buildImage, startTime, builder: buildEngineName };
 		} catch (e) {
-			await updateBuildStatus(newBuild, "failed");
+			// send notification message to dashboard client
 			sendLog({ SOCKET_ROOM, message: e.message, type: "error", action: "end" });
+
+			await updateBuildStatus(newBuild, "failed");
 			if (options?.onError) options?.onError(`Build failed: ${e}`);
 
 			// dispatch/trigger webhook
@@ -552,21 +588,23 @@ export async function startBuild(
 				onBuilding: (message) => sendLog({ SOCKET_ROOM, message }),
 			})
 			.then(async () => {
-				// update build status as "success"
-				await updateBuildStatus(newBuild, "success", { env });
-
+				// send notification message to dashboard client
 				sendLog({
 					SOCKET_ROOM,
 					message: `✓ Pushed "${buildImage}" to container registry (${registrySlug}) successfully!`,
 				});
 
-				notifyClientBuildSuccess();
+				// update build status as "success"
+				await updateBuildStatus(newBuild, "success", { env });
+
+				await notifyClientBuildSuccess();
 
 				if (options?.onSucceed) options?.onSucceed(newBuild);
 			})
 			.catch(async (e) => {
-				await updateBuildStatus(newBuild, "failed");
 				sendLog({ SOCKET_ROOM, message: e.message, type: "error", action: "end" });
+				await updateBuildStatus(newBuild, "failed");
+
 				if (options?.onError) options?.onError(`Build failed: ${e}`);
 
 				// dispatch/trigger webhook

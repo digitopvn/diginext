@@ -1,7 +1,13 @@
-import type { IRole, IUser, IWorkspace, UserDto } from "@/entities";
-import { RoleService } from "@/services";
+import { upperFirst } from "lodash";
 
-import { isObjectId, MongoDB } from "./mongodb";
+import type { IApp, IProject, IRole, IUser, IWorkspace, UserDto } from "@/entities";
+import type { IBase } from "@/entities/Base";
+import type { IQueryFilter } from "@/interfaces";
+import type { Ownership } from "@/interfaces/SystemTypes";
+import type { AppService, BaseService, ProjectService } from "@/services";
+import { RoleService, UserService } from "@/services";
+
+import { MongoDB } from "./mongodb";
 
 export const addUserToWorkspace = async (userId: string, workspace: IWorkspace, roleType: "admin" | "moderator" | "member" = "member") => {
 	const { DB } = await import("@/modules/api/DB");
@@ -125,8 +131,29 @@ export async function getActiveWorkspace(user: IUser) {
 	return workspace;
 }
 
+export async function assignRoleWithoutCheckingPermissions(roleId: string, toUser: IUser, ownership?: Ownership) {
+	const roleSvc = new RoleService();
+	const toBeUpdatedRole = await roleSvc.findOne({ _id: roleId });
+	const roleWorkspaceId = MongoDB.toString(toBeUpdatedRole.workspace);
+
+	// filter: same role & same workspace roles
+	const roles = toUser.roles
+		.map((role) => role as IRole)
+		.filter((role) => MongoDB.toString(role.workspace) !== roleWorkspaceId)
+		.filter((role) => MongoDB.toString(role._id) !== MongoDB.toString(roleId))
+		.map((role) => role._id);
+
+	// push new role id
+	roles.push(MongoDB.toObjectId(roleId));
+
+	// update user
+	const userSvc = new UserService(ownership);
+	return userSvc.updateOne({ _id: toUser._id }, { roles });
+}
+
 export async function assignRole(role: IRole, user: IUser, options?: { makeActive?: boolean }) {
-	const { DB } = await import("@/modules/api/DB");
+	const userSvc = new UserService();
+
 	// validate
 	if (!user.activeRole || !user.activeWorkspace) throw new Error(`Permissions denied.`);
 
@@ -134,7 +161,9 @@ export async function assignRole(role: IRole, user: IUser, options?: { makeActiv
 	if (!activeWorkspace) throw new Error(`Permissions denied.`);
 
 	const activeRole = await getActiveRole(user, activeWorkspace);
+	// current role "member" -> cannot assign any roles to others
 	if (!activeRole || activeRole.type === "member") throw new Error(`Permissions denied.`);
+	// current role "moderator" -> cannot assign "admin" role to others
 	if (!activeRole || (activeRole.type === "moderator" && role.type === "admin")) throw new Error(`Permissions denied.`);
 
 	// remove old roles
@@ -144,11 +173,11 @@ export async function assignRole(role: IRole, user: IUser, options?: { makeActiv
 
 	// push a new role
 	roles.push(role._id);
-
+	console.log("assignRole > new roles :>> ", roles);
 	// update database
 	const updateData: Partial<UserDto> = { roles };
 	if (options?.makeActive) updateData.activeRole = role;
-	user = await DB.updateOne("user", { _id: user._id }, { roles });
+	user = await userSvc.updateOne({ _id: user._id }, { roles });
 
 	// return
 	return { user, role };
@@ -204,34 +233,131 @@ export async function filterUsersByWorkspaceRole(workspaceId: string, list: IUse
 	const wsId = workspaceId;
 	const roleSvc = new RoleService();
 	const wsRoles = await roleSvc.find({ workspace: workspaceId });
-	// console.log("wsId :>> ", wsId);
+	// console.log("wsRoles :>> ", wsRoles);
+	// console.log("list :>> ", list);
 
-	return list.map((item) => {
-		if (item.roles && item.roles.length > 0) {
-			item.roles = item.roles.filter((roleId) => {
-				if (isObjectId(roleId)) {
-					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString(roleId));
-				} else if ((roleId as IRole)._id) {
-					return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString((roleId as IRole)._id));
-				} else {
-					return false;
-				}
-			});
+	return list
+		.map((user) => {
+			if (user && user.roles && user.roles.length > 0) {
+				user.roles = user.roles.filter((role) => {
+					if (MongoDB.isValidObjectId(role)) {
+						return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString(role));
+					} else if ((role as IRole)._id) {
+						return wsRoles.map((r) => MongoDB.toString(r._id)).includes(MongoDB.toString((role as IRole)._id));
+					} else {
+						return false;
+					}
+				});
+			}
+
+			if (user && user.workspaces && user.workspaces.length > 0) {
+				user.workspaces = user.workspaces.filter((ws) => {
+					if (MongoDB.isValidObjectId(ws)) {
+						return wsId === MongoDB.toString(ws);
+					} else if ((ws as IWorkspace)._id) {
+						return wsId === MongoDB.toString((ws as IWorkspace)._id);
+					} else {
+						return false;
+					}
+				});
+			}
+
+			// console.log("user.workspaces :>> ", user?.workspaces);
+			// console.log("user.roles :>> ", user?.roles);
+
+			return user;
+		})
+		.filter((user) => typeof user !== "undefined" && user !== null);
+}
+
+export function checkProjectPermissionsById(projectId: any, user?: IUser) {
+	if (!MongoDB.isValidObjectId(projectId)) throw new Error(`Project ID is invalid: "${projectId}"`);
+	if (user && user.allowAccess?.projects?.length > 0) {
+		if (!user.allowAccess?.projects?.map((p) => MongoDB.toString(p)).includes(MongoDB.toString(projectId)))
+			throw new Error(`You don't have permissions in this project.`);
+	}
+}
+
+export function checkProjectPermissions(project: IProject, user?: IUser) {
+	checkProjectPermissionsById(project._id, user);
+}
+
+export async function checkProjectPermissionsByFilter(svc: ProjectService, filter: IQueryFilter<IProject>, user?: IUser) {
+	if (user && user.allowAccess) {
+		const projects = await svc.find(filter);
+		projects.forEach((project) => {
+			// check APP access permissions
+			checkProjectPermissions(project, user);
+		});
+	}
+}
+
+export function checkAppPermissionsById(appId: any, user?: IUser) {
+	if (!MongoDB.isValidObjectId(appId)) throw new Error(`App ID is invalid: "${appId}"`);
+	if (user && user?.allowAccess?.apps?.length > 0) {
+		if (!user?.allowAccess?.apps?.map((p) => MongoDB.toString(p)).includes(MongoDB.toString(appId))) {
+			throw new Error(`Permission denied.`);
 		}
+	}
+}
 
-		if (item.workspaces && item.workspaces.length > 0) {
-			const workspaces = item.workspaces.filter((ws) => {
-				if (isObjectId(ws)) {
-					return wsId === MongoDB.toString(ws);
-				} else if ((ws as IWorkspace)._id) {
-					return wsId === MongoDB.toString((ws as IWorkspace)._id);
-				} else {
-					return false;
-				}
-			});
-			item.workspaces = workspaces;
-		}
+export function checkAppPermissions(app: IApp, user?: IUser) {
+	checkAppPermissionsById(app._id, user);
+}
 
-		return item;
-	});
+export async function checkAppPermissionsByFilter(svc: AppService, filter: IQueryFilter<IApp>, user?: IUser) {
+	if (user && user.allowAccess) {
+		const apps = await svc.find(filter);
+		apps.forEach((app) => {
+			// check APP access permissions
+			checkAppPermissions(app, user);
+		});
+	}
+}
+
+export async function checkProjectAndAppPermissions(svc: AppService, filter: IQueryFilter<IApp>, user?: IUser) {
+	if (user && user.allowAccess) {
+		const apps = await svc.find(filter);
+		apps.forEach((app) => {
+			// check PROJECT access permissions
+			checkProjectPermissionsById(app.project, user);
+			// check APP access permissions
+			checkAppPermissions(app, user);
+		});
+	}
+}
+
+export function checkPermissionsById(
+	resource: "clusters" | "cloud_databases" | "cloud_database_backups" | "gits" | "frameworks" | "container_registries",
+	id: any,
+	user?: IUser
+) {
+	if (!MongoDB.isValidObjectId(id)) throw new Error(`${upperFirst(resource)} ID is invalid: "${id}"`);
+	if (user && user.allowAccess && user.allowAccess[resource] && user.allowAccess[resource].length > 0) {
+		const allowedResources = user.allowAccess[resource];
+		if (!allowedResources?.map((item) => MongoDB.toString(item)).includes(MongoDB.toString(id)))
+			throw new Error(`You don't have permissions in this ${resource}.`);
+	}
+}
+
+export function checkPermissions(
+	resource: "clusters" | "cloud_databases" | "cloud_database_backups" | "gits" | "frameworks" | "container_registries",
+	item: IBase,
+	user?: IUser
+) {
+	checkPermissionsById(resource, item._id, user);
+}
+
+export async function checkPermissionsByFilter(
+	resource: "clusters" | "cloud_databases" | "cloud_database_backups" | "gits" | "frameworks" | "container_registries",
+	svc: BaseService,
+	filter: IQueryFilter<any>,
+	user?: IUser
+) {
+	if (user && user.allowAccess && user.allowAccess[resource] && user.allowAccess[resource].length > 0) {
+		const items = await svc.find(filter);
+		items.forEach((item) => {
+			checkPermissions(resource, item, user);
+		});
+	}
 }
