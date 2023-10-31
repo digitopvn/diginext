@@ -11,7 +11,7 @@ import { dxSendEmail } from "@/modules/diginext/dx-email";
 import type { DxPackage } from "@/modules/diginext/dx-package";
 import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
 import type { DxSubsription } from "@/modules/diginext/dx-subscription";
-import { dxCreateWorkspace } from "@/modules/diginext/dx-workspace";
+import { dxCreateWorkspace, dxJoinWorkspace } from "@/modules/diginext/dx-workspace";
 import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
@@ -221,11 +221,15 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		if (!data.emails || data.emails.length === 0) return interfaces.respondFailure({ msg: `List of email is required.` });
 		if (!this.user) return interfaces.respondFailure({ msg: `Unauthenticated.` });
 		const { DB } = await import("@/modules/api/DB");
+		const userSvc = new UserService();
+		const WcSvc = new WorkspaceService();
 
 		const { emails, role: roleType = "member" } = data;
 
 		const workspace = this.user.activeWorkspace as IWorkspace;
 		const wsId = workspace._id;
+		console.log(`[WS_Controller] Invite Member > Workspace :>>`, workspace);
+		const userId = this.user._id;
 
 		// check if this user is admin of the workspace:
 		const activeRole = this.user.activeRole as IRole;
@@ -241,8 +245,8 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 				let existingUser = await DB.findOne("user", { email });
 				if (!existingUser) {
 					const username = email.split("@")[0] || "New User";
-					const invitedMember = await DB.create("user", {
-						// active: false,
+					const invitedMember = await userSvc.create({
+						active: false,
 						name: username,
 						email: email,
 						workspaces: [wsId],
@@ -250,14 +254,16 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 					});
 					return invitedMember;
 				} else {
+					// Set user to workspace in Dx site
+					const joinWorkspaceRes = await dxJoinWorkspace(email, workspace.slug, workspace.dx_key);
 					const workspaces = existingUser.workspaces || [];
 					workspaces.push(wsId);
 					existingUser = await DB.updateOne("user", { _id: existingUser._id }, { workspaces: filterUniqueItems(workspaces) });
+
 					return existingUser;
 				}
 			})
 		);
-		// console.log("invitedMembers :>> ", invitedMembers);
 
 		if (!IsTest()) {
 			const mailContent = `Dear,<br/><br/>You've been invited to <strong>"${workspace.name}"</strong> workspace, please <a href="${Config.BASE_URL}" target="_blank">click here</a> to login.<br/><br/>Cheers,<br/>Diginext System`;
