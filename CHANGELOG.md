@@ -1,3 +1,10 @@
+## [3.25.1](https://github.com/digitopvn/diginext/compare/v3.25.0...v3.25.1) (2023-11-03)
+
+
+### Bug Fixes
+
+* **hotfix:** git pull large repo issue ([f395ee0](https://github.com/digitopvn/diginext/commit/f395ee0d531f2e8c620f60d77d0e7e5bdede9bae))
+
 # [3.25.0](https://github.com/digitopvn/diginext/compare/v3.24.13...v3.25.0) (2023-11-03)
 
 
