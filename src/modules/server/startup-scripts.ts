@@ -61,6 +61,7 @@ export async function startupScripts() {
 		execCmd(`git init`);
 		execCmd(`git config --global user.email server@diginext.site`);
 		execCmd(`git config --global --add user.name Diginext`);
+		execCmd(`git config --global http.postBuffer 524288000`); // 524 mb
 	}
 
 	// seed system initial data: Cloud Providers
