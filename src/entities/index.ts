@@ -4,6 +4,7 @@ export * from "./Build";
 export * from "./CloudDatabase";
 export * from "./CloudDatabaseBackup";
 export * from "./CloudProvider";
+export * from "./CloudStorage";
 export * from "./Cluster";
 export * from "./ContainerRegistry";
 export * from "./Cronjob";

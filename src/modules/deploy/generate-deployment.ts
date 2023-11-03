@@ -137,9 +137,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			subdomainName: prereleaseSubdomainName,
 			clusterSlug: deployEnvironmentConfig.cluster,
 		});
-		if (status === 0) {
-			throw new Error(`Can't create "prerelease" domain: ${domain} because "${messages.join(". ")}"`);
-		}
+		if (status === 0) throw new Error(`Unable to create PRE-RELEASE domain "${domain}" due to "${messages.join(". ")}"`);
 		prereleaseDomain = domain;
 	}
 	if (env === "prod") log({ prereleaseDomain });
