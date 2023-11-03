@@ -49,8 +49,7 @@ export async function uploadFile(filename, destination) {
 
 		// log(`${filename} uploaded to ${bucketName}.`);
 	} catch (e) {
-		log(`Error when uploading`, filename, "to", destination + ":", e);
-		// logError(e);
+		throw new Error(`Unable to upload "${filename}" to "${destination}": ${e}`);
 	}
 }
 
