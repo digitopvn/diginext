@@ -1,3 +1,10 @@
+# [3.26.0](https://github.com/digitopvn/diginext/compare/v3.25.1...v3.26.0) (2023-11-03)
+
+
+### Features
+
+* **server,api:** add cloud storage crud ([70bc7b8](https://github.com/digitopvn/diginext/commit/70bc7b8efcec0f21ba995c97544d29364c1d7107)), closes [#366](https://github.com/digitopvn/diginext/issues/366) [#367](https://github.com/digitopvn/diginext/issues/367) [#368](https://github.com/digitopvn/diginext/issues/368)
+
 ## [3.25.1](https://github.com/digitopvn/diginext/compare/v3.25.0...v3.25.1) (2023-11-03)
 
 
