@@ -1,3 +1,23 @@
+# [3.25.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.13...v3.25.0-prerelease.1) (2023-10-31)
+
+
+### Bug Fixes
+
+* **dxapi:** create user, workspace ([f850b02](https://github.com/digitopvn/diginext/commit/f850b02bdcc5afa169c6a22cf888e140dbbfce7f))
+* **dxAPI:** dx Create User ([d0c801f](https://github.com/digitopvn/diginext/commit/d0c801fa5a10ffcef597ef84c9d297d8fe97fe63))
+* **dxapi:** invite member logic ([6c98cef](https://github.com/digitopvn/diginext/commit/6c98cefc921a3bfe7159fcfc8a54a692b827a0c6))
+* **interface:** object ([2b9b898](https://github.com/digitopvn/diginext/commit/2b9b8984bbc9acd06325a4cbdb98f02a96e69be8))
+* **isTest:** env isTest ([6d94a51](https://github.com/digitopvn/diginext/commit/6d94a5195adf6af3bab2a6776ca1bef83e2f590c))
+* **schema:** user schema ([04d66d0](https://github.com/digitopvn/diginext/commit/04d66d0b9df8839b941e0c3236b5d3cc8504b9ca))
+* **type:** user provider ([1b58445](https://github.com/digitopvn/diginext/commit/1b58445d84abf97426b4ab28ffc7dff6d8ceac14))
+* **typo:** change link dx site ([466dfc1](https://github.com/digitopvn/diginext/commit/466dfc1f4f2a91f67b4325b01e61cf282936cadd))
+
+
+### Features
+
+* **api:** create user dx site ([2fe43d7](https://github.com/digitopvn/diginext/commit/2fe43d7625c6ddd351cf215276843e9e91a28974))
+* **api:** workspace and subscription ([8fca4c8](https://github.com/digitopvn/diginext/commit/8fca4c8bde06758c347f988de49ab9028e762ad6))
+
 ## [3.24.13](https://github.com/digitopvn/diginext/compare/v3.24.12...v3.24.13) (2023-10-27)
 
 
