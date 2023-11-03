@@ -8,6 +8,7 @@ import path from "path";
 import { DIGITOP_CDN_URL } from "../../config/const";
 import type { InputOptions } from "../../interfaces/InputOptions";
 import { getAppConfig, invalidateCache, uploadFile } from "../../plugins";
+import { askForProjectAndApp } from "../apps/ask-project-and-app";
 
 // config
 
@@ -73,7 +74,7 @@ async function upload(env, onComplete, options) {
 
 			// FINISH UPLOADING...
 			if (failedItems.length > 0) {
-				console.warn(`[WARNING] Không thể upload những file sau:`);
+				console.warn(`[WARNING] Unable to upload these files:`);
 				failedItems.forEach((item) => {
 					console.warn(`\n- ${item.path} (${item.reason})`);
 				});
@@ -109,30 +110,17 @@ function uploadBatch(concurrency, env, onComplete, options) {
 }
 
 /**
- *
+ * Upload static files of current working project to Google Cloud Storage
  * @param {InputOptions} options
  * @param {UploadCompleteCallback} onComplete
  * @returns
  */
 export async function startUpload(options: InputOptions, onComplete?: UploadCompleteCallback) {
 	const { version = "", env = "dev" } = options;
-	// check for diginext config:
 
-	let configFile = path.resolve("dx.json");
-	let isFrameworkConfigExisted = fs.existsSync(path.resolve("dx.json"));
-	if (!isFrameworkConfigExisted) {
-		await logError(
-			"Diginext has't been initialized yet. Run `diginext new` to create new project or `diginext init` to initialize current directory."
-		);
-		return;
-	}
+	const { app, project } = await askForProjectAndApp(options.targetDirectory, options);
 
-	const configStr = fs.readFileSync(configFile);
-	const config = JSON.parse(configStr.toString());
-
-	projectName = config.projectSlug;
-	// shouldOptimize = options && options.optimize === true ? true : false;
-	// isProduction = options && options.isProd === true ? true : false;
+	projectName = project.slug;
 
 	failedItems = [];
 	uploadItems = [];
@@ -155,9 +143,15 @@ export async function startUpload(options: InputOptions, onComplete?: UploadComp
 	log(`Uploading "${uploadPathPattern}" to "${DIGITOP_CDN_URL}/${projectName}/${env}"`);
 
 	const files = await globby(uploadPathPattern);
+
 	uploadedCount = 0;
 	totalCount = files.length;
 	uploadItems = [...files];
+
+	if (options.isDebugging) {
+		console.log(`[CDN] Start uploading > totalCount :>>`, totalCount);
+		console.log(`[CDN] Start uploading > uploadItems :>>`, uploadItems);
+	}
 
 	progressBar.start(totalCount, 0);
 
@@ -165,7 +159,7 @@ export async function startUpload(options: InputOptions, onComplete?: UploadComp
 		maxConcurrentUploadFiles,
 		env,
 		() => {
-			logSuccess(`Upload files lên ${env} CDN của dự án "${projectName}" thành công.`);
+			logSuccess(`Finished uploading files to "${env}" CDN of "${projectName}" project.`);
 			if (onComplete) onComplete({ env, project: projectName, items: uploadItems });
 			process.exit(1);
 		},

@@ -24,7 +24,7 @@ import { ContainerRegistryService, WorkspaceService } from "@/services";
 import { findAndRunCronjob } from "../cronjob/find-and-run-job";
 
 /**
- * BUILD SERVER INITIAL START-UP SCRIPTS:
+ * NOTE: BUILD SERVER INITIAL START-UP SCRIPTS:
  * - Create config directory in {HOME_DIR}
  * - Connect GIT providers (if any)
  * - Connect Container Registries (if any)
@@ -47,42 +47,14 @@ export async function startupScripts() {
 		setInterval(findAndRunCronjob, 15 * 1000);
 	}
 
-	// Generate SSH keys
-	// if (!IsTest()) {
-	// 	const isSSHKeysExisted = await sshKeysExisted();
-	// 	if (!isSSHKeysExisted) await generateSSH();
-	// 	// verify if generated SSH key should not require passphase
-	// 	const keyHasPassphase = sshKeyContainPassphase();
-	// 	if (keyHasPassphase) console.warn(`SSH key "id_rsa" should not contain passphase.`);
-	// }
-
-	/**
-	 * Connect to git providers
-	 * (No need to verify SSH for "test" environment)
-	 */
-
-	// if (!IsTest()) {
-	// const gitSvc = new GitProviderService();
-	// const gitProviders = await gitSvc.find({});
-	// if (!isEmpty(gitProviders)) {
-	// 	for (const gitProvider of gitProviders) {
-	// 		verifySSH({ gitProvider: gitProvider.type });
-	// 	}
-	// }
-
-	// set global identity
-	// [isDevMode == process.env.DEV_MODE == true] to make sure it won't override your current GIT config when developing Diginext
+	// NOTE: [isDevMode == process.env.DEV_MODE == true] to make sure it won't override your current GIT config when developing Diginext
 	if (!isDevMode) {
 		// write initial private SSH keys if any
-		// if (Config.grab("ID_RSA")) {
-		// 	await writeCustomSSHKeys({ gitDomain: "github.com", privateKey: Config.grab("ID_RSA") });
-		// 	await writeCustomSSHKeys({ gitDomain: "bitbucket.org", privateKey: Config.grab("ID_RSA") });
-		// }
 		const result = await execCmd(`./scripts/custom_rsa.sh`);
 		console.log(result);
 
 		/**
-		 * REQUIRED: DO NOT TURN OFF THIS
+		 * CAUTION: DO NOT TURN OFF THIS
 		 * ---
 		 * Set default git config
 		 */
@@ -104,6 +76,7 @@ export async function startupScripts() {
 		await Promise.all(workspaces.map((ws) => seedDefaultProjects(ws, ws.owner as IUser)));
 	}
 
+	// FIXME: Why would we need this?
 	// connect container registries
 	const registrySvc = new ContainerRegistryService();
 	const registries = await registrySvc.find({});

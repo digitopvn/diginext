@@ -10,7 +10,7 @@ export async function execCDN(options) {
 
 	if (options.secondAction == "push") {
 		const version = loadVersionCacheCDNFromEnv(options);
-		console.log("cache version: ", version);
+		console.log("Cache version: ", version);
 
 		await startUpload({
 			version,
