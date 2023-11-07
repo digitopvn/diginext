@@ -28,6 +28,7 @@ export default class UserController extends BaseController<IUser> {
 	constructor() {
 		const service = new UserService();
 		super(service);
+		this.service = service;
 	}
 
 	/**
@@ -147,7 +148,7 @@ export default class UserController extends BaseController<IUser> {
 			workspaceId = MongoDB.toString(workspace._id);
 
 			// find the user
-			console.log("this.service :>> ", this.service);
+			// console.log("this.service :>> ", this.service);
 			let user = await this.service.findOne({ _id: userId, workspaces: workspaceId }, { populate: ["roles"] });
 			if (!user) throw new Error(`User not found.`);
 			// console.dir(user, { depth: 10 });
