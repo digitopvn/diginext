@@ -248,7 +248,10 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					}
 					if (ingressClass) ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
 
-					// requests per minute
+					// limit file upload & body size
+					ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/proxy-body-size"] = "100m";
+
+					// limit requests per minute (DEV ONLY)
 					if (ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rpm"])
 						delete ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rpm"];
 					if (env !== "prod") ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rps"] = `100`;

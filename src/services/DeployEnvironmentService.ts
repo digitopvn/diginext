@@ -6,8 +6,7 @@ import type { QuerySelector } from "mongoose";
 
 import type { ICluster, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
-import type { IQueryOptions } from "@/interfaces";
-import { type DeployEnvironment, type KubeDeployment } from "@/interfaces";
+import type { DeployEnvironment, IQueryOptions, KubeDeployment } from "@/interfaces";
 import type { DeployEnvironmentData } from "@/interfaces/AppInterfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { Ownership } from "@/interfaces/SystemTypes";

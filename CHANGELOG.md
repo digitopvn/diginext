@@ -1,3 +1,90 @@
+# [3.25.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.13...v3.25.0-prerelease.1) (2023-10-31)
+
+
+### Bug Fixes
+
+* **dxapi:** create user, workspace ([f850b02](https://github.com/digitopvn/diginext/commit/f850b02bdcc5afa169c6a22cf888e140dbbfce7f))
+* **dxAPI:** dx Create User ([d0c801f](https://github.com/digitopvn/diginext/commit/d0c801fa5a10ffcef597ef84c9d297d8fe97fe63))
+* **dxapi:** invite member logic ([6c98cef](https://github.com/digitopvn/diginext/commit/6c98cefc921a3bfe7159fcfc8a54a692b827a0c6))
+* **interface:** object ([2b9b898](https://github.com/digitopvn/diginext/commit/2b9b8984bbc9acd06325a4cbdb98f02a96e69be8))
+* **isTest:** env isTest ([6d94a51](https://github.com/digitopvn/diginext/commit/6d94a5195adf6af3bab2a6776ca1bef83e2f590c))
+* **schema:** user schema ([04d66d0](https://github.com/digitopvn/diginext/commit/04d66d0b9df8839b941e0c3236b5d3cc8504b9ca))
+* **type:** user provider ([1b58445](https://github.com/digitopvn/diginext/commit/1b58445d84abf97426b4ab28ffc7dff6d8ceac14))
+* **typo:** change link dx site ([466dfc1](https://github.com/digitopvn/diginext/commit/466dfc1f4f2a91f67b4325b01e61cf282936cadd))
+
+
+### Features
+
+* **api:** create user dx site ([2fe43d7](https://github.com/digitopvn/diginext/commit/2fe43d7625c6ddd351cf215276843e9e91a28974))
+* **api:** workspace and subscription ([8fca4c8](https://github.com/digitopvn/diginext/commit/8fca4c8bde06758c347f988de49ab9028e762ad6))
+
+## [3.24.13](https://github.com/digitopvn/diginext/compare/v3.24.12...v3.24.13) (2023-10-27)
+
+
+### Bug Fixes
+
+* **types:** some format issues ([36768d0](https://github.com/digitopvn/diginext/commit/36768d03dfd26ad1841d909377d5584d4fde686f))
+
+## [3.24.12](https://github.com/digitopvn/diginext/compare/v3.24.11...v3.24.12) (2023-10-26)
+
+
+### Bug Fixes
+
+* **server:** missing org when create new git provider ([6b9eaf1](https://github.com/digitopvn/diginext/commit/6b9eaf1916a96d42e9faa0657e0cc5b61934d260))
+
+## [3.24.11](https://github.com/digitopvn/diginext/compare/v3.24.10...v3.24.11) (2023-10-25)
+
+
+### Bug Fixes
+
+* **cli:** ask generate dockerfile using ai ([d606ead](https://github.com/digitopvn/diginext/commit/d606ead20fb37ad2d65c5ee27dc503055ce4f0f2))
+* **server,cli:** validate project and app name special chars ([7de20bf](https://github.com/digitopvn/diginext/commit/7de20bf0b44dc355a48299e8ab1994429938fa45))
+* **server,dashboard:** correct auth redirect select workspace with tokens ([cd3a2f4](https://github.com/digitopvn/diginext/commit/cd3a2f4f2a763a54d1850b60b4227e68fff4b9b4))
+* **server,dashboard:** edit db form, db backup system logs ([ddc92d1](https://github.com/digitopvn/diginext/commit/ddc92d11be229bf5630740172bb5e9defa4d1543))
+* **server:** issue of deleting expired db backups ([835a1d3](https://github.com/digitopvn/diginext/commit/835a1d34b8bb88d17e4f450636c385a7d9b5fe1b))
+* **server:** mistake super in delete db bk svc ([07a2ef8](https://github.com/digitopvn/diginext/commit/07a2ef83df8c50ffccc945bc6de47562cafec3f7))
+
+## [3.24.10](https://github.com/digitopvn/diginext/compare/v3.24.9...v3.24.10) (2023-10-24)
+
+
+### Bug Fixes
+
+* **server,dashboard:** fix update role, build log dark mode ([2fdf737](https://github.com/digitopvn/diginext/commit/2fdf73762f800773a414322d518104d49ffc44a1))
+* update role issue & dark mode build logs ([#439](https://github.com/digitopvn/diginext/issues/439)) ([bae0dbf](https://github.com/digitopvn/diginext/commit/bae0dbff83fe1da7216dece4efce2b272b20a836))
+
+## [3.24.9](https://github.com/digitopvn/diginext/compare/v3.24.8...v3.24.9) (2023-10-24)
+
+
+### Bug Fixes
+
+* **debug:** auth google redirect ([5bd24f9](https://github.com/digitopvn/diginext/commit/5bd24f9db162f0052fc64587227a936f2bebf1c1))
+* **server:** assign tokens to cookies in auth jwt ([687745b](https://github.com/digitopvn/diginext/commit/687745b49531b2f1c37cf5bd75f73b76187fa58f))
+* **server:** auth google callback not redirect correctly ([9b388d2](https://github.com/digitopvn/diginext/commit/9b388d2ec9ff3bda157bafde6e05eb2e4d6ea881))
+
+## [3.24.8](https://github.com/digitopvn/diginext/compare/v3.24.7...v3.24.8) (2023-10-24)
+
+
+### Bug Fixes
+
+* **server,cli:** dx new github repo permission ([58c4f73](https://github.com/digitopvn/diginext/commit/58c4f73196abc709d53937a9d3d23dad0e48b0dd))
+
+## [3.24.7](https://github.com/digitopvn/diginext/compare/v3.24.6...v3.24.7) (2023-10-24)
+
+
+### Bug Fixes
+
+* **cli:** request build error log url is null ([bb9f83e](https://github.com/digitopvn/diginext/commit/bb9f83e4a6055e73dd29d30fbaebe0df31b9efb9))
+* **cli:** rm debug log new app ([2cf0884](https://github.com/digitopvn/diginext/commit/2cf088481db00dd4a43d0ff5b0469d533fd6f818))
+* **server:** add proxy body size 100m to ingress ([0140220](https://github.com/digitopvn/diginext/commit/01402202a156bfcadc054514082c3f0f7ebb28d0))
+* **server:** issue of update failed status to db backup ([166291d](https://github.com/digitopvn/diginext/commit/166291d07d3372e930d52ff061b415d0c0d00b5e))
+
+## [3.24.6](https://github.com/digitopvn/diginext/compare/v3.24.5...v3.24.6) (2023-10-19)
+
+
+### Bug Fixes
+
+* **github actions:** use podman as builder ([0085ae5](https://github.com/digitopvn/diginext/commit/0085ae5af688d8a04d6e50a96083a4a8209def8e))
+
 ## [3.24.6-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.24.5...v3.24.6-prerelease.1) (2023-10-18)
 
 

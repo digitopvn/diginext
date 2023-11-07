@@ -10,7 +10,7 @@ import { Config, isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IProject, IUser, IWebhook, IWorkspace } from "@/entities";
 import type { BuildPlatform } from "@/interfaces/SystemTypes";
-import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath } from "@/plugins";
+import { getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
 import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
 import { getIO, socketIO } from "@/server";
@@ -388,29 +388,51 @@ export async function startBuild(
 	}
 
 	// Clone/pull with repoSSH first, if failed, try repoURL...
-	try {
-		await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, {
-			onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
-		});
-	} catch (e) {
-		// give another try with HTTPS and access token
-		if (app.gitProvider) {
-			const git = await DB.findOne("git", { _id: app.gitProvider });
-			const repoURL = repoSshToRepoURL(repoSSH);
-			try {
-				await pullOrCloneGitRepoHTTP(repoURL, buildDir, gitBranch, {
-					useAccessToken: {
-						type: git.method === "basic" ? "Basic" : "Bearer",
-						value: git.access_token,
-					},
-					onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
-				});
-			} catch (e2) {
-				notifyClientGitPullFailure(e2);
-			}
-		} else {
-			notifyClientGitPullFailure(e);
+	// try {
+	// 	await pullOrCloneGitRepo(repoSSH, buildDir, gitBranch, {
+	// 		onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
+	// 	});
+	// } catch (e) {
+	// 	// give another try with HTTPS and access token
+	// 	if (app.gitProvider) {
+	// 		const git = await DB.findOne("git", { _id: app.gitProvider });
+	// 		const repoURL = repoSshToRepoURL(repoSSH);
+	// 		try {
+	// 			await pullOrCloneGitRepoHTTP(repoURL, buildDir, gitBranch, {
+	// 				useAccessToken: {
+	// 					type: git.method === "basic" ? "Basic" : "Bearer",
+	// 					value: git.access_token,
+	// 				},
+	// 				onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
+	// 			});
+	// 		} catch (e2) {
+	// 			notifyClientGitPullFailure(e2);
+	// 		}
+	// 	} else {
+	// 		notifyClientGitPullFailure(e);
+	// 	}
+	// }
+
+	// Clone or pull repository with HTTPS + access token:
+	if (app.gitProvider) {
+		const git = await DB.findOne("git", { _id: app.gitProvider });
+		const repoURL = repoSshToRepoURL(repoSSH);
+		try {
+			await pullOrCloneGitRepoHTTP(repoURL, buildDir, gitBranch, {
+				isDebugging: true,
+				useAccessToken: {
+					type: git.method === "basic" ? "Basic" : "Bearer",
+					value: git.access_token,
+				},
+				onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
+			});
+		} catch (err) {
+			await notifyClientGitPullFailure(err);
+			return;
 		}
+	} else {
+		await notifyClientGitPullFailure("This app doesn't attach to any git provider.");
+		return;
 	}
 
 	// emit socket message to "digirelease" app:

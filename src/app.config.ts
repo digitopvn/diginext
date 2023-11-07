@@ -110,11 +110,11 @@ export class Config {
 	}
 
 	static get DX_SITE_URL() {
-		return trimNull(process.env.DX_SITE_URL) ? trimNull(process.env.DX_SITE_URL) : "https://diginext.site";
+		return trimNull(process.env.DX_SITE_URL) ? trimNull(process.env.DX_SITE_URL) : "https://diginext-website.dev.diginext.site";
 	}
 
 	static get DX_API_URL() {
-		return trimNull(process.env.DX_API_URL) ? trimNull(process.env.DX_API_URL) : "https://diginext.site/api";
+		return trimNull(process.env.DX_API_URL) ? trimNull(process.env.DX_API_URL) : "https://diginext-website.dev.diginext.site/api";
 	}
 
 	static get BUILDER() {

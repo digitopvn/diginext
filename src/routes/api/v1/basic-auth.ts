@@ -2,7 +2,7 @@ import express from "express";
 import { model } from "mongoose";
 
 import { Config } from "@/app.config";
-import type { type IUser, type IWorkspace, IRole } from "@/entities";
+import type { IRole, IUser, IWorkspace } from "@/entities";
 import { userSchema } from "@/entities";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import { extractAccessTokenInfo, generateJWT } from "@/modules/passports";

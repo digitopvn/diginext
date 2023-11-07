@@ -4,17 +4,13 @@ import { writeFileSync } from "fs";
 import path from "path";
 import yargs from "yargs";
 
-import { getCliConfig } from "@/config/config";
 import type { InputOptions } from "@/interfaces";
 import { getFolderStructure } from "@/plugins/fs-extra";
 
 import { fetchApi } from "../api";
 
-const { buildServerUrl } = getCliConfig();
-
 export async function execAI(options?: InputOptions) {
-	const { DB } = await import("@/modules/api/DB");
-	const { secondAction: action, thirdAction: resource, isDebugging } = options;
+	const { secondAction: action, thirdAction: resource, env, isDebugging } = options;
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
 
 	switch (action) {
@@ -37,13 +33,12 @@ export async function execAI(options?: InputOptions) {
 						if (options?.isDebugging) console.log("execAI() > requestResult.data :>> ", response.data);
 
 						const dockerfileContent = response?.data;
-						writeFileSync(path.resolve(options.targetDirectory, `Dockerfile.generated`), dockerfileContent, "utf8");
+						writeFileSync(path.resolve(options.targetDirectory, `Dockerfile.${env}`), dockerfileContent, "utf8");
 
 						// log success
-						logSuccess(`Generate successfully: ${chalk.cyan("./Dockerfile.generated")}`);
+						logSuccess(`Generated successfully: ${chalk.cyan(`./Dockerfile.${env}`)}`);
 					} catch (e) {
-						logError(`Unable to call Diginext API:`, e);
-						return;
+						throw new Error(`Unable to call Diginext API: ${e}`);
 					}
 					break;
 

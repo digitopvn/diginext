@@ -6,7 +6,13 @@ import type { IUser, UserDto } from "@/entities";
 import type { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import { MongoDB } from "@/plugins/mongodb";
-import { assignRoleByID, assignRoleByRoleID, filterSensitiveInfo, filterUsersByWorkspaceRole, getActiveRole } from "@/plugins/user-utils";
+import {
+	assignRoleByID,
+	assignRoleWithoutCheckingPermissions,
+	filterSensitiveInfo,
+	filterUsersByWorkspaceRole,
+	getActiveRole,
+} from "@/plugins/user-utils";
 import { UserService, WorkspaceService } from "@/services";
 
 interface JoinWorkspaceBody {
@@ -71,21 +77,28 @@ export default class UserController extends BaseController<IUser> {
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
+		// console.log("body.roles :>> ", body.roles);
 		if (body.roles) {
 			try {
-				if (isArray(body.roles)) {
-					await Promise.all(body.roles.map((roleId) => assignRoleByRoleID(roleId, this.user)));
-				} else if (MongoDB.isValidObjectId(body.roles)) {
-					const roleId = body.roles;
-					await assignRoleByRoleID(roleId, this.user);
-				}
+				// find list of affected users
+				const users = await this.service.find(this.filter, { populate: ["roles"] });
+				users.forEach(async (user) => {
+					if (isArray(body.roles)) {
+						await Promise.all(
+							body.roles.map((roleId) => assignRoleWithoutCheckingPermissions(MongoDB.toString(roleId), user, this.ownership))
+						);
+					} else if (MongoDB.isValidObjectId(body.roles)) {
+						const roleId = body.roles;
+						return assignRoleWithoutCheckingPermissions(MongoDB.toString(roleId), user, this.ownership);
+					}
+				});
 				delete body.roles;
 			} catch (e) {
-				return respondFailure(e.toString());
+				return respondFailure(`Unable to update role: ${e}`);
 			}
 		}
 
-		// [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
+		// ! [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
 		if (this.filter.owner && MongoDB.toString(this.filter.owner) === MongoDB.toString(this.user._id)) delete this.filter.owner;
 
 		return super.update(body);

@@ -3,15 +3,15 @@ import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { upperCase } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IRole } from "@/entities";
-import { GitProviderDto } from "@/entities";
-import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
+import type { GitProviderDto, IRole } from "@/entities";
+import type { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
-import type { GitProviderDomain } from "@/interfaces/SystemTypes";
-import { type GitProviderType, gitProviderDomain } from "@/interfaces/SystemTypes";
+import type { GitProviderDomain, GitProviderType } from "@/interfaces/SystemTypes";
+import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
-import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
+import type { GitRepositoryDto } from "@/modules/git/git-provider-api";
+import GitProviderAPI from "@/modules/git/git-provider-api";
 import { makeSlug } from "@/plugins/slug";
 import { GitProviderService } from "@/services";
 

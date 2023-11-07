@@ -22,6 +22,7 @@ router
 	.post("/invite", processApiRequest(controller.inviteMember.bind(controller)))
 	.patch("/add-user", processApiRequest(controller.addUser.bind(controller)))
 	.get("/service_account", processApiRequest(controller.getServiceAccounts.bind(controller)))
-	.get("/api_key", processApiRequest(controller.getApiKeyUsers.bind(controller)));
+	.get("/api_key", processApiRequest(controller.getApiKeyUsers.bind(controller)))
+	.post("/update-package", processApiRequest(controller.updatePackageWorkspace.bind(controller)));
 
 export default router;

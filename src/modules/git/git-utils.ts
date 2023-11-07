@@ -213,6 +213,7 @@ export const pullOrCloneGitRepoHTTP = async (repoURL: string, dir: string, branc
 	if (!options.useAccessToken) throw new Error(`Access token is required to pull/clone repo with HTTPS.`);
 	const repoUrlWithAuth = injectAuthToRepoURL(repoURL, { type: options.useAccessToken.type, token: options.useAccessToken.value });
 
+	if (options?.isDebugging) console.log("pullOrCloneGitRepoHTTP() > repoUrlWithAuth :>> ", repoUrlWithAuth);
 	if (options?.isDebugging) console.log("pullOrCloneGitRepoHTTP() > repoURL :>> ", repoURL);
 	if (options?.isDebugging) console.log("pullOrCloneGitRepoHTTP() > dir :>> ", dir);
 	// if (options?.isDebugging) console.log("pullOrCloneGitRepoHTTP() > options :>> ", options);
@@ -264,12 +265,13 @@ export const pullOrCloneGitRepoHTTP = async (repoURL: string, dir: string, branc
 				success = true;
 			} catch (e2) {
 				if (options?.isDebugging) console.log("pullOrCloneGitRepoHTTP() > Failed to PULL & CLONE :>> ", e2);
-				if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoURL}" (${branch}) to "${dir}" directory: ${e2.message}`);
+				if (options?.onUpdate) options?.onUpdate(`Failed to SSH clone "${repoURL}" (${branch}) to "${dir}" directory: ${e2.message}`);
+				throw new Error(`Failed to SSH clone "${repoURL}" (${branch}) to "${dir}" directory: ${e2.message}`);
 			}
 		}
 	} else {
 		if (options?.isDebugging) console.log("pullOrCloneGitRepoHTTP() > directory NOT exists :>> try to CLONE instead...");
-		if (options?.onUpdate) options?.onUpdate(`Cache source code not found. Cloning "${repoURL}" (${branch}) to "${dir}" directory.`);
+		if (options?.onUpdate) options?.onUpdate(`[HTTP] Cache source code not found. Cloning "${repoURL}" (${branch}) to "${dir}" directory.`);
 
 		try {
 			git = simpleGit({ progress: onProgress });
@@ -284,7 +286,8 @@ export const pullOrCloneGitRepoHTTP = async (repoURL: string, dir: string, branc
 			success = true;
 		} catch (e) {
 			if (options?.isDebugging) console.error(`❌ pullOrCloneGitRepoHTTP() > Failed to CLONE: ${e}`);
-			if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoURL}" (${branch}) to "${dir}" directory: ${e.message}`);
+			if (options?.onUpdate) options?.onUpdate(`[HTTP] Failed to clone "${repoURL}" (${branch}) to "${dir}" directory: ${e}`);
+			throw new Error(`[HTTP] Failed to clone "${repoURL}" (${branch}) to "${dir}" directory: ${e}`);
 		}
 	}
 

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { log } from "diginext-utils/dist/xconsole/log";
+import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 
 import type { InputOptions } from "@/interfaces";
 
@@ -48,16 +48,23 @@ export default async function updateBranchProtection(options: InputOptions) {
 				} catch (error) {
 					if (error?.response) {
 						// The request was made and the server responded with a status code outside of the 2xx range
-						console.log("URL:>> ", `https://api.github.com/repos/${owner}/${repo}/branches/${branch}/protection`);
-						console.log(" ==> error?.response?.data\n", error?.response?.data);
-						console.log(" ==> error?.response?.status\n", error?.response?.status);
-						console.log(" ==> error?.response?.headers\n", error?.response?.headers);
+						if (error?.response?.data?.message) logWarn(error?.response?.data?.message);
+
+						if (options.isDebugging) {
+							console.log(
+								"[PROTECT_GIT_BRANCH] URL:>> ",
+								`https://api.github.com/repos/${owner}/${repo}/branches/${branch}/protection`
+							);
+							console.log("[PROTECT_GIT_BRANCH] ==> error?.response?.data\n", error?.response?.data);
+							console.log("[PROTECT_GIT_BRANCH] ==> error?.response?.status\n", error?.response?.status);
+							console.log("[PROTECT_GIT_BRANCH] ==> error?.response?.headers\n", error?.response?.headers);
+						}
 					} else if (error?.request) {
 						// The request was made but no response was received
-						console.log(error?.request);
+						if (options.isDebugging) console.log("[PROTECT_GIT_BRANCH] Error:\n", error?.request);
 					} else {
 						// Something happened in setting up the request that triggered an Error
-						console.log("Error:\n", error?.message);
+						if (options.isDebugging) console.log("[PROTECT_GIT_BRANCH] Error:\n", error?.message);
 					}
 				}
 			}
