@@ -435,7 +435,12 @@ export class AppService extends BaseService<IApp> {
 		if (!app) throw new Error(`Unable to delete: App not found.`);
 
 		// take down all deploy environments of this app
-		await this.takeDown(app, options);
+		try {
+			await this.takeDown(app, options);
+		} catch (e) {
+			// ignore on error
+			console.error(e);
+		}
 
 		return super.delete(filter, options);
 	}
@@ -448,7 +453,12 @@ export class AppService extends BaseService<IApp> {
 		if (!app) throw new Error(`Unable to delete: App not found.`);
 
 		// take down all deploy environments of this app
-		await this.takeDown(app, options);
+		try {
+			await this.takeDown(app, options);
+		} catch (e) {
+			// ignore on error
+			console.error(e);
+		}
 
 		return super.softDelete(filter, options);
 	}
@@ -472,6 +482,10 @@ export class AppService extends BaseService<IApp> {
 	}
 
 	async takeDown(app: IApp, options?: IQueryOptions) {
+		// validate
+		if (!app.deployEnvironment) throw new Error(`Unable to take down "${app.slug}" app, no deploy environtments found.`);
+
+		// initialize
 		const { DeployEnvironmentService } = await import("@/services");
 		const deployEnvSvc = new DeployEnvironmentService();
 
