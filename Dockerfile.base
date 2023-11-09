@@ -60,11 +60,18 @@ RUN curl -fsSL https://pgp.mongodb.com/server-6.0.asc | gpg -o /usr/share/keyrin
 RUN apt-get update && apt-get install -y default-mysql-client
 
 # Install PostgreSQL client tools
+# Add the repository for PostgreSQL
+RUN apt-get update && apt-get install -y gnupg2 && \
+    sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
+    apt-key adv --fetch-keys https://www.postgresql.org/media/keys/ACCC4CF8.asc
 RUN apt-get update && apt-get install -y postgresql-client
 RUN apt-get update && \
     apt-get install -y postgresql-client-14 \
     postgresql-client-15 \
     postgresql-client-16
+
+# Clean up the apt cache -> smaller docker image size
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /usr/app
