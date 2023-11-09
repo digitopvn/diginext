@@ -592,7 +592,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 				// for CLI create new app from a framework
 				git = simpleGit({ progress: onProgress });
 
-				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch", "--depth=1"]);
 				if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Success to CLONE !");
 
 				// remove git on finish
@@ -612,7 +612,7 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 		try {
 			git = simpleGit({ progress: onProgress });
 
-			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch"]);
+			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch", "--depth=1"]);
 			if (options?.isDebugging) console.log("✅ pullOrCloneGitRepo() > Success to CLONE !");
 
 			// remove git on finish

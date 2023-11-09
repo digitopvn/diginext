@@ -67,7 +67,7 @@ export async function askForGitProvider() {
 		const { token } = await inquirer.prompt<{ token: string }>({
 			type: "password",
 			name: "token",
-			mask: true,
+			mask: "*",
 			message: gitProviderType === "bitbucket" ? "Bitbucket app password:" : "Github personal access token:",
 		});
 

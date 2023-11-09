@@ -228,13 +228,17 @@ export const pullOrCloneGitRepoHTTP = async (repoURL: string, dir: string, branc
 			if (options?.isDebugging) console.log("pullOrCloneGitRepoHTTP() > directory exists :>> try to PULL...");
 			git = simpleGit(dir, { progress: onProgress });
 			// -----------------------
-			// ! DO NOT SET TO "FALSE"
+			// CAUTION: DO NOT SET TO "FALSE"
 			// -----------------------
 			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
 			const originRemote = remotes[0] as any;
 			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
 			if (options?.isDebugging) console.log("originRemote :>> ", originRemote, `>`, { repoURL });
-			if (originRemote?.refs?.fetch !== repoURL) await git.addRemote("origin", repoUrlWithAuth);
+
+			if (originRemote?.refs?.fetch !== repoURL) {
+				await git.removeRemote("origin");
+				await git.addRemote("origin", repoUrlWithAuth);
+			}
 
 			const curBranch = await getCurrentGitBranch(dir);
 			await git.pull("origin", curBranch, ["--no-ff"]);
@@ -255,7 +259,7 @@ export const pullOrCloneGitRepoHTTP = async (repoURL: string, dir: string, branc
 				// for CLI create new app from a framework
 				git = simpleGit({ progress: onProgress });
 
-				await git.clone(repoUrlWithAuth, dir, [`--branch=${branch}`, "--single-branch"]);
+				await git.clone(repoUrlWithAuth, dir, [`--branch=${branch}`, "--single-branch", "--depth=1"]);
 				if (options?.isDebugging) console.log("pullOrCloneGitRepoHTTP() > Success to CLONE !");
 
 				// remove git on finish
@@ -276,7 +280,7 @@ export const pullOrCloneGitRepoHTTP = async (repoURL: string, dir: string, branc
 		try {
 			git = simpleGit({ progress: onProgress });
 
-			await git.clone(repoUrlWithAuth, dir, [`--branch=${branch}`, "--single-branch"]);
+			await git.clone(repoUrlWithAuth, dir, [`--branch=${branch}`, "--single-branch", "--depth=1"]);
 			if (options?.isDebugging) console.log("✅ pullOrCloneGitRepoHTTP() > Success to CLONE !");
 
 			// remove git on finish

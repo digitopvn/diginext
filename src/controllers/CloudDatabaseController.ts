@@ -88,8 +88,8 @@ export default class CloudDatabaseController extends BaseController<ICloudDataba
 		try {
 			const db = await this.service.findOne(this.filter);
 			if (!db) return interfaces.respondFailure(`Database not found.`);
-			const res = await this.service.backup(db);
-			return interfaces.respondSuccess({ data: res });
+			const data = await this.service.backup(db);
+			return interfaces.respondSuccess({ data });
 		} catch (e) {
 			return interfaces.respondFailure(e.toString());
 		}

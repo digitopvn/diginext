@@ -1,13 +1,16 @@
 import cliProgress from "cli-progress";
 import { firstElement } from "diginext-utils/dist/array";
-import { log, logError, logSuccess } from "diginext-utils/dist/xconsole/log";
+import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import fs from "fs";
 import globby from "globby";
 import path from "path";
 
-import { DIGITOP_CDN_URL } from "../../config/const";
+import type { ICloudStorage } from "@/entities";
+
 import type { InputOptions } from "../../interfaces/InputOptions";
-import { getAppConfig, invalidateCache, uploadFile } from "../../plugins";
+import { getAppConfig, invalidateCache, resolveEnvFilePath, wait } from "../../plugins";
+import { askForProjectAndApp } from "../apps/ask-project-and-app";
+import { askForStorage } from "./ask-for-storage";
 
 // config
 
@@ -16,6 +19,7 @@ const defaultPattern = "./public/**/*.*";
 // const pattern = "./public/**/*.*";
 
 let projectName = "cli-test-project";
+let storage: ICloudStorage;
 // let projectSlug = "";
 // let shouldOptimize = false;
 // let isProduction = false;
@@ -60,12 +64,20 @@ async function upload(env, onComplete, options) {
 	const version = options.hasOwnProperty("version") ? options.version : "";
 
 	let filePath = uploadItems[uploadedCount];
-	filePath = filePath.replace("public/", `public${version}/`);
+	// filePath = filePath.replace("public/", `public${version}/`);
+
+	if (options.isDebugging) {
+		console.log("-----------------------------------");
+		console.log("[upload] uploadedCount :>> ", uploadedCount);
+		console.log("[upload] totalCount :>> ", uploadItems.length - 1);
+		console.log("[upload] version :>> ", version);
+		console.log("[upload] filePath :>> ", filePath);
+		console.log("[upload] projectName :>> ", projectName);
+	}
 
 	uploadedCount++;
 
-	const countFinish = (resolve) => {
-		// uploadedCount++;
+	const checkFinish = (resolve) => {
 		progressBar.update(uploadedCount);
 
 		if (uploadedCount >= totalCount) {
@@ -73,7 +85,7 @@ async function upload(env, onComplete, options) {
 
 			// FINISH UPLOADING...
 			if (failedItems.length > 0) {
-				console.warn(`[WARNING] Không thể upload những file sau:`);
+				console.warn(`[WARNING] Unable to upload these files:`);
 				failedItems.forEach((item) => {
 					console.warn(`\n- ${item.path} (${item.reason})`);
 				});
@@ -90,61 +102,70 @@ async function upload(env, onComplete, options) {
 	return new Promise(async (resolve, reject) => {
 		// UPLOAD TO GOOGLE CLOUD STORAGE:
 		let destination = `${projectName}/${env}/${filePath}`;
+
+		// attach "version" to destination files
+		destination = destination.replace("public/", `public${version}/`);
+
+		// NOTE: For "Next.js" project only
 		destination = destination.replace(/\.next/g, "_next");
 
 		try {
-			await uploadFile(filePath, destination);
+			// init service
+			const { CloudStorageService } = await import("@/services");
+			const svc = new CloudStorageService();
+
+			// use service to upload
+			const uploadRes = await svc.uploadFileFromFilePath(storage, filePath, destination, {
+				cacheControl: "public, max-age=31536000",
+				contentEncoding: "gzip",
+			});
+			// console.log("uploadRes :>> ", uploadRes);
+			// await uploadFile(filePath, destination);
 		} catch (e) {
+			console.error(e);
+			console.error(`[ERROR] Unable to upload file to "${storage.name} / ${storage.bucket}" storage: "${filePath}"`);
 			resolve(e);
 		}
 
-		countFinish(resolve);
+		checkFinish(resolve);
 	});
 }
 
-function uploadBatch(concurrency, env, onComplete, options) {
+function uploadBatch(concurrency: number, env: string, onComplete: () => void, options?: { version?: string; isDebugging?: boolean }) {
 	for (let i = 0; i < concurrency; i++) {
 		upload(env, onComplete, options);
 	}
 }
 
 /**
- *
- * @param {InputOptions} options
- * @param {UploadCompleteCallback} onComplete
- * @returns
+ * Upload static files of current working project to Cloud Storage
  */
 export async function startUpload(options: InputOptions, onComplete?: UploadCompleteCallback) {
 	const { version = "", env = "dev" } = options;
-	// check for diginext config:
 
-	let configFile = path.resolve("dx.json");
-	let isFrameworkConfigExisted = fs.existsSync(path.resolve("dx.json"));
-	if (!isFrameworkConfigExisted) {
-		await logError(
-			"Diginext has't been initialized yet. Run `diginext new` to create new project or `diginext init` to initialize current directory."
-		);
-		return;
-	}
+	// ask for project
+	const { project } = await askForProjectAndApp(options.targetDirectory, options);
 
-	const configStr = fs.readFileSync(configFile);
-	const config = JSON.parse(configStr.toString());
+	// ask for storage
+	storage = await askForStorage();
+	if (options.isDebugging) console.log("storage :>> ", storage);
 
-	projectName = config.projectSlug;
-	// shouldOptimize = options && options.optimize === true ? true : false;
-	// isProduction = options && options.isProd === true ? true : false;
+	projectName = project.slug;
 
+	// reset arrays
 	failedItems = [];
 	uploadItems = [];
+	failedItems = [];
 
 	// parse static directory path:
 	let uploadPathPattern = defaultPattern;
+	if (uploadPathPattern.substring(0, 2) == "./") uploadPathPattern = uploadPathPattern.substring(2);
 
 	if (options.path) {
 		options.path = options.path.trim();
 		if (options.path.charAt(0) == "/") {
 			options.path = options.path.substring(1);
-		} else if (options.path.substring(2) == "./") {
+		} else if (options.path.substring(0, 2) == "./") {
 			options.path = options.path.substring(2);
 		}
 		const lastChar = options.path.slice(-1);
@@ -152,25 +173,31 @@ export async function startUpload(options: InputOptions, onComplete?: UploadComp
 		uploadPathPattern = `${options.path}/**/*.*`;
 	}
 
-	log(`Uploading "${uploadPathPattern}" to "${DIGITOP_CDN_URL}/${projectName}/${env}"`);
+	// log(`Uploading "${uploadPathPattern}" to "${DIGITOP_CDN_URL}/${projectName}/${env}"`);
 
 	const files = await globby(uploadPathPattern);
+
 	uploadedCount = 0;
 	totalCount = files.length;
 	uploadItems = [...files];
 
+	if (options.isDebugging) {
+		console.log(`[CDN] Start uploading > totalCount :>>`, totalCount);
+		console.log(`[CDN] Start uploading > uploadItems :>>`, uploadItems);
+	}
+
 	progressBar.start(totalCount, 0);
 
-	uploadBatch(
-		maxConcurrentUploadFiles,
-		env,
-		() => {
-			logSuccess(`Upload files lên ${env} CDN của dự án "${projectName}" thành công.`);
-			if (onComplete) onComplete({ env, project: projectName, items: uploadItems });
-			process.exit(1);
-		},
-		{ version }
-	);
+	function onFinishUpload() {
+		logSuccess(`Finished uploading files to "${env}" CDN of "${projectName}" project.`);
+		if (onComplete) onComplete({ env, project: projectName, items: uploadItems });
+		process.exit(1);
+	}
+
+	uploadBatch(maxConcurrentUploadFiles, env, onFinishUpload, { version, isDebugging: options.isDebugging });
+
+	// NOTE: max wait time: 8 hours
+	await wait(8 * 60 * 60 * 1000);
 }
 
 export async function purgeProject(options) {
@@ -193,15 +220,13 @@ export async function purgeAllCache(options) {
 	// TODO: Implement DigitalOcean SPACE purging cache feature
 }
 
-export const loadVersionCacheCDNFromEnv = (options) => {
+export const loadVersionCacheCDNFromEnv = (options: InputOptions) => {
 	const { env } = options;
 	//
 	let version = "";
 
 	//load .env.prod
-	let envFilePath = path.resolve(`deployment/.env.${env}`);
-	if (!fs.existsSync(envFilePath)) envFilePath = path.resolve(`.env.${env}`);
-	if (!fs.existsSync(envFilePath)) envFilePath = path.resolve(`.env`);
+	const envFilePath = resolveEnvFilePath({ env, ignoreIfNotExisted: false, targetDirectory: options.targetDirectory });
 
 	if (fs.existsSync(envFilePath)) {
 		const rawdata = fs.readFileSync(envFilePath).toString();

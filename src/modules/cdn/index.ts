@@ -1,16 +1,18 @@
 import { logSuccess } from "diginext-utils/dist/xconsole/log";
 
+import type { InputOptions } from "@/interfaces";
+
 import { logHelp } from "../../plugins/utils";
 import { disableCDN, enableCDN, loadVersionCacheCDNFromEnv, purgeProject, startUpload } from "./cdn.service";
 
-export async function execCDN(options) {
+export async function execCDN(options: InputOptions) {
 	const { env = "dev" } = options;
 
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
 
 	if (options.secondAction == "push") {
 		const version = loadVersionCacheCDNFromEnv(options);
-		console.log("cache version: ", version);
+		console.log("Cache version: ", version);
 
 		await startUpload({
 			version,
@@ -18,6 +20,7 @@ export async function execCDN(options) {
 			path: options.thirdAction,
 			production: options.isProd,
 			optimize: options.shouldCompress,
+			isDebugging: options.isDebugging,
 		});
 	} else if (options.secondAction == "enable") {
 		enableCDN({ env });

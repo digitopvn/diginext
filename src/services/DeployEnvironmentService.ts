@@ -405,7 +405,8 @@ export class DeployEnvironmentService {
 	 * Take down a deploy environment but still keep the deploy environment information (cluster, registry, namespace,...)
 	 */
 	async takeDownDeployEnvironment(app: IApp, env: string, options?: IQueryOptions) {
-		if (!env) throw new Error(`Params "env" (deploy environment) is required.`);
+		if (!app.deployEnvironment) throw new Error(`Unable to take down, this app doesn't have any deploy environments.`);
+		if (!env) throw new Error(`Unable to take down, param "env" (deploy environment) is required.`);
 
 		const deployEnvironment = app.deployEnvironment[env];
 		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);

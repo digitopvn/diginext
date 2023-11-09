@@ -48,6 +48,10 @@ export type CloudDatabaseType = (typeof cloudDatabaseList)[number];
 export const registryProviderList = ["gcloud", "digitalocean", "dockerhub"] as const;
 export type RegistryProviderType = (typeof registryProviderList)[number];
 
+// cloud storage providers
+export const storageProviderList = ["gcloud", "do_space", "aws_s3"] as const;
+export type StorageProviderType = (typeof storageProviderList)[number];
+
 // git providers
 export const availableGitProviders = ["bitbucket", "github" /**, "gitlab" */] as const;
 export type GitProviderType = (typeof availableGitProviders)[number];

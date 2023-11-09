@@ -117,7 +117,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const applyCommand = `| kubectl apply -f -`;
 
 	// command: "doctl registry kubernetes-manifest"
-	const registryYaml = await execaCommand(
+	const { stdout: registryYaml } = await execaCommand(
 		`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} --access-token ${API_ACCESS_TOKEN} ${applyCommand}`
 	);
 	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;

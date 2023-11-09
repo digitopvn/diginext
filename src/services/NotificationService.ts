@@ -129,7 +129,7 @@ export class NotificationService extends BaseService<INotification> {
 				.then((notifications) => {
 					// emit websocket to clients
 					notifications.map(({ owner: recipientId }) => {
-						socketIO?.to(recipientId).emit("notification", { action: "new", message: "You have new notification" });
+						socketIO?.to(recipientId.toString()).emit("notification", { action: "new", message: "You have new notification" });
 					});
 					return notifications;
 				})
@@ -149,7 +149,7 @@ export class NotificationService extends BaseService<INotification> {
 			return this.create(notiData, options)
 				.then((noti) => {
 					// emit websocket to clients
-					socketIO?.to(noti.owner).emit("notification", { action: "new", message: "You have new notification" });
+					socketIO?.to(noti.owner.toString()).emit("notification", { action: "new", message: "You have new notification" });
 					return noti;
 				})
 				.catch((e) => {

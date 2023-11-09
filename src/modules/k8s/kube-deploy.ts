@@ -389,7 +389,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 		deployment,
 		deploymentName;
 
-	yaml.loadAll(deploymentYaml, (doc) => {
+	yaml.loadAll(deploymentYaml, (doc: any) => {
 		if (doc && doc.kind == "Ingress") {
 			ingress = doc;
 			ingressName = doc.metadata.name;
@@ -461,7 +461,7 @@ export async function rollout(id: string, options: RolloutOptions = {}) {
 
 	let prereleaseApp, prereleaseAppName;
 	if (env === "prod") {
-		yaml.loadAll(prereleaseYaml, function (doc) {
+		yaml.loadAll(prereleaseYaml, function (doc: any) {
 			if (doc && doc.kind == "Service") prereleaseAppName = doc.spec.selector.app;
 			if (doc && doc.kind == "Deployment") prereleaseApp = doc;
 		});
