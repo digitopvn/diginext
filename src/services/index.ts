@@ -8,6 +8,7 @@ export * from "./BuildService";
 export * from "./CloudDatabaseBackupService";
 export * from "./CloudDatabaseService";
 export * from "./CloudProviderService";
+export * from "./CloudStorageService";
 export * from "./ClusterService";
 export * from "./ContainerRegistryService";
 export * from "./CronjobService";

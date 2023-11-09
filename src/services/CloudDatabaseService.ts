@@ -224,7 +224,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 
 		// backup
 		try {
-			const bkSvc = new CloudDatabaseBackupService();
+			const bkSvc = new CloudDatabaseBackupService(this.ownership);
 
 			// check if this process has been done by other pods, if yes, ignore this.
 			const bkName = `${db.type}-backup-${makeDaySlug()}`;
@@ -243,19 +243,30 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 				owner: this.req.user?._id as string,
 			});
 
+			console.log("[DB_BACKUP] backup :>> ", backup);
 			console.log(`[DB_BACKUP] Start backing up > ${db.slug} :>> `, bkName);
 
 			switch (db.type) {
 				case "mariadb":
 				case "mysql":
-					MySQL.backup({ dbName: options?.dbName, host: db.host, port: toString(db.port), user: db.user, pass: db.pass })
-						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
-						.catch((e) => (backup ? bkSvc.updateStatus(backup._id, { status: "failed" }) : undefined));
+					MySQL.backup({
+						backupId: backup._id.toString(),
+						dbName: options?.dbName,
+						host: db.host,
+						port: toString(db.port),
+						user: db.user,
+						pass: db.pass,
+					})
+						.then((res) => bkSvc.updateStatus(res.backupId, { status: "success", path: res.path }))
+						.catch((e) => {
+							logError(e.stack);
+							if (backup) bkSvc.updateStatus(backup._id, { status: "failed" });
+						});
 					break;
 				case "mongodb":
 					MongoShell.backup({
 						dbName: options?.dbName,
-						authDb: options?.authDb,
+						authDb: options?.authDb || db.authDb,
 						url: db.url,
 						host: db.host,
 						port: toString(db.port),
@@ -263,11 +274,25 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						pass: db.pass,
 					})
 						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
-						.catch((e) => (backup ? bkSvc.updateStatus(backup._id, { status: "failed" }) : undefined));
+						.catch((e) => {
+							logError(e.stack);
+							if (backup) bkSvc.updateStatus(backup._id, { status: "failed" });
+						});
 					break;
 				case "postgresql":
+					PostgreSQL.checkConnection({
+						dbName: options?.dbName,
+						authDb: options?.authDb || db.authDb,
+						url: db.url,
+						host: db.host,
+						port: toString(db.port),
+						user: db.user,
+						pass: db.pass,
+						isDebugging: true,
+					});
 					PostgreSQL.backup({
 						dbName: options?.dbName,
+						authDb: options?.authDb || db.authDb,
 						url: db.url,
 						host: db.host,
 						port: toString(db.port),
@@ -275,7 +300,10 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						pass: db.pass,
 					})
 						.then((res) => bkSvc.updateStatus(backup._id, { status: "success", path: res.path }))
-						.catch((e) => (backup ? bkSvc.updateStatus(backup._id, { status: "failed" }) : undefined));
+						.catch((e) => {
+							logError(e.stack);
+							if (backup) bkSvc.updateStatus(backup._id, { status: "failed" });
+						});
 					break;
 				default:
 					throw new Error(`Database type "${db.type}" is not supported backing up at the moment.`);
@@ -283,13 +311,13 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 
 			return backup;
 		} catch (e) {
-			logError(`[DB_BACKUP_ERRROR]`, e);
+			logError(`[DB_BACKUP_ERRROR]`, e.stack);
 			return;
 		}
 	}
 
 	async restoreFromBackupId(backupId: string, dbId: string) {
-		const bkSvc = new CloudDatabaseBackupService();
+		const bkSvc = new CloudDatabaseBackupService(this.ownership);
 		const backup = await bkSvc.findOne({ _id: backupId });
 		const db = await this.findOne({ _id: dbId });
 		return this.restoreFromBackup(backup, db);

@@ -19,15 +19,22 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 
 	async create(data: CloudDatabaseBackupDto & { owner?: string; workspace?: string }): Promise<ICloudDatabaseBackup> {
 		try {
-			const bk = await super.create(data);
+			const backup = await super.create(data);
+			console.log("CloudDatabaseBackupService > create > backup :>> ", backup);
 
 			// check expired backups and deleted expired ones
 			this.deleteExpiredBackups(MongoDB.toString(this.workspace._id));
 
-			return bk;
+			return backup;
 		} catch (e) {
 			const logSvc = new SystemLogService();
-			logSvc.saveError(e, { level: 3, name: "[DB_BK_SERVICE] Unable to create new database backup", type: "error", workspace: this.workspace });
+			await logSvc.saveError(e, {
+				level: 3,
+				name: "[DB_BK_SERVICE] Unable to create new database backup",
+				type: "error",
+				workspace: this.workspace,
+			});
+			return;
 		}
 	}
 
@@ -37,6 +44,7 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 			updateData.path = data.path;
 			updateData.url = `${Config.BASE_URL}/storage/${data.path.split("storage/")[1]}`;
 		}
+
 		const backup = await this.updateOne({ _id: id }, updateData);
 		return backup;
 	}
@@ -76,6 +84,7 @@ export class CloudDatabaseBackupService extends BaseService<ICloudDatabaseBackup
 	}
 
 	async deleteExpiredBackups(workspaceId: string) {
+		console.log("[DB_BACKUP] deleteExpiredBackups > workspaceId :>> ", workspaceId);
 		const workspaceSvc = new WorkspaceService();
 		const workspace = await workspaceSvc.findOne({ _id: workspaceId });
 		if (!workspace) throw new Error(`Unable to delete expired db backups of "${workspaceId}" workspace: Workspace not found.`);

@@ -257,7 +257,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			});
 
 		// remove this app ID from project.apps
-		const [project] = await new ProjectService().update(
+		const project = await new ProjectService().updateOne(
 			{
 				_id: (app.project as IProject)._id,
 			},

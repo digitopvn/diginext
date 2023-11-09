@@ -40,7 +40,7 @@ export async function createAppByForm(
 			name: "name",
 			message: "Enter your app name:",
 			validate: function (value) {
-				if (value.length <= 3) return "App name is required & has at least 3 characters.";
+				if (value.length < 3) return "App name is required & has at least 3 characters.";
 				if (containsSpecialCharacters(value)) return `App name should not contain special characters.`;
 
 				return true;
@@ -182,7 +182,8 @@ export async function createAppByForm(
 		owner: options.userId,
 		ownerSlug: options.user,
 		workspace: options.workspaceId,
-		workspaceSlug: options.workspace.slug,
+		// FIXME: I don't know why "options.workspace" is undefined when uploading files to cloud storage
+		workspaceSlug: options.workspace?.slug || options.project.workspaceSlug,
 	};
 
 	appData.git.provider = options.gitProvider;

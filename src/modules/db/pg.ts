@@ -1,8 +1,9 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { logError } from "diginext-utils/dist/xconsole/log";
 import { existsSync, mkdirSync } from "fs";
 import path from "path";
 
-import { CLI_DIR } from "@/config/const";
+import { STORAGE_DIR } from "@/config/const";
 
 export type PostgresConnectionInfo = {
 	/**
@@ -14,6 +15,10 @@ export type PostgresConnectionInfo = {
 	 * @default admin
 	 */
 	dbName?: string;
+	/**
+	 * @default admin
+	 */
+	authDb?: string;
 	host: string;
 	/**
 	 * @default 5432
@@ -30,7 +35,7 @@ export const getConnectionString = (options: Partial<PostgresConnectionInfo>) =>
 	if (options.url) return options.url;
 	if (!options.host) throw new Error(`Param "host" is required.`);
 	if (!options.pass) throw new Error(`Param "pass" is required.`);
-	return `postgresql://${options.user || "root"}:${options.pass}@${options.host}:${options.port}/${options.dbName || ""}`;
+	return `postgresql://${options.user || "root"}:${options.pass}@${options.host}:${options.port}/${options.dbName || options.authDb || ""}`;
 };
 
 export const checkConnection = async (options: PostgresConnectionInfo & { isDebugging?: boolean }) => {
@@ -63,7 +68,7 @@ export const backup = async (
 	const { execa, execaCommand, execaSync } = await import("execa");
 
 	const bkName = `postgresql-backup-${makeDaySlug()}.${options.dbName ? "dump" : "sql"}`;
-	if (!options.outDir) options.outDir = path.resolve(CLI_DIR, `storage/postgresql`);
+	if (!options.outDir) options.outDir = path.resolve(STORAGE_DIR, `postgresql`);
 
 	if (!existsSync(options.outDir)) mkdirSync(options.outDir, { recursive: true });
 
@@ -72,12 +77,15 @@ export const backup = async (
 	const connectionStr = getConnectionString(options);
 
 	if (options.dbName) {
-		const { stdout, stderr } = execaSync(`pg_dump`, [connectionStr, "-F", "c", "-f", outPath]);
+		const { stdout, stderr } = await execa(`pg_dump`, [connectionStr, "-F", "c", "-f", outPath]);
 		if (options.isDebugging) console.log(`[POSTGRES] Backup database "${options.dbName}" successfully :>> `, stdout);
+		if (stderr) logError(stderr);
 	} else {
-		const { stdout, stderr } = execaSync(`pg_dumpall`, ["-d", connectionStr, "-f", outPath], { env: { PGPASSWORD: options.pass } });
+		const { stdout, stderr } = await execa(`pg_dumpall`, ["-d", connectionStr, "-f", outPath], { env: { PGPASSWORD: options.pass } });
 		if (options.isDebugging) console.log("[POSTGRES] Backup all databases successfully :>> ", stdout);
+		if (stderr) logError(stderr);
 	}
+
 	return { name: bkName, path: outPath };
 };
 

@@ -1,8 +1,9 @@
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
+import { logError } from "diginext-utils/dist/xconsole/log";
 import { existsSync, mkdirSync } from "fs";
 import path from "path";
 
-import { CLI_DIR } from "@/config/const";
+import { STORAGE_DIR } from "@/config/const";
 
 export type MysqlConnectionInfo = {
 	host: string;
@@ -54,17 +55,21 @@ export const backup = async (
 		 * Output directory
 		 */
 		outDir?: string;
+		/**
+		 * Backup ID
+		 */
+		backupId?: string;
 	} & { isDebugging?: boolean }
 ) => {
 	const { execa, execaCommand, execaSync } = await import("execa");
 
 	const bkName = `mysql-backup-${makeDaySlug()}.sql`;
-	if (!options.outDir) options.outDir = path.resolve(CLI_DIR, `storage/mysql`);
+	if (!options.outDir) options.outDir = path.resolve(STORAGE_DIR, `mysql`);
 	if (!existsSync(options.outDir)) mkdirSync(options.outDir, { recursive: true });
 
 	const outPath = path.resolve(options.outDir, bkName);
 
-	const { stdout, stderr } = execaSync(`mysqldump`, [
+	const { stdout, stderr } = await execa(`mysqldump`, [
 		"-h",
 		options.host,
 		"-P",
@@ -79,8 +84,10 @@ export const backup = async (
 		"--result-file",
 		outPath,
 	]);
+	if (stderr) logError(stderr);
+
 	if (options.isDebugging) console.log("[MYSQL] Backup successfully :>> ", stdout);
-	return { name: bkName, path: outPath };
+	return { backupId: options.backupId, name: bkName, path: outPath };
 };
 
 export const restore = async (

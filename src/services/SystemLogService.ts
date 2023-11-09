@@ -1,3 +1,5 @@
+import { logError } from "diginext-utils/dist/xconsole/log";
+
 import { type ISystemLog, systemLogSchema } from "@/entities/SystemLog";
 import type { Ownership } from "@/interfaces/SystemTypes";
 
@@ -24,6 +26,7 @@ export class SystemLogService extends BaseService<ISystemLog> {
 	}
 
 	async saveError(error: any, options?: SaveLogOptions) {
+		logError(error.stack);
 		return this.saveLog(error.stack, { ...options, level: 3, type: "error" });
 	}
 

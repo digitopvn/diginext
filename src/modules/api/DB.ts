@@ -10,6 +10,7 @@ import type {
 	ICloudDatabase,
 	ICloudDatabaseBackup,
 	ICloudProvider,
+	ICloudStorage,
 	ICluster,
 	IContainerRegistry,
 	ICronjob,
@@ -55,6 +56,7 @@ export const dbCollections = [
 	"cronjob",
 	"webhook",
 	"notification",
+	"storage",
 ] as const;
 export type DBCollection = (typeof dbCollections)[number];
 
@@ -140,6 +142,8 @@ export type TypeByCollection<T extends DBCollection> = T extends "api_key_user"
 	? IWebhook
 	: T extends "notification"
 	? INotification
+	: T extends "storage"
+	? ICloudStorage
 	: never;
 
 export interface DBQueryOptions extends IQueryOptions {
@@ -260,6 +264,10 @@ export class DB {
 			case "notification":
 				const { NotificationService } = await import("@/services");
 				svc = new NotificationService();
+				break;
+			case "storage":
+				const { CloudStorageService } = await import("@/services");
+				svc = new CloudStorageService();
 				break;
 		}
 		// assign ownership

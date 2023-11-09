@@ -26,7 +26,7 @@ export type FetchDeploymentResult = {
 export const fetchDeploymentFromContent = (content: string): FetchDeploymentResult => {
 	let domains: string[] = [];
 	let deployContent = content;
-	let deploymentData = yaml.loadAll(deployContent);
+	let deploymentData = yaml.loadAll(deployContent) as any[];
 	// console.log("deploymentData :>> ", deploymentData);
 
 	let IMAGE_NAME = "",
@@ -72,7 +72,7 @@ export const fetchDeploymentFromContent = (content: string): FetchDeploymentResu
 		domains,
 		endpoint,
 		deployContent,
-		deployYaml: deploymentData,
+		deployYaml: deployContent,
 		NAMESPACE,
 		SERVICE_NAME,
 		INGRESS_NAME,

@@ -192,7 +192,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// write namespace.[env].yaml
 	if (!fs.existsSync(NAMESPACE_TEMPLATE_PATH)) throw new Error(`Namespace template not found: "${NAMESPACE_TEMPLATE_PATH}"`);
 	let namespaceContent = fs.readFileSync(NAMESPACE_TEMPLATE_PATH, "utf8");
-	let namespaceObject = yaml.load(namespaceContent) || {};
+	let namespaceObject = (yaml.load(namespaceContent) || {}) as any;
 	if (params.isDebugging) console.log("Generate deployment > namespace > template YAML :>> ", namespaceContent);
 	namespaceObject.metadata.name = nsName;
 	namespaceObject.metadata.labels = namespaceObject.metadata?.labels || {};

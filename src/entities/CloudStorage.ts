@@ -1,8 +1,8 @@
 import mongoose, { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
-import type { CloudProviderType } from "@/interfaces/SystemTypes";
-import { cloudProviderList } from "@/interfaces/SystemTypes";
+import type { StorageProviderType } from "@/interfaces/SystemTypes";
+import { storageProviderList } from "@/interfaces/SystemTypes";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
@@ -10,7 +10,7 @@ import { baseSchemaDefinitions } from "./Base";
 export interface ICloudStorage extends IBase {
 	name?: string;
 	verified?: boolean;
-	provider?: CloudProviderType;
+	provider?: StorageProviderType;
 	/**
 	 * The host (domain) of your cloud storage.
 	 * @example "cdn.example.com"
@@ -39,12 +39,12 @@ export interface ICloudStorage extends IBase {
 		 */
 		service_account?: string;
 		/**
-		 * ### NOTE: For AWS S3 Storage
+		 * ### NOTE: For AWS S3 & DigitalOcean Space Storage
 		 * Your AWS access key ID
 		 */
 		key_id?: string;
 		/**
-		 * ### NOTE: For AWS S3 Storage
+		 * ### NOTE: For AWS S3 & DigitalOcean Space Storage
 		 * Your AWS secret access key
 		 */
 		key_secret?: string;
@@ -57,10 +57,16 @@ export const cloudStorageSchema = new Schema(
 		...baseSchemaDefinitions,
 		name: { type: String },
 		verified: Boolean,
-		provider: { type: String, enum: cloudProviderList },
+		provider: { type: String, enum: storageProviderList },
 		host: { type: String },
 		origin: { type: String },
 		bucket: { type: String },
+		region: { type: String },
+		auth: {
+			service_account: { type: String },
+			key_id: { type: String },
+			key_secret: { type: String },
+		},
 	},
 	{ collection: "cloud_storages", timestamps: true }
 );
