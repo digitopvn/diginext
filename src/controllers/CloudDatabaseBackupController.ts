@@ -20,7 +20,6 @@ export default class CloudDatabaseBackupController extends BaseController<ICloud
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
-		console.log("this.filter :>> ", this.filter);
 		return super.read();
 	}
 

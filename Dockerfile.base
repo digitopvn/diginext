@@ -61,6 +61,10 @@ RUN apt-get update && apt-get install -y default-mysql-client
 
 # Install PostgreSQL client tools
 RUN apt-get update && apt-get install -y postgresql-client
+RUN apt-get update && \
+    apt-get install -y postgresql-client-14 \
+    postgresql-client-15 \
+    postgresql-client-16
 
 # Set working directory
 WORKDIR /usr/app

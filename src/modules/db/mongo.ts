@@ -5,7 +5,7 @@ import generator from "generate-password";
 import { MongoClient } from "mongodb";
 import path from "path";
 
-import { CLI_DIR } from "@/config/const";
+import { CLI_DIR, STORAGE_DIR } from "@/config/const";
 
 let currentDB;
 
@@ -70,7 +70,7 @@ export const backup = async (
 	const { execa, execaCommand, execaSync } = await import("execa");
 
 	const bkName = `mongodb-backup-${makeDaySlug()}`;
-	const mongoBackupDir = path.resolve(CLI_DIR, `storage/mongodb`);
+	const mongoBackupDir = path.resolve(STORAGE_DIR, `mongodb`);
 	if (!options.outDir) options.outDir = path.resolve(mongoBackupDir, bkName);
 
 	if (!existsSync(options.outDir)) mkdirSync(options.outDir, { recursive: true });
@@ -78,10 +78,11 @@ export const backup = async (
 	console.log("[MONGODB] backup > options :>> ", options);
 
 	if (options.url) {
-		const { stdout, stderr } = execaSync(`mongodump`, ["--uri", options.url, "--out", options.outDir]);
+		const { stdout, stderr } = await execa(`mongodump`, ["--uri", options.url, "--out", options.outDir]);
+		if (stderr) logError(stderr);
 		if (options.isDebugging) console.log("[MONGODB] Backup successfully :>> ", stdout);
 	} else {
-		const { stdout, stderr } = execaSync(`mongodump`, [
+		const { stdout, stderr } = await execa(`mongodump`, [
 			"--host",
 			`${options.host}:${options.port || 27017}`,
 			"--username",
@@ -94,11 +95,13 @@ export const backup = async (
 			"--out",
 			options.outDir,
 		]);
+		if (stderr) logError(stderr);
 		if (options.isDebugging) console.log("[MONGODB] Backup successfully :>> ", stdout);
 	}
 
+	// compress backup folder
 	const compressedBackupName = `${bkName}.tar.gz`;
-	const { stdout } = execaSync("tar", ["-czf", compressedBackupName, bkName], { cwd: mongoBackupDir });
+	const { stdout } = await execa("tar", ["-czf", compressedBackupName, bkName], { cwd: mongoBackupDir });
 	if (options.isDebugging) console.log("Compressing backup directory :>> ", stdout);
 
 	// keep the compressed file, remove the directory to save disk space...
