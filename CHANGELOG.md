@@ -1,3 +1,19 @@
+# [3.27.0](https://github.com/digitopvn/diginext/compare/v3.26.0...v3.27.0) (2023-11-09)
+
+
+### Bug Fixes
+
+* **server,admin:** issue of deleting empty apps ([8eef83d](https://github.com/digitopvn/diginext/commit/8eef83df56bb5cd8492336a60a14b7b460ca14b4))
+* **server:** build docker base ([9b76b86](https://github.com/digitopvn/diginext/commit/9b76b86fea26f788269da9e58dfa489e42bcbbef))
+* **server:** issue of mysql backup not working ([79e4a46](https://github.com/digitopvn/diginext/commit/79e4a46772f959d6e3758067c36ecf348ac79ba9))
+* **typescript:** correct some types of map and yaml load ([3c80cc0](https://github.com/digitopvn/diginext/commit/3c80cc08f1f8e84c1e13a00d48728f45ef991288))
+
+
+### Features
+
+* **dashboard:** cloud storage management ui ([fcecd7f](https://github.com/digitopvn/diginext/commit/fcecd7ff3f431e89256ef05ca0eefe9bccf679e9))
+* **server:** add cloud storage google do-space aws-s3 ([319a574](https://github.com/digitopvn/diginext/commit/319a57420e247bf619777e06733294d8cdda6ded))
+
 # [3.26.0](https://github.com/digitopvn/diginext/compare/v3.25.1...v3.26.0) (2023-11-03)
 
 
