@@ -1,4 +1,4 @@
-# [3.27.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.26.0...v3.27.0-prerelease.1) (2023-11-09)
+# [3.27.0](https://github.com/digitopvn/diginext/compare/v3.26.0...v3.27.0) (2023-11-09)
 
 
 ### Bug Fixes
