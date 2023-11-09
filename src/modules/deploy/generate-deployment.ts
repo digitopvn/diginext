@@ -1,3 +1,4 @@
+import type { V1PersistentVolume, V1PersistentVolumeClaim } from "@kubernetes/client-node";
 import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import yaml from "js-yaml";
@@ -425,8 +426,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				doc.spec.template.spec.containers[0].image = IMAGE_NAME;
 				doc.spec.template.spec.containers[0].env = containerEnvs;
 
-				// ! PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
+				// CAUTION: PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
 				doc.spec.template.spec.containers[0].ports = [{ containerPort: toNumber(deployEnvironmentConfig.port) }];
+
+				// FIXME: persistent volumes
+				// FIXME: nodeAffinity
 
 				// prerelease's deployment:
 				prereleaseDeployDoc = _.cloneDeep(doc);
@@ -459,6 +463,62 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		});
 	} else {
 		throw new Error("YAML deployment template is incorrect");
+	}
+
+	// remove persistent volumes if there is none
+	if (app.deployEnvironment[env].volumes && app.deployEnvironment[env].volumes.length > 0) {
+		const { volumes } = app.deployEnvironment[env];
+
+		// get storage class name
+		const allStorageClasses = await ClusterManager.getAllStorageClasses({ context: cluster.contextName });
+		if (!allStorageClasses || allStorageClasses.length === 0)
+			throw new Error(`Unable to create volume, this cluster doesn't have any storage class.`);
+		const storageClass = allStorageClasses[0].metadata.name;
+
+		// assign labels
+		const labels: any = {};
+		labels.workspace = workspace.slug;
+		labels["updated-by"] = username;
+		labels.project = projectSlug;
+		labels.app = appName;
+		labels["main-app"] = mainAppName;
+
+		volumes.forEach((vol) => {
+			// persistent volume
+			const persistentVolume: V1PersistentVolume = {
+				metadata: {
+					name: vol.name,
+					labels,
+				},
+				spec: {
+					storageClassName: storageClass,
+					capacity: {
+						storage: vol.size,
+					},
+					accessModes: ["ReadWriteOnce"],
+					hostPath: { path: vol.hostPath },
+					persistentVolumeReclaimPolicy: "Retain",
+					volumeMode: "Filesystem",
+				},
+			};
+			deploymentCfg.push(persistentVolume);
+
+			// persistent volume claim
+			const persistentVolumeClaim: V1PersistentVolumeClaim = {
+				metadata: {
+					name: vol.name,
+					labels,
+				},
+				spec: {
+					storageClassName: storageClass,
+					resources: {
+						requests: { storage: vol.size },
+					},
+					accessModes: ["ReadWriteOnce"],
+				},
+			};
+			deploymentCfg.push(persistentVolumeClaim);
+		});
 	}
 
 	deploymentContent = objectToDeploymentYaml(deploymentCfg);

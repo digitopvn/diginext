@@ -11,6 +11,28 @@ export const availableSslTypes = ["letsencrypt", "custom", "none"] as const;
  */
 export type SslType = (typeof availableSslTypes)[number];
 
+export type DeployEnvironmentVolume = {
+	name: string;
+	node: string;
+	/**
+	 * Volume size
+	 * @example "5Gi", "500Mi"
+	 */
+	size: string;
+	/**
+	 * Kubernetes Storage Class
+	 */
+	storageClass: string;
+	/**
+	 * Map directory on the host server to this volume
+	 */
+	hostPath: string;
+	/**
+	 * Map directory inside the container into this volume
+	 */
+	mountPath: string;
+};
+
 export interface ClientDeployEnvironmentConfig {
 	/**
 	 * Image URI of this app on the Container Registry.
@@ -229,4 +251,9 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	 * A screenshot URL from build success
 	 */
 	screenshot?: string;
+
+	/**
+	 * Persistent Volume
+	 */
+	volumes?: DeployEnvironmentVolume[];
 }

@@ -6,7 +6,7 @@ import type { QuerySelector } from "mongoose";
 
 import type { ICluster, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
-import type { DeployEnvironment, IQueryOptions, KubeDeployment } from "@/interfaces";
+import type { DeployEnvironment, DeployEnvironmentVolume, IQueryOptions, KubeDeployment } from "@/interfaces";
 import type { DeployEnvironmentData } from "@/interfaces/AppInterfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { Ownership } from "@/interfaces/SystemTypes";
@@ -21,6 +21,7 @@ import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
 import { formatEnvVars } from "@/plugins/env-var";
+import { containsSpecialCharacters } from "@/plugins/string";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -649,5 +650,50 @@ export class DeployEnvironmentService {
 		}
 
 		return { app: updatedApp, message };
+	}
+
+	/**
+	 * Add persistent volume to deploy environment
+	 * @param app - IApp
+	 * @param env - Deploy environment (dev, prod,...)
+	 * @param data - Persistent volume configuration
+	 */
+	async addPersistentVolume(app: IApp, env: string, data: DeployEnvironmentVolume) {
+		// validate
+		if (!app) throw new Error(`App's data is required`);
+		if (!data) throw new Error(`Volume configuration data is required`);
+		if (containsSpecialCharacters(data.name)) throw new Error(`Volume name cannot contain any special characters.`);
+		if (app.deployEnvironment[env].volumes.find((vol) => vol.name === data.name)) throw new Error(`Volume name is existed, choose another one.`);
+
+		// update db
+		const { AppService } = await import("./index");
+		const appSvc = new AppService(this.ownership);
+		app = await appSvc.updateOne({ _id: app._id }, { $push: { [`deployEnvironment.${env}.volumes`]: data } }, { raw: true });
+
+		// result
+		return app.deployEnvironment[env].volumes;
+	}
+
+	/**
+	 * Delete persistent volume to deploy environment
+	 * @param app - IApp
+	 * @param env - Deploy environment name (dev, prod,...)
+	 * @param name - Persistent volume name
+	 */
+	async deletePersistentVolume(app: IApp, env: string, name: string) {
+		// validate
+		if (!app) throw new Error(`App's data is required`);
+		if (!name) throw new Error(`Volume name is required`);
+
+		// update db
+		const { AppService } = await import("./index");
+		const appSvc = new AppService(this.ownership);
+
+		const { volumes } = app.deployEnvironment[env];
+		const updatedVolumes = volumes.filter((volume) => volume.name !== name);
+		app = await appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.volumes`]: updatedVolumes });
+
+		// result
+		return app.deployEnvironment[env].volumes;
 	}
 }

@@ -37,3 +37,16 @@ export function simplifyK8SResourceData(item: any) {
 	compactItem.workspace = item.workspace;
 	return compactItem;
 }
+
+/**
+ * Regular expression to match Kubernetes memory format
+ * It looks for digits followed by either Ei, Pi, Ti, Gi, Mi, Ki, E, P, T, G, M, K, or nothing
+ */
+export function validateKubernetesMemoryFormat(value: string) {
+	const regex = /^(\d+)(Ei|Pi|Ti|Gi|Mi|Ki|E|P|T|G|M|K)?$/;
+
+	// Test the value against the regular expression
+	const isValid = regex.test(value);
+
+	return isValid;
+}

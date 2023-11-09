@@ -1,3 +1,4 @@
+import type { V1PersistentVolume, V1PersistentVolumeClaim, V1StorageClass } from "@kubernetes/client-node";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import { execa, execaCommandSync } from "execa";
@@ -1523,5 +1524,338 @@ export async function rollbackDeployRevision(name: string, revision: number, nam
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
 		return [];
+	}
+}
+
+// ------------------- PERSISTENT VOLUME -----------------------
+
+/**
+ * Get PersistentVolume by name
+ */
+export async function getPersistentVolume(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "get", "pv", name);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout) as V1PersistentVolume;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolume >`, e);
+		return;
+	}
+}
+
+/**
+ * Get PersistentVolumes in a namespace
+ * @param namespace @default "default"
+ */
+export async function getPersistentVolumes(namespace = "default", options: GetKubeDeployOptions = {}) {
+	const { context, filterLabel, skipOnError, metrics = true } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "get", "pv");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		return items as V1PersistentVolume[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolumes >`, e);
+		return [];
+	}
+}
+
+/**
+ * Get all PersistentVolumes in a cluster
+ */
+export async function getAllPersistentVolumes(options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("get", "pv");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-A", "-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		return items as V1PersistentVolume[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPersistentVolumes >`, e);
+		return [];
+	}
+}
+
+/**
+ * Alias function of `getPods()`
+ */
+export const getPersistentVolumesByFilter = getPersistentVolumes;
+
+export async function deletePersistentVolume(name: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "delete", "pv", name);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolume >`, e);
+		return;
+	}
+}
+
+export async function deletePersistentVolumesByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "delete", "pv");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolumesByFilter >`, e);
+		return;
+	}
+}
+
+// ------------------- PERSISTENT VOLUME CLAIM -----------------------
+
+/**
+ * Get PersistentVolumeClaim by name
+ */
+export async function getPersistentVolumeClaim(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "get", "pvc", name);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout) as V1PersistentVolumeClaim;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolumeClaim >`, e);
+		return;
+	}
+}
+
+/**
+ * Get PersistentVolumeClaims in a namespace
+ * @param namespace @default "default"
+ */
+export async function getPersistentVolumeClaims(namespace = "default", options: GetKubeDeployOptions = {}) {
+	const { context, filterLabel, skipOnError, metrics = true } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "get", "pvc");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		return items as V1PersistentVolumeClaim[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolumeClaims >`, e);
+		return [];
+	}
+}
+
+/**
+ * Get all PersistentVolumes in a cluster
+ */
+export async function getAllPersistentVolumeClaims(options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("get", "pvc");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-A", "-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		return items as V1PersistentVolumeClaim[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPersistentVolumeClaims >`, e);
+		return [];
+	}
+}
+
+/**
+ * Alias function of `getPods()`
+ */
+export const getPersistentVolumeClaimsByFilter = getPersistentVolumeClaims;
+
+export async function deletePersistentVolumeClaim(name: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "delete", "pvc", name);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolumeClaim >`, e);
+		return;
+	}
+}
+
+export async function deletePersistentVolumeClaimsByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "delete", "pvc");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolumeClaimsByFilter >`, e);
+		return;
+	}
+}
+
+// ------------------- STORAGE CLASS -----------------------
+
+/**
+ * Get Storage Class by name
+ */
+export async function getStorageClass(name, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "get", "sc", name);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		return JSON.parse(stdout) as V1StorageClass;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getStorageClass >`, e);
+		return;
+	}
+}
+
+/**
+ * Get pods in a namespace
+ * @param namespace @default "default"
+ */
+export async function getStorageClasses(namespace = "default", options: GetKubeDeployOptions = {}) {
+	const { context, filterLabel, skipOnError, metrics = true } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "get", "sc");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		return items as V1StorageClass[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getStorageClasses >`, e);
+		return [];
+	}
+}
+
+/**
+ * Get all pods in a cluster
+ */
+export async function getAllStorageClasses(options: KubeCommandOptions = {}) {
+	const { context, filterLabel, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("get", "sc");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		args.push("-A", "-o", "json");
+
+		const { stdout } = await execa("kubectl", args);
+		const { items } = JSON.parse(stdout);
+		return items as V1StorageClass[];
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] getAllStorageClasses >`, e);
+		return [];
+	}
+}
+
+/**
+ * Alias function of `getPods()`
+ */
+export const getStorageClassesByFilter = getPods;
+
+export async function deleteStorageClass(name: string, namespace = "default", options: KubeGenericOptions = {}) {
+	const { context, skipOnError } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "delete", "sc", name);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] deleteStorageClass >`, e);
+		return;
+	}
+}
+
+export async function deleteStorageClassesByFilter(namespace = "default", options: KubeCommandOptions = {}) {
+	const { context, skipOnError, filterLabel } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "delete", "sc");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] deleteStorageClassesByFilter >`, e);
+		return;
 	}
 }
