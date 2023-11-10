@@ -1,3 +1,13 @@
+# [3.28.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.27.1...v3.28.0-prerelease.1) (2023-11-10)
+
+
+### Features
+
+* **dashboard:** add or remove volume in deploy environment ([2045531](https://github.com/digitopvn/diginext/commit/204553153e4266e6d82e3f48113ce321a2dc39f4))
+* **server,cli:** cluster manager, storage class, persistent volume ([2ead6ab](https://github.com/digitopvn/diginext/commit/2ead6abd3082cc99ec833451c5dbb3ef83d4f48b))
+* **server,dashboard:** add or remove persistent volume ([#454](https://github.com/digitopvn/diginext/issues/454)) ([b592776](https://github.com/digitopvn/diginext/commit/b59277642b36cd9ed3d84096d711274b091533cc))
+* **server:** api add and remove persistent volume ([63583b5](https://github.com/digitopvn/diginext/commit/63583b53e489a3559e1ce7e617202f3715e55a77))
+
 ## [3.27.1](https://github.com/digitopvn/diginext/compare/v3.27.0...v3.27.1) (2023-11-10)
 
 
