@@ -1,7 +1,6 @@
 import type { PutObjectCommandInput } from "@aws-sdk/client-s3";
 import { S3 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import AWS from "aws-sdk";
 
 import type { ICloudStorage } from "@/entities";
 import { getImageBufferFromUrl, readFileToBuffer } from "@/plugins/image";
@@ -12,17 +11,7 @@ import type { StorageUploadOptions } from "./storage-types";
 export type InitGoogleStorageOptions = { pathPrefix?: string; isDebugging?: boolean };
 
 export function initStorage(storage: ICloudStorage) {
-	// Configure the AWS SDK with your AWS credentials
-	// JS SDK v3 does not support global configuration.
-	// Codemod has attempted to pass values to each service client in this file.
-	// You may need to update clients outside of this file, if they use global config.
-	// AWS.config.update({
-	// 	accessKeyId: storage.auth.key_id, // Replace with your AWS access key
-	// 	secretAccessKey: storage.auth.key_secret, // Replace with your AWS secret key
-	// 	region: storage.region, // Uncomment and set to your bucket's region
-	// });
-
-	const endpoint = storage.provider === "do_space" ? new AWS.Endpoint(getStorageHost(storage)) : undefined;
+	const endpoint = storage.provider === "do_space" ? getStorageHost(storage) : undefined;
 
 	const s3 = new S3({
 		endpoint,

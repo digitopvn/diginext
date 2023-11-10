@@ -8,6 +8,7 @@ import type { ICluster, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
 import type { DeployEnvironment, IQueryOptions, KubeDeployment } from "@/interfaces";
 import type { DeployEnvironmentData } from "@/interfaces/AppInterfaces";
+import type { DeployEnvironmentVolume } from "@/interfaces/DeployEnvironmentVolume";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
@@ -20,7 +21,10 @@ import { dxCreateDomain } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
+import { allElementsAreEqual } from "@/plugins/array";
 import { formatEnvVars } from "@/plugins/env-var";
+import { isValidKubernetesMemoryFormat } from "@/plugins/k8s-helper";
+import { containsSpecialCharacters } from "@/plugins/string";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -181,7 +185,7 @@ export class DeployEnvironmentService {
 		// const appConfig = await getAppConfigFromApp(updatedApp);
 		// console.log("buildTag :>> ", buildTag);
 
-		let deployment: GenerateDeploymentResult = await generateDeployment({
+		let deployment = await generateDeployment({
 			appSlug: app.slug,
 			env,
 			username: ownership.owner.slug,
@@ -649,5 +653,168 @@ export class DeployEnvironmentService {
 		}
 
 		return { app: updatedApp, message };
+	}
+
+	/**
+	 * Add persistent volume to deploy environment
+	 * @param app - IApp
+	 * @param env - Deploy environment (dev, prod,...)
+	 * @param data - Persistent volume configuration
+	 */
+	async addPersistentVolume(app: IApp, env: string, data: DeployEnvironmentVolume) {
+		// validate
+		if (!app) throw new Error(`App's data is required`);
+		if (!data) throw new Error(`Volume configuration data is required`);
+		if (containsSpecialCharacters(data.name)) throw new Error(`Volume name cannot contain any special characters.`);
+		if (!app.deployEnvironment) throw new Error(`This app doesn't have any deploy environments.`);
+		if (!app.deployEnvironment[env]) throw new Error(`This app doesn't have "${env}" deploy environment.`);
+		if (app.deployEnvironment[env].volumes?.find((vol) => vol.name === data.name)) throw new Error(`Volume name is existed, choose another one.`);
+
+		const { buildTag, cluster: clusterSlug } = app.deployEnvironment[env];
+
+		// get cluster
+		const { ClusterService } = await import("@/services");
+		const clusterSvc = new ClusterService(this.ownership);
+		const cluster = await clusterSvc.findOne({ slug: clusterSlug });
+		if (!cluster || !cluster.contextName) throw new Error(`Cluster "${clusterSlug}" not found or not verified.`);
+		const { contextName: context } = cluster;
+
+		// update db: NEW VOLUME
+		const { AppService } = await import("./index");
+		const appSvc = new AppService(this.ownership);
+		app = await appSvc.updateOne(
+			{ _id: app._id },
+			{
+				$push: {
+					[`deployEnvironment.${env}.volumes`]: data,
+				},
+			},
+			{ raw: true }
+		);
+
+		// add {PersistentVolumeClaim} to Kubernetes deployment
+		const deployment = await await generateDeployment({
+			appSlug: app.slug,
+			env,
+			username: this.ownership.owner.slug,
+			workspace: this.ownership.workspace,
+			buildTag,
+		});
+
+		// Apply deployment YAML
+		await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context });
+
+		// update db: DEPLOYMENT YAML
+		app = await appSvc.updateOne(
+			{ _id: app._id },
+			{
+				$set: {
+					[`deployEnvironment.${env}.deploymentYaml`]: deployment.deploymentContent,
+					[`deployEnvironment.${env}.prereleaseDeploymentYaml`]: deployment.prereleaseDeploymentContent,
+				},
+			},
+			{ raw: true }
+		);
+
+		// result
+		return app.deployEnvironment[env].volumes.find((vol) => vol.name === data.name);
+	}
+
+	/**
+	 * Add persistent volume to deploy environment
+	 * @param app - IApp
+	 * @param env - Deploy environment (dev, prod,...)
+	 * @param data - Persistent volume configuration
+	 */
+	async addPersistentVolumeBySize(app: IApp, env: string, data: Pick<DeployEnvironmentVolume, "name" | "size" | "mountPath">) {
+		// validate
+		if (containsSpecialCharacters(data.name)) throw new Error(`Volume name cannot contain any special characters.`);
+		if (!app.deployEnvironment) throw new Error(`This app doesn't have any deploy environments.`);
+		if (!app.deployEnvironment[env]) throw new Error(`This app doesn't have "${env}" deploy environment.`);
+		if (app.deployEnvironment[env].volumes?.find((vol) => vol.name === data.name)) throw new Error(`Volume name is existed, choose another one.`);
+		if (!isValidKubernetesMemoryFormat(data.size)) throw new Error(`Volume size is not valid`);
+
+		// deploy environment
+		const deployEnvironment = app.deployEnvironment[env];
+		const { cluster: clusterSlug, namespace } = deployEnvironment;
+
+		// get cluster
+		const { ClusterService } = await import("@/services");
+		const clusterSvc = new ClusterService(this.ownership);
+		const cluster = await clusterSvc.findOne({ slug: clusterSlug });
+		if (!cluster || !cluster.contextName) throw new Error(`Cluster "${clusterSlug}" not found or not verified.`);
+		const { contextName: context } = cluster;
+
+		// get storage class name
+		const allStorageClasses = await ClusterManager.getAllStorageClasses({ context });
+		if (!allStorageClasses || allStorageClasses.length === 0)
+			throw new Error(`Unable to create volume, this cluster doesn't have any storage class.`);
+		const storageClass = allStorageClasses[0].metadata.name;
+
+		// get node of deploy environment
+		const pods = await ClusterManager.getPods(namespace, { context });
+		if (!pods || pods.length === 0)
+			throw new Error(`No running deploy environments, you can only add volumes to running app's deploy environment.`);
+		const podNodes = pods.map((pod) => pod.spec.nodeName);
+		if (!allElementsAreEqual(podNodes)) {
+			logWarn(`Pods were scheduled to different nodes, they will be rescheduled in the same node to share the persistent volume.`);
+		}
+		const node = podNodes[0]; // <- select the first node found as volume's node
+
+		// process
+		const volumeData: DeployEnvironmentVolume = {
+			...data,
+			node,
+			storageClass,
+		};
+
+		// result
+		return this.addPersistentVolume(app, env, volumeData);
+	}
+
+	/**
+	 * Delete persistent volume to deploy environment
+	 * @param app - IApp
+	 * @param env - Deploy environment name (dev, prod,...)
+	 * @param name - Persistent volume name
+	 */
+	async removePersistentVolume(app: IApp, env: string, name: string) {
+		// validate
+		if (!app) throw new Error(`App's data is required`);
+		if (!app.deployEnvironment) throw new Error(`This app doesn't have any deploy environments.`);
+		if (!app.deployEnvironment[env]) throw new Error(`This app doesn't have "${env}" deploy environment.`);
+		if (!name) throw new Error(`Volume name is required.`);
+		if (!app.deployEnvironment[env].volumes || !app.deployEnvironment[env].volumes.find((vol) => vol.name === name))
+			throw new Error(`Volume not found.`);
+
+		// deploy environment
+		const deployEnvironment = app.deployEnvironment[env];
+		const { cluster: clusterSlug, namespace } = deployEnvironment;
+
+		// get cluster
+		const { ClusterService } = await import("@/services");
+		const clusterSvc = new ClusterService(this.ownership);
+		const cluster = await clusterSvc.findOne({ slug: clusterSlug });
+		if (!cluster || !cluster.contextName) throw new Error(`Cluster "${clusterSlug}" not found or not verified.`);
+		const { contextName: context } = cluster;
+
+		// remove {PersistentVolumeClaim} of Kubernetes deployment
+		const result = await ClusterManager.deletePersistentVolumeClaim(name, namespace, { context });
+		const message = result ? `Unable to delete persistent volume (${name}) of Kubernetes deployment (${app.projectSlug}-${app.slug}).` : "";
+
+		// update db
+		try {
+			const { AppService } = await import("./index");
+			const appSvc = new AppService(this.ownership);
+
+			const { volumes } = app.deployEnvironment[env];
+			const updatedVolumes = volumes.filter((volume) => volume.name !== name);
+			app = await appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.volumes`]: updatedVolumes });
+
+			// result
+			return { success: true, message };
+		} catch (e) {
+			return { success: false, message: `Unable to delete persistent volume (${name}): ${e}` };
+		}
 	}
 }

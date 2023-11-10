@@ -114,3 +114,32 @@ spec:
             - name: IRON_SESSION_SECRET
               value: "SHPfrs9nuSdutexampleAw2mn8trxCVG93YVGVR"
           # ==================================
+# ---
+# # PERSISTENT VOLUME
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: example-pv
+# spec:
+#   capacity:
+#     storage: 5Gi
+#   volumeMode: Filesystem
+#   accessModes:
+#     - ReadWriteOnce
+#   persistentVolumeReclaimPolicy: Retain
+#   storageClassName: standard
+#   hostPath:
+#     path: "/mnt/data"
+# ---
+# # PERSISTENT VOLUME CLAIM
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: example-pvc
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 5Gi
+#   storageClassName: standard

@@ -1,4 +1,4 @@
-import { isEmpty } from "lodash";
+import { isEmpty, isUndefined } from "lodash";
 import path from "path";
 
 import { isServerMode } from "@/app.config";
@@ -92,7 +92,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		await ClusterManager.authCluster(cluster, { ownership: { owner, workspace } });
 		sendLog({ SOCKET_ROOM, message: `✓ Connected to "${cluster.name}" (context: ${cluster.contextName}).` });
 	} catch (e) {
-		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error", action: "end" });
+		sendLog({ SOCKET_ROOM, message: `❌ Unable to connect the cluster: ${e.message}`, type: "error", action: "end" });
 		throw new Error(e.message);
 	}
 
@@ -105,6 +105,10 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 	 * Because it will generate the name of secret to put into deployment yaml
 	 */
 	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
+	if (isUndefined(isNsExisted)) {
+		sendLog({ SOCKET_ROOM, message: `❌ Unable to connect cluster to get namespace list.`, type: "error", action: "end" });
+		throw new Error(`Unable to connect cluster to get namespace list.`);
+	}
 	if (!isNsExisted) {
 		const createNsResult = await ClusterManager.createNamespace(namespace, { context });
 		if (!createNsResult) throw new Error(`Unable to create new namespace: ${namespace}`);
@@ -133,7 +137,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 	 * ! [WARNING]
 	 * ! If "--fresh" flag was specified, the deployment's namespace will be deleted & redeploy from scratch!
 	 */
-	// console.log("[START BUILD] options.shouldUseFreshDeploy :>> ", options.shouldUseFreshDeploy);
+	// console.log("[DEPLOY BUILD] options.shouldUseFreshDeploy :>> ", options.shouldUseFreshDeploy);
 	if (shouldUseFreshDeploy) {
 		sendLog({
 			SOCKET_ROOM,
@@ -320,7 +324,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 	 * So it can be used to create release from build
 	 */
 	let deployment: GenerateDeploymentResult;
-	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generating the deployment files on server...` });
+	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generating the deployment files on server...` });
 	try {
 		deployment = await generateDeployment({
 			appSlug,
@@ -358,9 +362,9 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
 	const updatedApp = await DB.updateOne("app", { slug: appSlug }, updatedAppData);
-	console.log("updatedApp.deployEnvironment[env].envVars :>> ", updatedApp.deployEnvironment[env].envVars);
+	// console.log("updatedApp.deployEnvironment[env].envVars :>> ", updatedApp.deployEnvironment[env].envVars);
 
-	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
+	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// Create new Release:
@@ -386,7 +390,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 		const consumers = filterUniqueItems([projectOwner?._id, appOwner?._id, owner?._id])
 			.filter((uid) => typeof uid !== "undefined")
 			.map((uid) => MongoDB.toString(uid));
-		console.log("consumers :>> ", consumers);
+		// console.log("consumers :>> ", consumers);
 
 		webhook = await webhookSvc.create({
 			events: ["deploy_status"],

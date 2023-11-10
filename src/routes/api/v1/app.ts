@@ -37,6 +37,9 @@ router
 	.delete("/deploy_environment/down", processApiRequest(controller.takeDownDeployEnvironment.bind(controller)))
 	.delete("/deploy_environment/sleep", processApiRequest(controller.sleepDeployEnvironment.bind(controller)))
 	.patch("/deploy_environment/awake", processApiRequest(controller.awakeDeployEnvironment.bind(controller)))
+	// volumes
+	.post("/deploy_environment/volume", processApiRequest(controller.addVolumeToDeployEnvironment.bind(controller)))
+	.delete("/deploy_environment/volume", processApiRequest(controller.removeVolumeToDeployEnvironment.bind(controller)))
 	// logs
 	.get("/environment/logs", processApiRequest(controller.viewLogs.bind(controller)))
 	// domains
