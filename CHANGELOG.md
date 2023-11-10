@@ -1,3 +1,11 @@
+## [3.27.1](https://github.com/digitopvn/diginext/compare/v3.27.0...v3.27.1) (2023-11-10)
+
+
+### Bug Fixes
+
+* **dashboard:** add db backup status column ([16fc1b2](https://github.com/digitopvn/diginext/commit/16fc1b2f0e53b2af9b9e5bac13ed411ebc8976e3))
+* **server:** hotfix mysqldump column-statistics not support ([8fa9945](https://github.com/digitopvn/diginext/commit/8fa99451cdc6ca1c8043ee058c866921276d0ad7))
+
 # [3.27.0](https://github.com/digitopvn/diginext/compare/v3.26.0...v3.27.0) (2023-11-09)
 
 
