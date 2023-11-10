@@ -2,6 +2,7 @@ import type { ObjectId } from "mongodb";
 
 import type { IUser } from "@/entities";
 
+import type { DeployEnvironmentVolume } from "./DeployEnvironmentVolume";
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
 import type { AppStatus, ResourceQuotaSize } from "./SystemTypes";
 
@@ -10,28 +11,6 @@ export const availableSslTypes = ["letsencrypt", "custom", "none"] as const;
  * @default "letsencrypt"
  */
 export type SslType = (typeof availableSslTypes)[number];
-
-export type DeployEnvironmentVolume = {
-	name: string;
-	node: string;
-	/**
-	 * Volume size
-	 * @example "5Gi", "500Mi"
-	 */
-	size: string;
-	/**
-	 * Kubernetes Storage Class
-	 */
-	storageClass: string;
-	/**
-	 * Map directory on the host server to this volume
-	 */
-	hostPath: string;
-	/**
-	 * Map directory inside the container into this volume
-	 */
-	mountPath: string;
-};
 
 export interface ClientDeployEnvironmentConfig {
 	/**

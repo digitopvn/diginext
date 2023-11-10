@@ -1,4 +1,4 @@
-import type { V1PersistentVolume, V1PersistentVolumeClaim } from "@kubernetes/client-node";
+import type { V1PersistentVolumeClaim } from "@kubernetes/client-node";
 import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import yaml from "js-yaml";
@@ -207,6 +207,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// write deployment.[env].yaml (ing, svc, deployment)
 	let deploymentContent = fs.readFileSync(FULL_DEPLOYMENT_TEMPLATE_PATH, "utf8");
 	let deploymentCfg: any[] = yaml.loadAll(deploymentContent);
+
+	console.log("app.deployEnvironment :>> ", app.deployEnvironment);
+	console.log("app.deployEnvironment[env].volumes :>> ", app.deployEnvironment[env].volumes);
 
 	if (deploymentCfg.length) {
 		deploymentCfg.forEach((doc, index) => {
@@ -429,8 +432,38 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				// CAUTION: PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
 				doc.spec.template.spec.containers[0].ports = [{ containerPort: toNumber(deployEnvironmentConfig.port) }];
 
-				// FIXME: persistent volumes
-				// FIXME: nodeAffinity
+				// add persistent volumes
+				if (app.deployEnvironment[env].volumes && app.deployEnvironment[env].volumes.length > 0) {
+					const { volumes } = app.deployEnvironment[env];
+					let nodeName = volumes[0].node;
+					// persistent volume claim
+					doc.spec.template.spec.volumes = volumes.map((vol) => ({ name: vol.name, persistentVolumeClaim: { claimName: vol.name } }));
+
+					// mount to container
+					doc.spec.template.spec.containers[0].volumeMounts = volumes.map((vol) => ({
+						name: vol.name,
+						mountPath: vol.mountPath,
+					}));
+
+					// "nodeAffinity" -> to make sure pods are scheduled to the same node with the persistent volume
+					doc.spec.template.spec.affinity = {
+						nodeAffinity: {
+							requiredDuringSchedulingIgnoredDuringExecution: {
+								nodeSelectorTerms: [
+									{
+										matchExpressions: [
+											{
+												key: "kubernetes.io/hostname",
+												operator: "In",
+												values: [nodeName],
+											},
+										],
+									},
+								],
+							},
+						},
+					};
+				}
 
 				// prerelease's deployment:
 				prereleaseDeployDoc = _.cloneDeep(doc);
@@ -465,7 +498,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		throw new Error("YAML deployment template is incorrect");
 	}
 
-	// remove persistent volumes if there is none
+	// add persistent volumes if needed
 	if (app.deployEnvironment[env].volumes && app.deployEnvironment[env].volumes.length > 0) {
 		const { volumes } = app.deployEnvironment[env];
 
@@ -484,29 +517,13 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		labels["main-app"] = mainAppName;
 
 		volumes.forEach((vol) => {
-			// persistent volume
-			const persistentVolume: V1PersistentVolume = {
-				metadata: {
-					name: vol.name,
-					labels,
-				},
-				spec: {
-					storageClassName: storageClass,
-					capacity: {
-						storage: vol.size,
-					},
-					accessModes: ["ReadWriteOnce"],
-					hostPath: { path: vol.hostPath },
-					persistentVolumeReclaimPolicy: "Retain",
-					volumeMode: "Filesystem",
-				},
-			};
-			deploymentCfg.push(persistentVolume);
-
 			// persistent volume claim
 			const persistentVolumeClaim: V1PersistentVolumeClaim = {
+				apiVersion: "v1",
+				kind: "PersistentVolumeClaim",
 				metadata: {
 					name: vol.name,
+					namespace: nsName,
 					labels,
 				},
 				spec: {
@@ -522,6 +539,8 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	}
 
 	deploymentContent = objectToDeploymentYaml(deploymentCfg);
+
+	console.log("deploymentContent :>> ", deploymentContent);
 
 	/**
 	 * PRE-RELEASE DEPLOYMENT:

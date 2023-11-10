@@ -3,7 +3,7 @@ import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import { execa, execaCommandSync } from "execa";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
-import { isEmpty, round, startsWith, toInteger } from "lodash";
+import { isEmpty, isUndefined, round, startsWith, toInteger } from "lodash";
 import path from "path";
 
 import { CLI_DIR } from "@/config/const";
@@ -28,6 +28,7 @@ interface KubeGenericOptions {
 	context?: string;
 	/**
 	 * Should skip when error?
+	 * @default false
 	 */
 	skipOnError?: boolean;
 }
@@ -245,6 +246,7 @@ export async function deleteNamespaceByCluster(namespace: string, clusterSlug: s
  */
 export async function isNamespaceExisted(namespace: string, options: KubeCommandOptions = {}) {
 	const allNamespaces = await getAllNamespaces(options);
+	if (isUndefined(allNamespaces)) return;
 	if (isEmpty(allNamespaces)) return false;
 	return typeof allNamespaces.find((ns) => ns.metadata.name === namespace) !== "undefined";
 }

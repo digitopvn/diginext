@@ -7,6 +7,7 @@ import type { IApp, IBuild, ICluster, IProject } from "@/entities";
 import { AppDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
 import { AppInputSchema, CreateEnvVarsDto, DeployEnvironmentData, UpdateEnvVarsDto } from "@/interfaces/AppInterfaces";
+import type { DeployEnvironmentVolume } from "@/interfaces/DeployEnvironmentVolume";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
@@ -1275,6 +1276,15 @@ export default class AppController extends BaseController<IApp, AppService> {
 			if (!result.success) return respondFailure(`Unable to take down this deploy environment: ${result.message}.`);
 			return respondSuccess({ data: result });
 		} catch (e) {
+			// write to system logs
+			const { SystemLogService } = await import("@/services");
+			const logSvc = new SystemLogService(this.ownership);
+			await logSvc.saveError(e, {
+				level: 3,
+				name: "[APP_CONTROLLER] Unable to take down a deploy environment",
+				type: "error",
+				workspace: this.workspace,
+			});
 			return respondFailure(`Unable to take down this deploy environment: ${e}`);
 		}
 	}
@@ -1317,6 +1327,15 @@ export default class AppController extends BaseController<IApp, AppService> {
 			if (!result.success) return respondFailure(`Unable to sleep a deploy environment: ${result.message}.`);
 			return respondSuccess({ data: result });
 		} catch (e) {
+			// write to system logs
+			const { SystemLogService } = await import("@/services");
+			const logSvc = new SystemLogService(this.ownership);
+			await logSvc.saveError(e, {
+				level: 3,
+				name: "[APP_CONTROLLER] Unable to sleep a deploy environment",
+				type: "error",
+				workspace: this.workspace,
+			});
 			return respondFailure(`Unable to sleep a deploy environment: ${e}`);
 		}
 	}
@@ -1352,14 +1371,137 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app) return respondFailure(`App not found.`);
 
 		const { DeployEnvironmentService } = await import("@/services");
-		const deployEnvSvc = new DeployEnvironmentService();
+		const deployEnvSvc = new DeployEnvironmentService(this.ownership);
 
 		try {
 			const result = await deployEnvSvc.wakeUpDeployEnvironment(app, env);
 			if (!result.success) return respondFailure(`Unable to awake a deploy environment: ${result.message}.`);
 			return respondSuccess({ data: result });
 		} catch (e) {
+			// write to system logs
+			const { SystemLogService } = await import("@/services");
+			const logSvc = new SystemLogService(this.ownership);
+			await logSvc.saveError(e, {
+				level: 3,
+				name: "[APP_CONTROLLER] Unable to awake a deploy environment",
+				type: "error",
+				workspace: this.workspace,
+			});
 			return respondFailure(`Unable to awake a deploy environment: ${e}`);
+		}
+	}
+
+	/**
+	 * Add new volume to app's deploy environment.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/deploy_environment/volume")
+	async addVolumeToDeployEnvironment(
+		/**
+		 * `REQUIRES`
+		 * ---
+		 * Volume configuration
+		 */
+		@Body()
+		body: Pick<DeployEnvironmentVolume, "name" | "size" | "mountPath">,
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's ID
+			 */
+			_id?: string;
+			/**
+			 * App slug
+			 */
+			slug?: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+		}
+	) {
+		const { _id, slug, env } = this.filter;
+		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
+
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
+		if (!app) return respondFailure(`App not found.`);
+
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService(this.ownership);
+
+		try {
+			const result = await deployEnvSvc.addPersistentVolumeBySize(app, env, body);
+			if (!result) return respondFailure(`Unable to attach a volume to this deploy environment.`);
+			return respondSuccess({ data: result });
+		} catch (e) {
+			// write to system logs
+			const { SystemLogService } = await import("@/services");
+			const logSvc = new SystemLogService(this.ownership);
+			await logSvc.saveError(e, {
+				level: 3,
+				name: "[APP_CONTROLLER] Unable to attach a volume to this deploy environment",
+				type: "error",
+				workspace: this.workspace,
+			});
+			return respondFailure(`Unable to attach a volume to this deploy environment: ${e}`);
+		}
+	}
+
+	/**
+	 * Add new volume to app's deploy environment.
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Delete("/deploy_environment/volume")
+	async removeVolumeToDeployEnvironment(
+		@Queries()
+		queryParams?: {
+			/**
+			 * App's ID
+			 */
+			_id?: string;
+			/**
+			 * App slug
+			 */
+			slug?: string;
+			/**
+			 * Deploy environment name
+			 * @example "dev" | "prod"
+			 */
+			env: string;
+			/**
+			 * Volume name
+			 */
+			name: string;
+		}
+	) {
+		const { _id, slug, env, name } = this.filter;
+		if (!_id && !slug) return respondFailure(`App "_id" or "slug" is required.`);
+		if (!name) return respondFailure(`Volume "name" is required.`);
+
+		const app = await this.service.findOne({ $or: [{ _id }, { slug }] }, this.options);
+		if (!app) return respondFailure(`App not found.`);
+
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService(this.ownership);
+
+		try {
+			const result = await deployEnvSvc.removePersistentVolume(app, env, name);
+			if (!result) return respondFailure(`Unable to remove a volume to this deploy environment.`);
+			return respondSuccess({ data: result });
+		} catch (e) {
+			// write to system logs
+			const { SystemLogService } = await import("@/services");
+			const logSvc = new SystemLogService(this.ownership);
+			await logSvc.saveError(e, {
+				level: 3,
+				name: "[APP_CONTROLLER] Unable to remove a volume to this deploy environment",
+				type: "error",
+				workspace: this.workspace,
+			});
+			return respondFailure(`Unable to remove a volume to this deploy environment: ${e}`);
 		}
 	}
 }

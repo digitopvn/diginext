@@ -31,7 +31,6 @@ export class SystemLogService extends BaseService<ISystemLog> {
 	}
 
 	async deleteExpiredLogs() {
-		console.log("deleteExpiredLogs > this.workspace :>> ", this.workspace);
 		const { type, value } = this.workspace?.settings?.system_log?.retention || {};
 		if (!type && !value) return;
 
