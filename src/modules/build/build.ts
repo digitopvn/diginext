@@ -419,7 +419,7 @@ export async function startBuild(
 		const repoURL = repoSshToRepoURL(repoSSH);
 		try {
 			await pullOrCloneGitRepoHTTP(repoURL, buildDir, gitBranch, {
-				isDebugging: true,
+				// isDebugging: true,
 				useAccessToken: {
 					type: git.method === "basic" ? "Basic" : "Bearer",
 					value: git.access_token,
@@ -504,7 +504,7 @@ export async function startBuild(
 		if (shouldDeploy) {
 			sendLog({
 				SOCKET_ROOM,
-				message: chalk.green(`Preparing to deploy this build...`),
+				message: chalk.green(`⏳ Preparing to deploy this build...`),
 				type: "log",
 			});
 			return;

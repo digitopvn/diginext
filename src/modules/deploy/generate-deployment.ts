@@ -1,3 +1,4 @@
+import type { V1PersistentVolumeClaim } from "@kubernetes/client-node";
 import { log, logWarn } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import yaml from "js-yaml";
@@ -206,6 +207,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// write deployment.[env].yaml (ing, svc, deployment)
 	let deploymentContent = fs.readFileSync(FULL_DEPLOYMENT_TEMPLATE_PATH, "utf8");
 	let deploymentCfg: any[] = yaml.loadAll(deploymentContent);
+
+	console.log("app.deployEnvironment :>> ", app.deployEnvironment);
+	console.log("app.deployEnvironment[env].volumes :>> ", app.deployEnvironment[env].volumes);
 
 	if (deploymentCfg.length) {
 		deploymentCfg.forEach((doc, index) => {
@@ -425,8 +429,41 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				doc.spec.template.spec.containers[0].image = IMAGE_NAME;
 				doc.spec.template.spec.containers[0].env = containerEnvs;
 
-				// ! PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
+				// CAUTION: PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
 				doc.spec.template.spec.containers[0].ports = [{ containerPort: toNumber(deployEnvironmentConfig.port) }];
+
+				// add persistent volumes
+				if (app.deployEnvironment[env].volumes && app.deployEnvironment[env].volumes.length > 0) {
+					const { volumes } = app.deployEnvironment[env];
+					let nodeName = volumes[0].node;
+					// persistent volume claim
+					doc.spec.template.spec.volumes = volumes.map((vol) => ({ name: vol.name, persistentVolumeClaim: { claimName: vol.name } }));
+
+					// mount to container
+					doc.spec.template.spec.containers[0].volumeMounts = volumes.map((vol) => ({
+						name: vol.name,
+						mountPath: vol.mountPath,
+					}));
+
+					// "nodeAffinity" -> to make sure pods are scheduled to the same node with the persistent volume
+					doc.spec.template.spec.affinity = {
+						nodeAffinity: {
+							requiredDuringSchedulingIgnoredDuringExecution: {
+								nodeSelectorTerms: [
+									{
+										matchExpressions: [
+											{
+												key: "kubernetes.io/hostname",
+												operator: "In",
+												values: [nodeName],
+											},
+										],
+									},
+								],
+							},
+						},
+					};
+				}
 
 				// prerelease's deployment:
 				prereleaseDeployDoc = _.cloneDeep(doc);
@@ -461,7 +498,49 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 		throw new Error("YAML deployment template is incorrect");
 	}
 
+	// add persistent volumes if needed
+	if (app.deployEnvironment[env].volumes && app.deployEnvironment[env].volumes.length > 0) {
+		const { volumes } = app.deployEnvironment[env];
+
+		// get storage class name
+		const allStorageClasses = await ClusterManager.getAllStorageClasses({ context: cluster.contextName });
+		if (!allStorageClasses || allStorageClasses.length === 0)
+			throw new Error(`Unable to create volume, this cluster doesn't have any storage class.`);
+		const storageClass = allStorageClasses[0].metadata.name;
+
+		// assign labels
+		const labels: any = {};
+		labels.workspace = workspace.slug;
+		labels["updated-by"] = username;
+		labels.project = projectSlug;
+		labels.app = appName;
+		labels["main-app"] = mainAppName;
+
+		volumes.forEach((vol) => {
+			// persistent volume claim
+			const persistentVolumeClaim: V1PersistentVolumeClaim = {
+				apiVersion: "v1",
+				kind: "PersistentVolumeClaim",
+				metadata: {
+					name: vol.name,
+					namespace: nsName,
+					labels,
+				},
+				spec: {
+					storageClassName: storageClass,
+					resources: {
+						requests: { storage: vol.size },
+					},
+					accessModes: ["ReadWriteOnce"],
+				},
+			};
+			deploymentCfg.push(persistentVolumeClaim);
+		});
+	}
+
 	deploymentContent = objectToDeploymentYaml(deploymentCfg);
+
+	console.log("deploymentContent :>> ", deploymentContent);
 
 	/**
 	 * PRE-RELEASE DEPLOYMENT:

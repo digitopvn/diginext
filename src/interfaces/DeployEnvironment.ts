@@ -2,6 +2,7 @@ import type { ObjectId } from "mongodb";
 
 import type { IUser } from "@/entities";
 
+import type { DeployEnvironmentVolume } from "./DeployEnvironmentVolume";
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
 import type { AppStatus, ResourceQuotaSize } from "./SystemTypes";
 
@@ -229,4 +230,9 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	 * A screenshot URL from build success
 	 */
 	screenshot?: string;
+
+	/**
+	 * Persistent Volume
+	 */
+	volumes?: DeployEnvironmentVolume[];
 }

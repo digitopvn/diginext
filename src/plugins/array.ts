@@ -33,3 +33,18 @@ export function filterUniqueItemWithCondition(array: any[], uniqueField: string,
 
 	return Array.from(uniqueMap.values());
 }
+
+/**
+ * Check whether all elements in a single array are the same.
+ *
+ * @example
+ * const array1 = ["1", "1", "1"];
+ * const array2 = ["1", "2", "1"];
+ * console.log(allElementsAreEqual(array1)); // Should log `true`
+ * console.log(allElementsAreEqual(array2)); // Should log `false`
+ * @param array - Input array
+ * @returns {boolean}
+ */
+export function allElementsAreEqual(array: any[]) {
+	return array.every((element) => element === array[0]);
+}
