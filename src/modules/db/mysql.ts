@@ -80,7 +80,7 @@ export const backup = async (
 		options.dbName ? options.dbName : "--all-databases",
 		"--no-create-db",
 		"--lock-tables=false",
-		"--column-statistics=false",
+		// "--column-statistics=false",
 		"--result-file",
 		outPath,
 	]);
