@@ -1,3 +1,16 @@
+# [3.29.0](https://github.com/digitopvn/diginext/compare/v3.28.0...v3.29.0) (2023-11-13)
+
+
+### Bug Fixes
+
+* **server,volume:** issue of unable to remove persistent volume ([0d8d90f](https://github.com/digitopvn/diginext/commit/0d8d90ff34f292d2d200df315a881b611dcc4bdf))
+* **server,volume:** issue of unable to remove persistent volume ([#456](https://github.com/digitopvn/diginext/issues/456)) ([4c52726](https://github.com/digitopvn/diginext/commit/4c527269f8d78b35634b5ac1f64202aaaa91a6bd))
+
+
+### Features
+
+* **server,dashboard:** add or remove persistent volume ([#454](https://github.com/digitopvn/diginext/issues/454)) ([b592776](https://github.com/digitopvn/diginext/commit/b59277642b36cd9ed3d84096d711274b091533cc))
+
 # [3.28.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.27.1...v3.28.0-prerelease.1) (2023-11-10)
 
 
