@@ -1,3 +1,12 @@
+## [3.29.1](https://github.com/digitopvn/diginext/compare/v3.29.0...v3.29.1) (2023-12-05)
+
+
+### Bug Fixes
+
+* **cli:** rm logs cli login profile ([c6ca9dc](https://github.com/digitopvn/diginext/commit/c6ca9dc32be80b08aba8786f5d5b463f90eb5a27))
+* **dashboard:** hide existing workspace when creating new ([fac7335](https://github.com/digitopvn/diginext/commit/fac7335c51e9f820dadaf9451839c677ed3b90a0))
+* **server:** show logs of dx site api subscribe ([04d5e56](https://github.com/digitopvn/diginext/commit/04d5e56fc4033ef022a809670903de9d3aa25cba))
+
 # [3.29.0](https://github.com/digitopvn/diginext/compare/v3.28.0...v3.29.0) (2023-11-13)
 
 
