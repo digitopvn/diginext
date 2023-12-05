@@ -1,3 +1,11 @@
+## [3.29.2](https://github.com/digitopvn/diginext/compare/v3.29.1...v3.29.2) (2023-12-05)
+
+
+### Bug Fixes
+
+* **server:** correct dx api subscribe package api ([99ebaac](https://github.com/digitopvn/diginext/commit/99ebaace59209e0bac4250753cf7584ff6fd403f))
+* **server:** correct dx api subscribe package api ([#458](https://github.com/digitopvn/diginext/issues/458)) ([5da09e7](https://github.com/digitopvn/diginext/commit/5da09e7fe2b401da5074c0d4bc3c2e252b535bbe))
+
 ## [3.29.1](https://github.com/digitopvn/diginext/compare/v3.29.0...v3.29.1) (2023-12-05)
 
 
