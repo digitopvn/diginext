@@ -86,12 +86,18 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		// if no "dx_key" provided, subscribe to a DX package & obtain DX key
 		if (!IsTest() && !dx_key) {
 			const pkgRes = await dxGetPackages();
-			if (!pkgRes || !pkgRes.status)
+			console.log("pkgRes :>> ", pkgRes);
+			if (!pkgRes || !pkgRes.status) {
 				return interfaces.respondFailure(pkgRes.messages?.join(", ") || `Unable to get the list of Diginext package plans.`);
+			}
 
 			const dxPackages = pkgRes.data as DxPackage[];
 			const pkg = dxPackages.find((p) => (Config.SERVER_TYPE === "hobby" ? "hobby" : "self_hosted"));
-			if (!pkg) return interfaces.respondFailure(`Diginext package plans not found.`);
+			if (!pkg) {
+				console.log("dxPackages :>> ", dxPackages);
+				return interfaces.respondFailure(`Diginext package plans not found.`);
+			}
+
 			pkgId = pkg.id;
 			const subscribeRes = await dxSubscribe({ email: this.user.email });
 			if (!subscribeRes || !subscribeRes.status)
