@@ -268,6 +268,9 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 				} else {
 					// Set user to workspace in Dx site
 					const joinWorkspaceRes = await dxJoinWorkspace(email, workspace.slug, workspace.dx_key);
+
+					// FIXME: check API error
+
 					const workspaces = existingUser.workspaces || [];
 					workspaces.push(wsId);
 					existingUser = await DB.updateOne("user", { _id: existingUser._id }, { workspaces: filterUniqueItems(workspaces) });
