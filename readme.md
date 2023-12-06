@@ -16,6 +16,7 @@ https://diginext.site
 
 ## Features
 
+- **Overcoming Kubernetes complexity by stripping Kubernetes away**
 - One-click deploy to any Kubernetes clusters of any cloud providers
     - ✅ GCP
     - ✅ DigitalOcean
@@ -24,15 +25,25 @@ https://diginext.site
     - 🔜 Azure
 - Simple deploy of any public or private Docker image
 - Application rollback to previously deployed versions
-- Overcoming Kubernetes complexity by stripping Kubernetes away
 - Start developing new applications with frameworks or boilerplates
 - Manage, auto-backup & restore databases:
-    ✅ Postgres
-    ✅ MySQL
-    ✅ MongoDB
+    - ✅ Postgres
+    - ✅ MySQL
+    - ✅ MongoDB
+- Manage & upload files to:
+    - ✅ Google Storage
+    - ✅ AWS S3 Block Storage
+    - ✅ Digital Ocean Space
 - Zero-downtime deploy and health checks
+- Cronjobs for automation tasks
 - Monitor CPU, RAM, and Network usage per deployment, per node & per cluster
 - Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)
+
+## Demo Video
+
+[![Watch the video](https://raw.githubusercontent.com/digitopvn/diginext/main/demo.png)](https://www.youtube.com/watch?v=Q2jJ555Mc2k)
+
+## Benefits
 
 ### For Developers
 
