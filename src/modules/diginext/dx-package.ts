@@ -20,7 +20,7 @@ export type DxPackage = {
 };
 
 export type SubscribeParams = {
-	email: string;
+	userEmail: string;
 	userName?: string;
 	name?: string;
 	packageId?: string;
