@@ -1,3 +1,11 @@
+## [3.29.3](https://github.com/digitopvn/diginext/compare/v3.29.2...v3.29.3) (2023-12-06)
+
+
+### Bug Fixes
+
+* **server:** fix create workspace dx site api ([8ce82db](https://github.com/digitopvn/diginext/commit/8ce82dbe0bb687f00f154184fd21118da6b3c3dc))
+* **server:** fix create workspace dx site api ([#459](https://github.com/digitopvn/diginext/issues/459)) ([add806f](https://github.com/digitopvn/diginext/commit/add806f812dd303ab3c94596de694f1040b2f064))
+
 ## [3.29.2](https://github.com/digitopvn/diginext/compare/v3.29.1...v3.29.2) (2023-12-05)
 
 
