@@ -1,3 +1,11 @@
+## [3.29.4](https://github.com/digitopvn/diginext/compare/v3.29.3...v3.29.4) (2023-12-06)
+
+
+### Bug Fixes
+
+* **server:** correct dx create workspace api path ([072b6d7](https://github.com/digitopvn/diginext/commit/072b6d70d911a9f7b5e99891f4868cd8cb4a0d07))
+* **server:** create workspace add fixme join ws ([047c752](https://github.com/digitopvn/diginext/commit/047c7522c9200d6e835b18242943d51738f0f374))
+
 ## [3.29.3](https://github.com/digitopvn/diginext/compare/v3.29.2...v3.29.3) (2023-12-06)
 
 
