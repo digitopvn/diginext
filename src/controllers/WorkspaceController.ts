@@ -31,6 +31,7 @@ export type CreateWorkspaceParams = {
 	userId: any;
 	email: string;
 	public: boolean;
+	subscriptionId?: string;
 };
 
 interface WorkspaceInputData {
@@ -83,17 +84,25 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		let dx_key: string = body.dx_key;
 		let pkgId: string;
+		let subscriptionId: string;
+
 		// if no "dx_key" provided, subscribe to a DX package & obtain DX key
 		if (!IsTest() && !dx_key) {
 			const pkgRes = await dxGetPackages();
-			if (!pkgRes || !pkgRes.status)
+			console.log("pkgRes :>> ", pkgRes);
+			if (!pkgRes || !pkgRes.status) {
 				return interfaces.respondFailure(pkgRes.messages?.join(", ") || `Unable to get the list of Diginext package plans.`);
+			}
 
 			const dxPackages = pkgRes.data as DxPackage[];
 			const pkg = dxPackages.find((p) => (Config.SERVER_TYPE === "hobby" ? "hobby" : "self_hosted"));
-			if (!pkg) return interfaces.respondFailure(`Diginext package plans not found.`);
+			if (!pkg) {
+				console.log("dxPackages :>> ", dxPackages);
+				return interfaces.respondFailure(`Diginext package plans not found.`);
+			}
+
 			pkgId = pkg.id;
-			const subscribeRes = await dxSubscribe({ email: this.user.email });
+			const subscribeRes = await dxSubscribe({ userEmail: this.user.email, packageId: pkgId });
 			if (!subscribeRes || !subscribeRes.status)
 				return interfaces.respondFailure(
 					subscribeRes.messages?.join(", ") || `Unable to subscribe a Diginext package "${pkg.name}" (${pkg.id}).`
@@ -101,6 +110,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 			const dxSubscription = subscribeRes.data as DxSubsription;
 
+			subscriptionId = dxSubscription.id;
 			dx_key = dxSubscription.key;
 			console.log("dxSubscription >>>>>>>>", dxSubscription);
 
@@ -117,15 +127,17 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		if (isUndefined(body.public)) body.public = true;
 
 		// ----- VERIFY DX KEY -----
+
 		// Create workspace in diginext-site
 		if (!IsTest()) {
 			const dataCreateWorkSpace: CreateWorkspaceParams = {
 				name: name,
-				email: ownerUser.email,
-				packageId: pkgId,
-				userId: ownerUser._id,
 				public: body.public,
 				type: Config.SERVER_TYPE,
+				packageId: pkgId,
+				email: ownerUser.email,
+				userId: ownerUser._id,
+				subscriptionId,
 			};
 			const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace, dx_key);
 			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
@@ -256,6 +268,9 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 				} else {
 					// Set user to workspace in Dx site
 					const joinWorkspaceRes = await dxJoinWorkspace(email, workspace.slug, workspace.dx_key);
+
+					// FIXME: check API error
+
 					const workspaces = existingUser.workspaces || [];
 					workspaces.push(wsId);
 					existingUser = await DB.updateOne("user", { _id: existingUser._id }, { workspaces: filterUniqueItems(workspaces) });

@@ -203,7 +203,7 @@ export async function cliAuthenticate(options: InputOptions) {
 	if (options.isDebugging) console.log("[ACCOUNT] user :>> ", user);
 
 	if (!status || isEmpty(user) || isEmpty(user?.activeWorkspace)) {
-		console.log(`[ACCOUNT] profileRes :>>`, profileRes);
+		if (options.isDebugging) console.log(`[ACCOUNT] profileRes :>>`, profileRes);
 		if (profileRes.messages.join(".").indexOf("ENETDOWN") > -1) {
 			logError(`Unable to connect: ${buildServerUrl} is down.`);
 			return;

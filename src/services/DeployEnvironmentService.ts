@@ -789,7 +789,7 @@ export class DeployEnvironmentService {
 
 		// deploy environment
 		const deployEnvironment = app.deployEnvironment[env];
-		const { cluster: clusterSlug, namespace } = deployEnvironment;
+		const { cluster: clusterSlug, namespace, buildTag } = deployEnvironment;
 
 		// get cluster
 		const { ClusterService } = await import("@/services");
@@ -798,23 +798,46 @@ export class DeployEnvironmentService {
 		if (!cluster || !cluster.contextName) throw new Error(`Cluster "${clusterSlug}" not found or not verified.`);
 		const { contextName: context } = cluster;
 
+		// update db
+		const { AppService } = await import("./index");
+		const appSvc = new AppService(this.ownership);
+
+		// update db: Remove "volume" in "deployEnvironment"
+		const { volumes } = app.deployEnvironment[env];
+		const updatedVolumes = volumes.filter((volume) => volume.name !== name);
+		app = await appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.volumes`]: updatedVolumes });
+
+		// unattach volume from the K8S deployment
+		const deployment = await await generateDeployment({
+			appSlug: app.slug,
+			env,
+			username: this.ownership.owner.slug,
+			workspace: this.ownership.workspace,
+			buildTag,
+		});
+
+		// Apply deployment YAML
+		await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context });
+
+		// update db: DEPLOYMENT YAML
+		app = await appSvc.updateOne(
+			{ _id: app._id },
+			{
+				$set: {
+					[`deployEnvironment.${env}.deploymentYaml`]: deployment.deploymentContent,
+					[`deployEnvironment.${env}.prereleaseDeploymentYaml`]: deployment.prereleaseDeploymentContent,
+				},
+			},
+			{ raw: true }
+		);
+
 		// remove {PersistentVolumeClaim} of Kubernetes deployment
 		const result = await ClusterManager.deletePersistentVolumeClaim(name, namespace, { context });
 		const message = result ? `Unable to delete persistent volume (${name}) of Kubernetes deployment (${app.projectSlug}-${app.slug}).` : "";
 
-		// update db
-		try {
-			const { AppService } = await import("./index");
-			const appSvc = new AppService(this.ownership);
+		// FIXME: wait for {PersistentVolume} to be deleted
 
-			const { volumes } = app.deployEnvironment[env];
-			const updatedVolumes = volumes.filter((volume) => volume.name !== name);
-			app = await appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.volumes`]: updatedVolumes });
-
-			// result
-			return { success: true, message };
-		} catch (e) {
-			return { success: false, message: `Unable to delete persistent volume (${name}): ${e}` };
-		}
+		// result
+		return { success: true, message };
 	}
 }

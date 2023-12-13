@@ -1,3 +1,65 @@
+## [3.29.6](https://github.com/digitopvn/diginext/compare/v3.29.5...v3.29.6) (2023-12-13)
+
+
+### Bug Fixes
+
+* **hotfix:** nginx ingress deny git path ([954d396](https://github.com/digitopvn/diginext/commit/954d39670722d975bf0ff86861632921e0739aa7))
+* **hotfix:** nginx ingress deny git path ([#463](https://github.com/digitopvn/diginext/issues/463)) ([d65ecf1](https://github.com/digitopvn/diginext/commit/d65ecf19c700c114e77211b44d97e13961cbacc4))
+
+## [3.29.5](https://github.com/digitopvn/diginext/compare/v3.29.4...v3.29.5) (2023-12-13)
+
+
+### Bug Fixes
+
+* **hotfix,security:** prevent nginx ingress exploit git dir ([611ebd2](https://github.com/digitopvn/diginext/commit/611ebd2d157cb9409db1a7afeff79c9e79a123ec))
+* **hotfix,security:** prevent nginx ingress exploit git dir ([#462](https://github.com/digitopvn/diginext/issues/462)) ([11e4502](https://github.com/digitopvn/diginext/commit/11e45020891ac91a0a41cae60d38eaa62c5fecde))
+
+## [3.29.4](https://github.com/digitopvn/diginext/compare/v3.29.3...v3.29.4) (2023-12-06)
+
+
+### Bug Fixes
+
+* **server:** correct dx create workspace api path ([072b6d7](https://github.com/digitopvn/diginext/commit/072b6d70d911a9f7b5e99891f4868cd8cb4a0d07))
+* **server:** create workspace add fixme join ws ([047c752](https://github.com/digitopvn/diginext/commit/047c7522c9200d6e835b18242943d51738f0f374))
+
+## [3.29.3](https://github.com/digitopvn/diginext/compare/v3.29.2...v3.29.3) (2023-12-06)
+
+
+### Bug Fixes
+
+* **server:** fix create workspace dx site api ([8ce82db](https://github.com/digitopvn/diginext/commit/8ce82dbe0bb687f00f154184fd21118da6b3c3dc))
+* **server:** fix create workspace dx site api ([#459](https://github.com/digitopvn/diginext/issues/459)) ([add806f](https://github.com/digitopvn/diginext/commit/add806f812dd303ab3c94596de694f1040b2f064))
+
+## [3.29.2](https://github.com/digitopvn/diginext/compare/v3.29.1...v3.29.2) (2023-12-05)
+
+
+### Bug Fixes
+
+* **server:** correct dx api subscribe package api ([99ebaac](https://github.com/digitopvn/diginext/commit/99ebaace59209e0bac4250753cf7584ff6fd403f))
+* **server:** correct dx api subscribe package api ([#458](https://github.com/digitopvn/diginext/issues/458)) ([5da09e7](https://github.com/digitopvn/diginext/commit/5da09e7fe2b401da5074c0d4bc3c2e252b535bbe))
+
+## [3.29.1](https://github.com/digitopvn/diginext/compare/v3.29.0...v3.29.1) (2023-12-05)
+
+
+### Bug Fixes
+
+* **cli:** rm logs cli login profile ([c6ca9dc](https://github.com/digitopvn/diginext/commit/c6ca9dc32be80b08aba8786f5d5b463f90eb5a27))
+* **dashboard:** hide existing workspace when creating new ([fac7335](https://github.com/digitopvn/diginext/commit/fac7335c51e9f820dadaf9451839c677ed3b90a0))
+* **server:** show logs of dx site api subscribe ([04d5e56](https://github.com/digitopvn/diginext/commit/04d5e56fc4033ef022a809670903de9d3aa25cba))
+
+# [3.29.0](https://github.com/digitopvn/diginext/compare/v3.28.0...v3.29.0) (2023-11-13)
+
+
+### Bug Fixes
+
+* **server,volume:** issue of unable to remove persistent volume ([0d8d90f](https://github.com/digitopvn/diginext/commit/0d8d90ff34f292d2d200df315a881b611dcc4bdf))
+* **server,volume:** issue of unable to remove persistent volume ([#456](https://github.com/digitopvn/diginext/issues/456)) ([4c52726](https://github.com/digitopvn/diginext/commit/4c527269f8d78b35634b5ac1f64202aaaa91a6bd))
+
+
+### Features
+
+* **server,dashboard:** add or remove persistent volume ([#454](https://github.com/digitopvn/diginext/issues/454)) ([b592776](https://github.com/digitopvn/diginext/commit/b59277642b36cd9ed3d84096d711274b091533cc))
+
 # [3.28.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.27.1...v3.28.0-prerelease.1) (2023-11-10)
 
 

@@ -57,6 +57,8 @@ export type GenerateDeploymentResult = {
 	prereleaseUrl: string;
 };
 
+const nginxBlockedPaths = `location ~* /\.git/ { deny all; return 403; }`;
+
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const { appSlug, buildTag, env = "dev", username, workspace, appConfig } = params;
 
@@ -250,6 +252,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					}
 					if (ingressClass) ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
 
+					// block some specific paths
+					ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/server-snippet"] = nginxBlockedPaths;
+
 					// limit file upload & body size
 					ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/proxy-body-size"] = "100m";
 
@@ -326,6 +331,8 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					prereleaseIngressDoc.metadata.namespace = nsName;
 					prereleaseIngressDoc.metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"] = "";
 					prereleaseIngressDoc.metadata.annotations["cert-manager.io/cluster-issuer"] = "letsencrypt-prod";
+					// block some specific paths
+					prereleaseIngressDoc.metadata.annotations["nginx.ingress.kubernetes.io/server-snippet"] = nginxBlockedPaths;
 					prereleaseIngressDoc.spec.tls = [
 						{
 							hosts: [prereleaseDomain],
@@ -437,7 +444,16 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					const { volumes } = app.deployEnvironment[env];
 					let nodeName = volumes[0].node;
 					// persistent volume claim
-					doc.spec.template.spec.volumes = volumes.map((vol) => ({ name: vol.name, persistentVolumeClaim: { claimName: vol.name } }));
+					doc.spec.template.spec.volumes = volumes.map((vol) => {
+						switch (vol.type) {
+							case "host-path":
+								return { name: vol.name, hostPath: { path: vol.hostPath, type: "DirectoryOrCreate" } };
+
+							case "pvc":
+							default:
+								return { name: vol.name, persistentVolumeClaim: { claimName: vol.name } };
+						}
+					});
 
 					// mount to container
 					doc.spec.template.spec.containers[0].volumeMounts = volumes.map((vol) => ({
