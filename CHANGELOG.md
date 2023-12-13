@@ -1,3 +1,11 @@
+## [3.29.6](https://github.com/digitopvn/diginext/compare/v3.29.5...v3.29.6) (2023-12-13)
+
+
+### Bug Fixes
+
+* **hotfix:** nginx ingress deny git path ([954d396](https://github.com/digitopvn/diginext/commit/954d39670722d975bf0ff86861632921e0739aa7))
+* **hotfix:** nginx ingress deny git path ([#463](https://github.com/digitopvn/diginext/issues/463)) ([d65ecf1](https://github.com/digitopvn/diginext/commit/d65ecf19c700c114e77211b44d97e13961cbacc4))
+
 ## [3.29.5](https://github.com/digitopvn/diginext/compare/v3.29.4...v3.29.5) (2023-12-13)
 
 
