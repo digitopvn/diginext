@@ -916,13 +916,14 @@ interface ResolveApplicationFilePathOptions {
 	targetDirectory?: string;
 	env?: string;
 	ignoreIfNotExisted?: boolean;
+	msg?: string;
 }
 
 /**
  * Resolve a location path of the file within the application.
  */
 export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicationFilePathOptions) => {
-	const { targetDirectory = process.cwd(), env = "dev", ignoreIfNotExisted = false } = options;
+	const { targetDirectory = process.cwd(), env = "dev", ignoreIfNotExisted = false, msg } = options;
 
 	let filePath = path.resolve(targetDirectory, `${fileNamePrefix}.${env}`);
 	if (fs.existsSync(filePath)) return filePath;
@@ -940,7 +941,7 @@ export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicat
 	if (fs.existsSync(filePath)) return filePath;
 
 	if (!ignoreIfNotExisted) {
-		const message = `Missing "./${fileNamePrefix}" file, are you in the project directory?`;
+		const message = msg ?? `Missing "./${fileNamePrefix}" file, are you in the project directory?`;
 		throw new Error(message);
 	}
 	return;

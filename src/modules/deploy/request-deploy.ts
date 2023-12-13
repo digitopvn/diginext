@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import chalk from "chalk";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import { io } from "socket.io-client";
@@ -6,7 +8,7 @@ import { getCliConfig } from "@/config/config";
 import type { DeployBuildParams } from "@/controllers/DeployController";
 import type { InputOptions } from "@/interfaces/InputOptions";
 import { fetchApi } from "@/modules/api/fetchApi";
-import { currentVersion, resolveDockerfilePath } from "@/plugins";
+import { currentVersion, resolveDockerfilePath, resolveFilePath } from "@/plugins";
 
 import type { StartBuildParams } from "../build";
 import { generateBuildTag } from "../build/generate-build-tag";
@@ -46,6 +48,20 @@ export async function requestDeploy(options: InputOptions) {
 			)}\nIf everything is good, commit & push the changes to the remote git, then deploy again: \n  ${chalk.cyan(`$ dx up --${env}`)}`
 		);
 		return;
+	}
+
+	// check ".dockerignore"
+	let dockerIgnoreFile = resolveFilePath(".dockerignore", {
+		targetDirectory,
+		env,
+		msg: `You should have ".dockerignore" file and exclude ".git" directory or sensitive directories/files for security reason.`,
+	});
+	if (dockerIgnoreFile) {
+		const dockerIgnoreContent = readFileSync(dockerIgnoreFile, "utf8");
+		if (dockerIgnoreContent.indexOf(".git") === -1) {
+			logError(`You should add ".git" to your ".dockerignore" file due to security reason.`);
+			return;
+		}
 	}
 
 	// Warn about uncommited files
