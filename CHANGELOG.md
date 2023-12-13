@@ -1,3 +1,11 @@
+## [3.29.5](https://github.com/digitopvn/diginext/compare/v3.29.4...v3.29.5) (2023-12-13)
+
+
+### Bug Fixes
+
+* **hotfix,security:** prevent nginx ingress exploit git dir ([611ebd2](https://github.com/digitopvn/diginext/commit/611ebd2d157cb9409db1a7afeff79c9e79a123ec))
+* **hotfix,security:** prevent nginx ingress exploit git dir ([#462](https://github.com/digitopvn/diginext/issues/462)) ([11e4502](https://github.com/digitopvn/diginext/commit/11e45020891ac91a0a41cae60d38eaa62c5fecde))
+
 ## [3.29.4](https://github.com/digitopvn/diginext/compare/v3.29.3...v3.29.4) (2023-12-06)
 
 
