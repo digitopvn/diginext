@@ -1,3 +1,11 @@
+## [3.29.9](https://github.com/digitopvn/diginext/compare/v3.29.8...v3.29.9) (2023-12-14)
+
+
+### Bug Fixes
+
+* **server:** fix nginx block git format ([33b67a4](https://github.com/digitopvn/diginext/commit/33b67a45253581b53222797e978f9818a6ae5b25))
+* **server:** fix nginx block git format ([#467](https://github.com/digitopvn/diginext/issues/467)) ([18649ec](https://github.com/digitopvn/diginext/commit/18649ec47f6c18eef42a160b290b71c54f54eadc))
+
 ## [3.29.8](https://github.com/digitopvn/diginext/compare/v3.29.7...v3.29.8) (2023-12-14)
 
 
