@@ -1,3 +1,11 @@
+## [3.29.11](https://github.com/digitopvn/diginext/compare/v3.29.10...v3.29.11) (2023-12-14)
+
+
+### Bug Fixes
+
+* **server,cli:** member cannot access git provider issue ([14e6144](https://github.com/digitopvn/diginext/commit/14e61445a88465bf5ceeacfc3c64d0b8e0101c28))
+* **server,cli:** member cannot access git provider issue ([#469](https://github.com/digitopvn/diginext/issues/469)) ([c2b6ae3](https://github.com/digitopvn/diginext/commit/c2b6ae35a402266d029ed041f8f403d54dab60c6))
+
 ## [3.29.10](https://github.com/digitopvn/diginext/compare/v3.29.9...v3.29.10) (2023-12-14)
 
 
