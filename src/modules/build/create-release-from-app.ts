@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { isEmpty } from "lodash";
 
 import type { IApp, IRelease, IUser, IWorkspace } from "@/entities";
@@ -15,6 +16,8 @@ type OwnershipParams = {
 
 export const createReleaseFromApp = async (app: IApp, env: string, buildTag: string, ownership?: OwnershipParams) => {
 	const { DB } = await import("@/modules/api/DB");
+
+	const startTime = dayjs();
 
 	const deployedEnvironment = await getDeployEvironmentByApp(app, env);
 	const { imageURL: IMAGE_NAME } = deployedEnvironment;
@@ -64,7 +67,9 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildTag: str
 		appConfig: appConfig,
 		// build status
 		branch: branch,
+		status: "in_progress",
 		buildStatus: "success",
+		startTime: startTime.toDate(),
 		active: env !== "prod",
 		// deployment target
 		namespace,
