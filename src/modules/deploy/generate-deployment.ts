@@ -57,7 +57,7 @@ export type GenerateDeploymentResult = {
 	prereleaseUrl: string;
 };
 
-const nginxBlockedPaths = "location ~ .git { deny all; return 403; }";
+const nginxBlockedPaths = "location ~ /.git { deny all; return 403; }";
 
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const { appSlug, buildTag, env = "dev", username, workspace, appConfig } = params;
