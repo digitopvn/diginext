@@ -444,7 +444,16 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					const { volumes } = app.deployEnvironment[env];
 					let nodeName = volumes[0].node;
 					// persistent volume claim
-					doc.spec.template.spec.volumes = volumes.map((vol) => ({ name: vol.name, persistentVolumeClaim: { claimName: vol.name } }));
+					doc.spec.template.spec.volumes = volumes.map((vol) => {
+						switch (vol.type) {
+							case "host-path":
+								return { name: vol.name, hostPath: { path: vol.hostPath, type: "DirectoryOrCreate" } };
+
+							case "pvc":
+							default:
+								return { name: vol.name, persistentVolumeClaim: { claimName: vol.name } };
+						}
+					});
 
 					// mount to container
 					doc.spec.template.spec.containers[0].volumeMounts = volumes.map((vol) => ({

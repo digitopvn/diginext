@@ -19,7 +19,11 @@ export type DeployEnvironmentVolume = {
 	/**
 	 * Map directory on the host server to this volume
 	 */
-	// hostPath: string;
+	hostPath?: string;
+	/**
+	 * Type
+	 */
+	type?: string;
 	/**
 	 * Location of mapped directory inside the container into this volume
 	 */
