@@ -99,7 +99,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 
 	// target environment info
 	const { contextName: context } = cluster;
-	const { namespace } = release;
+	const { namespace, endpoint } = release;
 
 	/**
 	 * Create namespace & imagePullScrets here!
@@ -115,6 +115,9 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		if (!createNsResult) throw new Error(`Unable to create new namespace: ${namespace}`);
 	}
 
+	/**
+	 * Checking "imagePullSecrets" in a namepsace
+	 */
 	try {
 		const { name: imagePullSecretName } = await ClusterManager.createImagePullSecretsInNamespace(appSlug, env, cluster.slug, namespace);
 		sendLog({
@@ -131,6 +134,34 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 		throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
+	}
+
+	/**
+	 * Checking NGINX Ingress:
+	 * - If there are a similar domain in different namespace -> throw error
+	 */
+	try {
+		const allIngresses = await ClusterManager.getAllIngresses({ context });
+		let namespaceOfExistingIngress;
+		const ingInAnotherNamespace = allIngresses.find((ing) => {
+			const findCondition =
+				typeof ing.spec.rules.find((rule) => rule.host === endpoint) !== "undefined" && ing.metadata.namespace !== namespace;
+			if (findCondition) namespaceOfExistingIngress = ing.metadata.namespace;
+			return findCondition;
+		});
+		if (ingInAnotherNamespace) {
+			const message = `There is a similar domain (${endpoint}) in "${namespaceOfExistingIngress}" namespace of "${context}" cluster, unable to create new ingress with the same domain. Suggestions:\n- Delete the ingress of this domain "${endpoint}" in "${namespaceOfExistingIngress}" namepsace.\n- Use a different domain for this deploy environment.`;
+			sendLog({ SOCKET_ROOM, type: "error", action: "end", message });
+			// dispatch/trigger webhook
+			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+			throw new Error(message);
+		}
+	} catch (e) {
+		const message = `Unable to fetch ingresses of "${context}" cluster: ${e}`;
+		sendLog({ SOCKET_ROOM, type: "error", action: "end", message });
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+		throw new Error(message);
 	}
 
 	// Start rolling out new release
