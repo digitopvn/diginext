@@ -943,7 +943,10 @@ export const resolveFilePath = (fileNamePrefix: string, options: ResolveApplicat
 	if (!ignoreIfNotExisted) {
 		const message = msg ?? `Missing "./${fileNamePrefix}" file, are you in the project directory?`;
 		throw new Error(message);
+	} else {
+		if (msg) logWarn(msg);
 	}
+
 	return;
 };
 

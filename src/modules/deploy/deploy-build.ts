@@ -12,6 +12,7 @@ import { getAppConfigFromApp } from "../apps/app-helper";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { updateAppConfig } from "../apps/update-config";
 import { createReleaseFromBuild, sendLog } from "../build";
+import { updateReleaseStatusById } from "../build/update-release-status";
 import ClusterManager from "../k8s";
 import type { FetchDeploymentResult } from "./fetch-deployment";
 import { fetchDeploymentFromContent } from "./fetch-deployment";
@@ -406,9 +407,20 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 
 	// process deploy build to cluster
 	if (deployInBackground) {
-		processDeployBuild(build, newRelease, cluster, options);
+		processDeployBuild(build, newRelease, cluster, options)
+			.then(() => {
+				updateReleaseStatusById(releaseId, "success");
+			})
+			.catch((e) => {
+				updateReleaseStatusById(releaseId, "failed");
+			});
 	} else {
-		await processDeployBuild(build, newRelease, cluster, options);
+		try {
+			await processDeployBuild(build, newRelease, cluster, options);
+			await updateReleaseStatusById(releaseId, "success");
+		} catch (e) {
+			await updateReleaseStatusById(releaseId, "failed");
+		}
 	}
 
 	return { app: updatedApp, build, release: newRelease, deployment, endpoint, prerelease: prereleaseDeploymentData };
