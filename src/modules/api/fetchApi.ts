@@ -89,6 +89,7 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 
 	if (options.data) options.data = JSON.stringify(options.data);
 
+	if (isDebugging) console.log("options.url :>> ", options.baseURL + options.url);
 	if (isDebugging) console.log("options.params :>> ", options.params);
 	if (isDebugging) console.log("options.headers :>> ", options.headers);
 	if (isDebugging) console.log("options.data :>> ", options.data);
@@ -100,7 +101,7 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 		if (e.toString().indexOf(`ECONNREFUSED`) > -1) {
 			logError(`NETWORK ERROR: Cannot connect to the build server at "${url}".`);
 		} else {
-			logError(`${options.method} - ${options.url} - API ERROR:`, e);
+			logError(`${method} - ${options.url} - API ERROR:`, e);
 		}
 		return { status: 0, messages: [`Something went wrong: ${e.toString()}`], data: null } as FetchApiResponse<T>;
 	}

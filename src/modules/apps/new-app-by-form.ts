@@ -82,6 +82,8 @@ export async function createAppByForm(
 	}
 	options.framework = curFramework;
 
+	if (options.isDebugging) console.log("options.framework :>> ", options.framework);
+
 	// Check git provider authentication
 	let isFwPrivate = false;
 	let frameworkGitProvider: GitProviderType;
@@ -110,8 +112,12 @@ export async function createAppByForm(
 		options.frameworkVersion = "unknown";
 	}
 
+	if (options.isDebugging) console.log("options.frameworkVersion :>> ", options.frameworkVersion);
+
+	if (options.isDebugging) console.log("options.git :>> ", options.git);
+
 	// select git provider for this app:
-	let gitProvider = options.git || (await askForGitProvider());
+	let gitProvider = options.git || (await askForGitProvider({ isDebugging: options.isDebugging }));
 	options.git = gitProvider;
 	options.gitProvider = gitProvider.type;
 	if (options.isDebugging) log(`[CREATE APP BY FORM] git provider :>>`, gitProvider);
