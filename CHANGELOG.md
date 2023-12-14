@@ -1,3 +1,14 @@
+## [3.29.7](https://github.com/digitopvn/diginext/compare/v3.29.6...v3.29.7) (2023-12-14)
+
+
+### Bug Fixes
+
+* **cli:** src/modules/deploy/generate-deployment.ts spec.template.spec.volumes add host-path type ([57fd3c2](https://github.com/digitopvn/diginext/commit/57fd3c2ccad21aad0753d27c634ca3b623bfd8ab))
+* **cli:** src/modules/deploy/generate-deployment.ts spec.template.spec.volumes add host-path type ([76a8693](https://github.com/digitopvn/diginext/commit/76a8693a7d4e9c96fbf0622b51d969301ce6dd07))
+* **hotfix,cli:** dockerignore is require to deploy apps ([9bd41c3](https://github.com/digitopvn/diginext/commit/9bd41c394f38206d699d3ef4d4fdb37ac3e40973))
+* **server,cli:** update release status when deploying ([54e997d](https://github.com/digitopvn/diginext/commit/54e997d9d23262e90d3982e14ced02743f6721d8))
+* **server:** generate ingress deny git path ([f2b6569](https://github.com/digitopvn/diginext/commit/f2b6569ecd00a95d19e2aab5234ce20bab9c2bf8))
+
 ## [3.29.7-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.29.6...v3.29.7-prerelease.1) (2023-12-13)
 
 
