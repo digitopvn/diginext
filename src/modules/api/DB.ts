@@ -342,7 +342,7 @@ export class DB {
 			const path = collection === "git_repo" ? "git" : collection;
 			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
-			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
+			const { data = [], status, messages = [""] } = await fetchApi<T>({ url, isDebugging: options.isDebugging });
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] FIND MANY - ${url} :>>`, messages);
 
 			items = data;
