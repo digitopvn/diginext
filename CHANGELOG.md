@@ -1,3 +1,11 @@
+## [3.29.10](https://github.com/digitopvn/diginext/compare/v3.29.9...v3.29.10) (2023-12-14)
+
+
+### Bug Fixes
+
+* **server,dashboard:** build logs, nginx ingress check duplication ([3b8a5b0](https://github.com/digitopvn/diginext/commit/3b8a5b0e7bb96293de7713a74cbee66dc58251fe))
+* **server,dashboard:** build logs, nginx ingress check duplication ([#468](https://github.com/digitopvn/diginext/issues/468)) ([9ba5958](https://github.com/digitopvn/diginext/commit/9ba595869a306df897caefb490f074a8f912811b))
+
 ## [3.29.9](https://github.com/digitopvn/diginext/compare/v3.29.8...v3.29.9) (2023-12-14)
 
 
