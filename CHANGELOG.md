@@ -1,3 +1,10 @@
+## [3.29.8](https://github.com/digitopvn/diginext/compare/v3.29.7...v3.29.8) (2023-12-14)
+
+
+### Bug Fixes
+
+* **admin:** correct deploy status in build logs ([a85486f](https://github.com/digitopvn/diginext/commit/a85486f4a3149a4706a62eebc5237bfabeaf4556))
+
 ## [3.29.7](https://github.com/digitopvn/diginext/compare/v3.29.6...v3.29.7) (2023-12-14)
 
 
