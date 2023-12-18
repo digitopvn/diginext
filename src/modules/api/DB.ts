@@ -101,50 +101,50 @@ export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPaginati
 export type TypeByCollection<T extends DBCollection> = T extends "api_key_user"
 	? IApiKeyAccount
 	: T extends "app"
-	? IApp
-	: T extends "build"
-	? IBuild
-	: T extends "cluster"
-	? ICluster
-	: T extends "cronjob"
-	? ICronjob
-	: T extends "database"
-	? ICloudDatabase
-	: T extends "db_backup"
-	? ICloudDatabaseBackup
-	: T extends "framework"
-	? IFramework
-	: T extends "git"
-	? IGitProvider
-	: T extends "git_repo"
-	? GitRepository
-	: T extends "project"
-	? IProject
-	: T extends "provider"
-	? ICloudProvider
-	: T extends "registry"
-	? IContainerRegistry
-	: T extends "release"
-	? IRelease
-	: T extends "role"
-	? IRole
-	: T extends "route"
-	? IRoute
-	: T extends "service_account"
-	? IServiceAccount
-	: T extends "team"
-	? ITeam
-	: T extends "user"
-	? IUser
-	: T extends "workspace"
-	? IWorkspace
-	: T extends "webhook"
-	? IWebhook
-	: T extends "notification"
-	? INotification
-	: T extends "storage"
-	? ICloudStorage
-	: never;
+		? IApp
+		: T extends "build"
+			? IBuild
+			: T extends "cluster"
+				? ICluster
+				: T extends "cronjob"
+					? ICronjob
+					: T extends "database"
+						? ICloudDatabase
+						: T extends "db_backup"
+							? ICloudDatabaseBackup
+							: T extends "framework"
+								? IFramework
+								: T extends "git"
+									? IGitProvider
+									: T extends "git_repo"
+										? GitRepository
+										: T extends "project"
+											? IProject
+											: T extends "provider"
+												? ICloudProvider
+												: T extends "registry"
+													? IContainerRegistry
+													: T extends "release"
+														? IRelease
+														: T extends "role"
+															? IRole
+															: T extends "route"
+																? IRoute
+																: T extends "service_account"
+																	? IServiceAccount
+																	: T extends "team"
+																		? ITeam
+																		: T extends "user"
+																			? IUser
+																			: T extends "workspace"
+																				? IWorkspace
+																				: T extends "webhook"
+																					? IWebhook
+																					: T extends "notification"
+																						? INotification
+																						: T extends "storage"
+																							? ICloudStorage
+																							: never;
 
 export interface DBQueryOptions extends IQueryOptions {
 	filter?: any;
@@ -342,7 +342,7 @@ export class DB {
 			const path = collection === "git_repo" ? "git" : collection;
 			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
-			const { data = [], status, messages = [""] } = await fetchApi<T>({ url });
+			const { data = [], status, messages = [""] } = await fetchApi<T>({ url, isDebugging: options.isDebugging });
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] FIND MANY - ${url} :>>`, messages);
 
 			items = data;

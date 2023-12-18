@@ -1,8 +1,47 @@
+## [3.29.11](https://github.com/digitopvn/diginext/compare/v3.29.10...v3.29.11) (2023-12-14)
+=======
 ## [3.29.7-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.29.7-prerelease.1...v3.29.7-prerelease.2) (2023-12-18)
 
 
 ### Bug Fixes
 
+* **server,cli:** member cannot access git provider issue ([14e6144](https://github.com/digitopvn/diginext/commit/14e61445a88465bf5ceeacfc3c64d0b8e0101c28))
+* **server,cli:** member cannot access git provider issue ([#469](https://github.com/digitopvn/diginext/issues/469)) ([c2b6ae3](https://github.com/digitopvn/diginext/commit/c2b6ae35a402266d029ed041f8f403d54dab60c6))
+
+## [3.29.10](https://github.com/digitopvn/diginext/compare/v3.29.9...v3.29.10) (2023-12-14)
+
+
+### Bug Fixes
+
+* **server,dashboard:** build logs, nginx ingress check duplication ([3b8a5b0](https://github.com/digitopvn/diginext/commit/3b8a5b0e7bb96293de7713a74cbee66dc58251fe))
+* **server,dashboard:** build logs, nginx ingress check duplication ([#468](https://github.com/digitopvn/diginext/issues/468)) ([9ba5958](https://github.com/digitopvn/diginext/commit/9ba595869a306df897caefb490f074a8f912811b))
+
+## [3.29.9](https://github.com/digitopvn/diginext/compare/v3.29.8...v3.29.9) (2023-12-14)
+
+
+### Bug Fixes
+
+* **server:** fix nginx block git format ([33b67a4](https://github.com/digitopvn/diginext/commit/33b67a45253581b53222797e978f9818a6ae5b25))
+* **server:** fix nginx block git format ([#467](https://github.com/digitopvn/diginext/issues/467)) ([18649ec](https://github.com/digitopvn/diginext/commit/18649ec47f6c18eef42a160b290b71c54f54eadc))
+
+## [3.29.8](https://github.com/digitopvn/diginext/compare/v3.29.7...v3.29.8) (2023-12-14)
+
+
+### Bug Fixes
+
+* **admin:** correct deploy status in build logs ([a85486f](https://github.com/digitopvn/diginext/commit/a85486f4a3149a4706a62eebc5237bfabeaf4556))
+
+## [3.29.7](https://github.com/digitopvn/diginext/compare/v3.29.6...v3.29.7) (2023-12-14)
+
+
+### Bug Fixes
+
+* **cli:** src/modules/deploy/generate-deployment.ts spec.template.spec.volumes add host-path type ([57fd3c2](https://github.com/digitopvn/diginext/commit/57fd3c2ccad21aad0753d27c634ca3b623bfd8ab))
+* **cli:** src/modules/deploy/generate-deployment.ts spec.template.spec.volumes add host-path type ([76a8693](https://github.com/digitopvn/diginext/commit/76a8693a7d4e9c96fbf0622b51d969301ce6dd07))
+* **hotfix,cli:** dockerignore is require to deploy apps ([9bd41c3](https://github.com/digitopvn/diginext/commit/9bd41c394f38206d699d3ef4d4fdb37ac3e40973))
+* **server,cli:** update release status when deploying ([54e997d](https://github.com/digitopvn/diginext/commit/54e997d9d23262e90d3982e14ced02743f6721d8))
+* **server:** generate ingress deny git path ([f2b6569](https://github.com/digitopvn/diginext/commit/f2b6569ecd00a95d19e2aab5234ce20bab9c2bf8))
+=======
 * **cli:** src/modules/git/updateBranchProtection.ts ([fd2d439](https://github.com/digitopvn/diginext/commit/fd2d439cbadc38eb76f8b38a10f0b9d59d7df410))
 
 ## [3.29.7-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.29.6...v3.29.7-prerelease.1) (2023-12-13)
