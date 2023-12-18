@@ -1,3 +1,11 @@
+## [3.29.7-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.29.6...v3.29.7-prerelease.1) (2023-12-13)
+
+
+### Bug Fixes
+
+* **cli:** src/modules/deploy/generate-deployment.ts spec.template.spec.volumes add host-path type ([57fd3c2](https://github.com/digitopvn/diginext/commit/57fd3c2ccad21aad0753d27c634ca3b623bfd8ab))
+* **cli:** src/modules/deploy/generate-deployment.ts spec.template.spec.volumes add host-path type ([76a8693](https://github.com/digitopvn/diginext/commit/76a8693a7d4e9c96fbf0622b51d969301ce6dd07))
+
 ## [3.29.6](https://github.com/digitopvn/diginext/compare/v3.29.5...v3.29.6) (2023-12-13)
 
 
