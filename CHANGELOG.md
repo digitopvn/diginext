@@ -1,3 +1,11 @@
+## [3.29.12-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.29.11...v3.29.12-prerelease.1) (2023-12-18)
+
+
+### Bug Fixes
+
+* **cli:** src/modules/git/updateBranchProtection.ts ([597c082](https://github.com/digitopvn/diginext/commit/597c0829b0bbfb6a5249ec2c6b6cca38cebd7bd4))
+* **cli:** src/modules/git/updateBranchProtection.ts ([fd2d439](https://github.com/digitopvn/diginext/commit/fd2d439cbadc38eb76f8b38a10f0b9d59d7df410))
+
 ## [3.29.11](https://github.com/digitopvn/diginext/compare/v3.29.10...v3.29.11) (2023-12-14)
 =======
 ## [3.29.7-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.29.7-prerelease.1...v3.29.7-prerelease.2) (2023-12-18)
