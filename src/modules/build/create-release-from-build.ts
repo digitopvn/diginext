@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { isEmpty } from "lodash";
 
 import type { IBuild, IRelease, IUser, IWorkspace } from "@/entities";
@@ -15,6 +16,8 @@ type OwnershipParams = {
 
 export const createReleaseFromBuild = async (build: IBuild, env?: string, ownership?: OwnershipParams) => {
 	const { DB } = await import("../api/DB");
+
+	const startTime = dayjs();
 
 	// get app data
 	const app = await DB.findOne("app", { id: build.app }, { populate: ["owner", "workspace"] });
@@ -69,7 +72,9 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 		appConfig: appConfig,
 		// build status
 		branch: branch,
+		status: "in_progress",
 		buildStatus: "success",
+		startTime: startTime.toDate(),
 		active: env !== "prod",
 		// deployment target
 		namespace,

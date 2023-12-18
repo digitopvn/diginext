@@ -40,7 +40,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 	}
 
 	// if the user doesn't have roles, reject the request!
-	if (!user || !user.roles || user.roles.length == 0) return ApiResponse.rejected(res);
+	if (!user || !user.activeRole) return ApiResponse.rejected(res);
 
 	let isAllowed = false;
 
@@ -81,6 +81,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 
 	// Check again if a specific route is specified:
 	routeRole = activeRole.routes.find((routeInfo) => routeInfo.path === routePath);
+	console.log("authorize() > routeRole :>> ", routeRole);
 
 	if (routeRole) {
 		if (!routeRole.permissions) routeRole.permissions = [];

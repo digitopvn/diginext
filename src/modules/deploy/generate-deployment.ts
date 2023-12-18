@@ -57,7 +57,7 @@ export type GenerateDeploymentResult = {
 	prereleaseUrl: string;
 };
 
-const nginxBlockedPaths = `location ~* /\.git/ { deny all; return 403; }`;
+const nginxBlockedPaths = "location ~ /.git { deny all; return 403; }";
 
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const { appSlug, buildTag, env = "dev", username, workspace, appConfig } = params;
@@ -261,7 +261,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					// limit requests per minute (DEV ONLY)
 					if (ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rpm"])
 						delete ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rpm"];
-					if (env !== "prod") ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rps"] = `100`;
+					if (env !== "prod") ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rps"] = `200`;
 
 					// labels
 					if (!doc.metadata.labels) doc.metadata.labels = {};

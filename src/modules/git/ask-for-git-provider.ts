@@ -36,9 +36,11 @@ export async function askForGitOrg(gitProvider: IGitProvider) {
 	return { org, gitProvider: provider };
 }
 
-export async function askForGitProvider() {
+export async function askForGitProvider(options?: { isDebugging?: boolean }) {
 	const { DB } = await import("@/modules/api/DB");
-	const gitProviders = await DB.find("git", {});
+	const gitProviders = await DB.find("git", {}, { isDebugging: options?.isDebugging });
+
+	if (options?.isDebugging) console.log("askForGitProvider() > gitProviders :>> ", gitProviders);
 
 	if (isEmpty(gitProviders)) {
 		// logError(`This workspace doesn't have any git providers integrated.`);
