@@ -1,5 +1,5 @@
 import axios from "axios";
-import { log, logWarn } from "diginext-utils/dist/xconsole/log";
+import { logWarn } from "diginext-utils/dist/xconsole/log";
 
 import type { InputOptions } from "@/interfaces";
 
@@ -18,7 +18,7 @@ export default async function updateBranchProtection(options: InputOptions) {
 				const token = options.git?.access_token;
 				const owner = options.git?.org;
 				const repo = options.repoSlug;
-				const branch = "main";
+				const branch = (options as any).defaultBranch || "main";
 
 				try {
 					const res = await axios({
@@ -48,7 +48,8 @@ export default async function updateBranchProtection(options: InputOptions) {
 							allow_fork_syncing: true,
 						},
 					});
-					if (options.isDebugging) log("res Update main branch protection :>> ", res);
+					// if (options.isDebugging) log("res Update main branch protection :>> ", res?.statusText);
+					if (options.isDebugging) console.log("Update main branch protection :>> ", res?.statusText);
 				} catch (error) {
 					if (error?.response) {
 						// The request was made and the server responded with a status code outside of the 2xx range
@@ -72,6 +73,7 @@ export default async function updateBranchProtection(options: InputOptions) {
 					}
 				}
 			}
+
 			break;
 
 		case "bitbucket":
