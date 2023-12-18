@@ -32,10 +32,16 @@ export default async function updateBranchProtection(options: InputOptions) {
 						data: {
 							required_status_checks: null,
 							enforce_admins: null,
-							required_pull_request_reviews: null,
+							required_pull_request_reviews: {
+								dismissal_restrictions: null,
+								dismiss_stale_reviews: null,
+								require_code_owner_reviews: null,
+								required_approving_review_count: null,
+								require_last_push_approval: null,
+								bypass_pull_request_allowances: null,
+							},
 							restrictions: null,
-
-							required_linear_history: true,
+							required_linear_history: null,
 							allow_force_pushes: true,
 							allow_deletions: null,
 							block_creations: null,
