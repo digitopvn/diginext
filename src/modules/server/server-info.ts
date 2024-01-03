@@ -6,7 +6,7 @@ import type { InputOptions } from "@/interfaces";
 import { getOS } from "@/plugins";
 
 export const showServerInfo = async (options: InputOptions) => {
-	const { execa, execaCommand, execaSync } = await import("execa");
+	const { execa } = await import("execa");
 
 	const { buildServerUrl } = getCliConfig();
 
@@ -30,7 +30,9 @@ export const showServerInfo = async (options: InputOptions) => {
 	table.push(["CLI Version", options.version]);
 	table.push(["CLI Dir", CLI_DIR]);
 	table.push(["CLI Config", CLI_CONFIG_FILE]);
-	table.push(["Server URL", buildServerUrl]);
+	table.push(["Server URL", `${buildServerUrl}`]);
+
+	console.log("table :>> ", table);
 
 	console.log(table.toString());
 };
