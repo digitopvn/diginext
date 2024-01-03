@@ -88,12 +88,7 @@ async function logBitbucket(title, message, delay) {
 
 export const readJson = (filePath) => {
 	const jsonContent = fs.readFileSync(filePath).toString();
-	try {
-		return JSON.parse(jsonContent);
-	} catch (e) {
-		logWarn(e);
-		return {};
-	}
+	return JSON.parse(jsonContent);
 };
 
 export type SaveJsonOptions = { overwrite?: boolean; beautify?: boolean };
@@ -114,13 +109,8 @@ export const saveJson = (data: string | any, filePath: string, options: SaveJson
 		}
 	}
 
-	try {
-		fs.writeFileSync(filePath, jsonContent, "utf8");
-		return JSON.parse(jsonContent);
-	} catch (e) {
-		logWarn(`WRITE_ERROR >`, e);
-		return {};
-	}
+	fs.writeFileSync(filePath, jsonContent, "utf8");
+	return JSON.parse(jsonContent);
 };
 
 export const showDocs = async (filePath: string) => {
