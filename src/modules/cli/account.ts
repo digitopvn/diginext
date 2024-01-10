@@ -77,6 +77,9 @@ export const cliLogin = async (options: CliLoginOptions) => {
 		buildServerUrl: trimEnd(buildServerUrl.indexOf(":3000") > -1 ? buildServerUrl.replace(/3000/, "6969") : buildServerUrl, "/"),
 	});
 
+	// remove old "refresh_token"
+	saveCliConfig({ refresh_token: null, currentUser: null });
+
 	// open login page of build server:
 	if (!access_token && !apiToken) {
 		open(tokenDisplayUrl);
