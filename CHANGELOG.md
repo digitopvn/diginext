@@ -1,3 +1,13 @@
+## [3.29.12](https://github.com/digitopvn/diginext/compare/v3.29.11...v3.29.12) (2024-01-03)
+
+
+### Bug Fixes
+
+* **cli:** issue of expired refresh token ([32d00af](https://github.com/digitopvn/diginext/commit/32d00afa4107b8c4a0be21920d399688c68bd477))
+* **cli:** src/modules/git/updateBranchProtection.ts ([597c082](https://github.com/digitopvn/diginext/commit/597c0829b0bbfb6a5249ec2c6b6cca38cebd7bd4))
+* **cli:** src/modules/git/updateBranchProtection.ts ([fd2d439](https://github.com/digitopvn/diginext/commit/fd2d439cbadc38eb76f8b38a10f0b9d59d7df410))
+* **cli:** throw error when deploy at the same time ([10a697b](https://github.com/digitopvn/diginext/commit/10a697b1feb1b9125884d242f856f9df7e2fa27f))
+
 ## [3.29.12-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.29.11...v3.29.12-prerelease.1) (2023-12-18)
 
 
