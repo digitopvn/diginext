@@ -17,7 +17,6 @@ import { getIO, socketIO } from "@/server";
 import { WebhookService } from "@/services";
 
 import builder from "../builder";
-import { verifySSH } from "../git";
 import { pullOrCloneGitRepoHTTP, repoSshToRepoURL } from "../git/git-utils";
 import { connectRegistry } from "../registry/connect-registry";
 import { sendLog } from "./send-log-message";
@@ -355,22 +354,22 @@ export async function startBuild(
 	 * Verify SSH before cloning/pulling files from a git repository.
 	 */
 
-	const gitAuth = await verifySSH({ gitProvider });
-	if (!gitAuth) {
-		// print the logs to client (Dashboard & CLI)
-		sendLog({
-			SOCKET_ROOM,
-			action: "end",
-			type: "error",
-			message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`,
-		});
-		if (options?.onError) options?.onError(`[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`);
-		// update build status
-		await updateBuildStatus(newBuild, "failed");
-		// dispatch/trigger webhook
-		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
-		return;
-	}
+	// const gitAuth = await verifySSH({ gitProvider });
+	// if (!gitAuth) {
+	// 	// print the logs to client (Dashboard & CLI)
+	// 	sendLog({
+	// 		SOCKET_ROOM,
+	// 		action: "end",
+	// 		type: "error",
+	// 		message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`,
+	// 	});
+	// 	if (options?.onError) options?.onError(`[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`);
+	// 	// update build status
+	// 	await updateBuildStatus(newBuild, "failed");
+	// 	// dispatch/trigger webhook
+	// 	if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+	// 	return;
+	// }
 
 	// Git SSH verified -> start pulling now...
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Pulling latest source code from "${repoSSH}" at "${gitBranch}" branch...` });

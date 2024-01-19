@@ -18,7 +18,7 @@ docker-compose.*.yaml
 04-ingress.yaml
 05-podman-fuse-device-plugin.yaml
 gcloud-secret.yaml
-
+KUBECONFIG
 # diginext
 dx.json
 
