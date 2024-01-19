@@ -1,3 +1,11 @@
+## [3.29.15](https://github.com/digitopvn/diginext/compare/v3.29.14...v3.29.15) (2024-01-19)
+
+
+### Bug Fixes
+
+* **server:** build issue of undefined git, try similar gits ([50237fd](https://github.com/digitopvn/diginext/commit/50237fdf89cb451be929ef50962fb0c0c1b93217))
+* **server:** debug build ([565c2de](https://github.com/digitopvn/diginext/commit/565c2de58063634dc34e7c08d1ac92699c73fa0e))
+
 ## [3.29.14](https://github.com/digitopvn/diginext/compare/v3.29.13...v3.29.14) (2024-01-19)
 
 
