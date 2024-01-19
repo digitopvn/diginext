@@ -1,3 +1,10 @@
+## [3.29.14](https://github.com/digitopvn/diginext/compare/v3.29.13...v3.29.14) (2024-01-19)
+
+
+### Bug Fixes
+
+* **server:** pull git repo by http ([6732a66](https://github.com/digitopvn/diginext/commit/6732a66772c16a0cad400c0181741ecd97ecee22))
+
 ## [3.29.13](https://github.com/digitopvn/diginext/compare/v3.29.12...v3.29.13) (2024-01-19)
 
 
