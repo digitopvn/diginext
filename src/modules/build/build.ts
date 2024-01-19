@@ -411,7 +411,15 @@ export async function startBuild(
 
 	// Clone or pull repository with HTTPS + access token:
 	if (app.gitProvider) {
+		// find the git provider of this app:
 		const git = await DB.findOne("git", { _id: app.gitProvider });
+		if (!git) {
+			await notifyClientGitPullFailure(`Git provider not found (${app.gitProvider}).`);
+			return;
+		}
+		console.log("git :>> ", git);
+
+		// parse repo URL from repo SSH
 		const repoURL = repoSshToRepoURL(repoSSH);
 
 		// notify client...
