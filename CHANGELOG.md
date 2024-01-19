@@ -1,3 +1,11 @@
+## [3.29.13](https://github.com/digitopvn/diginext/compare/v3.29.12...v3.29.13) (2024-01-19)
+
+
+### Bug Fixes
+
+* **gitignore:** ignore credentials ([8ff1a1e](https://github.com/digitopvn/diginext/commit/8ff1a1e03dfed3c6d5c9645ee43510640ab7aff6))
+* **server:** disable verify git ssh when building ([865e924](https://github.com/digitopvn/diginext/commit/865e9249668d08811e86a4813e03d0b68f2a4f1d))
+
 ## [3.29.12](https://github.com/digitopvn/diginext/compare/v3.29.11...v3.29.12) (2024-01-03)
 
 
