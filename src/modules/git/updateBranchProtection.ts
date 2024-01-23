@@ -39,7 +39,7 @@ export default async function updateBranchProtection(options: InputOptions) {
 								require_last_push_approval: null,
 							},
 							restrictions: null,
-							required_linear_history: null,
+							required_linear_history: false,
 							allow_force_pushes: true,
 							allow_deletions: null,
 							block_creations: null,

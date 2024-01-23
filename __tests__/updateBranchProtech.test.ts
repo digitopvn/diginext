@@ -1,5 +1,7 @@
 // import updateBranchProtection from "@/modules/git/updateBranchProtection";
 // import axios from "axios";
+// const dotenv = require("dotenv").config({ path: ".env.test" });
+// const _env = dotenv.parsed ? dotenv.parsed : {};
 
 // function getRepoName(url: string): string | null {
 // 	// Regular expression to match the GitHub repository pattern
@@ -26,7 +28,9 @@
 // }
 
 // it("updateBranchProtech.test.ts", async () => {
-// 	const token = process.env.GITHUB_TOKEN;
+// 	const token = _env.GITHUB_TOKEN;
+// 	console.log("token :>> ", token);
+// 	if (!token) throw new Error("NO GITHUB_TOKEN");
 
 // 	let maxPage = 3;
 // 	for (let k = 1; k <= 3; k++) {
