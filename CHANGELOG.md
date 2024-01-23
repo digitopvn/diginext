@@ -1,3 +1,26 @@
+## [3.29.15](https://github.com/digitopvn/diginext/compare/v3.29.14...v3.29.15) (2024-01-19)
+
+
+### Bug Fixes
+
+* **server:** build issue of undefined git, try similar gits ([50237fd](https://github.com/digitopvn/diginext/commit/50237fdf89cb451be929ef50962fb0c0c1b93217))
+* **server:** debug build ([565c2de](https://github.com/digitopvn/diginext/commit/565c2de58063634dc34e7c08d1ac92699c73fa0e))
+
+## [3.29.14](https://github.com/digitopvn/diginext/compare/v3.29.13...v3.29.14) (2024-01-19)
+
+
+### Bug Fixes
+
+* **server:** pull git repo by http ([6732a66](https://github.com/digitopvn/diginext/commit/6732a66772c16a0cad400c0181741ecd97ecee22))
+
+## [3.29.13](https://github.com/digitopvn/diginext/compare/v3.29.12...v3.29.13) (2024-01-19)
+
+
+### Bug Fixes
+
+* **gitignore:** ignore credentials ([8ff1a1e](https://github.com/digitopvn/diginext/commit/8ff1a1e03dfed3c6d5c9645ee43510640ab7aff6))
+* **server:** disable verify git ssh when building ([865e924](https://github.com/digitopvn/diginext/commit/865e9249668d08811e86a4813e03d0b68f2a4f1d))
+
 ## [3.29.12](https://github.com/digitopvn/diginext/compare/v3.29.11...v3.29.12) (2024-01-03)
 
 

@@ -24,6 +24,7 @@ node_modules
 *.yml
 **/*.yml
 **/templates/**
+KUBECONFIG
 
 # __tests__/**
 # **/__tests__/**
