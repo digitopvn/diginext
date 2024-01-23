@@ -1,4 +1,5 @@
 // import updateBranchProtection from "@/modules/git/updateBranchProtection";
+// import updateRepoSetting from "@/modules/git/updateRepoSetting";
 // import axios from "axios";
 // const dotenv = require("dotenv").config({ path: ".env.test" });
 // const _env = dotenv.parsed ? dotenv.parsed : {};
@@ -63,7 +64,8 @@
 // 			};
 
 // 			console.log("element.html_url :>> ", element.html_url);
-// 			const ress = await updateBranchProtection(option);
+// 			// const ress = await updateBranchProtection(option);
+// 			const ress = await updateRepoSetting(option);
 // 		}
 // 	}
 // }, 1000000);
