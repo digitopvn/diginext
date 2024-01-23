@@ -186,8 +186,9 @@ export class DeployEnvironmentService {
 		// console.log("buildTag :>> ", buildTag);
 
 		let deployment = await generateDeployment({
-			appSlug: app.slug,
 			env,
+			skipPrerelease: true, // skip overwrite "prerelease" domain origin
+			appSlug: app.slug,
 			username: ownership.owner.slug,
 			workspace: ownership.workspace,
 			buildTag: buildTag,
@@ -630,6 +631,7 @@ export class DeployEnvironmentService {
 				// generate new deployment YAML
 				let deployment: GenerateDeploymentResult = await generateDeployment({
 					env,
+					skipPrerelease: true, // skip overwrite "prerelease" domain origin
 					appSlug,
 					buildTag,
 					username: this.user.slug,
@@ -694,8 +696,9 @@ export class DeployEnvironmentService {
 
 		// add {PersistentVolumeClaim} to Kubernetes deployment
 		const deployment = await await generateDeployment({
-			appSlug: app.slug,
 			env,
+			skipPrerelease: true, // skip overwrite "prerelease" domain origin
+			appSlug: app.slug,
 			username: this.ownership.owner.slug,
 			workspace: this.ownership.workspace,
 			buildTag,
@@ -809,8 +812,9 @@ export class DeployEnvironmentService {
 
 		// unattach volume from the K8S deployment
 		const deployment = await await generateDeployment({
-			appSlug: app.slug,
 			env,
+			skipPrerelease: true, // skip overwrite "prerelease" domain origin
+			appSlug: app.slug,
 			username: this.ownership.owner.slug,
 			workspace: this.ownership.workspace,
 			buildTag,
