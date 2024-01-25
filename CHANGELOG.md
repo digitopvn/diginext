@@ -1,3 +1,10 @@
+## [3.29.16](https://github.com/digitopvn/diginext/compare/v3.29.15...v3.29.16) (2024-01-23)
+
+
+### Bug Fixes
+
+* **server:** skip overwrite prerelease url on env vars changed ([f66429d](https://github.com/digitopvn/diginext/commit/f66429d9656ec4c5f48355de684ffe205a7db05f))
+
 ## [3.29.15](https://github.com/digitopvn/diginext/compare/v3.29.14...v3.29.15) (2024-01-19)
 
 

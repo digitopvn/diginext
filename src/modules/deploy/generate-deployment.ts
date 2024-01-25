@@ -25,6 +25,12 @@ export type GenerateDeploymentParams = {
 	username: string;
 	workspace: IWorkspace;
 	/**
+	 * Skip replacing origin domain of "prerelease" environment.
+	 *
+	 * @default false
+	 */
+	skipPrerelease?: boolean;
+	/**
 	 * Requires if generate deployment files from image URL.
 	 */
 	appConfig?: AppConfig;
@@ -60,7 +66,7 @@ export type GenerateDeploymentResult = {
 const nginxBlockedPaths = "location ~ /.git { deny all; return 403; }";
 
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
-	const { appSlug, buildTag, env = "dev", username, workspace, appConfig } = params;
+	const { appSlug, buildTag, env = "dev", skipPrerelease = false, username, workspace, appConfig } = params;
 
 	// validate inputs
 	if (!appSlug) throw new Error(`Unable to generate YAML, app's slug is required.`);
@@ -164,6 +170,9 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	let prereleaseEnvs = [];
 	if (env === "prod" && !isEmpty(domains)) {
 		prereleaseEnvs = containerEnvs.map((envVar) => {
+			// DO NOT replace origin domain of PRERELEASE env:
+			if (skipPrerelease) return { ...envVar };
+
 			let curValue = envVar.value;
 			if (curValue.indexOf(domains[0]) > -1) {
 				// replace all production domains with PRERELEASE domains
