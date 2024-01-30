@@ -169,16 +169,16 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
 	let prereleaseEnvs = [];
 	if (env === "prod" && !isEmpty(domains)) {
-		prereleaseEnvs = containerEnvs.map((envVar) => {
+		prereleaseEnvs = containerEnvs.map(({ value, ...envVar }) => {
 			// DO NOT replace origin domain of PRERELEASE env:
-			if (skipPrerelease) return { ...envVar };
+			if (skipPrerelease) return { value, ...envVar };
 
-			let curValue = envVar.value;
+			let curValue = value || "";
 			if (curValue.indexOf(domains[0]) > -1) {
 				// replace all production domains with PRERELEASE domains
-				envVar.value = (curValue || "").replace(new RegExp(domains[0], "gi"), prereleaseDomain);
+				curValue = curValue.replace(new RegExp(domains[0], "gi"), prereleaseDomain);
 			}
-			return { ...envVar };
+			return { ...envVar, value: curValue };
 		});
 	}
 	// console.log("[3] prereleaseEnvs :>> ", prereleaseEnvs);
