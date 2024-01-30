@@ -70,5 +70,9 @@
 // 	}
 // }, 1000000);
 
+it("updateBranchProtech.test.ts", async () => {
+	console.log("ok");
+});
+
 // // nothing, just because Jest will not work without exporting something
 export {};
