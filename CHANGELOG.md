@@ -1,3 +1,17 @@
+# [3.30.0](https://github.com/digitopvn/diginext/compare/v3.29.16...v3.30.0) (2024-01-30)
+
+
+### Bug Fixes
+
+* **cli:** map env prerelease ([3f372da](https://github.com/digitopvn/diginext/commit/3f372da92ccf37dda58247cc76628e92404aa8e7))
+* **cli:** updateBranchProtech disable required_linear_history ([fe05c00](https://github.com/digitopvn/diginext/commit/fe05c00b8ebdbf7a71ad70f6b576520057c81e08))
+* skip test github ([fc86cb2](https://github.com/digitopvn/diginext/commit/fc86cb2bb87d3e23dff8959ad117dfea1dca1d95))
+
+
+### Features
+
+* **cli:** enabled allow_auto_merge on default init github repo ([449ea6b](https://github.com/digitopvn/diginext/commit/449ea6b3396bbede501def1be12819c17b4d2a8b))
+
 ## [3.29.16](https://github.com/digitopvn/diginext/compare/v3.29.15...v3.29.16) (2024-01-23)
 
 
