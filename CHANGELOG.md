@@ -1,3 +1,10 @@
+## [3.30.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.30.0...v3.30.1-prerelease.1) (2024-03-19)
+
+
+### Bug Fixes
+
+* **github action:** update staging environment ([6aa9660](https://github.com/digitopvn/diginext/commit/6aa96606971ebbcf87ae6915292906079e324491))
+
 # [3.30.0](https://github.com/digitopvn/diginext/compare/v3.29.16...v3.30.0) (2024-01-30)
 
 
