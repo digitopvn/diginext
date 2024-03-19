@@ -1,3 +1,57 @@
+# [3.30.0](https://github.com/digitopvn/diginext/compare/v3.29.16...v3.30.0) (2024-01-30)
+
+
+### Bug Fixes
+
+* **cli:** map env prerelease ([3f372da](https://github.com/digitopvn/diginext/commit/3f372da92ccf37dda58247cc76628e92404aa8e7))
+* **cli:** updateBranchProtech disable required_linear_history ([fe05c00](https://github.com/digitopvn/diginext/commit/fe05c00b8ebdbf7a71ad70f6b576520057c81e08))
+* skip test github ([fc86cb2](https://github.com/digitopvn/diginext/commit/fc86cb2bb87d3e23dff8959ad117dfea1dca1d95))
+
+
+### Features
+
+* **cli:** enabled allow_auto_merge on default init github repo ([449ea6b](https://github.com/digitopvn/diginext/commit/449ea6b3396bbede501def1be12819c17b4d2a8b))
+
+## [3.29.16](https://github.com/digitopvn/diginext/compare/v3.29.15...v3.29.16) (2024-01-23)
+
+
+### Bug Fixes
+
+* **server:** skip overwrite prerelease url on env vars changed ([f66429d](https://github.com/digitopvn/diginext/commit/f66429d9656ec4c5f48355de684ffe205a7db05f))
+
+## [3.29.15](https://github.com/digitopvn/diginext/compare/v3.29.14...v3.29.15) (2024-01-19)
+
+
+### Bug Fixes
+
+* **server:** build issue of undefined git, try similar gits ([50237fd](https://github.com/digitopvn/diginext/commit/50237fdf89cb451be929ef50962fb0c0c1b93217))
+* **server:** debug build ([565c2de](https://github.com/digitopvn/diginext/commit/565c2de58063634dc34e7c08d1ac92699c73fa0e))
+
+## [3.29.14](https://github.com/digitopvn/diginext/compare/v3.29.13...v3.29.14) (2024-01-19)
+
+
+### Bug Fixes
+
+* **server:** pull git repo by http ([6732a66](https://github.com/digitopvn/diginext/commit/6732a66772c16a0cad400c0181741ecd97ecee22))
+
+## [3.29.13](https://github.com/digitopvn/diginext/compare/v3.29.12...v3.29.13) (2024-01-19)
+
+
+### Bug Fixes
+
+* **gitignore:** ignore credentials ([8ff1a1e](https://github.com/digitopvn/diginext/commit/8ff1a1e03dfed3c6d5c9645ee43510640ab7aff6))
+* **server:** disable verify git ssh when building ([865e924](https://github.com/digitopvn/diginext/commit/865e9249668d08811e86a4813e03d0b68f2a4f1d))
+
+## [3.29.12](https://github.com/digitopvn/diginext/compare/v3.29.11...v3.29.12) (2024-01-03)
+
+
+### Bug Fixes
+
+* **cli:** issue of expired refresh token ([32d00af](https://github.com/digitopvn/diginext/commit/32d00afa4107b8c4a0be21920d399688c68bd477))
+* **cli:** src/modules/git/updateBranchProtection.ts ([597c082](https://github.com/digitopvn/diginext/commit/597c0829b0bbfb6a5249ec2c6b6cca38cebd7bd4))
+* **cli:** src/modules/git/updateBranchProtection.ts ([fd2d439](https://github.com/digitopvn/diginext/commit/fd2d439cbadc38eb76f8b38a10f0b9d59d7df410))
+* **cli:** throw error when deploy at the same time ([10a697b](https://github.com/digitopvn/diginext/commit/10a697b1feb1b9125884d242f856f9df7e2fa27f))
+
 ## [3.29.12-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.29.11...v3.29.12-prerelease.1) (2023-12-18)
 
 

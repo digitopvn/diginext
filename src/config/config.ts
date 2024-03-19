@@ -3,6 +3,7 @@ import type execa from "execa";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { toNumber } from "lodash";
 
+import { Config } from "@/app.config";
 import type { ICloudDatabase } from "@/entities/CloudDatabase";
 import type { ICloudProvider } from "@/entities/CloudProvider";
 import type { ICluster } from "@/entities/Cluster";
@@ -80,8 +81,9 @@ export const getCliConfig = () => {
 	if (!existsSync(CLI_CONFIG_DIR)) mkdirSync(CLI_CONFIG_DIR, { recursive: true });
 	if (!existsSync(CLI_CONFIG_FILE)) writeFileSync(CLI_CONFIG_FILE, "{}", "utf8");
 
-	const conf = readJson(CLI_CONFIG_FILE);
-	return conf as CliConfig;
+	const conf = readJson(CLI_CONFIG_FILE) as CliConfig;
+	if (!conf.buildServerUrl) conf.buildServerUrl = Config.BASE_URL;
+	return conf;
 };
 
 /**

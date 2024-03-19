@@ -7,6 +7,7 @@ import { simpleGit } from "simple-git";
 
 import type InputOptions from "@/interfaces/InputOptions";
 import updateBranchProtection from "@/modules/git/updateBranchProtection";
+import updateRepoSetting from "@/modules/git/updateRepoSetting";
 import { wait } from "@/plugins";
 import { makeSlug } from "@/plugins/slug";
 
@@ -54,6 +55,7 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 		(async () => {
 			await Timer.wait(1000);
 			await updateBranchProtection(options);
+			await updateRepoSetting(options);
 		})();
 
 		// create developer branches

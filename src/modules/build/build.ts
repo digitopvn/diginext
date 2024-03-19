@@ -17,7 +17,6 @@ import { getIO, socketIO } from "@/server";
 import { WebhookService } from "@/services";
 
 import builder from "../builder";
-import { verifySSH } from "../git";
 import { pullOrCloneGitRepoHTTP, repoSshToRepoURL } from "../git/git-utils";
 import { connectRegistry } from "../registry/connect-registry";
 import { sendLog } from "./send-log-message";
@@ -355,30 +354,27 @@ export async function startBuild(
 	 * Verify SSH before cloning/pulling files from a git repository.
 	 */
 
-	const gitAuth = await verifySSH({ gitProvider });
-	if (!gitAuth) {
-		// print the logs to client (Dashboard & CLI)
-		sendLog({
-			SOCKET_ROOM,
-			action: "end",
-			type: "error",
-			message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`,
-		});
-		if (options?.onError) options?.onError(`[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`);
-		// update build status
-		await updateBuildStatus(newBuild, "failed");
-		// dispatch/trigger webhook
-		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
-		return;
-	}
-
-	// Git SSH verified -> start pulling now...
-	sendLog({ SOCKET_ROOM, message: `[START BUILD] Pulling latest source code from "${repoSSH}" at "${gitBranch}" branch...` });
+	// const gitAuth = await verifySSH({ gitProvider });
+	// if (!gitAuth) {
+	// 	// print the logs to client (Dashboard & CLI)
+	// 	sendLog({
+	// 		SOCKET_ROOM,
+	// 		action: "end",
+	// 		type: "error",
+	// 		message: `[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`,
+	// 	});
+	// 	if (options?.onError) options?.onError(`[START BUILD] "${buildDir}" -> Failed to verify "${gitProvider}" git SSH key.`);
+	// 	// update build status
+	// 	await updateBuildStatus(newBuild, "failed");
+	// 	// dispatch/trigger webhook
+	// 	if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+	// 	return;
+	// }
 
 	async function notifyClientGitPullFailure(e) {
 		// print the logs to client (Dashboard & CLI)
-		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `Failed to pull "${repoSSH}": ${e}` });
-		if (options?.onError) options?.onError(`Failed to pull "${repoSSH}": ${e}`);
+		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `[GIT] Failed to pull: "${e}"` });
+		if (options?.onError) options?.onError(`Failed to pull: "${e}"`);
 
 		// update build status
 		await updateBuildStatus(newBuild, "failed");
@@ -415,8 +411,29 @@ export async function startBuild(
 
 	// Clone or pull repository with HTTPS + access token:
 	if (app.gitProvider) {
-		const git = await DB.findOne("git", { _id: app.gitProvider });
+		// find the git provider of this app:
+		let git = await DB.findOne("git", { _id: app.gitProvider });
+		if (!git) {
+			if (!app.git?.provider) {
+				await notifyClientGitPullFailure(`Git provider not found (${app.gitProvider}).`);
+				return;
+			}
+
+			// try with any similar provider
+			git = await DB.findOne("git", { type: app.git?.provider });
+			if (!git) {
+				await notifyClientGitPullFailure(`Git provider not found (${app.gitProvider}).`);
+				return;
+			}
+		}
+		// console.log("git :>> ", git);
+
+		// parse repo URL from repo SSH
 		const repoURL = repoSshToRepoURL(repoSSH);
+
+		// notify client...
+		sendLog({ SOCKET_ROOM, message: `[START BUILD] Pulling latest source code from "${repoURL}" at "${gitBranch}" branch...` });
+
 		try {
 			await pullOrCloneGitRepoHTTP(repoURL, buildDir, gitBranch, {
 				// isDebugging: true,
@@ -427,11 +444,11 @@ export async function startBuild(
 				onUpdate: (message) => sendLog({ SOCKET_ROOM, message }),
 			});
 		} catch (err) {
-			await notifyClientGitPullFailure(err);
+			await notifyClientGitPullFailure(`${repoURL} :>> ${err}`);
 			return;
 		}
 	} else {
-		await notifyClientGitPullFailure("This app doesn't attach to any git provider.");
+		await notifyClientGitPullFailure(`This app doesn't attach to any git provider.`);
 		return;
 	}
 
