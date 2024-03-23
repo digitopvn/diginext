@@ -408,7 +408,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 	@Security("api_key")
 	@Security("jwt")
-	@Post("/is-onwer-workspace")
+	@Post("/is-owner-workspace")
 	async isOwnerWorkspace(@Body() data: { userId: string; workspace_id: string }) {
 		console.log("Is onwer workspace", data);
 		const result = await this.service.findOne({ owner: data.userId, _id: data.workspace_id });
