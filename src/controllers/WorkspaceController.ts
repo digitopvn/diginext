@@ -403,7 +403,17 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		const workspace = await this.service.findOne({ dx_key: data.old_key });
 		if (!workspace) throw new Error(`This workspace is not existed.`);
 		const workspaceUpdate = await DB.updateOne("workspace", { dx_key: data.old_key }, { dx_key: data.new_key });
-		console.log(workspaceUpdate);
 		return interfaces.respondSuccess({ data: { workspaceUpdate } });
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/is-onwer-workspace")
+	async isOwnerWorkspace(@Body() data: { userId: string; workspace_id: string }) {
+		console.log("Is onwer workspace", data);
+		const result = await this.service.findOne({ owner: data.userId, _id: data.workspace_id });
+		if (!result) throw new Error(`This is not the owner of workspace.`);
+
+		return interfaces.respondSuccess({ data: { result } });
 	}
 }
