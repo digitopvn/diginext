@@ -212,6 +212,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 
 		return resData;
 	} catch (e) {
+		console.log(url);
 		throw new Error(e);
 	}
 };
