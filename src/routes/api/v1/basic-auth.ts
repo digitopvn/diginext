@@ -135,6 +135,11 @@ router.post("/register", async (req, res) => {
 		access_token = accessToken;
 		refresh_token = refreshToken;
 
+		// assign JWT access token to cookie and request headers:
+		res.cookie("x-auth-cookie", access_token);
+		res.cookie("refresh_token", refresh_token);
+		res.header("Authorization", `Bearer ${access_token}`);
+
 		return res.json(respondSuccess({ data: { user: newUser, access_token, refresh_token } }));
 	} catch (error) {
 		console.error("Error during registration:", error);
