@@ -1,3 +1,16 @@
+# [3.31.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.30.1-prerelease.1...v3.31.0-prerelease.1) (2024-03-24)
+
+
+### Bug Fixes
+
+* **workspace:** spell check ([9416027](https://github.com/digitopvn/diginext/commit/9416027aefaf9423067f5794d9181bbe1287252c))
+
+
+### Features
+
+* **workspace:** check is owner workspace ([3cd92fc](https://github.com/digitopvn/diginext/commit/3cd92fc83c06d8d2cb11dd0de714b933bbcc1f3d))
+* **workspace:** check is owner workspace ([#481](https://github.com/digitopvn/diginext/issues/481)) ([d30e62f](https://github.com/digitopvn/diginext/commit/d30e62f6c207191b9de089c3d287a4796b444904))
+
 ## [3.30.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.30.0...v3.30.1-prerelease.1) (2024-03-19)
 
 
