@@ -1,14 +1,19 @@
 import bcrypt from "bcrypt";
 import express from "express";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { OAuth2Client } from "google-auth-library";
+import { isEmpty } from "lodash";
 import { model } from "mongoose";
 
 import { Config } from "@/app.config";
-import type { IRole, IUser, IWorkspace } from "@/entities";
+import type { IRole, IUser, IWorkspace, ProviderInfo, UserDto } from "@/entities";
 import { userSchema } from "@/entities";
 import { respondFailure, respondSuccess } from "@/interfaces";
 import { extractAccessTokenInfo, generateJWT } from "@/modules/passports";
 import { MongoDB } from "@/plugins/mongodb";
 import { UserService, WorkspaceService } from "@/services";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const router = express.Router();
 
@@ -231,5 +236,102 @@ router.post(
 		}
 	}
 );
+router.post("/login/google", async (req, res) => {
+	const { token } = req.body;
+	try {
+		const userGoogle = await client.verifyIdToken({
+			idToken: token,
+			audience: process.env.GOOGLE_CLIENT_ID,
+		});
+		const payload = userGoogle.getPayload();
+		const userid = payload.sub;
+
+		try {
+			const userSvc = new UserService();
+
+			let user = await userSvc.findOne({ email: payload.email }, { populate: ["roles"] });
+
+			if (user) {
+				const updateData = {} as UserDto;
+				if (user.image != payload.picture) updateData.image = payload.picture;
+				if (user.name != payload.given_name + payload.family_name) updateData.name = payload.given_name + payload.family_name;
+				if (!isEmpty(updateData)) user = await userSvc.updateOne({ _id: user._id }, updateData);
+				return res.json(respondSuccess({ data: { user } }));
+			}
+
+			const provider: ProviderInfo = {
+				name: "google",
+				user_id: userid,
+				access_token: token,
+			};
+
+			const newUser = await userSvc.create({
+				providers: [provider],
+				name: payload.given_name + payload.family_name,
+				email: payload.email,
+				image: payload.picture,
+				verified: payload.email_verified,
+				isActive: true,
+			});
+
+			let access_token: string;
+			let refresh_token: string;
+
+			let workspace: IWorkspace;
+			let workspaceId: string;
+			if (newUser.workspaces && newUser.workspaces.length === 1) {
+				// if this user only have 1 workspace -> make it active!
+				workspace = newUser.workspaces[0] as IWorkspace;
+				workspaceId = MongoDB.toString(workspace._id);
+
+				// active role
+				const activeRoleId = (newUser.roles[0] as IRole)._id;
+
+				// sign JWT
+				const { accessToken, refreshToken } = generateJWT(newUser._id.toString(), {
+					expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
+					workspaceId,
+				});
+				const tokenInfo = await extractAccessTokenInfo(
+					{ access_token: accessToken, refresh_token: refreshToken },
+					{ id: newUser._id.toString(), workspaceId, exp: Date.now() + 172800000 }
+				);
+
+				// update tokens to user info
+				await userSvc.updateOne(
+					{ _id: newUser._id },
+					{ token: tokenInfo.token, activeWorkspace: workspaceId, activeRole: activeRoleId },
+					{ populate: ["roles", "workspaces", "activeRole", "activeWorkspace"] }
+				);
+
+				access_token = accessToken;
+				refresh_token = refreshToken;
+
+				return res.json(respondSuccess({ data: { user: newUser, access_token, refresh_token } }));
+			}
+			// if this user has no workspaces or multiple workspaces -> select one!
+			console.warn("this user has no workspaces or multiple workspaces -> select one!");
+
+			const { accessToken, refreshToken } = generateJWT(newUser._id.toString(), { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
+			const tokenInfo = await extractAccessTokenInfo(
+				{ access_token: accessToken, refresh_token: refreshToken },
+				{ id: newUser._id.toString(), exp: Date.now() + 172800000 }
+			);
+
+			// update tokens to user info
+			const userUpdate = await userSvc.updateOne({ _id: newUser._id }, { token: tokenInfo.token }, { populate: ["workspaces", "roles"] });
+			access_token = accessToken;
+			refresh_token = refreshToken;
+
+			return res.json(respondSuccess({ data: { user: userUpdate, access_token, refresh_token } }));
+		} catch (error) {
+			console.error("Error during login:", error);
+			return res.json(respondFailure("Internal server error"));
+		}
+	} catch (error) {
+		console.error("Error authenticating with Google:", error);
+		res.status(401).json({ error: "Authentication failed" });
+	}
+});
 
 export default router;
