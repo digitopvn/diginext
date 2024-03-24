@@ -1,3 +1,17 @@
+# [3.31.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.31.0-prerelease.1...v3.31.0-prerelease.2) (2024-03-24)
+
+
+### Bug Fixes
+
+* **basic-auth:** remove req header ([e377184](https://github.com/digitopvn/diginext/commit/e3771842c39827863c1ec488ee07f1b7da08122a))
+* **basic-auth:** revert auth ([5a97615](https://github.com/digitopvn/diginext/commit/5a97615cc65eb426af77f50e0dcb1cbea1b52a2d))
+
+
+### Features
+
+* **basic-auth:** login with social ([56e34d2](https://github.com/digitopvn/diginext/commit/56e34d2e955d030649dad0a28a88e19252bef365))
+* **package.json:** google-auth-library ([739018b](https://github.com/digitopvn/diginext/commit/739018bef4f8b7f5d1878732e60d368b01642952))
+
 # [3.31.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.30.1-prerelease.1...v3.31.0-prerelease.1) (2024-03-24)
 
 
