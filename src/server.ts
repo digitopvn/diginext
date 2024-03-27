@@ -227,7 +227,7 @@ function initialize(db?: typeof mongoose) {
 	const rateLimiter = new RateLimiterMongo({
 		storeClient: db.connection,
 		tableName: "auth-rate-limit",
-		points: 5, // Requests
+		points: 50, // Requests
 		duration: 60, // Per second(s)
 		blockDuration: 60 * 60 * 1, // 1 hour
 	});
