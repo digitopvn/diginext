@@ -1,3 +1,11 @@
+# [3.31.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.31.0-prerelease.2...v3.31.0-prerelease.3) (2024-03-27)
+
+
+### Bug Fixes
+
+* **server.ts:** allow domain local ([c761e48](https://github.com/digitopvn/diginext/commit/c761e485cf4ae3c133a3b25f032df80fcfb6e03d))
+* **server.ts:** change rate limit ([f667166](https://github.com/digitopvn/diginext/commit/f66716683cf76c6e0f66f428d8361617f705611c))
+
 # [3.31.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.31.0-prerelease.1...v3.31.0-prerelease.2) (2024-03-24)
 
 
