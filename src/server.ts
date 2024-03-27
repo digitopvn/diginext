@@ -43,6 +43,7 @@ const allowedHosts = [
 	"localhost:3000",
 	"localhost:6969",
 	"localhost:4000",
+	"localhost:42000",
 	"topgroup.diginext.site",
 	"topgroup-v2.diginext.site",
 	"diginext.vn",
