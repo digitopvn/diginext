@@ -14,7 +14,8 @@ export const processApiRequest =
 
 			// mask sensitive information before responding:
 			// only for data which the current user doesn't own
-			if (!Config.SHARE_RESOURCE_CREDENTIAL && result) result.data = maskSensitiveInfo(result.data, req.user, req.role, req.baseUrl);
+			// console.log("Config.SHARE_RESOURCE_CREDENTIAL :>> ", Config.SHARE_RESOURCE_CREDENTIAL);
+			if (!Config.SHARE_RESOURCE_CREDENTIAL) result.data = maskSensitiveInfo(result.data, req.user, req.role, req.baseUrl);
 
 			// save activity log here...
 			saveActivityLog(req, res, next);
