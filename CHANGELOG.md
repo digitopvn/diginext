@@ -1,3 +1,25 @@
+# [3.31.0](https://github.com/digitopvn/diginext/compare/v3.30.0...v3.31.0) (2024-04-04)
+
+
+### Bug Fixes
+
+* **basic-auth:** remove req header ([e377184](https://github.com/digitopvn/diginext/commit/e3771842c39827863c1ec488ee07f1b7da08122a))
+* **basic-auth:** revert auth ([5a97615](https://github.com/digitopvn/diginext/commit/5a97615cc65eb426af77f50e0dcb1cbea1b52a2d))
+* **cli,cluster:** get credentials when auth cluster ([cc26ec0](https://github.com/digitopvn/diginext/commit/cc26ec0424ca996b221225ef6ae840852ecabdc0))
+* **github action:** update staging environment ([6aa9660](https://github.com/digitopvn/diginext/commit/6aa96606971ebbcf87ae6915292906079e324491))
+* **security:** mask all sensitive info ([f4725ef](https://github.com/digitopvn/diginext/commit/f4725ef78523d25b13edf4d60a94245872d26efc))
+* **server.ts:** allow domain local ([c761e48](https://github.com/digitopvn/diginext/commit/c761e485cf4ae3c133a3b25f032df80fcfb6e03d))
+* **server.ts:** change rate limit ([f667166](https://github.com/digitopvn/diginext/commit/f66716683cf76c6e0f66f428d8361617f705611c))
+* **workspace:** spell check ([9416027](https://github.com/digitopvn/diginext/commit/9416027aefaf9423067f5794d9181bbe1287252c))
+
+
+### Features
+
+* **basic-auth:** login with social ([56e34d2](https://github.com/digitopvn/diginext/commit/56e34d2e955d030649dad0a28a88e19252bef365))
+* **package.json:** google-auth-library ([739018b](https://github.com/digitopvn/diginext/commit/739018bef4f8b7f5d1878732e60d368b01642952))
+* **workspace:** check is owner workspace ([3cd92fc](https://github.com/digitopvn/diginext/commit/3cd92fc83c06d8d2cb11dd0de714b933bbcc1f3d))
+* **workspace:** check is owner workspace ([#481](https://github.com/digitopvn/diginext/issues/481)) ([d30e62f](https://github.com/digitopvn/diginext/commit/d30e62f6c207191b9de089c3d287a4796b444904))
+
 # [3.31.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.31.0-prerelease.2...v3.31.0-prerelease.3) (2024-03-27)
 
 
