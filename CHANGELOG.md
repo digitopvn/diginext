@@ -1,3 +1,11 @@
+## [3.31.1](https://github.com/digitopvn/diginext/compare/v3.31.0...v3.31.1) (2024-04-04)
+
+
+### Bug Fixes
+
+* **admin:** fix dark mode and smart form always send field config ([b9ef789](https://github.com/digitopvn/diginext/commit/b9ef789d390fce55a413c201da7029a295e7c83c))
+* **admin:** fix dark mode and smart form always send field config ([#485](https://github.com/digitopvn/diginext/issues/485)) ([1851bb2](https://github.com/digitopvn/diginext/commit/1851bb201ebac281f99390cc79297289f6d3b5cf))
+
 # [3.31.0](https://github.com/digitopvn/diginext/compare/v3.30.0...v3.31.0) (2024-04-04)
 
 
