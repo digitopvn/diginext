@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.30.0",
+	"version": "3.31.0-prerelease.3",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"exports": "./index.js",
 	"bin": {
@@ -194,6 +194,7 @@
 		"gitignore": "^0.6.0",
 		"glob": "^8.1.0",
 		"globby": "11.1.0",
+		"google-auth-library": "^9.7.0",
 		"humanize-duration": "^3.25.1",
 		"husky": "^8.0.0",
 		"image-size": "^1.0.2",

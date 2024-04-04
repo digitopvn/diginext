@@ -42,3 +42,10 @@ export async function dxJoinWorkspace(email: string, slug: string, dxKey: string
 		} as CreateWorkspaceResponse;
 	return dxApi<JoinWorkspaceResponse>({ url: "/join-workspace", data: { email, slug }, method: "POST", dxKey });
 }
+
+// export async function dxIsOnwerWorkspace(userId: string, workspaceId: string) {
+// 	console.log("CHECK IS OWNER WORKSPACE");
+// 	if (IsTest()) {
+// 		return
+// 	}
+// }
