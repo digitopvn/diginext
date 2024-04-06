@@ -1,3 +1,11 @@
+# [3.31.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.31.0-prerelease.3...v3.31.0-prerelease.4) (2024-04-06)
+
+
+### Features
+
+* **basic-auth.ts:** generate token ([b1da592](https://github.com/digitopvn/diginext/commit/b1da5924fcabdcbb550297ed1105632c7ac9afc1))
+* **basic-auth.ts:** generate token ([#486](https://github.com/digitopvn/diginext/issues/486)) ([e730e0f](https://github.com/digitopvn/diginext/commit/e730e0fe9fdda6232ffec2f704eef73804241cce))
+
 # [3.31.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.31.0-prerelease.2...v3.31.0-prerelease.3) (2024-03-27)
 
 
