@@ -11,7 +11,7 @@ import { dxSendEmail } from "@/modules/diginext/dx-email";
 import type { DxPackage } from "@/modules/diginext/dx-package";
 import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
 import type { DxSubsription } from "@/modules/diginext/dx-subscription";
-import { dxCreateWorkspace, dxJoinWorkspace } from "@/modules/diginext/dx-workspace";
+import { dxJoinWorkspace } from "@/modules/diginext/dx-workspace";
 import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
@@ -129,21 +129,21 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		// ----- VERIFY DX KEY -----
 
 		// Create workspace in diginext-site
-		if (!IsTest()) {
-			const dataCreateWorkSpace: CreateWorkspaceParams = {
-				name: name,
-				public: body.public,
-				type: Config.SERVER_TYPE,
-				packageId: pkgId,
-				email: ownerUser.email,
-				userId: ownerUser._id,
-				subscriptionId,
-			};
-			const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace, dx_key);
-			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
-		} else {
-			dx_key = "some-random-key";
-		}
+		// if (!IsTest()) {
+		// 	const dataCreateWorkSpace: CreateWorkspaceParams = {
+		// 		name: name,
+		// 		public: body.public,
+		// 		type: Config.SERVER_TYPE,
+		// 		packageId: pkgId,
+		// 		email: ownerUser.email,
+		// 		userId: ownerUser._id,
+		// 		subscriptionId,
+		// 	};
+		// 	const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace, dx_key);
+		// 	if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+		// } else {
+		// 	dx_key = "some-random-key";
+		// }
 		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
 
 		// ----- END VERIFYING -----
