@@ -255,6 +255,7 @@ router.post("/login/google", async (req, res) => {
 				const updateData = {} as UserDto;
 				if (user.image != payload.picture) updateData.image = payload.picture;
 				if (user.name != payload.given_name + payload.family_name) updateData.name = payload.given_name + payload.family_name;
+
 				if (!isEmpty(updateData)) user = await userSvc.updateOne({ _id: user._id }, updateData);
 				return res.json(respondSuccess({ data: { user } }));
 			}
@@ -306,6 +307,7 @@ router.post("/login/google", async (req, res) => {
 
 				access_token = accessToken;
 				refresh_token = refreshToken;
+				console.log("resfrest_token 1: " + refreshToken);
 
 				return res.json(respondSuccess({ data: { user: newUser, access_token, refresh_token } }));
 			}
@@ -322,6 +324,7 @@ router.post("/login/google", async (req, res) => {
 			const userUpdate = await userSvc.updateOne({ _id: newUser._id }, { token: tokenInfo.token }, { populate: ["workspaces", "roles"] });
 			access_token = accessToken;
 			refresh_token = refreshToken;
+			console.log("resfrest_token: " + refreshToken);
 
 			return res.json(respondSuccess({ data: { user: userUpdate, access_token, refresh_token } }));
 		} catch (error) {
@@ -330,6 +333,20 @@ router.post("/login/google", async (req, res) => {
 		}
 	} catch (error) {
 		console.error("Error authenticating with Google:", error);
+		res.status(401).json({ error: "Authentication failed" });
+	}
+});
+
+router.post("/generate-access-token", async (req, res) => {
+	const { workspaceId, userId } = req.body;
+	try {
+		const { accessToken: access_token, refreshToken: refresh_token } = generateJWT(userId, {
+			expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
+			workspaceId,
+		});
+		return res.json(respondSuccess({ data: { access_token, refresh_token } }));
+	} catch (error) {
+		console.error("Error authenticating generate:", error);
 		res.status(401).json({ error: "Authentication failed" });
 	}
 });
