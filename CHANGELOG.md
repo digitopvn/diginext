@@ -1,3 +1,10 @@
+# [3.31.0-prerelease.5](https://github.com/digitopvn/diginext/compare/v3.31.0-prerelease.4...v3.31.0-prerelease.5) (2024-04-07)
+
+
+### Bug Fixes
+
+* **package.json:** change version ([ce92534](https://github.com/digitopvn/diginext/commit/ce925347793db6e529badbd83e89a4c1d3f40727))
+
 # [3.31.0-prerelease.4](https://github.com/digitopvn/diginext/compare/v3.31.0-prerelease.3...v3.31.0-prerelease.4) (2024-04-06)
 
 
