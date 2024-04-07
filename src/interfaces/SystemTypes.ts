@@ -184,6 +184,7 @@ export const credentialFields: string[] = [
 	"github_oauth.personal_access_token",
 	// metadata
 	"metadata.email",
+	"metadata.access_token",
 	"metadata.apiAccessToken",
 	"metadata.serviceAccount",
 	"metadata.dockerPassword",

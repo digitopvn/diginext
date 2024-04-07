@@ -2,8 +2,6 @@ import _, { isArray } from "lodash";
 
 import type { IRole, IUser } from "@/entities";
 
-import { isOwned } from "./is-own";
-
 export interface MaskOptions {
 	/**
 	 * @default *
@@ -30,30 +28,62 @@ export const mask = (str: string, leftUnmaskLength = 0, rightUnmaskLength?: numb
 };
 
 export const maskSensitiveInfo = (data: any, user: IUser, role?: IRole, route?: string) => {
-	if (route.indexOf("/api_key")) return data; // <-- exclude masking data for some specific routes
+	// console.log("[mask-sensitive-info] typeof data :>> ", typeof data);
+	// console.log("[mask-sensitive-info] route :>> ", route);
+
+	if (route.indexOf("/api_key") > -1) return data; // <-- exclude masking data for some specific routes
 	if (typeof data === "boolean" || typeof data === "number" || typeof data === "string") return data;
 
+	// console.log("[mask-sensitive-info] user :>> ", user);
+	// console.log("[mask-sensitive-info] user.name :>> ", user.name);
+
 	// parse role
-	if (!role && (user.activeRole as IRole)?._id) role = user.activeRole as IRole;
+	// console.log("[mask-sensitive-info] user.activeRole :>> ", user.activeRole);
+
+	if ((user.activeRole as IRole)?._id) role = user.activeRole as IRole;
+
+	// console.log("[mask-sensitive-info] role :>> ", role);
+
 	if (!role) return;
 
 	const maskedFields = role?.maskedFields || [];
+	// console.log("[mask-sensitive-info] maskedFields :>> ", maskedFields);
 
 	// mask fields
 	if (isArray(data)) {
 		data = data.map((item) => {
-			if (!isOwned(item, user)) {
-				maskedFields.map((maskedField) => {
-					if (_.has(item, maskedField)) item = _.set(item, maskedField, "");
-				});
-			}
+			/**
+			 * ONLY Mask fields for NOT-owned items
+			 */
+			// if (!isOwned(item, user)) {
+			// 	maskedFields.map((maskedField) => {
+			// 		if (_.has(item, maskedField)) item = _.set(item, maskedField, "");
+			// 	});
+			// }
+
+			/**
+			 * Mask all fields
+			 */
+			maskedFields.map((maskedField) => {
+				if (_.has(item, maskedField)) item = _.set(item, maskedField, "");
+			});
 			return item;
 		});
 	} else {
-		if (!isOwned(data, user))
-			maskedFields.map((maskedField) => {
-				if (_.has(data, maskedField)) data = _.set(data, maskedField, "");
-			});
+		/**
+		 * ONLY Mask fields for NOT-owned items
+		 */
+		// if (!isOwned(data, user))
+		// 	maskedFields.map((maskedField) => {
+		// 		if (_.has(data, maskedField)) data = _.set(data, maskedField, "");
+		// 	});
+
+		/**
+		 * Mask all fields
+		 */
+		maskedFields.map((maskedField) => {
+			if (_.has(data, maskedField)) data = _.set(data, maskedField, "");
+		});
 	}
 
 	return data;
