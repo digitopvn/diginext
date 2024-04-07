@@ -1,3 +1,18 @@
+# [3.32.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.31.1...v3.32.0-prerelease.1) (2024-04-07)
+
+
+### Bug Fixes
+
+* **package.json:** change version ([ce92534](https://github.com/digitopvn/diginext/commit/ce925347793db6e529badbd83e89a4c1d3f40727))
+* resolve conflict ([621ec6c](https://github.com/digitopvn/diginext/commit/621ec6ca266447f1cbf02ddac92a23b061bc320c))
+* **resolve:** conflict file ([b24d651](https://github.com/digitopvn/diginext/commit/b24d651c313ca3dfb8a1eb9808c59c877241d2d3))
+
+
+### Features
+
+* **basic-auth.ts:** generate token ([b1da592](https://github.com/digitopvn/diginext/commit/b1da5924fcabdcbb550297ed1105632c7ac9afc1))
+* **basic-auth.ts:** generate token ([#486](https://github.com/digitopvn/diginext/issues/486)) ([e730e0f](https://github.com/digitopvn/diginext/commit/e730e0fe9fdda6232ffec2f704eef73804241cce))
+
 ## [3.31.1](https://github.com/digitopvn/diginext/compare/v3.31.0...v3.31.1) (2024-04-04)
 
 
