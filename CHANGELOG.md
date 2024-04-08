@@ -1,3 +1,11 @@
+## [3.32.1](https://github.com/digitopvn/diginext/compare/v3.32.0...v3.32.1) (2024-04-08)
+
+
+### Bug Fixes
+
+* **admin:** fixed public key not found ([8b52e7a](https://github.com/digitopvn/diginext/commit/8b52e7a3adbb4eb9a67f6697731652434baa1b84))
+* **cli:** force dockerignore skip git dir ([4f4e982](https://github.com/digitopvn/diginext/commit/4f4e9822a91a558871b3ded1afe5ae127e40c395))
+
 # [3.32.0](https://github.com/digitopvn/diginext/compare/v3.31.1...v3.32.0) (2024-04-07)
 
 
