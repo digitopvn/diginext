@@ -1,3 +1,11 @@
+## [3.32.2](https://github.com/digitopvn/diginext/compare/v3.32.1...v3.32.2) (2024-04-10)
+
+
+### Bug Fixes
+
+* **server:** hide docker auth in error message ([e11aa9f](https://github.com/digitopvn/diginext/commit/e11aa9f2d311a119539012ea4e0423f556c1f906))
+* **server:** hide docker auth in error message ([#491](https://github.com/digitopvn/diginext/issues/491)) ([d2299a2](https://github.com/digitopvn/diginext/commit/d2299a29baaf772628b529d7322112ff5d21bc8c))
+
 ## [3.32.1](https://github.com/digitopvn/diginext/compare/v3.32.0...v3.32.1) (2024-04-08)
 
 
