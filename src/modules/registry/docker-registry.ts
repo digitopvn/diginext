@@ -45,7 +45,7 @@ const DockerRegistry = {
 				if (options.isDebugging) log(`[PODMAN] connectDockerRegistry >`, { connectRes });
 			}
 		} catch (e) {
-			throw new Error(`[DOCKER] connectDockerRegistry > ${e}`);
+			throw new Error(`[${Config.BUILDER.toUpperCase()}] Unable to connect to Docker Registry: Authentication failure.`);
 		}
 
 		const workspace = await DB.findOne("workspace", { _id: workspaceId });
