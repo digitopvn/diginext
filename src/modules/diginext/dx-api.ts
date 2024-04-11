@@ -9,12 +9,12 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 	const { method, dxKey } = options;
 
 	if (isEmpty(options.headers)) options.headers = {};
-	console.log("DXKEY :", dxKey);
+	// console.log("DXKEY :", dxKey);
 
 	options.baseURL = Config.DX_API_URL;
 	// options.headers.Authorization = `Bearer ${licenseKey}`;
 	if (dxKey) options.headers["X-API-Key"] = dxKey;
-	console.log("HEADER OPTIONS:", options.headers["X-API-Key"]);
+	// console.log("HEADER OPTIONS:", options.headers["X-API-Key"]);
 
 	if (["POST", "PATCH", "DELETE"].includes(method?.toUpperCase())) {
 		if (isEmpty(options.headers["content-type"])) options.headers["content-type"] = "application/json";
