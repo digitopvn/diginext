@@ -234,7 +234,7 @@ export default class BaseService<T = any> {
 												else: null,
 											},
 										},
-								  },
+									},
 						},
 					},
 				});
@@ -280,15 +280,15 @@ export default class BaseService<T = any> {
 			pagination.prev_page =
 				pagination.current_page != prevPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 
 			pagination.next_page =
 				pagination.current_page != nextPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 		}
 
@@ -364,7 +364,7 @@ export default class BaseService<T = any> {
 												else: null,
 											},
 										},
-								  },
+									},
 						},
 					},
 				});
@@ -401,15 +401,15 @@ export default class BaseService<T = any> {
 			pagination.prev_page =
 				pagination.current_page != prevPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 
 			pagination.next_page =
 				pagination.current_page != nextPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 		}
 
