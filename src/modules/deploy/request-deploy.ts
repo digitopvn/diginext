@@ -50,7 +50,7 @@ export async function requestDeploy(options: InputOptions) {
 		return;
 	}
 
-	// check ".dockerignore"
+	// [SECURITY] Check ".dockerignore"
 	let dockerIgnoreFile = resolveFilePath(".dockerignore", {
 		targetDirectory,
 		env,
@@ -60,7 +60,8 @@ export async function requestDeploy(options: InputOptions) {
 	if (dockerIgnoreFile) {
 		const dockerIgnoreContent = readFileSync(dockerIgnoreFile, "utf8");
 		if (dockerIgnoreContent.indexOf(".git") === -1) {
-			logWarn(`You should add ".git/" to your ".dockerignore" file due to security reason.`);
+			logError(`You need to add ".git/" to your ".dockerignore" file due to security reason.`);
+			return;
 		}
 	}
 

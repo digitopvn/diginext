@@ -125,11 +125,11 @@ export class Config {
 	 * Share resource credentials to workspaces?
 	 * - If TRUE -> Everyone can read the cloud resource's credentials (such as secrets, service accounts, api access token,...)
 	 * - If FALSE -> Only the server can read cloud resource's credentials, others (CLI & API) won't, even Workspace Administrators or Moderators.
-	 * @default true
+	 * @default false
 	 */
 	static get SHARE_RESOURCE_CREDENTIAL() {
 		return typeof trimNull(process.env.SHARE_RESOURCE_CREDENTIAL) === "undefined"
-			? true
+			? false
 			: trimNull(process.env.SHARE_RESOURCE_CREDENTIAL) === "true" ||
 					process.env.SHARE_RESOURCE_CREDENTIAL === "TRUE" ||
 					process.env.SHARE_RESOURCE_CREDENTIAL === "1";

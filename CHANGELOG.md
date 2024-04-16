@@ -1,3 +1,135 @@
+## [3.32.2](https://github.com/digitopvn/diginext/compare/v3.32.1...v3.32.2) (2024-04-10)
+
+
+### Bug Fixes
+
+* **server:** hide docker auth in error message ([e11aa9f](https://github.com/digitopvn/diginext/commit/e11aa9f2d311a119539012ea4e0423f556c1f906))
+* **server:** hide docker auth in error message ([#491](https://github.com/digitopvn/diginext/issues/491)) ([d2299a2](https://github.com/digitopvn/diginext/commit/d2299a29baaf772628b529d7322112ff5d21bc8c))
+
+## [3.32.1](https://github.com/digitopvn/diginext/compare/v3.32.0...v3.32.1) (2024-04-08)
+
+
+### Bug Fixes
+
+* **admin:** fixed public key not found ([8b52e7a](https://github.com/digitopvn/diginext/commit/8b52e7a3adbb4eb9a67f6697731652434baa1b84))
+* **cli:** force dockerignore skip git dir ([4f4e982](https://github.com/digitopvn/diginext/commit/4f4e9822a91a558871b3ded1afe5ae127e40c395))
+
+# [3.32.0](https://github.com/digitopvn/diginext/compare/v3.31.1...v3.32.0) (2024-04-07)
+
+
+### Bug Fixes
+
+* **package.json:** change version ([ce92534](https://github.com/digitopvn/diginext/commit/ce925347793db6e529badbd83e89a4c1d3f40727))
+* resolve conflict ([621ec6c](https://github.com/digitopvn/diginext/commit/621ec6ca266447f1cbf02ddac92a23b061bc320c))
+* **resolve:** conflict file ([b24d651](https://github.com/digitopvn/diginext/commit/b24d651c313ca3dfb8a1eb9808c59c877241d2d3))
+
+
+### Features
+
+* **basic-auth.ts:** generate token ([b1da592](https://github.com/digitopvn/diginext/commit/b1da5924fcabdcbb550297ed1105632c7ac9afc1))
+* **basic-auth.ts:** generate token ([#486](https://github.com/digitopvn/diginext/issues/486)) ([e730e0f](https://github.com/digitopvn/diginext/commit/e730e0fe9fdda6232ffec2f704eef73804241cce))
+
+# [3.32.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.31.1...v3.32.0-prerelease.1) (2024-04-07)
+
+
+### Bug Fixes
+
+* **package.json:** change version ([ce92534](https://github.com/digitopvn/diginext/commit/ce925347793db6e529badbd83e89a4c1d3f40727))
+* resolve conflict ([621ec6c](https://github.com/digitopvn/diginext/commit/621ec6ca266447f1cbf02ddac92a23b061bc320c))
+* **resolve:** conflict file ([b24d651](https://github.com/digitopvn/diginext/commit/b24d651c313ca3dfb8a1eb9808c59c877241d2d3))
+
+
+### Features
+
+* **basic-auth.ts:** generate token ([b1da592](https://github.com/digitopvn/diginext/commit/b1da5924fcabdcbb550297ed1105632c7ac9afc1))
+* **basic-auth.ts:** generate token ([#486](https://github.com/digitopvn/diginext/issues/486)) ([e730e0f](https://github.com/digitopvn/diginext/commit/e730e0fe9fdda6232ffec2f704eef73804241cce))
+
+## [3.31.1](https://github.com/digitopvn/diginext/compare/v3.31.0...v3.31.1) (2024-04-04)
+
+
+### Bug Fixes
+
+* **admin:** fix dark mode and smart form always send field config ([b9ef789](https://github.com/digitopvn/diginext/commit/b9ef789d390fce55a413c201da7029a295e7c83c))
+* **admin:** fix dark mode and smart form always send field config ([#485](https://github.com/digitopvn/diginext/issues/485)) ([1851bb2](https://github.com/digitopvn/diginext/commit/1851bb201ebac281f99390cc79297289f6d3b5cf))
+
+# [3.31.0](https://github.com/digitopvn/diginext/compare/v3.30.0...v3.31.0) (2024-04-04)
+
+
+### Bug Fixes
+
+* **basic-auth:** remove req header ([e377184](https://github.com/digitopvn/diginext/commit/e3771842c39827863c1ec488ee07f1b7da08122a))
+* **basic-auth:** revert auth ([5a97615](https://github.com/digitopvn/diginext/commit/5a97615cc65eb426af77f50e0dcb1cbea1b52a2d))
+* **cli,cluster:** get credentials when auth cluster ([cc26ec0](https://github.com/digitopvn/diginext/commit/cc26ec0424ca996b221225ef6ae840852ecabdc0))
+* **github action:** update staging environment ([6aa9660](https://github.com/digitopvn/diginext/commit/6aa96606971ebbcf87ae6915292906079e324491))
+* **security:** mask all sensitive info ([f4725ef](https://github.com/digitopvn/diginext/commit/f4725ef78523d25b13edf4d60a94245872d26efc))
+* **server.ts:** allow domain local ([c761e48](https://github.com/digitopvn/diginext/commit/c761e485cf4ae3c133a3b25f032df80fcfb6e03d))
+* **server.ts:** change rate limit ([f667166](https://github.com/digitopvn/diginext/commit/f66716683cf76c6e0f66f428d8361617f705611c))
+* **workspace:** spell check ([9416027](https://github.com/digitopvn/diginext/commit/9416027aefaf9423067f5794d9181bbe1287252c))
+
+
+### Features
+
+* **basic-auth:** login with social ([56e34d2](https://github.com/digitopvn/diginext/commit/56e34d2e955d030649dad0a28a88e19252bef365))
+* **package.json:** google-auth-library ([739018b](https://github.com/digitopvn/diginext/commit/739018bef4f8b7f5d1878732e60d368b01642952))
+* **workspace:** check is owner workspace ([3cd92fc](https://github.com/digitopvn/diginext/commit/3cd92fc83c06d8d2cb11dd0de714b933bbcc1f3d))
+* **workspace:** check is owner workspace ([#481](https://github.com/digitopvn/diginext/issues/481)) ([d30e62f](https://github.com/digitopvn/diginext/commit/d30e62f6c207191b9de089c3d287a4796b444904))
+
+# [3.31.0-prerelease.3](https://github.com/digitopvn/diginext/compare/v3.31.0-prerelease.2...v3.31.0-prerelease.3) (2024-03-27)
+
+
+### Bug Fixes
+
+* **server.ts:** allow domain local ([c761e48](https://github.com/digitopvn/diginext/commit/c761e485cf4ae3c133a3b25f032df80fcfb6e03d))
+* **server.ts:** change rate limit ([f667166](https://github.com/digitopvn/diginext/commit/f66716683cf76c6e0f66f428d8361617f705611c))
+
+# [3.31.0-prerelease.2](https://github.com/digitopvn/diginext/compare/v3.31.0-prerelease.1...v3.31.0-prerelease.2) (2024-03-24)
+
+
+### Bug Fixes
+
+* **basic-auth:** remove req header ([e377184](https://github.com/digitopvn/diginext/commit/e3771842c39827863c1ec488ee07f1b7da08122a))
+* **basic-auth:** revert auth ([5a97615](https://github.com/digitopvn/diginext/commit/5a97615cc65eb426af77f50e0dcb1cbea1b52a2d))
+
+
+### Features
+
+* **basic-auth:** login with social ([56e34d2](https://github.com/digitopvn/diginext/commit/56e34d2e955d030649dad0a28a88e19252bef365))
+* **package.json:** google-auth-library ([739018b](https://github.com/digitopvn/diginext/commit/739018bef4f8b7f5d1878732e60d368b01642952))
+
+# [3.31.0-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.30.1-prerelease.1...v3.31.0-prerelease.1) (2024-03-24)
+
+
+### Bug Fixes
+
+* **workspace:** spell check ([9416027](https://github.com/digitopvn/diginext/commit/9416027aefaf9423067f5794d9181bbe1287252c))
+
+
+### Features
+
+* **workspace:** check is owner workspace ([3cd92fc](https://github.com/digitopvn/diginext/commit/3cd92fc83c06d8d2cb11dd0de714b933bbcc1f3d))
+* **workspace:** check is owner workspace ([#481](https://github.com/digitopvn/diginext/issues/481)) ([d30e62f](https://github.com/digitopvn/diginext/commit/d30e62f6c207191b9de089c3d287a4796b444904))
+
+## [3.30.1-prerelease.1](https://github.com/digitopvn/diginext/compare/v3.30.0...v3.30.1-prerelease.1) (2024-03-19)
+
+
+### Bug Fixes
+
+* **github action:** update staging environment ([6aa9660](https://github.com/digitopvn/diginext/commit/6aa96606971ebbcf87ae6915292906079e324491))
+
+# [3.30.0](https://github.com/digitopvn/diginext/compare/v3.29.16...v3.30.0) (2024-01-30)
+
+
+### Bug Fixes
+
+* **cli:** map env prerelease ([3f372da](https://github.com/digitopvn/diginext/commit/3f372da92ccf37dda58247cc76628e92404aa8e7))
+* **cli:** updateBranchProtech disable required_linear_history ([fe05c00](https://github.com/digitopvn/diginext/commit/fe05c00b8ebdbf7a71ad70f6b576520057c81e08))
+* skip test github ([fc86cb2](https://github.com/digitopvn/diginext/commit/fc86cb2bb87d3e23dff8959ad117dfea1dca1d95))
+
+
+### Features
+
+* **cli:** enabled allow_auto_merge on default init github repo ([449ea6b](https://github.com/digitopvn/diginext/commit/449ea6b3396bbede501def1be12819c17b4d2a8b))
+
 ## [3.29.16](https://github.com/digitopvn/diginext/compare/v3.29.15...v3.29.16) (2024-01-23)
 
 

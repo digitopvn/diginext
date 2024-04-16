@@ -3,7 +3,6 @@ import type { IUser, UserDto } from "@/entities/User";
 import { userSchema } from "@/entities/User";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
-import { dxCreateUser } from "@/modules/diginext/dx-user";
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
@@ -28,17 +27,17 @@ export class UserService extends BaseService<IUser> {
 		if (!data.username) data.username = data.slug;
 		// create user with DX Site
 		// console.log("INPUT DATA USER", data);
-		const createUserRes = await dxCreateUser({
-			email: data.email,
-			name: data.name,
-			password: data?.password,
-			isActive: data.active === undefined ? true : data.active,
-			providers: data?.providers,
-			username: data?.displayName,
-			image: data?.image,
-		});
+		// const createUserRes = await dxCreateUser({
+		// 	email: data.email,
+		// 	name: data.name,
+		// 	password: data?.password,
+		// 	isActive: data.active === undefined ? true : data.active,
+		// 	providers: data?.providers,
+		// 	username: data?.displayName,
+		// 	image: data?.image,
+		// });
 		// console.log("RES DX SITE", createUserRes);
-		if (!createUserRes?.status) throw new Error(`Create user fail.`);
+		// if (!createUserRes?.status) throw new Error(`Create user fail.`);
 		return super.create(data, options);
 	}
 

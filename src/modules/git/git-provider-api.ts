@@ -36,8 +36,8 @@ const userRepoApiPath = (provider: GitProviderType, username?: string, slug?: st
 	provider === "bitbucket"
 		? `/repositories/${username}${slug ? `/${slug}` : ""}`
 		: provider === "github"
-		? `/user${username ? `/${username}` : ""}/repos`
-		: undefined;
+			? `/user${username ? `/${username}` : ""}/repos`
+			: undefined;
 
 const orgRepoApiPath = (provider: GitProviderType, org?: string, slug?: string) =>
 	provider === "bitbucket" ? `/repositories/${org}${slug ? `/${slug}` : ""}` : provider === "github" ? `/orgs/${org}/repos` : undefined;
@@ -212,6 +212,7 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 
 		return resData;
 	} catch (e) {
+		console.log(url);
 		throw new Error(e);
 	}
 };

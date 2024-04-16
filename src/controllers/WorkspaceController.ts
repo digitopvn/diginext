@@ -11,7 +11,7 @@ import { dxSendEmail } from "@/modules/diginext/dx-email";
 import type { DxPackage } from "@/modules/diginext/dx-package";
 import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
 import type { DxSubsription } from "@/modules/diginext/dx-subscription";
-import { dxCreateWorkspace, dxJoinWorkspace } from "@/modules/diginext/dx-workspace";
+import { dxJoinWorkspace } from "@/modules/diginext/dx-workspace";
 import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
@@ -129,21 +129,21 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		// ----- VERIFY DX KEY -----
 
 		// Create workspace in diginext-site
-		if (!IsTest()) {
-			const dataCreateWorkSpace: CreateWorkspaceParams = {
-				name: name,
-				public: body.public,
-				type: Config.SERVER_TYPE,
-				packageId: pkgId,
-				email: ownerUser.email,
-				userId: ownerUser._id,
-				subscriptionId,
-			};
-			const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace, dx_key);
-			if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
-		} else {
-			dx_key = "some-random-key";
-		}
+		// if (!IsTest()) {
+		// 	const dataCreateWorkSpace: CreateWorkspaceParams = {
+		// 		name: name,
+		// 		public: body.public,
+		// 		type: Config.SERVER_TYPE,
+		// 		packageId: pkgId,
+		// 		email: ownerUser.email,
+		// 		userId: ownerUser._id,
+		// 		subscriptionId,
+		// 	};
+		// 	const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace, dx_key);
+		// 	if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+		// } else {
+		// 	dx_key = "some-random-key";
+		// }
 		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
 
 		// ----- END VERIFYING -----
@@ -403,7 +403,17 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 		const workspace = await this.service.findOne({ dx_key: data.old_key });
 		if (!workspace) throw new Error(`This workspace is not existed.`);
 		const workspaceUpdate = await DB.updateOne("workspace", { dx_key: data.old_key }, { dx_key: data.new_key });
-		console.log(workspaceUpdate);
 		return interfaces.respondSuccess({ data: { workspaceUpdate } });
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/is-owner-workspace")
+	async isOwnerWorkspace(@Body() data: { userId: string; workspace_id: string }) {
+		console.log("Is onwer workspace", data);
+		const result = await this.service.findOne({ owner: data.userId, _id: data.workspace_id });
+		if (!result) throw new Error(`This is not the owner of workspace.`);
+
+		return interfaces.respondSuccess({ data: { result } });
 	}
 }

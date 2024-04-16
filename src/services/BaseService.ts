@@ -195,8 +195,8 @@ export default class BaseService<T = any> {
 
 		// populate
 		if (options?.populate && options?.populate.length > 0) {
-			options?.populate.forEach((collection) => {
-				const collectionPath = this.model.schema.paths[collection];
+			options?.populate.forEach((field) => {
+				const collectionPath = this.model.schema.paths[field];
 				if (!collectionPath) return;
 
 				const lookupCollection = collectionPath.options?.ref;
@@ -208,33 +208,33 @@ export default class BaseService<T = any> {
 				pipelines.push({
 					$lookup: {
 						from: lookupCollection,
-						localField: collection,
+						localField: field,
 						foreignField: "_id",
-						as: collection,
+						as: field,
 					},
 				});
 
 				// if there are many results, return an array, if there are only 1 result, return an object
 				pipelines.push({
 					$addFields: {
-						[collection]: {
+						[field]: {
 							$cond: isPopulatedFieldArray
-								? [{ $isArray: `$${collection}` }, `$${collection}`, { $ifNull: [`$${collection}`, null] }]
+								? [{ $isArray: `$${field}` }, `$${field}`, { $ifNull: [`$${field}`, null] }]
 								: {
 										if: {
-											$and: [{ $isArray: `$${collection}` }, { $eq: [{ $size: `$${collection}` }, 1] }],
+											$and: [{ $isArray: `$${field}` }, { $eq: [{ $size: `$${field}` }, 1] }],
 										},
-										then: { $arrayElemAt: [`$${collection}`, 0] },
+										then: { $arrayElemAt: [`$${field}`, 0] },
 										else: {
 											$cond: {
 												if: {
-													$and: [{ $isArray: `$${collection}` }, { $ne: [{ $size: `$${collection}` }, 1] }],
+													$and: [{ $isArray: `$${field}` }, { $ne: [{ $size: `$${field}` }, 1] }],
 												},
-												then: `$${collection}`,
+												then: `$${field}`,
 												else: null,
 											},
 										},
-								  },
+									},
 						},
 					},
 				});
@@ -280,15 +280,15 @@ export default class BaseService<T = any> {
 			pagination.prev_page =
 				pagination.current_page != prevPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 
 			pagination.next_page =
 				pagination.current_page != nextPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 		}
 
@@ -364,7 +364,7 @@ export default class BaseService<T = any> {
 												else: null,
 											},
 										},
-								  },
+									},
 						},
 					},
 				});
@@ -401,15 +401,15 @@ export default class BaseService<T = any> {
 			pagination.prev_page =
 				pagination.current_page != prevPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 
 			pagination.next_page =
 				pagination.current_page != nextPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 		}
 
