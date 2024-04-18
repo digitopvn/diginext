@@ -2,16 +2,16 @@
 
 # Function to detect Linux distribution
 detect_linux_distribution() {
-    if [ -f "/etc/os-release" ]; then
-        source "/etc/os-release"
-        if [ "${ID}" == "ubuntu" ]; then
-            echo "ubuntu"
-        elif [ "${ID}" == "centos" ]; then
-            echo "centos"
-        elif [ "${ID}" == "debian" ]; then
-            echo "debian"
-        fi
+  if [ -f "/etc/os-release" ]; then
+    source "/etc/os-release"
+    if [ "${ID}" == "ubuntu" ]; then
+      echo "ubuntu"
+    elif [ "${ID}" == "centos" ]; then
+      echo "centos"
+    elif [ "${ID}" == "debian" ]; then
+      echo "debian"
     fi
+  fi
 }
 
 # Detect Linux distribution
@@ -35,7 +35,7 @@ chmod +x get_helm.sh
 ./get_helm.sh
 
 # Install NGINX Ingress
-helm upgrade --install ingress-nginx ingress-nginx   --repo https://kubernetes.github.io/ingress-nginx   --namespace ingress-nginx --create-namespace
+helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
 
 # Install Cert-Manager using Helm
 kubectl create ns cert-manager
@@ -59,11 +59,11 @@ helm install grafana grafana/grafana --namespace grafana
 helm repo add loki https://grafana.github.io/loki/charts
 helm repo update
 helm upgrade --install loki grafana/loki-stack \
-    --set fluent-bit.enabled=true,promtail.enabled=false \
-    --set loki.persistence.enabled=true \
-    --set loki.persistence.size=10Gi \
-    --set loki.compactor.retention_enabled=true \
-    --set loki.limits_config.retention_period=3d
+  --set fluent-bit.enabled=true,promtail.enabled=false \
+  --set loki.persistence.enabled=true \
+  --set loki.persistence.size=10Gi \
+  --set loki.compactor.retention_enabled=true \
+  --set loki.limits_config.retention_period=3d
 
 # Create the YAML file for the Cert Manager Prod Let's Encrypt ClusterIssuer
 kubectl apply -f - <<EOF
@@ -150,9 +150,8 @@ kind: Ingress
 metadata:
   name: dev-http
   namespace: dev
-  annotations:
-    kubernetes.io/ingress.class: nginx
 spec:
+  ingressClassName: nginx
   rules:
     - host: microk8s.topane.com
       http:
@@ -174,9 +173,9 @@ metadata:
   name: dev
   namespace: dev
   annotations:
-    kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
+  ingressClassName: nginx
   tls:
     - hosts:
         - demo.topane.com

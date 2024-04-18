@@ -201,7 +201,6 @@ EOF
 #   name: hello
 #   namespace: hello
 #   annotations:
-#     # kubernetes.io/ingress.class: public
 #     cert-manager.io/cluster-issuer: letsencrypt-prod
 # spec:
 #   tls:
