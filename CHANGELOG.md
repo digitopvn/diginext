@@ -1,3 +1,13 @@
+## [3.32.3](https://github.com/digitopvn/diginext/compare/v3.32.2...v3.32.3) (2024-04-18)
+
+
+### Bug Fixes
+
+* **cli:** clear console logs ([7fc0d01](https://github.com/digitopvn/diginext/commit/7fc0d0189ff436685d147bd7bbb4373ddcdcee09))
+* **server:** correct ingress yaml examples ([e976cc2](https://github.com/digitopvn/diginext/commit/e976cc23dff4434e4b359ff29a9e73bd16a0cfdf))
+* **server:** generate ingress yaml with new ingress class definition ([94c747b](https://github.com/digitopvn/diginext/commit/94c747bc35af8435a2a13185889b5683f7d091a6))
+* src/modules/deploy/generate-deployment.ts volume default type change to host-path ([647389c](https://github.com/digitopvn/diginext/commit/647389ca8732b01b17ec96f88f12ec4348b8810e))
+
 ## [3.32.2](https://github.com/digitopvn/diginext/compare/v3.32.1...v3.32.2) (2024-04-10)
 
 
