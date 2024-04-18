@@ -18,11 +18,11 @@ metadata:
     project: example
     owner: topgroup
   annotations:
-    kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
     # nginx.ingress.kubernetes.io/proxy-body-size: 50m
     # nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
+  ingressClassName: nginx
   tls:
     - hosts:
         - example.com
