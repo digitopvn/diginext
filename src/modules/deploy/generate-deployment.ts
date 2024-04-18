@@ -460,12 +460,12 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					// persistent volume claim
 					doc.spec.template.spec.volumes = volumes.map((vol) => {
 						switch (vol.type) {
-							case "host-path":
-								return { name: vol.name, hostPath: { path: vol.hostPath, type: "DirectoryOrCreate" } };
-
 							case "pvc":
-							default:
 								return { name: vol.name, persistentVolumeClaim: { claimName: vol.name } };
+
+							case "host-path":
+							default:
+								return { name: vol.name, hostPath: { path: vol.hostPath, type: "DirectoryOrCreate" } };
 						}
 					});
 
