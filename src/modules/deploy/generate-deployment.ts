@@ -259,7 +259,12 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					} else {
 						ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
 					}
-					if (ingressClass) ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
+					if (ingressClass) {
+						// OLD
+						// ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
+						// NEW
+						ingCfg.spec.ingressClassName = ingressClass;
+					}
 
 					// block some specific paths
 					ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/server-snippet"] = nginxBlockedPaths;
