@@ -1,3 +1,12 @@
+## [3.32.5](https://github.com/digitopvn/diginext/compare/v3.32.4...v3.32.5) (2024-05-17)
+
+
+### Bug Fixes
+
+* **cli:** fix api key not cached ([de44969](https://github.com/digitopvn/diginext/commit/de449695fead4bc05bdfb15a00c442eb6cb1e682))
+* **cli:** fix api key not cached  [@mrgoonie](https://github.com/mrgoonie) ([#495](https://github.com/digitopvn/diginext/issues/495)) ([c11cf09](https://github.com/digitopvn/diginext/commit/c11cf09afcb5a21f90aabe62c39f59f3ea634927))
+* **server:** improve access token error message ([ae9a8c8](https://github.com/digitopvn/diginext/commit/ae9a8c8ceb960157959f6fc3e864f1c4ece8b485))
+
 ## [3.32.4](https://github.com/digitopvn/diginext/compare/v3.32.3...v3.32.4) (2024-05-17)
 
 
