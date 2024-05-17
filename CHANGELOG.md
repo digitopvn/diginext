@@ -1,3 +1,11 @@
+## [3.32.4](https://github.com/digitopvn/diginext/compare/v3.32.3...v3.32.4) (2024-05-17)
+
+
+### Bug Fixes
+
+* **server:** improve token validate error message ([d3a38cf](https://github.com/digitopvn/diginext/commit/d3a38cf7d6ed921f6825ec01a0f40460ffcdc111))
+* **server:** improve token validate error message ([#494](https://github.com/digitopvn/diginext/issues/494)) ([7b8052c](https://github.com/digitopvn/diginext/commit/7b8052ca5bbc5a6b34ae0d748ecb27bfe4a73cb2))
+
 ## [3.32.3](https://github.com/digitopvn/diginext/compare/v3.32.2...v3.32.3) (2024-04-18)
 
 
