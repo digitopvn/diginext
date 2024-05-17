@@ -32,7 +32,5 @@ export const showServerInfo = async (options: InputOptions) => {
 	table.push(["CLI Config", CLI_CONFIG_FILE]);
 	table.push(["Server URL", `${buildServerUrl}`]);
 
-	console.log("table :>> ", table);
-
 	console.log(table.toString());
 };

@@ -48,6 +48,12 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 		apiToken: cachedApiKey,
 	} = getCliConfig();
 
+	if (options.isDebugging) {
+		console.log("cachedAccessToken :>> ", cachedAccessToken);
+		console.log("cachedRefreshToken :>> ", cachedRefreshToken);
+		console.log("cachedApiKey :>> ", cachedApiKey);
+	}
+
 	if (!buildServerUrl) {
 		logError(`"BUILD SERVER URL" not found. Please login with: "dx login <BUILD_SERVER_URL>"`);
 		return {
