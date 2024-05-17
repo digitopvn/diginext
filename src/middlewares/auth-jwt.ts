@@ -37,7 +37,7 @@ const jwt_auth = (req: AppRequest, res, next) =>
 				let refresh_token = req.query.refresh_token as string;
 				// console.log("jwt_auth > refresh_token :>> ", refresh_token);
 
-				if (!refresh_token) return Response.ignore(res, "Access token was expired.");
+				if (!refresh_token) return Response.ignore(res, "Access token is required.");
 
 				try {
 					const { error: isInvalidRefreshToken, tokenDetails: refreshTokenDetails } = await verifyRefreshToken(refresh_token);
