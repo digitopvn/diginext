@@ -68,7 +68,7 @@ const jwt_auth = (req: AppRequest, res, next) =>
 				}
 			}
 
-			return Response.ignore(res, "Access token was expired.");
+			return Response.ignore(res, "Invalid refresh token.");
 		} else {
 			// check active workspace
 			// console.log("user :>> ", user);

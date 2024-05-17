@@ -228,6 +228,7 @@ export async function cliAuthenticate(options: InputOptions) {
 		currentWorkspace: options.workspace,
 		access_token: user.token.access_token,
 		refresh_token: user.token.refresh_token,
+		apiToken,
 	});
 
 	return user;
