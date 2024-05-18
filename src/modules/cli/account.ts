@@ -5,6 +5,7 @@ import { isEmpty, trimEnd } from "lodash";
 import open from "open";
 
 import { Config } from "@/app.config";
+import type { CliConfig } from "@/config/config";
 import { getCliConfig, saveCliConfig } from "@/config/config";
 import type { IRole } from "@/entities";
 import type { AccessTokenInfo, IUser } from "@/entities/User";
@@ -78,7 +79,12 @@ export const cliLogin = async (options: CliLoginOptions) => {
 	});
 
 	// remove old "refresh_token"
-	saveCliConfig({ refresh_token: null, currentUser: null });
+	saveCliConfig({
+		access_token: null,
+		refresh_token: null,
+		apiToken: null,
+		currentUser: null,
+	});
 
 	// open login page of build server:
 	if (!access_token && !apiToken) {
@@ -114,8 +120,8 @@ export const cliLogin = async (options: CliLoginOptions) => {
 
 	// "access_token" is VALID -> save it to local machine!
 	saveCliConfig({
-		access_token,
-		refresh_token: currentUser.token.refresh_token,
+		access_token: apiToken ? null : access_token,
+		refresh_token: apiToken ? null : currentUser.token.refresh_token,
 		apiToken,
 		currentWorkspace: currentUser.activeWorkspace as IWorkspace,
 	});
@@ -160,8 +166,24 @@ export const cliLogout = async () => {
 
 export async function cliAuthenticate(options: InputOptions) {
 	let accessToken, refreshToken, workspace: IWorkspace, user: IUser;
-	const { access_token: currentAccessToken, refresh_token: currentRefreshToken, apiToken, buildServerUrl } = getCliConfig();
+
+	const {
+		access_token: currentAccessToken = options.apiToken ? null : options.token,
+		refresh_token: currentRefreshToken = options.apiToken ? null : options.refreshToken,
+		apiToken = options.apiToken,
+		buildServerUrl,
+	} = getCliConfig();
+
 	accessToken = currentAccessToken;
+
+	if (options.isDebugging) {
+		console.log("=====================================");
+		console.log("  cliAuthenticate() > currentAccessToken :>> ", currentAccessToken);
+		console.log("  cliAuthenticate() > currentRefreshToken :>> ", currentRefreshToken);
+		console.log("  cliAuthenticate() > apiToken :>> ", apiToken);
+		console.log("  cliAuthenticate() > buildServerUrl :>> ", buildServerUrl);
+		console.log("=====================================");
+	}
 
 	// check old build server url
 	if (buildServerUrl && (buildServerUrl.includes("app.diginext.site") || buildServerUrl.includes("topgroup.diginext.site"))) {
@@ -204,7 +226,7 @@ export async function cliAuthenticate(options: InputOptions) {
 
 	const profileRes = await fetchApi({
 		url: `/auth/profile`,
-		access_token: accessToken,
+		access_token: apiToken ? undefined : accessToken,
 		api_key: apiToken,
 		isDebugging: options.isDebugging,
 	});
@@ -231,13 +253,15 @@ export async function cliAuthenticate(options: InputOptions) {
 	options.workspaceId = MongoDB.toString(options.workspace._id);
 
 	// Save "currentUser", "access_token", "refresh_token" for next API requests
-	saveCliConfig({
+	const cliConfig: CliConfig = {
 		currentUser: user,
 		currentWorkspace: options.workspace,
-		access_token: user.token.access_token,
-		refresh_token: user.token.refresh_token,
-		apiToken,
-	});
+		access_token: options.apiToken ? null : user.token.access_token,
+		refresh_token: options.apiToken ? null : user.token.refresh_token,
+		apiToken: apiToken || options.apiToken,
+	};
+	console.log("cliAuthenticate() > cliConfig :>> ", cliConfig);
+	saveCliConfig(cliConfig);
 
 	return user;
 }

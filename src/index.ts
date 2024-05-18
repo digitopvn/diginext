@@ -54,7 +54,10 @@ export async function processCLI(options?: InputOptions) {
 	if (options.env) env = options.env;
 
 	// debugging info
-	if (options.isDebugging) await showServerInfo(options);
+	if (options.isDebugging) {
+		await showServerInfo(options);
+		console.log("CLI options :>> ", options);
+	}
 
 	switch (options.action) {
 		case "test":
