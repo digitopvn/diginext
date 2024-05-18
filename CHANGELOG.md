@@ -1,3 +1,15 @@
+## [3.32.7](https://github.com/digitopvn/diginext/compare/v3.32.6...v3.32.7) (2024-05-18)
+
+
+### Bug Fixes
+
+* **cli:** auto add http to build server url ([e6fa23b](https://github.com/digitopvn/diginext/commit/e6fa23b965261ba1ce59c843821d90b48b662dbf))
+* **cli:** correct build server url auto prefix ([6ba9dcb](https://github.com/digitopvn/diginext/commit/6ba9dcb5bdbcf18edd2844ba46d5c9c7d8eb0055))
+* **cli:** turn off unexpected logs ([8255ca1](https://github.com/digitopvn/diginext/commit/8255ca13a6470be880d61532705732752dfdf0d3))
+* **cli:** turn off unexpected logs ([#498](https://github.com/digitopvn/diginext/issues/498)) ([30426cb](https://github.com/digitopvn/diginext/commit/30426cbd7c91d6b87b63e39a6467bfc84869f353))
+* **server,cli:** fix access_token and api_key conflicted ([2224f8f](https://github.com/digitopvn/diginext/commit/2224f8f0215a9bfb1df3644878d3454c37e8c76d))
+* **server,cli:** fix access_token and api_key conflicted ([#497](https://github.com/digitopvn/diginext/issues/497)) ([9cb3648](https://github.com/digitopvn/diginext/commit/9cb36486a3d2cdfa3147f932c1eed0c5ccb3092f))
+
 ## [3.32.6](https://github.com/digitopvn/diginext/compare/v3.32.5...v3.32.6) (2024-05-18)
 
 
