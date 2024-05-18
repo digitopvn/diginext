@@ -1,3 +1,11 @@
+## [3.32.6](https://github.com/digitopvn/diginext/compare/v3.32.5...v3.32.6) (2024-05-18)
+
+
+### Bug Fixes
+
+* **cli:** change build url to app.dxup.dev ([88cf0b8](https://github.com/digitopvn/diginext/commit/88cf0b80bccdecc2176812ddfc61e130ab37c0d3))
+* **cli:** change build url to app.dxup.dev ([#496](https://github.com/digitopvn/diginext/issues/496)) ([e58cd01](https://github.com/digitopvn/diginext/commit/e58cd0188bc9d7d8a3aa7ac742094f262ad47e9c))
+
 ## [3.32.5](https://github.com/digitopvn/diginext/compare/v3.32.4...v3.32.5) (2024-05-17)
 
 
