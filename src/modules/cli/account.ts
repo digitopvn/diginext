@@ -194,7 +194,7 @@ export async function cliAuthenticate(options: InputOptions) {
 		return;
 	}
 
-	const continueToLoginStep = async (url) => {
+	const continueToLoginStep = async (url: string) => {
 		// clear old/expired/cached "access_token" and "refresh_token"
 		saveCliConfig({
 			access_token: null,
@@ -206,7 +206,7 @@ export async function cliAuthenticate(options: InputOptions) {
 		});
 
 		// request login API
-		options.url = url;
+		options.url = url.startsWith("http") ? url : `https://${url}`;
 		const _user = await cliLogin(options);
 
 		if (!_user) {
