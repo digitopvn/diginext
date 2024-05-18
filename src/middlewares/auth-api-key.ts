@@ -25,7 +25,7 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: ExpressRespons
 				apiKeyAccount = await DB.updateOne(
 					"api_key_user",
 					{ _id: apiKeyAccount._id },
-					{ activeWorkspace: workspaces[0]._id },
+					{ activeWorkspace: workspaces[0]._id, "token.refresh_token": access_token },
 					{ populate: ["roles", "workspaces", "activeWorkspace"] }
 				);
 			}

@@ -49,9 +49,11 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 	} = getCliConfig();
 
 	if (options.isDebugging) {
-		console.log("cachedAccessToken :>> ", cachedAccessToken);
-		console.log("cachedRefreshToken :>> ", cachedRefreshToken);
-		console.log("cachedApiKey :>> ", cachedApiKey);
+		console.log("=====================================");
+		console.log("   fetchApi() > cachedAccessToken :>> ", cachedAccessToken);
+		console.log("   fetchApi() > cachedRefreshToken :>> ", cachedRefreshToken);
+		console.log("   fetchApi() > cachedApiKey :>> ", cachedApiKey);
+		console.log("=====================================");
 	}
 
 	if (!buildServerUrl) {
@@ -73,15 +75,23 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 		options.headers = { ...options.headers, Authorization: `Bearer ${access_token}` };
 	} else if (cachedAccessToken) {
 		options.headers = { ...options.headers, Authorization: `Bearer ${cachedAccessToken}` };
-	} else if (currentUser?.token?.access_token) {
-		options.headers = { ...options.headers, Authorization: `Bearer ${currentUser.token?.access_token}` };
-	} else {
+	}
+	// else if (currentUser?.token?.access_token) {
+	// 	options.headers = { ...options.headers, Authorization: `Bearer ${currentUser.token?.access_token}` };
+	// }
+	else {
 		options.headers = { ...options.headers };
 	}
 
 	// if "API_ACCESS_TOKEN" is defined, ignore "Bearer" token
-	if (!options.headers.Authorization && (api_key || cachedApiKey)) {
-		options.headers = { ...options.headers, "x-api-key": api_key || cachedApiKey };
+	if (api_key) {
+		options.headers.Authorization = "";
+		options.headers = { ...options.headers, "x-api-key": api_key };
+	}
+
+	if (!options.headers.Authorization && !options.headers["x-api-key"] && cachedApiKey) {
+		options.headers.Authorization = "";
+		options.headers = { ...options.headers, "x-api-key": cachedApiKey };
 	}
 
 	// Inject "REFRESH_TOKEN" if any
