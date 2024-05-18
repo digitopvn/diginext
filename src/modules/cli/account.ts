@@ -261,7 +261,7 @@ export async function cliAuthenticate(options: InputOptions) {
 		refresh_token: options.apiToken ? null : user.token.refresh_token,
 		apiToken: apiToken || options.apiToken,
 	};
-	console.log("cliAuthenticate() > cliConfig :>> ", cliConfig);
+	if (options.isDebugging) console.log("cliAuthenticate() > cliConfig :>> ", cliConfig);
 	saveCliConfig(cliConfig);
 
 	return user;
