@@ -288,10 +288,19 @@ jobs:
       - run: kubectl version --client
       - run: kubectl config get-contexts
       - run: kubectl config current-context
-      - run: kubectl config use-context topgroup-k3s
+      - run: kubectl config use-context topgroup-dev
 
-      - name: Set image to [topgroup.diginext.site] deployment
-        run: kubectl --context=topgroup-k3s -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
+      # Deploy to TOPGROUP DEV cluster
+      - name: Set image to [app.diginext.site / OLD] deployment
+        run: kubectl --context=topgroup-dev -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
+
+        # Deploy to DXUP cluster
+      - name: Set image to [app.dxup.dev / TOP Group] deployment
+        run: kubectl --context=topgroup-dev -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
+
+      # Deploy to LONGVAN DEV cluster
+      - name: Set image to [app.dxup.dev / Long Van] deployment
+        run: kubectl --context=longvan-cluster -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
 
       # DEPRECATED
       # - name: Set image to [hobby.diginext.site] deployment
@@ -326,7 +335,7 @@ jobs:
       - run: kubectl version --client
       - run: kubectl config get-contexts
       - run: kubectl config current-context
-      - run: kubectl config use-context topgroup-k3s
 
+      - run: kubectl config use-context topgroup-k3s
       - name: Set image to K8S deployment
         run: kubectl -n diginext-staging set image deployment/diginext diginext=digitop/diginext:$LATEST_TAG

@@ -1,5 +1,5 @@
 import Table from "cli-table";
-import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
+import { logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty, trimEnd } from "lodash";
 import open from "open";
@@ -162,7 +162,15 @@ export async function cliAuthenticate(options: InputOptions) {
 	let accessToken, refreshToken, workspace: IWorkspace, user: IUser;
 	const { access_token: currentAccessToken, refresh_token: currentRefreshToken, apiToken, buildServerUrl } = getCliConfig();
 	accessToken = currentAccessToken;
-	// workspace = currentWorkspace;
+
+	// check old build server url
+	if (buildServerUrl && (buildServerUrl.includes("app.diginext.site") || buildServerUrl.includes("topgroup.diginext.site"))) {
+		logWarn(`Your current build server url is: ${buildServerUrl}`);
+		logWarn(`Please update your build server url to: "https://app.dxup.dev"`);
+		logWarn(`You can do this by running: dx login https://app.dxup.dev`);
+		logWarn(`If you don't want to update your build server url, you can run: dx logout`);
+		return;
+	}
 
 	const continueToLoginStep = async (url) => {
 		// clear old/expired/cached "access_token" and "refresh_token"

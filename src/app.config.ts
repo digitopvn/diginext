@@ -106,7 +106,7 @@ export class Config {
 	}
 
 	static get DEFAULT_DX_SERVER_URL() {
-		return "https://app.diginext.site";
+		return "https://app.dxup.dev";
 	}
 
 	static get DX_SITE_URL() {
