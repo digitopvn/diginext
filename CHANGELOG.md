@@ -1,3 +1,11 @@
+## [3.32.8](https://github.com/digitopvn/diginext/compare/v3.32.7...v3.32.8) (2024-05-21)
+
+
+### Bug Fixes
+
+* **server,cli:** increase websocket timeout ([0a38d4b](https://github.com/digitopvn/diginext/commit/0a38d4b7c7b210ffce2ecb6c54084dc495180a41))
+* **server,cli:** increase websocket timeout ([#499](https://github.com/digitopvn/diginext/issues/499)) ([82e0fcb](https://github.com/digitopvn/diginext/commit/82e0fcbdd528bb2943e7f27a0433d6fc272a3968))
+
 ## [3.32.7](https://github.com/digitopvn/diginext/compare/v3.32.6...v3.32.7) (2024-05-18)
 
 
