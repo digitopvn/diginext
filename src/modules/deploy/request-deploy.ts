@@ -193,18 +193,34 @@ export async function requestDeploy(options: InputOptions) {
 		let socketURL = buildServerUrl.replace(/https/gi, "wss");
 		socketURL = buildServerUrl.replace(/http/gi, "ws");
 
-		const socket = io(socketURL, { transports: ["websocket"], timeout: 60000 });
+		let pingInt;
+
+		const socket = io(socketURL, {
+			transports: ["websocket"],
+			timeout: 60000,
+			requestTimeout: 60000,
+		});
 		socket.on("error", (e) => logError(e));
 		socket.on("connect_error", (e) => logError(e));
 
 		socket.on("disconnect", () => {
-			// log("[CLI Server] Disconnected");
+			log("[DXUP Websocket] Disconnected.");
 			socket.emit("leave", { room: SOCKET_ROOM });
+			clearInterval(pingInt);
 		});
 
 		socket.on("connect", () => {
-			// log("[CLI Server] Connected");
+			log("[DXUP Websocket] Connected.");
 			socket.emit("join", { room: SOCKET_ROOM });
+
+			clearInterval(pingInt);
+			pingInt = setInterval(() => {
+				const start = Date.now();
+				socket.emit("ping", () => {
+					const duration = Date.now() - start;
+					console.log(`[DXUP Websocket] Ping: ${duration}ms (${socketURL})`);
+				});
+			}, 15 * 1000);
 		});
 
 		return new Promise((resolve, reject) => {
@@ -230,7 +246,7 @@ export async function requestDeploy(options: InputOptions) {
 			});
 
 			// Max build duration: 30 mins
-			setTimeout(() => reject(`Request timeout (30 minutes)`), 30 * 60 * 1000);
+			setTimeout(() => reject(`[DXUP Websocket] Request timeout (>30 minutes)`), 30 * 60 * 1000);
 		});
 	} else {
 		return true;
