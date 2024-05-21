@@ -162,7 +162,7 @@ export async function requestBuild(options: InputOptions) {
 	if (options.isTail) {
 		let socketURL = buildServerUrl.replace(/https/gi, "wss");
 		socketURL = buildServerUrl.replace(/http/gi, "ws");
-		const socket = io(socketURL, { transports: ["websocket"] });
+		const socket = io(socketURL, { transports: ["websocket"], timeout: 60000 });
 
 		socket.on("error", (e) => logError(e));
 		socket.on("connect_error", (e) => logError(e));

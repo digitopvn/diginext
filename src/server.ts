@@ -103,7 +103,12 @@ function initialize(db?: typeof mongoose) {
 	/**
 	 * Websocket / SOCKET.IO
 	 */
-	socketIO = new SocketServer(server, { transports: ["websocket"] });
+	socketIO = new SocketServer(server, {
+		transports: ["websocket"],
+		pingTimeout: 30000,
+		connectTimeout: 90000,
+		upgradeTimeout: 30000,
+	});
 	socketIO.on("connection", (socket) => {
 		// console.log("a user connected");
 
