@@ -1,3 +1,12 @@
+## [3.32.9](https://github.com/digitopvn/diginext/compare/v3.32.8...v3.32.9) (2024-05-21)
+
+
+### Bug Fixes
+
+* **server,cli:** add logs to websocket connection ([0d6be7f](https://github.com/digitopvn/diginext/commit/0d6be7fa1eac4f5f83d31be94e206583d6c07bb0))
+* **server,cli:** add ping pong to websocket ([d0750e8](https://github.com/digitopvn/diginext/commit/d0750e8f8dbe25f26012e2ed1b821ebc904998fb))
+* **server,cli:** add ping pong to websocket ([#500](https://github.com/digitopvn/diginext/issues/500)) ([cf7d1a0](https://github.com/digitopvn/diginext/commit/cf7d1a0bad16bff336e16dfb3eda0d3e79b5a83c))
+
 ## [3.32.8](https://github.com/digitopvn/diginext/compare/v3.32.7...v3.32.8) (2024-05-21)
 
 
