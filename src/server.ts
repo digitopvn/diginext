@@ -112,6 +112,10 @@ function initialize(db?: typeof mongoose) {
 	socketIO.on("connection", (socket) => {
 		// console.log("a user connected");
 
+		socket.on("ping", (callback) => {
+			callback();
+		});
+
 		socket.on("join", (data) => {
 			// console.log("join room:", data);
 			socket.join(data.room);

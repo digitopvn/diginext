@@ -193,6 +193,8 @@ export async function requestDeploy(options: InputOptions) {
 		let socketURL = buildServerUrl.replace(/https/gi, "wss");
 		socketURL = buildServerUrl.replace(/http/gi, "ws");
 
+		let pingInt;
+
 		const socket = io(socketURL, { transports: ["websocket"], timeout: 60000 });
 		socket.on("error", (e) => logError(e));
 		socket.on("connect_error", (e) => logError(e));
@@ -205,6 +207,15 @@ export async function requestDeploy(options: InputOptions) {
 		socket.on("connect", () => {
 			// log("[CLI Server] Connected");
 			socket.emit("join", { room: SOCKET_ROOM });
+
+			clearInterval(pingInt);
+			pingInt = setInterval(() => {
+				const start = Date.now();
+				socket.emit("ping", () => {
+					const duration = Date.now() - start;
+					console.log(`[Websocket] Ping: ${duration}ms (${socketURL})`);
+				});
+			}, 15 * 1000);
 		});
 
 		return new Promise((resolve, reject) => {
