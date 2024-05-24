@@ -115,6 +115,31 @@ dx login
 cd /path/to/your/app
 dx init
 dx up
+
+# custom deploy
+dx up --prod
+dx up --prod --rollout
+dx up --prod --rollout --replicas=5
+dx up --prod --rollout --replicas=5 --port=3000
+dx up --prod --rollout --replicas=5 --port=3000 --select-cluster
+# deploy to custom environment
+dx up --staging
+# deploy to other cluster
+dx up --cluster=[cluster-name]
+# deploy without SSL
+dx up --no-ssl
+# deploy with custom domain
+dx up --domain=[your-domain]
+# deploy with custom container size
+dx up --size=2x
+# deploy with DX API key
+dx up --api-key=[your-dx-api-key]
+# redirect all other domains to the first domain (for example: no-www -> www)
+dx up --redirect
+# upload local .env to dxup deployment
+dx up --upload-env
+# delete old deployments and deploy new
+dx up --fresh
 ```
 
 That's it!
@@ -128,8 +153,11 @@ dx new
 ```
 
 Available frameworks:
-✓ Next.js
+✓ Next.js (Page Router)
+✓ Next.js (App Router)
 ✓ Nest.js
+✓ Bun.js Starter
+✓ Express.js Starter
 ✓ Static website with NGINX
 ✓ More to come!
 
