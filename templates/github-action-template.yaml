@@ -27,7 +27,7 @@ jobs:
       - name: Deploy to Diginext
         uses: digitopvn/diginext-actions@v0
         with:
-          workspace_url: https://apps.diginext.site
+          workspace_url: https://apps.dxup.dev
           api_key: ${{ env.DX_API_KEY }}
           cluster: {{cluster}}
           registry: {{registry}}

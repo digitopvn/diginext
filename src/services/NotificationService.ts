@@ -91,7 +91,7 @@ export class NotificationService extends BaseService<INotification> {
 							{
 								recipients: emailRecipients.map(({ name, email }) => ({ name, email })),
 								subject: `[DIGINEXT / ${this.ownership.workspace.name}] ${data.title}`,
-								content: `Hey,<br/><br/>You've got a notification from "${this.ownership.workspace.name}" workspace:<br/><br/>${data.message}<br/><br/>—<br/>You are receiving this because you are subscribed to this thread.<br/><a href="https://app.diginext.site/settings/notifications">Manage your Diginext notifications</a>`,
+								content: `Hey,<br/><br/>You've got a notification from "${this.ownership.workspace.name}" workspace:<br/><br/>${data.message}<br/><br/>—<br/>You are receiving this because you are subscribed to this thread.<br/><a href="https://app.dxup.dev/settings/notifications">Manage your Diginext notifications</a>`,
 							},
 							this.ownership.workspace.dx_key
 						);

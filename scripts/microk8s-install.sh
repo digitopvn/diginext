@@ -107,7 +107,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: cert@diginext.site
+    email: cert@dxup.dev
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:

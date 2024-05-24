@@ -18,7 +18,7 @@ export interface GenerateDomainOptions {
 	 */
 	subdomainName: string;
 	/**
-	 * @default diginext.site
+	 * @default dxup.dev
 	 */
 	primaryDomain: string;
 	/**
