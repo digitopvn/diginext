@@ -174,22 +174,23 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	const isSecretExisted = await ClusterManager.isSecretExisted(secretName, namespace, { context });
 	if (isSecretExisted) await ClusterManager.deleteSecret(secretName, namespace, { context });
 
-	// Create new "imagePullSecret":
-	const svcAccContentCmd = isWin() ? `$(type ${serviceAccountPath})` : `$(cat ${serviceAccountPath})`;
-	const { stdout: newImagePullingSecret } = await execaCommand(
-		`kubectl ${
-			context ? `--context=${context} ` : ""
-		}-n ${namespace} create secret docker-registry ${secretName} --docker-server=${host} --docker-username=_json_key --docker-password="${svcAccContentCmd}" -o json`,
-		isWin() ? {} : { shell: "bash" }
-	);
-
-	// delete temporary file
-	// unlink(serviceAccountPath, (err) => err && logError(`[REGISTRY CONTROLLER] Remove tmp file:`, err));
-
-	// console.log("GCLOUD > createImagePullingSecret > newImagePullingSecret :>> ", newImagePullingSecret);
-
-	// create new image pulling secret (in namespace & in database)
 	try {
+		const svcAccContentCmd = isWin() ? `$(type ${serviceAccountPath})` : `$(cat ${serviceAccountPath})`;
+		// Create new "imagePullSecret":
+		const { stdout: newImagePullingSecret } = await execaCommand(
+			`kubectl ${
+				context ? `--context=${context} ` : ""
+			}-n ${namespace} create secret docker-registry ${secretName} --docker-server=${host} --docker-username=_json_key --docker-password="${svcAccContentCmd}" -o json`,
+			isWin() ? {} : { shell: "bash" }
+		);
+
+		// delete temporary file
+		// unlink(serviceAccountPath, (err) => err && logError(`[REGISTRY CONTROLLER] Remove tmp file:`, err));
+
+		// console.log("GCLOUD > createImagePullingSecret > newImagePullingSecret :>> ", newImagePullingSecret);
+
+		// create new image pulling secret (in namespace & in database)
+
 		secretValue = JSON.parse(newImagePullingSecret).data[".dockerconfigjson"];
 		// log({ secretValue });
 
@@ -215,7 +216,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 
 		return updatedRegistry.imagePullSecret;
 	} catch (e) {
-		logError(`Cannot create image pull secret:`, e);
+		logError(`Cannot create image pull secret: ${e}`);
 		return;
 	}
 };

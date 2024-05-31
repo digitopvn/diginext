@@ -1,4 +1,4 @@
-Here are the frequently asked questions about **Diginext (DX)** and antd that you should look up before you ask in the community or create a new issue. We also maintain a [FAQ issues label](http://diginext.site/faq) for common github issues.
+Here are the frequently asked questions about **Diginext (DX)** and antd that you should look up before you ask in the community or create a new issue. We also maintain a [FAQ issues label](http://dxup.dev/faq) for common github issues.
 
 ---
 

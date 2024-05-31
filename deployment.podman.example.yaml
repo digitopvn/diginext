@@ -59,7 +59,7 @@ spec:
             - name: DEV_MODE
               value: "false"
             - name: BASE_URL
-              value: https://api.diginext.site
+              value: https://api.dxup.dev
             - name: DB_URI
               value: # mongodb://...
             - name: JWT_SECRET

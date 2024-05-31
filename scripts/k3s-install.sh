@@ -21,7 +21,7 @@ linux_distribution=$(detect_linux_distribution)
 export IP_ADDRESS=$(curl ifconfig.me)
 export USER=$(whoami)
 
-# TODO: call api to create diginext.site domain and point it to this server
+# TODO: call api to create dxup.dev domain and point it to this server
 
 # Install K3S
 curl -sfL https://get.k3s.io | sh -s - --disable=traefik
@@ -74,7 +74,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: cert@diginext.site
+    email: cert@dxup.dev
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:

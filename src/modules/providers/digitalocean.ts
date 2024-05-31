@@ -116,28 +116,32 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	// create secret in the namespace (if needed)
 	const applyCommand = `| kubectl apply -f -`;
 
-	// command: "doctl registry kubernetes-manifest"
-	const { stdout: registryYaml } = await execaCommand(
-		`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} --access-token ${API_ACCESS_TOKEN} ${applyCommand}`
-	);
-	const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
+	try {
+		// command: "doctl registry kubernetes-manifest"
+		const { stdout: registryYaml } = await execaCommand(
+			`doctl registry kubernetes-manifest --context ${context} --namespace ${namespace} --name ${secretName} --access-token ${API_ACCESS_TOKEN} ${applyCommand}`
+		);
+		const registrySecretData = yaml.load(registryYaml) as KubeRegistrySecret;
 
-	if (!registrySecretData) {
-		logError(`[DIGITAL_OCEAN] Failed to create "imagePullSecrets" in "${namespace}" namespace of "${context}" cluster.`);
-		return;
+		if (!registrySecretData) {
+			logError(`[DIGITAL_OCEAN] Failed to create "imagePullSecrets" in "${namespace}" namespace of "${context}" cluster.`);
+			return;
+		}
+
+		// Save to database
+		const imagePullSecret = {
+			name: secretName,
+			value: registrySecretData.data[".dockerconfigjson"],
+		};
+
+		const [updatedRegistry] = await DB.update("registry", { slug: registrySlug }, { imagePullSecret });
+		if (!updatedRegistry) logError(`[DIGITAL_OCEAN] Can't update container registry of Digital Ocean.`);
+		// log(`DigitalOcean.createImagePullingSecret() :>>`, { updatedRegistry });
+
+		return imagePullSecret;
+	} catch (e: any) {
+		throw new Error(`[DIGITAL_OCEAN] Error creating "imagePullSecret": ${e}`.replace(API_ACCESS_TOKEN, "***"));
 	}
-
-	// Save to database
-	const imagePullSecret = {
-		name: secretName,
-		value: registrySecretData.data[".dockerconfigjson"],
-	};
-
-	const [updatedRegistry] = await DB.update("registry", { slug: registrySlug }, { imagePullSecret });
-	if (!updatedRegistry) logError(`[DIGITAL_OCEAN] Can't update container registry of Digital Ocean.`);
-	// log(`DigitalOcean.createImagePullingSecret() :>>`, { updatedRegistry });
-
-	return imagePullSecret;
 };
 
 /**

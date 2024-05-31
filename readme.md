@@ -2,7 +2,7 @@
 
 ### **A developer-focused platform for app deployment & centralized cloud resource management.**
 
-https://diginext.site
+https://dxup.dev
 
 ***Developers should not be frustrated by deploying apps to the infrastructure, or bothering the DevOps engineers to help deploying it, they should fully focus on developing apps, they don't need to understand the servers, the domains, or infrastructure related stuffs.***
 
@@ -86,9 +86,9 @@ https://diginext.site
 
 ## Getting Started
 
-- [Diginext website](https://diginext.site/?ref=github)
-- [Official Workspace](https://app.diginext.site/?ref=github)
-- [Documentation](https://docs.diginext.site/?ref=github)
+- [Diginext website](https://dxup.dev/?ref=github)
+- [Official Workspace](https://app.dxup.dev/?ref=github)
+- [Documentation](https://docs.dxup.dev/?ref=github)
 
 #### CLI Installation
 
@@ -109,12 +109,37 @@ Login to your Diginext workspace:
 ```bash
 dx login 
 # is similar with:
-# $ dx login https://app.diginext.site
+# $ dx login https://app.dxup.dev
 # in case you hosted Diginext yourself:
 # $ dx login https://<your-diginext-workspace-domain>
 cd /path/to/your/app
 dx init
 dx up
+
+# custom deploy
+dx up --prod
+dx up --prod --rollout
+dx up --prod --rollout --replicas=5
+dx up --prod --rollout --replicas=5 --port=3000
+dx up --prod --rollout --replicas=5 --port=3000 --select-cluster
+# deploy to custom environment
+dx up --staging
+# deploy to other cluster
+dx up --cluster=[cluster-name]
+# deploy without SSL
+dx up --no-ssl
+# deploy with custom domain
+dx up --domain=[your-domain]
+# deploy with custom container size
+dx up --size=2x
+# deploy with DX API key
+dx up --api-key=[your-dx-api-key]
+# redirect all other domains to the first domain (for example: no-www -> www)
+dx up --redirect
+# upload local .env to dxup deployment
+dx up --upload-env
+# delete old deployments and deploy new
+dx up --fresh
 ```
 
 That's it!
@@ -128,8 +153,11 @@ dx new
 ```
 
 Available frameworks:
-✓ Next.js
+✓ Next.js (Page Router)
+✓ Next.js (App Router)
 ✓ Nest.js
+✓ Bun.js Starter
+✓ Express.js Starter
 ✓ Static website with NGINX
 ✓ More to come!
 
@@ -143,7 +171,7 @@ Available frameworks:
 Access into your server (directly or via SSH), then run this script:
 
 ```bash
-curl -sfL https://diginext.site/install/microk8s | sh -
+curl -sfL https://dxup.dev/install/microk8s | sh -
 ```
 
 👉 [Detailed instruction](https://dev.to/mrgoonie/i-turn-my-companys-pc-into-my-own-vercel-like-platform-351o)
@@ -167,7 +195,7 @@ Access the admin (`http://localhost:6969`) to configure your new workspace.
 
 On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx up` (or `dx deploy`).
 
-👉 Read the [docs here](https://docs.diginext.site/?ref=github).
+👉 Read the [docs here](https://docs.dxup.dev/?ref=github).
 
 ### Other installation guides
 
@@ -181,7 +209,7 @@ On the client side, use the CLI command `dx login http://your-workspace-domain.c
 
 ## Admin UI
 
-- Official workspace: https://app.diginext.site
+- Official workspace: https://app.dxup.dev
 - Visit our [source code here](https://github.com/digitopvn/diginext-admin)
 
 ## Contributing [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)

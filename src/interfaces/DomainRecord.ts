@@ -27,7 +27,7 @@ export interface DomainRecord {
 
 	/**
 	 * The host name, alias, or service being defined by the record.
-	 * - This could be the subdomain name: `sub-domain-name.diginext.site`
+	 * - This could be the subdomain name: `sub-domain-name.dxup.dev`
 	 * @example "@"
 	 */
 	name: string;

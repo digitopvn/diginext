@@ -15,7 +15,7 @@ on:
 # CI/CD STEPS
 jobs:
   deploy-topgroup:
-    name: Deploy to topgroup.diginext.site
+    name: Deploy to topgroup.dxup.dev
     runs-on: ubuntu-latest
     if: >
       github.event.workflow_run.conclusion == 'success'

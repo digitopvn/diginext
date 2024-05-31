@@ -273,7 +273,7 @@ export async function parseCliOptions() {
 				.usage(
 					chalk.green("Create new domain and point it to your server:\n") +
 						`$  $0 domain create --name my-example -i 192.168.1.10 \n` +
-						`> This will create a domain "my-example.diginext.site" and point to the IP address: 192.168.1.10`
+						`> This will create a domain "my-example.dxup.dev" and point to the IP address: 192.168.1.10`
 				)
 				.command("create", "> alias: add | new")
 				.command("update", "> alias: change | modify | mod")

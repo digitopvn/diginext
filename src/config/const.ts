@@ -1,7 +1,7 @@
 import { homedir } from "os";
 import path from "path";
 
-export const DIGINEXT_DOMAIN = `diginext.site`;
+export const DIGINEXT_DOMAIN = `dxup.dev`;
 
 export const HOME_DIR = homedir();
 export const KUBECONFIG_DIR = path.resolve(HOME_DIR, ".kube");
