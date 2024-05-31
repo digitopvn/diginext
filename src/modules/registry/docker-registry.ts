@@ -124,20 +124,20 @@ const DockerRegistry = {
 		if (email) createSecretOptions.push(`--docker-email=${email}`);
 		if (context) createSecretOptions.push(`--context=${context}`);
 
-		const { stdout: newImagePullingSecret } = await execa(`kubectl`, [
-			"-n",
-			namespace,
-			`create`,
-			`secret`,
-			`docker-registry`,
-			secretName,
-			...createSecretOptions,
-			"-o",
-			"json",
-		]);
-
 		// create new image pulling secret (in namespace & in database)
 		try {
+			const { stdout: newImagePullingSecret } = await execa(`kubectl`, [
+				"-n",
+				namespace,
+				`create`,
+				`secret`,
+				`docker-registry`,
+				secretName,
+				...createSecretOptions,
+				"-o",
+				"json",
+			]);
+
 			secretValue = JSON.parse(newImagePullingSecret).data[".dockerconfigjson"];
 			// log({ secretValue });
 
@@ -161,7 +161,7 @@ const DockerRegistry = {
 
 			return updatedRegistry.imagePullSecret;
 		} catch (e) {
-			throw new Error(`[DOCKER] Cannot create image pull secret: ${e}`);
+			throw new Error(`[DOCKER] Cannot create image pull secret: ${e}`.replace(password, "***"));
 		}
 	},
 };
