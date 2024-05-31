@@ -1,3 +1,18 @@
+# [3.33.0](https://github.com/digitopvn/diginext/compare/v3.32.9...v3.33.0) (2024-05-31)
+
+
+### Bug Fixes
+
+* **readme:** add some samples of dx up command ([f9f40eb](https://github.com/digitopvn/diginext/commit/f9f40eb549d3555aab0954e667ec2fecbbb09f00))
+* **server:** fixed create image pull secret exposing docker pass ([886fec4](https://github.com/digitopvn/diginext/commit/886fec428892cb79b14c9cecdc676ad5077263c2))
+* **server:** fixed create image pull secret exposing docker pass ([#501](https://github.com/digitopvn/diginext/issues/501)) ([7877408](https://github.com/digitopvn/diginext/commit/7877408c56d12e24a61ae9844c3f170b78060952))
+* **server:** fixed doctl command create imagepullsecret exposing docker pass ([2bcc9a2](https://github.com/digitopvn/diginext/commit/2bcc9a2ef2fa1840118d24d2671ecf1b02ba8c39))
+
+
+### Features
+
+* **core:** migrate diginext.site to dxup.dev ([17b7652](https://github.com/digitopvn/diginext/commit/17b76520a983c7e0d0621dc89c816713b561f504))
+
 ## [3.32.9](https://github.com/digitopvn/diginext/compare/v3.32.8...v3.32.9) (2024-05-21)
 
 
