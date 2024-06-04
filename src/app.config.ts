@@ -76,6 +76,10 @@ export class Config {
 		return trimNull(process.env.BASE_PATH) || "";
 	}
 
+	static get LOCATION() {
+		return trimNull(process.env.LOCATION) || "unknown";
+	}
+
 	static getBasePath(extendedPath = "") {
 		const { BASE_PATH } = this;
 		return (BASE_PATH === "" ? BASE_PATH : `/${BASE_PATH}`) + extendedPath;
