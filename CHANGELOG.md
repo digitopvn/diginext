@@ -1,3 +1,12 @@
+## [3.33.3](https://github.com/digitopvn/diginext/compare/v3.33.2...v3.33.3) (2024-06-04)
+
+
+### Bug Fixes
+
+* **server:** issue delete deploy env cluster not found ([6ce935a](https://github.com/digitopvn/diginext/commit/6ce935a7d8be5d9ca88503b9d7a1069213557746))
+* **server:** issue delete deploy env cluster not found ([#504](https://github.com/digitopvn/diginext/issues/504)) ([f61d4be](https://github.com/digitopvn/diginext/commit/f61d4be188738d9af34cb2098b409d5295439e34))
+* **server:** project - add fixme when delete project ([c952b43](https://github.com/digitopvn/diginext/commit/c952b4319fca5bf5f7fb9e936437d0b045bc2662))
+
 ## [3.33.2](https://github.com/digitopvn/diginext/compare/v3.33.1...v3.33.2) (2024-06-04)
 
 
