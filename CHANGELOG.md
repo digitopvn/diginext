@@ -1,3 +1,12 @@
+## [3.33.4](https://github.com/digitopvn/diginext/compare/v3.33.3...v3.33.4) (2024-06-04)
+
+
+### Bug Fixes
+
+* **server:** issue delete app but cluster is undefined ([2e4e238](https://github.com/digitopvn/diginext/commit/2e4e238b93b970d60f23e8961bf1d6593d5fd47a))
+* **server:** issue delete app but cluster is undefined ([#505](https://github.com/digitopvn/diginext/issues/505)) ([1eb483b](https://github.com/digitopvn/diginext/commit/1eb483ba3e40c43ba6c897cc060113a724b1a501))
+* **server:** webhook - add dxup url to email notification ([c565658](https://github.com/digitopvn/diginext/commit/c5656581f9e9e2219e3eeabca81d1bbe9191b5d1))
+
 ## [3.33.3](https://github.com/digitopvn/diginext/compare/v3.33.2...v3.33.3) (2024-06-04)
 
 
