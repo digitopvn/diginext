@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { Get, Route, Security, Tags } from "tsoa/dist";
 
+import { Config } from "@/app.config";
 import { respondSuccess } from "@/interfaces";
 import { currentVersion } from "@/plugins";
 
@@ -14,7 +15,7 @@ export default class StatsController extends BaseController {
 	 */
 	@Get("/version")
 	version() {
-		return respondSuccess({ data: { version: currentVersion() } });
+		return respondSuccess({ data: { version: currentVersion(), location: Config.LOCATION } });
 	}
 
 	/**

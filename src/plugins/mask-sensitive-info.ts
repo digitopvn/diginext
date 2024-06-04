@@ -65,7 +65,7 @@ export const maskSensitiveInfo = (data: any, user: IUser, role?: IRole, route?: 
 			 * Mask all fields
 			 */
 			maskedFields.map((maskedField) => {
-				if (_.has(item, maskedField)) item = _.set(item, maskedField, "");
+				if (_.has(item, maskedField)) item = _.set(item, maskedField, "***");
 			});
 			return item;
 		});
