@@ -1,3 +1,11 @@
+## [3.33.2](https://github.com/digitopvn/diginext/compare/v3.33.1...v3.33.2) (2024-06-04)
+
+
+### Bug Fixes
+
+* **server:** dx api timeout 30s ([253445a](https://github.com/digitopvn/diginext/commit/253445aae2e4fac0ad800f627e21c5e41f3c2e97))
+* **server:** dx api timeout 30s ([#503](https://github.com/digitopvn/diginext/issues/503)) ([47aa637](https://github.com/digitopvn/diginext/commit/47aa6374f78bceffa641fb6eec315f94891edb2c))
+
 ## [3.33.1](https://github.com/digitopvn/diginext/compare/v3.33.0...v3.33.1) (2024-06-04)
 
 
