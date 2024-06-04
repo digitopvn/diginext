@@ -50,6 +50,8 @@ export class ProjectService extends BaseService<IProject> {
 		// check permissions
 		await checkProjectPermissionsByFilter(this, filter, this.user);
 
+		// FIXME: Delete all apps & deploy environments!
+
 		return super.delete(filter, options);
 	}
 
