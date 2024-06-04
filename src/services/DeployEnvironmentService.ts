@@ -412,6 +412,7 @@ export class DeployEnvironmentService {
 	async takeDownDeployEnvironment(app: IApp, env: string, options?: IQueryOptions) {
 		if (!app.deployEnvironment) throw new Error(`Unable to take down, this app doesn't have any deploy environments.`);
 		if (!env) throw new Error(`Unable to take down, param "env" (deploy environment) is required.`);
+		let errorMsg;
 
 		const deployEnvironment = app.deployEnvironment[env];
 		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
@@ -423,9 +424,38 @@ export class DeployEnvironmentService {
 		const appSvc = new AppService();
 		const clusterSvc = new ClusterService();
 		const cluster = await clusterSvc.findOne({ slug: clusterSlug });
-		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
+		if (!cluster) {
+			console.log(`[DEPLOY_ENVIRONMENT] takeDownDeployEnvironment() > Cluster "${clusterSlug}" not found.`);
+			// response data
+			errorMsg = `Cluster "${clusterSlug}" not found.`;
+			return {
+				app: {
+					slug: app.slug,
+					id: app._id,
+					owner: app.owner,
+					workspace: app.workspace,
+					cluster: cluster.slug,
+				},
+				success: true,
+				message: errorMsg,
+			};
+		}
 
-		if (!deployEnvironment.namespace) throw new Error(`Namespace not found.`);
+		if (!deployEnvironment.namespace) {
+			console.log(`[DEPLOY_ENVIRONMENT] takeDownDeployEnvironment() > Namespace not found.`);
+			errorMsg = `Namespace not found.`;
+			return {
+				app: {
+					slug: app.slug,
+					id: app._id,
+					owner: app.owner,
+					workspace: app.workspace,
+					cluster: cluster.slug,
+				},
+				success: true,
+				message: errorMsg,
+			};
+		}
 
 		const { contextName: context } = cluster;
 		const { namespace } = deployEnvironment;
@@ -443,7 +473,6 @@ export class DeployEnvironmentService {
 		 * ---
 		 * Should NOT delete namespace because it will affect other apps in a project!
 		 */
-		let errorMsg;
 
 		try {
 			// Delete INGRESS
