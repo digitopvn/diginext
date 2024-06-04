@@ -290,7 +290,7 @@ jobs:
       - run: kubectl config current-context
       - run: kubectl config use-context topgroup-dev
 
-      # Deploy to TOPGROUP DEV cluster (DEPRECATED)
+      # Deploy to TOPGROUP DEV cluster (DEPRECATED SOON)
       - name: Set image to [app.diginext.site / OLD] deployment
         run: kubectl --context=topgroup-dev -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
 

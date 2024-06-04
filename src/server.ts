@@ -119,6 +119,14 @@ function initialize(db?: typeof mongoose) {
 	});
 	const subClient = pubClient.duplicate();
 
+	pubClient.on("error", (error) => {
+		console.error("Redis PubClient Error:", error);
+	});
+
+	subClient.on("error", (error) => {
+		console.error("Redis SubClient Error:", error);
+	});
+
 	/**
 	 * Websocket / SOCKET.IO
 	 */
