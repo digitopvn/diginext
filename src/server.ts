@@ -1,5 +1,6 @@
 import "reflect-metadata";
 
+import { createAdapter } from "@socket.io/redis-adapter";
 import bodyParser from "body-parser";
 import console from "console";
 import cookieParser from "cookie-parser";
@@ -11,6 +12,7 @@ import express from "express";
 import { queryParser } from "express-query-parser";
 import type { Server } from "http";
 import { createServer } from "http";
+import { Redis } from "ioredis";
 import type mongoose from "mongoose";
 import morgan from "morgan";
 import passport from "passport";
@@ -44,6 +46,11 @@ const allowedHosts = [
 	"localhost:6969",
 	"localhost:4000",
 	"localhost:42000",
+	"diginext.site",
+	"www.diginext.site",
+	"topgroup.diginext.site",
+	"app.diginext.site",
+	"*.diginext.site",
 	"topgroup.dxup.dev",
 	"topgroup-v2.dxup.dev",
 	"diginext.vn",
@@ -52,6 +59,7 @@ const allowedHosts = [
 	"www.dxup.dev",
 	"hobby.dxup.dev",
 	"app.dxup.dev",
+	"*.dxup.dev",
 	"wearetopgroup.com",
 	"digitop.vn",
 ];
@@ -101,6 +109,25 @@ function initialize(db?: typeof mongoose) {
 	server = createServer(app);
 
 	/**
+	 * REDIS
+	 */
+	const pubClient = new Redis({
+		host: Config.REDIS_HOST,
+		port: Config.REDIS_PORT,
+		password: Config.REDIS_PASSWORD,
+		keyPrefix: `dxup:`,
+	});
+	const subClient = pubClient.duplicate();
+
+	pubClient.on("error", (error) => {
+		console.error("Redis PubClient Error:", error);
+	});
+
+	subClient.on("error", (error) => {
+		console.error("Redis SubClient Error:", error);
+	});
+
+	/**
 	 * Websocket / SOCKET.IO
 	 */
 	socketIO = new SocketServer(server, {
@@ -108,6 +135,7 @@ function initialize(db?: typeof mongoose) {
 		pingTimeout: 30000,
 		connectTimeout: 90000,
 		upgradeTimeout: 30000,
+		adapter: createAdapter(pubClient, subClient),
 	});
 	socketIO.on("connection", (socket) => {
 		// console.log("a user connected");

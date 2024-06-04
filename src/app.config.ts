@@ -147,8 +147,12 @@ export class Config {
 		return trimNull(process.env.REDIS_HOST) || "";
 	}
 
-	static get REDIS_PASS() {
-		return trimNull(process.env.REDIS_PASS) || "";
+	static get REDIS_PORT() {
+		return toInt(process.env.REDIS_PORT, 0);
+	}
+
+	static get REDIS_PASSWORD() {
+		return trimNull(process.env.REDIS_PASSWORD) || "";
 	}
 
 	static get CORS_WHITELIST() {
