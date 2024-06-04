@@ -291,8 +291,8 @@ jobs:
       - run: kubectl config use-context topgroup-dev
 
       # Deploy to TOPGROUP DEV cluster (DEPRECATED)
-      # - name: Set image to [app.dxup.dev / OLD] deployment
-      #   run: kubectl --context=topgroup-dev -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
+      - name: Set image to [app.diginext.site / OLD] deployment
+        run: kubectl --context=topgroup-dev -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
 
       # Deploy to DXUP cluster (DEPRECATED)
       # - name: Set image to [app.dxup.dev / TOP Group] deployment
