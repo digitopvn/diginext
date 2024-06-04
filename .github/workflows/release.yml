@@ -294,9 +294,9 @@ jobs:
       - name: Set image to [app.diginext.site / OLD] deployment
         run: kubectl --context=topgroup-dev -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
 
-      # Deploy to DXUP cluster (DEPRECATED)
-      # - name: Set image to [app.dxup.dev / TOP Group] deployment
-      #   run: kubectl --context=topgroup-dev -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
+      # Deploy to DXUP cluster
+      - name: Set image to [app.dxup.dev / TOP Group] deployment
+        run: kubectl --context=topgroup-dev -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
 
       # Deploy to LONGVAN STAGING cluster
       - name: Set image to [app.dxup.dev / Long Van STAGING] deployment
