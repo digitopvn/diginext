@@ -1,3 +1,11 @@
+## [3.33.5](https://github.com/digitopvn/diginext/compare/v3.33.4...v3.33.5) (2024-06-04)
+
+
+### Bug Fixes
+
+* **server,admin:** add build location, mask sensitive info to *** ([25101fd](https://github.com/digitopvn/diginext/commit/25101fd7eebd246b2a3429aedd581ae09b5c5ca7))
+* **server,admin:** add build location, mask sensitive info to *** ([#506](https://github.com/digitopvn/diginext/issues/506)) ([fffee17](https://github.com/digitopvn/diginext/commit/fffee17634da3d30bc4ab3b952462836e5fc2e1b))
+
 ## [3.33.4](https://github.com/digitopvn/diginext/compare/v3.33.3...v3.33.4) (2024-06-04)
 
 
