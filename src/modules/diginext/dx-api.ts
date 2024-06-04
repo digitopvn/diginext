@@ -8,6 +8,9 @@ import type { ResponseData } from "@/interfaces";
 export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dxKey?: string }) {
 	const { method, dxKey } = options;
 
+	// timeout: 30s
+	options.timeout = 30000;
+
 	if (isEmpty(options.headers)) options.headers = {};
 	// console.log("DXKEY :", dxKey);
 
@@ -21,7 +24,7 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 	}
 
 	// if (options.data) options.data = new URLSearchParams(options.data);
-	// console.log(`dxApi: ${options.url} > options.headers :>>`, options.headers);
+	console.log(`dxApi: ${Config.DX_API_URL}${options.url} > options.headers :>>`, options.headers);
 
 	try {
 		const res = await axios(options);
