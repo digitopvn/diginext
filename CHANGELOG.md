@@ -1,3 +1,12 @@
+## [3.33.1](https://github.com/digitopvn/diginext/compare/v3.33.0...v3.33.1) (2024-06-04)
+
+
+### Bug Fixes
+
+* **cli:** warning new domain dxup.dev ([09a4361](https://github.com/digitopvn/diginext/commit/09a4361895c87efea3739adb56062c971e31422f))
+* **server:** add error handling to redis ([58d5104](https://github.com/digitopvn/diginext/commit/58d5104989c67bc8ad27c4223a7c75057b25f927))
+* **server:** generate domain should uses diginext.site ([c32cf39](https://github.com/digitopvn/diginext/commit/c32cf393badcb706adcdf2a1718ec6063dce5722))
+
 # [3.33.0](https://github.com/digitopvn/diginext/compare/v3.32.9...v3.33.0) (2024-05-31)
 
 
