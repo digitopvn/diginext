@@ -114,6 +114,7 @@ export class WebhookService extends BaseService<IWebhook> {
 								.then((ref) => {
 									const build = ref?.build as IBuild;
 									const BUILD_LOG_ROOM = `${build.appSlug}-${build.tag}`;
+									const buildListPageUrl = `${Config.BASE_URL}/build`;
 									const logURL = `${Config.BASE_URL}/build/logs?build_slug=${BUILD_LOG_ROOM}`;
 									const duration = humanizeDuration(build.duration);
 									const owner = ref.owner as IUser;
@@ -124,15 +125,16 @@ export class WebhookService extends BaseService<IWebhook> {
 										to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
 										title: webhook.status === "failed" ? `Deploy failed: ${ref?.name}` : `Deploy success: ${ref?.name}`,
 										message:
-											webhook.status === "failed"
-												? `Failed to deploy "${ref?.appSlug}" app of "${ref?.projectSlug}" project to "${ref?.env.toUpperCase()}" environment.`
+											(webhook.status === "failed"
+												? `Failed to deploy "${ref?.appSlug}" app of "${ref?.projectSlug}" project to "${ref?.env.toUpperCase()}" environment.<br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}`
 												: `<strong>App has been deployed to "${ref?.env.toUpperCase()}" environment successfully.</strong><br/><br/>- Workspace: ${
 														(ref?.workspace as IWorkspace).name
 												  }<br/>- User: ${owner.name} (${
 														owner.slug
 												  })<br/>- App: ${ref?.appSlug}<br/>- Project: ${ref?.projectSlug}<br/>- URL: <a href="https://${
 														ref?.env === "production" ? ref?.prereleaseUrl : ref?.productionUrl
-												  }">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${ref?.image}`,
+												  }">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${ref?.image}`) +
+											`<br/><br/>Go to <a href="${buildListPageUrl}">DXUP Dashboard</a>.<br/><br/>Best regards, <a href="https://dxup.dev">DXUP</a> Team.`,
 									});
 								})
 								.catch((e) => {
