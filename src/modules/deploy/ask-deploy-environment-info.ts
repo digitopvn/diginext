@@ -15,6 +15,7 @@ import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import { updateAppConfig } from "../apps/update-config";
 import { updateAppGitInfo } from "../apps/update-git-config";
 import { askForDomain } from "../build";
+import { askForCluster } from "../cluster/ask-for-cluster";
 import { askForRegistry } from "../registry/ask-for-registry";
 import { checkGitignoreContainsDotenvFiles } from "./dotenv-exec";
 import { uploadDotenvFileByApp } from "./dotenv-upload";
@@ -128,10 +129,12 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		serverDeployEnvironment.cluster = cluster.slug;
 		serverDeployEnvironment.provider = (cluster.provider as ICloudProvider).shortName;
 	} else {
-		const cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster });
+		let cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster });
 		if (!cluster) {
-			logError(`Cluster "${serverDeployEnvironment.cluster}" not found.`);
-			return;
+			logWarn(`Cluster "${serverDeployEnvironment.cluster}" not found or might be modified, please select target cluster.`);
+			cluster = await askForCluster();
+			serverDeployEnvironment.cluster = cluster.slug;
+			serverDeployEnvironment.provider = (cluster.provider as ICloudProvider).shortName;
 		}
 	}
 
