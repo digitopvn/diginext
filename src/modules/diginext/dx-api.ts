@@ -5,7 +5,7 @@ import { isEmpty } from "lodash";
 import { Config } from "@/app.config";
 import type { ResponseData } from "@/interfaces";
 
-export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dxKey?: string }) {
+export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dxKey?: string; isDebugging?: boolean }) {
 	const { method, dxKey } = options;
 
 	// timeout: 30s
@@ -24,7 +24,7 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 	}
 
 	// if (options.data) options.data = new URLSearchParams(options.data);
-	console.log(`dxApi: ${Config.DX_API_URL}${options.url} > options.headers :>>`, options.headers);
+	if (options.isDebugging) console.log(`dxApi: ${Config.DX_API_URL}${options.url} > options.headers :>>`, options.headers);
 
 	try {
 		const res = await axios(options);
