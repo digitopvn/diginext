@@ -1,4 +1,5 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
+import { isEmpty } from "lodash";
 
 import type { IBuild } from "@/entities";
 import * as entities from "@/entities";
@@ -23,8 +24,20 @@ export default class BuildController extends BaseController<IBuild, BuildService
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
-	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
-		return super.read();
+	async read(@Queries() queryParams?: interfaces.IGetQueryParams) {
+		let builds = await this.service.find(this.filter, this.options, this.pagination);
+
+		if (isEmpty(builds)) return respondSuccess({ data: [] });
+
+		// exclude "logs" when "id" and "slug" query params are not provided
+		if (!this.filter.id && !this.filter.slug) {
+			builds = builds.map((build) => {
+				delete build.logs;
+				return build;
+			});
+		}
+
+		return respondSuccess({ data: builds });
 	}
 
 	@Security("api_key")

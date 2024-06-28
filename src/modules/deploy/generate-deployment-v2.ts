@@ -65,7 +65,7 @@ export type GenerateDeploymentResult = {
 
 const nginxBlockedPaths = "location ~ /.git { deny all; return 403; }";
 
-export const generateDeployment = async (params: GenerateDeploymentParams) => {
+export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => {
 	const { appSlug, buildTag, env = "dev", skipPrerelease = false, username, workspace, appConfig } = params;
 
 	// validate inputs
@@ -452,32 +452,6 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 				// CAUTION: PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
 				doc.spec.template.spec.containers[0].ports = [{ containerPort: toNumber(deployEnvironmentConfig.port) }];
-
-				// readinginessProbe & livenessProbe
-				// Sometimes, applications are temporarily unable to serve traffic
-				doc.spec.template.spec.containers[0].readinessProbe = {
-					httpGet: {
-						path: "/",
-						port: toNumber(deployEnvironmentConfig.port),
-					},
-					initialDelaySeconds: 10,
-					timeoutSeconds: 1,
-					periodSeconds: 10,
-					successThreshold: 1,
-					failureThreshold: 3,
-				};
-				// The application is considered unhealthy after a certain number of consecutive failures
-				doc.spec.template.spec.containers[0].livenessProbe = {
-					httpGet: {
-						path: "/",
-						port: toNumber(deployEnvironmentConfig.port),
-					},
-					initialDelaySeconds: 5,
-					timeoutSeconds: 1,
-					periodSeconds: 3,
-					successThreshold: 1,
-					failureThreshold: 3,
-				};
 
 				// add persistent volumes
 				if (app.deployEnvironment[env].volumes && app.deployEnvironment[env].volumes.length > 0) {
