@@ -1,3 +1,10 @@
+## [3.33.7](https://github.com/digitopvn/diginext/compare/v3.33.6...v3.33.7) (2024-06-28)
+
+
+### Bug Fixes
+
+* **server:** increase period check time of readiness and liveness probe ([9cb90b5](https://github.com/digitopvn/diginext/commit/9cb90b55b5e1046087d9444ebfd4c0edc20036b0))
+
 ## [3.33.6](https://github.com/digitopvn/diginext/compare/v3.33.5...v3.33.6) (2024-06-28)
 
 
