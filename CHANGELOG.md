@@ -1,3 +1,13 @@
+## [3.33.6](https://github.com/digitopvn/diginext/compare/v3.33.5...v3.33.6) (2024-06-28)
+
+
+### Bug Fixes
+
+* **cli:** select cluster when it is outdated, modified or deleted ([7633c17](https://github.com/digitopvn/diginext/commit/7633c17f5a04cdde701548675c671983b28a63dd))
+* **cli:** update env dx site url and api url ([7762abb](https://github.com/digitopvn/diginext/commit/7762abbe891f7a528fbf658e7a97b47cf8a2cbb3))
+* **server:** add livenessProbe and readinessProbe in generated deploy yaml ([2b08407](https://github.com/digitopvn/diginext/commit/2b0840758b11e904a933142cd09dca64d2d06815))
+* **server:** add livenessProbe and readinessProbe in generated deploy yaml ([#507](https://github.com/digitopvn/diginext/issues/507)) ([857528a](https://github.com/digitopvn/diginext/commit/857528a9b61d0454b56e3caf585bdad68347e000))
+
 ## [3.33.5](https://github.com/digitopvn/diginext/compare/v3.33.4...v3.33.5) (2024-06-04)
 
 
