@@ -454,7 +454,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 				doc.spec.template.spec.containers[0].ports = [{ containerPort: toNumber(deployEnvironmentConfig.port) }];
 
 				// readinginessProbe & livenessProbe
-				// Sometimes, applications are temporarily unable to serve traffic
+				// RUNNING: Sometimes, applications are temporarily unable to serve traffic
 				doc.spec.template.spec.containers[0].readinessProbe = {
 					httpGet: {
 						path: "/",
@@ -466,7 +466,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					successThreshold: 1,
 					failureThreshold: 3,
 				};
-				// The application is considered unhealthy after a certain number of consecutive failures
+				// STARTUP: The application is considered unhealthy after a certain number of consecutive failures
 				doc.spec.template.spec.containers[0].livenessProbe = {
 					httpGet: {
 						path: "/",
@@ -476,7 +476,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 					timeoutSeconds: 2,
 					periodSeconds: 15,
 					successThreshold: 1,
-					failureThreshold: 3,
+					failureThreshold: 6,
 				};
 
 				// add persistent volumes
