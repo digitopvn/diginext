@@ -13,6 +13,6 @@ export const formatEnvVars = (envVars: KubeEnvironmentVariable[]) => {
 			valueStr = JSON.stringify(value);
 		} catch (e: any) {}
 
-		return { name, value: valueStr ?? value.toString() };
+		return { name, value: valueStr ?? value?.toString() ?? "" };
 	});
 };
