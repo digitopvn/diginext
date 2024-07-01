@@ -1,3 +1,11 @@
+## [3.33.8](https://github.com/digitopvn/diginext/compare/v3.33.7...v3.33.8) (2024-07-01)
+
+
+### Bug Fixes
+
+* **server,admin:** env var value is undefined ([18594ef](https://github.com/digitopvn/diginext/commit/18594eff19ecce7f79a190010279f40622e77487))
+* **server:** increase liveness probe to 3 mins ([3c05238](https://github.com/digitopvn/diginext/commit/3c052384e0574a6136b8d96be997c79f2c81a0f5))
+
 ## [3.33.7](https://github.com/digitopvn/diginext/compare/v3.33.6...v3.33.7) (2024-06-28)
 
 
