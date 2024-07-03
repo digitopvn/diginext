@@ -472,11 +472,11 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 						path: "/",
 						port: toNumber(deployEnvironmentConfig.port),
 					},
-					initialDelaySeconds: 30,
+					initialDelaySeconds: 30, // chờ 30s rồi mới bắt đầu check
 					timeoutSeconds: 2,
-					periodSeconds: 15,
-					successThreshold: 1,
-					failureThreshold: 6,
+					periodSeconds: 10, // check lại mỗi 10s
+					successThreshold: 1, // chỉ cần 1 lần success -> app is ready
+					failureThreshold: 30, // check 30 lần fail x 10s = 300s (5 phút)
 				};
 
 				// add persistent volumes
