@@ -19,7 +19,8 @@ router
 	.get("/verify", processApiRequest(controller.verify.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
-	.delete("/", processApiRequest(controller.delete.bind(controller)));
+	.delete("/", processApiRequest(controller.delete.bind(controller)))
+	.post("/image-pull-secret", processApiRequest(controller.createImagePullSecret.bind(controller)));
 // .delete("/empty", processApiRequest(controller.empty.bind(controller)));
 
 export default router;

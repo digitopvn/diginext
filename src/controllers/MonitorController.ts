@@ -53,22 +53,6 @@ export default class MonitorController {
 			full,
 		};
 
-		// parse "search"
-		// if (search === true) {
-		// 	Object.entries(filter).forEach(([key, val]) => {
-		// 		filter[key] =
-		// 			isString(val) &&
-		// 			!isValidObjectId(val) &&
-		// 			!isBoolean(val) &&
-		// 			!isDate(val) &&
-		// 			!isNumber(val) &&
-		// 			!isBooleanString(val) &&
-		// 			!isNumberString(val)
-		// 				? { $regex: trim(val), $options: "i" }
-		// 				: val;
-		// 	});
-		// }
-
 		// parse "sort" (or "order") from the query url:
 		let _sortOptions: string[];
 		if (sort) _sortOptions = sort.indexOf(",") > -1 ? sort.split(",") : [sort];

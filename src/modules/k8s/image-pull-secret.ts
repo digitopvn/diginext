@@ -1,6 +1,8 @@
 import { log, logError } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
+import { DB } from "@/modules/api/DB";
+
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
@@ -9,37 +11,15 @@ import DockerRegistry from "../registry/docker-registry";
 
 /**
  * Create imagePullSecrets in a namespace
- * @param appSlug - App's slug
- * @param env @example "dev", "prod"
- * @param clusterSlug - Cluster's slug
- * @param namespace @default "default"
  */
-export async function createImagePullSecretsInNamespace(appSlug: string, env: string, clusterSlug: string, namespace: string = "default") {
-	const { DB } = await import("@/modules/api/DB");
+export async function createImagePullSecrets(options: ContainerRegistrySecretOptions) {
+	const { registrySlug } = options;
+	// console.log("createImagePullSecretsInNamespace > options :>> ", options);
+
 	let message = "";
 
-	let app = await DB.findOne("app", { slug: appSlug });
-
-	if (!app) throw new Error(`App "${appSlug}" not found.`);
-
-	const deployEnvironment = await getDeployEvironmentByApp(app, env);
-	if (isEmpty(deployEnvironment)) {
-		throw new Error(`Deploy environment (${env}) of "${appSlug}" app not found.`);
-	}
-
-	const { registry: regSlug } = deployEnvironment;
-	let registry = await DB.findOne("registry", { slug: regSlug });
-
-	if (!registry) throw new Error(`Container Registry (${regSlug}) of "${appSlug}" app not found.`);
-	const registrySlug = registry.slug;
-
-	const options: ContainerRegistrySecretOptions = {
-		namespace,
-		clusterSlug,
-		registrySlug,
-		shouldCreateSecretInNamespace: true,
-	};
-	// console.log("createImagePullSecretsInNamespace > options :>> ", options);
+	let registry = await DB.findOne("registry", { slug: registrySlug });
+	if (!registry) throw new Error(`Container Registry "${registrySlug}" not found.`);
 
 	try {
 		let imagePullSecret: { name?: string; value?: string };
@@ -65,8 +45,8 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 
 		if (imagePullSecret && imagePullSecret.name) {
 			// update image pull secret name into container registry
-			const [updatedRegistry] = await DB.update("registry", { slug: regSlug }, { imagePullSecret });
-			if (!updatedRegistry) logError(`[IMAGE PULL SECRET] Can't update "imagePullSecrets" to "${regSlug}" registry`);
+			const [updatedRegistry] = await DB.update("registry", { slug: registrySlug }, { imagePullSecret });
+			if (!updatedRegistry) logError(`[IMAGE PULL SECRET] Can't update "imagePullSecrets" to "${registrySlug}" registry`);
 
 			// print success
 			message = `Created "imagePullSecret" named "${imagePullSecret.name}" successfully.`;
@@ -82,4 +62,63 @@ export async function createImagePullSecretsInNamespace(appSlug: string, env: st
 		message = `[ERROR] Creating "imagePullSecret" failed -> ${e.toString()}`;
 		throw new Error(message);
 	}
+}
+
+/**
+ * Create imagePullSecrets in a namespace by deploy environment
+ * @param appSlug - App's slug
+ * @param env @example "dev", "prod"
+ */
+export async function createImagePullSecretsByDeployEnvironment(appSlug: string, env: string = "dev") {
+	// const { DB } = await import("@/modules/api/DB");
+
+	let app = await DB.findOne("app", { slug: appSlug });
+	if (!app) throw new Error(`App "${appSlug}" not found.`);
+
+	const deployEnvironment = await getDeployEvironmentByApp(app, env);
+	if (isEmpty(deployEnvironment)) {
+		throw new Error(`Deploy environment (${env}) of "${appSlug}" app not found.`);
+	}
+
+	const { registry: registrySlug, namespace, cluster: clusterSlug } = deployEnvironment;
+
+	const options: ContainerRegistrySecretOptions = {
+		namespace,
+		clusterSlug,
+		registrySlug,
+	};
+	// console.log("createImagePullSecretsInNamespace > options :>> ", options);
+
+	return createImagePullSecrets(options);
+}
+
+/**
+ * Create imagePullSecrets in a namespace
+ * @param appSlug - App's slug
+ * @param env @example "dev", "prod"
+ * @param clusterSlug - Cluster's slug
+ * @param namespace @default "default"
+ */
+export async function createImagePullSecretsInNamespace(appSlug: string, env: string, clusterSlug: string, namespace: string = "default") {
+	// const { DB } = await import("@/modules/api/DB");
+	let message = "";
+
+	let app = await DB.findOne("app", { slug: appSlug });
+	if (!app) throw new Error(`App "${appSlug}" not found.`);
+
+	const deployEnvironment = await getDeployEvironmentByApp(app, env);
+	if (isEmpty(deployEnvironment)) {
+		throw new Error(`Deploy environment (${env}) of "${appSlug}" app not found.`);
+	}
+
+	const { registry: registrySlug } = deployEnvironment;
+
+	const options: ContainerRegistrySecretOptions = {
+		namespace,
+		clusterSlug,
+		registrySlug,
+	};
+	// console.log("createImagePullSecretsInNamespace > options :>> ", options);
+
+	return createImagePullSecrets(options);
 }

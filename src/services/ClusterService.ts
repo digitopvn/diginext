@@ -5,8 +5,10 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces
 import type { Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
 import type { ClusterAuthOptions } from "@/modules/k8s/cluster-auth";
+import { createImagePullSecrets } from "@/modules/k8s/image-pull-secret";
 import { deleteClusterInKubeConfig } from "@/modules/k8s/kube-config";
 import type { InstallStackOptions } from "@/modules/k8s/stack-install";
+import type { ContainerRegistrySecretOptions } from "@/modules/registry/ContainerRegistrySecretOptions";
 import { checkPermissions, checkPermissionsByFilter, checkPermissionsById } from "@/plugins/user-utils";
 
 import BaseService from "./BaseService";
@@ -103,5 +105,26 @@ export class ClusterService extends BaseService<ICluster> {
 		} catch (e) {
 			return false;
 		}
+	}
+
+	/**
+	 * Create "imagePullSecret" in a namespace of a cluster
+	 */
+	async createImagePullSecret(filter: IQueryFilter<any>, data: ContainerRegistrySecretOptions, options?: { isDebugging?: boolean }) {
+		// find cluster
+		const { clusterSlug } = data;
+		let cluster = await this.findOne({ slug: clusterSlug });
+		if (!cluster) {
+			if (filter.owner) {
+				throw new Error(`Unauthorized.`);
+			} else {
+				throw new Error(`Cluster not found.`);
+			}
+		}
+
+		// check permissions
+		await checkPermissionsById("clusters", cluster._id, this.user);
+
+		return createImagePullSecrets(data);
 	}
 }

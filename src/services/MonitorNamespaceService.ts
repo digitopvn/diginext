@@ -1,5 +1,5 @@
 import type { IUser, IWorkspace } from "@/entities";
-import type { KubeNamespace } from "@/interfaces";
+import type { IQueryFilter, IQueryOptions, KubeNamespace } from "@/interfaces";
 import type {
 	MonitoringCreateOptions,
 	MonitoringNamespaceQueryFilter,
@@ -132,6 +132,13 @@ export class MonitorNamespaceService {
 	async findOne(filter: MonitoringNamespaceQueryFilter, options?: MonitoringQueryOptions) {
 		const data = await this.find(filter, options);
 		return data[0];
+	}
+
+	async update(filter: IQueryFilter<any>, data: any, options?: IQueryOptions): Promise<KubeNamespace[]> {
+		// check permissions
+		// await checkPermissionsByFilter("frameworks", this, filter, this.user);
+		// return super.update(filter, data, options);
+		return [];
 	}
 
 	async allResources(filter: MonitoringNamespaceQueryFilter, options?: MonitoringQueryOptions) {

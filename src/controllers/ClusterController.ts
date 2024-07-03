@@ -6,6 +6,7 @@ import * as interfaces from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
+import { ContainerRegistrySecretOptions } from "@/modules/registry/ContainerRegistrySecretOptions";
 import { CloudProviderService, ClusterService } from "@/services";
 
 import BaseController from "./BaseController";
@@ -152,6 +153,18 @@ export default class ClusterController extends BaseController<ICluster, ClusterS
 				ownership: this.ownership,
 			});
 			return respondSuccess({ data: cluster });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/image-pull-secret")
+	async createImagePullSecret(@Body() body: ContainerRegistrySecretOptions) {
+		try {
+			const data = await this.service.createImagePullSecret(this.filter, body, this.options);
+			return data ? respondSuccess({ data }) : respondFailure({ data });
 		} catch (e) {
 			return respondFailure(e.toString());
 		}

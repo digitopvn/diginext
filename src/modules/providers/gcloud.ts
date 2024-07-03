@@ -286,7 +286,6 @@ export const execGoogleCloud = async (options?: InputOptions) => {
 					clusterSlug,
 					registrySlug: selectedRegistry.slug,
 					namespace: options.namespace,
-					shouldCreateSecretInNamespace: options.shouldCreate,
 				});
 			} catch (e) {
 				logError(e);
