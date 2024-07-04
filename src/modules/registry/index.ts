@@ -61,7 +61,7 @@ export const execRegistry = async (options: InputOptions) => {
 
 			if (!namespace) namespace = await askForNamespace(cluster);
 
-			const res = await DB.create("cluster", { registrySlug, clusterSlug, namespace }, { subpath: "image-pull-secret" });
+			const res = await DB.create("cluster", { registrySlug, clusterSlug, namespace }, { subpath: "/image-pull-secret" });
 			if (!res) return logError(`Failed to create "imagePullSecret".`);
 			logSuccess(`ImagePullSecret "${res.name}" created.`);
 
