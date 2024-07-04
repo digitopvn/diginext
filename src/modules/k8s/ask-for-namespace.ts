@@ -5,8 +5,6 @@ import { isEmpty } from "lodash";
 import { Config } from "@/app.config";
 import type { ICluster } from "@/entities";
 
-import { DB } from "../api/DB";
-
 export const askForNamespace = async (cluster: ICluster) => {
 	const { contextName: context, isVerified } = cluster;
 	if (!context || !isVerified) {
@@ -14,6 +12,7 @@ export const askForNamespace = async (cluster: ICluster) => {
 		return;
 	}
 
+	const { DB } = await import("@/modules/api/DB");
 	const namespaces = await DB.find("monitor/namespaces", { cluster: cluster.slug });
 
 	if (isEmpty(namespaces)) {
