@@ -1,3 +1,11 @@
+## [3.33.9](https://github.com/digitopvn/diginext/compare/v3.33.8...v3.33.9) (2024-07-04)
+
+
+### Bug Fixes
+
+* **server,cli:** create image pull secret uses api in the background ([b646573](https://github.com/digitopvn/diginext/commit/b6465736d7fd2c3e46e97ed1c62f6cfd236f4b86))
+* **server:** increase liveness probe time to 5 mins ([05535fd](https://github.com/digitopvn/diginext/commit/05535fd3b56b582ff58e6700b292c47dd7668de7))
+
 ## [3.33.8](https://github.com/digitopvn/diginext/compare/v3.33.7...v3.33.8) (2024-07-01)
 
 
