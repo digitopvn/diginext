@@ -1,4 +1,3 @@
-import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { existsSync, writeFileSync } from "fs";
 import yaml from "js-yaml";
 
@@ -78,8 +77,10 @@ export async function getKubeContextByCluster(cluster: ICluster, filePath?: stri
 		context = listContexts.find((ctx) => ctx.name === slug);
 	}
 
-	if (!context)
-		logWarn(`Kubernetes context not found of "${slug}" cluster (${provider}), current contexts: ${listContexts.map((ctx) => ctx.name)}.`);
+	if (!context) {
+		// logWarn(`Kubernetes context not found of "${slug}" cluster (${provider}), current contexts: ${listContexts.map((ctx) => ctx.name)}.`);
+		throw new Error(`Kubernetes context "${shortName}" not found of "${slug}" cluster (${provider}).`);
+	}
 
 	return context;
 }

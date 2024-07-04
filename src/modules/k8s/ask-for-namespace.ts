@@ -2,18 +2,19 @@ import { logError } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 
+import { Config } from "@/app.config";
 import type { ICluster } from "@/entities";
 
-import ClusterManager from "./index";
+import { DB } from "../api/DB";
 
 export const askForNamespace = async (cluster: ICluster) => {
-	const { contextName: context } = cluster;
-	if (!context) {
-		logError(`This cluster hasn't been authenticated.`);
+	const { contextName: context, isVerified } = cluster;
+	if (!context || !isVerified) {
+		logError(`This cluster hasn't been verified in DXUP system, please go to ${Config.DEFAULT_DX_SERVER_URL} to verify it.`);
 		return;
 	}
 
-	const namespaces = await ClusterManager.getAllNamespaces({ context });
+	const namespaces = await DB.find("monitor/namespaces", { cluster: cluster.slug });
 
 	if (isEmpty(namespaces)) {
 		logError(`This cluster (${cluster.slug}) doesn't have any namespaces.`);

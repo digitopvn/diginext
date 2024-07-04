@@ -81,7 +81,7 @@ export async function authorize(req: AppRequest, res: Response, next: NextFuncti
 
 	// Check again if a specific route is specified:
 	routeRole = activeRole.routes.find((routeInfo) => routeInfo.path === routePath);
-	console.log("authorize() > routeRole :>> ", routeRole);
+	// console.log("authorize() > routeRole :>> ", routeRole);
 
 	if (routeRole) {
 		if (!routeRole.permissions) routeRole.permissions = [];

@@ -27,7 +27,7 @@ import type {
 	IWebhook,
 	IWorkspace,
 } from "@/entities";
-import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
+import type { IQueryFilter, IQueryOptions, IQueryPagination, KubeNamespace } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 
 import type { GitRepository } from "../git/git-provider-api";
@@ -57,6 +57,7 @@ export const dbCollections = [
 	"webhook",
 	"notification",
 	"storage",
+	"monitor/namespaces",
 ] as const;
 export type DBCollection = (typeof dbCollections)[number];
 
@@ -144,6 +145,8 @@ export type TypeByCollection<T extends DBCollection> = T extends "api_key_user"
 	? INotification
 	: T extends "storage"
 	? ICloudStorage
+	: T extends "monitor/namespaces"
+	? KubeNamespace
 	: never;
 
 export interface DBQueryOptions extends IQueryOptions {
@@ -268,6 +271,10 @@ export class DB {
 			case "storage":
 				const { CloudStorageService } = await import("@/services");
 				svc = new CloudStorageService();
+				break;
+			case "monitor/namespaces":
+				const { MonitorNamespaceService } = await import("@/services");
+				svc = new MonitorNamespaceService();
 				break;
 		}
 		// assign ownership

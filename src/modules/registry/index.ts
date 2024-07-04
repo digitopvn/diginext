@@ -1,5 +1,5 @@
 import { isJSON } from "class-validator";
-import { logError } from "diginext-utils/dist/xconsole/log";
+import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import { existsSync, readFileSync } from "fs";
 
 import type { ContainerRegistryDto, ICluster, IContainerRegistry } from "@/entities";
@@ -7,15 +7,12 @@ import type InputOptions from "@/interfaces/InputOptions";
 
 import { askForCluster } from "../cluster/ask-for-cluster";
 import { askForNamespace } from "../k8s/ask-for-namespace";
-import digitalocean from "../providers/digitalocean";
-import gcloud from "../providers/gcloud";
 import { addContainerRegistry } from "./add-container-registry";
 import { askToConnectRegistry } from "./ask-connect-registry";
 import { askForRegistry } from "./ask-for-registry";
-import DockerRegistry from "./docker-registry";
 
 export const execRegistry = async (options: InputOptions) => {
-	let { secondAction, registry: registrySlug, namespace, shouldCreate: shouldCreateSecretInNamespace } = options;
+	let { secondAction, registry: registrySlug, namespace } = options;
 	const { DB } = await import("@/modules/api/DB");
 
 	switch (secondAction) {
@@ -64,32 +61,36 @@ export const execRegistry = async (options: InputOptions) => {
 
 			if (!namespace) namespace = await askForNamespace(cluster);
 
-			switch (provider) {
-				case "digitalocean":
-					return digitalocean.createImagePullingSecret({
-						clusterSlug,
-						registrySlug,
-						namespace,
-					});
+			const res = await DB.create("cluster", { registrySlug, clusterSlug, namespace }, { subpath: "image-pull-secret" });
+			if (!res) return logError(`Failed to create "imagePullSecret".`);
+			logSuccess(`ImagePullSecret "${res.name}" created.`);
 
-				case "gcloud":
-					return gcloud.createImagePullingSecret({
-						clusterSlug,
-						registrySlug,
-						namespace,
-					});
+		// switch (provider) {
+		// 	case "digitalocean":
+		// 		return digitalocean.createImagePullingSecret({
+		// 			clusterSlug,
+		// 			registrySlug,
+		// 			namespace,
+		// 		});
 
-				case "dockerhub":
-					return DockerRegistry.createImagePullSecret({
-						clusterSlug,
-						registrySlug,
-						namespace,
-					});
+		// 	case "gcloud":
+		// 		return gcloud.createImagePullingSecret({
+		// 			clusterSlug,
+		// 			registrySlug,
+		// 			namespace,
+		// 		});
 
-				default:
-					logError(`Container registry provider "${provider}" is not valid.`);
-					break;
-			}
+		// 	case "dockerhub":
+		// 		return DockerRegistry.createImagePullSecret({
+		// 			clusterSlug,
+		// 			registrySlug,
+		// 			namespace,
+		// 		});
+
+		// 	default:
+		// 		logError(`Container registry provider "${provider}" is not valid.`);
+		// 		break;
+		// }
 
 		case "secret":
 			// TODO: get "imagePullSecrets" value as JSON or YAML (from database)

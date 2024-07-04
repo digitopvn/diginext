@@ -45,7 +45,13 @@ const DockerRegistry = {
 				if (options.isDebugging) log(`[PODMAN] connectDockerRegistry >`, { connectRes });
 			}
 		} catch (e) {
-			throw new Error(`[${Config.BUILDER.toUpperCase()}] Unable to connect to Docker Registry: Authentication failure.`);
+			// NOTE: DO NOT EXPOSE PASSWORD IN THIS LOG DUE TO SECURITY RISK !!!
+			console.log(
+				`[${Config.BUILDER.toUpperCase()}] connectDockerToRegistry() > error :>>`,
+				(e.message || "unknown").replace(new RegExp(password, "gi"), "***")
+			);
+			if (!e.message.includes("The specified item already exists in the keychain"))
+				throw new Error(`[${Config.BUILDER.toUpperCase()}] Unable to connect to Docker Registry (${registrySlug}): Authentication failure.`);
 		}
 
 		const workspace = await DB.findOne("workspace", { _id: workspaceId });
