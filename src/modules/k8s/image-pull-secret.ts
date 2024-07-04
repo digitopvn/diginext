@@ -1,8 +1,6 @@
 import { log, logError } from "diginext-utils/dist/xconsole/log";
 import { isEmpty } from "lodash";
 
-import { DB } from "@/modules/api/DB";
-
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
@@ -15,6 +13,7 @@ import DockerRegistry from "../registry/docker-registry";
 export async function createImagePullSecrets(options: ContainerRegistrySecretOptions) {
 	const { registrySlug } = options;
 	// console.log("createImagePullSecretsInNamespace > options :>> ", options);
+	const { DB } = await import("@/modules/api/DB");
 
 	let message = "";
 
@@ -70,7 +69,7 @@ export async function createImagePullSecrets(options: ContainerRegistrySecretOpt
  * @param env @example "dev", "prod"
  */
 export async function createImagePullSecretsByDeployEnvironment(appSlug: string, env: string = "dev") {
-	// const { DB } = await import("@/modules/api/DB");
+	const { DB } = await import("@/modules/api/DB");
 
 	let app = await DB.findOne("app", { slug: appSlug });
 	if (!app) throw new Error(`App "${appSlug}" not found.`);
@@ -100,7 +99,7 @@ export async function createImagePullSecretsByDeployEnvironment(appSlug: string,
  * @param namespace @default "default"
  */
 export async function createImagePullSecretsInNamespace(appSlug: string, env: string, clusterSlug: string, namespace: string = "default") {
-	// const { DB } = await import("@/modules/api/DB");
+	const { DB } = await import("@/modules/api/DB");
 	let message = "";
 
 	let app = await DB.findOne("app", { slug: appSlug });
