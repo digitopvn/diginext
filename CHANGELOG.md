@@ -1,3 +1,11 @@
+## [3.33.10](https://github.com/digitopvn/diginext/compare/v3.33.9...v3.33.10) (2024-07-04)
+
+
+### Bug Fixes
+
+* **server:** correct create image pull secret subpath api ([7b10bec](https://github.com/digitopvn/diginext/commit/7b10bec75bd2e522244f3b2318b04b5329430997))
+* **server:** correct create image pull secret subpath api ([#511](https://github.com/digitopvn/diginext/issues/511)) ([4825e70](https://github.com/digitopvn/diginext/commit/4825e7095234f87e6ac2480f58d1f3653615b05d))
+
 ## [3.33.9](https://github.com/digitopvn/diginext/compare/v3.33.8...v3.33.9) (2024-07-04)
 
 
