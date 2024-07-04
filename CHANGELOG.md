@@ -1,3 +1,11 @@
+## [3.33.11](https://github.com/digitopvn/diginext/compare/v3.33.10...v3.33.11) (2024-07-04)
+
+
+### Bug Fixes
+
+* **server:** correct db import ([28bc976](https://github.com/digitopvn/diginext/commit/28bc976b2d34f41d6dc50d94ca573689575254d0))
+* **server:** correct db import ([#512](https://github.com/digitopvn/diginext/issues/512)) ([70eea67](https://github.com/digitopvn/diginext/commit/70eea67ea1fbe7a47a956282c25da793a6afcc8b))
+
 ## [3.33.10](https://github.com/digitopvn/diginext/compare/v3.33.9...v3.33.10) (2024-07-04)
 
 
