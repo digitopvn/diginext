@@ -2,15 +2,16 @@ import chalk from "chalk";
 import dayjs from "dayjs";
 import humanizeDuration from "humanize-duration";
 
-import { Config, IsTest } from "@/app.config";
+import { IsTest } from "@/app.config";
 import { wait } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 import MediaService from "@/services/MediaService";
 
 import screenshot from "../capture/screenshot";
-import type { DeployBuildOptions, DeployBuildResult } from "../deploy/deploy-build";
-import { deployBuild } from "../deploy/deploy-build";
+import type { DeployBuildOptions } from "../deploy/deploy-build";
+import type { DeployBuildV2Result } from "../deploy/deploy-build-v2";
+import { deployBuildV2 } from "../deploy/deploy-build-v2";
 import type { StartBuildParams, StartBuildResult } from "./build";
 import { startBuild, stopBuild } from "./build";
 import { sendLog } from "./send-log-message";
@@ -46,9 +47,9 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	if (!deployParams.env) deployParams.env = buildParams.env || "dev";
 	if (typeof deployParams.deployInBackground === "undefined") deployParams.deployInBackground = false;
 
-	let deployRes: DeployBuildResult;
+	let deployRes: DeployBuildV2Result;
 	try {
-		deployRes = await deployBuild(build, deployParams);
+		deployRes = await deployBuildV2(build, deployParams);
 	} catch (e) {
 		stopBuild(projectSlug, appSlug, SOCKET_ROOM);
 		sendLog({ SOCKET_ROOM, type: "error", message: `Deploy error: ${e.stack}` });
@@ -61,7 +62,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > Release ID :>> ${release._id}` });
 
 	const releaseId = MongoDB.toString(release._id);
-	const { endpoint, prereleaseUrl } = deployment;
+	const { endpoint } = deployment;
 
 	// [3] Print success information
 	const endTime = dayjs();
@@ -78,7 +79,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 		try {
 			// let's this job run in background
 			wait(30 * 1000, () => {
-				screenshot(env === "prod" ? prereleaseUrl : endpoint, { fullPage: false })
+				screenshot(endpoint, { fullPage: false })
 					.then(async (result) => {
 						if (result) {
 							// success -> write to db
@@ -103,31 +104,13 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 		} catch (e) {
 			sendLog({
 				SOCKET_ROOM,
-				message: `[BUILD_AND_DEPLOY] Unable to capture the webpage screenshot (${env === "prod" ? prereleaseUrl : endpoint}): ${e}`,
+				message: `[BUILD_AND_DEPLOY] Unable to capture the webpage screenshot (${endpoint}): ${e}`,
 			});
 		}
 	}
 
-	if (env == "prod") {
-		const buildServerUrl = Config.BASE_URL;
-		const rollOutUrl = `${buildServerUrl}/project/?lv1=release&project=${projectSlug}&app=${appSlug}&env=prod`;
-
-		sendLog({ SOCKET_ROOM, message: chalk.bold(chalk.yellow(`✓ Preview at: ${prereleaseUrl}`)), type: "success" });
-
-		sendLog({
-			SOCKET_ROOM,
-			message: chalk.bold(chalk.yellow(`✓ Review & publish at: ${rollOutUrl}`)),
-			type: "success",
-		});
-
-		sendLog({
-			SOCKET_ROOM,
-			message: chalk.bold(chalk.yellow(`✓ Roll out with CLI command:`), `$ dx rollout ${releaseId}`),
-			type: "success",
-		});
-	} else {
-		sendLog({ SOCKET_ROOM, message: chalk.bold(chalk.yellow(`✓ Check out your release at: ${endpoint}`)), type: "success" });
-	}
+	// [5] Send success message to the CLI client:
+	sendLog({ SOCKET_ROOM, message: chalk.bold(chalk.yellow(`✓ Check out your release at: ${endpoint}`)), type: "success" });
 
 	// disconnect CLI client:
 	socketIO?.to(SOCKET_ROOM).emit("message", { action: "end" });

@@ -2,7 +2,7 @@ import type { IBuild, IRelease } from "@/entities";
 import { MongoDB } from "@/plugins/mongodb";
 
 import type { DeployBuildOptions } from "./deploy-build";
-import { deployBuild } from "./deploy-build";
+import { deployBuildV2 } from "./deploy-build-v2";
 
 export interface DeployReleaseOptions extends DeployBuildOptions {
 	release: string;
@@ -22,7 +22,7 @@ export const deployRelease = async (release: IRelease, options: DeployBuildOptio
 
 	if (!build) throw new Error(`[DEPLOY RELEASE] Build not found.`);
 
-	return deployBuild(build, options);
+	return deployBuildV2(build, options);
 };
 
 export const deployWithReleaseSlug = async (releaseSlug: string, options: DeployBuildOptions) => {

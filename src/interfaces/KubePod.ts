@@ -128,7 +128,9 @@ export interface KubePod {
 			lastProbeTime?: string;
 			lastTransitionTime?: string;
 			status?: "True" | "False";
-			type?: "Initialized" | "Ready" | "ContainersReady" | "PodScheduled" | "PodHasNetwork";
+			message?: string;
+			reason?: string;
+			type?: "Initialized" | "PodScheduled" | "ContainersReady" | "PodHasNetwork" | "PodReadyToStartContainers" | "Ready";
 		}[];
 		containerStatuses?: {
 			containerID?: string;
@@ -150,6 +152,10 @@ export interface KubePod {
 			state?: {
 				running?: {
 					startedAt?: string;
+				};
+				waiting?: {
+					message?: string;
+					reason?: string;
 				};
 			};
 		}[];

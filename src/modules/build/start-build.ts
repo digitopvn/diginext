@@ -6,11 +6,9 @@ import { isEmpty } from "lodash";
 import PQueue from "p-queue";
 import path from "path";
 
-import { getCliConfig } from "@/config/config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IRelease, IWorkspace } from "@/entities";
 import type { InputOptions } from "@/interfaces/InputOptions";
-import { fetchDeploymentFromContent } from "@/modules/deploy/fetch-deployment";
 import { getGitProviderFromRepoSSH, Logger, pullOrCloneGitRepo, resolveDockerfilePath, wait } from "@/plugins";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
@@ -269,14 +267,14 @@ export async function startBuildV1(
 		return;
 	}
 
-	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+	const { endpoint, deploymentContent } = deployment;
 	// sendLog({ SOCKET_ROOM, message: deploymentContent });
 	// if (env === "prod") sendLog({ SOCKET_ROOM, message: prereleaseDeploymentContent });
 
 	// update data to deploy environment:
-	serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
+	// serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
 	serverDeployEnvironment.deploymentYaml = deploymentContent;
-	serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+	// serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 	serverDeployEnvironment.updatedAt = new Date();
 	serverDeployEnvironment.lastUpdatedBy = username;
 
@@ -334,7 +332,7 @@ export async function startBuildV1(
 	// }
 
 	// Insert this build record to server:
-	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
+	// let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
 	let releaseId: string, newRelease: IRelease;
 	try {
 		newRelease = await createReleaseFromBuild(newBuild, env, { author });
@@ -420,26 +418,28 @@ export async function startBuildV1(
 
 	sendLog({ SOCKET_ROOM, message: chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanizeDuration(deployDuration)} 🎉`), type: "success" });
 
-	if (env == "prod") {
-		const { buildServerUrl } = getCliConfig();
-		const rollOutUrl = `${buildServerUrl}/project/?lv1=release&project=${projectSlug}&app=${appSlug}&env=prod`;
+	// if (env == "prod") {
+	// 	const { buildServerUrl } = getCliConfig();
+	// 	const rollOutUrl = `${buildServerUrl}/project/?lv1=release&project=${projectSlug}&app=${appSlug}&env=prod`;
 
-		sendLog({ SOCKET_ROOM, message: chalk.bold(chalk.yellow(`✓ Preview at: ${prereleaseDeploymentData.endpoint}`)), type: "success" });
+	// 	sendLog({ SOCKET_ROOM, message: chalk.bold(chalk.yellow(`✓ Preview at: ${prereleaseDeploymentData.endpoint}`)), type: "success" });
 
-		sendLog({
-			SOCKET_ROOM,
-			message: chalk.bold(chalk.yellow(`✓ Review & publish at: ${rollOutUrl}`)),
-			type: "success",
-		});
+	// 	sendLog({
+	// 		SOCKET_ROOM,
+	// 		message: chalk.bold(chalk.yellow(`✓ Review & publish at: ${rollOutUrl}`)),
+	// 		type: "success",
+	// 	});
 
-		sendLog({
-			SOCKET_ROOM,
-			message: chalk.bold(chalk.yellow(`✓ Roll out with CLI command:`), `$ dx rollout ${releaseId}`),
-			type: "success",
-		});
-	} else {
-		sendLog({ SOCKET_ROOM, message: chalk.bold(chalk.yellow(`✓ Preview at: ${endpoint}`)), type: "success" });
-	}
+	// 	sendLog({
+	// 		SOCKET_ROOM,
+	// 		message: chalk.bold(chalk.yellow(`✓ Roll out with CLI command:`), `$ dx rollout ${releaseId}`),
+	// 		type: "success",
+	// 	});
+	// } else {
+	// 	sendLog({ SOCKET_ROOM, message: chalk.bold(chalk.yellow(`✓ Preview at: ${endpoint}`)), type: "success" });
+	// }
+
+	sendLog({ SOCKET_ROOM, message: chalk.bold(chalk.yellow(`✓ Preview at: ${endpoint}`)), type: "success" });
 
 	// i don't know, just for sure...
 	await wait(2000);

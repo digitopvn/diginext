@@ -14,11 +14,11 @@ import { updateAppConfig } from "../apps/update-config";
 import { createReleaseFromBuild, sendLog } from "../build";
 import { updateReleaseStatusById } from "../build/update-release-status";
 import ClusterManager from "../k8s";
-import type { FetchDeploymentResult } from "./fetch-deployment";
+import { deployBuild } from "./deploy-build";
 import type { GenerateDeploymentResult } from "./generate-deployment";
-import { generateDeployment } from "./generate-deployment";
+import { generateDeploymentV2 } from "./generate-deployment-v2";
 
-export type DeployBuildOptions = {
+export type DeployBuildV2Options = {
 	/**
 	 * ### `REQUIRED`
 	 * Deploy environment
@@ -64,16 +64,16 @@ export type DeployBuildOptions = {
 	deployInBackground?: boolean;
 };
 
-export type DeployBuildResult = {
+export type DeployBuildV2Result = {
 	app: IApp;
 	build: IBuild;
 	release: IRelease;
 	deployment: GenerateDeploymentResult;
 	endpoint: string;
-	prerelease: FetchDeploymentResult;
+	// prerelease: FetchDeploymentResult;
 };
 
-export const processDeployBuild = async (build: IBuild, release: IRelease, cluster: ICluster, options: DeployBuildOptions) => {
+export const processDeployBuildV2 = async (build: IBuild, release: IRelease, cluster: ICluster, options: DeployBuildV2Options) => {
 	const { env, owner, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
 	const { appSlug, projectSlug, tag: buildTag } = build;
 	const { slug: username } = owner;
@@ -217,15 +217,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		});
 
 		try {
-			if (forceRollOut) {
-				ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
-			} else {
-				if (env === "prod") {
-					ClusterManager.previewPrerelease(releaseId, { onUpdate: onRolloutUpdate });
-				} else {
-					ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
-				}
-			}
+			ClusterManager.rolloutV2(releaseId, { onUpdate: onRolloutUpdate });
 		} catch (e) {
 			const errMsg = `Failed to roll out the release :>> ${e.message}:`;
 			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: errMsg });
@@ -239,19 +231,11 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 		if (release._id) {
 			sendLog({
 				SOCKET_ROOM,
-				message:
-					env === "prod"
-						? `Rolling out the PRE-RELEASE deployment to "${env.toUpperCase()}" environment...`
-						: `Rolling out the deployment to "${env.toUpperCase()}" environment...`,
+				message: `Rolling out the deployment to "${env.toUpperCase()}" environment...`,
 			});
 
 			try {
-				const result =
-					env === "prod"
-						? forceRollOut
-							? await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate })
-							: await ClusterManager.previewPrerelease(releaseId, { onUpdate: onRolloutUpdate })
-						: await ClusterManager.rollout(releaseId, { onUpdate: onRolloutUpdate });
+				const result = await ClusterManager.rolloutV2(releaseId, { onUpdate: onRolloutUpdate });
 
 				if (result.error) {
 					const errMsg = `Failed to roll out the release :>> ${result.error}.`;
@@ -278,7 +262,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 	}
 };
 
-export const deployBuild = async (build: IBuild, options: DeployBuildOptions): Promise<DeployBuildResult> => {
+export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options): Promise<DeployBuildV2Result> => {
 	const { DB } = await import("@/modules/api/DB");
 
 	// parse options
@@ -357,7 +341,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 	let deployment: GenerateDeploymentResult;
 	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generating the deployment files on server...` });
 	try {
-		deployment = await generateDeployment({
+		deployment = await generateDeploymentV2({
 			appSlug,
 			env,
 			username,
@@ -381,9 +365,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 	const { endpoint, deploymentContent } = deployment;
 
 	// update data to deploy environment:
-	serverDeployEnvironment.prereleaseUrl = null;
 	serverDeployEnvironment.deploymentYaml = deploymentContent;
-	serverDeployEnvironment.prereleaseDeploymentYaml = null;
 	serverDeployEnvironment.updatedAt = new Date();
 	serverDeployEnvironment.lastUpdatedBy = username;
 
@@ -399,7 +381,6 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
 	// Create new Release:
-	// let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
 	let releaseId: string, newRelease: IRelease;
 	try {
 		newRelease = await createReleaseFromBuild(build, env, { author: owner, workspace, cliVersion });
@@ -437,7 +418,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 
 	// process deploy build to cluster
 	if (deployInBackground) {
-		processDeployBuild(build, newRelease, cluster, options)
+		processDeployBuildV2(build, newRelease, cluster, options)
 			.then(() => {
 				updateReleaseStatusById(releaseId, "success");
 			})
@@ -446,17 +427,17 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 			});
 	} else {
 		try {
-			await processDeployBuild(build, newRelease, cluster, options);
+			await processDeployBuildV2(build, newRelease, cluster, options);
 			await updateReleaseStatusById(releaseId, "success");
 		} catch (e) {
 			await updateReleaseStatusById(releaseId, "failed");
 		}
 	}
 
-	return { app: updatedApp, build, release: newRelease, deployment, endpoint, prerelease: null };
+	return { app: updatedApp, build, release: newRelease, deployment, endpoint };
 };
 
-export const deployWithBuildSlug = async (buildSlug: string, options: DeployBuildOptions) => {
+export const deployWithBuildSlug = async (buildSlug: string, options: DeployBuildV2Options) => {
 	const { DB } = await import("@/modules/api/DB");
 	const build = await DB.findOne("build", { slug: buildSlug });
 	if (!build) throw new Error(`[DEPLOY BUILD] Build slug "${buildSlug}" not found.`);

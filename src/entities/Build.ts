@@ -17,6 +17,10 @@ export interface IBuild extends IBase {
 	 */
 	tag?: string;
 	/**
+	 * Build number
+	 */
+	num?: number;
+	/**
 	 * Build start time
 	 */
 	startTime?: Date;
@@ -66,6 +70,7 @@ export const buildSchema = new Schema(
 		name: { type: String },
 		image: { type: String },
 		tag: { type: String },
+		num: { type: String },
 		startTime: { type: Date },
 		endTime: { type: Date },
 		duration: { type: Number },

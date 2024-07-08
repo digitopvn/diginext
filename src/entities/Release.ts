@@ -12,6 +12,8 @@ import type { IApp, IBuild } from "./index";
 export interface IRelease extends IBase {
 	name?: string;
 	image?: string;
+	buildTag?: string;
+	buildNumber?: number;
 	cliVersion?: string;
 	/**
 	 * Targeted environment.
@@ -92,6 +94,8 @@ export const releaseSchema = new Schema(
 		...baseSchemaDefinitions,
 		name: { type: String },
 		image: { type: String },
+		buildTag: { type: String },
+		buildNumber: { type: Number },
 		cliVersion: { type: String },
 		env: { type: String },
 		envVars: [{ name: { type: String }, value: { type: String } }],

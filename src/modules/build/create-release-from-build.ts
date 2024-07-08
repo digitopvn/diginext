@@ -28,7 +28,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 	// console.log("project :>> ", project);
 
 	// get deployment data
-	const { branch, image, tag, cliVersion } = build;
+	const { branch, image, tag, num: buildNumber, cliVersion } = build;
 	const { slug: projectSlug } = project;
 	const { owner, workspace, slug: appSlug } = app;
 	const { slug: workspaceSlug, _id: workspaceId } = workspace as IWorkspace;
@@ -68,6 +68,8 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 		env,
 		cliVersion: ownership?.cliVersion || cliVersion,
 		name: `${projectSlug}/${appSlug}:${buildTag}`,
+		buildTag,
+		buildNumber,
 		image: IMAGE_NAME,
 		appConfig: appConfig,
 		// build status

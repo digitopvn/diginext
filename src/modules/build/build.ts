@@ -41,11 +41,9 @@ export type StartBuildParams = {
 	buildTag?: string;
 
 	/**
-	 * Use `buildTag` instead, currently it's still an alias of `buildTag`,
-	 * **ONLY for fallback support CLI < `3.21.0`** and will be removed soon.
-	 * @deprecated From `v3.21.0+`
+	 * An incremental number of build
 	 */
-	buildNumber?: string;
+	buildNumber?: number;
 
 	/**
 	 * ID of the author
@@ -183,6 +181,7 @@ export async function startBuild(
 	const {
 		// require
 		buildTag,
+		buildNumber,
 		gitBranch,
 		registrySlug,
 		appSlug,
@@ -299,6 +298,7 @@ export async function startBuild(
 		slug: SOCKET_ROOM,
 		env, // <-- optional
 		tag: buildTag,
+		num: buildNumber,
 		image: imageURL,
 		status: "building",
 		startTime: startTime.toDate(),

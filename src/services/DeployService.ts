@@ -46,8 +46,6 @@ export default class DeployService {
 			const registry = await DB.findOne("registry", { slug: deployParams.registry, workspace: ownership.workspace._id });
 			if (registry) app = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${deployParams.env}.registry`]: registry.slug });
 		}
-		// fallback support deprecated "buildNumber" -> now "buildTag"
-		if (buildParams.buildNumber) buildParams.buildTag = buildParams.buildNumber;
 
 		// ownership
 		const author = ownership.owner || (await DB.findOne("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] }));

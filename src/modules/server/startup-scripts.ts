@@ -83,9 +83,10 @@ export async function startupScripts() {
 	const registries = await registrySvc.find({});
 	if (registries.length > 0) {
 		for (const registry of registries) {
+			// console.log("registry.workspace :>> ", registry.workspace);
 			connectRegistry(registry, { workspaceId: registry.workspace }).catch((e) => {
 				// wait for 2 minutes and retry
-				wait(2 * 60 * 2000, connectRegistry(registry));
+				wait(2 * 60 * 2000, connectRegistry(registry).catch(console.error));
 			});
 		}
 	}

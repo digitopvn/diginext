@@ -149,6 +149,30 @@ export default class ReleaseController extends BaseController<IRelease> {
 
 	@Security("api_key")
 	@Security("jwt")
+	@Patch("/rollout-v2")
+	async rolloutV2(@Body() data: { id: string }) {
+		const { id: idInFilter } = this.filter;
+		const { id } = data;
+
+		const releaseId = id || idInFilter;
+
+		// console.log("controller > rollout > id :>> ", id);
+		if (!releaseId) return respondFailure({ msg: `Release ID is required.` });
+
+		try {
+			const rolloutResult = await ClusterManager.rolloutV2(MongoDB.toString(releaseId));
+			if (rolloutResult.error) {
+				return respondFailure({ msg: rolloutResult.error });
+			}
+
+			return respondSuccess({ data: rolloutResult.data });
+		} catch (e) {
+			return respondFailure({ msg: e.toString() });
+		}
+	}
+
+	@Security("api_key")
+	@Security("jwt")
 	@Patch("/preview")
 	async previewPrerelease(@Body() data: { id: string }) {
 		const { id: idInFilter } = this.filter;

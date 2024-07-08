@@ -3,7 +3,7 @@ import type { ExecaReturnValue } from "execa";
 
 import { Config, isServerMode } from "@/app.config";
 import { saveCliConfig } from "@/config/config";
-import type { IContainerRegistry } from "@/entities";
+import type { IContainerRegistry, IUser, IWorkspace } from "@/entities";
 
 import ClusterManager from "../k8s";
 import { getKubeContextByCluster } from "../k8s/kube-config";
@@ -87,8 +87,16 @@ const DockerRegistry = {
 		if (!clusterSlug) throw new Error(`Cluster's short name is required.`);
 
 		// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { populate: ["owner", "workspace"] });
 		if (!cluster) throw new Error(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterSlug}" cluster.`);
+
+		// authenticate cluster & switch to that cluster's context
+		try {
+			const { owner, workspace } = cluster;
+			await ClusterManager.authCluster(cluster, { ownership: { owner: owner as IUser, workspace: workspace as IWorkspace } });
+		} catch (e) {
+			throw new Error(e.message);
+		}
 
 		const { name: context } = await getKubeContextByCluster(cluster);
 

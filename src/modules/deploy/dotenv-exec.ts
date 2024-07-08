@@ -33,14 +33,16 @@ export const checkGitignoreContainsDotenvFiles = async (options: DotenvUtilsOpti
 	const gitignoreContent = readFileSync(gitignoreFile, "utf8");
 
 	let isContainAll = true;
-	const results = fileNames.map((dotenvName) => {
-		if (gitignoreContent.indexOf(dotenvName) === -1) isContainAll = false;
-		const isContained = gitignoreContent.indexOf(dotenvName) > -1;
-		if (!isContained) {
-			logWarn(`⚠️ "${dotenvName}" should be added to ".gitignore":`, chalk.cyan("https://salferrarello.com/add-env-to-gitignore/"));
-		}
-		return { name: dotenvName, isContained };
-	});
+	const results = fileNames
+		.filter((dotenvName) => dotenvName !== ".env.sample" && dotenvName !== ".env.example" && dotenvName !== ".env.template")
+		.map((dotenvName) => {
+			if (gitignoreContent.indexOf(dotenvName) === -1) isContainAll = false;
+			const isContained = gitignoreContent.indexOf(dotenvName) > -1;
+			if (!isContained) {
+				logWarn(`⚠️ "${dotenvName}" should be added to ".gitignore":`, chalk.cyan("https://salferrarello.com/add-env-to-gitignore/"));
+			}
+			return { name: dotenvName, isContained };
+		});
 
 	return { isContainAll, results };
 };
