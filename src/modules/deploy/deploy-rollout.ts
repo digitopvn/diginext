@@ -40,15 +40,15 @@ export async function cleanUpNamespace(cluster: ICluster, namespace: string, app
 		ClusterManager.deleteIngressByFilter(namespace, {
 			context,
 			skipOnError: true,
-			filterLabel: `app-version=${appVersion}`,
+			filterLabel: `app-version!=${appVersion}`,
 		})
 	);
 
 	// Delete Prerelease SERVICE to optimize cluster
-	cleanUpCommands.push(ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `app-version=${appVersion}` }));
+	cleanUpCommands.push(ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `app-version!=${appVersion}` }));
 
 	// Clean up Prerelease Deployments
-	cleanUpCommands.push(ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `app-version=${appVersion}` }));
+	cleanUpCommands.push(ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `app-version!=${appVersion}` }));
 
 	// Clean up immediately & just ignore if any errors
 	let data;
@@ -223,10 +223,11 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 	const mainAppName = await getDeploymentName(app);
+
 	/**
-	 * App's tag (for service & deployment selector)
+	 * App's version (for service & deployment selector)
 	 */
-	const appVersion = `${mainAppName}-${buildNumber}`;
+	const appVersion = releaseData.appVersion || `${mainAppName}-${buildNumber}`;
 
 	// log(`Rolling out > mainAppName:`, mainAppName);
 
@@ -532,9 +533,10 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	 */
 	if (!IsTest()) {
 		/**
-		 * [ONLY WHEN DEPLOY TO PRODUCTION ENVIRONMENT] Clean up prerelease deployments (to optimize cluster resource quotas)
+		 * NOTE: Clean up DEPRECATED deployments (from OLD CLI <3.33.11 deployments)
 		 */
-		if (isServerMode && env === "prod") {
+		// if (isServerMode && env === "prod") {
+		if (isServerMode) {
 			cleanUpNamespace(cluster, namespace, appVersion)
 				.then(({ error }) => {
 					if (error) throw new Error(`Unable to clean up old resources in "${namespace}" namespace.`);

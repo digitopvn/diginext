@@ -16,6 +16,7 @@ import { updateReleaseStatusById } from "../build/update-release-status";
 import ClusterManager from "../k8s";
 import { deployBuild } from "./deploy-build";
 import type { GenerateDeploymentResult } from "./generate-deployment";
+import getDeploymentName from "./generate-deployment-name";
 import { generateDeploymentV2 } from "./generate-deployment-v2";
 
 export type DeployBuildV2Options = {
@@ -313,7 +314,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 
 	// parse options
 	const { env, owner, workspace, deployInBackground = true, cliVersion } = options;
-	const { appSlug, projectSlug, tag: buildTag } = build;
+	const { appSlug, projectSlug, tag: buildTag, num: buildNumber } = build;
 	const { slug: username } = owner;
 	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 
@@ -321,6 +322,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
 	const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
 
+	// app info
 	let app = await DB.updateOne("app", { slug: appSlug }, { updatedBy: owner._id }, { populate: ["project", "owner"] });
 	if (!app) {
 		sendLog({
@@ -331,9 +333,14 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 		throw new Error(`[DEPLOY BUILD] App "${appSlug}" not found.`);
 	}
 
+	// project info
 	const project = app.project as IProject;
 	const projectOwner = await DB.findOne("user", { _id: project.owner });
 	const appOwner = app.owner as IUser;
+
+	// app version
+	const mainAppName = await getDeploymentName(app);
+	const appVersion = `${mainAppName}-${buildNumber}`;
 
 	// get deploy environment data
 	let serverDeployEnvironment = await getDeployEvironmentByApp(app, env);
@@ -429,7 +436,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	// Create new Release:
 	let releaseId: string, newRelease: IRelease;
 	try {
-		newRelease = await createReleaseFromBuild(build, env, { author: owner, workspace, cliVersion });
+		newRelease = await createReleaseFromBuild(build, env, { author: owner, workspace, cliVersion, appVersion });
 		releaseId = MongoDB.toString(newRelease._id);
 
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });

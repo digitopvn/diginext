@@ -12,6 +12,7 @@ type OwnershipParams = {
 	author: IUser;
 	workspace?: IWorkspace;
 	cliVersion?: string;
+	appVersion?: string;
 };
 
 export const createReleaseFromBuild = async (build: IBuild, env?: string, ownership?: OwnershipParams) => {
@@ -72,6 +73,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 		buildNumber,
 		image: IMAGE_NAME,
 		appConfig: appConfig,
+		appVersion: ownership?.appVersion,
 		// build status
 		branch: branch,
 		status: "in_progress",

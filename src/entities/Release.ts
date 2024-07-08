@@ -15,6 +15,7 @@ export interface IRelease extends IBase {
 	buildTag?: string;
 	buildNumber?: number;
 	cliVersion?: string;
+	appVersion?: string;
 	/**
 	 * Targeted environment.
 	 * @example dev, prod, staging, canary,...
@@ -101,6 +102,7 @@ export const releaseSchema = new Schema(
 		buildTag: { type: String },
 		buildNumber: { type: Number },
 		cliVersion: { type: String },
+		appVersion: { type: String },
 		env: { type: String },
 		envVars: [{ name: { type: String }, value: { type: String } }],
 		prereleaseEnvironment: [{ type: String }],
