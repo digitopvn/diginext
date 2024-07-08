@@ -31,7 +31,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	} catch (e) {
 		const app = await DB.findOne("app", { slug: buildParams.appSlug });
 		const SOCKET_ROOM = `${buildParams.appSlug}-${buildParams.buildTag}`;
-		stopBuild(app.projectSlug, app.slug, SOCKET_ROOM);
+		stopBuild(app.projectSlug, app.slug, SOCKET_ROOM, "failed");
 		sendLog({ SOCKET_ROOM, type: "error", message: `Build error: ${e.stack}` });
 		return;
 	}
@@ -51,7 +51,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	try {
 		deployRes = await deployBuildV2(build, deployParams);
 	} catch (e) {
-		stopBuild(projectSlug, appSlug, SOCKET_ROOM);
+		stopBuild(projectSlug, appSlug, SOCKET_ROOM, "success", "failed");
 		sendLog({ SOCKET_ROOM, type: "error", message: `Deploy error: ${e.stack}` });
 		return;
 	}

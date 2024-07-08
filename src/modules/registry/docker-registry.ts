@@ -55,7 +55,7 @@ const DockerRegistry = {
 		}
 
 		const workspace = await DB.findOne("workspace", { _id: workspaceId });
-		if (!workspace) throw new Error(`[DOCKER] Workspace not found.`);
+		if (!workspace) throw new Error(`[DOCKER] Workspace not found (${workspaceId}).`);
 
 		const existingRegistry = await DB.findOne("registry", { slug: registrySlug });
 		if (options.isDebugging) log(`[DOCKER] connectDockerRegistry >`, { existingRegistry });

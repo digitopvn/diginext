@@ -59,6 +59,10 @@ export interface IRelease extends IBase {
 	status?: DeployStatus;
 	active?: boolean;
 	/**
+	 * Release revision message
+	 */
+	message?: string;
+	/**
 	 * Deploy start time
 	 */
 	startTime?: Date;
@@ -131,6 +135,7 @@ export const releaseSchema = new Schema(
 		providerProjectId: { type: String },
 		buildStatus: { type: String },
 		status: { type: String },
+		message: { type: String },
 		startTime: { type: Date },
 		endTime: { type: Date },
 		duration: { type: Number },

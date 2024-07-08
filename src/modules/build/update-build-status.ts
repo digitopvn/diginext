@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { log, logError } from "diginext-utils/dist/xconsole/log";
 
 import type { IBuild, IProject } from "@/entities";
-import type { BuildStatus } from "@/interfaces/SystemTypes";
+import type { BuildStatus, DeployStatus } from "@/interfaces/SystemTypes";
 
 export async function updateBuildStatus(build: IBuild, status: BuildStatus, options?: { env?: string; isDebugging?: boolean }) {
 	const { DB } = await import("@/modules/api/DB");
@@ -41,7 +41,12 @@ export async function updateBuildStatus(build: IBuild, status: BuildStatus, opti
 	return updatedBuild;
 }
 
-export async function updateBuildStatusByAppSlug(appSlug: string, buildSlug: string, buildStatus: BuildStatus) {
+export async function updateBuildStatusByAppSlug(
+	appSlug: string,
+	buildSlug: string,
+	buildStatus: BuildStatus,
+	deployStatus: DeployStatus = "pending"
+) {
 	const { DB } = await import("../api/DB");
 
 	// find the existing project
@@ -65,7 +70,7 @@ export async function updateBuildStatusByAppSlug(appSlug: string, buildSlug: str
 	// log(`[START BUILD] updateBuildStatus > updatedApp :>>`, updatedApp.latestBuild);
 
 	// update build's status on server
-	const [updatedBuild] = await DB.update("build", { slug: buildSlug }, { status: buildStatus }, { populate: ["project"] });
+	const [updatedBuild] = await DB.update("build", { slug: buildSlug }, { status: buildStatus, deployStatus }, { populate: ["project"] });
 	if (updatedBuild) {
 		// log(`Update build status successfully >> ${app.slug} >> ${buildSlug} >> new status: ${buildStatus.toUpperCase()}`);
 		return updatedBuild;

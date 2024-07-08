@@ -184,13 +184,14 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		projectSlug, // ! This is not PROJECT_ID of Google Cloud provider
 		cluster: clusterSlug,
 		appSlug,
-		build,
+		build: buildId,
 		buildNumber,
 		preYaml: prereleaseYaml,
 		deploymentYaml,
 		endpoint: endpointUrl,
 		namespace,
 		env,
+		message,
 	} = releaseData as IRelease;
 
 	// webhook
@@ -210,6 +211,12 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	if (!app && onUpdate) {
 		const error = `Unable to roll out: app "${appSlug}" not found.`;
 		onUpdate(error);
+
+		// update release as "failed"
+		await DB.update("release", { _id: releaseId }, { status: "failed" }, { select: ["_id", "status"] }).catch(console.error);
+		// Update "deployStatus" of a build to success
+		await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] }).catch(console.error);
+
 		return { error };
 	}
 	// log(`Rolling out > app:`, app);
@@ -229,6 +236,12 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		logError(`Cluster "${clusterSlug}" not found.`);
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
+		// update release as "failed"
+		await DB.update("release", { _id: releaseId }, { status: "failed" }, { select: ["_id", "status"] }).catch(console.error);
+		// Update "deployStatus" of a build to success
+		await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] }).catch(console.error);
+
 		return { error: `Cluster "${clusterSlug}" not found.` };
 	}
 
@@ -240,6 +253,11 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		logError(`[ROLL_OUT] ${error}`);
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+		// update release as "failed"
+		await DB.update("release", { _id: releaseId }, { status: "failed" }, { select: ["_id", "status"] }).catch(console.error);
+		// Update "deployStatus" of a build to success
+		await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] }).catch(console.error);
+
 		return { error };
 	}
 
@@ -268,6 +286,12 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 			// dispatch/trigger webhook
 			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
+			// update release as "failed"
+			await DB.update("release", { _id: releaseId }, { status: "failed" }, { select: ["_id", "status"] }).catch(console.error);
+			// Update "deployStatus" of a build to success
+			await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] }).catch(console.error);
+
 			return { error: err };
 		}
 	}
@@ -281,6 +305,10 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		const error = `[ROLL OUT V2] Can't create "imagePullSecrets" in the "${namespace}" namespace (cluster: "${clusterSlug}").`;
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+		// update release as "failed"
+		await DB.update("release", { _id: releaseId }, { status: "failed" }, { select: ["_id", "status"] }).catch(console.error);
+		// Update "deployStatus" of a build to success
+		await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] }).catch(console.error);
 		return { error };
 	}
 
@@ -362,13 +390,39 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
+		// update release as "failed"
+		await DB.update("release", { _id: releaseId }, { status: "failed" }, { select: ["_id", "status"] }).catch(console.error);
+		// Update "deployStatus" of a build to success
+		await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] }).catch(console.error);
+
+		return { error };
+	}
+
+	/**
+	 * Annotate new deployment with app version
+	 */
+	try {
+		await ClusterManager.kubectlAnnotateDeployment(`kubernetes.io/change-cause="${message || appVersion}"`, deploymentName, namespace, {
+			context,
+		});
+	} catch (e) {
+		const error = `Unable to annotate new deployment (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env} / Deployment: ${deploymentName})`;
+		if (onUpdate) onUpdate(error);
+
+		// dispatch/trigger webhook
+		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
+		// update release as "failed"
+		await DB.update("release", { _id: releaseId }, { status: "failed" }, { select: ["_id", "status"] }).catch(console.error);
+		// Update "deployStatus" of a build to success
+		await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] }).catch(console.error);
+
 		return { error };
 	}
 
 	if (onUpdate) onUpdate(`Applied new deployment YAML of "${appSlug}".`);
 
 	// Wait until the deployment is ready!
-	let notReadyCount = 0;
 	const isNewDeploymentReady = async () => {
 		const newPods = await ClusterManager.getPods(namespace, {
 			context,
@@ -382,37 +436,34 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		}
 
 		let isReady = false;
+		log(`[ROLL OUT V2] "${appVersion}" > checking ${newPods.length} pods > pod.status.conditions:`);
+
 		newPods.forEach((pod) => {
-			log(
-				`[ROLL OUT V2] "${appVersion}" > ${pod.metadata.name} > pod.status.conditions :>>`,
-				pod.status.conditions.map((c) => `\n- ${c.type}: ${c.status} (Reason: "${c.reason}")`).join("")
-			);
-			if (onUpdate) {
-				pod.status?.conditions?.map((condition) => {
-					// const msg = `[CHECKING NEW DEPLOYMENT STATUS] Type: "${condition.type}" -> Status: "${condition.status}"`;
-					// onUpdate(msg);
+			log(pod.status.conditions.map((c) => `- ${c.type}: ${c.status} (Reason: "${c.reason}")`).join("\n"));
 
-					isReady = condition.type === "Ready" && condition.status === "True";
-
-					if (condition.type === "ContainersReady" && condition.status === "False" && condition.reason === "ContainersNotReady") {
-						if (notReadyCount >= 5) throw new Error(`App is unable to start up: ${condition.message}`);
-						notReadyCount++;
-					}
+			pod.status?.conditions
+				?.filter((condition) => condition.type === "Ready")
+				.map((condition) => {
+					isReady = condition.status === "True";
 				});
-			}
+			pod.status.containerStatuses.map((containerStatus) => {
+				if (containerStatus.restartCount > 0) throw new Error(`App is unable to start up due to some unexpected errors.`);
+			});
 		});
 
-		if (options?.isDebugging) log(`[ROLL OUT V2 - INTERVAL] Checking new pod's status -> Is Ready:`, isReady);
+		log(`[ROLL OUT V2] Checking new pod's status -> Are New Pods Ready:`, isReady);
 		return isReady;
 	};
 
-	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 4 * 60);
+	// check interval: 10 secs
+	// max wait time: 10 mins
+	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 10 * 60).catch((e) => false);
 	if (options?.isDebugging) log(`[ROLL OUT V2] Checking new deployment's status -> Is Fully Ready:`, isReallyReady);
 
 	// Try to get the container logs and print to the web ui
-	let containerLogs = await logPodByFilter(namespace, { filterLabel: `app-version=${appVersion}`, context });
-	if (!containerLogs)
-		containerLogs += "\n\n-----\n\n" + (await logPodByFilter(namespace, { filterLabel: `app-version=${appVersion}`, previous: true, context }));
+	let containerLogs = isReallyReady
+		? await logPodByFilter(namespace, { filterLabel: `app-version=${appVersion}`, context })
+		: await logPodByFilter(namespace, { filterLabel: `app-version=${appVersion}`, previous: true, context });
 
 	if (onUpdate && containerLogs) onUpdate(`--------------- APP'S LOGS ON STARTED UP --------------- \n${containerLogs}`);
 
@@ -421,13 +472,22 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		!isReallyReady ||
 		containerLogs.indexOf("Error from server") > -1 ||
 		containerLogs.indexOf("An error occurred") > -1 ||
-		containerLogs.indexOf("Command failed") > -1
+		containerLogs.indexOf("Command failed") > -1 ||
+		containerLogs.indexOf("Unexpected Server Error") > -1
 	) {
 		const error = `[ERROR] The application failed to start up properly. To identify the issue, please review the application logs.`;
 		if (onUpdate) onUpdate(error);
 
+		// print out the logs in server side:
+		logError(containerLogs);
+
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
+		// update release as "failed"
+		await DB.update("release", { _id: releaseId }, { status: "failed" }, { select: ["_id", "status"] }).catch(console.error);
+		// Update "deployStatus" of a build to success
+		await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] }).catch(console.error);
 
 		return { error };
 	}
@@ -443,14 +503,25 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	await DB.update("release", { appSlug, active: true }, { active: false }, { select: ["_id", "active", "appSlug"] });
 
 	// Mark this latest release as "active":
-	const latestRelease = await DB.updateOne("release", { _id: releaseId }, { active: true }, { select: ["_id", "active", "appSlug"] });
+	const latestRelease = await DB.updateOne(
+		"release",
+		{ _id: releaseId },
+		{ active: true, status: "success" },
+		{ select: ["_id", "active", "appSlug"] }
+	);
+
 	if (!latestRelease) {
 		const error = `[ERROR] Unable to mark the latest release (${releaseId}) status as "active".`;
 		if (onUpdate) onUpdate(error);
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+		// Update "deployStatus" of a build to success
+		await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] });
 		throw new Error(error);
 	}
+
+	// Update "deployStatus" of a build to success
+	await DB.update("build", { _id: buildId }, { deployStatus: "success" }, { select: ["_id", "deployStatus"] }).catch(console.error);
 
 	// Assign this release as "latestRelease" of this app's deploy environment
 	await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.latestRelease`]: latestRelease._id }, { select: ["_id"] });

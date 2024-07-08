@@ -5,7 +5,7 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IBuild } from "@/entities/Build";
 import { buildSchema } from "@/entities/Build";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
-import type { Ownership } from "@/interfaces/SystemTypes";
+import type { BuildStatus, DeployStatus, Ownership } from "@/interfaces/SystemTypes";
 import type { RerunBuildParams, StartBuildParams } from "@/modules/build";
 import { generateBuildTag } from "@/modules/build/generate-build-tag";
 import { checkQuota } from "@/modules/workspace/check-quota";
@@ -76,7 +76,7 @@ export class BuildService extends BaseService<IBuild> {
 		return { logURL, ...buildInfo };
 	}
 
-	async stopBuild(slug: string, ownership?: Ownership) {
+	async stopBuild(slug: string, buildStatus: BuildStatus, deployStatus: DeployStatus = "pending") {
 		// const { slug } = data;
 		// console.log("slug :>> ", slug);
 		// return ApiResponse.failed(res, `${slug}`);
@@ -87,11 +87,10 @@ export class BuildService extends BaseService<IBuild> {
 		if (!build) throw new Error(`Build "${slug}" not found.`);
 
 		const buildModule = await import("@/modules/build");
-		const stoppedBuild = await buildModule.stopBuild(build.projectSlug, build.appSlug, slug.toString());
+		const stoppedBuild = await buildModule.stopBuild(build.projectSlug, build.appSlug, slug.toString(), buildStatus, deployStatus);
 		if ((stoppedBuild as { error: string })?.error) throw new Error((stoppedBuild as { error: string }).error);
 
-		build = await this.updateOne({ _id: build._id }, { status: "failed" });
-		return build;
+		return stoppedBuild;
 	}
 
 	async rerunBuild(build: IBuild, options: RerunBuildParams, ownership?: Ownership) {

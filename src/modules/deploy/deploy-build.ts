@@ -398,6 +398,9 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
+	// update "deployStatus" of a build
+	await DB.updateOne("build", { _id: build._id }, { deployStatus: "in_progress" }).catch(console.error);
+
 	// Create new Release:
 	// let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
 	let releaseId: string, newRelease: IRelease;

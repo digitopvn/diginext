@@ -194,8 +194,8 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	let deploymentContent = fs.readFileSync(FULL_DEPLOYMENT_TEMPLATE_PATH, "utf8");
 	let deploymentCfg: any[] = yaml.loadAll(deploymentContent);
 
-	console.log("app.deployEnvironment :>> ", app.deployEnvironment);
-	console.log("app.deployEnvironment[env].volumes :>> ", app.deployEnvironment[env].volumes);
+	// console.log("app.deployEnvironment :>> ", app.deployEnvironment);
+	// console.log("app.deployEnvironment[env].volumes :>> ", app.deployEnvironment[env].volumes);
 
 	if (deploymentCfg.length) {
 		deploymentCfg.forEach((doc, index) => {
@@ -225,17 +225,18 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 					}
 
 					// ingress class
-					let ingressClass = "";
-					if (
-						deployEnvironmentConfig.ingress &&
-						(ingressClasses.map((ingClass) => ingClass?.metadata?.name) || []).includes(deployEnvironmentConfig.ingress)
-					) {
-						ingressClass = deployEnvironmentConfig.ingress;
-					} else {
-						ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
-					}
+					const ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
+					// let ingressClass = "";
+					// if (
+					// 	deployEnvironmentConfig.ingress &&
+					// 	(ingressClasses.map((ingClass) => ingClass?.metadata?.name) || []).includes(deployEnvironmentConfig.ingress)
+					// ) {
+					// 	ingressClass = deployEnvironmentConfig.ingress;
+					// } else {
+					// 	ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
+					// }
 					if (ingressClass) {
-						// OLD
+						//  OLD -> DEPRECATED!!!
 						// ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
 						// NEW
 						ingCfg.spec.ingressClassName = ingressClass;

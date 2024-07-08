@@ -28,7 +28,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 	// console.log("project :>> ", project);
 
 	// get deployment data
-	const { branch, image, tag, num: buildNumber, cliVersion } = build;
+	const { branch, image, tag, num: buildNumber, message: buildMessage, cliVersion } = build;
 	const { slug: projectSlug } = project;
 	const { owner, workspace, slug: appSlug } = app;
 	const { slug: workspaceSlug, _id: workspaceId } = workspace as IWorkspace;
@@ -78,6 +78,7 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 		buildStatus: "success",
 		startTime: startTime.toDate(),
 		active: env !== "prod",
+		message: buildMessage,
 		// deployment target
 		namespace,
 		provider,
@@ -111,6 +112,9 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 
 	// create new release in the database
 	const newRelease = DB.create("release", data);
+
+	// update "deployStatus" in a build
+	await DB.update("build", { _id: build._id }, { deployStatus: "in_progress" }).catch(console.error);
 
 	// log("Created new Release successfully:", newRelease);
 

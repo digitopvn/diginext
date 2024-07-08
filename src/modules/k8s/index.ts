@@ -65,6 +65,7 @@ import {
 	getStorageClassesByFilter,
 	isNamespaceExisted,
 	isSecretExisted,
+	kubectlAnnotateDeployment,
 	kubectlApply,
 	kubectlApplyContent,
 	logPod,
@@ -172,6 +173,7 @@ const ClusterManager = {
 	rolloutV2,
 	kubectlApply,
 	kubectlApplyContent,
+	kubectlAnnotateDeployment,
 	rollbackDeploy,
 	rollbackDeployRevision,
 	// stacks

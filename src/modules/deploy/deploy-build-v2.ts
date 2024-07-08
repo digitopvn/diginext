@@ -87,11 +87,39 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 	webhookSvc.ownership = { owner, workspace };
 	const webhook = await DB.findOne("webhook", { release: releaseId });
 
+	// mark build & release as "failed" status
+	const markBuildAndReleaseAsFailed = async () => {
+		// update build
+		const _build = await DB.update(
+			"build",
+			{ _id: build._id },
+			{ deployStatus: "failed" },
+			{
+				select: ["_id", "status", "deployStatus"],
+			}
+		).catch(console.error);
+		// update release
+		const _release = await DB.update(
+			"release",
+			{ _id: release._id },
+			{ status: "failed" },
+			{
+				select: ["_id", "status", "buildStatus"],
+			}
+		).catch(console.error);
+
+		console.log("markBuildAndReleaseAsFailed() > _build :>> ", _build);
+		console.log("markBuildAndReleaseAsFailed() > _release :>> ", _release);
+	};
+
 	// authenticate cluster & switch to that cluster's context
 	try {
 		await ClusterManager.authCluster(cluster, { ownership: { owner, workspace } });
 		sendLog({ SOCKET_ROOM, message: `✓ Connected to "${cluster.name}" (context: ${cluster.contextName}).` });
 	} catch (e) {
+		// update "deployStatus" in a build & a release
+		await markBuildAndReleaseAsFailed();
+
 		sendLog({ SOCKET_ROOM, message: `❌ Unable to connect the cluster: ${e.message}`, type: "error", action: "end" });
 		throw new Error(e.message);
 	}
@@ -106,6 +134,9 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 	 */
 	const isNsExisted = await ClusterManager.isNamespaceExisted(namespace, { context });
 	if (isUndefined(isNsExisted)) {
+		// update "deployStatus" in a build & a release
+		await markBuildAndReleaseAsFailed();
+
 		sendLog({ SOCKET_ROOM, message: `❌ Unable to connect cluster to get namespace list.`, type: "error", action: "end" });
 		throw new Error(`Unable to connect cluster to get namespace list.`);
 	}
@@ -124,6 +155,9 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 			message: `Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace.`,
 		});
 	} catch (e) {
+		// update "deployStatus" in a build & a release
+		await markBuildAndReleaseAsFailed();
+
 		sendLog({
 			SOCKET_ROOM,
 			type: "error",
@@ -149,6 +183,9 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 			return findCondition;
 		});
 		if (ingInAnotherNamespace) {
+			// update "deployStatus" in a build & a release
+			await markBuildAndReleaseAsFailed();
+
 			const message = `There is a similar domain (${endpoint}) in "${namespaceOfExistingIngress}" namespace of "${context}" cluster, unable to create new ingress with the same domain. Suggestions:\n- Delete the ingress of this domain "${endpoint}" in "${namespaceOfExistingIngress}" namepsace.\n- Use a different domain for this deploy environment.`;
 			sendLog({ SOCKET_ROOM, type: "error", action: "end", message });
 			// dispatch/trigger webhook
@@ -156,6 +193,9 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 			throw new Error(message);
 		}
 	} catch (e) {
+		// update "deployStatus" in a build & a release
+		await markBuildAndReleaseAsFailed();
+
 		const message = `Unable to fetch ingresses of "${context}" cluster: ${e}`;
 		sendLog({ SOCKET_ROOM, type: "error", action: "end", message });
 		// dispatch/trigger webhook
@@ -178,6 +218,9 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 
 		const wipedNamespaceRes = await ClusterManager.deleteNamespaceByCluster(namespace, cluster.slug);
 		if (isEmpty(wipedNamespaceRes)) {
+			// update "deployStatus" in a build & a release
+			await markBuildAndReleaseAsFailed();
+
 			sendLog({
 				SOCKET_ROOM,
 				type: "error",
@@ -195,6 +238,9 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 			message: `Successfully deleted "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`,
 		});
 	}
+
+	// NOTE: No need to "deployStatus" in a build & a release below, because there are similar code in "rolloutV2" function
+	// await markBuildAndReleaseAsFailed();
 
 	const onRolloutUpdate = (msg: string) => {
 		// if any errors on rolling out -> stop processing deployment

@@ -9,7 +9,7 @@ import path from "path";
 import { Config, isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IProject, IUser, IWebhook, IWorkspace } from "@/entities";
-import type { BuildPlatform } from "@/interfaces/SystemTypes";
+import type { BuildPlatform, BuildStatus, DeployStatus } from "@/interfaces/SystemTypes";
 import { getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
 import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
@@ -111,6 +111,11 @@ export type StartBuildParams = {
 	 * @default false
 	 */
 	shouldDeploy?: boolean;
+
+	/**
+	 * Revision message
+	 */
+	message?: string;
 };
 
 export type RerunBuildParams = Pick<StartBuildParams, "platforms" | "args" | "registrySlug" | "buildTag" | "buildWatch">;
@@ -142,7 +147,13 @@ export async function saveLogs(buildSlug: string, logs: string) {
 /**
  * Stop the build process.
  */
-export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug: string) => {
+export const stopBuild = async (
+	projectSlug: string,
+	appSlug: string,
+	buildSlug: string,
+	status: BuildStatus = "failed",
+	deployStatus: DeployStatus = "pending"
+) => {
 	const { DB } = await import("../api/DB");
 
 	let error;
@@ -159,7 +170,7 @@ export const stopBuild = async (projectSlug: string, appSlug: string, buildSlug:
 	await builder[upperFirst(Config.BUILDER)].stopBuild(builderName);
 
 	// Update the status in the database
-	const stoppedBuild = await updateBuildStatusByAppSlug(appSlug, buildSlug, "failed");
+	const stoppedBuild = await updateBuildStatusByAppSlug(appSlug, buildSlug, status, deployStatus);
 
 	logSuccess(`Build process of "${buildSlug}" has been stopped.`);
 
@@ -182,6 +193,7 @@ export async function startBuild(
 		// require
 		buildTag,
 		buildNumber,
+		message: buildMessage,
 		gitBranch,
 		registrySlug,
 		appSlug,
@@ -297,10 +309,12 @@ export async function startBuild(
 		name: buildImage,
 		slug: SOCKET_ROOM,
 		env, // <-- optional
+		message: buildMessage,
 		tag: buildTag,
 		num: buildNumber,
 		image: imageURL,
 		status: "building",
+		deployStatus: "pending",
 		startTime: startTime.toDate(),
 		createdBy: username,
 		projectSlug,

@@ -28,6 +28,7 @@ const argvOptions = {
 	"show-options": { describe: "Show current input options [for debugging].", alias: "s" },
 	local: { describe: "For running process on local machine" },
 	input: { describe: "Input string", alias: "i" },
+	message: { describe: "Input message (for build, deploy or release)", alias: "m" },
 	type: { describe: "Input type as string" },
 	data: { describe: "Input data", alias: "d" },
 	value: { describe: "Input value", alias: "val" },
@@ -165,6 +166,7 @@ const deployOptions = {
 	shouldUploadDotenv: argvOptions["upload-env"],
 	fresh: argvOptions.fresh,
 	rollout: argvOptions.rollout,
+	message: argvOptions.message,
 };
 
 const kubectlDeploymentOptions = {
@@ -575,6 +577,7 @@ export async function parseCliOptions() {
 		redirect: argv.redirect as boolean,
 		ssl: argv.ssl as boolean, // [FLAG] --no-ssl
 		imageURL: argv.image as string,
+		message: argv.message as string,
 	};
 
 	const { DB } = await import("@/modules/api/DB");

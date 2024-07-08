@@ -137,6 +137,7 @@ export async function requestDeploy(options: InputOptions) {
 			env,
 			buildTag: options.buildTag,
 			buildNumber: tagInfo.number,
+			message: options.message,
 			gitBranch: options.gitBranch,
 			registrySlug: deployEnvironment.registry,
 			appSlug: options.appSlug,

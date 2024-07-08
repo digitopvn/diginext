@@ -1228,7 +1228,7 @@ export async function getPods(namespace = "default", options: GetKubeDeployOptio
 
 		args.push("-o", "json");
 
-		console.log(`[GET PODS] Command :>> kubectl ${args.join(" ")}`);
+		// console.log(`[GET PODS] Command :>> kubectl ${args.join(" ")}`);
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
 
@@ -1851,6 +1851,42 @@ export async function deleteStorageClassesByFilter(namespace = "default", option
 		if (context) args.push(`--context=${context}`);
 
 		args.push("-n", namespace, "delete", "sc");
+
+		if (filterLabel) args.push("-l", filterLabel);
+
+		const { stdout } = await execa("kubectl", args);
+		return stdout as string;
+	} catch (e) {
+		if (!skipOnError) logError(`[KUBE_CTL] deleteStorageClassesByFilter >`, e);
+		return;
+	}
+}
+
+export async function kubectlAnnotateDeployment(
+	keyAndValue: string,
+	deploymentName: string = "",
+	namespace = "default",
+	options: KubeCommandOptions & { overwrite?: boolean } = { overwrite: true }
+) {
+	const { context, skipOnError, filterLabel, overwrite = true } = options;
+	try {
+		const args = [];
+		if (context) args.push(`--context=${context}`);
+
+		args.push("-n", namespace, "annotate");
+
+		if (overwrite) args.push("--overwrite");
+
+		if (deploymentName) {
+			args.push(`deployment/${deploymentName}`);
+		} else {
+			args.push("deployment");
+		}
+
+		// annotation: key=value
+		args.push(keyAndValue);
+		// args.push(`kubernetes.io/change-cause="${keyAndValue}"`);
+		// args.push(`description='${keyAndValue}'`);
 
 		if (filterLabel) args.push("-l", filterLabel);
 
