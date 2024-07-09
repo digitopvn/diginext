@@ -29,7 +29,7 @@ export interface RolloutOptions {
  * @param cluster - Cluster
  * @param appVersion - App's version
  */
-export async function cleanUpNamespace(cluster: ICluster, namespace: string, appVersion: string) {
+export async function cleanUpNamespace(cluster: ICluster, namespace: string, appName: string, appVersion: string) {
 	const { contextName: context } = cluster;
 
 	// Clean up Prerelease YAML
@@ -40,15 +40,17 @@ export async function cleanUpNamespace(cluster: ICluster, namespace: string, app
 		ClusterManager.deleteIngressByFilter(namespace, {
 			context,
 			skipOnError: true,
-			filterLabel: `app-version!=${appVersion}`,
+			filterLabel: `main-app=${appName},app-version!=${appVersion}`,
 		})
 	);
 
 	// Delete Prerelease SERVICE to optimize cluster
-	cleanUpCommands.push(ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `app-version!=${appVersion}` }));
+	cleanUpCommands.push(ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `main-app=${appName},app-version!=${appVersion}` }));
 
 	// Clean up Prerelease Deployments
-	cleanUpCommands.push(ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `app-version!=${appVersion}` }));
+	cleanUpCommands.push(
+		ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `main-app=${appName},app-version!=${appVersion}` })
+	);
 
 	// Clean up immediately & just ignore if any errors
 	let data;
@@ -537,7 +539,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		 */
 		// if (isServerMode && env === "prod") {
 		if (isServerMode) {
-			cleanUpNamespace(cluster, namespace, appVersion)
+			cleanUpNamespace(cluster, namespace, mainAppName, appVersion)
 				.then(({ error }) => {
 					if (error) throw new Error(`Unable to clean up old resources in "${namespace}" namespace.`);
 					logSuccess(`✅ Clean up old resources in "${namespace}" namespace SUCCESSFULLY.`);
