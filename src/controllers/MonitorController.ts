@@ -100,8 +100,16 @@ export default class MonitorController {
 			const clusters = await clusterSvc.find({ workspace: this.workspace._id, ...restFilter });
 			const ls = await Promise.all(
 				clusters.map(async (cluster) => {
-					const { contextName: context } = cluster;
-					if (!context) return [] as KubeNode[];
+					const { contextName: context, isVerified } = cluster;
+					if (!context || isVerified === false) return [] as KubeNode[];
+					// authenticate cluster
+					try {
+						await ClusterManager.authCluster(cluster, { ownership: this.ownership, shouldSwitchContextToThisCluster: false });
+					} catch (e) {
+						console.error(`[ERROR] MonitorController > getNodes() :>>`, e);
+						return [] as KubeNode[];
+					}
+					// fetch list
 					let nodeList = await ClusterManager.getAllNodes({ context });
 					nodeList = nodeList.map((ns) => {
 						ns.workspace = MongoDB.toString(this.workspace._id);
@@ -121,9 +129,18 @@ export default class MonitorController {
 			});
 			if (!cluster) return respondFailure(`Cluster "${clusterSlugOrId}" not found.`);
 
-			const { contextName: context } = cluster;
-			if (!context) return respondFailure(`Unverified cluster: "${clusterSlugOrId}"`);
+			const { contextName: context, isVerified } = cluster;
+			if (!context || isVerified === false) return respondFailure(`Unverified cluster: "${clusterSlugOrId}"`);
 
+			// authenticate cluster
+			try {
+				await ClusterManager.authCluster(cluster, { ownership: this.ownership, shouldSwitchContextToThisCluster: false });
+			} catch (e) {
+				console.error(`[ERROR] MonitorController > getNodes() :>>`, e);
+				return [] as KubeNode[];
+			}
+
+			// fetch list
 			data = await ClusterManager.getAllNodes({ context });
 			data = data.map((ns) => {
 				ns.workspace = MongoDB.toString(this.workspace._id);

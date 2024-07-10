@@ -1,6 +1,6 @@
 import type { V1PersistentVolume, V1PersistentVolumeClaim, V1StorageClass } from "@kubernetes/client-node";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
-import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
+import { logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import { execa, execaCommandSync } from "execa";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
 import { isEmpty, isUndefined, round, startsWith, toInteger } from "lodash";
@@ -102,6 +102,16 @@ export async function kubectlApplyContent(yamlContent: string, options: KubeComm
 	return stdout;
 }
 
+export interface NodeUsage {
+	name: string;
+	cpu: string;
+	cpuPercent: string;
+	cpuCapacity: string;
+	memory: string;
+	memoryPercent: string;
+	memoryCapacity: string;
+}
+
 /**
  * Get all nodes of a cluster
  */
@@ -117,22 +127,29 @@ export async function getAllNodes(options: KubeCommandOptions = {}) {
 
 		args.push("-o", "json");
 
-		// get resource usage
-		const { stdout: usageStr } = execaCommandSync(`kubectl --context=${context} top node --no-headers=true`);
-		const usage = usageStr.split("\n").map((line) => {
-			const [name, cpu, cpuPercent, memory, memoryPercent] = line.trim().split(/\s+/);
-			const memoryCapacity = Math.round((toInteger(memory.replace(/Mi/, "")) / toInteger(memoryPercent.replace("%", ""))) * 100) + "Mi";
-			const cpuCapacity = Math.round((toInteger(cpu.replace(/m/, "")) / toInteger(cpuPercent.replace("%", ""))) * 100) + "m";
-			return {
-				name,
-				cpu,
-				cpuPercent,
-				cpuCapacity,
-				memory,
-				memoryPercent,
-				memoryCapacity,
-			};
-		});
+		// get metrics
+		let usage: NodeUsage[];
+		try {
+			// get resource usage
+			const { stdout: usageStr } = execaCommandSync(`kubectl --context=${context} top node --no-headers=true`);
+			usage = usageStr.split("\n").map((line) => {
+				const [name, cpu, cpuPercent, memory, memoryPercent] = line.trim().split(/\s+/);
+				const memoryCapacity = Math.round((toInteger(memory.replace(/Mi/, "")) / toInteger(memoryPercent.replace("%", ""))) * 100) + "Mi";
+				const cpuCapacity = Math.round((toInteger(cpu.replace(/m/, "")) / toInteger(cpuPercent.replace("%", ""))) * 100) + "m";
+				return {
+					name,
+					cpu,
+					cpuPercent,
+					cpuCapacity,
+					memory,
+					memoryPercent,
+					memoryCapacity,
+				};
+			});
+		} catch (e2) {
+			logWarn(`[KUBE_CTL] getAllNodes > ${context} > Unable to get metrics :>> ${e2}`);
+			usage = [];
+		}
 
 		const { stdout } = await execa("kubectl", args);
 		const nodes = (JSON.parse(stdout).items as KubeNode[]).map((node) => {
@@ -148,19 +165,18 @@ export async function getAllNodes(options: KubeCommandOptions = {}) {
 			}
 			// usage
 			const nodeUsage = usage.find((n) => n.name === node.metadata.name);
-			if (nodeUsage) {
-				node.cpu = nodeUsage.cpu;
-				node.cpuPercent = nodeUsage.cpuPercent;
-				node.cpuCapacity = nodeUsage.cpuCapacity;
-				node.memory = nodeUsage.memory;
-				node.memoryPercent = nodeUsage.memoryPercent;
-				node.memoryCapacity = nodeUsage.memoryCapacity;
-			}
+			node.cpu = nodeUsage?.cpu || "0";
+			node.cpuPercent = nodeUsage?.cpuPercent || "0";
+			node.cpuCapacity = nodeUsage?.cpuCapacity || "0";
+			node.memory = nodeUsage?.memory || "0";
+			node.memoryPercent = nodeUsage?.memoryPercent || "0";
+			node.memoryCapacity = nodeUsage?.memoryCapacity || "0";
+
 			return node;
 		});
 		return nodes;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllNodes > Unable to get the list.`);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllNodes > ${context} > Unable to get the list:`, e);
 		return [];
 	}
 }
@@ -177,7 +193,7 @@ export async function getAllNamespaces(options: KubeCommandOptions = {}) {
 	try {
 		return JSON.parse(stdout).items as KubeNamespace[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllNamespaces > Can't get namespace list.`);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllNamespaces > ${context} > Can't get namespace list.`);
 		return [];
 	}
 }
@@ -191,7 +207,7 @@ export async function getNamespace(name: string, options: KubeCommandOptions = {
 	try {
 		return !options?.output || options?.output === "json" ? (JSON.parse(stdout).items as KubeNamespace) : stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllNamespaces > Can't get namespace list.`);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllNamespaces > ${context} > Can't get namespace list.`);
 		return;
 	}
 }
@@ -205,7 +221,7 @@ export async function createNamespace(namespace: string, options: KubeGenericOpt
 		await execCmd(`kubectl ${context ? `--context=${context} ` : ""}create namespace ${namespace}`);
 		return { name: namespace };
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] createNamespace >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] createNamespace > ${context} >`, e);
 		return;
 	}
 }
@@ -219,7 +235,7 @@ export async function deleteNamespace(namespace: string, options: KubeCommandOpt
 		await execCmd(`kubectl ${context ? `--context=${context} ` : ""}delete namespace ${namespace} ${filterLabel ? `-l ${filterLabel} ` : ""}`);
 		return { namespace };
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteNamespace >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteNamespace > ${context} >`, e);
 		return;
 	}
 }
@@ -240,7 +256,7 @@ export async function deleteNamespaceByCluster(namespace: string, clusterSlug: s
 		await execCmd(`kubectl ${context ? `--context=${context} ` : ""}delete namespace ${namespace}`);
 		return { namespace };
 	} catch (e) {
-		logError(`[KUBE_CTL] deleteNamespaceByCluster >`, e);
+		logError(`[KUBE_CTL] deleteNamespaceByCluster > ${context} >`, e);
 		return;
 	}
 }
@@ -266,7 +282,7 @@ export async function getSecrets(namespace: string = "default", options: KubeCom
 		);
 		return JSON.parse(stdout).items as KubeSecret[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getSecrets >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getSecrets > ${context} >`, e);
 		return [];
 	}
 }
@@ -282,7 +298,7 @@ export async function getAllSecrets(options: KubeCommandOptions = {}) {
 		);
 		return JSON.parse(stdout).items as KubeSecret[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllSecrets >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllSecrets > ${context} >`, e);
 		return [];
 	}
 }
@@ -309,7 +325,7 @@ export async function deleteSecret(name, namespace = "default", options: KubeGen
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteSecret >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteSecret > ${context} >`, e);
 		return;
 	}
 }
@@ -329,7 +345,7 @@ export async function deleteSecretsByFilter(namespace = "default", options: Kube
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout);
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteSecretsByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteSecretsByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -350,7 +366,7 @@ export async function getAllIngresses(options: KubeGenericOptions = {}) {
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout).items as KubeIngress[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllIngresses >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllIngresses > ${context} >`, e);
 		return;
 	}
 }
@@ -368,7 +384,7 @@ export async function getIngressClasses(options: KubeGenericOptions = {}) {
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout).items as KubeIngressClass[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getIngressClasses >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getIngressClasses > ${context} >`, e);
 		return;
 	}
 }
@@ -386,7 +402,7 @@ export async function getIngress(name, namespace = "default", options: KubeGener
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout) as KubeIngress;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getIngress >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getIngress > ${context} >`, e);
 		return;
 	}
 }
@@ -411,7 +427,7 @@ export async function getIngresses(namespace = "default", options: KubeCommandOp
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout).items as KubeIngress[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getIngress >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getIngress > ${context} >`, e);
 		return [];
 	}
 }
@@ -427,7 +443,7 @@ export async function deleteIngress(name, namespace = "default", options: KubeGe
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteIngress >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteIngress > ${context} >`, e);
 		return;
 	}
 }
@@ -445,7 +461,7 @@ export async function deleteIngressByFilter(namespace = "default", options: Kube
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteIngressByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteIngressByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -522,7 +538,7 @@ export async function getDeploys(namespace = "default", options: GetKubeDeployOp
 			return deploy;
 		});
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getDeploys >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getDeploys > ${context} >`, e);
 		return [];
 	}
 }
@@ -588,7 +604,7 @@ export async function getAllDeploys(options: GetKubeDeployOptions = {}) {
 			return deploy;
 		});
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllDeploys >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllDeploys > ${context} >`, e);
 		return [];
 	}
 }
@@ -608,7 +624,7 @@ export async function getDeploy(name: string, namespace = "default", options: Ku
 		const { stdout } = await execa("kubectl", args);
 		return output === "json" ? (JSON.parse(stdout) as KubeDeployment) : stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getDeploy >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getDeploy > ${context} >`, e);
 		return;
 	}
 }
@@ -630,7 +646,7 @@ export async function getDeploysByFilter(namespace = "default", options: KubeCom
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout).items as KubeDeployment[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getDeploy >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getDeploy > ${context} >`, e);
 		return;
 	}
 }
@@ -649,7 +665,7 @@ export async function scaleDeploy(name: string, replicas: number, namespace = "d
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] scaleDeploy >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] scaleDeploy > ${context} >`, e);
 		return;
 	}
 }
@@ -672,7 +688,7 @@ export async function scaleDeployByFilter(replicas: number, namespace = "default
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] scaleDeployByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] scaleDeployByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -691,7 +707,7 @@ export async function setDeployImage(name: string, container: string, imageURL: 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] setDeployImage >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] setDeployImage > ${context} >`, e);
 		return;
 	}
 }
@@ -710,7 +726,7 @@ export async function setDeployImageAll(name: string, imageURL: string, namespac
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] setDeployImageAll >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] setDeployImageAll > ${context} >`, e);
 		return;
 	}
 }
@@ -750,7 +766,7 @@ export async function setDeployPortAll(name: string, port: string, namespace = "
 
 		return res;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] setDeployPortAll >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] setDeployPortAll > ${context} >`, e);
 		return;
 	}
 }
@@ -779,7 +795,7 @@ export async function setDeployImagePullSecretByFilter(imagePullSecretName: stri
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] setDeployImagePullSecretByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] setDeployImagePullSecretByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -797,7 +813,7 @@ export async function deleteDeploy(name, namespace = "default", options: KubeGen
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteDeploy`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteDeploy > ${context} :>>`, e);
 		return;
 	}
 }
@@ -817,7 +833,7 @@ export async function deleteDeploymentsByFilter(namespace = "default", options: 
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteDeploymentsByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteDeploymentsByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -885,7 +901,7 @@ export async function getStatefulSets(namespace = "default", options: GetKubeDep
 			return deploy;
 		});
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getStatefulSets >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getStatefulSets > ${context} >`, e);
 		return [];
 	}
 }
@@ -951,7 +967,7 @@ export async function getAllStatefulSets(options: GetKubeDeployOptions = {}) {
 			return deploy;
 		});
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllStatefulSets >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllStatefulSets > ${context} >`, e);
 		return [];
 	}
 }
@@ -971,7 +987,7 @@ export async function getStatefulSet(name: string, namespace = "default", option
 		const { stdout } = await execa("kubectl", args);
 		return !output || output === "json" ? (JSON.parse(stdout) as KubeStatefulSet) : stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getStatefulSet >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getStatefulSet > ${context} >`, e);
 		return;
 	}
 }
@@ -993,7 +1009,7 @@ export async function getStatefulSetsByFilter(namespace = "default", options: Ku
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout) as KubeStatefulSet[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getStatefulSet >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getStatefulSet > ${context} >`, e);
 		return;
 	}
 }
@@ -1030,7 +1046,7 @@ export async function deleteStatefulSet(name, namespace = "default", options: Ku
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteStatefulSet`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteStatefulSet > ${context} >`, e);
 		return;
 	}
 }
@@ -1050,7 +1066,7 @@ export async function deleteStatefulSetsByFilter(namespace = "default", options:
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteStatefulSetsByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteStatefulSetsByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -1097,7 +1113,7 @@ export async function getService(name, namespace = "default", options: KubeGener
 		const { stdout } = await execa("kubectl", args);
 		return !options?.output || options?.output === "json" ? (JSON.parse(stdout) as KubeService) : stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getService >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getService > ${context} >`, e);
 		return;
 	}
 }
@@ -1124,7 +1140,7 @@ export async function getServices(namespace = "default", options: KubeCommandOpt
 		const { items } = JSON.parse(stdout);
 		return !options?.output || options?.output === "json" ? (items as KubeService[]) : stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllServices >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllServices > ${context} >`, e);
 		return [];
 	}
 }
@@ -1151,7 +1167,7 @@ export async function getAllServices(options: KubeCommandOptions = {}) {
 		const { items } = JSON.parse(stdout);
 		return items as KubeService[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllServices >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllServices > ${context} >`, e);
 		return [];
 	}
 }
@@ -1171,7 +1187,7 @@ export async function deleteService(name, namespace = "default", options: KubeGe
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteService >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteService > ${context} >`, e);
 		return;
 	}
 }
@@ -1193,7 +1209,7 @@ export async function deleteServiceByFilter(namespace = "default", options: Kube
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteServiceByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteServiceByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -1211,7 +1227,7 @@ export async function getPod(name, namespace = "default", options: KubeGenericOp
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout) as KubePod;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getPod >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getPod > ${context} >`, e);
 		return;
 	}
 }
@@ -1256,7 +1272,7 @@ export async function getPods(namespace = "default", options: GetKubeDeployOptio
 			return item;
 		});
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getPods >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getPods > ${context} >`, e);
 		return [];
 	}
 }
@@ -1296,7 +1312,7 @@ export async function getAllPods(options: KubeCommandOptions = {}) {
 			return item;
 		});
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPods > ${context} >`, e);
 		return [];
 	}
 }
@@ -1317,7 +1333,7 @@ export async function deletePod(name: string, namespace = "default", options: Ku
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getPod >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deletePod > ${context} >`, e);
 		return;
 	}
 }
@@ -1335,7 +1351,7 @@ export async function deletePodsByFilter(namespace = "default", options: KubeCom
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getPod >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deletePodsByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -1360,7 +1376,7 @@ export async function logPod(
 		const { stdout, stderr } = await execa("kubectl", args);
 		return stdout || stderr;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] logPod >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] logPod > ${context} >`, e);
 		return e.toString() as string;
 	}
 }
@@ -1386,7 +1402,7 @@ export async function logPodByFilter(
 		const { stdout, stderr } = await execa("kubectl", args);
 		return stdout || stderr;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] logPod >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] logPodByFilter > ${context} >`, e);
 		return e.toString() as string;
 	}
 }
@@ -1412,7 +1428,7 @@ export async function setEnvVar(envVars: KubeEnvironmentVariable[], deploy: stri
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] setEnvVar >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] setEnvVar > ${context} >`, e);
 		return;
 	}
 }
@@ -1443,7 +1459,7 @@ export async function setEnvVarByFilter(envVars: KubeEnvironmentVariable[], name
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] setEnvVar >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] setEnvVar > ${context} >`, e);
 		return;
 	}
 }
@@ -1469,7 +1485,7 @@ export async function deleteEnvVar(envVarNames: string[], deploy: string, namesp
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteEnvVar >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteEnvVar > ${context} >`, e);
 		return;
 	}
 }
@@ -1497,7 +1513,7 @@ export async function deleteEnvVarByFilter(envVarNames: string[], namespace = "d
 		const { stdout } = await execa("kubectl", args);
 		return stdout;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteEnvVar >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteEnvVar > ${context} >`, e);
 		return;
 	}
 }
@@ -1513,7 +1529,7 @@ export async function rollbackDeploy(name: string, namespace = "default", option
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPods > ${context} >`, e);
 		return [];
 	}
 }
@@ -1529,7 +1545,7 @@ export async function rollbackDeployRevision(name: string, revision: number, nam
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllPods >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPods > ${context} >`, e);
 		return [];
 	}
 }
@@ -1552,7 +1568,7 @@ export async function getPersistentVolume(name, namespace = "default", options: 
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout) as V1PersistentVolume;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolume >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolume > ${context} >`, e);
 		return;
 	}
 }
@@ -1577,7 +1593,7 @@ export async function getPersistentVolumes(namespace = "default", options: GetKu
 		const { items } = JSON.parse(stdout);
 		return items as V1PersistentVolume[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolumes >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolumes > ${context} >`, e);
 		return [];
 	}
 }
@@ -1601,7 +1617,7 @@ export async function getAllPersistentVolumes(options: KubeCommandOptions = {}) 
 		const { items } = JSON.parse(stdout);
 		return items as V1PersistentVolume[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllPersistentVolumes >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPersistentVolumes > ${context} >`, e);
 		return [];
 	}
 }
@@ -1622,7 +1638,7 @@ export async function deletePersistentVolume(name: string, namespace = "default"
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolume >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolume > ${context} >`, e);
 		return;
 	}
 }
@@ -1640,7 +1656,7 @@ export async function deletePersistentVolumesByFilter(namespace = "default", opt
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolumesByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolumesByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -1663,7 +1679,7 @@ export async function getPersistentVolumeClaim(name, namespace = "default", opti
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout) as V1PersistentVolumeClaim;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolumeClaim >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolumeClaim > ${context} >`, e);
 		return;
 	}
 }
@@ -1688,7 +1704,7 @@ export async function getPersistentVolumeClaims(namespace = "default", options: 
 		const { items } = JSON.parse(stdout);
 		return items as V1PersistentVolumeClaim[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolumeClaims >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getPersistentVolumeClaims > ${context} >`, e);
 		return [];
 	}
 }
@@ -1712,7 +1728,7 @@ export async function getAllPersistentVolumeClaims(options: KubeCommandOptions =
 		const { items } = JSON.parse(stdout);
 		return items as V1PersistentVolumeClaim[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllPersistentVolumeClaims >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllPersistentVolumeClaims > ${context} >`, e);
 		return [];
 	}
 }
@@ -1733,7 +1749,7 @@ export async function deletePersistentVolumeClaim(name: string, namespace = "def
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolumeClaim >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolumeClaim > ${context} >`, e);
 		return;
 	}
 }
@@ -1751,7 +1767,7 @@ export async function deletePersistentVolumeClaimsByFilter(namespace = "default"
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolumeClaimsByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deletePersistentVolumeClaimsByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -1774,7 +1790,7 @@ export async function getStorageClass(name, namespace = "default", options: Kube
 		const { stdout } = await execa("kubectl", args);
 		return JSON.parse(stdout) as V1StorageClass;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getStorageClass >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getStorageClass > ${context} >`, e);
 		return;
 	}
 }
@@ -1799,7 +1815,7 @@ export async function getStorageClasses(namespace = "default", options: GetKubeD
 		const { items } = JSON.parse(stdout);
 		return items as V1StorageClass[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getStorageClasses >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getStorageClasses > ${context} >`, e);
 		return [];
 	}
 }
@@ -1823,7 +1839,7 @@ export async function getAllStorageClasses(options: KubeCommandOptions = {}) {
 		const { items } = JSON.parse(stdout);
 		return items as V1StorageClass[];
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] getAllStorageClasses >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] getAllStorageClasses > ${context} >`, e);
 		return [];
 	}
 }
@@ -1844,7 +1860,7 @@ export async function deleteStorageClass(name: string, namespace = "default", op
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteStorageClass >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteStorageClass > ${context} >`, e);
 		return;
 	}
 }
@@ -1862,7 +1878,7 @@ export async function deleteStorageClassesByFilter(namespace = "default", option
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteStorageClassesByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteStorageClassesByFilter > ${context} >`, e);
 		return;
 	}
 }
@@ -1898,7 +1914,7 @@ export async function kubectlAnnotateDeployment(
 		const { stdout } = await execa("kubectl", args);
 		return stdout as string;
 	} catch (e) {
-		if (!skipOnError) logError(`[KUBE_CTL] deleteStorageClassesByFilter >`, e);
+		if (!skipOnError) logError(`[KUBE_CTL] deleteStorageClassesByFilter > ${context} >`, e);
 		return;
 	}
 }
