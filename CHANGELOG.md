@@ -1,3 +1,23 @@
+# [3.34.0](https://github.com/digitopvn/diginext/compare/v3.33.11...v3.34.0) (2024-07-10)
+
+
+### Bug Fixes
+
+* **server,admin:** improve sidebar menu, project & app list ([23ddceb](https://github.com/digitopvn/diginext/commit/23ddceb619258604b0af20379c2b56336b9dfe6b))
+* **server:** auth cluster when failed then update verified as false ([bd50b9b](https://github.com/digitopvn/diginext/commit/bd50b9b3f1303a033a01ed451936eca2231c34cb))
+* **server:** catch auth middlewares errors ([28597f4](https://github.com/digitopvn/diginext/commit/28597f4f36fb3394d7d5bf242e9fe2f789ceb5ae))
+* **server:** clean up deployments of cli <3.33.11 after deploy new app version ([11d5b6c](https://github.com/digitopvn/diginext/commit/11d5b6c1daa2825a18bc278993bce5d79a50aebb))
+* **server:** sort project on top after deploying ([bd2b1db](https://github.com/digitopvn/diginext/commit/bd2b1dbb5722203eddb69ab6ddba2544babfd833))
+* **server:** stop deploying process on new deployment crashed ([9bad39a](https://github.com/digitopvn/diginext/commit/9bad39a7b3e0f519beea5833bd27c66c58f9102b))
+* **server:** when roll out avoid clean up irrelevant resources in current namespace ([8ba4f66](https://github.com/digitopvn/diginext/commit/8ba4f66dddd48b5167f464ff0eff9b089b144da0))
+
+
+### Features
+
+* **admin:** promote to another env, improve builds, releases, projects, apps ([46c81bb](https://github.com/digitopvn/diginext/commit/46c81bb95cb57f3f990c1d38615a156a242cebdf))
+* **server,cli:** deploy with message, splitted build and roll out status ([43cb5cb](https://github.com/digitopvn/diginext/commit/43cb5cbcbf48f734cf2f5908f1c13bd836418173))
+* **server:** promote production, deploy from release ([6532254](https://github.com/digitopvn/diginext/commit/6532254441c240cbbf7f8e895e71752143713363))
+
 ## [3.33.11](https://github.com/digitopvn/diginext/compare/v3.33.10...v3.33.11) (2024-07-04)
 
 
