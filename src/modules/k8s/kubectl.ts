@@ -80,10 +80,7 @@ export async function kubectlApply(filePath: string, options: KubeGenericOptions
 export async function kubectlApplyContent(yamlContent: string, options: KubeCommandOptions = {}) {
 	const { context, filterLabel } = options;
 
-	if (!yamlContent) {
-		logError(`[KUBE_CTL] kubectlApplyContent > YAML content is empty.`);
-		return;
-	}
+	if (!yamlContent) throw new Error(`[KUBE_CTL] kubectlApplyContent > YAML content is empty.`);
 
 	// create temporary YAML file
 	const tmpDir = path.resolve(CLI_DIR, `storage/kubectl_tmp`);
@@ -94,10 +91,10 @@ export async function kubectlApplyContent(yamlContent: string, options: KubeComm
 	writeFileSync(filePath, yamlContent, "utf8");
 
 	// process kubectl apply command which point to that temporary YAML file:
-	const stdout = await execCmd(
-		`kubectl ${context ? `--context=${context} ` : ""}apply -f ${filePath} ${filterLabel ? `-l ${filterLabel} ` : ""}`,
-		`[KUBE_CTL] Failed to apply "${filePath}" in of "${context}" cluster context.`
+	const { stdout } = await execaCommandSync(
+		`kubectl ${context ? `--context=${context} ` : ""}apply -f ${filePath} ${filterLabel ? `-l ${filterLabel} ` : ""}`
 	);
+
 	if (stdout) logSuccess(stdout);
 	return stdout;
 }

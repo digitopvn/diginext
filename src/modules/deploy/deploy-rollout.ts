@@ -509,9 +509,11 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	/**
 	 * Apply new deployment yaml
 	 */
-	const applyDeploymentYamlRes = await ClusterManager.kubectlApplyContent(tmpDeploymentYaml, { context });
-	if (!applyDeploymentYamlRes) {
-		const error = `Unable to apply SERVICE "${service.metadata.name}" (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${deploymentYaml}`;
+	try {
+		await ClusterManager.kubectlApplyContent(tmpDeploymentYaml, { context });
+		if (onUpdate) onUpdate(`Applied new deployment YAML of "${appSlug}" successfully.`);
+	} catch (e) {
+		const error = `[ERROR] Unable to apply new deployment "${deploymentName}": ${e}\n\n${deploymentYaml}`;
 		if (onUpdate) onUpdate(error);
 
 		// dispatch/trigger webhook
@@ -524,7 +526,6 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 		return { error };
 	}
-	if (onUpdate) onUpdate(`Applied new deployment YAML of "${appSlug}".`);
 
 	/**
 	 * Annotate new deployment with app version
