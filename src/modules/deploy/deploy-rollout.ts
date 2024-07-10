@@ -51,9 +51,9 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 		isDebugging,
 	});
 	if (!pods || pods.length == 0) {
-		const msg = `Something's wrong, new pods has been unable to create.`;
+		const msg = `Unable to check "${appName}" deployment, selected pods not found: ${filterLabel}.`;
 		if (onUpdate) onUpdate(msg);
-		return false;
+		throw new Error(msg);
 	}
 
 	let isReady = false;
@@ -473,6 +473,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	 * Scale current deployment up to many replicas before apply new deployment YAML
 	 */
 	if (newReplicas === 1 || currentReplicas <= 1) {
+		if (onUpdate) onUpdate(`Scaling "${currentDeploymentName}" deployment to ${deployReplicas} & prepare for rolling out new deployment.`);
 		await ClusterManager.scaleDeploy(currentDeploymentName, deployReplicas, namespace, { context });
 
 		// wait 10 secs
@@ -494,7 +495,15 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 			5 * 60
 		).catch((e) => false);
 
-		if (!isDeploymentFinishScaling) logWarn(`Unable to scale up the previous deployment, downtime might happen.`);
+		if (!isDeploymentFinishScaling) {
+			logWarn(`Unable to scale up the previous deployment, downtime might happen.`);
+			if (onUpdate)
+				onUpdate(
+					`Unable to scale up the previous deployment (${currentDeploymentName}) to ${deployReplicas} replicas, downtime might happen.`
+				);
+		} else {
+			if (onUpdate) onUpdate(`Scaled "${currentDeploymentName}" deployment to ${deployReplicas} replicas successfully.`);
+		}
 	}
 
 	/**
