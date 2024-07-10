@@ -5,7 +5,10 @@ import type { Ownership } from "@/interfaces/SystemTypes";
 import type { StartBuildParams } from "@/modules/build";
 import { buildAndDeploy } from "@/modules/build/build-and-deploy";
 import { type DeployBuildOptions, deployBuild } from "@/modules/deploy/deploy-build";
+import { deployBuildV2 } from "@/modules/deploy/deploy-build-v2";
 import { deployRelease } from "@/modules/deploy/deploy-release";
+import type { PromoteDeployEnvironmentOptions } from "@/modules/deploy/promote-deploy-environment";
+import { promoteDeployEnvironment } from "@/modules/deploy/promote-deploy-environment";
 import { currentVersion } from "@/plugins";
 
 export default class DeployService {
@@ -46,8 +49,6 @@ export default class DeployService {
 			const registry = await DB.findOne("registry", { slug: deployParams.registry, workspace: ownership.workspace._id });
 			if (registry) app = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${deployParams.env}.registry`]: registry.slug });
 		}
-		// fallback support deprecated "buildNumber" -> now "buildTag"
-		if (buildParams.buildNumber) buildParams.buildTag = buildParams.buildNumber;
 
 		// ownership
 		const author = ownership.owner || (await DB.findOne("user", { _id: deployParams.author }, { populate: ["activeWorkspace"] }));
@@ -102,10 +103,24 @@ export default class DeployService {
 	}
 
 	/**
-	 * Deploy from a release
+	 * Deploy from a build (V2)
+	 */
+	async deployBuildV2(build: IBuild, options: DeployBuildOptions) {
+		return deployBuildV2(build, options);
+	}
+
+	/**
+	 * Deploy from a release (V2)
 	 */
 	async deployRelease(release: IRelease, options: DeployBuildOptions) {
 		return deployRelease(release, options);
+	}
+
+	/**
+	 * Promote a deploy environment to another deploy environment (default: "production").
+	 */
+	async promoteDeployEnvironment(options: PromoteDeployEnvironmentOptions) {
+		return promoteDeployEnvironment(options);
 	}
 }
 

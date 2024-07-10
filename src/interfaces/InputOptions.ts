@@ -639,6 +639,13 @@ export type InputOptions = {
 	 * @deprecated
 	 */
 	prodDomains?: string[];
+
+	/**
+	 * Used in request build/deployment
+	 * - Flag: `-m`, `--message`
+	 * @example "v1.0.0"
+	 */
+	message?: string;
 };
 
 export default InputOptions;

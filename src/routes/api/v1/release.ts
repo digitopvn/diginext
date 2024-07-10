@@ -26,7 +26,8 @@ router
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
 	.delete("/empty", processApiRequest(controller.empty.bind(controller)))
-	.patch("/rollout", processApiRequest(controller.rollout.bind(controller)));
+	.patch("/rollout", processApiRequest(controller.rollout.bind(controller)))
+	.patch("/rollout-v2", processApiRequest(controller.rolloutV2.bind(controller)));
 // .patch("/preview", processApiRequest(controller.previewPrerelease.bind(controller)));
 // Turn this migration off
 // .get("/migrate", authenticate, controller.migrate.bind(controller));

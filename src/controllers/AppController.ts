@@ -705,13 +705,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 			buildTag: buildTag,
 		});
 
-		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+		const { endpoint, deploymentContent } = deployment;
 
 		// update data to deploy environment:
 		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
-		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
 		serverDeployEnvironment.deploymentYaml = deploymentContent;
-		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 		serverDeployEnvironment.updatedAt = new Date();
 		serverDeployEnvironment.lastUpdatedBy = this.user.username;
 
@@ -752,9 +750,6 @@ export default class AppController extends BaseController<IApp, AppService> {
 			cliVersion: currentVersion(),
 			workspace: this.workspace,
 		});
-
-		// const result = await ClusterManager.rollout(release._id.toString());
-		// if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
 
 		// apply deployment YAML
 		const applyResult = await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context: cluster.contextName });
@@ -918,13 +913,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 				buildTag: BUILD_TAG,
 			});
 
-			const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+			const { endpoint, deploymentContent } = deployment;
 
 			// update data to deploy environment:
 			let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
-			serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
 			serverDeployEnvironment.deploymentYaml = deploymentContent;
-			serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 			serverDeployEnvironment.updatedAt = new Date();
 			serverDeployEnvironment.lastUpdatedBy = this.user.username;
 
@@ -1152,13 +1145,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 			buildTag: BUILD_TAG,
 		});
 
-		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+		const { endpoint, deploymentContent } = deployment;
 
 		// update data to deploy environment:
 		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
-		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
 		serverDeployEnvironment.deploymentYaml = deploymentContent;
-		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 		serverDeployEnvironment.updatedAt = new Date();
 		serverDeployEnvironment.lastUpdatedBy = this.user.username;
 
@@ -1195,9 +1186,6 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 			// apply deployment YAML
 			await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context: cluster.contextName });
-
-			// const result = await ClusterManager.rollout(release._id.toString());
-			// if (result.error) return respondFailure(`Failed to roll out the release :>> ${result.error}.`);
 		}
 
 		return respondSuccess({ data: updatedApp });

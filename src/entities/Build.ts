@@ -2,7 +2,7 @@ import type { Types } from "mongoose";
 import mongoose, { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
-import type { BuildStatus } from "@/interfaces/SystemTypes";
+import { type BuildStatus, type DeployStatus, buildStatusList, deployStatusList } from "@/interfaces/SystemTypes";
 
 import type { IApp } from "./App";
 import type { IBase } from "./Base";
@@ -16,6 +16,10 @@ export interface IBuild extends IBase {
 	 * Image tag is also "buildTag"
 	 */
 	tag?: string;
+	/**
+	 * Build number
+	 */
+	num?: number;
 	/**
 	 * Build start time
 	 */
@@ -35,12 +39,17 @@ export interface IBuild extends IBase {
 	 */
 	env?: string;
 	/**
+	 * Release revision message
+	 */
+	message?: string;
+	/**
 	 * Build from which git branch
 	 */
 	branch?: string;
 	cliVersion?: string;
 	createdBy?: string;
 	status?: BuildStatus;
+	deployStatus?: DeployStatus;
 	projectSlug?: string;
 	/**
 	 * App's slug
@@ -66,14 +75,17 @@ export const buildSchema = new Schema(
 		name: { type: String },
 		image: { type: String },
 		tag: { type: String },
+		num: { type: String },
 		startTime: { type: Date },
 		endTime: { type: Date },
 		duration: { type: Number },
+		message: { type: String },
 		env: { type: String },
 		branch: { type: String },
 		cliVersion: { type: String },
 		createdBy: { type: String },
-		status: { type: String, enum: ["pending", "building", "succeeded", "failed", "cancelled"] },
+		status: { type: String, enum: buildStatusList },
+		deployStatus: { type: String, enum: deployStatusList },
 		projectSlug: { type: String },
 		appSlug: { type: String },
 		logs: { type: String },

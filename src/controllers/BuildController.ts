@@ -5,6 +5,7 @@ import type { IBuild } from "@/entities";
 import * as entities from "@/entities";
 import * as interfaces from "@/interfaces";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
+import type { BuildStatus, DeployStatus } from "@/interfaces/SystemTypes";
 import * as buildModule from "@/modules/build";
 import { Logger } from "@/plugins";
 import { BuildService } from "@/services";
@@ -37,7 +38,7 @@ export default class BuildController extends BaseController<IBuild, BuildService
 			});
 		}
 
-		return respondSuccess({ data: builds });
+		return respondSuccess({ data: builds, ...this.pagination });
 	}
 
 	@Security("api_key")
@@ -116,9 +117,11 @@ export default class BuildController extends BaseController<IBuild, BuildService
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/stop")
-	async stopBuild(@Body() body: { slug: string }) {
+	async stopBuild(@Body() body: { slug: string; status?: BuildStatus; deployStatus?: DeployStatus }) {
 		try {
-			const build = await this.service.stopBuild(body.slug, this.ownership);
+			if (typeof body.status === "undefined") body.status = "cancelled";
+			if (typeof body.deployStatus === "undefined") body.deployStatus = "pending";
+			const build = await this.service.stopBuild(body.slug, body.status);
 			return respondSuccess({ data: build });
 		} catch (e) {
 			return respondFailure(`Unable to stop the build process: ${e}`);

@@ -135,15 +135,23 @@ export interface ClientDeployEnvironmentConfig {
  */
 export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	/**
+	 * ObjectID of the build associated with this deploy environment.
+	 */
+	buildId?: string;
+	/**
 	 * Build tag is image's tag (no special characters, eg. "dot" or "comma")
 	 * @example latest, v01, prerelease, alpha, beta,...
 	 */
 	buildTag: string;
 	/**
-	 * Alias of `buildTag`, use `buildTag` instead, this field will be removed soon.
-	 * @deprecated
+	 * A incremental number digit of a build.
 	 */
 	buildNumber?: string;
+
+	/**
+	 * The app version
+	 */
+	appVersion?: string;
 
 	/**
 	 * ID of the latest release associated with this deploy environment.

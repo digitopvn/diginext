@@ -78,16 +78,16 @@ export const deployImage = async (options: DeployImageParams, appConfig: AppConf
 	const serverEnvironmentVariables = formatEnvVars(envVars || targetEnvironment?.envVars || []);
 
 	// generate YAML deployment files
-	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = await generateDeployment({
+	const { endpoint, deploymentContent } = await generateDeployment({
 		appSlug: slug,
 		env,
 		username,
 		appConfig,
 		workspace,
 	});
-	targetEnvironment.prereleaseUrl = prereleaseUrl;
+	// targetEnvironment.prereleaseUrl = prereleaseUrl;
 	targetEnvironment.deploymentYaml = deploymentContent;
-	targetEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+	// targetEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 
 	// update env vars to database:
 	const updateAppData = { environment: app.environment || {}, deployEnvironment: app.deployEnvironment || {} } as IApp;

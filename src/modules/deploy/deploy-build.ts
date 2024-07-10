@@ -15,7 +15,6 @@ import { createReleaseFromBuild, sendLog } from "../build";
 import { updateReleaseStatusById } from "../build/update-release-status";
 import ClusterManager from "../k8s";
 import type { FetchDeploymentResult } from "./fetch-deployment";
-import { fetchDeploymentFromContent } from "./fetch-deployment";
 import type { GenerateDeploymentResult } from "./generate-deployment";
 import { generateDeployment } from "./generate-deployment";
 
@@ -284,7 +283,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 
 	// parse options
 	const { env, owner, workspace, deployInBackground = true, cliVersion } = options;
-	const { appSlug, projectSlug, tag: buildTag } = build;
+	const { appSlug, projectSlug, tag: buildTag, num: buildNumber } = build;
 	const { slug: username } = owner;
 	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 
@@ -379,12 +378,12 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 		sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
 		throw new Error(errMsg);
 	}
-	const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+	const { endpoint, deploymentContent } = deployment;
 
 	// update data to deploy environment:
-	serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
+	serverDeployEnvironment.prereleaseUrl = null;
 	serverDeployEnvironment.deploymentYaml = deploymentContent;
-	serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+	serverDeployEnvironment.prereleaseDeploymentYaml = null;
 	serverDeployEnvironment.updatedAt = new Date();
 	serverDeployEnvironment.lastUpdatedBy = username;
 
@@ -399,8 +398,11 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
 
+	// update "deployStatus" of a build
+	await DB.updateOne("build", { _id: build._id }, { deployStatus: "in_progress" }).catch(console.error);
+
 	// Create new Release:
-	let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
+	// let prereleaseDeploymentData = fetchDeploymentFromContent(prereleaseDeploymentContent);
 	let releaseId: string, newRelease: IRelease;
 	try {
 		newRelease = await createReleaseFromBuild(build, env, { author: owner, workspace, cliVersion });
@@ -454,7 +456,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 		}
 	}
 
-	return { app: updatedApp, build, release: newRelease, deployment, endpoint, prerelease: prereleaseDeploymentData };
+	return { app: updatedApp, build, release: newRelease, deployment, endpoint, prerelease: null };
 };
 
 export const deployWithBuildSlug = async (buildSlug: string, options: DeployBuildOptions) => {

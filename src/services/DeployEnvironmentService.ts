@@ -194,13 +194,13 @@ export class DeployEnvironmentService {
 			buildTag: buildTag,
 		});
 
-		const { endpoint, prereleaseUrl, deploymentContent, prereleaseDeploymentContent } = deployment;
+		const { endpoint, deploymentContent } = deployment;
 
 		// update data to deploy environment:
 		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
-		serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
+		// serverDeployEnvironment.prereleaseUrl = prereleaseUrl;
 		serverDeployEnvironment.deploymentYaml = deploymentContent;
-		serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
+		// serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 		serverDeployEnvironment.updatedAt = new Date();
 		serverDeployEnvironment.lastUpdatedBy = ownership.owner.username;
 
@@ -673,7 +673,7 @@ export class DeployEnvironmentService {
 					{ _id: app._id },
 					{
 						[`deployEnvironment.${env}.deploymentYaml`]: deployment.deploymentContent,
-						[`deployEnvironment.${env}.prereleaseDeploymentYaml`]: deployment.prereleaseDeploymentContent,
+						// [`deployEnvironment.${env}.prereleaseDeploymentYaml`]: deployment.prereleaseDeploymentContent,
 					}
 				);
 			} catch (e) {
@@ -740,7 +740,7 @@ export class DeployEnvironmentService {
 			{
 				$set: {
 					[`deployEnvironment.${env}.deploymentYaml`]: deployment.deploymentContent,
-					[`deployEnvironment.${env}.prereleaseDeploymentYaml`]: deployment.prereleaseDeploymentContent,
+					// [`deployEnvironment.${env}.prereleaseDeploymentYaml`]: deployment.prereleaseDeploymentContent,
 				},
 			},
 			{ raw: true }
@@ -856,7 +856,7 @@ export class DeployEnvironmentService {
 			{
 				$set: {
 					[`deployEnvironment.${env}.deploymentYaml`]: deployment.deploymentContent,
-					[`deployEnvironment.${env}.prereleaseDeploymentYaml`]: deployment.prereleaseDeploymentContent,
+					// [`deployEnvironment.${env}.prereleaseDeploymentYaml`]: "deployment.prereleaseDeploymentContent",
 				},
 			},
 			{ raw: true }

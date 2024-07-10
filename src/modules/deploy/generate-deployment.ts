@@ -54,13 +54,13 @@ export type GenerateDeploymentResult = {
 	deploymentContent: string;
 	deploymentCfg: KubeDeployment;
 	// prerelease (ingress, service, pods,...)
-	prereleaseYamlObject: any[];
-	prereleaseDeploymentContent: string;
+	// prereleaseYamlObject: any[];
+	// prereleaseDeploymentContent: string;
+	// prereleaseUrl: string;
 	// accessibility
 	buildTag: string;
 	IMAGE_NAME: string;
 	endpoint: string;
-	prereleaseUrl: string;
 };
 
 const nginxBlockedPaths = "location ~ /.git { deny all; return 403; }";

@@ -119,7 +119,7 @@ export async function requestBuild(options: InputOptions) {
 	const requestBuildData: StartBuildParams = {
 		gitBranch: gitBranch,
 		buildTag: options.buildTag,
-		buildNumber: options.buildTag, // <-- Fallback support CLI <3.21.0 (Will be removed soon)
+		buildNumber: tagInfo.number,
 		registrySlug: registry.slug,
 		appSlug: app.slug,
 	};

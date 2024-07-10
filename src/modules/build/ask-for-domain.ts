@@ -9,6 +9,19 @@ import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
 import { generateDomains } from "../deploy/generate-domain";
 
+export function generateDiginextDomain(env: string, projectSlug: string, appSlug: string) {
+	let subdomainName = `${projectSlug}-${appSlug}.${env}`;
+	let generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
+
+	if (generatedDomain.length > 60) {
+		subdomainName = `${appSlug}-${makeDaySlug({ divider: "" })}`;
+		generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
+		logWarn(`This app's domain is too long, it will be shorten randomly to: ${generatedDomain}`);
+	}
+
+	return { subdomain: subdomainName, domain: generatedDomain };
+}
+
 export const askForDomain = async (
 	env: string,
 	projectSlug: string,
@@ -18,15 +31,10 @@ export const askForDomain = async (
 ) => {
 	const { DB } = await import("../api/DB");
 
-	let subdomainName = `${projectSlug}-${appSlug}.${env}`;
 	let domains: string[] = [];
 
-	let generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
-	if (generatedDomain.length > 60) {
-		subdomainName = `${appSlug}-${makeDaySlug({ divider: "" })}`;
-		generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
-		logWarn(`This app's domain is too long, it will be shorten randomly to: ${generatedDomain}`);
-	}
+	let { subdomain, domain } = generateDiginextDomain(env, projectSlug, appSlug);
+
 	const clusterSlug = deployEnvironment.cluster;
 
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["workspace"] });
@@ -50,34 +58,36 @@ export const askForDomain = async (
 			const askGenerate = await inquirer.prompt<{ useGeneratedDomain: boolean }>({
 				name: "useGeneratedDomain",
 				type: "confirm",
-				message: `Do you want to use our generated domain: ${chalk.green(
-					generatedDomain
-				)}? (You can update it anytime in your Diginext workspace)`,
+				message: `Do you want to use our generated domain: ${chalk.green(domain)}? (You can update it anytime in your Diginext workspace)`,
 				default: true,
 			});
 			useGeneratedDomain = askGenerate.useGeneratedDomain;
 		}
 
 		if (useGeneratedDomain) {
-			const { status, ip, domain, messages } = await generateDomains({
+			const {
+				status,
+				ip,
+				domain: generatedDomain,
+				messages,
+			} = await generateDomains({
 				workspace,
-				primaryDomain: DIGINEXT_DOMAIN,
-				subdomainName,
+				subdomainName: subdomain,
 				clusterSlug: clusterSlug,
 			});
 
 			if (status === 0) throw new Error(messages.join("."));
 
 			// in case the domain was existed, it will automatically generate a new one
-			generatedDomain = domain;
+			domain = generatedDomain;
 
 			// save app config:
 			if (!deployEnvironment.domains) deployEnvironment.domains = [];
-			deployEnvironment.domains.push(generatedDomain);
+			deployEnvironment.domains.push(domain);
 
 			domains = deployEnvironment.domains;
 
-			logSuccess(`Great! Domain "${generatedDomain}" has been created and pointed to this IP address: ${ip}`);
+			logSuccess(`Great! Domain "${domain}" has been created and pointed to this IP address: ${ip}`);
 		} else {
 			// logError(`You need a domain to deploy this app. Please add one in: Diginext workspace > project > app > deploy environment"`);
 			domains = [];

@@ -21,6 +21,7 @@ const jwt_auth = (req: AppRequest, res, next) =>
 
 		// Handle error
 		// if (err) return res.status(500).json({ error: "An error occurred during authentication", details: err });
+		if (err) return next(err);
 
 		if (!user) {
 			/**

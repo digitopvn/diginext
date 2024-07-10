@@ -1,3 +1,4 @@
+import { rolloutV2 } from "../deploy/deploy-rollout";
 import authCluster, { authClusterBySlug } from "./cluster-auth";
 import { createImagePullSecretsInNamespace } from "./image-pull-secret";
 import { currentCluster, currentContext, getKubeConfig, getKubeContextByCluster, getKubeContextByClusterSlug } from "./kube-config";
@@ -64,6 +65,7 @@ import {
 	getStorageClassesByFilter,
 	isNamespaceExisted,
 	isSecretExisted,
+	kubectlAnnotateDeployment,
 	kubectlApply,
 	kubectlApplyContent,
 	logPod,
@@ -168,8 +170,10 @@ const ClusterManager = {
 	// deploy
 	previewPrerelease,
 	rollout,
+	rolloutV2,
 	kubectlApply,
 	kubectlApplyContent,
+	kubectlAnnotateDeployment,
 	rollbackDeploy,
 	rollbackDeployRevision,
 	// stacks

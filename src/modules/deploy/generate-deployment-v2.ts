@@ -1,11 +1,11 @@
 import type { V1PersistentVolumeClaim } from "@kubernetes/client-node";
-import { log, logWarn } from "diginext-utils/dist/xconsole/log";
+import { logWarn } from "diginext-utils/dist/xconsole/log";
 import * as fs from "fs";
 import yaml from "js-yaml";
-import _, { isEmpty, isObject, toNumber } from "lodash";
+import { isObject, toNumber } from "lodash";
 
 import { getContainerResourceBySize } from "@/config/config";
-import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
+import { FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
 import type { IContainerRegistry, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
@@ -14,20 +14,23 @@ import { formatEnvVars } from "@/plugins/env-var";
 import { makeSlug } from "@/plugins/slug";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
+import { generateDiginextDomain } from "../build";
 import ClusterManager from "../k8s";
 import { createImagePullSecretsInNamespace } from "../k8s/image-pull-secret";
 import getDeploymentName from "./generate-deployment-name";
 import { generateDomains } from "./generate-domain";
 
-export type GenerateDeploymentParams = {
+export type GenerateDeploymentV2Params = {
 	appSlug: string;
 	env: string;
+	port?: number;
 	username: string;
 	workspace: IWorkspace;
 	/**
 	 * Skip replacing origin domain of "prerelease" environment.
 	 *
 	 * @default false
+	 * @deprecated
 	 */
 	skipPrerelease?: boolean;
 	/**
@@ -39,34 +42,53 @@ export type GenerateDeploymentParams = {
 	 */
 	targetDirectory?: string;
 	/**
+	 * Image URL of a build on container registry (no tag/version)
+	 */
+	buildImage?: string;
+	/**
 	 * Requires if generate deployment files from source code.
 	 */
 	buildTag?: string;
+	/**
+	 * Container Registry
+	 */
+	registry?: IContainerRegistry;
 	// debug
 	isDebugging?: boolean;
 };
 
-export type GenerateDeploymentResult = {
+export type GenerateDeploymentV2Result = {
 	// namespace
 	namespaceContent: string;
 	namespaceObject: KubeNamespace;
+
 	// deployment (ingress, service, pods,...)
+	deployEnvironment: DeployEnvironment;
 	deploymentContent: string;
 	deploymentCfg: KubeDeployment;
-	// prerelease (ingress, service, pods,...)
-	prereleaseYamlObject: any[];
-	prereleaseDeploymentContent: string;
+
 	// accessibility
 	buildTag: string;
+	buildNumber: number;
 	IMAGE_NAME: string;
 	endpoint: string;
-	prereleaseUrl: string;
 };
 
 const nginxBlockedPaths = "location ~ /.git { deny all; return 403; }";
 
-export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => {
-	const { appSlug, buildTag, env = "dev", skipPrerelease = false, username, workspace, appConfig } = params;
+export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) => {
+	const {
+		appSlug,
+		buildTag,
+		buildImage,
+		env = "dev",
+		port,
+		skipPrerelease = false,
+		username,
+		workspace,
+		appConfig,
+		registry: inputRegistry,
+	} = params;
 
 	// validate inputs
 	if (!appSlug) throw new Error(`Unable to generate YAML, app's slug is required.`);
@@ -75,6 +97,9 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 	const { DB } = await import("@/modules/api/DB");
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
+	const appOwner = app.ownerSlug;
+
+	let projectSlug = currentAppConfig.project;
 
 	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
 
@@ -84,36 +109,57 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 	const deployEnvironmentConfig = currentAppConfig.deployEnvironment[env];
 	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);
 
-	const registrySlug = deployEnvironmentConfig.registry;
-
 	// let deploymentName = project + "-" + appSlug.toLowerCase();
 	let deploymentName = await getDeploymentName(app);
 
-	let nsName = deployEnvironmentConfig.namespace;
+	let nsName = deployEnvironmentConfig.namespace || `${projectSlug}-${env}`;
 	let ingName = deploymentName;
 	let svcName = deploymentName;
 	let mainAppName = deploymentName;
-	let appName = deploymentName + "-" + (app.buildNumber ?? 1);
+	let buildNumber = app.buildNumber ?? 1;
+	let appVersion = deploymentName + "-" + buildNumber;
 	let basePath = deployEnvironmentConfig.basePath ?? "";
 
+	// Overwrite exposed port
+	if (typeof port !== "undefined") deployEnvironmentConfig.port = port;
+	if (typeof deployEnvironmentConfig.port === "undefined") throw new Error(`Unable to generate deployment YAML, port is required.`);
+
+	const clusterSlug = deployEnvironmentConfig.cluster;
+
 	// Prepare for building docker image
-	const { imageURL } = deployEnvironmentConfig;
+	let IMAGE_NAME = buildImage ? `${buildImage}:${buildTag}` : undefined;
+	if (!IMAGE_NAME && deployEnvironmentConfig.imageURL) IMAGE_NAME = `${deployEnvironmentConfig.imageURL}:${buildTag}`;
+	if (!IMAGE_NAME) throw new Error(`Unable to generate deployment YAML, image name (image url + tag) is required.`);
+	deployEnvironmentConfig.imageURL = IMAGE_NAME;
 
-	// TODO: Replace BUILD_NUMBER so it can work with Skaffold
-	const IMAGE_NAME = `${imageURL}:${buildTag}`;
-
-	let projectSlug = currentAppConfig.project;
 	let domains = deployEnvironmentConfig.domains;
 	let replicas = deployEnvironmentConfig.replicas ?? 1;
 
-	const BASE_URL = domains && domains.length > 0 ? `https://${domains[0]}` : `http://${svcName}.${nsName}.svc.cluster.local`;
-	const clusterSlug = deployEnvironmentConfig.cluster;
-
-	// get container registry
-	let registry: IContainerRegistry = await DB.findOne("registry", { slug: registrySlug });
-	if (!registry) {
-		throw new Error(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
+	// if no domains, generate a default DIGINEXT domain:
+	if (!domains) {
+		const { subdomain } = await generateDiginextDomain(env, projectSlug, appSlug);
+		const {
+			status,
+			domain: generatedDomain,
+			messages,
+		} = await generateDomains({
+			workspace,
+			subdomainName: subdomain,
+			clusterSlug: clusterSlug,
+		});
+		if (!status) throw new Error(messages.join("\n"));
+		deployEnvironmentConfig.domains = domains = [generatedDomain];
+		deployEnvironmentConfig.ssl = "letsencrypt";
 	}
+
+	const BASE_URL = domains && domains.length > 0 ? `https://${domains[0]}` : `http://${svcName}.${nsName}.svc.cluster.local`;
+
+	// get container registry & create "imagePullSecret" in the target cluster
+	let registry: IContainerRegistry =
+		inputRegistry || (deployEnvironmentConfig.registry ? await DB.findOne("registry", { slug: deployEnvironmentConfig.registry }) : undefined);
+	if (!registry) throw new Error(`Container registries not found, please contact your admin or create a new one.`);
+	deployEnvironmentConfig.registry = registry.slug;
+
 	if (!registry.imagePullSecret) {
 		const imagePullSecret = await createImagePullSecretsInNamespace(appSlug, env, clusterSlug, nsName);
 		[registry] = await DB.update("registry", { _id: registry._id }, { imagePullSecret });
@@ -130,27 +176,6 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 	// get registry secret as image pulling secret:
 	const { imagePullSecret } = registry;
 
-	// prerelease:
-	const prereleaseSubdomainName = `${appSlug.toLowerCase()}.prerelease`;
-	let prereleaseIngName = `prerelease-${ingName}`;
-	let prereleaseSvcName = `prerelease-${svcName}`;
-	let prereleaseAppName = `prerelease-${appName}`;
-	let prereleaseIngressDoc, prereleaseSvcDoc, prereleaseDeployDoc;
-	let prereleaseDomain: string;
-
-	// Setup a domain for prerelease
-	if (env == "prod") {
-		const { status, domain, messages } = await generateDomains({
-			workspace,
-			primaryDomain: DIGINEXT_DOMAIN,
-			subdomainName: prereleaseSubdomainName,
-			clusterSlug: deployEnvironmentConfig.cluster,
-		});
-		if (status === 0) throw new Error(`Unable to create PRE-RELEASE domain "${domain}" due to "${messages.join(". ")}"`);
-		prereleaseDomain = domain;
-	}
-	if (env === "prod") log({ prereleaseDomain });
-
 	// * [NEW TACTIC] Fetch ENV variables from database:
 	const deployEnvironment = app.deployEnvironment[env] || ({} as DeployEnvironment);
 	// console.log("generate deployment > deployEnvironment :>> ", deployEnvironment);
@@ -165,23 +190,6 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 	containerEnvs = formatEnvVars(containerEnvs);
 
 	// console.log("[2] containerEnvs :>> ", containerEnvs);
-
-	// prerelease ENV variables (is the same with PROD ENV variables, except the domains/origins if any):
-	let prereleaseEnvs = [];
-	if (env === "prod" && !isEmpty(domains)) {
-		prereleaseEnvs = containerEnvs.map(({ value, ...envVar }) => {
-			// DO NOT replace origin domain of PRERELEASE env:
-			if (skipPrerelease) return { value, ...envVar };
-
-			let curValue = value || "";
-			if (curValue.indexOf(domains[0]) > -1) {
-				// replace all production domains with PRERELEASE domains
-				curValue = curValue.replace(new RegExp(domains[0], "gi"), prereleaseDomain);
-			}
-			return { ...envVar, value: curValue };
-		});
-	}
-	// console.log("[3] prereleaseEnvs :>> ", prereleaseEnvs);
 
 	// Should inherit the "Ingress" config from the previous deployment?
 	let previousDeployment,
@@ -198,6 +206,17 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 		}
 	}
 
+	// assign labels
+	const labels: any = {};
+	labels.workspace = workspace.slug;
+	labels.owner = appOwner;
+	labels["updated-by"] = username;
+	labels.project = projectSlug;
+	labels.app = mainAppName;
+	labels["main-app"] = mainAppName;
+	labels["app-version"] = appVersion;
+	labels["deploy-strategy"] = "v2";
+
 	// get available ingress class
 	const ingressClasses = (await ClusterManager.getIngressClasses({ context })) || [];
 
@@ -209,7 +228,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 	namespaceObject.metadata.name = nsName;
 	namespaceObject.metadata.labels = namespaceObject.metadata?.labels || {};
 	namespaceObject.metadata.labels.project = projectSlug.toLowerCase();
-	namespaceObject.metadata.labels.owner = username.toLowerCase();
+	namespaceObject.metadata.labels.owner = appOwner.toLowerCase();
 	namespaceObject.metadata.labels.workspace = workspace.slug.toLowerCase();
 
 	namespaceContent = objectToDeploymentYaml(namespaceObject);
@@ -219,8 +238,8 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 	let deploymentContent = fs.readFileSync(FULL_DEPLOYMENT_TEMPLATE_PATH, "utf8");
 	let deploymentCfg: any[] = yaml.loadAll(deploymentContent);
 
-	console.log("app.deployEnvironment :>> ", app.deployEnvironment);
-	console.log("app.deployEnvironment[env].volumes :>> ", app.deployEnvironment[env].volumes);
+	// console.log("app.deployEnvironment :>> ", app.deployEnvironment);
+	// console.log("app.deployEnvironment[env].volumes :>> ", app.deployEnvironment[env].volumes);
 
 	if (deploymentCfg.length) {
 		deploymentCfg.forEach((doc, index) => {
@@ -243,6 +262,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 						};
 					}
 
+					if (!ingCfg.metadata.annotations) ingCfg.metadata.annotations = {};
 					if (deployEnvironmentConfig.ssl == "letsencrypt") {
 						ingCfg.metadata.annotations["cert-manager.io/cluster-issuer"] = "letsencrypt-prod";
 					} else {
@@ -250,17 +270,18 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 					}
 
 					// ingress class
-					let ingressClass = "";
-					if (
-						deployEnvironmentConfig.ingress &&
-						(ingressClasses.map((ingClass) => ingClass?.metadata?.name) || []).includes(deployEnvironmentConfig.ingress)
-					) {
-						ingressClass = deployEnvironmentConfig.ingress;
-					} else {
-						ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
-					}
+					const ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
+					// let ingressClass = "";
+					// if (
+					// 	deployEnvironmentConfig.ingress &&
+					// 	(ingressClasses.map((ingClass) => ingClass?.metadata?.name) || []).includes(deployEnvironmentConfig.ingress)
+					// ) {
+					// 	ingressClass = deployEnvironmentConfig.ingress;
+					// } else {
+					// 	ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
+					// }
 					if (ingressClass) {
-						// OLD
+						//  OLD -> DEPRECATED!!!
 						// ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
 						// NEW
 						ingCfg.spec.ingressClassName = ingressClass;
@@ -278,12 +299,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 					if (env !== "prod") ingCfg.metadata.annotations["nginx.ingress.kubernetes.io/limit-rps"] = `200`;
 
 					// labels
-					if (!doc.metadata.labels) doc.metadata.labels = {};
-					doc.metadata.labels.workspace = workspace.slug;
-					doc.metadata.labels["updated-by"] = username;
-					doc.metadata.labels.project = projectSlug;
-					doc.metadata.labels.app = appName;
-					doc.metadata.labels["main-app"] = mainAppName;
+					doc.metadata.labels = labels;
 					doc.metadata.labels.phase = "live";
 
 					// redirect
@@ -311,7 +327,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 						// tls
 						ingCfg.spec.tls.push({
 							hosts: [domain],
-							secretName: deployEnvironmentConfig.tlsSecret || `tls-secret-letsencrypt-${makeSlug(domain)}`,
+							secretName: deployEnvironmentConfig.tlsSecret || `tls-${makeSlug(domain)}`,
 						});
 
 						// rules
@@ -338,37 +354,6 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 							delete ingCfg.spec.tls;
 						} catch (e) {}
 					}
-
-					// pre-release
-					prereleaseIngressDoc = _.cloneDeep(doc);
-					prereleaseIngressDoc.metadata.name = prereleaseIngName;
-					prereleaseIngressDoc.metadata.namespace = nsName;
-					prereleaseIngressDoc.metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"] = "";
-					prereleaseIngressDoc.metadata.annotations["cert-manager.io/cluster-issuer"] = "letsencrypt-prod";
-					// block some specific paths
-					prereleaseIngressDoc.metadata.annotations["nginx.ingress.kubernetes.io/server-snippet"] = nginxBlockedPaths;
-					prereleaseIngressDoc.spec.tls = [
-						{
-							hosts: [prereleaseDomain],
-							secretName: `secret-${_.kebabCase(prereleaseDomain)}`,
-						},
-					];
-					prereleaseIngressDoc.spec.rules = [
-						{
-							host: prereleaseDomain,
-							http: {
-								paths: [
-									{
-										path: "/" + basePath,
-										pathType: "Prefix",
-										backend: {
-											service: { name: prereleaseSvcName, port: { number: deployEnvironmentConfig.port } },
-										},
-									},
-								],
-							},
-						},
-					];
 				} else {
 					delete deploymentCfg[index];
 					doc = null;
@@ -378,27 +363,14 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 			if (doc && doc.kind == "Service") {
 				doc.metadata.name = svcName;
 
-				if (!doc.metadata.labels) doc.metadata.labels = {};
-				doc.metadata.labels.workspace = workspace.slug;
-				doc.metadata.labels["updated-by"] = username;
-				doc.metadata.labels.project = projectSlug;
-				doc.metadata.labels.app = appName;
-				doc.metadata.labels["main-app"] = mainAppName;
+				// labels
+				doc.metadata.labels = labels;
 				doc.metadata.labels.phase = "live";
-				doc.spec.selector.app = appName;
+				doc.spec.selector.app = mainAppName;
 
 				// Routing traffic to the same pod base on ClientIP
 				doc.spec.sessionAffinity = "ClientIP";
 				doc.spec.ports = [{ port: deployEnvironmentConfig.port, targetPort: deployEnvironmentConfig.port }];
-
-				// clone svc to prerelease:
-				prereleaseSvcDoc = _.cloneDeep(doc);
-				prereleaseSvcDoc.metadata.name = prereleaseSvcName;
-				prereleaseSvcDoc.metadata.namespace = nsName;
-				prereleaseSvcDoc.metadata.labels["main-app"] = mainAppName;
-				prereleaseSvcDoc.metadata.labels.app = appName;
-				prereleaseSvcDoc.metadata.labels.phase = "prerelease";
-				prereleaseSvcDoc.spec.selector.app = prereleaseAppName;
 			}
 
 			if (doc && doc.kind == "Deployment") {
@@ -408,44 +380,41 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 				} else {
 					// canary, production, staging,...
 					doc.spec.template.spec.containers[0].resources = getContainerResourceBySize(deployEnvironmentConfig.size || "1x");
-
-					// * Add roll out strategy -> Rolling Update
-					doc.spec.strategy = {
-						type: "RollingUpdate",
-						rollingUpdate: {
-							maxSurge: 1,
-							maxUnavailable: 1,
-						},
-					};
 				}
+
+				// minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing
+				doc.spec.minReadySeconds = 10;
+
+				// * Add roll out strategy -> Rolling Update
+				doc.spec.strategy = {
+					type: "RollingUpdate",
+					rollingUpdate: {
+						maxSurge: 1,
+						maxUnavailable: 1,
+					},
+				};
 
 				// container replicas
 				doc.spec.replicas = replicas;
-				doc.metadata.name = appName;
+				// doc.metadata.name = appName;
+				doc.metadata.name = mainAppName;
 
 				// deployment's labels
-				if (!doc.metadata.labels) doc.metadata.labels = {};
-				doc.metadata.labels.workspace = workspace.slug;
-				doc.metadata.labels["updated-by"] = username;
-				doc.metadata.labels.project = projectSlug;
-				doc.metadata.labels.app = appName;
-				doc.metadata.labels["main-app"] = mainAppName;
+				doc.metadata.labels = labels;
 				doc.metadata.labels.phase = "live";
 
 				// pod's labels
-				doc.spec.template.metadata.labels.workspace = workspace.slug;
-				doc.spec.template.metadata.labels["updated-by"] = username;
-				doc.spec.template.metadata.labels.project = projectSlug;
-				doc.spec.template.metadata.labels.app = appName;
-				doc.spec.template.metadata.labels["main-app"] = mainAppName;
+				doc.spec.template.metadata.labels = labels;
 				doc.spec.template.metadata.labels.phase = "live";
-				doc.spec.selector.matchLabels.app = appName;
-
-				// container
-				doc.spec.template.spec.containers[0].name = appName;
+				// doc.spec.selector.matchLabels.app = appName;
+				doc.spec.selector.matchLabels.app = mainAppName;
 
 				// Inject "imagePullSecrets" to pull image from the container registry
 				doc.spec.template.spec.imagePullSecrets = [{ name: imagePullSecret.name }];
+
+				// container
+				// doc.spec.template.spec.containers[0].name = appName;
+				doc.spec.template.spec.containers[0].name = mainAppName;
 
 				doc.spec.template.spec.containers[0].image = IMAGE_NAME;
 				doc.spec.template.spec.containers[0].env = containerEnvs;
@@ -453,7 +422,33 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 				// CAUTION: PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
 				doc.spec.template.spec.containers[0].ports = [{ containerPort: toNumber(deployEnvironmentConfig.port) }];
 
-				// add persistent volumes
+				// readinginessProbe & livenessProbe
+				// RUNNING: Sometimes, applications are temporarily unable to serve traffic
+				doc.spec.template.spec.containers[0].readinessProbe = {
+					httpGet: {
+						path: "/",
+						port: toNumber(deployEnvironmentConfig.port),
+					},
+					initialDelaySeconds: 30,
+					timeoutSeconds: 2,
+					periodSeconds: 15,
+					successThreshold: 1,
+					failureThreshold: 3,
+				};
+				// STARTUP: The application is considered unhealthy after a certain number of consecutive failures
+				doc.spec.template.spec.containers[0].livenessProbe = {
+					httpGet: {
+						path: "/",
+						port: toNumber(deployEnvironmentConfig.port),
+					},
+					initialDelaySeconds: 30, // chờ 30s rồi mới bắt đầu check
+					timeoutSeconds: 2,
+					periodSeconds: 10, // check lại mỗi 10s
+					successThreshold: 1, // chỉ cần 1 lần success -> app is ready
+					failureThreshold: 30, // check 30 lần fail x 10s = 300s (5 phút)
+				};
+
+				// add persistent volumes (IF ANY)
 				if (app.deployEnvironment[env].volumes && app.deployEnvironment[env].volumes.length > 0) {
 					const { volumes } = app.deployEnvironment[env];
 					let nodeName = volumes[0].node;
@@ -494,34 +489,6 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 						},
 					};
 				}
-
-				// prerelease's deployment:
-				prereleaseDeployDoc = _.cloneDeep(doc);
-				prereleaseDeployDoc.metadata.namespace = nsName;
-				prereleaseDeployDoc.metadata.name = prereleaseAppName;
-				prereleaseDeployDoc.metadata.labels.phase = "prerelease";
-				prereleaseDeployDoc.metadata.labels["main-app"] = mainAppName;
-				prereleaseDeployDoc.metadata.labels.app = prereleaseAppName;
-				prereleaseDeployDoc.metadata.labels.project = projectSlug;
-				prereleaseDeployDoc.metadata.labels.workspace = workspace.slug;
-				prereleaseDeployDoc.metadata.labels["updated-by"] = username;
-
-				prereleaseDeployDoc.spec.replicas = 1;
-				prereleaseDeployDoc.spec.template.metadata.labels.phase = "prerelease";
-				prereleaseDeployDoc.spec.template.metadata.labels["main-app"] = mainAppName;
-				prereleaseDeployDoc.spec.template.metadata.labels.app = prereleaseAppName;
-				prereleaseDeployDoc.spec.template.metadata.labels.project = projectSlug;
-				prereleaseDeployDoc.spec.template.metadata.labels.workspace = workspace.slug;
-				prereleaseDeployDoc.spec.template.metadata.labels["updated-by"] = username;
-				prereleaseDeployDoc.spec.template.spec.containers[0].image = IMAGE_NAME;
-				prereleaseDeployDoc.spec.template.spec.containers[0].env = prereleaseEnvs;
-				prereleaseDeployDoc.spec.template.spec.containers[0].resources = {};
-
-				// prerelease's app selector
-				prereleaseDeployDoc.spec.selector.matchLabels.app = prereleaseAppName;
-
-				// ! no need roll out strategy for prerelease:
-				delete prereleaseDeployDoc.spec.strategy;
 			}
 		});
 	} else {
@@ -537,14 +504,6 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 		if (!allStorageClasses || allStorageClasses.length === 0)
 			throw new Error(`Unable to create volume, this cluster doesn't have any storage class.`);
 		const storageClass = allStorageClasses[0].metadata.name;
-
-		// assign labels
-		const labels: any = {};
-		labels.workspace = workspace.slug;
-		labels["updated-by"] = username;
-		labels.project = projectSlug;
-		labels.app = appName;
-		labels["main-app"] = mainAppName;
 
 		volumes.forEach((vol) => {
 			// persistent volume claim
@@ -572,15 +531,11 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 
 	console.log("deploymentContent :>> ", deploymentContent);
 
-	/**
-	 * PRE-RELEASE DEPLOYMENT:
-	 */
-	let prereleaseYamlObject = [prereleaseIngressDoc, prereleaseSvcDoc, prereleaseDeployDoc];
-	let prereleaseDeploymentContent = objectToDeploymentYaml(prereleaseYamlObject);
-
 	// End point của ứng dụng:
 	let endpoint = `https://${domains[0]}/${basePath}`;
-	const prereleaseUrl = `https://${prereleaseDomain}/${basePath}`;
+
+	// update deploy environment
+	// const updatedApp = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${env}`]: deployEnvironmentConfig });
 
 	return {
 		envVars: containerEnvs,
@@ -588,15 +543,17 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentParams) => 
 		namespaceContent,
 		namespaceObject,
 		// deployment (ingress, service, pods,...)
+		deployEnvironment: deployEnvironmentConfig as DeployEnvironment,
 		deploymentContent,
 		deploymentCfg,
 		// prerelease (ingress, service, pods,...)
-		prereleaseYamlObject,
-		prereleaseDeploymentContent,
+		// prereleaseYamlObject,
+		// prereleaseDeploymentContent,
+		// prereleaseUrl,
 		// accessibility
-		buildTag: buildTag,
+		buildTag,
+		buildNumber,
 		IMAGE_NAME,
 		endpoint,
-		prereleaseUrl,
-	} as GenerateDeploymentResult;
+	} as GenerateDeploymentV2Result;
 };

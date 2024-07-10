@@ -136,7 +136,8 @@ export async function requestDeploy(options: InputOptions) {
 		buildParams: {
 			env,
 			buildTag: options.buildTag,
-			buildNumber: options.buildTag, // <-- Fallback support CLI <3.21.0 (Will be removed soon)
+			buildNumber: tagInfo.number,
+			message: options.message,
 			gitBranch: options.gitBranch,
 			registrySlug: deployEnvironment.registry,
 			appSlug: options.appSlug,

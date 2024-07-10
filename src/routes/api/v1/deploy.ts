@@ -41,7 +41,11 @@ router
 	/**
 	 * Build & deploy from a git repo.
 	 */
-	.post("/from-git", processApiRequest(controller.buildFromGitRepoAndDeploy.bind(controller)));
+	.post("/from-git", processApiRequest(controller.buildFromGitRepoAndDeploy.bind(controller)))
+	/**
+	 * Promote an origin deploy environment to target deploy environment.
+	 */
+	.post("/promote", processApiRequest(controller.promoteDeployEnvironment.bind(controller)));
 /**
  * Deploy from an image URL
  */

@@ -304,17 +304,25 @@ export class AppService extends BaseService<IApp> {
 
 		const apps = await super.find(filter, options, pagination);
 
-		if (!status)
+		// if skip status checking, return apps
+		if (!status) {
 			return apps.map((app) => {
 				if (app && app.deployEnvironment) {
 					for (const env of Object.keys(app.deployEnvironment)) {
-						if (app.deployEnvironment[env] && app.deployEnvironment[env].envVars)
+						if (app.deployEnvironment[env] && app.deployEnvironment[env].envVars) {
 							app.deployEnvironment[env].envVars = formatEnvVars(app.deployEnvironment[env].envVars);
+
+							// default values
+							// app.deployEnvironment[env].readyCount = 0;
+							// app.deployEnvironment[env].status = "unknown";
+						}
 					}
 				}
 				return app;
 			});
+		}
 
+		// start checking status -> get cluster info
 		const { ClusterService } = await import("./index");
 		const clusterSvc = new ClusterService();
 		const clusterFilter: any = {};

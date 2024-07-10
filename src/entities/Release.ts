@@ -12,7 +12,10 @@ import type { IApp, IBuild } from "./index";
 export interface IRelease extends IBase {
 	name?: string;
 	image?: string;
+	buildTag?: string;
+	buildNumber?: number;
 	cliVersion?: string;
+	appVersion?: string;
 	/**
 	 * Targeted environment.
 	 * @example dev, prod, staging, canary,...
@@ -57,6 +60,10 @@ export interface IRelease extends IBase {
 	status?: DeployStatus;
 	active?: boolean;
 	/**
+	 * Release revision message
+	 */
+	message?: string;
+	/**
 	 * Deploy start time
 	 */
 	startTime?: Date;
@@ -92,7 +99,10 @@ export const releaseSchema = new Schema(
 		...baseSchemaDefinitions,
 		name: { type: String },
 		image: { type: String },
+		buildTag: { type: String },
+		buildNumber: { type: Number },
 		cliVersion: { type: String },
+		appVersion: { type: String },
 		env: { type: String },
 		envVars: [{ name: { type: String }, value: { type: String } }],
 		prereleaseEnvironment: [{ type: String }],
@@ -127,6 +137,7 @@ export const releaseSchema = new Schema(
 		providerProjectId: { type: String },
 		buildStatus: { type: String },
 		status: { type: String },
+		message: { type: String },
 		startTime: { type: Date },
 		endTime: { type: Date },
 		duration: { type: Number },
