@@ -7,7 +7,7 @@ import { buildSchema } from "@/entities/Build";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 import type { BuildStatus, DeployStatus, Ownership } from "@/interfaces/SystemTypes";
 import type { RerunBuildParams, StartBuildParams } from "@/modules/build";
-import { generateBuildTag } from "@/modules/build/generate-build-tag";
+import { generateBuildTagBySourceDir } from "@/modules/build/generate-build-tag";
 import { checkQuota } from "@/modules/workspace/check-quota";
 
 import BaseService from "./BaseService";
@@ -64,7 +64,7 @@ export class BuildService extends BaseService<IBuild> {
 			const projectSlug = app?.projectSlug;
 			const SOURCE_CODE_DIR = `cache/${projectSlug}/${appSlug}/${gitBranch}`;
 			const buildDir = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
-			const tagInfo = await generateBuildTag(buildDir, { branch: gitBranch });
+			const tagInfo = await generateBuildTagBySourceDir(buildDir, { branch: gitBranch });
 			data.buildTag = tagInfo.tag;
 		}
 
