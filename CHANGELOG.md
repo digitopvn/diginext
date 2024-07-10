@@ -1,3 +1,13 @@
+## [3.34.3](https://github.com/digitopvn/diginext/compare/v3.34.2...v3.34.3) (2024-07-10)
+
+
+### Bug Fixes
+
+* **admin:** issue of build list page ([ad0a7ef](https://github.com/digitopvn/diginext/commit/ad0a7ef7a0839d5f4262fb14db3d9364994cd838))
+* **server:** build not found when scale replicas ([1e8e838](https://github.com/digitopvn/diginext/commit/1e8e83853ce7abd5eb4f02f9860e3d9d37c8f8bb))
+* **server:** correct build finish notification message ([bd75c74](https://github.com/digitopvn/diginext/commit/bd75c746bde5730c5295a1cbd10a64b4c95619dc))
+* **server:** mark long running build & deploy as failed ([5796935](https://github.com/digitopvn/diginext/commit/5796935dbf6615c7e7940885581a869eff7caa49))
+
 ## [3.34.2](https://github.com/digitopvn/diginext/compare/v3.34.1...v3.34.2) (2024-07-10)
 
 
