@@ -416,7 +416,7 @@ export async function startBuildV1(
 	// Print success:
 	const deployDuration = dayjs().diff(startTime, "millisecond");
 
-	sendLog({ SOCKET_ROOM, message: chalk.green(`🎉 FINISHED DEPLOYING AFTER ${humanizeDuration(deployDuration)} 🎉`), type: "success" });
+	sendLog({ SOCKET_ROOM, message: chalk.green(`✅ FINISHED BUILDING AFTER ${humanizeDuration(deployDuration)}`), type: "success" });
 
 	// if (env == "prod") {
 	// 	const { buildServerUrl } = getCliConfig();

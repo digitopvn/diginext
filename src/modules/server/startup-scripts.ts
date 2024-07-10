@@ -22,6 +22,7 @@ import { setServerStatus } from "@/server";
 import { ContainerRegistryService, WorkspaceService } from "@/services";
 
 import { findAndRunCronjob } from "../cronjob/find-and-run-job";
+import { markLongRunningBuildAndReleaseAsFailed } from "../deploy/mark-long-build-release-as-failed";
 
 /**
  * NOTE: BUILD SERVER INITIAL START-UP SCRIPTS:
@@ -111,6 +112,13 @@ export async function startupScripts() {
 		const atHour = 2; // 2AM
 		console.log(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
 		cronjob.schedule(`0 ${atHour} */${repeatDays} * *`, () => cleanUp());
+
+		/**
+		 * Mark all builds & releases with "in_progress" status longer than 1 hour as "failed".
+		 * Run every hour.
+		 */
+		cronjob.schedule(`0 * * * *`, () => markLongRunningBuildAndReleaseAsFailed());
+		markLongRunningBuildAndReleaseAsFailed();
 	}
 
 	/**
