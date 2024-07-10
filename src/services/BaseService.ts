@@ -234,7 +234,7 @@ export default class BaseService<T = any> {
 												else: null,
 											},
 										},
-									},
+								  },
 						},
 					},
 				});
@@ -280,15 +280,15 @@ export default class BaseService<T = any> {
 			pagination.prev_page =
 				pagination.current_page != prevPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-						"?" +
-						new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
+					  "?" +
+					  new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 
 			pagination.next_page =
 				pagination.current_page != nextPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-						"?" +
-						new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
+					  "?" +
+					  new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 		}
 
@@ -364,7 +364,7 @@ export default class BaseService<T = any> {
 												else: null,
 											},
 										},
-									},
+								  },
 						},
 					},
 				});
@@ -401,15 +401,15 @@ export default class BaseService<T = any> {
 			pagination.prev_page =
 				pagination.current_page != prevPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-						"?" +
-						new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
+					  "?" +
+					  new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 
 			pagination.next_page =
 				pagination.current_page != nextPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-						"?" +
-						new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
+					  "?" +
+					  new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 		}
 
@@ -449,7 +449,7 @@ export default class BaseService<T = any> {
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateFilter :>> `, updateFilter);
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > updateData :>> `, updateData);
 
-		const affectedIds = (await this.find(filter, { ...options, select: ["_id"] })).map((item) => (item as any)._id);
+		const affectedIds = (await this.find(updateFilter, { ...options, select: ["_id"] })).map((item) => (item as any)._id);
 		if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > affectedIds :>> `, affectedIds);
 
 		try {
@@ -459,7 +459,7 @@ export default class BaseService<T = any> {
 			// response > results
 			const affectedItems = await this.find({ _id: { $in: affectedIds } }, options);
 			if (options?.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > update > affectedItems :>> `, affectedItems);
-			return updateRes.acknowledged ? affectedItems : [];
+			return updateRes.modifiedCount > 0 ? affectedItems : [];
 		} catch (e) {
 			console.error(`[BASE_SERVICE] "${this.model.collection.name}" > Unable to update data:`, e.stack);
 		}
