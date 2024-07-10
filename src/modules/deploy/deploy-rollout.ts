@@ -621,7 +621,9 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	}
 
 	// Update "deployStatus" of a build to success
-	await DB.update("build", { _id: buildId }, { deployStatus: "success" }, { select: ["_id", "deployStatus"] }).catch(console.error);
+	const build = await DB.updateOne("build", { _id: buildId }, { deployStatus: "success" }, { select: ["_id", "deployStatus"] });
+	// Update project to sort by latest release
+	await DB.update("project", { slug: projectSlug }, { lastUpdatedBy: owner.username, latestBuild: build?.slug }, { select: ["_id", "updatedAt"] });
 
 	// Assign this release as "latestRelease" of this app's deploy environment
 	await DB.updateOne(
