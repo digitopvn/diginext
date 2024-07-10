@@ -1,3 +1,10 @@
+## [3.34.2](https://github.com/digitopvn/diginext/compare/v3.34.1...v3.34.2) (2024-07-10)
+
+
+### Bug Fixes
+
+* **admin:** improve build page by add deploy env column ([060dc5b](https://github.com/digitopvn/diginext/commit/060dc5b7555baa1d2a22d03837b1147fdfaf4db7))
+
 ## [3.34.1](https://github.com/digitopvn/diginext/compare/v3.34.0...v3.34.1) (2024-07-10)
 
 
