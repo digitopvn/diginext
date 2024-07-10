@@ -11,7 +11,7 @@ import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppConfig } from "../apps/update-config";
 import { updateAppGitInfo } from "../apps/update-git-config";
 import { askForDomain } from "./ask-for-domain";
-import { generateBuildTag } from "./generate-build-tag";
+import { generateBuildTagBySourceDir } from "./generate-build-tag";
 import { startBuildV1 } from "./start-build";
 
 export const startBuildAndRun = async (options: InputOptions) => {
@@ -91,7 +91,7 @@ export const startBuildAndRun = async (options: InputOptions) => {
 	 * Generate build number as docker image tag
 	 */
 	const { imageURL, namespace } = appConfig.deployEnvironment[env];
-	const tagInfo = await generateBuildTag(options.targetDirectory, { branch: options.gitBranch });
+	const tagInfo = await generateBuildTagBySourceDir(options.targetDirectory, { branch: options.gitBranch });
 
 	options.slug = appConfig.slug; // ! required
 	options.projectSlug = appConfig.project; // ! required

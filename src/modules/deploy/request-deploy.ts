@@ -11,7 +11,7 @@ import { fetchApi } from "@/modules/api/fetchApi";
 import { currentVersion, resolveDockerfilePath, resolveFilePath } from "@/plugins";
 
 import type { StartBuildParams } from "../build";
-import { generateBuildTag } from "../build/generate-build-tag";
+import { generateBuildTagBySourceDir } from "../build/generate-build-tag";
 import { isUnstagedFiles } from "../git/git-utils";
 import { askAiGenerateDockerfile } from "./ask-ai-generate-dockerfile";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
@@ -103,7 +103,7 @@ export async function requestDeploy(options: InputOptions) {
 	 * [3] Generate build number & build image as docker image tag
 	 */
 	const { imageURL } = deployEnvironment;
-	const tagInfo = await generateBuildTag(options.targetDirectory, { branch: options.gitBranch });
+	const tagInfo = await generateBuildTagBySourceDir(options.targetDirectory, { branch: options.gitBranch });
 	options.buildTag = tagInfo.tag;
 	options.buildImage = `${imageURL}:${options.buildTag}`;
 	options.SOCKET_ROOM = `${appConfig.slug}-${options.buildTag}`;

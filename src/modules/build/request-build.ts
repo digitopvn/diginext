@@ -12,7 +12,7 @@ import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppGitInfo } from "../apps/update-git-config";
 import { stageCommitAndPushAll } from "../git/git-utils";
 import { askForRegistry } from "../registry/ask-for-registry";
-import { generateBuildTag } from "./generate-build-tag";
+import { generateBuildTagBySourceDir } from "./generate-build-tag";
 import type { StartBuildParams } from "./index";
 
 /**
@@ -86,7 +86,7 @@ export async function requestBuild(options: InputOptions) {
 	 * Generate build number & build image as docker image tag
 	 */
 	const imageURL = `${registry.imageBaseURL}/${app.projectSlug}-${app.slug}`;
-	const tagInfo = await generateBuildTag(options.targetDirectory, { branch: options.gitBranch });
+	const tagInfo = await generateBuildTagBySourceDir(options.targetDirectory, { branch: options.gitBranch });
 	if (options.isDebugging) console.log("tagInfo :>> ", tagInfo);
 
 	options.buildTag = tagInfo.tag;

@@ -10,6 +10,7 @@ import { IPostQueryParams, respondFailure, respondSuccess } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import type { StartBuildParams } from "@/modules/build";
+import { generateBuildTagByApp } from "@/modules/build/generate-build-tag";
 import { startBuildV1 } from "@/modules/build/start-build";
 import type { DeployBuildOptions } from "@/modules/deploy/deploy-build";
 import { PromoteDeployEnvironmentOptions } from "@/modules/deploy/promote-deploy-environment";
@@ -215,15 +216,18 @@ export default class DeployController {
 		// validate cluster -> if this app has no clusters but specified in deploy params -> move forward as it will use deploy params
 		if (!deployEnvironment.cluster && !body.deployParams.cluster) return respondFailure(`Cluster is required.`);
 
+		const tagInfo = await generateBuildTagByApp(app, { branch: body.gitBranch });
 		const buildParams: StartBuildParams = {
-			appSlug: body.appSlug,
-			buildTag: makeDaySlug({ divider: "" }),
+			env,
+			appSlug: app.slug,
+			buildTag: tagInfo.tag,
+			buildNumber: tagInfo.number,
 			gitBranch: body.gitBranch,
 			registrySlug: deployEnvironment.registry || body.deployParams.registry,
 		};
 		const deployParams = body.deployParams;
 		const buildAndDeployParams = { buildParams, deployParams };
-		console.log("[DEPLOY CONTROLLER] this :>> ", this);
+
 		return this.buildAndDeploy(buildAndDeployParams);
 	}
 

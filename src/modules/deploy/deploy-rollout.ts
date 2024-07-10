@@ -234,9 +234,8 @@ export async function cleanUpPrereleaseV2(idOrRelease: string | IRelease) {
 export async function rolloutV2(releaseId: string, options: RolloutOptions = {}) {
 	const { DB } = await import("@/modules/api/DB");
 	const { onUpdate } = options;
-	const { execa, execaCommand } = await import("execa");
 
-	let releaseData = await DB.updateOne("release", { id: releaseId }, { status: "in_progress" }, { populate: ["owner", "workspace"] });
+	let releaseData = await DB.updateOne("release", { _id: releaseId }, { status: "in_progress" }, { populate: ["owner", "workspace"] });
 	if (isEmpty(releaseData)) {
 		const error = `Unable to roll out: Release "${releaseId}" not found.`;
 		if (onUpdate) onUpdate(error);
