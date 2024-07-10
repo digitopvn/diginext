@@ -14,19 +14,23 @@ import { formatEnvVars } from "@/plugins/env-var";
 import { makeSlug } from "@/plugins/slug";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
+import { generateDiginextDomain } from "../build";
 import ClusterManager from "../k8s";
 import { createImagePullSecretsInNamespace } from "../k8s/image-pull-secret";
 import getDeploymentName from "./generate-deployment-name";
+import { generateDomains } from "./generate-domain";
 
 export type GenerateDeploymentV2Params = {
 	appSlug: string;
 	env: string;
+	port?: number;
 	username: string;
 	workspace: IWorkspace;
 	/**
 	 * Skip replacing origin domain of "prerelease" environment.
 	 *
 	 * @default false
+	 * @deprecated
 	 */
 	skipPrerelease?: boolean;
 	/**
@@ -38,9 +42,17 @@ export type GenerateDeploymentV2Params = {
 	 */
 	targetDirectory?: string;
 	/**
+	 * Image URL of a build on container registry (no tag/version)
+	 */
+	buildImage?: string;
+	/**
 	 * Requires if generate deployment files from source code.
 	 */
 	buildTag?: string;
+	/**
+	 * Container Registry
+	 */
+	registry?: IContainerRegistry;
 	// debug
 	isDebugging?: boolean;
 };
@@ -49,13 +61,12 @@ export type GenerateDeploymentV2Result = {
 	// namespace
 	namespaceContent: string;
 	namespaceObject: KubeNamespace;
+
 	// deployment (ingress, service, pods,...)
+	deployEnvironment: DeployEnvironment;
 	deploymentContent: string;
 	deploymentCfg: KubeDeployment;
-	// prerelease (ingress, service, pods,...)
-	// prereleaseYamlObject: any[];
-	// prereleaseDeploymentContent: string;
-	// prereleaseUrl: string;
+
 	// accessibility
 	buildTag: string;
 	buildNumber: number;
@@ -66,7 +77,18 @@ export type GenerateDeploymentV2Result = {
 const nginxBlockedPaths = "location ~ /.git { deny all; return 403; }";
 
 export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) => {
-	const { appSlug, buildTag, env = "dev", skipPrerelease = false, username, workspace, appConfig } = params;
+	const {
+		appSlug,
+		buildTag,
+		buildImage,
+		env = "dev",
+		port,
+		skipPrerelease = false,
+		username,
+		workspace,
+		appConfig,
+		registry: inputRegistry,
+	} = params;
 
 	// validate inputs
 	if (!appSlug) throw new Error(`Unable to generate YAML, app's slug is required.`);
@@ -77,6 +99,8 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
 	const appOwner = app.ownerSlug;
 
+	let projectSlug = currentAppConfig.project;
+
 	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
 
 	// DEFINE DEPLOYMENT PARTS:
@@ -85,12 +109,10 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	const deployEnvironmentConfig = currentAppConfig.deployEnvironment[env];
 	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);
 
-	const registrySlug = deployEnvironmentConfig.registry;
-
 	// let deploymentName = project + "-" + appSlug.toLowerCase();
 	let deploymentName = await getDeploymentName(app);
 
-	let nsName = deployEnvironmentConfig.namespace;
+	let nsName = deployEnvironmentConfig.namespace || `${projectSlug}-${env}`;
 	let ingName = deploymentName;
 	let svcName = deploymentName;
 	let mainAppName = deploymentName;
@@ -98,24 +120,46 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	let appVersion = deploymentName + "-" + buildNumber;
 	let basePath = deployEnvironmentConfig.basePath ?? "";
 
+	// Overwrite exposed port
+	if (typeof port !== "undefined") deployEnvironmentConfig.port = port;
+	if (typeof deployEnvironmentConfig.port === "undefined") throw new Error(`Unable to generate deployment YAML, port is required.`);
+
+	const clusterSlug = deployEnvironmentConfig.cluster;
+
 	// Prepare for building docker image
-	const { imageURL } = deployEnvironmentConfig;
+	let IMAGE_NAME = buildImage ? `${buildImage}:${buildTag}` : undefined;
+	if (!IMAGE_NAME && deployEnvironmentConfig.imageURL) IMAGE_NAME = `${deployEnvironmentConfig.imageURL}:${buildTag}`;
+	if (!IMAGE_NAME) throw new Error(`Unable to generate deployment YAML, image name (image url + tag) is required.`);
+	deployEnvironmentConfig.imageURL = IMAGE_NAME;
 
-	// TODO: Replace BUILD_NUMBER so it can work with Skaffold
-	const IMAGE_NAME = `${imageURL}:${buildTag}`;
-
-	let projectSlug = currentAppConfig.project;
 	let domains = deployEnvironmentConfig.domains;
 	let replicas = deployEnvironmentConfig.replicas ?? 1;
 
-	const BASE_URL = domains && domains.length > 0 ? `https://${domains[0]}` : `http://${svcName}.${nsName}.svc.cluster.local`;
-	const clusterSlug = deployEnvironmentConfig.cluster;
-
-	// get container registry
-	let registry: IContainerRegistry = await DB.findOne("registry", { slug: registrySlug });
-	if (!registry) {
-		throw new Error(`Cannot find any container registries with slug as "${registrySlug}", please contact your admin or create a new one.`);
+	// if no domains, generate a default DIGINEXT domain:
+	if (!domains) {
+		const { subdomain } = await generateDiginextDomain(env, projectSlug, appSlug);
+		const {
+			status,
+			domain: generatedDomain,
+			messages,
+		} = await generateDomains({
+			workspace,
+			subdomainName: subdomain,
+			clusterSlug: clusterSlug,
+		});
+		if (!status) throw new Error(messages.join("\n"));
+		deployEnvironmentConfig.domains = domains = [generatedDomain];
+		deployEnvironmentConfig.ssl = "letsencrypt";
 	}
+
+	const BASE_URL = domains && domains.length > 0 ? `https://${domains[0]}` : `http://${svcName}.${nsName}.svc.cluster.local`;
+
+	// get container registry & create "imagePullSecret" in the target cluster
+	let registry: IContainerRegistry =
+		inputRegistry || (deployEnvironmentConfig.registry ? await DB.findOne("registry", { slug: deployEnvironmentConfig.registry }) : undefined);
+	if (!registry) throw new Error(`Container registries not found, please contact your admin or create a new one.`);
+	deployEnvironmentConfig.registry = registry.slug;
+
 	if (!registry.imagePullSecret) {
 		const imagePullSecret = await createImagePullSecretsInNamespace(appSlug, env, clusterSlug, nsName);
 		[registry] = await DB.update("registry", { _id: registry._id }, { imagePullSecret });
@@ -218,6 +262,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 						};
 					}
 
+					if (!ingCfg.metadata.annotations) ingCfg.metadata.annotations = {};
 					if (deployEnvironmentConfig.ssl == "letsencrypt") {
 						ingCfg.metadata.annotations["cert-manager.io/cluster-issuer"] = "letsencrypt-prod";
 					} else {
@@ -282,7 +327,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 						// tls
 						ingCfg.spec.tls.push({
 							hosts: [domain],
-							secretName: deployEnvironmentConfig.tlsSecret || `tls-secret-letsencrypt-${makeSlug(domain)}`,
+							secretName: deployEnvironmentConfig.tlsSecret || `tls-${makeSlug(domain)}`,
 						});
 
 						// rules
@@ -489,12 +534,16 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	// End point của ứng dụng:
 	let endpoint = `https://${domains[0]}/${basePath}`;
 
+	// update deploy environment
+	// const updatedApp = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${env}`]: deployEnvironmentConfig });
+
 	return {
 		envVars: containerEnvs,
 		// namespace
 		namespaceContent,
 		namespaceObject,
 		// deployment (ingress, service, pods,...)
+		deployEnvironment: deployEnvironmentConfig as DeployEnvironment,
 		deploymentContent,
 		deploymentCfg,
 		// prerelease (ingress, service, pods,...)

@@ -17,12 +17,13 @@ import ClusterManager from "../k8s";
 import { deployBuild } from "./deploy-build";
 import type { GenerateDeploymentResult } from "./generate-deployment";
 import getDeploymentName from "./generate-deployment-name";
+import type { GenerateDeploymentV2Result } from "./generate-deployment-v2";
 import { generateDeploymentV2 } from "./generate-deployment-v2";
 
 export type DeployBuildV2Options = {
 	/**
 	 * ### `REQUIRED`
-	 * Deploy environment
+	 * Target deploy environment
 	 */
 	env: string;
 	/**
@@ -36,6 +37,14 @@ export type DeployBuildV2Options = {
 	 */
 	workspace: IWorkspace;
 	/**
+	 * App's exposed port
+	 */
+	port?: number;
+	/**
+	 * Select target cluster (by slug) to deploy
+	 */
+	clusterSlug?: string;
+	/**
 	 * Current version of the Diginext CLI
 	 */
 	cliVersion?: string;
@@ -48,6 +57,7 @@ export type DeployBuildV2Options = {
 	 * ### ONLY APPLY FOR DEPLOYING to PROD
 	 * Force roll out the release to "prod" deploy environment (skip the "prerelease" environment)
 	 * @default false
+	 * @deprecated
 	 */
 	forceRollOut?: boolean;
 	/**
@@ -313,8 +323,8 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	const { DB } = await import("@/modules/api/DB");
 
 	// parse options
-	const { env, owner, workspace, deployInBackground = true, cliVersion } = options;
-	const { appSlug, projectSlug, tag: buildTag, num: buildNumber } = build;
+	const { env, port, owner, workspace, clusterSlug: targetClusterSlug, deployInBackground = true, cliVersion } = options;
+	const { appSlug, projectSlug, tag: buildTag, num: buildNumber, registry: registryId } = build;
 	const { slug: username } = owner;
 	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 
@@ -367,6 +377,10 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 		errMsgs.push(`Deploy environment (${env.toUpperCase()}) of "${appSlug}" app is empty (probably deleted?).`);
 	}
 
+	// if target cluster is defined, then set it to the deploy environment
+	if (targetClusterSlug) serverDeployEnvironment.cluster = targetClusterSlug;
+
+	// if no cluster is defined for this deploy environment, throw error
 	if (!serverDeployEnvironment.cluster) {
 		sendLog({
 			SOCKET_ROOM,
@@ -383,6 +397,9 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	const { cluster: clusterSlug } = serverDeployEnvironment;
 	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
 
+	// find registry
+	const registry = registryId ? await DB.findOne("registry", { _id: registryId }) : undefined;
+
 	// get app config to generate deployment data
 	const appConfig = getAppConfigFromApp(app);
 
@@ -391,17 +408,21 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	 * Generate deployment data (YAML) & save the YAML deployment to "app.environment[env]"
 	 * So it can be used to create release from build
 	 */
-	let deployment: GenerateDeploymentResult;
+	let deployment: GenerateDeploymentV2Result;
 	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generating the deployment files on server...` });
+	console.log("build.image :>> ", build.image);
 	try {
 		deployment = await generateDeploymentV2({
 			appSlug,
 			env,
+			port,
 			username,
 			workspace,
-			buildTag: buildTag,
+			buildImage: build.image,
+			buildTag,
 			appConfig,
 			targetDirectory: buildDirectory,
+			registry,
 		});
 	} catch (e) {
 		const errMsg = `[DEPLOY_BUILD] Generate YAML > error :>>\n${e.stack}`;
@@ -415,9 +436,10 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 		sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
 		throw new Error(errMsg);
 	}
-	const { endpoint, deploymentContent } = deployment;
+	const { endpoint, deploymentContent, deployEnvironment } = deployment;
 
 	// update data to deploy environment:
+	serverDeployEnvironment = { ...serverDeployEnvironment, ...deployEnvironment };
 	serverDeployEnvironment.deploymentYaml = deploymentContent;
 	serverDeployEnvironment.updatedAt = new Date();
 	serverDeployEnvironment.lastUpdatedBy = username;

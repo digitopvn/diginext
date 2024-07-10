@@ -12,7 +12,7 @@ import type { IResourceQuota, KubeIngress, KubeService } from "@/interfaces";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import ClusterManager from "@/modules/k8s";
 import { logPodByFilter } from "@/modules/k8s/kubectl";
-import { waitUntil } from "@/plugins";
+import { objectToDeploymentYaml, waitUntil } from "@/plugins";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 import { WebhookService } from "@/services";
@@ -23,6 +23,67 @@ export interface RolloutOptions {
 	isDebugging?: boolean;
 	onUpdate?: (msg?: string) => void;
 }
+
+export interface CheckDeploymentReadyOptions {
+	/**
+	 * Cluster's context (in ".kubeconfig")
+	 */
+	context?: string;
+	namespace: string;
+	appName: string;
+	appVersion?: string;
+	replicas?: number;
+	onUpdate?: (msg?: string) => void;
+	isDebugging?: boolean;
+}
+
+const deployReplicas = 2;
+
+const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
+	const { namespace, appName, appVersion, replicas = 1, onUpdate, isDebugging = false, context } = options;
+	if (isDebugging) log(`checkDeploymentReady() :>>`, options);
+
+	const filterLabel = `main-app=${appName}${appVersion ? `,app-version=${appVersion}` : ""}`;
+	const pods = await ClusterManager.getPods(namespace, {
+		context,
+		filterLabel,
+		metrics: false,
+		isDebugging,
+	});
+	if (!pods || pods.length == 0) {
+		const msg = `Something's wrong, new pods has been unable to create.`;
+		if (onUpdate) onUpdate(msg);
+		return false;
+	}
+
+	let isReady = false;
+	let countReady = 0;
+
+	// if (isDebugging) log(`[ROLL OUT V2] "${appVersion}" > checking ${pods.length} pods > pod.status.conditions:`);
+	try {
+		pods.forEach((pod) => {
+			if (isDebugging) log(pod.status.conditions.map((c) => `- ${c.type}: ${c.status} (Reason: "${c.reason}")`).join("\n"));
+
+			pod.status?.conditions
+				?.filter((condition) => condition.type === "Ready")
+				.map((condition) => {
+					if (condition.status === "True") countReady++;
+				});
+
+			pod.status.containerStatuses.map((containerStatus) => {
+				if (containerStatus.restartCount > 0) throw new Error(`App is unable to start up due to some unexpected errors.`);
+			});
+		});
+	} catch (e) {
+		if (onUpdate) onUpdate(e.message);
+		return false;
+	}
+
+	if (countReady >= replicas) isReady = true;
+
+	log(`[ROLL OUT V2] Checking is "${appName}" deployment ready (${countReady}/${replicas}):`, isReady);
+	return isReady;
+};
 
 /**
  * Clean up namespace's resources by app version
@@ -174,7 +235,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	const { onUpdate } = options;
 	const { execa, execaCommand } = await import("execa");
 
-	let releaseData = await DB.findOne("release", { id: releaseId }, { populate: ["owner", "workspace"] });
+	let releaseData = await DB.updateOne("release", { id: releaseId }, { status: "in_progress" }, { populate: ["owner", "workspace"] });
 	if (isEmpty(releaseData)) {
 		const error = `Unable to roll out: Release "${releaseId}" not found.`;
 		if (onUpdate) onUpdate(error);
@@ -188,7 +249,6 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		appSlug,
 		build: buildId,
 		buildNumber,
-		preYaml: prereleaseYaml,
 		deploymentYaml,
 		endpoint: endpointUrl,
 		namespace,
@@ -225,6 +285,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 	const mainAppName = await getDeploymentName(app);
+	const deployEnvironment = app.deployEnvironment[env];
 
 	/**
 	 * App's version (for service & deployment selector)
@@ -320,7 +381,9 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	 */
 	if (options?.isDebugging) console.log("[ROLL OUT V2] Deployment YAML :>> ", deploymentYaml);
 
-	let replicas = 1,
+	let newReplicas = 1,
+		currentReplicas = 0,
+		currentDeploymentName,
 		envVars: KubeEnvironmentVariable[] = [],
 		resourceQuota: IResourceQuota = {},
 		service: KubeService,
@@ -330,29 +393,40 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		deployment,
 		deploymentName;
 
-	yaml.loadAll(deploymentYaml, (doc: any) => {
-		if (doc && doc.kind == "Ingress") {
-			ingress = doc;
-			ingressName = doc.metadata.name;
-		}
+	let deploymentCfg: any[] = yaml.loadAll(deploymentYaml);
+	if (deploymentCfg.length > 1) {
+		deploymentCfg.forEach((doc: any) => {
+			if (doc && doc.kind == "Ingress") {
+				ingress = doc;
+				ingressName = doc.metadata.name;
+			}
 
-		if (doc && doc.kind == "Service") {
-			service = doc;
-			svcName = doc.metadata.name;
-		}
+			if (doc && doc.kind == "Service") {
+				service = doc;
+				svcName = doc.metadata.name;
+			}
 
-		if (doc && doc.kind == "Deployment") {
-			replicas = doc.spec.replicas;
-			envVars = doc.spec.template.spec.containers[0].env;
-			resourceQuota = doc.spec.template.spec.containers[0].resources;
-			deployment = doc;
-			deploymentName = doc.metadata.name;
-		}
-	});
+			if (doc && doc.kind == "Deployment") {
+				newReplicas = doc.spec.replicas;
+				// important: set new deployment's replicas to "deployReplicas" for temporary -> set back later (avoid downtime)
+				doc.spec.replicas = deployReplicas;
+				//
+				envVars = doc.spec.template.spec.containers[0].env;
+				resourceQuota = doc.spec.template.spec.containers[0].resources;
+				deployment = doc;
+				deploymentName = doc.metadata.name;
+			}
+		});
+	}
+	const tmpDeploymentYaml = objectToDeploymentYaml(deploymentCfg);
+	const [currentDeployment] = await ClusterManager.getDeploys(namespace, { context, filterLabel: `main-app=${mainAppName}`, metrics: false });
+	currentReplicas = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.spec.replicas : 0;
+	currentDeploymentName = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.metadata.name : "";
 
 	// check ingress domain has been used yet or not:
 	let isDomainUsed = false,
 		usedDomain: string,
+		usedDomainNamespace: string,
 		deleteIng: KubeIngress;
 
 	if (ingress) {
@@ -364,28 +438,68 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 			allIngresses.filter((ing) => {
 				domains.map((domain) => {
-					if (ing.spec.rules.map((rule) => rule.host).includes(domain)) {
+					if (ing.spec.rules.map((rule) => rule.host).includes(domain) && ing.metadata.namespace !== namespace) {
 						isDomainUsed = true;
 						usedDomain = domain;
 						deleteIng = ing;
+						usedDomainNamespace = ing.metadata.namespace;
 					}
 				});
 			});
 			if (isDomainUsed) {
-				await ClusterManager.deleteIngress(deleteIng.metadata.name, deleteIng.metadata.namespace, { context });
+				// await ClusterManager.deleteIngress(deleteIng.metadata.name, deleteIng.metadata.namespace, { context });
+				// if (onUpdate)
+				// 	onUpdate(
+				// 		`Domain "${usedDomain}" has been used before at "${deleteIng.metadata.namespace}" namespace -> Deleted "${deleteIng.metadata.name}" ingress to create a new one.`
+				// 	);
+				const error = `This domain "${service.metadata.name}" has been using in "${usedDomainNamespace}" namespace.`;
+				if (onUpdate) onUpdate(error);
 
-				if (onUpdate)
-					onUpdate(
-						`Domain "${usedDomain}" has been used before at "${deleteIng.metadata.namespace}" namespace -> Deleted "${deleteIng.metadata.name}" ingress to create a new one.`
-					);
+				// dispatch/trigger webhook
+				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
+				// update release as "failed"
+				await DB.update("release", { _id: releaseId }, { status: "failed" }, { select: ["_id", "status"] }).catch(console.error);
+				// Update "deployStatus" of a build to success
+				await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] }).catch(console.error);
+
+				return { error };
 			}
 		}
 	}
 
 	/**
+	 * Scale current deployment up to many replicas before apply new deployment YAML
+	 */
+	if (newReplicas === 1 || currentReplicas <= 1) {
+		await ClusterManager.scaleDeploy(currentDeploymentName, deployReplicas, namespace, { context });
+
+		// wait 10 secs
+		// await wait(30 * 1000);
+		// await ClusterManager.setDeployImageAll(deploymentName, `${deployEnvironment.imageURL}:${deployEnvironment.buildTag}`, namespace, { context });
+
+		// wait until an old deployment has been scaled successfully
+		const isDeploymentFinishScaling = await waitUntil(
+			() =>
+				checkDeploymentReady({
+					context,
+					appName: mainAppName,
+					namespace,
+					replicas: deployReplicas,
+					onUpdate,
+					// isDebugging: true,
+				}),
+			5,
+			5 * 60
+		).catch((e) => false);
+
+		if (!isDeploymentFinishScaling) logWarn(`Unable to scale up the previous deployment, downtime might happen.`);
+	}
+
+	/**
 	 * Apply new deployment yaml
 	 */
-	const applyDeploymentYamlRes = await ClusterManager.kubectlApplyContent(deploymentYaml, { context });
+	const applyDeploymentYamlRes = await ClusterManager.kubectlApplyContent(tmpDeploymentYaml, { context });
 	if (!applyDeploymentYamlRes) {
 		const error = `Unable to apply SERVICE "${service.metadata.name}" (Cluster: ${clusterSlug} / Namespace: ${namespace} / App: ${appSlug} / Env: ${env}):\n${deploymentYaml}`;
 		if (onUpdate) onUpdate(error);
@@ -400,6 +514,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 		return { error };
 	}
+	if (onUpdate) onUpdate(`Applied new deployment YAML of "${appSlug}".`);
 
 	/**
 	 * Annotate new deployment with app version
@@ -423,48 +538,27 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		return { error };
 	}
 
-	if (onUpdate) onUpdate(`Applied new deployment YAML of "${appSlug}".`);
-
 	// Wait until the deployment is ready!
-	const isNewDeploymentReady = async () => {
-		const newPods = await ClusterManager.getPods(namespace, {
-			context,
-			filterLabel: `app=${mainAppName},app-version=${appVersion}`,
-			metrics: false,
-		});
-		if (!newPods || newPods.length == 0) {
-			const msg = `Something's wrong, new pods hasn't been created.`;
-			onUpdate(msg);
-			return false;
-		}
-
-		let isReady = false;
-		log(`[ROLL OUT V2] "${appVersion}" > checking ${newPods.length} pods > pod.status.conditions:`);
-
-		newPods.forEach((pod) => {
-			log(pod.status.conditions.map((c) => `- ${c.type}: ${c.status} (Reason: "${c.reason}")`).join("\n"));
-
-			pod.status?.conditions
-				?.filter((condition) => condition.type === "Ready")
-				.map((condition) => {
-					isReady = condition.status === "True";
-				});
-			pod.status.containerStatuses.map((containerStatus) => {
-				if (containerStatus.restartCount > 0) throw new Error(`App is unable to start up due to some unexpected errors.`);
-			});
-		});
-
-		log(`[ROLL OUT V2] Checking new pod's status -> Are New Pods Ready:`, isReady);
-		return isReady;
-	};
 
 	// check interval: 10 secs
 	// max wait time: 10 mins
-	const isReallyReady = await waitUntil(isNewDeploymentReady, 10, 10 * 60).catch((e) => false);
-	if (options?.isDebugging) log(`[ROLL OUT V2] Checking new deployment's status -> Is Fully Ready:`, isReallyReady);
+	const isNewDeploymentReady = await waitUntil(
+		() =>
+			checkDeploymentReady({
+				context,
+				appName: mainAppName,
+				appVersion,
+				namespace,
+				onUpdate,
+				// isDebugging: true,
+			}),
+		5,
+		10 * 60
+	).catch((e) => false);
+	if (options?.isDebugging) log(`[ROLL OUT V2] Checking new deployment's status -> Is Fully Ready:`, isNewDeploymentReady);
 
 	// Try to get the container logs and print to the web ui
-	let containerLogs = isReallyReady
+	let containerLogs = isNewDeploymentReady
 		? await logPodByFilter(namespace, { filterLabel: `app-version=${appVersion}`, context })
 		: await logPodByFilter(namespace, { filterLabel: `app-version=${appVersion}`, previous: true, context });
 
@@ -472,7 +566,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 	// throw the error
 	if (
-		!isReallyReady ||
+		!isNewDeploymentReady ||
 		containerLogs.indexOf("Error from server") > -1 ||
 		containerLogs.indexOf("An error occurred") > -1 ||
 		containerLogs.indexOf("Command failed") > -1 ||
@@ -495,6 +589,9 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		return { error };
 	}
 
+	// Scale new deployment to new replicas
+	await ClusterManager.scaleDeploy(deploymentName, newReplicas, namespace, { context });
+
 	// Print success:
 	const prodUrlInCLI = chalk.bold(`https://${endpointUrl}`);
 	const successMsg = `🎉 PUBLISHED AT: ${prodUrlInCLI} 🎉`;
@@ -503,7 +600,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	if (onUpdate) onUpdate(successMsg);
 
 	// Mark previous releases as "inactive":
-	await DB.update("release", { appSlug, active: true }, { active: false }, { select: ["_id", "active", "appSlug"] });
+	await DB.update("release", { appSlug, env, active: true }, { active: false }, { select: ["_id", "active", "appSlug"] });
 
 	// Mark this latest release as "active":
 	const latestRelease = await DB.updateOne(
@@ -527,7 +624,16 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	await DB.update("build", { _id: buildId }, { deployStatus: "success" }, { select: ["_id", "deployStatus"] }).catch(console.error);
 
 	// Assign this release as "latestRelease" of this app's deploy environment
-	await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.latestRelease`]: latestRelease._id }, { select: ["_id"] });
+	await DB.updateOne(
+		"app",
+		{ slug: appSlug },
+		{
+			[`deployEnvironment.${env}.latestRelease`]: latestRelease._id,
+			[`deployEnvironment.${env}.appVersion`]: appVersion,
+			[`deployEnvironment.${env}.buildId`]: buildId,
+		},
+		{ select: ["_id"] }
+	);
 
 	/**
 	 * 5. Clean up > Delete old deployments (IF ANY)

@@ -8,7 +8,7 @@ import { formatEnvVars } from "@/plugins/env-var";
 /**
  * Some old deploy environment was saved into JSON
  */
-export const getDeployEnvironmentFromJSON = async (app: IApp, env: string) => {
+export const getDeployEnvironmentFromJSON = (app: IApp, env: string) => {
 	let deployEnvironment = {} as DeployEnvironment;
 	if (app.environment && app.environment[env]) {
 		if (isJSON(app.environment[env])) {
@@ -20,7 +20,7 @@ export const getDeployEnvironmentFromJSON = async (app: IApp, env: string) => {
 	return deployEnvironment || {};
 };
 
-export const getDeployEvironmentByApp = async (app: IApp, env: string) => {
+export const getDeployEvironmentByApp = (app: IApp, env: string) => {
 	const deployEnvironment = ((app.deployEnvironment || {})[env] || {}) as DeployEnvironment;
 
 	// format environment variables

@@ -12,6 +12,7 @@ import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import type { StartBuildParams } from "@/modules/build";
 import { startBuildV1 } from "@/modules/build/start-build";
 import type { DeployBuildOptions } from "@/modules/deploy/deploy-build";
+import { PromoteDeployEnvironmentOptions } from "@/modules/deploy/promote-deploy-environment";
 import { parseGitRepoDataFromRepoSSH } from "@/modules/git/git-utils";
 import { MongoDB } from "@/plugins/mongodb";
 import { AppService, ClusterService, ContainerRegistryService, GitProviderService } from "@/services";
@@ -372,7 +373,7 @@ export default class DeployController {
 	) {
 		const { DB } = await import("@/modules/api/DB");
 		const { buildSlug } = body;
-		if (!buildSlug) return { status: 0, messages: [`Build "slug" is required`] };
+		if (!buildSlug) return respondFailure(`Build "slug" is required`);
 
 		const build = await DB.findOne("build", { slug: buildSlug });
 		if (!build) return respondFailure(`Build not found.`);
@@ -389,7 +390,7 @@ export default class DeployController {
 
 		// DEPLOY A BUILD:
 		try {
-			const result = await this.service.deployBuild(build, deployBuildOptions);
+			const result = await this.service.deployBuildV2(build, deployBuildOptions);
 			const { release } = result;
 
 			if (!release) return respondFailure(`Failed to deploy from a build (${buildSlug}).`);
@@ -418,7 +419,7 @@ export default class DeployController {
 	) {
 		const { DB } = await import("@/modules/api/DB");
 		const { releaseSlug } = body;
-		if (!releaseSlug) return { status: 0, messages: [`Build "slug" is required`] };
+		if (!releaseSlug) return respondFailure(`Build "slug" is required`);
 
 		const release = await DB.findOne("release", { slug: releaseSlug }, { populate: ["build"] });
 		if (!release) return respondFailure(`Release not found.`);
@@ -439,6 +440,32 @@ export default class DeployController {
 		// DEPLOY A BUILD:
 		try {
 			const result = await this.service.deployRelease(release, deployBuildOptions);
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
+	}
+
+	/**
+	 * Promote a deploy environment to another deploy environment (default: "production").
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/promote")
+	async promoteDeployEnvironment(
+		@Body()
+		body: PromoteDeployEnvironmentOptions
+	) {
+		const deployBuildOptions: PromoteDeployEnvironmentOptions = {
+			...body,
+			owner: this.user,
+			workspace: this.workspace,
+		};
+		if (this.options?.isDebugging) console.log("deployBuildOptions :>> ", deployBuildOptions);
+
+		// DEPLOY A BUILD FROM A SOURCE DEPLOY ENVIRONMENT TO A DESTINATION DEPLOY ENVIRONMENT:
+		try {
+			const data = await this.service.promoteDeployEnvironment(deployBuildOptions);
+			return respondSuccess({ data, msg: deployBuildOptions.deployInBackground ? "Deploying..." : "" });
 		} catch (e) {
 			return respondFailure(e.toString());
 		}

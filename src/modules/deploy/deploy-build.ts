@@ -283,7 +283,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 
 	// parse options
 	const { env, owner, workspace, deployInBackground = true, cliVersion } = options;
-	const { appSlug, projectSlug, tag: buildTag } = build;
+	const { appSlug, projectSlug, tag: buildTag, num: buildNumber } = build;
 	const { slug: username } = owner;
 	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
 

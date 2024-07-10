@@ -38,7 +38,7 @@ export default class BuildController extends BaseController<IBuild, BuildService
 			});
 		}
 
-		return respondSuccess({ data: builds });
+		return respondSuccess({ data: builds, ...this.pagination });
 	}
 
 	@Security("api_key")

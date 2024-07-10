@@ -31,6 +31,10 @@ interface KubeGenericOptions {
 	 * @default false
 	 */
 	skipOnError?: boolean;
+	/**
+	 * Debug
+	 */
+	isDebugging?: boolean;
 }
 
 interface KubeCommandOptions extends KubeGenericOptions {
@@ -593,16 +597,16 @@ export async function getAllDeploys(options: GetKubeDeployOptions = {}) {
  * Get a deployment in a namespace
  */
 export async function getDeploy(name: string, namespace = "default", options: KubeGenericOptions = {}) {
-	const { context, skipOnError, output } = options;
+	const { context, skipOnError, output = "json" } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
 		args.push("-n", namespace, "get", "deploy", name);
 
-		if (!output || output === "json") args.push("-o", "json");
+		if (output === "json") args.push("-o", "json");
 
 		const { stdout } = await execa("kubectl", args);
-		return !output || output === "json" ? (JSON.parse(stdout) as KubeDeployment) : stdout;
+		return output === "json" ? (JSON.parse(stdout) as KubeDeployment) : stdout;
 	} catch (e) {
 		if (!skipOnError) logError(`[KUBE_CTL] getDeploy >`, e);
 		return;
@@ -1217,7 +1221,7 @@ export async function getPod(name, namespace = "default", options: KubeGenericOp
  * @param namespace @default "default"
  */
 export async function getPods(namespace = "default", options: GetKubeDeployOptions = {}) {
-	const { context, filterLabel, skipOnError, metrics = true } = options;
+	const { context, filterLabel, skipOnError, metrics = true, isDebugging } = options;
 	try {
 		const args = [];
 		if (context) args.push(`--context=${context}`);
@@ -1229,6 +1233,7 @@ export async function getPods(namespace = "default", options: GetKubeDeployOptio
 		args.push("-o", "json");
 
 		// console.log(`[GET PODS] Command :>> kubectl ${args.join(" ")}`);
+		if (isDebugging) console.log(`[GET PODS] Command: "kubectl ${args.join(" ")}"`);
 		const { stdout } = await execa("kubectl", args);
 		const { items } = JSON.parse(stdout);
 

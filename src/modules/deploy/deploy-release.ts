@@ -9,6 +9,9 @@ export interface DeployReleaseOptions extends DeployBuildOptions {
 	releaseSlug?: string;
 }
 
+/**
+ * Deploy from a release (using V2 strategy)
+ */
 export const deployRelease = async (release: IRelease, options: DeployBuildOptions) => {
 	if (!release) throw new Error(`[DEPLOY RELEASE] Release not found.`);
 	const { DB } = await import("@/modules/api/DB");

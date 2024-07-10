@@ -2,6 +2,7 @@ import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { logError } from "diginext-utils/dist/xconsole/log";
 
 import { isServerMode } from "@/app.config";
+import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IWorkspace } from "@/entities";
 
 import { fetchApi } from "../api";
@@ -18,9 +19,9 @@ export interface GenerateDomainOptions {
 	 */
 	subdomainName: string;
 	/**
-	 * @default dxup.dev
+	 * @default "diginext.site"
 	 */
-	primaryDomain: string;
+	primaryDomain?: string;
 	/**
 	 * Value of A RECORD
 	 */
@@ -45,7 +46,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	// Manage domains in database to avoid duplication
 	const dxKey = params.workspace.dx_key;
 
-	let { subdomainName, clusterSlug, ipAddress, primaryDomain } = params;
+	let { subdomainName, clusterSlug, ipAddress, primaryDomain = DIGINEXT_DOMAIN } = params;
 	let domain = `${subdomainName}.${primaryDomain}`;
 	let targetIP: string;
 
