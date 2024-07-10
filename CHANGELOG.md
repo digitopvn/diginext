@@ -1,3 +1,12 @@
+## [3.34.1](https://github.com/digitopvn/diginext/compare/v3.34.0...v3.34.1) (2024-07-10)
+
+
+### Bug Fixes
+
+* **server:** improve error message on roll out ([fd00cec](https://github.com/digitopvn/diginext/commit/fd00cece65e4f71305c1eccfb3029ca0b77deae4))
+* **server:** stuck at scaling prev deployment up before rolling out ([aa790a1](https://github.com/digitopvn/diginext/commit/aa790a129159b6cea5fd3b2564aa3e7573fc5f48))
+* **server:** stuck at scaling prev deployment up before rolling out ([#514](https://github.com/digitopvn/diginext/issues/514)) ([f2463a8](https://github.com/digitopvn/diginext/commit/f2463a8f804b1de5dece5a9cfe12978eb1f582db))
+
 # [3.34.0](https://github.com/digitopvn/diginext/compare/v3.33.11...v3.34.0) (2024-07-10)
 
 
