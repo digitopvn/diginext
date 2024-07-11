@@ -62,7 +62,7 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 	// if (isDebugging) log(`[ROLL OUT V2] "${appVersion}" > checking ${pods.length} pods > pod.status.conditions:`);
 	try {
 		pods.forEach((pod) => {
-			if (isDebugging) log(pod.status.conditions.map((c) => `- ${c.type}: ${c.status} (Reason: "${c.reason}")`).join("\n"));
+			if (isDebugging) log(pod.status?.conditions?.map((c) => `- ${c.type}: ${c.status} (Reason: "${c.reason}")`).join("\n"));
 
 			pod.status?.conditions
 				?.filter((condition) => condition.type === "Ready")
@@ -70,19 +70,21 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 					if (condition.status === "True") countReady++;
 				});
 
-			pod.status.containerStatuses.map((containerStatus) => {
+			pod.status?.containerStatuses?.map((containerStatus) => {
 				if (containerStatus.restartCount > 0) throw new Error(`App is unable to start up due to some unexpected errors.`);
 			});
 		});
 	} catch (e) {
 		if (onUpdate) onUpdate(e.message);
 		throw new Error(e.message);
-		return false;
 	}
 
 	if (countReady >= replicas) isReady = true;
 
-	log(`[ROLL OUT V2] Checking is "${appName}" deployment ready (${countReady}/${replicas}):`, isReady);
+	// notify to the dashboard:
+	const msg = `Checking is "${appName}" deployment ready (${countReady}/${replicas}): ${isReady}`;
+	log(msg);
+	if (onUpdate) onUpdate(msg);
 	return isReady;
 };
 

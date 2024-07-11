@@ -138,7 +138,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	let IMAGE_NAME = buildImage ? `${buildImage}:${buildTag}` : undefined;
 	if (!IMAGE_NAME && deployEnvironmentConfig.imageURL) IMAGE_NAME = `${deployEnvironmentConfig.imageURL}:${buildTag}`;
 	if (!IMAGE_NAME) throw new Error(`Unable to generate deployment YAML, image name (image url + tag) is required.`);
-	deployEnvironmentConfig.imageURL = IMAGE_NAME;
+	deployEnvironmentConfig.imageURL = buildImage;
 
 	let domains = deployEnvironmentConfig.domains;
 	let replicas = deployEnvironmentConfig.replicas ?? 1;
