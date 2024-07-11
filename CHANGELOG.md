@@ -1,3 +1,12 @@
+## [3.34.6](https://github.com/digitopvn/diginext/compare/v3.34.5...v3.34.6) (2024-07-11)
+
+
+### Bug Fixes
+
+* **github action:** release workflow name correction ([2bf9179](https://github.com/digitopvn/diginext/commit/2bf917980a74b1f970fa3117363dd2d6b46a034d))
+* **server,admin:** list of build crashed, build logs crashed, view crashed pods ([ca9e87d](https://github.com/digitopvn/diginext/commit/ca9e87d76df25de1933e78cc4c8b87fc72c8866d))
+* **server:** unable to get logs of failed deployment pods ([08d2fe9](https://github.com/digitopvn/diginext/commit/08d2fe93eebc4537ab90251ed973c5429a643d98))
+
 ## [3.34.5](https://github.com/digitopvn/diginext/compare/v3.34.4...v3.34.5) (2024-07-11)
 
 
