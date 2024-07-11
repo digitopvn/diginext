@@ -1,3 +1,11 @@
+## [3.34.5](https://github.com/digitopvn/diginext/compare/v3.34.4...v3.34.5) (2024-07-11)
+
+
+### Bug Fixes
+
+* **server:** unable to deploy due to missing owner in deploy environment ([30c9c69](https://github.com/digitopvn/diginext/commit/30c9c69025b753c3fee055946be34725def9d8d1))
+* **server:** unable to deploy due to missing owner in deploy environment ([#518](https://github.com/digitopvn/diginext/issues/518)) ([18ca05c](https://github.com/digitopvn/diginext/commit/18ca05c8bb3a134e80a46ae8553a926acb26868e))
+
 ## [3.34.4](https://github.com/digitopvn/diginext/compare/v3.34.3...v3.34.4) (2024-07-10)
 
 
