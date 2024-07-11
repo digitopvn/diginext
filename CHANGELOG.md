@@ -1,3 +1,12 @@
+## [3.34.4](https://github.com/digitopvn/diginext/compare/v3.34.3...v3.34.4) (2024-07-10)
+
+
+### Bug Fixes
+
+* **admin:** improve rerun build and deploy process ([42c2377](https://github.com/digitopvn/diginext/commit/42c2377c5cc5637de7f854c21ae65b6b173b0f69))
+* **server:** issue of release not found when deploy ([76dafb6](https://github.com/digitopvn/diginext/commit/76dafb61ffbb93a195fd7a9149e97c33cfccdf86))
+* **server:** issue of release not found when deploy ([#517](https://github.com/digitopvn/diginext/issues/517)) ([11bf2cc](https://github.com/digitopvn/diginext/commit/11bf2cccf436889259b309916416e4f9eda72e66))
+
 ## [3.34.3](https://github.com/digitopvn/diginext/compare/v3.34.2...v3.34.3) (2024-07-10)
 
 
