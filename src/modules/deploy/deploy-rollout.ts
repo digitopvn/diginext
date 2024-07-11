@@ -569,8 +569,8 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 	// Try to get the container logs and print to the web ui
 	let containerLogs = isNewDeploymentReady
-		? await logPodByFilter(namespace, { filterLabel: `app-version=${appVersion}`, context })
-		: await logPodByFilter(namespace, { filterLabel: `app-version=${appVersion}`, previous: true, context });
+		? await logPodByFilter(namespace, { filterLabel: `app-version=${appVersion}`, context }).catch((e) => "")
+		: await logPodByFilter(namespace, { filterLabel: `app-version=${appVersion}`, previous: true, context }).catch((e) => "");
 
 	if (onUpdate && containerLogs) onUpdate(`--------------- APP'S LOGS ON STARTED UP --------------- \n${containerLogs}`);
 
