@@ -6,7 +6,7 @@ import { isObject, toNumber } from "lodash";
 
 import { getContainerResourceBySize } from "@/config/config";
 import { FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
-import type { IContainerRegistry, IWorkspace } from "@/entities";
+import type { IContainerRegistry, IUser, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { objectToDeploymentYaml } from "@/plugins";
@@ -97,9 +97,17 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	const { DB } = await import("@/modules/api/DB");
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
-	const appOwner = app.ownerSlug;
+	let appOwner = app.ownerSlug;
+	if (!appOwner) {
+		appOwner = (app.owner as IUser).slug;
+		await DB.updateOne("app", { slug: appSlug }, { ownerSlug: appOwner }).catch((e) =>
+			console.error(`Unable to update "appOwner" to "${appSlug}" app.`)
+		);
+	}
 
 	let projectSlug = currentAppConfig.project;
+	if (!projectSlug)
+		throw new Error(`Unable to generate YAML, a "project" (slug) param in "${env}" deploy environment of "${appSlug}" is required.`);
 
 	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
 

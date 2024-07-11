@@ -76,7 +76,7 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 		});
 	} catch (e) {
 		if (onUpdate) onUpdate(e.message);
-		throw new Error(`App is unable to start up due to some unexpected errors.`);
+		throw new Error(e.message);
 		return false;
 	}
 
