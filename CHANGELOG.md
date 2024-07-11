@@ -1,3 +1,11 @@
+## [3.34.7](https://github.com/digitopvn/diginext/compare/v3.34.6...v3.34.7) (2024-07-11)
+
+
+### Bug Fixes
+
+* **admin:** improve build list filter and sort ([671097e](https://github.com/digitopvn/diginext/commit/671097e156db072ae2a1a2caa2438e03babf27fa))
+* **server:** correct build image in deploy env without tag ([b07a40d](https://github.com/digitopvn/diginext/commit/b07a40da7d4827c5188a66f5b17a7d5af8846273))
+
 ## [3.34.6](https://github.com/digitopvn/diginext/compare/v3.34.5...v3.34.6) (2024-07-11)
 
 
