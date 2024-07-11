@@ -300,11 +300,11 @@ jobs:
 
       # Deploy to LONGVAN STAGING cluster
       - name: Set image to [app.dxup.dev / Long Van STAGING] deployment
-        run: kubectl --context=longvan-cluster -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
+        run: kubectl --context=topgroup-staging -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
 
       # Deploy to LONGVAN PROD cluster
       - name: Set image to [app.dxup.dev / Long Van PROD] deployment
-        run: kubectl --context=topgroup-staging -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
+        run: kubectl --context=longvan-cluster -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
 
       # DEPRECATED
       # - name: Set image to [hobby.dxup.dev] deployment

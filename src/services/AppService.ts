@@ -117,6 +117,8 @@ export class AppService extends BaseService<IApp> {
 			appDto.git = data.git;
 		}
 
+		if (!appDto.ownerSlug) appDto.ownerSlug = this.user.username || this.ownership.owner.username;
+
 		let newApp: IApp;
 
 		try {
