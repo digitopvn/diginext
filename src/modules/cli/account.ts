@@ -42,8 +42,8 @@ export const showProfile = async (options: InputOptions) => {
 	const { buildServerUrl, currentUser, apiToken } = getCliConfig();
 	if (!buildServerUrl || !currentUser || !currentUser.token?.access_token) return logError(`Unauthenticated.`);
 
-	const { status, data } = await fetchApi({ url: `/auth/profile`, access_token: currentUser.token.access_token, api_key: apiToken });
-	if (status === 0 || !data) return logError(`Authentication failed, invalid "access_token".`);
+	const { status, data, messages } = await fetchApi({ url: `/auth/profile`, access_token: currentUser.token.access_token, api_key: apiToken });
+	if (status === 0 || !data) return logError(`Authentication failed, invalid "access_token": ${messages.join(",")}.`);
 
 	const user = data as IUser;
 	const ws = user.activeWorkspace as IWorkspace;
@@ -111,9 +111,9 @@ export const cliLogin = async (options: CliLoginOptions) => {
 	let currentUser: IUser;
 
 	// validate the "access_token" -> get "userId":
-	const { status, data } = await fetchApi({ url: `/auth/profile`, access_token, api_key: apiToken });
+	const { status, data, messages } = await fetchApi({ url: `/auth/profile`, access_token, api_key: apiToken });
 	if (status === 0) {
-		logError(`Authentication failed, invalid "access_token".`);
+		logError(`Authentication failed, invalid "access_token": ${messages.join(",")}.`);
 		return;
 	}
 	currentUser = data as IUser;
