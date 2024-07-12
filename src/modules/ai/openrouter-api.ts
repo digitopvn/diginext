@@ -7,12 +7,15 @@ import { Config } from "@/app.config";
 export const OPENROUTER_BASE_API_URL = "https://openrouter.ai/api/v1";
 
 export const aiModels = [
-	"google/palm-2-codechat-bison",
-	"google/palm-2-chat-bison",
+	"deepseek/deepseek-coder",
+	"google/gemini-flash-1.5",
+	"google/gemini-pro-1.5",
+	"openai/gpt-4o",
 	"openai/gpt-3.5-turbo",
 	"openai/gpt-3.5-turbo-16k",
 	"openai/gpt-4",
 	"openai/gpt-4-32k",
+	"anthropic/claude-3.5-sonnet",
 	"anthropic/claude-2",
 	"anthropic/claude-instant-v1",
 	"meta-llama/llama-2-13b-chat",
