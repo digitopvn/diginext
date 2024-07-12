@@ -40,6 +40,9 @@ export const testCommand = async (options?: InputOptions) => {
 	// const aiSvc = new AIService();
 	// await aiSvc.generateDockerfile(options.targetDirectory, options);
 
+	console.log("options.env :>> ", options.env);
+	console.log("options.envs :>> ", options.envs);
+
 	const repoSshOrUrl = "https://github.com/digitopvn/diginext-docs";
 	const repoSSH = isValidRepoURL(repoSshOrUrl) ? repoUrlToRepoSSH(repoSshOrUrl) : repoSshOrUrl;
 	const repoURL = isValidRepoURL(repoSshOrUrl) ? repoSshOrUrl : repoSshToRepoURL(repoSshOrUrl);

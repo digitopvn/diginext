@@ -550,52 +550,8 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 
 	if (options?.isDebugging) console.log("pullOrCloneGitRepo() > repoSSH :>> ", repoSSH);
 
-	if (fs.existsSync(dir)) {
-		try {
-			if (options?.isDebugging) console.log("pullOrCloneGitRepo() > directory exists :>> try to PULL...");
-			git = simpleGit(dir, { progress: onProgress });
-			// -----------------------
-			// ! DO NOT SET TO "FALSE"
-			// -----------------------
-			const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
-			const originRemote = remotes[0] as any;
-			if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
-			if (options?.isDebugging) console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
-			if (originRemote?.refs?.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
-
-			const curBranch = await getCurrentGitBranch(dir);
-			await git.pull("origin", curBranch, ["--no-ff"]);
-
-			// remove git on finish
-			if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
-			if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
-
-			success = true;
-		} catch (e) {
-			if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Failed to PULL :>> try to CLONE...", e);
-			if (options?.onUpdate) options?.onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
-
-			try {
-				// just for sure...
-				await deleteFolderRecursive(dir);
-
-				// for CLI create new app from a framework
-				git = simpleGit({ progress: onProgress });
-
-				await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch", "--depth=1"]);
-				if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Success to CLONE !");
-
-				// remove git on finish
-				if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
-				if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
-
-				success = true;
-			} catch (e2) {
-				if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Failed to PULL & CLONE :>> ", e2);
-				if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e2.message}`);
-			}
-		}
-	} else {
+	// TMP DIRECTORY NOT EXISTS
+	if (!fs.existsSync(dir)) {
 		if (options?.isDebugging) console.log("pullOrCloneGitRepo() > directory NOT exists :>> try to CLONE...");
 		if (options?.onUpdate) options?.onUpdate(`Cache source code not found. Cloning "${repoSSH}" (${branch}) to "${dir}" directory.`);
 
@@ -610,9 +566,58 @@ export const pullOrCloneGitRepo = async (repoSSH: string, dir: string, branch: s
 			if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
 
 			success = true;
+			return success;
 		} catch (e) {
 			if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Failed to CLONE !");
 			if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e.message}`);
+		}
+	}
+
+	// TMP DIRECTORY -> EXISTS
+	try {
+		// try pull
+		if (options?.isDebugging) console.log("pullOrCloneGitRepo() > directory exists :>> try to PULL...");
+		git = simpleGit(dir, { progress: onProgress });
+		// -----------------------
+		// ! DO NOT SET TO "FALSE"
+		// -----------------------
+		const remotes = ((await git.getRemotes(true)) || []).filter((remote) => remote.name === "origin");
+		const originRemote = remotes[0] as any;
+		if (!originRemote) throw new Error(`This directory doesn't have any git remotes.`);
+		if (options?.isDebugging) console.log("originRemote :>> ", originRemote, `>`, { repoSSH });
+		if (originRemote?.refs?.fetch !== repoSSH) await git.addRemote("origin", repoSSH);
+
+		const curBranch = await getCurrentGitBranch(dir);
+		await git.pull("origin", curBranch, ["--no-ff"]);
+
+		// remove git on finish
+		if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
+		if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
+
+		success = true;
+	} catch (e) {
+		// if PULL failed -> delete dir -> try CLONE
+		if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Failed to PULL :>> try to CLONE...", e);
+		if (options?.onUpdate) options?.onUpdate(`Failed to pull "${repoSSH}" in "${dir}" directory (${e.message}) -> trying to clone new...`);
+
+		try {
+			// just for sure...
+			await deleteFolderRecursive(dir);
+
+			// for CLI create new app from a framework
+			git = simpleGit({ progress: onProgress });
+
+			await git.clone(repoSSH, dir, [`--branch=${branch}`, "--single-branch", "--depth=1"]);
+			if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Success to CLONE !");
+
+			// remove git on finish
+			if (options?.removeGitOnFinish) await deleteFolderRecursive(path.join(dir, ".git"));
+			if (options?.removeCIOnFinish) await deleteFolderRecursive(path.join(dir, ".github"));
+
+			success = true;
+		} catch (e2) {
+			if (options?.isDebugging) console.log("pullOrCloneGitRepo() > Failed to PULL & CLONE :>> ", e2);
+			if (options?.onUpdate) options?.onUpdate(`Failed to clone "${repoSSH}" (${branch}) to "${dir}" directory: ${e2.message}`);
 		}
 	}
 

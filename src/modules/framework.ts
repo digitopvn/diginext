@@ -91,7 +91,7 @@ export interface PullFrameworkVersion extends Pick<InputOptions, "framework" | "
 
 export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 	const { frameworkVersion = "main" } = options;
-	const { name, repoSSH } = options.framework;
+	const { name, repoSSH, public: isPublic } = options.framework;
 	if (!repoSSH) throw new Error(`Unable to pull/clone framework: repo SSH url is required.`);
 
 	const spin = ora(`Pulling "${name}" framework... 0%`).start();
@@ -108,19 +108,13 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 
 	if (options.isDebugging) console.log("pullFrameworkVersion() > frameworkVersion :>> ", frameworkVersion);
 
-	/**
-	 * [NOT WORKING]
-	 * ---
-	 * Parse framework repo SSH url -> use git provider's credentials accordingly:
-	 */
-
 	// pull or clone git repo
 	let pullStatus = await pullOrCloneGitRepo(repoSSH, tmpDir, frameworkVersion, {
 		onUpdate: (msg, progress) => {
 			if (isServerMode) {
 				console.log(msg);
 			} else {
-				spin.text = `Pulling "${name}" framework... ${progress || 0}%`;
+				spin.text = `[SSH] Pulling "${name}" framework... ${progress || 0}%`;
 			}
 		},
 		// delete framework git
@@ -134,10 +128,19 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 
 	// If failed to pull/clone with SSH, give another try with HTTPS method:
 	if (!pullStatus) {
+		logWarn(`Unable to pull framework via SSH: ${repoSSH}`);
+
+		if (!isPublic) throw new Error(`Unable to pull/clone this framework: The framework repo is private.`);
+
 		const { providerType } = parseGitRepoDataFromRepoSSH(repoSSH);
 		const { DB } = await import("@/modules/api/DB");
 		const gitProvider = await DB.findOne("git", { type: providerType });
 		if (options.isDebugging) console.log("pullFrameworkVersion() > gitProvider :>> ", gitProvider);
+
+		// USER IS MISSING PERMISSIONS
+		if (!gitProvider.access_token || gitProvider.access_token === "***") {
+			throw new Error(`Unable to pull/clone framework by HTTPS: missing permissions.`);
+		}
 
 		const repoURL = repoSshToRepoURL(repoSSH);
 
@@ -146,7 +149,7 @@ export const pullFrameworkVersion = async (options: PullFrameworkVersion) => {
 				if (isServerMode) {
 					console.log(msg);
 				} else {
-					spin.text = `Pulling "${name}" framework... ${progress || 0}%`;
+					spin.text = `[HTTPS] Pulling "${name}" framework... ${progress || 0}%`;
 				}
 			},
 			useAccessToken: {
