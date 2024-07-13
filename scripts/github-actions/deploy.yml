@@ -29,6 +29,6 @@ jobs:
 
       - uses: actions-hub/kubectl@master
         env:
-          KUBE_CONFIG: ${{ secrets.KUBECONFIG_DEV }}
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         with:
           args: --context=topgroup-k3s -n diginext-cli set image deploy *=digitop/diginext:${{github.ref_name}}
