@@ -110,20 +110,6 @@ export async function requestDeploy(options: InputOptions) {
 	const { SOCKET_ROOM } = options;
 
 	/**
-	 * [4] Stage, commit & push configuration files (dx.json) to GIT repository:
-	 */
-	// try {
-	// 	await stageCommitAndPushAll({
-	// 		directory: options.targetDirectory,
-	// 		message: `build(${env}): ${options.buildImage}`,
-	// 	});
-	// } catch (e) {
-	// 	// Stop the process if this throws any errors
-	// 	logError(`Can't commit files for building this app: ${e}`);
-	// 	return;
-	// }
-
-	/**
 	 * [5] Notify the commander & call API to request server build:
 	 */
 	log(`Requesting BUILD SERVER to deploy this app: "${appConfig.project}/${appConfig.slug}"`);

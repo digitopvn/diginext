@@ -82,8 +82,8 @@ export const downloadDotenvByAppSlug = async (appSlug: string, env: string = "de
 export const downloadDotenv = async (env: string, options: DownloadDotenvOptions = {}) => {
 	const { targetDir = process.cwd() } = options;
 
-	const { app } = await askForProjectAndApp(targetDir);
-	const appConfig = getAppConfigFromApp(app);
+	const { app } = await askForProjectAndApp(targetDir, options);
+	const appConfig = getAppConfigFromApp(app, options);
 	const { slug: appSlug } = appConfig;
 
 	if (!appSlug) {
@@ -92,11 +92,9 @@ export const downloadDotenv = async (env: string, options: DownloadDotenvOptions
 		);
 	}
 
-	return downloadDotenvByAppSlug(appSlug, env, options)
-		.then(async (result) => {
-			// [SECURITY CHECK] warns if DOTENV files are not listed in ".gitignore" file
-			await checkGitignoreContainsDotenvFiles({ targetDir });
-			return result;
-		})
-		.catch((e) => console.error(e));
+	return downloadDotenvByAppSlug(appSlug, env, options).then(async (result) => {
+		// [SECURITY CHECK] warns if DOTENV files are not listed in ".gitignore" file
+		await checkGitignoreContainsDotenvFiles({ targetDir });
+		return result;
+	});
 };

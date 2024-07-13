@@ -241,6 +241,12 @@ export type InputOptions = {
 	env?: "dev" | "prod" | "staging" | string;
 
 	/**
+	 * List of deploy environment codes
+	 * @default ["dev"]
+	 */
+	envs?: ("dev" | "prod" | "staging" | string)[];
+
+	/**
 	 * - Flags: `--dev`
 	 * @type {Boolean}
 	 * @default true

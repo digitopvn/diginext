@@ -537,7 +537,8 @@ export async function parseCliOptions() {
 		isPublic: (argv.public as boolean) ?? false,
 
 		// environment
-		env: (argv.env as string) ?? "dev",
+		env: typeof argv.env === "object" ? argv.env[0] : (argv.env as string) ?? "dev",
+		envs: typeof argv.env === "object" ? (argv.env as string[]) : [(argv.env as string) ?? "dev"],
 		isDev: (argv.dev as boolean) ?? true,
 		isStaging: (argv.staging as boolean) ?? argv.env === "staging" ?? false,
 		isCanary: (argv.canary as boolean) ?? argv.env === "canary" ?? false,

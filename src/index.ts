@@ -224,7 +224,16 @@ export async function processCLI(options?: InputOptions) {
 				await requestDeployImage(options.secondAction, options);
 			} else {
 				// deploy from source
-				await requestDeploy(options);
+				if (options.envs.length > 1) {
+					// deploy to multiple deploy envs
+					for (const _env of options.envs) {
+						options.env = _env;
+						await requestDeploy(options);
+					}
+				} else {
+					// deploy to single deploy env
+					await requestDeploy(options);
+				}
 			}
 			return;
 

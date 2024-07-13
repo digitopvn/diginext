@@ -278,7 +278,7 @@ jobs:
       - run: echo "${{ github.ref }}"
       - run: echo "${{ github.ref_name }}"
       - run: mkdir ~/.kube
-      - run: echo "${{ secrets.KUBECONFIG_DEV }}" >> ~/.kube/config
+      - run: echo "${{ secrets.KUBE_CONFIG }}" >> ~/.kube/config
 
       - name: Setup Kubernetes Tools
         uses: yokawasa/action-setup-kube-tools@v0.9.3
@@ -290,21 +290,21 @@ jobs:
       - run: kubectl config current-context
       - run: kubectl config use-context topgroup-dev
 
-      # Deploy to TOPGROUP DEV cluster (DEPRECATED SOON)
-      - name: Set image to [app.diginext.site / OLD] deployment
-        run: kubectl --context=topgroup-dev -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
+      # Deploy to TOPGROUP DEV cluster (DIGINEXT.SITE - DEPRECATED)
+      # - name: Set image to [app.diginext.site / OLD] deployment
+      #   run: kubectl --context=topgroup-dev -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
 
-      # Deploy to DXUP cluster
+      # Deploy to TOPGROUP DEV cluster (APP.DXUP.DEV)
       - name: Set image to [app.dxup.dev / TOP Group] deployment
         run: kubectl --context=topgroup-dev -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
-
-      # Deploy to LONGVAN STAGING cluster
-      - name: Set image to [app.dxup.dev / Long Van STAGING] deployment
-        run: kubectl --context=topgroup-staging -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
-
+        
       # Deploy to LONGVAN PROD cluster
       - name: Set image to [app.dxup.dev / Long Van PROD] deployment
         run: kubectl --context=longvan-cluster -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
+        
+      # Deploy to LONGVAN STAGING cluster (DEPRECATED)
+      # - name: Set image to [app.dxup.dev / Long Van STAGING] deployment
+      #   run: kubectl --context=topgroup-staging -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
 
       # DEPRECATED
       # - name: Set image to [hobby.dxup.dev] deployment
@@ -329,7 +329,7 @@ jobs:
       - run: echo "${{ github.ref }}"
       - run: echo "${{ github.ref_name }}"
       - run: mkdir ~/.kube
-      - run: echo "${{ secrets.KUBECONFIG_DEV }}" >> ~/.kube/config
+      - run: echo "${{ secrets.KUBE_CONFIG }}" >> ~/.kube/config
 
       - name: Setup Kubernetes Tools
         uses: yokawasa/action-setup-kube-tools@v0.9.3

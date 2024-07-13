@@ -46,7 +46,8 @@ export class AIService {
 		if (options?.isDebugging) console.log("askMessage :>> ", askMessage);
 
 		const dto: AIDto = {
-			model: "openai/gpt-3.5-turbo",
+			// model: "openai/gpt-3.5-turbo",
+			model: "deepseek/deepseek-coder",
 			messages: [
 				{
 					role: "system",

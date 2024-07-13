@@ -20,7 +20,7 @@ export const askForProjectAndApp = async (dir: string, options?: InputOptions) =
 	let apps = await DB.find(
 		"app",
 		{ "git.repoSSH": currentGitData.repoSSH },
-		{ populate: ["project", "owner", "workspace"], isDebugging: options.isDebugging }
+		{ populate: ["project", "owner", "workspace"], isDebugging: options?.isDebugging }
 	);
 
 	let app: IApp;
