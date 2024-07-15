@@ -1,3 +1,12 @@
+## [3.34.8](https://github.com/digitopvn/diginext/compare/v3.34.7...v3.34.8) (2024-07-13)
+
+
+### Bug Fixes
+
+* **admin:** fixed code editor issue ([56cd837](https://github.com/digitopvn/diginext/commit/56cd837e99d7937e766b6ca2b52542ba18a69a4e))
+* **cli:** deploy to multiple deploy environments ([65f3e7f](https://github.com/digitopvn/diginext/commit/65f3e7f71cd00b806e6ca0a5608b5df12abadd60))
+* **cli:** issue of downloading env from deploy environment ([f157b42](https://github.com/digitopvn/diginext/commit/f157b42319a2233fac1f56053875595d73046bbe))
+
 ## [3.34.7](https://github.com/digitopvn/diginext/compare/v3.34.6...v3.34.7) (2024-07-11)
 
 
