@@ -720,7 +720,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 			buildTag: buildTag,
 		});
 
-		const { endpoint, deploymentContent } = deployment;
+		const { deploymentContent } = deployment;
 
 		// update data to deploy environment:
 		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
@@ -767,21 +767,30 @@ export default class AppController extends BaseController<IApp, AppService> {
 		});
 
 		// apply deployment YAML
-		const applyResult = await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context: cluster.contextName });
-		console.log("AppController > updateDeployEnvironment() > Applied deployment yaml :>> ", applyResult);
+		try {
+			console.log("AppController > updateDeployEnvironment() > cluster :>> ", cluster.slug);
+			console.log("AppController > updateDeployEnvironment() > namespace :>> ", namespace);
+			console.log("AppController > updateDeployEnvironment() > deploymentContent :>> ", deploymentContent);
+			const applyResult = await ClusterManager.kubectlApplyContent(deploymentContent, { context: cluster.contextName });
+			console.log("AppController > updateDeployEnvironment() > Applied deployment yaml :>> ", applyResult);
 
-		// delete deprecated workloads
-		if (deprecatedWorkloads?.length > 0) {
-			const deleteResult = await Promise.all(
-				deprecatedWorkloads.map((workload) =>
-					ClusterManager.deleteDeploy(workload.metadata.name, workload.metadata.namespace, { context: cluster.contextName })
-				)
-			);
-			console.log("AppController > updateDeployEnvironment() > Deleted deprecated deployments :>> ", deleteResult);
+			// delete deprecated workloads
+			if (deprecatedWorkloads?.length > 0) {
+				const deleteResult = await Promise.all(
+					deprecatedWorkloads.map((workload) =>
+						ClusterManager.deleteDeploy(workload.metadata.name, workload.metadata.namespace, { context: cluster.contextName })
+					)
+				);
+				console.log("AppController > updateDeployEnvironment() > Deleted deprecated deployments :>> ", deleteResult);
+			}
+
+			return respondSuccess({
+				data: updatedApp.deployEnvironment[env],
+				msg: `Updated "${env.toUpperCase()}" deploy environment successfully.`,
+			});
+		} catch (e) {
+			return respondFailure(`Unable to update this deploy environment: ${e}`);
 		}
-		// }
-
-		return respondSuccess({ data: updatedApp.deployEnvironment[env] });
 	}
 
 	/**
