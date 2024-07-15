@@ -13,7 +13,7 @@ import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 import ClusterManager from "@/modules/k8s";
 import { logPodByFilter } from "@/modules/k8s/kubectl";
 import { objectToDeploymentYaml, waitUntil } from "@/plugins";
-import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
+import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 import { WebhookService } from "@/services";
 
@@ -131,102 +131,6 @@ export async function cleanUpNamespace(cluster: ICluster, namespace: string, app
 	logSuccess(msg);
 
 	return { error: null, data };
-}
-
-/**
- * Clean up PRERELEASE resources by ID or release data
- * @param idOrRelease - Release ID or {Release} data
- */
-export async function cleanUpPrereleaseV2(idOrRelease: string | IRelease) {
-	const { DB } = await import("@/modules/api/DB");
-	let releaseData: IRelease;
-
-	// validation
-	releaseData = await DB.findOne(
-		"release",
-		{ id: isValidObjectId(idOrRelease) ? idOrRelease : (idOrRelease as IRelease)._id },
-		{
-			select: ["_id", "id", "slug", "workspace", "owner", "cluster", "appSlug", "projectSlug", "namespace"],
-			populate: ["workspace", "owner"],
-		}
-	);
-
-	if (!releaseData) throw new Error(`Release "${idOrRelease}" not found.`);
-
-	const { cluster: clusterSlug, appSlug, namespace, owner, workspace } = releaseData;
-
-	let cluster: ICluster;
-	// authenticate cluster's provider & switch kubectl to that cluster:
-	try {
-		cluster = await ClusterManager.authClusterBySlug(clusterSlug, { ownership: { owner: owner as IUser, workspace: workspace as IWorkspace } });
-	} catch (e) {
-		logError(`[KUBE_DEPLOY] Clean up > `, e);
-		return { error: e.message };
-	}
-	const { contextName: context } = cluster;
-
-	// Fallback support to the deprecated "main-app" name
-	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
-	const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-	const mainAppName = await getDeploymentName(app);
-
-	// Clean up Prerelease YAML
-	const cleanUpCommands = [];
-
-	// Delete INGRESS to optimize cluster
-	cleanUpCommands.push(
-		ClusterManager.deleteIngressByFilter(namespace, {
-			context,
-			skipOnError: true,
-			filterLabel: `phase=prerelease,main-app=${mainAppName}`,
-		})
-	);
-
-	// Delete Prerelease SERVICE to optimize cluster
-	cleanUpCommands.push(ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${mainAppName}` }));
-
-	// Clean up Prerelease Deployments
-	cleanUpCommands.push(ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${mainAppName}` }));
-
-	// ! --- fallback support deprecated app name ---
-	// Delete INGRESS (fallback support deprecated app name)
-	if (deprecatedMainAppName)
-		cleanUpCommands.push(
-			ClusterManager.deleteIngressByFilter(namespace, {
-				context,
-				skipOnError: true,
-				filterLabel: `phase=prerelease,main-app=${deprecatedMainAppName}`,
-			})
-		);
-
-	// ! --- fallback support deprecated app name ---
-	// Delete Prerelease SERVICE to optimize cluster (fallback support deprecated app name)
-	if (deprecatedMainAppName)
-		cleanUpCommands.push(
-			ClusterManager.deleteServiceByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${deprecatedMainAppName}` })
-		);
-
-	// ! --- fallback support deprecated app name ---
-	// Clean up Prerelease Deployments
-	if (deprecatedMainAppName)
-		cleanUpCommands.push(
-			ClusterManager.deleteDeploymentsByFilter(namespace, { context, filterLabel: `phase=prerelease,main-app=${deprecatedMainAppName}` })
-		);
-
-	// Clean up immediately & just ignore if any errors
-	for (const cmd of cleanUpCommands) {
-		try {
-			await cmd;
-		} catch (e) {
-			logWarn(`[CLEAN UP] Ignore command: ${e}`);
-		}
-	}
-
-	// * Print success:
-	let msg = `🎉  PRERELEASE DEPLOYMENT DELETED  🎉`;
-	logSuccess(msg);
-
-	return { error: null, data: releaseData };
 }
 
 /**
@@ -386,6 +290,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	let newReplicas = 1,
 		currentReplicas = 0,
 		currentDeploymentName,
+		currentAppVersion,
 		envVars: KubeEnvironmentVariable[] = [],
 		resourceQuota: IResourceQuota = {},
 		service: KubeService,
@@ -422,8 +327,9 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	}
 	const tmpDeploymentYaml = objectToDeploymentYaml(deploymentCfg);
 	const [currentDeployment] = await ClusterManager.getDeploys(namespace, { context, filterLabel: `main-app=${mainAppName}`, metrics: false });
-	currentReplicas = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.spec.replicas : 0;
+	currentReplicas = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.spec.replicas : 1;
 	currentDeploymentName = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.metadata.name : "";
+	currentAppVersion = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.metadata.labels["app-version"] : undefined;
 
 	// check ingress domain has been used yet or not:
 	let isDomainUsed = false,

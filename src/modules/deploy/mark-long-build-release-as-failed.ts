@@ -1,3 +1,5 @@
+import { logSuccess } from "diginext-utils/dist/xconsole/log";
+
 import { BuildService, ReleaseService } from "@/services";
 
 /**
@@ -32,6 +34,6 @@ export async function markLongRunningBuildAndReleaseAsFailed() {
 	);
 
 	const result = { buildCount: builds.length, releaseCount: releases.length };
-	console.log("markLongRunningBuildAndReleaseAsFailed() > result :>> ", result);
+	if (result.buildCount > 0 || result.releaseCount > 0) logSuccess("markLongRunningBuildAndReleaseAsFailed() > result :>> ", result);
 	return result;
 }

@@ -17,6 +17,7 @@ import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import type { GenerateDeploymentResult } from "@/modules/deploy";
 import { fetchDeploymentFromContent, generateDeployment } from "@/modules/deploy";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
+import { generateDeploymentV2 } from "@/modules/deploy/generate-deployment-v2";
 import { dxCreateDomain } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
@@ -622,7 +623,21 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// cluster
 		let cluster: ICluster | undefined;
-		if (deployEnvironmentData.cluster) cluster = await DB.findOne("cluster", { slug: deployEnvironmentData.cluster });
+		if (deployEnvironmentData.cluster) {
+			cluster = await DB.findOne("cluster", { slug: deployEnvironmentData.cluster });
+
+			// check if change cluster:
+			if (deployEnvironmentData.cluster !== currentDeployEnvData.cluster) {
+				const { DeployEnvironmentService } = await import("@/services");
+				const deployEnvSvc = new DeployEnvironmentService();
+				try {
+					await deployEnvSvc.changeCluster(app, env, cluster, { user: this.ownership.owner, workspace: this.ownership.workspace });
+				} catch (e) {
+					return respondFailure(`Unable to change cluster: ${e.message}`);
+				}
+			}
+		}
+		// no cluster changed -> get current cluster
 		if (!cluster && currentDeployEnvData.cluster) cluster = await DB.findOne("cluster", { slug: currentDeployEnvData.cluster });
 
 		// namespace
@@ -697,7 +712,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		}
 
 		// generate deployment files and apply new config
-		let deployment: GenerateDeploymentResult = await generateDeployment({
+		let deployment: GenerateDeploymentResult = await generateDeploymentV2({
 			appSlug: app.slug,
 			env,
 			username: this.user.slug,
