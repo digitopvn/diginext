@@ -63,6 +63,7 @@ export type GenerateDeploymentV2Result = {
 	namespaceObject: KubeNamespace;
 
 	// deployment (ingress, service, pods,...)
+	deploymentName: string;
 	deployEnvironment: DeployEnvironment;
 	deploymentContent: string;
 	deploymentCfg: KubeDeployment;
@@ -551,6 +552,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 		namespaceContent,
 		namespaceObject,
 		// deployment (ingress, service, pods,...)
+		deploymentName,
 		deployEnvironment: deployEnvironmentConfig as DeployEnvironment,
 		deploymentContent,
 		deploymentCfg,

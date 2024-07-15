@@ -436,11 +436,12 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 		sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
 		throw new Error(errMsg);
 	}
-	const { endpoint, deploymentContent, deployEnvironment } = deployment;
+	const { endpoint, deploymentContent, deployEnvironment, deploymentName } = deployment;
 
 	// update data to deploy environment:
 	serverDeployEnvironment = { ...serverDeployEnvironment, ...deployEnvironment };
 	serverDeployEnvironment.deploymentYaml = deploymentContent;
+	serverDeployEnvironment.deploymentName = deploymentName;
 	serverDeployEnvironment.updatedAt = new Date();
 	serverDeployEnvironment.lastUpdatedBy = username;
 

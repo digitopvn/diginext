@@ -712,7 +712,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		}
 
 		// generate deployment files and apply new config
-		let deployment: GenerateDeploymentResult = await generateDeploymentV2({
+		let deployment = await generateDeploymentV2({
 			appSlug: app.slug,
 			env,
 			username: this.user.slug,
@@ -727,6 +727,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		serverDeployEnvironment.deploymentYaml = deploymentContent;
 		serverDeployEnvironment.updatedAt = new Date();
 		serverDeployEnvironment.lastUpdatedBy = this.user.username;
+		serverDeployEnvironment.deploymentName = deployment.deploymentName;
 
 		// Update {user}, {project}, {environment} to database before rolling out
 		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
