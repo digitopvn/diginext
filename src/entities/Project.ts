@@ -6,6 +6,7 @@ import type { HiddenBodyKeys } from "@/interfaces";
 import type { IApp } from "./App";
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
+import type { IBuild } from "./Build";
 import type { IUser } from "./User";
 import type { IWorkspace } from "./Workspace";
 
@@ -20,9 +21,13 @@ export interface IProject extends IBase {
 	createdBy?: string;
 	lastUpdatedBy?: string;
 	/**
-	 * Latest build of an application in this project
+	 * Latest build tag of an application in this project
 	 */
-	latestBuild?: string;
+	latestBuildTag?: Types.ObjectId | string;
+	/**
+	 * Latest build ID or DOCUMENT
+	 */
+	latestBuild?: Types.ObjectId | IBuild | string;
 	/**
 	 * List of App slugs
 	 *
@@ -58,7 +63,8 @@ export const projectSchema = new Schema(
 		clientSecret: { type: String },
 		createdBy: { type: String },
 		lastUpdatedBy: { type: String },
-		latestBuild: { type: String },
+		latestBuild: { type: Schema.Types.ObjectId, ref: "builds" },
+		latestBuildTag: { type: String },
 		appSlugs: { type: [String] },
 		apps: [{ type: Schema.Types.ObjectId, ref: "apps" }],
 		owner: { type: Schema.Types.ObjectId, ref: "users" },
