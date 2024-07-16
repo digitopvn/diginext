@@ -1,3 +1,10 @@
+## [3.34.10](https://github.com/digitopvn/diginext/compare/v3.34.9...v3.34.10) (2024-07-16)
+
+
+### Bug Fixes
+
+* **server:** delete deprecated ingress class annotation ([b753053](https://github.com/digitopvn/diginext/commit/b7530538f5b220b83ad7c3292e008d27598e1437))
+
 ## [3.34.9](https://github.com/digitopvn/diginext/compare/v3.34.8...v3.34.9) (2024-07-16)
 
 
