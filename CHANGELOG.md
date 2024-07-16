@@ -1,3 +1,13 @@
+## [3.34.9](https://github.com/digitopvn/diginext/compare/v3.34.8...v3.34.9) (2024-07-16)
+
+
+### Bug Fixes
+
+* **admin:** add change cluster shortcut button ([b59b7e7](https://github.com/digitopvn/diginext/commit/b59b7e7da66837e8528177e1c446c3bb7b1442e9))
+* **server,admin:** improve find latest build when update app ([9474178](https://github.com/digitopvn/diginext/commit/94741782b91145a058aae93ba8fd00c4ad17dad1))
+* **server:** improve change cluster speed ([a14efb9](https://github.com/digitopvn/diginext/commit/a14efb9be97452cc712590108d63251e96ac5aac))
+* **server:** save k8s deployment name to deploy environment ([1e9d616](https://github.com/digitopvn/diginext/commit/1e9d61661408c28956fb2fd2b447214ee19ab952))
+
 ## [3.34.8](https://github.com/digitopvn/diginext/compare/v3.34.7...v3.34.8) (2024-07-13)
 
 
