@@ -280,19 +280,10 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 
 					// ingress class
 					const ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
-					// let ingressClass = "";
-					// if (
-					// 	deployEnvironmentConfig.ingress &&
-					// 	(ingressClasses.map((ingClass) => ingClass?.metadata?.name) || []).includes(deployEnvironmentConfig.ingress)
-					// ) {
-					// 	ingressClass = deployEnvironmentConfig.ingress;
-					// } else {
-					// 	ingressClass = ingressClasses[0] && ingressClasses[0].metadata ? ingressClasses[0].metadata.name : undefined;
-					// }
 					if (ingressClass) {
-						//  OLD -> DEPRECATED!!!
-						// ingCfg.metadata.annotations["kubernetes.io/ingress.class"] = ingressClass;
-						// NEW
+						// ! OLD -> DEPRECATED!!!
+						delete ingCfg.metadata.annotations["kubernetes.io/ingress.class"];
+						// ! NEW -> WORKING!!!
 						ingCfg.spec.ingressClassName = ingressClass;
 					}
 
