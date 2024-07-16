@@ -1,9 +1,8 @@
 import chalk from "chalk";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import { log, logSuccess } from "diginext-utils/dist/xconsole/log";
+import { logSuccess } from "diginext-utils/dist/xconsole/log";
 
-import { IsDev } from "@/app.config";
 import { weekDays } from "@/entities/Cronjob";
 
 import { runCronjob } from "./run-job";
@@ -43,7 +42,8 @@ export const findAndRunCronjob = async (workspaceId?: string) => {
 					chalk.magenta(`\n  [${index}] ${job.name} (ID: ${job._id}) [Run at: ${dayjs(job.nextRunAt).format("llll")}]`)
 				)}`
 			);
-	} else {
-		if (IsDev()) log(`[CRONJOB] Cronjob checking: found ${jobs.length} to execute.`);
 	}
+	// else {
+	// 	if (IsDev()) log(`[CRONJOB] Cronjob checking: found ${jobs.length} to execute.`);
+	// }
 };

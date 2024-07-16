@@ -169,6 +169,11 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	namespaceYaml?: string;
 
 	/**
+	 * Name of the deployment
+	 */
+	deploymentName?: string;
+
+	/**
 	 * Content of deployment YAML file
 	 */
 	deploymentYaml?: string;

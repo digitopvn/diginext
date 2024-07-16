@@ -4,7 +4,7 @@ import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { isArray, isBoolean, isEmpty, isUndefined } from "lodash";
 import type { QuerySelector } from "mongoose";
 
-import type { ICluster, IProject, IUser, IWorkspace } from "@/entities";
+import type { IBuild, ICluster, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
 import type { DeployEnvironment, IQueryOptions, KubeDeployment } from "@/interfaces";
 import type { DeployEnvironmentData } from "@/interfaces/AppInterfaces";
@@ -24,6 +24,7 @@ import { currentVersion } from "@/plugins";
 import { allElementsAreEqual } from "@/plugins/array";
 import { formatEnvVars } from "@/plugins/env-var";
 import { isValidKubernetesMemoryFormat } from "@/plugins/k8s-helper";
+import { MongoDB } from "@/plugins/mongodb";
 import { containsSpecialCharacters } from "@/plugins/string";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
@@ -560,6 +561,12 @@ export class DeployEnvironmentService {
 		// validate
 		const deployEnvironment = app.deployEnvironment[env];
 		if (!deployEnvironment) throw new Error(`Deploy environment "${env}" not found.`);
+		if (!deployEnvironment.buildId) throw new Error(`This deploy environment (${env}) hasn't been built before.`);
+		if (!deployEnvironment.cluster || !deployEnvironment.latestRelease)
+			throw new Error(`This deploy environment (${env}) hasn't been deployed to any clusters.`);
+
+		// verify target cluster
+		if (!cluster.isVerified || !cluster.contextName) throw new Error(`Cluster "${cluster.slug}" hasn't been verified.`);
 
 		// delete app on previous cluster (if needed)
 		if (options.deleteAppOnPreviousCluster) {
@@ -572,22 +579,33 @@ export class DeployEnvironmentService {
 		// update new cluster slug:
 		app = await appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.cluster`]: cluster.slug });
 
-		const { BuildService } = await import("./index");
-		const { default: DeployService } = await import("./DeployService");
-		const buildSvc = new BuildService(this.ownership);
-		const deploySvc = new DeployService(this.ownership);
+		// get latest release
+		const { ReleaseService } = await import("./index");
+		const releaseSvc = new ReleaseService(this.ownership);
+		const release = await releaseSvc.findOne({ _id: deployEnvironment.latestRelease }, { populate: ["build"] });
 
-		// deploy to new cluster
-		const latestBuild = await buildSvc.findOne({ slug: app.latestBuild });
-		const { build, release } = await deploySvc.deployBuild(latestBuild, {
-			env,
-			owner: options.user,
-			workspace: options.workspace,
-			forceRollOut: true,
-		});
+		if (!release.build) throw new Error(`Build not found in this release.`);
+		const build = release.build as IBuild;
+
+		// clone to new release with new cluster slug:
+		const newReleaseData = { ...release, cluster: cluster.slug };
+		delete newReleaseData._id;
+		delete (newReleaseData as any).id;
+		delete newReleaseData.slug;
+		delete newReleaseData.createdAt;
+		delete newReleaseData.updatedAt;
+		delete newReleaseData.owner;
+		delete newReleaseData.ownerSlug;
+		console.log("newReleaseData :>> ", newReleaseData);
+		const newRelease = await releaseSvc.create(newReleaseData);
+		if (!newRelease) throw new Error(`Unable to create new release.`);
+
+		// roll out new release:
+		const rolloutResult = await ClusterManager.rolloutV2(MongoDB.toString(newRelease._id));
+		if (rolloutResult.error) throw new Error(rolloutResult.error);
 
 		// return
-		return { build, release, app };
+		return { build, release: newRelease, app };
 	}
 
 	/**

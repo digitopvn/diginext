@@ -20,22 +20,23 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildTag: str
 	const startTime = dayjs();
 
 	const deployedEnvironment = await getDeployEvironmentByApp(app, env);
-	const { imageURL: IMAGE_NAME, buildId } = deployedEnvironment;
+	const { imageURL: imageURL, buildId } = deployedEnvironment;
 
-	if (!buildTag) throw new Error(`Build not found due to "undefined" build number (app: "${app.slug}" - env: "${env}")`);
-	if (!buildId) throw new Error(`Build not found due to "undefined" build id (app: "${app.slug}" - env: "${env}")`);
+	if (!buildTag && !imageURL) throw new Error(`Build not found due to "undefined" build number (app: "${app.slug}" - env: "${env}")`);
+	// if (!buildId) throw new Error(`Build not found due to "undefined" build id (app: "${app.slug}" - env: "${env}")`);
 
-	console.log("createReleaseFromApp() > IMAGE_NAME :>> ", IMAGE_NAME);
+	console.log("createReleaseFromApp() > buildId :>> ", buildId);
+	console.log("createReleaseFromApp() > imageURL :>> ", imageURL);
 	console.log("createReleaseFromApp() > buildTag :>> ", buildTag);
 
 	const build = await DB.findOne(
 		"build",
 		{
-			$or: [{ _id: buildId }, { image: IMAGE_NAME, tag: buildTag }],
+			$or: [{ _id: buildId }, { image: imageURL, tag: buildTag }],
 		},
 		{ order: { createdAt: -1 } }
 	);
-	if (!build) throw new Error(`Unable to create new release: build image "${IMAGE_NAME}" or id "${buildId}" not found.`);
+	if (!build) throw new Error(`Unable to create new release: build image "${imageURL}" or id "${buildId}" not found.`);
 
 	const project = await DB.findOne("project", { slug: app.projectSlug });
 	if (!project) throw new Error(`Unable to create new release: project "${app.projectSlug}" not found.`);
@@ -70,7 +71,7 @@ export const createReleaseFromApp = async (app: IApp, env: string, buildTag: str
 		env,
 		cliVersion: ownership?.cliVersion || cliVersion,
 		name: `${projectSlug}/${appSlug}:${buildTag}`,
-		image: IMAGE_NAME,
+		image: imageURL,
 		appConfig: appConfig,
 		// build status
 		branch: branch,

@@ -17,6 +17,7 @@ import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import type { GenerateDeploymentResult } from "@/modules/deploy";
 import { fetchDeploymentFromContent, generateDeployment } from "@/modules/deploy";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
+import { generateDeploymentV2 } from "@/modules/deploy/generate-deployment-v2";
 import { dxCreateDomain } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
@@ -622,7 +623,21 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// cluster
 		let cluster: ICluster | undefined;
-		if (deployEnvironmentData.cluster) cluster = await DB.findOne("cluster", { slug: deployEnvironmentData.cluster });
+		if (deployEnvironmentData.cluster) {
+			cluster = await DB.findOne("cluster", { slug: deployEnvironmentData.cluster });
+
+			// check if change cluster:
+			if (deployEnvironmentData.cluster !== currentDeployEnvData.cluster) {
+				const { DeployEnvironmentService } = await import("@/services");
+				const deployEnvSvc = new DeployEnvironmentService();
+				try {
+					await deployEnvSvc.changeCluster(app, env, cluster, { user: this.ownership.owner, workspace: this.ownership.workspace });
+				} catch (e) {
+					return respondFailure(`Unable to change cluster: ${e.message}`);
+				}
+			}
+		}
+		// no cluster changed -> get current cluster
 		if (!cluster && currentDeployEnvData.cluster) cluster = await DB.findOne("cluster", { slug: currentDeployEnvData.cluster });
 
 		// namespace
@@ -697,7 +712,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		}
 
 		// generate deployment files and apply new config
-		let deployment: GenerateDeploymentResult = await generateDeployment({
+		let deployment = await generateDeploymentV2({
 			appSlug: app.slug,
 			env,
 			username: this.user.slug,
@@ -705,13 +720,14 @@ export default class AppController extends BaseController<IApp, AppService> {
 			buildTag: buildTag,
 		});
 
-		const { endpoint, deploymentContent } = deployment;
+		const { deploymentContent } = deployment;
 
 		// update data to deploy environment:
 		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
 		serverDeployEnvironment.deploymentYaml = deploymentContent;
 		serverDeployEnvironment.updatedAt = new Date();
 		serverDeployEnvironment.lastUpdatedBy = this.user.username;
+		serverDeployEnvironment.deploymentName = deployment.deploymentName;
 
 		// Update {user}, {project}, {environment} to database before rolling out
 		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
@@ -752,21 +768,30 @@ export default class AppController extends BaseController<IApp, AppService> {
 		});
 
 		// apply deployment YAML
-		const applyResult = await ClusterManager.kubectlApplyContent(deployment.deploymentContent, { context: cluster.contextName });
-		console.log("AppController > updateDeployEnvironment() > Applied deployment yaml :>> ", applyResult);
+		try {
+			console.log("AppController > updateDeployEnvironment() > cluster :>> ", cluster.slug);
+			console.log("AppController > updateDeployEnvironment() > namespace :>> ", namespace);
+			console.log("AppController > updateDeployEnvironment() > deploymentContent :>> ", deploymentContent);
+			const applyResult = await ClusterManager.kubectlApplyContent(deploymentContent, { context: cluster.contextName });
+			console.log("AppController > updateDeployEnvironment() > Applied deployment yaml :>> ", applyResult);
 
-		// delete deprecated workloads
-		if (deprecatedWorkloads?.length > 0) {
-			const deleteResult = await Promise.all(
-				deprecatedWorkloads.map((workload) =>
-					ClusterManager.deleteDeploy(workload.metadata.name, workload.metadata.namespace, { context: cluster.contextName })
-				)
-			);
-			console.log("AppController > updateDeployEnvironment() > Deleted deprecated deployments :>> ", deleteResult);
+			// delete deprecated workloads
+			if (deprecatedWorkloads?.length > 0) {
+				const deleteResult = await Promise.all(
+					deprecatedWorkloads.map((workload) =>
+						ClusterManager.deleteDeploy(workload.metadata.name, workload.metadata.namespace, { context: cluster.contextName })
+					)
+				);
+				console.log("AppController > updateDeployEnvironment() > Deleted deprecated deployments :>> ", deleteResult);
+			}
+
+			return respondSuccess({
+				data: updatedApp.deployEnvironment[env],
+				msg: `Updated "${env.toUpperCase()}" deploy environment successfully.`,
+			});
+		} catch (e) {
+			return respondFailure(`Unable to update this deploy environment: ${e}`);
 		}
-		// }
-
-		return respondSuccess({ data: updatedApp.deployEnvironment[env] });
 	}
 
 	/**
