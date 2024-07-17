@@ -59,16 +59,27 @@ export default class UserController extends BaseController<IUser> {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/profile")
-	profile(@Queries() queryParams?: IGetQueryParams) {
-		console.log("this.user :>> ", this.user);
+	async profile(@Queries() queryParams?: IGetQueryParams) {
+		console.log("[USER_CONTROLLER] profile() > this.user :>> ", this.user);
+		if (!this.user.username) {
+			// create username from slug (if not exists)
+			await this.service.updateOne({ _id: this.user._id }, { username: this.user.slug }).catch((e) => {
+				console.error(`Unable to update "username" of this user (${this.user._id}): ${e}`);
+			});
+		}
 		return this.user ? respondSuccess({ data: this.user }) : respondFailure(`Unauthenticated.`);
 	}
 
 	@Security("api_key2")
 	@Security("jwt")
 	@Post("/")
-	create(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
-		return super.create(body);
+	async create(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
+		try {
+			const newUser = await this.service.create(body, this.options);
+			return newUser ? respondSuccess({ data: newUser }) : respondFailure(`Failed to create user.`);
+		} catch (e) {
+			return respondFailure(`Failed to create user: ${e}`);
+		}
 	}
 
 	@Security("api_key")
@@ -76,30 +87,35 @@ export default class UserController extends BaseController<IUser> {
 	@Patch("/")
 	async update(@Body() body: UserDto, @Queries() queryParams?: IPostQueryParams) {
 		// console.log("body.roles :>> ", body.roles);
-		if (body.roles) {
-			try {
-				// find list of affected users
-				const users = await this.service.find(this.filter, { populate: ["roles"] });
-				users.forEach(async (user) => {
-					if (isArray(body.roles)) {
-						await Promise.all(
-							body.roles.map((roleId) => assignRoleWithoutCheckingPermissions(MongoDB.toString(roleId), user, this.ownership))
-						);
-					} else if (MongoDB.isValidObjectId(body.roles)) {
-						const roleId = body.roles;
-						return assignRoleWithoutCheckingPermissions(MongoDB.toString(roleId), user, this.ownership);
-					}
-				});
-				delete body.roles;
-			} catch (e) {
-				return respondFailure(`Unable to update role: ${e}`);
+		try {
+			if (body.roles) {
+				try {
+					// find list of affected users
+					const users = await this.service.find(this.filter, { populate: ["roles"] });
+					users.forEach(async (user) => {
+						if (isArray(body.roles)) {
+							await Promise.all(
+								body.roles.map((roleId) => assignRoleWithoutCheckingPermissions(MongoDB.toString(roleId), user, this.ownership))
+							);
+						} else if (MongoDB.isValidObjectId(body.roles)) {
+							const roleId = body.roles;
+							return assignRoleWithoutCheckingPermissions(MongoDB.toString(roleId), user, this.ownership);
+						}
+					});
+					delete body.roles;
+				} catch (e) {
+					return respondFailure(`Unable to update role: ${e}`);
+				}
 			}
+
+			// ! [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
+			if (this.filter.owner && MongoDB.toString(this.filter.owner) === MongoDB.toString(this.user._id)) delete this.filter.owner;
+
+			const updatedUsers = await this.service.update(this.filter, body, this.options);
+			return updatedUsers && updatedUsers.length > 0 ? respondSuccess({ data: updatedUsers }) : respondFailure(`Failed to update users.`);
+		} catch (e) {
+			return respondFailure(`Failed to update users: ${e}`);
 		}
-
-		// ! [MAGIC] if the item to be updated is the current logged in user -> allow it to happen!
-		if (this.filter.owner && MongoDB.toString(this.filter.owner) === MongoDB.toString(this.user._id)) delete this.filter.owner;
-
-		return super.update(body);
 	}
 
 	@Security("api_key")

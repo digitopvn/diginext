@@ -47,6 +47,8 @@ export interface IBuild extends IBase {
 	 */
 	branch?: string;
 	cliVersion?: string;
+	serverVersion?: string;
+	serverLocation?: string;
 	createdBy?: string;
 	status?: BuildStatus;
 	deployStatus?: DeployStatus;
@@ -83,6 +85,8 @@ export const buildSchema = new Schema(
 		env: { type: String },
 		branch: { type: String },
 		cliVersion: { type: String },
+		serverVersion: { type: String },
+		serverLocation: { type: String },
 		createdBy: { type: String },
 		status: { type: String, enum: buildStatusList },
 		deployStatus: { type: String, enum: deployStatusList },

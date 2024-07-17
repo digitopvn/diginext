@@ -13,14 +13,14 @@ const controller = new BuildController();
 // TODO: add view build logs
 
 router
+	.get("/", registerController(controller), processApiRequest(controller.read.bind(controller))) // ! PUBLIC ACCESS
+	.get("/logs", registerController(controller), processApiRequest(controller.getLogs.bind(controller))) // ! PUBLIC ACCESS
 	.use(authenticate, authorize)
 	.use(registerController(controller))
-	.get("/", processApiRequest(controller.read.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
 	.delete("/", processApiRequest(controller.delete.bind(controller)))
 	// .delete("/empty", processApiRequest(controller.empty.bind(controller)))
-	.get("/logs", processApiRequest(controller.getLogs.bind(controller)))
 	.post("/start", processApiRequest(controller.startBuild.bind(controller)))
 	.patch("/stop", processApiRequest(controller.stopBuild.bind(controller)))
 	.post("/rerun", processApiRequest(controller.rerunBuild.bind(controller)))

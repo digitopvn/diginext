@@ -33,6 +33,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		region,
 		zone,
 		registry,
+		isDebugging = false,
 	} = options;
 
 	const { app, project } = await askForProjectAndApp(options.targetDirectory, options);
@@ -125,6 +126,8 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 			deployEnvironment.tlsSecret = "";
 		}
 	}
+
+	if (isDebugging) console.log("parseOptionsToAppConfig() > deployEnvironment :>> ", deployEnvironment);
 
 	appConfig.deployEnvironment[env] = deployEnvironment;
 

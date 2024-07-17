@@ -1,4 +1,4 @@
-# DIGINEXT
+# DXUP
 
 ### **A developer-focused platform for app deployment & centralized cloud resource management.**
 
@@ -6,12 +6,12 @@ https://dxup.dev
 
 ***Developers should not be frustrated by deploying apps to the infrastructure, or bothering the DevOps engineers to help deploying it, they should fully focus on developing apps, they don't need to understand the servers, the domains, or infrastructure related stuffs.***
 
-> *Focus on building your apps, shipping fast, and shinning, and leave your cloud infrastructure to Diginext.*
+> *Focus on building your apps, shipping fast, and shinning, and leave your cloud infrastructure to DXUP.*
 
 > `dx` also means **Developer Experience**, and this is my number one goal - create the best experience for developers - let's make coding great again.
 
 <p align="center">
-  <img src="dx-banner.png?raw=true" alt="Diginext Build Server & CLI">
+  <img src="dx-banner.png?raw=true" alt="DXUP Build Server & CLI">
 </p>
 
 ## Features
@@ -74,7 +74,7 @@ https://dxup.dev
 
 - [I turn my company’s PC into my own “Vercel-like” platform](https://dev.to/mrgoonie/i-turn-my-companys-pc-into-my-own-vercel-like-platform-351o)
 - [Kubernetes for the poor](https://dev.to/mrgoonie/kubernetes-for-the-poor-2ne)
-- [Speed test building Next.js T3 App with Github Actions, Circle CI, Vercel & Diginext](https://dev.to/mrgoonie/speed-test-building-nextjs-t3-app-with-github-actions-circle-ci-vercel-diginext-473i)
+- [Speed test building Next.js T3 App with Github Actions, Circle CI, Vercel & DXUP](https://dev.to/mrgoonie/speed-test-building-nextjs-t3-app-with-github-actions-circle-ci-vercel-diginext-473i)
 - [Developer-First Platforms - Overcoming K8S Complexity](https://dev.to/mrgoonie/developer-first-platforms-overcoming-k8s-complexity-1lf9)
 - [“GitDevSecOps”](https://dev.to/mrgoonie/gitdevsecops-49gp)
 
@@ -86,7 +86,7 @@ https://dxup.dev
 
 ## Getting Started
 
-- [Diginext website](https://dxup.dev/?ref=github)
+- [DXUP website](https://dxup.dev/?ref=github)
 - [Official Workspace](https://app.dxup.dev/?ref=github)
 - [Documentation](https://docs.dxup.dev/?ref=github)
 
@@ -104,13 +104,13 @@ npm i @topgroup/diginext --location=global
 
 ---
 
-Login to your Diginext workspace:
+Login to your DXUP workspace:
 
 ```bash
 dx login 
 # is similar with:
 # $ dx login https://app.dxup.dev
-# in case you hosted Diginext yourself:
+# in case you hosted DXUP server yourself:
 # $ dx login https://<your-diginext-workspace-domain>
 cd /path/to/your/app
 dx init
@@ -161,7 +161,7 @@ Available frameworks:
 ✓ Static website with NGINX
 ✓ More to come!
 
-## Running Diginext platform on your own infrastructure
+## Running DXUP platform on your own infrastructure
 
 **Requirements:**
 - A server: any computers with Ubuntu, Debian or CentOS
@@ -178,7 +178,7 @@ curl -sfL https://dxup.dev/install/microk8s | sh -
 
 ### 2. With Docker Engine
 
--   **Diginext** requires a MongoDB database to run the build server.
+-   **DXUP** requires a MongoDB database to run the build server.
 
 For fastest installation, I recommend to use our `docker-compose.yaml`, you will need to fill in some environment variables:
 

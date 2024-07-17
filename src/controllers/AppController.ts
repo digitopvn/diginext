@@ -243,6 +243,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("jwt")
 	@Delete("/")
 	async delete(@Queries() queryParams?: IDeleteQueryParams) {
+		const messages: string[] = [];
 		const app = await this.service.findOne(this.filter, { populate: ["project"] });
 
 		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
@@ -254,7 +255,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
 				// take down environment
 				if (!isEmpty(deployEnvironment)) {
-					await deployEnvSvc.takeDownDeployEnvironment(app, env);
+					await deployEnvSvc.takeDownDeployEnvironment(app, env).catch((e) => {
+						console.error(`deleteDeployEnvironment() :>>`, e);
+						messages.push(`Unable to take down this deploy environment: ${e}`);
+					});
 				}
 			});
 
@@ -268,7 +272,13 @@ export default class AppController extends BaseController<IApp, AppService> {
 			},
 			{ raw: true }
 		);
-		return super.delete();
+
+		try {
+			const deleteRes = await this.service.delete(this.filter);
+			return respondSuccess({ data: deleteRes, msg: messages });
+		} catch (e) {
+			return respondFailure(`Unable to delete this app: ${e}`);
+		}
 	}
 
 	/**
@@ -823,6 +833,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		}
 	) {
 		let result = { status: 1, data: {}, messages: [] } as ResponseData & { data: IApp };
+		const messages: string[] = [];
 
 		// input validation
 		let { _id, id, slug, env } = body;
@@ -840,7 +851,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// take down the deploy environment
 		const { DeployEnvironmentService } = await import("@/services");
 		const deployEnvSvc = new DeployEnvironmentService();
-		await deployEnvSvc.takeDownDeployEnvironment(app, env.toString());
+		await deployEnvSvc.takeDownDeployEnvironment(app, env.toString()).catch((e) => {
+			console.error(`deleteDeployEnvironment() :>>`, e);
+			messages.push(`Unable to take down before deleting this deploy environment: ${e}`);
+		});
 
 		// update the app (delete the deploy environment)
 		const updatedApp = await this.service.updateOne(
@@ -854,7 +868,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (this.options.isDebugging) log(`[BaseController] deleted Environment`, { appFilter }, ` :>>`, { updatedApp });
 
 		// respond the results
-		return respondSuccess({ data: updatedApp });
+		return respondSuccess({ data: updatedApp, msg: messages });
 	}
 
 	/**

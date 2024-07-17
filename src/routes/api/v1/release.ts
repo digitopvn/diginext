@@ -17,9 +17,9 @@ const controller = new ReleaseController();
  */
 
 router
+	.get("/", registerController(controller), processApiRequest(controller.read.bind(controller))) // ! PUBLIC ACCESS
 	.use(authenticate, authorize)
 	.use(registerController(controller))
-	.get("/", processApiRequest(controller.read.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.post("/from-app", processApiRequest(controller.createFromApp.bind(controller)))
 	.post("/from-build", processApiRequest(controller.createFromBuild.bind(controller)))
