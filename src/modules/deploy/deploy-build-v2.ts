@@ -123,6 +123,16 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		console.log("markBuildAndReleaseAsFailed() > _release :>> ", _release);
 	};
 
+	// stop deployment if release is undefined
+	if (!release) {
+		// update "deployStatus" in a build & a release
+		await markBuildAndReleaseAsFailed().catch(console.error);
+
+		const msg = `❌ Unable to find release for build "${buildTag}".`;
+		sendLog({ SOCKET_ROOM, message: msg, type: "error", action: "end" });
+		throw new Error(msg);
+	}
+
 	// authenticate cluster & switch to that cluster's context
 	try {
 		await ClusterManager.authCluster(cluster, { ownership: { owner, workspace } });

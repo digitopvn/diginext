@@ -29,12 +29,18 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 	// console.log("project :>> ", project);
 
 	// get deployment data
-	const { branch, image, tag, num: buildNumber, message: buildMessage, cliVersion } = build;
+	const { branch, image, tag, num, message: buildMessage, cliVersion } = build;
 	const { slug: projectSlug } = project;
 	const { owner, workspace, slug: appSlug } = app;
 	const { slug: workspaceSlug, _id: workspaceId } = workspace as IWorkspace;
 
 	const buildTag = tag ?? image.split(":")[1];
+	const buildNumber =
+		typeof num === "number"
+			? num
+			: typeof app.buildNumber === "number"
+			? app.buildNumber + 1
+			: (await DB.count("build", { app: app._id }).catch((e) => 0)) + 1;
 
 	const deployedEnvironment = await getDeployEvironmentByApp(app, env || "dev");
 	// console.log(`deployedEnvironment > ${env} :>>`, deployedEnvironment);
@@ -106,17 +112,17 @@ export const createReleaseFromBuild = async (build: IBuild, env?: string, owners
 		workspaceSlug: workspaceSlug,
 	} as IRelease;
 
-	if (env === "prod") {
-		// prerelease
-		data.preYaml = prereleaseDeploymentData.deployContent;
-		data.prereleaseUrl = prereleaseDeploymentData.domains[0];
-	}
+	// if (env === "prod") {
+	// 	// prerelease
+	// 	data.preYaml = prereleaseDeploymentData.deployContent;
+	// 	data.prereleaseUrl = prereleaseDeploymentData.domains[0];
+	// }
 
 	// create new release in the database
 	const newRelease = DB.create("release", data);
 
 	// update "deployStatus" in a build
-	await DB.update("build", { _id: build._id }, { deployStatus: "in_progress" }).catch(console.error);
+	await DB.update("build", { _id: build._id }, { num: buildNumber, deployStatus: "in_progress" }).catch(console.error);
 
 	// log("Created new Release successfully:", newRelease);
 

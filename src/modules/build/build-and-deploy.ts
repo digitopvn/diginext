@@ -38,6 +38,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 
 	const { build, startTime, SOCKET_ROOM } = buildInfo;
 	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > buildTag :>> ${build.tag}` });
+	sendLog({ SOCKET_ROOM, message: `[BUILD_AND_DEPLOY] Finished building > buildNumber :>> ${build.num}` });
 
 	if (!build) throw new Error(`Unable to build "${buildParams.appSlug}" app (${buildParams.env}).`);
 

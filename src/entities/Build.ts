@@ -75,7 +75,7 @@ export const buildSchema = new Schema(
 		name: { type: String },
 		image: { type: String },
 		tag: { type: String },
-		num: { type: String },
+		num: { type: Number },
 		startTime: { type: Date },
 		endTime: { type: Date },
 		duration: { type: Number },
