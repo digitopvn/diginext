@@ -1,3 +1,13 @@
+## [3.34.12](https://github.com/digitopvn/diginext/compare/v3.34.11...v3.34.12) (2024-07-17)
+
+
+### Bug Fixes
+
+* **readme:** change "diginext" to "dxup" ([5205230](https://github.com/digitopvn/diginext/commit/5205230ff594aa209cc24a53e73348095de380e2))
+* **server,admin:** build logs access to public, new dxup logo ([7d80e5f](https://github.com/digitopvn/diginext/commit/7d80e5f53aa411e34953e22a2f6f528857e4064c))
+* **server,cli:** save server version and location to builds ([83b3239](https://github.com/digitopvn/diginext/commit/83b32399dd654e68495a88f2ec16e591f941e562))
+* **server:** catch crash issue when deleting apps ([76d13da](https://github.com/digitopvn/diginext/commit/76d13da93b72ce40c04f5306778d646d6196eced))
+
 ## [3.34.11](https://github.com/digitopvn/diginext/compare/v3.34.10...v3.34.11) (2024-07-17)
 
 
