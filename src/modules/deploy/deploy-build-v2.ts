@@ -123,6 +123,16 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		console.log("markBuildAndReleaseAsFailed() > _release :>> ", _release);
 	};
 
+	// stop deployment if release is undefined
+	if (!release) {
+		// update "deployStatus" in a build & a release
+		await markBuildAndReleaseAsFailed().catch(console.error);
+
+		const msg = `❌ Unable to find release for build "${buildTag}".`;
+		sendLog({ SOCKET_ROOM, message: msg, type: "error", action: "end" });
+		throw new Error(msg);
+	}
+
 	// authenticate cluster & switch to that cluster's context
 	try {
 		await ClusterManager.authCluster(cluster, { ownership: { owner, workspace } });
@@ -410,7 +420,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	 */
 	let deployment: GenerateDeploymentV2Result;
 	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generating the deployment files on server...` });
-	console.log("build.image :>> ", build.image);
+	console.log("deployBuildV2() > generateDeploymentV2() > build.image :>> ", build.image);
 	try {
 		deployment = await generateDeploymentV2({
 			appSlug,
@@ -491,6 +501,16 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 			release: releaseId,
 		});
 	}
+
+	// update project "lastUpdatedBy"
+	await DB.updateOne(
+		"project",
+		{ _id: project._id },
+		{
+			lastUpdatedBy: username,
+			latestBuild: build._id,
+		}
+	).catch(console.error);
 
 	// process deploy build to cluster
 	if (deployInBackground) {
