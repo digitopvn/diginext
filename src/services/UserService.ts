@@ -24,21 +24,9 @@ export class UserService extends BaseService<IUser> {
 	}
 
 	async create(data, options: IQueryOptions = {}) {
-		if (!data.username) data.username = data.slug;
-		// create user with DX Site
-		// console.log("INPUT DATA USER", data);
-		// const createUserRes = await dxCreateUser({
-		// 	email: data.email,
-		// 	name: data.name,
-		// 	password: data?.password,
-		// 	isActive: data.active === undefined ? true : data.active,
-		// 	providers: data?.providers,
-		// 	username: data?.displayName,
-		// 	image: data?.image,
-		// });
-		// console.log("RES DX SITE", createUserRes);
-		// if (!createUserRes?.status) throw new Error(`Create user fail.`);
-		return super.create(data, options);
+		let newUser = await super.create(data, options);
+		if (!newUser.username) newUser = await this.updateOne({ _id: newUser._id }, { username: newUser.slug });
+		return newUser;
 	}
 
 	async update(filter: IQueryFilter<IUser>, data: IUser | any, options?: IQueryOptions) {

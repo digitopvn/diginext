@@ -10,7 +10,7 @@ import { Config, isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, IProject, IUser, IWebhook, IWorkspace } from "@/entities";
 import type { BuildPlatform, BuildStatus, DeployStatus } from "@/interfaces/SystemTypes";
-import { getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
+import { currentVersion, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
 import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
 import { getIO, socketIO } from "@/server";
@@ -94,9 +94,19 @@ export type StartBuildParams = {
 	args?: { name: string; value: string }[];
 
 	/**
-	 * Diginext CLI version of client user
+	 * CLI version of client user
 	 */
 	cliVersion?: string;
+
+	/**
+	 * Current DXUP server version
+	 */
+	serverVersion?: string;
+
+	/**
+	 * Current DXUP server location
+	 */
+	serverLocation?: string;
 
 	/**
 	 * Enable debug mode
@@ -206,6 +216,8 @@ export async function startBuild(
 		shouldDeploy = false,
 		isDebugging = false,
 		cliVersion,
+		serverVersion = currentVersion(),
+		serverLocation = Config.LOCATION,
 	} = params;
 
 	// validate
@@ -321,7 +333,6 @@ export async function startBuild(
 		appSlug,
 		branch: gitBranch,
 		logs: logger?.content,
-		cliVersion,
 		registry: registry._id,
 		app: app._id,
 		project: project._id,
@@ -329,6 +340,10 @@ export async function startBuild(
 		ownerSlug: owner.slug,
 		workspace: workspace._id,
 		workspaceSlug: workspace.slug,
+		// versions
+		cliVersion,
+		serverVersion,
+		serverLocation,
 	} as IBuild;
 
 	const newBuild = await DB.create("build", buildData);

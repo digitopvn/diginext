@@ -29,6 +29,7 @@ import { execInitApp } from "./modules/apps/init-app";
 import { viewAppLogs } from "./modules/apps/view-logs";
 import { requestBuild } from "./modules/build/request-build";
 import { startBuildAndRun } from "./modules/build/start-build-and-run";
+import { showClientInfo } from "./modules/cli/show-cli-info";
 import { updateCli } from "./modules/cli/update-cli";
 import { execCluster } from "./modules/cluster/cli-cluster";
 import { execDotenvCommand } from "./modules/deploy/dotenv-exec";
@@ -37,7 +38,6 @@ import { parseOptionsToAppConfig } from "./modules/deploy/parse-options-to-app-c
 import { requestDeploy } from "./modules/deploy/request-deploy";
 import { requestDeployImage } from "./modules/deploy/request-deploy-image";
 import { execKubectl } from "./modules/k8s/kubectl-cli";
-import { showServerInfo } from "./modules/server/server-info";
 import { testCommand } from "./modules/test-command";
 
 /**
@@ -55,7 +55,7 @@ export async function processCLI(options?: InputOptions) {
 
 	// debugging info
 	if (options.isDebugging) {
-		await showServerInfo(options);
+		await showClientInfo(options);
 		console.log("CLI options :>> ", options);
 	}
 
@@ -65,7 +65,7 @@ export async function processCLI(options?: InputOptions) {
 			break;
 
 		case "info":
-			await showServerInfo(options);
+			await showClientInfo(options);
 			break;
 
 		case "profile":

@@ -12,6 +12,7 @@ import { currentVersion, resolveDockerfilePath, resolveFilePath } from "@/plugin
 
 import type { StartBuildParams } from "../build";
 import { generateBuildTagBySourceDir } from "../build/generate-build-tag";
+import { getServerInfo } from "../cli/get-server-info";
 import { isUnstagedFiles } from "../git/git-utils";
 import { askAiGenerateDockerfile } from "./ask-ai-generate-dockerfile";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
@@ -117,6 +118,11 @@ export async function requestDeploy(options: InputOptions) {
 	options.appSlug = appConfig.slug;
 	options.slug = appConfig.slug;
 
+	/**
+	 * [6] Get server info
+	 */
+	const { version: serverVersion, location: serverLocation } = await getServerInfo();
+
 	// Make an API to request server to build:
 	const requestDeployData: { buildParams: StartBuildParams; deployParams: DeployBuildParams } = {
 		buildParams: {
@@ -128,6 +134,8 @@ export async function requestDeploy(options: InputOptions) {
 			registrySlug: deployEnvironment.registry,
 			appSlug: options.appSlug,
 			cliVersion: currentVersion(),
+			serverVersion,
+			serverLocation,
 		},
 		deployParams: {
 			env,
