@@ -26,6 +26,9 @@ export async function requestDeploy(options: InputOptions) {
 		logError(`This command is only available at CLIENT MODE.`);
 		return;
 	}
+
+	if (!options) return logError(`Failed to request deploying app: Missing CLI options.`);
+
 	const { DB } = await import("@/modules/api/DB");
 
 	if (!options.targetDirectory) options.targetDirectory = process.cwd();
@@ -78,7 +81,7 @@ export async function requestDeploy(options: InputOptions) {
 	if (!appConfig) return;
 
 	if (options.isDebugging) {
-		console.log("Request deploy > app config :>>");
+		console.log("requestDeploy() > appConfig :>>");
 		console.dir(appConfig, { depth: 10 });
 	}
 
@@ -87,16 +90,16 @@ export async function requestDeploy(options: InputOptions) {
 	 *     then upload local app config to server.
 	 */
 	const deployInfo = await askForDeployEnvironmentInfo(options);
-	if (options.isDebugging) console.log("deployInfo :>> ", deployInfo);
+	if (options.isDebugging) console.log("requestDeploy() > askForDeployEnvironmentInfo() :>> ", deployInfo);
 	if (!deployInfo.appConfig || !deployInfo.deployEnvironment) return;
 
 	const { deployEnvironment, appConfig: validatedAppConfig } = deployInfo;
 	appConfig = validatedAppConfig;
 
 	if (options.isDebugging) {
-		console.log("requestDeploy >  app config :>>");
+		console.log("requestDeploy() > appConfig :>>");
 		console.dir(appConfig, { depth: 10 });
-		console.log("requestDeploy > deployEnvironment :>>");
+		console.log("requestDeploy() > deployEnvironment :>>");
 		console.dir(deployEnvironment, { depth: 10 });
 	}
 
@@ -105,6 +108,7 @@ export async function requestDeploy(options: InputOptions) {
 	 */
 	const { imageURL } = deployEnvironment;
 	const tagInfo = await generateBuildTagBySourceDir(options.targetDirectory, { branch: options.gitBranch });
+	if (options.isDebugging) console.log("requestDeploy() > generateBuildTagBySourceDir() :>> ", tagInfo);
 	options.buildTag = tagInfo.tag;
 	options.buildImage = `${imageURL}:${options.buildTag}`;
 	options.SOCKET_ROOM = `${appConfig.slug}-${options.buildTag}`;
@@ -122,6 +126,7 @@ export async function requestDeploy(options: InputOptions) {
 	 * [6] Get server info
 	 */
 	const { version: serverVersion, location: serverLocation } = await getServerInfo();
+	if (options.isDebugging) console.log("requestDeploy() > getServerInfo() :>> ", { serverVersion, serverLocation });
 
 	// Make an API to request server to build:
 	const requestDeployData: { buildParams: StartBuildParams; deployParams: DeployBuildParams } = {

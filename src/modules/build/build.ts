@@ -633,7 +633,7 @@ export async function startBuild(
 				shouldPush: true,
 				onBuilding: (message) => sendLog({ SOCKET_ROOM, message }),
 			})
-			.then(async () => {
+			.then(async (_imageURL) => {
 				// send notification message to dashboard client
 				sendLog({
 					SOCKET_ROOM,
@@ -641,11 +641,12 @@ export async function startBuild(
 				});
 
 				// update build status as "success"
-				await updateBuildStatus(newBuild, "success", { env });
+				const finishedBuild = await DB.findOne("build", { name: _imageURL });
+				await updateBuildStatus(finishedBuild, "success", { env });
 
 				await notifyClientBuildSuccess();
 
-				if (options?.onSucceed) options?.onSucceed(newBuild);
+				if (options?.onSucceed) options?.onSucceed(finishedBuild);
 			})
 			.catch(async (e) => {
 				sendLog({ SOCKET_ROOM, message: e.message, type: "error", action: "end" });
