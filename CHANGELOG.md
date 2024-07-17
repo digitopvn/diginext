@@ -1,3 +1,11 @@
+## [3.34.11](https://github.com/digitopvn/diginext/compare/v3.34.10...v3.34.11) (2024-07-17)
+
+
+### Bug Fixes
+
+* **server:** issue of create release failed because build number is string ([fad8ccf](https://github.com/digitopvn/diginext/commit/fad8ccf861f99726e949af270850f5e45c23537e))
+* **server:** update project when promote deploy env ([8f77d38](https://github.com/digitopvn/diginext/commit/8f77d38722b61052f93457f547fe458fac6759b2))
+
 ## [3.34.10](https://github.com/digitopvn/diginext/compare/v3.34.9...v3.34.10) (2024-07-16)
 
 
