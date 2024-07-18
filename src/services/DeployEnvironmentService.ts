@@ -17,7 +17,7 @@ import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import type { GenerateDeploymentResult } from "@/modules/deploy";
 import { generateDeployment } from "@/modules/deploy";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
-import { dxCreateDomain } from "@/modules/diginext/dx-domain";
+import { dxCreateDomain, dxUpdateDomain } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
@@ -603,6 +603,18 @@ export class DeployEnvironmentService {
 		// roll out new release:
 		const rolloutResult = await ClusterManager.rolloutV2(MongoDB.toString(newRelease._id));
 		if (rolloutResult.error) throw new Error(rolloutResult.error);
+
+		// change DXUP domain record (if any)
+		if (deployEnvironment.domains && deployEnvironment.domains.filter((domain) => domain.indexOf(".diginext.site") > -1).length > 0) {
+			if (this.workspace && this.workspace.dx_key) {
+				for (const domain of deployEnvironment.domains.filter((_domain) => _domain.indexOf(".diginext.site") > -1)) {
+					const subdomain = domain.replace(".diginext.site", "");
+					dxUpdateDomain({ subdomain, data: cluster.primaryIP }, this.workspace.dx_key).catch(console.error);
+				}
+			} else {
+				console.error("DeployEnvironmentService > changeCluster() > Update domain A record data > No WORKSPACE or DX_KEY found.");
+			}
+		}
 
 		// return
 		return { build, release: newRelease, app };
