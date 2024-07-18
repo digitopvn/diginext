@@ -13,11 +13,49 @@ export type CreateDiginextDomainParams = {
 	data: string;
 };
 
+export type UpdateDiginextDomainParams = {
+	/**
+	 * Subdomain name
+	 * @example myworkspace, yourworkspace, ourteam
+	 */
+	subdomain: string;
+	/**
+	 * Value of "A" record
+	 * @example 192.168.127.12
+	 */
+	data: string;
+};
+
 export type CreateDiginextDomainResponse = ResponseData & {
 	data: { domain: string; domain_record: string };
+};
+
+export type UpdateDiginextDomainResponse = ResponseData & {
+	data: {
+		id: string;
+		/**
+		 * Subdomain name
+		 * @example myworkspace, yourworkspace, ourteam
+		 */
+		name: string;
+		/**
+		 * Record type (A, TXT, CNAME, MX,...)
+		 */
+		type: string;
+		/**
+		 * Value of "A" record
+		 * @example 192.168.127.12
+		 */
+		data: string;
+	};
 };
 
 export async function dxCreateDomain(params: CreateDiginextDomainParams, dxKey: string) {
 	if (IsTest()) return { status: 1, data: { domain: `${params.name}.${DIGINEXT_DOMAIN}`, domain_record: "" } } as CreateDiginextDomainResponse;
 	return dxApi<CreateDiginextDomainResponse>({ url: "/domains/create", data: params, method: "POST", dxKey });
+}
+
+export async function dxUpdateDomain(params: UpdateDiginextDomainParams, dxKey: string) {
+	if (IsTest()) return { status: 1, data: { domain: `${params.subdomain}.${DIGINEXT_DOMAIN}`, domain_record: "" } } as CreateDiginextDomainResponse;
+	return dxApi<UpdateDiginextDomainResponse>({ url: "/domains", data: params, method: "PATCH", dxKey });
 }

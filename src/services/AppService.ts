@@ -215,7 +215,7 @@ export class AppService extends BaseService<IApp> {
 		if (existingApp) {
 			// [DANGEROUS] delete existing app when `--force` is specified:
 			if (options?.force) {
-				await this.softDelete({ "git.repoSSH": newRepoSSH, workspace: workspace._id });
+				await this.delete({ "git.repoSSH": newRepoSSH, workspace: workspace._id });
 			} else {
 				if (options?.returnExisting) return existingApp;
 				throw new Error(`Unable to import: app was existed with name "${existingApp.slug}" (Project: "${project.name}").`);
