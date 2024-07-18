@@ -94,7 +94,7 @@ export async function requestBuild(options: InputOptions) {
 
 	if (options.isDebugging) console.log("options.buildTag :>> ", options.buildTag);
 
-	const SOCKET_ROOM = `${app.slug}-${options.buildTag}`;
+	const SOCKET_ROOM = `${project.slug}_${app.slug}_${options.buildTag}`;
 
 	/**
 	 * Stage, commit & push configuration files (dx.json) to GIT repository:

@@ -66,9 +66,9 @@ export default class DeployService {
 		buildParams.user = author;
 
 		if (buildParams.cliVersion) {
-			const breakingChangeVersionCli = buildParams.cliVersion.split(".")[0];
+			const breakingChangeVersionCli = buildParams.cliVersion.split(".")[1];
 			const serverVersion = currentVersion();
-			const breakingChangeVersionServer = serverVersion.split(".")[0];
+			const breakingChangeVersionServer = serverVersion.split(".")[1];
 
 			if (breakingChangeVersionCli != breakingChangeVersionServer) {
 				throw new Error(
@@ -85,7 +85,7 @@ export default class DeployService {
 
 		const { appSlug, buildTag } = buildParams;
 		const buildServerUrl = Config.BASE_URL;
-		const SOCKET_ROOM = `${appSlug}-${buildTag}`;
+		const SOCKET_ROOM = `${app.projectSlug}_${appSlug}_${buildTag}`;
 		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}&env=${deployParams.env}`;
 
 		return { logURL };

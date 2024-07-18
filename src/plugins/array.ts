@@ -35,6 +35,18 @@ export function filterUniqueItemWithCondition(array: any[], uniqueField: string,
 }
 
 /**
+ * Create array of unique strings based on a given array of strings.
+ * @example
+ * const array = ["1", "2", "1"];
+ * console.log(uniqueStrings(array)); // Should log `["1", "2"]`
+ * @param array - Input array
+ * @returns {string[]}
+ */
+export function uniqueStrings(array: string[]) {
+	return [...new Set(array)];
+}
+
+/**
  * Check whether all elements in a single array are the same.
  *
  * @example

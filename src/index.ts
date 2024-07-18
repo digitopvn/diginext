@@ -36,7 +36,6 @@ import { execDotenvCommand } from "./modules/deploy/dotenv-exec";
 import { execRollOut } from "./modules/deploy/exec-rollout";
 import { parseOptionsToAppConfig } from "./modules/deploy/parse-options-to-app-config";
 import { requestDeploy } from "./modules/deploy/request-deploy";
-import { requestDeployImage } from "./modules/deploy/request-deploy-image";
 import { execKubectl } from "./modules/k8s/kubectl-cli";
 import { testCommand } from "./modules/test-command";
 
@@ -219,21 +218,16 @@ export async function processCLI(options?: InputOptions) {
 		case "up":
 		case "deploy":
 			await cliAuthenticate(options);
-			if (options.secondAction) {
-				// deploy from image url
-				await requestDeployImage(options.secondAction, options);
-			} else {
-				// deploy from source
-				if (options.envs.length > 1) {
-					// deploy to multiple deploy envs
-					for (const _env of options.envs) {
-						options.env = _env;
-						await requestDeploy(options);
-					}
-				} else {
-					// deploy to single deploy env
+			// request server to build & deploy from source
+			if (options.envs.length > 1) {
+				// deploy to multiple deploy envs
+				for (const _env of options.envs) {
+					options.env = _env;
 					await requestDeploy(options);
 				}
+			} else {
+				// deploy to single deploy env
+				await requestDeploy(options);
 			}
 			return;
 

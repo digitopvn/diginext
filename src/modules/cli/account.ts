@@ -72,7 +72,8 @@ export const cliLogin = async (options: CliLoginOptions) => {
 		logError(`Please provide your build server URL: "dx login <workspace_url>" or "dx login --help". Eg. https://build.example.com`);
 		return;
 	}
-	if (!buildServerUrl.startsWith("http")) buildServerUrl = `https://${buildServerUrl}`;
+	if (!buildServerUrl.startsWith("http"))
+		buildServerUrl = buildServerUrl.indexOf("localhost") > -1 ? `http://${buildServerUrl}` : `https://${buildServerUrl}`;
 
 	const tokenDisplayUrl = `${buildServerUrl}/cli`;
 	const cliConfig = saveCliConfig({

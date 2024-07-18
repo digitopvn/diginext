@@ -71,7 +71,7 @@ export interface EntityConstructor {
 }
 
 export const baseSchemaDefinitions = {
-	slug: { type: String },
+	slug: { type: String, unique: true },
 	active: { type: Boolean, default: true },
 	public: { type: Boolean, default: true },
 	metadata: { type: Object },

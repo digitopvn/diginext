@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import * as fs from "fs";
 import cronjob from "node-cron";
 
@@ -5,21 +6,12 @@ import { isDevMode, IsTest } from "@/app.config";
 import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
-import { migrateAllFrameworks } from "@/migration/migrate-all-frameworks";
-import { migrateAllGitProviders } from "@/migration/migrate-all-git-providers";
-import { migrateAllRecords } from "@/migration/migrate-all-records";
-import { migrateAllRoles } from "@/migration/migrate-all-roles";
-import { migrateServiceAccountAndApiKey } from "@/migration/migrate-all-sa-and-api-key";
-import { migrateAllUsers } from "@/migration/migrate-all-users";
-import { migrateAllAppEnvironment } from "@/migration/migrate-app-environment";
-import { migrateDefaultServiceAccountAndApiKeyUser } from "@/migration/migrate-service-account";
-import { connectRegistry } from "@/modules/registry/connect-registry";
-import { execCmd, wait } from "@/plugins";
+import { execCmd } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
 import { seedDefaultProjects } from "@/seeds/seed-projects";
 import { seedSystemInitialData } from "@/seeds/seed-system";
 import { setServerStatus } from "@/server";
-import { ContainerRegistryService, WorkspaceService } from "@/services";
+import { WorkspaceService } from "@/services";
 
 import { findAndRunCronjob } from "../cronjob/find-and-run-job";
 import { markLongRunningBuildAndReleaseAsFailed } from "../deploy/mark-long-build-release-as-failed";
@@ -34,7 +26,8 @@ import { markLongRunningBuildAndReleaseAsFailed } from "../deploy/mark-long-buil
  * - Seed some initial data
  */
 export async function startupScripts() {
-	console.log(`[DIGINEXT] Server is initializing...`);
+	console.log(`---------------------------------`);
+	console.log(chalk.green(`[SYSTEM]`), `Server is initializing...`);
 
 	// config dir
 	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);
@@ -80,17 +73,17 @@ export async function startupScripts() {
 
 	// FIXME: Why would we need this?
 	// connect container registries
-	const registrySvc = new ContainerRegistryService();
-	const registries = await registrySvc.find({});
-	if (registries.length > 0) {
-		for (const registry of registries) {
-			// console.log("registry.workspace :>> ", registry.workspace);
-			connectRegistry(registry, { workspaceId: registry.workspace }).catch((e) => {
-				// wait for 2 minutes and retry
-				wait(2 * 60 * 2000, connectRegistry(registry).catch(console.error));
-			});
-		}
-	}
+	// const registrySvc = new ContainerRegistryService();
+	// const registries = await registrySvc.find({});
+	// if (registries.length > 0) {
+	// 	for (const registry of registries) {
+	// 		// console.log("registry.workspace :>> ", registry.workspace);
+	// 		connectRegistry(registry, { workspaceId: registry.workspace }).catch((e) => {
+	// 			// wait for 2 minutes and retry
+	// 			wait(2 * 60 * 2000, connectRegistry(registry).catch(console.error));
+	// 		});
+	// 	}
+	// }
 
 	// connect clusters
 	// const clusterSvc = new ClusterService();
@@ -109,8 +102,8 @@ export async function startupScripts() {
 	 */
 	if (!IsTest()) {
 		const repeatDays = 7; // every 7 days
-		const atHour = 2; // 2AM
-		console.log(`[SYSTEM] ✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
+		const atHour = 3; // 3AM
+		console.log(chalk.green(`[SYSTEM]`), `✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
 		cronjob.schedule(`0 ${atHour} */${repeatDays} * *`, () => cleanUp());
 
 		/**
@@ -124,14 +117,14 @@ export async function startupScripts() {
 	/**
 	 * Database migration
 	 */
-	await migrateAllRecords();
-	await migrateAllRoles();
-	await migrateAllUsers();
-	await migrateAllAppEnvironment();
-	await migrateAllFrameworks();
-	await migrateAllGitProviders();
-	await migrateServiceAccountAndApiKey();
-	await migrateDefaultServiceAccountAndApiKeyUser();
+	// await migrateAllRecords();
+	// await migrateAllRoles();
+	// await migrateAllUsers();
+	// await migrateAllAppEnvironment();
+	// await migrateAllFrameworks();
+	// await migrateAllGitProviders();
+	// await migrateServiceAccountAndApiKey();
+	// await migrateDefaultServiceAccountAndApiKeyUser();
 	// await migrateAllClusters();
 
 	/**

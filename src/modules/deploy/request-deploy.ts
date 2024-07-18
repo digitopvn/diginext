@@ -111,7 +111,7 @@ export async function requestDeploy(options: InputOptions) {
 	if (options.isDebugging) console.log("requestDeploy() > generateBuildTagBySourceDir() :>> ", tagInfo);
 	options.buildTag = tagInfo.tag;
 	options.buildImage = `${imageURL}:${options.buildTag}`;
-	options.SOCKET_ROOM = `${appConfig.slug}-${options.buildTag}`;
+	options.SOCKET_ROOM = `${appConfig.project}_${appConfig.slug}_${options.buildTag}`;
 	const { SOCKET_ROOM } = options;
 
 	/**
@@ -169,7 +169,11 @@ export async function requestDeploy(options: InputOptions) {
 			console.dir(requestResult, { depth: 10 });
 		}
 
-		if (!requestResult.status) logError(requestResult.messages[0] || `Unable to call Request Deploy API.`);
+		// check errors
+		if (!requestResult.status) {
+			logError(`Failed to request server to build & deploy: ${requestResult.messages.join("\n")}` || `Unable to call Request Deploy API.`);
+			return;
+		}
 
 		if (options?.isDebugging) console.log("requestResult.data :>> ", requestResult.data);
 		const defaultLogURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}&env=${env}`;

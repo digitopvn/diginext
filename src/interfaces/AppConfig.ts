@@ -6,6 +6,9 @@ export interface AppConfig {
 	owner?: string;
 	workspace?: string;
 	cliVersion?: string;
+	/**
+	 * Project SLUG
+	 */
 	project?: string;
 
 	framework?: {

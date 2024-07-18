@@ -56,13 +56,22 @@ interface DockerBuildOptions {
 	onError?: (message: string) => void;
 }
 
-// const processes = {}
+export class BuildContainerError extends Error {
+	constructor(
+		public data: { imageName: string },
+		message?: string
+	) {
+		super(message);
+		this.name = "BuildContainerError";
+	}
+}
 
 /**
- * Build Docker image
+ * Build & push image using Docker
+ * @param imageName Image name = "image_url:tag"
  * @returns Image URL of the build
  */
-export const build = async (imageURL: string, options?: DockerBuildOptions) => {
+export const build = async (imageName: string, options?: DockerBuildOptions) => {
 	const {
 		dockerFile,
 		buildDirectory,
@@ -101,7 +110,7 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 	const cacheFlags = !isEmpty(cacheFroms) ? cacheFroms.map((cache) => `--cache-from type=${cache.type || "registry"},ref=${cache.value}`) : [];
 	const dockerFileFlag = `-f ${dockerFile}`;
 	const pushFlag = shouldPush ? "--push" : undefined;
-	const tagFlag = `-t ${imageURL}`;
+	const tagFlag = `-t ${imageName}`;
 	const builderFlag = `--builder=${builder}`;
 	const directoryFlag = buildDirectory ?? ".";
 
@@ -114,23 +123,27 @@ export const build = async (imageURL: string, options?: DockerBuildOptions) => {
 
 	const skippedErrors: string[] = ["importing cache manifest from", "failed to configure registry cache"];
 
-	const { execa, execaCommand, execaSync } = await import("execa");
-	const stream = execaCommand(buildCmd, cliOpts);
-	stream.stdio.forEach((_stdio) => {
-		if (_stdio) {
-			_stdio.on("data", (data) => {
-				let logMsg = data.toString();
-				// just ignore cache import error
-				for (const skippedErr of skippedErrors) {
-					if (logMsg.indexOf(skippedErr) > -1) logMsg = "";
-				}
-				if (onBuilding && logMsg) onBuilding(logMsg);
-			});
-		}
-	});
-	await stream;
+	try {
+		const { execa, execaCommand, execaSync } = await import("execa");
+		const stream = execaCommand(buildCmd, cliOpts);
+		stream.stdio.forEach((_stdio) => {
+			if (_stdio) {
+				_stdio.on("data", (data) => {
+					let logMsg = data.toString();
+					// just ignore cache import error
+					for (const skippedErr of skippedErrors) {
+						if (logMsg.indexOf(skippedErr) > -1) logMsg = "";
+					}
+					if (onBuilding && logMsg) onBuilding(logMsg);
+				});
+			}
+		});
+		await stream;
 
-	return imageURL;
+		return imageName;
+	} catch (e) {
+		throw new BuildContainerError({ imageName }, "An error occurred while building this image with Docker.");
+	}
 };
 
 /**
