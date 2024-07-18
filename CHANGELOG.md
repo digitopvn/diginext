@@ -1,3 +1,12 @@
+## [3.34.13](https://github.com/digitopvn/diginext/compare/v3.34.12...v3.34.13) (2024-07-18)
+
+
+### Bug Fixes
+
+* **server:** change cluster -> change diginext domain record ip address ([9792bfe](https://github.com/digitopvn/diginext/commit/9792bfe5dff41d8997b3af608cb38ba72b57bdee))
+* **server:** deleting apps, projects now permanent instead of soft delete ([ea8b14d](https://github.com/digitopvn/diginext/commit/ea8b14d08e3e86d37f62902474447784fef674b1))
+* **server:** deploy is finished but release status "in_progress" still hanging ([570de92](https://github.com/digitopvn/diginext/commit/570de92e0771da870a4bad05fc9d2fa29c900c24))
+
 ## [3.34.12](https://github.com/digitopvn/diginext/compare/v3.34.11...v3.34.12) (2024-07-17)
 
 
