@@ -45,6 +45,8 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		return;
 	}
 
+	appConfig.project = project.slug;
+
 	// get remote SSH
 	const gitRepoData = await getCurrentGitRepoData(targetDirectory);
 	if (!gitRepoData) {
@@ -133,6 +135,5 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 
 	// save to app config on server
 	appConfig = await updateAppConfig(app, env, deployEnvironment);
-
 	return appConfig;
 };

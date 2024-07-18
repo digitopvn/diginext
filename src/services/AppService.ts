@@ -16,6 +16,7 @@ import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCre
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { pullOrCloneGitRepo } from "@/plugins";
+import { uniqueStrings } from "@/plugins/array";
 import { formatEnvVars } from "@/plugins/env-var";
 import { basicUserFields } from "@/plugins/mask-sensitive-info";
 import { MongoDB } from "@/plugins/mongodb";
@@ -141,7 +142,8 @@ export class AppService extends BaseService<IApp> {
 		if (project) {
 			projectSvc.ownership = this.ownership;
 			const projectApps = [...(project.apps || []), newAppId];
-			project = await projectSvc.updateOne({ _id: project._id }, { apps: projectApps });
+			const projectAppSlugs = uniqueStrings([...(project.appSlugs || []), newApp.slug]);
+			project = await projectSvc.updateOne({ _id: project._id }, { apps: projectApps, appSlugs: projectAppSlugs });
 		}
 
 		return newApp;
@@ -428,12 +430,63 @@ export class AppService extends BaseService<IApp> {
 		// permissions
 		await checkAppPermissionsByFilter(this, filter, this.user);
 
+		if (data.project) {
+			const { ProjectService } = await import("./index");
+			const projectSvc = new ProjectService(this.ownership);
+			let project: IProject;
+			// find a project of this app
+			if (MongoDB.isValidObjectId(data.project)) {
+				project = await projectSvc.findOne({ _id: data.project });
+			} else if (isString(data.project)) {
+				project = await projectSvc.findOne({ slug: data.project });
+			} else {
+				throw new Error(`"project" is not a valid ID or slug.`);
+			}
+
+			if (!project) throw new Error(`Project "${data.project}" not found.`);
+			data.projectSlug = project.slug;
+			data.project = project._id;
+
+			// add this app._id and app.slug to project.apps and project.appSlugs
+			if (!project.apps) project.apps = [];
+			if (!project.appSlugs) project.appSlugs = [];
+			if (!project.apps.includes(data._id)) project.apps.push(data._id);
+			if (!project.appSlugs.includes(data.slug)) project.appSlugs.push(data.slug);
+			await projectSvc.updateOne({ _id: project._id }, { apps: project.apps, appSlugs: project.appSlugs });
+		}
+
 		return super.update(filter, data, options);
 	}
 
 	async updateOne(filter: IQueryFilter<IApp>, data: any, options?: IQueryOptions): Promise<IApp> {
 		// check permissions
 		await checkAppPermissionsByFilter(this, filter, this.user);
+
+		if (data.project) {
+			const { ProjectService } = await import("./index");
+			let project: IProject,
+				projectSvc = new ProjectService(this.ownership);
+			// find a project of this app
+			if (MongoDB.isValidObjectId(data.project)) {
+				project = await projectSvc.findOne({ _id: data.project });
+			} else if (isString(data.project)) {
+				project = await projectSvc.findOne({ slug: data.project });
+			} else {
+				throw new Error(`"project" is not a valid ID or slug.`);
+			}
+
+			if (!project) throw new Error(`Project "${data.project}" not found.`);
+			data.projectSlug = project.slug;
+			data.project = project._id;
+
+			// add this app._id and app.slug to project.apps and project.appSlugs
+			if (!project.apps) project.apps = [];
+			if (!project.appSlugs) project.appSlugs = [];
+			if (!project.apps.includes(data._id)) project.apps.push(data._id);
+			if (!project.appSlugs.includes(data.slug)) project.appSlugs.push(data.slug);
+			await projectSvc.updateOne({ _id: project._id }, { apps: project.apps, appSlugs: project.appSlugs });
+		}
+
 		return super.updateOne(filter, data, options);
 	}
 

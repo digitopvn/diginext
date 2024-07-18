@@ -289,7 +289,7 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 					recipients: invitedMembers.map((member) => {
 						return { email: member.email };
 					}),
-					subject: `[DIGINEXT] "${this.user.name}" has invited you to join "${workspace.name}" workspace.`,
+					subject: `[DXUP] "${this.user.name}" has invited you to join "${workspace.name}" workspace.`,
 					content: mailContent,
 				},
 				workspace.dx_key

@@ -30,7 +30,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 		if (!buildInfo) throw new Error(`[BUILD_AND_DEPLOY] Unable to build.`);
 	} catch (e) {
 		const app = await DB.findOne("app", { slug: buildParams.appSlug });
-		const SOCKET_ROOM = `${buildParams.appSlug}-${buildParams.buildTag}`;
+		const SOCKET_ROOM = `${app.projectSlug}_${buildParams.appSlug}_${buildParams.buildTag}`;
 		stopBuild(app.projectSlug, app.slug, SOCKET_ROOM, "failed");
 		sendLog({ SOCKET_ROOM, type: "error", message: `Build error: ${e.stack}` });
 		return;

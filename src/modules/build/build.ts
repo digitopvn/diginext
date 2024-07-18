@@ -3,12 +3,13 @@ import dayjs from "dayjs";
 import { log, logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import humanizeDuration from "humanize-duration";
 import { isEmpty, upperFirst } from "lodash";
+import { Types } from "mongoose";
 import PQueue from "p-queue";
 import path from "path";
 
 import { Config, isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IApp, IBuild, IProject, IUser, IWebhook, IWorkspace } from "@/entities";
+import type { IApp, IBuild, IUser, IWebhook, IWorkspace } from "@/entities";
 import type { BuildPlatform, BuildStatus, DeployStatus } from "@/interfaces/SystemTypes";
 import { currentVersion, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
 import { filterUniqueItems } from "@/plugins/array";
@@ -17,6 +18,7 @@ import { getIO, socketIO } from "@/server";
 import { WebhookService } from "@/services";
 
 import builder from "../builder";
+import { BuildContainerError } from "../builder/docker";
 import { pullOrCloneGitRepoHTTP, repoSshToRepoURL } from "../git/git-utils";
 import { connectRegistry } from "../registry/connect-registry";
 import { sendLog } from "./send-log-message";
@@ -164,8 +166,6 @@ export const stopBuild = async (
 	status: BuildStatus = "failed",
 	deployStatus: DeployStatus = "pending"
 ) => {
-	const { DB } = await import("../api/DB");
-
 	let error;
 
 	// Validate...
@@ -230,15 +230,21 @@ export async function startBuild(
 	const owner = user || (await DB.findOne("user", { _id: userId }, { populate: ["workspaces", "activeWorkspaces"] }));
 	if (isDebugging) console.log("owner :>> ", owner);
 
-	// get app
+	// get app info
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["owner", "workspace", "project"] });
 
-	// get workspace
+	// project info
+	if (!app.project || app.project instanceof Types.ObjectId || typeof app.project === "string")
+		throw new Error(`Invalid "app.project": "${app.project}", should be an instance of {IProject}.`);
+	const { project } = app;
+	const { slug: projectSlug } = project;
+
+	// get workspace info
 	const { activeWorkspace, slug: username } = owner;
 	const workspace = activeWorkspace as IWorkspace;
 
 	// socket & logs
-	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
+	const SOCKET_ROOM = `${projectSlug}_${appSlug}_${buildTag}`;
 	const logger = new Logger(SOCKET_ROOM);
 
 	// Emit socket message to request the BUILD SERVER to start building...
@@ -253,24 +259,13 @@ export async function startBuild(
 
 	// the container registry to store this build image
 	const registry = await DB.findOne("registry", { slug: registrySlug });
-
 	if (isEmpty(registry)) {
 		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
 		if (options?.onError) options?.onError(`[START BUILD] Container registry "${registrySlug}" not found.`);
 		return;
 	}
 
-	if (isEmpty(app.project)) {
-		sendLog({
-			SOCKET_ROOM,
-			type: "error",
-			action: "end",
-			message: `[START BUILD] App "${appSlug}" doesn't belong to any projects (probably deleted?).`,
-		});
-		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" doesn't belong to any projects (probably deleted?).`);
-		return;
-	}
-
+	// Git repo of this app
 	if (isEmpty(app.git) || isEmpty(app.git?.repoSSH)) {
 		sendLog({
 			SOCKET_ROOM,
@@ -281,10 +276,6 @@ export async function startBuild(
 		if (options?.onError) options?.onError(`[START BUILD] App "${appSlug}" doesn't have any git repository data (probably deleted?).`);
 		return;
 	}
-
-	// project info
-	const project = app.project as IProject;
-	const { slug: projectSlug } = project;
 
 	// get latest build of this app to utilize the cache for this build process
 	const latestBuild = await DB.findOne("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
@@ -528,20 +519,18 @@ export async function startBuild(
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Generated the deployment files successfully!` });
 
 	/**
-	 * ====================================================
+	 * =====================================================
 	 * Build the app with BUILDER ENGINE (Docker or Podman):
-	 * ====================================================
+	 * =====================================================
 	 */
 
 	sendLog({ SOCKET_ROOM, message: `[START BUILD] Start building the Docker image...` });
 
-	const notifyClientBuildSuccess = async () => {
-		const endTime = dayjs();
-		const buildDuration = endTime.diff(startTime, "millisecond");
-		const humanDuration = humanizeDuration(buildDuration);
+	const notifyClientBuildSuccess = async (finishedBuild: IBuild) => {
+		const humanDuration = humanizeDuration(finishedBuild.duration);
 
 		sendLog({
-			SOCKET_ROOM,
+			SOCKET_ROOM: finishedBuild.slug,
 			message: chalk.green(`✓ FINISHED BUILDING IMAGE AFTER ${humanDuration}`),
 			type: shouldDeploy ? "log" : "success",
 			action: shouldDeploy ? "log" : "end",
@@ -604,7 +593,7 @@ export async function startBuild(
 			// update build status as "success"
 			await updateBuildStatus(newBuild, "success", { env });
 
-			await notifyClientBuildSuccess();
+			await notifyClientBuildSuccess(newBuild);
 
 			if (options?.onSucceed) options?.onSucceed(newBuild);
 
@@ -644,18 +633,26 @@ export async function startBuild(
 				const finishedBuild = await DB.findOne("build", { name: _imageURL });
 				await updateBuildStatus(finishedBuild, "success", { env });
 
-				await notifyClientBuildSuccess();
+				await notifyClientBuildSuccess(finishedBuild);
 
 				if (options?.onSucceed) options?.onSucceed(finishedBuild);
 			})
-			.catch(async (e) => {
-				sendLog({ SOCKET_ROOM, message: e.message, type: "error", action: "end" });
-				await updateBuildStatus(newBuild, "failed");
+			.catch(async (error) => {
+				if (error instanceof BuildContainerError) {
+					console.error("Error data:", error.data);
+					const finishedBuild = await DB.findOne("build", { name: error.data.imageName });
 
-				if (options?.onError) options?.onError(`Build failed: ${e}`);
+					sendLog({ SOCKET_ROOM, message: error.message, type: "error", action: "end" });
+					await updateBuildStatus(finishedBuild, "failed");
 
-				// dispatch/trigger webhook
-				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+					if (options?.onError) options?.onError(`Build failed: ${error}`);
+
+					// dispatch/trigger webhook
+					webhook = await webhookSvc.findOne({ build: finishedBuild._id });
+					if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+				} else {
+					console.error("startBuild() > Error:", error);
+				}
 			});
 	}
 

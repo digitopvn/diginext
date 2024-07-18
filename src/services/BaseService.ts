@@ -74,7 +74,7 @@ export default class BaseService<T = any> {
 
 		if (options.isDebugging) console.log(`BaseService > COUNT "${this.model.collection.name}" collection > parsedFilter :>>`, parsedFilter);
 
-		const total = this.model.countDocuments(parsedFilter).exec();
+		const total = await this.model.countDocuments(parsedFilter).exec();
 		if (options.isDebugging) console.log(`BaseService > COUNT "${this.model.collection.name}" collection > total :>>`, total);
 		return total;
 	}
@@ -87,11 +87,11 @@ export default class BaseService<T = any> {
 			async function generateUniqueSlug(input, attempt = 1) {
 				let slug = makeSlug(input, { delimiter: "" });
 
-				let count = await scope.count({ slug });
+				let count = await scope.model.countDocuments({ slug }).exec();
 				if (count > 0) slug = slug + "-" + randomStringByLength(attempt, slugRange).toLowerCase();
 
 				// check unique again
-				count = await scope.count({ slug });
+				count = await scope.model.countDocuments({ slug }).exec();
 				if (count > 0) return generateUniqueSlug(input, attempt + 1);
 
 				return slug;

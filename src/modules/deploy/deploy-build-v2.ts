@@ -88,7 +88,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 	const { env, owner, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
 	const { appSlug, projectSlug, tag: buildTag } = build;
 	const { slug: username } = owner;
-	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
+	const SOCKET_ROOM = `${projectSlug}_${appSlug}_${buildTag}`;
 	const releaseId = MongoDB.toString(release._id);
 	const { DB } = await import("@/modules/api/DB");
 	const workspace = await DB.findOne("workspace", { _id: build.workspace });
@@ -336,7 +336,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	const { env, port, owner, workspace, clusterSlug: targetClusterSlug, deployInBackground = true, cliVersion } = options;
 	const { appSlug, projectSlug, tag: buildTag, num: buildNumber, registry: registryId } = build;
 	const { slug: username } = owner;
-	const SOCKET_ROOM = `${appSlug}-${buildTag}`;
+	const SOCKET_ROOM = `${projectSlug}_${appSlug}_${buildTag}`;
 
 	// build directory
 	const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;

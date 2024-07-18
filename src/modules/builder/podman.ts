@@ -5,6 +5,8 @@ import { cliOpts } from "@/config/config";
 import type { BuildPlatform } from "@/interfaces/SystemTypes";
 import { wait } from "@/plugins";
 
+import { BuildContainerError } from "./docker";
+
 interface PodmanBuildOptions {
 	dockerFile?: string;
 	buildDirectory?: string;
@@ -51,10 +53,11 @@ interface PodmanBuildOptions {
 const processes = {};
 
 /**
- * Build Docker image
+ * Build & push image using Podman
+ * @param imageName Image name = "image_url:tag"
  * @returns Image URL of the build
  */
-export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
+export const build = async (imageName: string, options?: PodmanBuildOptions) => {
 	const {
 		dockerFile,
 		buildDirectory,
@@ -114,7 +117,7 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 	/**
 	 * Image tag
 	 */
-	const tagFlag = `-t ${imageURL}`;
+	const tagFlag = `-t ${imageName}`;
 	/**
 	 * Context directory
 	 */
@@ -128,39 +131,43 @@ export const build = async (imageURL: string, options?: PodmanBuildOptions) => {
 	// docker build command:
 	const buildCmd = `podman build ${optionFlags}`;
 
-	const { execa, execaCommand, execaSync } = await import("execa");
-	let stream = execaCommand(buildCmd, cliOpts);
-	processes[builder] = stream;
-
-	const skippedErrors: string[] = ["User-selected graph driver"];
-
-	stream.stdio.forEach((_stdio) => {
-		if (_stdio) {
-			_stdio.on("data", (data) => {
-				let logMsg: string = data.toString();
-				for (const skippedErr of skippedErrors) {
-					if (logMsg.indexOf(skippedErr) > -1) logMsg = "";
-				}
-				if (onBuilding && logMsg) onBuilding(logMsg);
-			});
-		}
-	});
-	await stream;
-
-	if (shouldPush) {
-		stream = execaCommand(`podman push ${imageURL}`, cliOpts);
+	try {
+		const { execa, execaCommand, execaSync } = await import("execa");
+		let stream = execaCommand(buildCmd, cliOpts);
 		processes[builder] = stream;
 
+		const skippedErrors: string[] = ["User-selected graph driver"];
+
 		stream.stdio.forEach((_stdio) => {
-			if (_stdio)
+			if (_stdio) {
 				_stdio.on("data", (data) => {
-					if (onBuilding) onBuilding(data.toString());
+					let logMsg: string = data.toString();
+					for (const skippedErr of skippedErrors) {
+						if (logMsg.indexOf(skippedErr) > -1) logMsg = "";
+					}
+					if (onBuilding && logMsg) onBuilding(logMsg);
 				});
+			}
 		});
 		await stream;
-	}
 
-	return imageURL;
+		if (shouldPush) {
+			stream = execaCommand(`podman push ${imageName}`, cliOpts);
+			processes[builder] = stream;
+
+			stream.stdio.forEach((_stdio) => {
+				if (_stdio)
+					_stdio.on("data", (data) => {
+						if (onBuilding) onBuilding(data.toString());
+					});
+			});
+			await stream;
+		}
+
+		return imageName;
+	} catch (e) {
+		throw new BuildContainerError({ imageName }, "An error occurred while building this image with Podman.");
+	}
 };
 
 /**
