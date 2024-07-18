@@ -14,7 +14,6 @@ import { updateAppConfig } from "../apps/update-config";
 import { createReleaseFromBuild, sendLog } from "../build";
 import { updateReleaseStatusById } from "../build/update-release-status";
 import ClusterManager from "../k8s";
-import { deployBuild } from "./deploy-build";
 import type { GenerateDeploymentResult } from "./generate-deployment";
 import getDeploymentName from "./generate-deployment-name";
 import type { GenerateDeploymentV2Result } from "./generate-deployment-v2";
@@ -84,6 +83,16 @@ export type DeployBuildV2Result = {
 	// prerelease: FetchDeploymentResult;
 };
 
+export class DeployBuildError extends Error {
+	constructor(
+		public data: { build: IBuild; release: IRelease; cluster: ICluster },
+		message?: string
+	) {
+		super(message);
+		this.name = "DeployBuildError";
+	}
+}
+
 export const processDeployBuildV2 = async (build: IBuild, release: IRelease, cluster: ICluster, options: DeployBuildV2Options) => {
 	const { env, owner, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
 	const { appSlug, projectSlug, tag: buildTag } = build;
@@ -130,7 +139,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 
 		const msg = `❌ Unable to find release for build "${buildTag}".`;
 		sendLog({ SOCKET_ROOM, message: msg, type: "error", action: "end" });
-		throw new Error(msg);
+		throw new DeployBuildError({ build, release, cluster }, msg);
 	}
 
 	// authenticate cluster & switch to that cluster's context
@@ -142,7 +151,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		await markBuildAndReleaseAsFailed();
 
 		sendLog({ SOCKET_ROOM, message: `❌ Unable to connect the cluster: ${e.message}`, type: "error", action: "end" });
-		throw new Error(e.message);
+		throw new DeployBuildError({ build, release, cluster }, e.message);
 	}
 
 	// target environment info
@@ -159,11 +168,11 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		await markBuildAndReleaseAsFailed();
 
 		sendLog({ SOCKET_ROOM, message: `❌ Unable to connect cluster to get namespace list.`, type: "error", action: "end" });
-		throw new Error(`Unable to connect cluster to get namespace list.`);
+		throw new DeployBuildError({ build, release, cluster }, `Unable to connect cluster to get namespace list.`);
 	}
 	if (!isNsExisted) {
 		const createNsResult = await ClusterManager.createNamespace(namespace, { context });
-		if (!createNsResult) throw new Error(`Unable to create new namespace: ${namespace}`);
+		if (!createNsResult) throw new DeployBuildError({ build, release, cluster }, `Unable to create new namespace: ${namespace}`);
 	}
 
 	/**
@@ -187,7 +196,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		});
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
-		throw new Error(`Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
+		throw new DeployBuildError({ build, release, cluster }, `Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
 	}
 
 	/**
@@ -211,7 +220,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 			sendLog({ SOCKET_ROOM, type: "error", action: "end", message });
 			// dispatch/trigger webhook
 			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
-			throw new Error(message);
+			throw new DeployBuildError({ build, release, cluster }, message);
 		}
 	} catch (e) {
 		// update "deployStatus" in a build & a release
@@ -221,7 +230,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		sendLog({ SOCKET_ROOM, type: "error", action: "end", message });
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
-		throw new Error(message);
+		throw new DeployBuildError({ build, release, cluster }, message);
 	}
 
 	// Start rolling out new release
@@ -251,7 +260,10 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 			// dispatch/trigger webhook
 			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
-			throw new Error(`Unable to delete "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`);
+			throw new DeployBuildError(
+				{ build, release, cluster },
+				`Unable to delete "${namespace}" namespace of "${cluster.slug}" cluster (APP: ${appSlug} / PROJECT: ${projectSlug}).`
+			);
 		}
 
 		sendLog({
@@ -267,7 +279,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		// if any errors on rolling out -> stop processing deployment
 		if (msg.indexOf("Error from server") > -1) {
 			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: msg });
-			throw new Error(msg);
+			throw new DeployBuildError({ build, release, cluster }, msg);
 		} else {
 			// if normal log message -> print out to the Web UI
 			sendLog({ SOCKET_ROOM, message: msg });
@@ -292,7 +304,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 			// dispatch/trigger webhook
 			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
-			throw new Error(errMsg);
+			throw new DeployBuildError({ build, release, cluster }, errMsg);
 		}
 	} else {
 		if (release._id) {
@@ -307,7 +319,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 				if (result.error) {
 					const errMsg = `Failed to roll out the release :>> ${result.error}.`;
 					sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
-					throw new Error(errMsg);
+					throw new DeployBuildError({ build, release, cluster }, errMsg);
 				}
 
 				release = result.data;
@@ -323,10 +335,12 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 				// dispatch/trigger webhook
 				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
 
-				throw new Error(errMsg);
+				throw new DeployBuildError({ build, release, cluster }, errMsg);
 			}
 		}
 	}
+
+	return { build, release, cluster };
 };
 
 export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options): Promise<DeployBuildV2Result> => {
@@ -515,11 +529,14 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	// process deploy build to cluster
 	if (deployInBackground) {
 		processDeployBuildV2(build, newRelease, cluster, options)
-			.then(() => {
-				updateReleaseStatusById(releaseId, "success");
+			.then(({ release }) => {
+				updateReleaseStatusById(MongoDB.toString(release._id), "success");
 			})
 			.catch((e) => {
-				updateReleaseStatusById(releaseId, "failed");
+				if (e instanceof DeployBuildError) {
+					const { release } = e.data;
+					updateReleaseStatusById(MongoDB.toString(release._id), "failed");
+				}
 			});
 	} else {
 		try {
@@ -533,10 +550,10 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	return { app: updatedApp, build, release: newRelease, deployment, endpoint };
 };
 
-export const deployWithBuildSlug = async (buildSlug: string, options: DeployBuildV2Options) => {
+export const deployWithBuildSlugV2 = async (buildSlug: string, options: DeployBuildV2Options) => {
 	const { DB } = await import("@/modules/api/DB");
 	const build = await DB.findOne("build", { slug: buildSlug });
 	if (!build) throw new Error(`[DEPLOY BUILD] Build slug "${buildSlug}" not found.`);
 
-	return deployBuild(build, options);
+	return deployBuildV2(build, options);
 };
