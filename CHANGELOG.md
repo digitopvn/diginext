@@ -1,3 +1,12 @@
+## [3.34.14](https://github.com/digitopvn/diginext/compare/v3.34.13...v3.34.14) (2024-07-23)
+
+
+### Bug Fixes
+
+* **cli:** project not found when update app config ([86f93c1](https://github.com/digitopvn/diginext/commit/86f93c1fde6b308bed5b8233f8804188414f442c))
+* **server:** do not scale replicas when not found old deployment ([fcc1410](https://github.com/digitopvn/diginext/commit/fcc14104bffdcf37fa22f6f46ef0543368936da9))
+* **server:** migrate all to generate deployment v2 ([306fc50](https://github.com/digitopvn/diginext/commit/306fc502bf9af0a079efcf9dabafe58a340cb458))
+
 ## [3.34.13](https://github.com/digitopvn/diginext/compare/v3.34.12...v3.34.13) (2024-07-18)
 
 
