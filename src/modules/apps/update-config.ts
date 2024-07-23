@@ -1,7 +1,6 @@
 import { logError } from "diginext-utils/dist/xconsole/log";
-import { Types } from "mongoose";
 
-import type { AppDto, IApp } from "@/entities";
+import type { AppDto, IApp, IProject } from "@/entities";
 import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
 import { getAppConfigFromApp } from "./app-helper";
@@ -9,12 +8,15 @@ import { getAppConfigFromApp } from "./app-helper";
 export const updateAppConfig = async (app: IApp, env?: string, serverDeployEnvironment?: ClientDeployEnvironmentConfig) => {
 	const { DB } = await import("../api/DB");
 
-	let { project } = app;
+	let project: IProject;
 
-	if (project instanceof Types.ObjectId || typeof project === "string") {
-		project = await DB.findOne("project", { _id: project });
-		if (!project) throw new Error(`Unable to update app config: Project ${app.project} not found.`);
+	if ((app.project as any)._id) {
+		project = app.project as IProject;
+	} else {
+		project = await DB.findOne("project", { _id: app.project });
 	}
+
+	if (!project) throw new Error(`Unable to update app config: Project ${app.project} not found.`);
 
 	// ! IMPORTANT: In case app was moved to another project
 	const updateAppData: AppDto = {
