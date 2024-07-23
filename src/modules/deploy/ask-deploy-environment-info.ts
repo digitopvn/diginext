@@ -298,8 +298,8 @@ To expose this app to the internet later, you can add your own domain to deploy 
 	} else {
 		// if ENV file is existed on local & not available on server -> ask to upload local ENV to server:
 		if (envFile && !isEmpty(serverEnvironmentVariables)) {
-			logWarn(`Skip uploading local ENV variables to deployed environment since it's already existed.`);
-			log(`(If you want to force upload local ENV variables, deploy again with: ${chalk.cyan("dx up --upload-env")})`);
+			logWarn(`Skipped uploading your local ENV variables to the deploy environment since it's already existed.`);
+			log(`(If you want to force upload them, you can deploy again with: ${chalk.cyan(`dx up --env=${env} --upload-env`)})`);
 		}
 
 		if (envFile && isEmpty(serverEnvironmentVariables)) {

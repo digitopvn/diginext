@@ -17,7 +17,7 @@ router
 	.get("/with-apps", processApiRequest(controller.getProjectsAndApps.bind(controller)))
 	.post("/", processApiRequest(controller.create.bind(controller)))
 	.patch("/", processApiRequest(controller.update.bind(controller)))
-	.delete("/", processApiRequest(controller.softDelete.bind(controller)));
+	.delete("/", processApiRequest(controller.delete.bind(controller)));
 // .delete("/empty", processApiRequest(controller.empty.bind(controller)));
 
 export default router;

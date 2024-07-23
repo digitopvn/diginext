@@ -50,7 +50,7 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 			}
 
 			// select this app!
-			app = selectedApp;
+			app = await DB.findOne("app", { _id: selectedApp._id }, { populate: ["project"] });
 		} else {
 			app = await createAppByForm({ ...options, skipFramework: true });
 		}

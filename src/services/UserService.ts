@@ -3,6 +3,7 @@ import type { IUser, UserDto } from "@/entities/User";
 import { userSchema } from "@/entities/User";
 import type { IQueryFilter, IQueryOptions, IQueryPagination } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
+import { dxCreateUser } from "@/modules/diginext/dx-user";
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
@@ -26,6 +27,22 @@ export class UserService extends BaseService<IUser> {
 	async create(data, options: IQueryOptions = {}) {
 		let newUser = await super.create(data, options);
 		if (!newUser.username) newUser = await this.updateOne({ _id: newUser._id }, { username: newUser.slug });
+
+		// create user on "dxup.dev" via "dxApi"
+		try {
+			const dxUserRes = await dxCreateUser({
+				name: newUser.name,
+				username: newUser.username,
+				email: newUser.email,
+				password: newUser.password,
+				isActive: true,
+			});
+			if (dxUserRes.status) throw new Error(dxUserRes.messages.join("\n"));
+			newUser = await this.updateOne({ _id: newUser._id }, { dxUserId: dxUserRes.data.id });
+		} catch (e) {
+			console.log(`[UserService] create > dxCreateUser :>>`, e);
+		}
+
 		return newUser;
 	}
 

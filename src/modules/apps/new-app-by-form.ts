@@ -197,7 +197,7 @@ export async function createAppByForm(
 	if (options.repoURL) appData.git.repoURL = options.repoURL;
 
 	if (options.isDebugging) log(`Create new app with data:`, appData);
-	const newApp = await DB.create("app", appData, { isDebugging: options.isDebugging });
+	const newApp = await DB.create("app", appData, { populate: ["project"], isDebugging: options.isDebugging });
 	if (options.isDebugging) log({ newApp });
 
 	if (isEmpty(newApp) || (newApp as any).error) {

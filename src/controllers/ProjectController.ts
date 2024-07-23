@@ -80,14 +80,15 @@ export default class ProjectController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
-	async softDelete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
-		// console.log("filter :>> ", this.filter);
-		const result = await this.service.softDelete(this.filter);
-		// console.log("result :>> ", result);
-
-		return result.ok
-			? respondSuccess({ data: result })
-			: respondFailure(this.filter.owner ? `You don't have permissions to delete this project.` : `Unable to delete this project.`);
+	async delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
+		try {
+			const result = await this.service.delete(this.filter);
+			return result.ok
+				? respondSuccess({ data: result })
+				: respondFailure(this.filter.owner ? `You don't have permissions to delete this project.` : `Unable to delete this project.`);
+		} catch (e) {
+			return respondFailure(`Unable to delete this project: ${e.message}`);
+		}
 	}
 
 	@Security("api_key")

@@ -9,7 +9,15 @@ export async function createOrSelectProject(options?: InputOptions) {
 	const { DB } = await import("@/modules/api/DB");
 	// if the user provide project name -> create new project immediately
 	if (options.projectName) {
-		const newProject = await DB.create("project", { name: options.projectName });
+		const projectDto: any = { name: options.projectName };
+
+		const appId = options.appId || options.app?._id;
+		projectDto.apps = [appId];
+
+		const appSlug = options.appSlug || options.app?.slug;
+		projectDto.appSlugs = [appSlug];
+
+		const newProject = await DB.create("project", projectDto);
 		options.project = newProject;
 	}
 

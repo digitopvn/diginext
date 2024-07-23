@@ -76,13 +76,10 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
 
-	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
-
 	// DEFINE DEPLOYMENT PARTS:
 	if (params.isDebugging) console.log("generateDeployment() > buildTag :>> ", buildTag);
 
 	const deployEnvironmentConfig = currentAppConfig.deployEnvironment[env];
-	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);
 
 	const registrySlug = deployEnvironmentConfig.registry;
 

@@ -112,6 +112,10 @@ export interface IUser extends IBase {
 	 */
 	password?: string;
 	/**
+	 * User ID in DXUP.DEV
+	 */
+	dxUserId?: string;
+	/**
 	 * User token
 	 */
 	token?: AccessTokenInfo;
@@ -170,6 +174,7 @@ export const userSchema = new Schema(
 		password: {
 			type: String,
 		},
+		dxUserId: { type: String },
 		token: {
 			type: accessTokenInfoSchema,
 		},

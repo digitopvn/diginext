@@ -37,6 +37,8 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 	} = options;
 
 	const { app, project } = await askForProjectAndApp(options.targetDirectory, options);
+	// console.log("app :>> ", app);
+	// console.log("project :>> ", project);
 
 	// get current config
 	let appConfig = await getAppConfigFromApp(app);

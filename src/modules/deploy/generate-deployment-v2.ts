@@ -110,17 +110,12 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	if (!projectSlug)
 		throw new Error(`Unable to generate YAML, a "project" (slug) param in "${env}" deploy environment of "${appSlug}" is required.`);
 
-	// console.log("generateDeployment() > currentAppConfig :>> ", currentAppConfig);
-
 	// DEFINE DEPLOYMENT PARTS:
-	if (params.isDebugging) console.log("generateDeployment() > buildTag :>> ", buildTag);
+	if (params.isDebugging) console.log("generateDeploymentV2() > buildTag :>> ", buildTag);
 
 	const deployEnvironmentConfig = currentAppConfig.deployEnvironment[env];
-	// console.log("generateDeployment() > deployEnvironmentConfig :>> ", deployEnvironmentConfig);
 
-	// let deploymentName = project + "-" + appSlug.toLowerCase();
 	let deploymentName = await getDeploymentName(app);
-
 	let nsName = deployEnvironmentConfig.namespace || `${projectSlug}-${env}`;
 	let ingName = deploymentName;
 	let svcName = deploymentName;
@@ -155,6 +150,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 			workspace,
 			subdomainName: subdomain,
 			clusterSlug: clusterSlug,
+			isDebugging: true,
 		});
 		if (!status) throw new Error(messages.join("\n"));
 		deployEnvironmentConfig.domains = domains = [generatedDomain];
@@ -419,7 +415,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 				doc.spec.template.spec.containers[0].image = IMAGE_NAME;
 				doc.spec.template.spec.containers[0].env = containerEnvs;
 
-				// CAUTION: PORT 80 sẽ không sử dụng được trên cluster của Digital Ocean
+				// NOTE: PORT 80 có thể không sử dụng được trên cluster của Digital Ocean
 				doc.spec.template.spec.containers[0].ports = [{ containerPort: toNumber(deployEnvironmentConfig.port) }];
 
 				// readinginessProbe & livenessProbe

@@ -1,4 +1,5 @@
 import inquirer from "inquirer";
+import { isEmpty } from "lodash";
 
 import { isServerMode } from "@/app.config";
 import type { IApp, IProject } from "@/entities";
@@ -27,14 +28,14 @@ export const askForProjectAndApp = async (dir: string, options?: InputOptions) =
 	let project: IProject;
 
 	// no apps found -> create or select one:
-	if (!apps || apps.length === 0) {
+	if (isEmpty(apps)) {
 		// try to find apps with deprecated "dx.json" file:
 		const oldAppConfig = getAppConfig();
 		if (oldAppConfig) {
 			app = await DB.findOne("app", { slug: oldAppConfig.slug }, { populate: ["project", "owner", "workspace"] });
 			if (app) {
 				project = await DB.findOne("project", { slug: oldAppConfig.project });
-				return { project, app };
+				if (!isEmpty(project)) return { project, app };
 			}
 		}
 
@@ -48,7 +49,7 @@ export const askForProjectAndApp = async (dir: string, options?: InputOptions) =
 	// if there are only 1 app with this git repo -> select it:
 	if (!apps || apps.length === 1) {
 		app = apps[0];
-		project = app.project as IProject;
+		project = isEmpty(app.project) ? await createOrSelectProject(options) : (app.project as IProject);
 		return { project, app };
 	}
 

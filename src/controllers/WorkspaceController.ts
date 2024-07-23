@@ -1,63 +1,14 @@
-import { isUndefined } from "lodash";
-import type { Types } from "mongoose";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import { Config, IsTest } from "@/app.config";
 import BaseController from "@/controllers/BaseController";
-import type { IApiKeyAccount, IRole, IServiceAccount, IWorkspace } from "@/entities";
-import type { ResponseData } from "@/interfaces";
+import type { IApiKeyAccount, IServiceAccount, IWorkspace } from "@/entities";
 import * as interfaces from "@/interfaces";
-import { dxSendEmail } from "@/modules/diginext/dx-email";
-import type { DxPackage } from "@/modules/diginext/dx-package";
-import { dxGetPackages, dxSubscribe } from "@/modules/diginext/dx-package";
-import type { DxSubsription } from "@/modules/diginext/dx-subscription";
-import { dxJoinWorkspace } from "@/modules/diginext/dx-workspace";
-import { filterUniqueItems } from "@/plugins/array";
-import { MongoDB } from "@/plugins/mongodb";
-import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
-import seedWorkspaceInitialData from "@/seeds";
-import { RoleService, UserService, WorkspaceService } from "@/services";
-
-interface AddUserBody {
-	userId: Types.ObjectId;
-	workspaceId: Types.ObjectId;
-	roleId?: Types.ObjectId;
-}
-
-export type CreateWorkspaceParams = {
-	name: string;
-	type?: "default" | "hobby" | "self_hosted";
-	packageId: string;
-	userId: any;
-	email: string;
-	public: boolean;
-	subscriptionId?: string;
-};
-
-interface WorkspaceInputData {
-	/**
-	 * Name of the workspace.
-	 */
-	name: string;
-	/**
-	 * User ID of the owner (default is the current authenticated user)
-	 */
-	owner?: string;
-	/**
-	 * Set privacy mode for this workspace
-	 * @default true
-	 */
-	public?: boolean;
-	/**
-	 * Diginext API Key
-	 */
-	dx_key: string;
-}
+import { AddUserToWorkspaceParams, InviteMemberData, WorkspaceInputData, WorkspaceService } from "@/services";
 
 @Tags("Workspace")
 @Route("workspace")
 export default class WorkspaceController extends BaseController<IWorkspace> {
-	// service: WorkspaceService;
+	service: WorkspaceService;
 
 	constructor() {
 		super(new WorkspaceService());
@@ -77,138 +28,36 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: WorkspaceInputData) {
-		const { owner = MongoDB.toString(this.user._id), name } = body;
-
-		if (!name) return interfaces.respondFailure({ msg: `Param "name" is required.` });
-		if (!owner) return interfaces.respondFailure({ msg: `Param "owner" (UserID) is required.` });
-
-		let dx_key: string = body.dx_key;
-		let pkgId: string;
-		let subscriptionId: string;
-
-		// if no "dx_key" provided, subscribe to a DX package & obtain DX key
-		if (!IsTest() && !dx_key) {
-			const pkgRes = await dxGetPackages();
-			console.log("pkgRes :>> ", pkgRes);
-			if (!pkgRes || !pkgRes.status) {
-				return interfaces.respondFailure(pkgRes.messages?.join(", ") || `Unable to get the list of Diginext package plans.`);
-			}
-
-			const dxPackages = pkgRes.data as DxPackage[];
-			const pkg = dxPackages.find((p) => (Config.SERVER_TYPE === "hobby" ? "hobby" : "self_hosted"));
-			if (!pkg) {
-				console.log("dxPackages :>> ", dxPackages);
-				return interfaces.respondFailure(`Diginext package plans not found.`);
-			}
-
-			pkgId = pkg.id;
-			const subscribeRes = await dxSubscribe({ userEmail: this.user.email, packageId: pkgId });
-			if (!subscribeRes || !subscribeRes.status)
-				return interfaces.respondFailure(
-					subscribeRes.messages?.join(", ") || `Unable to subscribe a Diginext package "${pkg.name}" (${pkg.id}).`
-				);
-
-			const dxSubscription = subscribeRes.data as DxSubsription;
-
-			subscriptionId = dxSubscription.id;
-			dx_key = dxSubscription.key;
-			console.log("dxSubscription >>>>>>>>", dxSubscription);
-
-			if (!dx_key) return interfaces.respondFailure(`Unable to obtain "dx_key" from Diginext Package Subscribe API.`);
-
-			body.dx_key = dx_key;
+		try {
+			const newWorkspace = await this.service.create(body);
+			return interfaces.respondSuccess({ data: newWorkspace });
+		} catch (e) {
+			return interfaces.respondFailure(e);
 		}
-
-		// find owner
-		let ownerUser = this.user;
-		if (!ownerUser) return interfaces.respondFailure("Workspace's owner not found.");
-
-		// Assign some default values if it's missing
-		if (isUndefined(body.public)) body.public = true;
-
-		// ----- VERIFY DX KEY -----
-
-		// Create workspace in diginext-site
-		// if (!IsTest()) {
-		// 	const dataCreateWorkSpace: CreateWorkspaceParams = {
-		// 		name: name,
-		// 		public: body.public,
-		// 		type: Config.SERVER_TYPE,
-		// 		packageId: pkgId,
-		// 		email: ownerUser.email,
-		// 		userId: ownerUser._id,
-		// 		subscriptionId,
-		// 	};
-		// 	const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace, dx_key);
-		// 	if (!createWsRes.status) return interfaces.respondFailure(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
-		// } else {
-		// 	dx_key = "some-random-key";
-		// }
-		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
-
-		// ----- END VERIFYING -----
-
-		// [1] Create new workspace:
-		if (this.options?.isDebugging) console.log("WorkspaceController > CREATE > body :>> ", body);
-		const newWorkspace = await this.service.create(body);
-		if (this.options?.isDebugging) console.log("WorkspaceController > CREATE > ownerUser :>> ", ownerUser);
-		if (this.options?.isDebugging) console.log("WorkspaceController > CREATE > newWorkspace :>> ", newWorkspace);
-		if (!newWorkspace) return interfaces.respondFailure(`Failed to create new workspace.`);
-
-		/**
-		 * [2] SEED INITIAL DATA TO THIS WORKSPACE
-		 * - Default roles
-		 * - Default permissions of routes
-		 * - Default API_KEY
-		 * - Default Service Account
-		 * - Default Frameworks
-		 * - Default Clusters (if any)
-		 */
-		await seedWorkspaceInitialData(newWorkspace, ownerUser);
-
-		// [3] Ownership: add this workspace to the creator {User} if it's not existed:
-		ownerUser = await addUserToWorkspace(owner, newWorkspace, "admin");
-
-		// [4] Set this workspace as "activeWorkspace" for this creator:
-		ownerUser = await makeWorkspaceActive(owner, MongoDB.toString(newWorkspace._id));
-
-		return interfaces.respondSuccess({ data: newWorkspace });
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/")
-	update(@Body() body: WorkspaceInputData, @Queries() queryParams?: interfaces.IPostQueryParams) {
-		return super.update(body);
+	async update(@Body() body: Partial<WorkspaceInputData>, @Queries() queryParams?: interfaces.IPostQueryParams) {
+		try {
+			const updatedWorkspace = await this.service.update(this.filter, body, this.options);
+			return interfaces.respondSuccess({ data: updatedWorkspace });
+		} catch (e) {
+			return interfaces.respondFailure(e);
+		}
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	async delete(@Queries() queryParams?: interfaces.IDeleteQueryParams) {
-		const { DB } = await import("@/modules/api/DB");
-		// delete workspace in user:
-		const _user = await DB.findOne("user", { workspaces: this.workspace._id });
-		const workspaces = _user.workspaces.filter((wsId) => MongoDB.toString(wsId) !== MongoDB.toString(this.workspace._id));
-		const updatedUser = await DB.updateOne("user", { _id: _user._id }, { workspaces, activeWorkspace: undefined });
-		console.log("[WorkspaceController] delete > updatedUser :>> ", updatedUser);
-
-		// delete related data:
-		await DB.delete("project", { workspace: this.workspace._id });
-		await DB.delete("app", { workspace: this.workspace._id });
-		await DB.delete("build", { workspace: this.workspace._id });
-		await DB.delete("cluster", { workspace: this.workspace._id });
-		await DB.delete("framework", { workspace: this.workspace._id });
-		await DB.delete("git", { workspace: this.workspace._id });
-		await DB.delete("database", { workspace: this.workspace._id });
-		await DB.delete("api_key_user", { workspace: this.workspace._id });
-		await DB.delete("service_account", { workspace: this.workspace._id });
-		await DB.delete("registry", { workspace: this.workspace._id });
-		await DB.delete("release", { workspace: this.workspace._id });
-		await DB.delete("role", { workspace: this.workspace._id });
-		await DB.delete("route", { workspace: this.workspace._id });
-		await DB.delete("team", { workspace: this.workspace._id });
-		return super.delete();
+		try {
+			const deletedWorkspace = await this.service.delete(this.filter, this.options);
+			return interfaces.respondSuccess({ data: deletedWorkspace });
+		} catch (e) {
+			return interfaces.respondFailure(e);
+		}
 	}
 
 	@Security("api_key")
@@ -216,125 +65,26 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 	@Post("/invite")
 	async inviteMember(
 		@Body()
-		data: {
-			/**
-			 * List of invited emails
-			 */
-			emails: string[];
-			/**
-			 * Assign role:
-			 * - "member"
-			 * - "guest"
-			 * @default "member"
-			 */
-			role?: string;
-		}
+		data: InviteMemberData
 	) {
-		if (!data.emails || data.emails.length === 0) return interfaces.respondFailure({ msg: `List of email is required.` });
-		if (!this.user) return interfaces.respondFailure({ msg: `Unauthenticated.` });
-		const { DB } = await import("@/modules/api/DB");
-		const userSvc = new UserService();
-		const WcSvc = new WorkspaceService();
-
-		const { emails, role: roleType = "member" } = data;
-
-		const workspace = this.user.activeWorkspace as IWorkspace;
-		const wsId = workspace._id;
-		console.log(`[WS_Controller] Invite Member > Workspace :>>`, workspace);
-		const userId = this.user._id;
-
-		// check if this user is admin of the workspace:
-		const activeRole = this.user.activeRole as IRole;
-		if (activeRole.type !== "admin" && activeRole.type !== "moderator")
-			return interfaces.respondFailure(`You don't have permissions to invite users, please contact administrator.`);
-
-		const assignedRole = await DB.findOne("role", { type: roleType, workspace: wsId });
-		// console.log("assignedRole :>> ", assignedRole);
-
-		// create temporary users of invited members:
-		const invitedMembers = await Promise.all(
-			emails.map(async (email) => {
-				let existingUser = await DB.findOne("user", { email });
-				if (!existingUser) {
-					const username = email.split("@")[0] || "New User";
-					const invitedMember = await userSvc.create({
-						active: false,
-						name: username,
-						email: email,
-						workspaces: [wsId],
-						roles: [assignedRole._id],
-					});
-					return invitedMember;
-				} else {
-					// Set user to workspace in Dx site
-					const joinWorkspaceRes = await dxJoinWorkspace(email, workspace.slug, workspace.dx_key);
-
-					// FIXME: check API error
-
-					const workspaces = existingUser.workspaces || [];
-					workspaces.push(wsId);
-					existingUser = await DB.updateOne("user", { _id: existingUser._id }, { workspaces: filterUniqueItems(workspaces) });
-
-					return existingUser;
-				}
-			})
-		);
-
-		if (!IsTest()) {
-			const mailContent = `Dear,<br/><br/>You've been invited to <strong>"${workspace.name}"</strong> workspace, please <a href="${Config.BASE_URL}" target="_blank">click here</a> to login.<br/><br/>Cheers,<br/>Diginext System`;
-
-			// send invitation email to those users:
-			const result = await dxSendEmail(
-				{
-					recipients: invitedMembers.map((member) => {
-						return { email: member.email };
-					}),
-					subject: `[DXUP] "${this.user.name}" has invited you to join "${workspace.name}" workspace.`,
-					content: mailContent,
-				},
-				workspace.dx_key
-			);
-
+		try {
+			const result = await this.service.inviteMember(data, this.options);
 			return interfaces.respondSuccess({ data: result });
-		} else {
-			return interfaces.respondSuccess({ data: { succeed: 1 } });
+		} catch (e) {
+			return interfaces.respondFailure(e);
 		}
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Patch("/add-user")
-	async addUser(@Body() data: AddUserBody) {
-		const { userId, workspaceId, roleId } = data;
-		const result: ResponseData = { status: 1, messages: [], data: [] };
-
+	async addUser(@Body() data: AddUserToWorkspaceParams) {
 		try {
-			const uid = userId;
-			const wsId = workspaceId;
-			const userSvc = new UserService(this.ownership);
-			const roleSvc = new RoleService(this.ownership);
-
-			const user = await userSvc.findOne({ id: uid });
-			const workspace = await this.service.findOne({ id: wsId });
-
-			let role: IRole;
-			if (roleId) role = await roleSvc.findOne({ id: roleId });
-
-			if (!user) throw new Error(`This user is not existed.`);
-			if (!workspace) throw new Error(`This workspace is not existed.`);
-			if (user.workspaces.includes(wsId)) throw new Error(`This user is existed in this workspace.`);
-
-			const workspaces = [...user.workspaces, wsId].filter((_wsId) => typeof _wsId !== "undefined").map((_wsId) => MongoDB.toString(_wsId));
-
-			const updatedUser = await userSvc.update({ id: uid }, { workspaces });
-
-			result.data = updatedUser;
+			const updatedUser = await this.service.addUser(data);
+			return interfaces.respondSuccess({ data: updatedUser });
 		} catch (e) {
-			result.messages.push(e.message);
-			result.status = 0;
+			return interfaces.respondFailure(e);
 		}
-
-		return result;
 	}
 
 	/**

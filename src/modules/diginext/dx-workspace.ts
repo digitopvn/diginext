@@ -1,5 +1,4 @@
 import dayjs from "dayjs";
-import type { Types } from "mongoose";
 
 import { IsTest } from "@/app.config";
 import type { ResponseData } from "@/interfaces";
@@ -7,12 +6,10 @@ import type { ResponseData } from "@/interfaces";
 import { dxApi } from "./dx-api";
 
 export type CreateWorkspaceParams = {
+	userId: string;
 	name: string;
-	type?: "default" | "hobby" | "self_hosted";
-	packageId: string;
-	userId: Types.ObjectId;
-	email: string;
 	public: boolean;
+	subscriptionId?: string;
 };
 
 export type CreateWorkspaceResponse = ResponseData & {
@@ -22,8 +19,8 @@ export type JoinWorkspaceResponse = ResponseData & {
 	data: { name: string; createdAt: string; updatedAt: string };
 };
 
-export async function dxCreateWorkspace(params: CreateWorkspaceParams, dxKey: string) {
-	return dxApi<CreateWorkspaceResponse>({ url: "/workspaces", data: params, method: "POST", dxKey });
+export async function dxCreateWorkspace(params: CreateWorkspaceParams) {
+	return dxApi<CreateWorkspaceResponse>({ url: "/workspaces", data: params, method: "POST" });
 }
 
 export async function dxJoinWorkspace(email: string, slug: string, dxKey: string) {

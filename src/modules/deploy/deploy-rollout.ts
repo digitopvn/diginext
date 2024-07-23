@@ -380,36 +380,38 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	 * Scale current deployment up to many replicas before apply new deployment YAML
 	 */
 	if (newReplicas === 1 || currentReplicas <= 1) {
-		if (onUpdate) onUpdate(`Scaling "${currentDeploymentName}" deployment to ${deployReplicas} & prepare for rolling out new deployment.`);
-		await ClusterManager.scaleDeploy(currentDeploymentName, deployReplicas, namespace, { context });
+		if (currentDeploymentName) {
+			if (onUpdate) onUpdate(`Scaling "${currentDeploymentName}" deployment to ${deployReplicas} & prepare for rolling out new deployment.`);
+			await ClusterManager.scaleDeploy(currentDeploymentName, deployReplicas, namespace, { context });
 
-		// wait 10 secs
-		// await wait(30 * 1000);
-		// await ClusterManager.setDeployImageAll(deploymentName, `${deployEnvironment.imageURL}:${deployEnvironment.buildTag}`, namespace, { context });
+			// wait 10 secs
+			// await wait(30 * 1000);
+			// await ClusterManager.setDeployImageAll(deploymentName, `${deployEnvironment.imageURL}:${deployEnvironment.buildTag}`, namespace, { context });
 
-		// wait until an old deployment has been scaled successfully
-		const isDeploymentFinishScaling = await waitUntil(
-			() =>
-				checkDeploymentReady({
-					context,
-					appName: mainAppName,
-					namespace,
-					replicas: deployReplicas,
-					onUpdate,
-					// isDebugging: true,
-				}),
-			5,
-			5 * 60
-		).catch((e) => false);
+			// wait until an old deployment has been scaled successfully
+			const isDeploymentFinishScaling = await waitUntil(
+				() =>
+					checkDeploymentReady({
+						context,
+						appName: mainAppName,
+						namespace,
+						replicas: deployReplicas,
+						onUpdate,
+						// isDebugging: true,
+					}),
+				5,
+				5 * 60
+			).catch((e) => false);
 
-		if (!isDeploymentFinishScaling) {
-			logWarn(`Unable to scale up the previous deployment, downtime might happen.`);
-			if (onUpdate)
-				onUpdate(
-					`Unable to scale up the previous deployment (${currentDeploymentName}) to ${deployReplicas} replicas, downtime might happen.`
-				);
-		} else {
-			if (onUpdate) onUpdate(`Scaled "${currentDeploymentName}" deployment to ${deployReplicas} replicas successfully.`);
+			if (!isDeploymentFinishScaling) {
+				logWarn(`Unable to scale up the previous deployment, downtime might happen.`);
+				if (onUpdate)
+					onUpdate(
+						`Unable to scale up the previous deployment (${currentDeploymentName}) to ${deployReplicas} replicas, downtime might happen.`
+					);
+			} else {
+				if (onUpdate) onUpdate(`Scaled "${currentDeploymentName}" deployment to ${deployReplicas} replicas successfully.`);
+			}
 		}
 	}
 

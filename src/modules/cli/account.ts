@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import Table from "cli-table";
 import { logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
@@ -190,9 +191,8 @@ export async function cliAuthenticate(options: InputOptions) {
 	// check old build server url
 	if (buildServerUrl && !buildServerUrl.includes("app.dxup.dev")) {
 		logWarn(`Your current build server url is: ${buildServerUrl}`);
-		logWarn(`Please update your build server url to: "https://app.dxup.dev"`);
-		logWarn(`You can do this by running: dx login https://app.dxup.dev`);
-		logWarn(`If you don't want to update your build server url, you can run: dx logout`);
+		logWarn(`If you want to deploy on DXUP platform, update it to: "https://app.dxup.dev"`);
+		logWarn(`You can do that by running:`, chalk.cyan(`dx login app.dxup.dev`));
 		return;
 	}
 
