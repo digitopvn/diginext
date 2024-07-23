@@ -3,7 +3,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 import type { ICloudDatabaseBackup } from "@/entities";
 import { CloudDatabaseBackupDto } from "@/entities";
 import * as interfaces from "@/interfaces";
-import { CloudDatabaseBackupService } from "@/services";
+import { CloudDatabaseBackupService } from "@/services/CloudDatabaseBackupService";
 
 import BaseController from "./BaseController";
 

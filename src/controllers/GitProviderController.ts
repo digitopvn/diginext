@@ -13,7 +13,7 @@ import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
 import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
 import { makeSlug } from "@/plugins/slug";
-import { GitProviderService } from "@/services";
+import { GitProviderService } from "@/services/GitProviderService";
 
 import BaseController from "./BaseController";
 
