@@ -39,5 +39,9 @@ export const showClientInfo = async (options: InputOptions) => {
 	table.push(["Server Version", serverInfo.version]);
 	table.push(["Server Location", serverInfo.location]);
 
+	// project & app
+	if (options.project) table.push(["Project", `${options.project.slug} (ID: ${options.project._id})`]);
+	if (options.app) table.push(["App", `${options.app.slug} (ID: ${options.app._id})`]);
+
 	console.log(table.toString());
 };

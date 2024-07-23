@@ -2,11 +2,13 @@ import "reflect-metadata";
 
 import { createAdapter } from "@socket.io/redis-adapter";
 import bodyParser from "body-parser";
+import chalk from "chalk";
 import console from "console";
 import cookieParser from "cookie-parser";
 import session from "cookie-session";
 import cors from "cors";
-import { logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
+import dayjs from "dayjs";
+import { logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import type { Express, Request, Response } from "express";
 import express from "express";
 import { queryParser } from "express-query-parser";
@@ -299,7 +301,8 @@ function initialize(db?: typeof mongoose) {
 	 * SERVER HANDLING
 	 */
 	function onConnect() {
-		logSuccess(`✅ Server is UP & listening at port ${PORT}...`);
+		console.log(chalk.green("[SYSTEM]"), `Date & time: ${dayjs().format("LLLL")}`);
+		console.log(chalk.green("[SYSTEM]"), `✅ Server is UP & listening at port ${PORT}...`);
 	}
 
 	server.on("error", async (error: any) => {

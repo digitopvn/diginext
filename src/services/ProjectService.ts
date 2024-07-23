@@ -50,7 +50,24 @@ export class ProjectService extends BaseService<IProject> {
 		// check permissions
 		await checkProjectPermissionsByFilter(this, filter, this.user);
 
-		// FIXME: Delete all apps & deploy environments!
+		// Delete all apps & deploy environments!
+		const projects = await this.find(filter);
+		if (projects.length > 0) {
+			for (const project of projects) {
+				const appSvc = new AppService(this.ownership);
+				const appFilter = { project: project._id };
+				try {
+					const apps = await appSvc.find(appFilter);
+					if (apps.length > 0) {
+						for (const app of apps) {
+							await appSvc.takeDown(app).then((_app) => appSvc.delete({ _id: _app._id }));
+						}
+					}
+				} catch (e) {
+					await appSvc.delete(appFilter).catch((err) => logWarn(`ProjectService > delete > delete apps :>>`, err));
+				}
+			}
+		}
 
 		return super.delete(filter, options);
 	}

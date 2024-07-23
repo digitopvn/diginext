@@ -3,7 +3,6 @@ import * as fs from "fs";
 import cronjob from "node-cron";
 
 import { isDevMode, IsTest } from "@/app.config";
-import { cleanUp } from "@/build/system";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
 import { execCmd } from "@/plugins";
@@ -101,10 +100,13 @@ export async function startupScripts() {
 	 * (Skip for test environment)
 	 */
 	if (!IsTest()) {
-		const repeatDays = 7; // every 7 days
-		const atHour = 3; // 3AM
-		console.log(chalk.green(`[SYSTEM]`), `✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
-		cronjob.schedule(`0 ${atHour} */${repeatDays} * *`, () => cleanUp());
+		/**
+		 * System clean up: DOCKER/PODMAN -> Not working (use server crontab currently instead)
+		 */
+		// const repeatDays = 7; // every 7 days
+		// const atHour = 3; // 3AM
+		// console.log(chalk.green(`[SYSTEM]`), `✓ Cronjob of "System Clean Up" has been scheduled every ${repeatDays} days at ${atHour}:00 AM`);
+		// cronjob.schedule(`0 ${atHour} */${repeatDays} * *`, () => cleanUp());
 
 		/**
 		 * Mark all builds & releases with "in_progress" status longer than 1 hour as "failed".

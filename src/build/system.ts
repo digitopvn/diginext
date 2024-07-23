@@ -32,7 +32,7 @@ export async function cleanUp() {
 	let result;
 
 	// Clean up docker system
-	result = await execCmd(`${Config.BUILDER} system prune -af --filter until=72h`);
+	result = await execCmd(`${Config.BUILDER} system prune -af --filter name=buildx`);
 	log(`>>> DOCKER SYSTEM HAVE BEEN CLEANED UP:`);
 	log(result);
 	logger?.append(result);

@@ -558,7 +558,9 @@ export class AppService extends BaseService<IApp> {
 		// take down all deploy environments
 		const deployEnvs = Object.keys(app.deployEnvironment);
 		console.log("AppSvc.takeDown() > deployEnvs :>> ", deployEnvs);
-		return Promise.all(deployEnvs.map((env) => deployEnvSvc.takeDownDeployEnvironment(app, env, options)));
+		await Promise.all(deployEnvs.map((env) => deployEnvSvc.takeDownDeployEnvironment(app, env, options)));
+
+		return app;
 	}
 
 	async archiveApp(app: IApp, ownership?: Ownership) {

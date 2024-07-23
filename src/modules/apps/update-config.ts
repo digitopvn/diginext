@@ -9,10 +9,12 @@ import { getAppConfigFromApp } from "./app-helper";
 export const updateAppConfig = async (app: IApp, env?: string, serverDeployEnvironment?: ClientDeployEnvironmentConfig) => {
 	const { DB } = await import("../api/DB");
 
-	if (app.project instanceof Types.ObjectId || typeof app.project === "string")
-		throw new Error(`Invalid "app.project" type, must be {IProject} instance.`);
-
 	let { project } = app;
+
+	if (project instanceof Types.ObjectId || typeof project === "string") {
+		project = await DB.findOne("project", { _id: project });
+		if (!project) throw new Error(`Unable to update app config: Project ${app.project} not found.`);
+	}
 
 	// ! IMPORTANT: In case app was moved to another project
 	const updateAppData: AppDto = {
