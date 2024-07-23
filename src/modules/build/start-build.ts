@@ -15,8 +15,8 @@ import { socketIO } from "@/server";
 
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import builder from "../builder";
-import type { GenerateDeploymentResult } from "../deploy";
-import { generateDeployment } from "../deploy";
+import type { GenerateDeploymentV2Result } from "../deploy/generate-deployment-v2";
+import { generateDeploymentV2 } from "../deploy/generate-deployment-v2";
 import { verifySSH } from "../git";
 import ClusterManager from "../k8s";
 import { connectRegistry } from "../registry/connect-registry";
@@ -245,11 +245,11 @@ export async function startBuildV1(
 	 * Generate deployment data (YAML) & save the YAML deployment to "app.deployEnvironment[env]"
 	 * So it can be used to create release from build
 	 */
-	let deployment: GenerateDeploymentResult;
+	let deployment: GenerateDeploymentV2Result;
 	sendLog({ SOCKET_ROOM, message: `Generating the deployment files on server...` });
 
 	try {
-		deployment = await generateDeployment({
+		deployment = await generateDeploymentV2({
 			appSlug,
 			env,
 			username,

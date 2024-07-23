@@ -14,8 +14,7 @@ import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
-import type { GenerateDeploymentResult } from "@/modules/deploy";
-import { fetchDeploymentFromContent, generateDeployment } from "@/modules/deploy";
+import { fetchDeploymentFromContent } from "@/modules/deploy";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
 import { generateDeploymentV2 } from "@/modules/deploy/generate-deployment-v2";
 import { dxCreateDomain } from "@/modules/diginext/dx-domain";
@@ -942,14 +941,15 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// generate deployment files and apply new config
 		if (updatedApp.deployEnvironment && updatedApp.deployEnvironment[env] && updatedApp.deployEnvironment[env].deploymentYaml) {
-			const { BUILD_TAG } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+			const { BUILD_TAG, IMAGE_NAME } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
 
-			let deployment: GenerateDeploymentResult = await generateDeployment({
+			let deployment = await generateDeploymentV2({
 				appSlug: app.slug,
 				env,
 				username: this.user.slug,
 				workspace: this.workspace,
 				buildTag: BUILD_TAG,
+				buildImage: IMAGE_NAME,
 			});
 
 			const { endpoint, deploymentContent } = deployment;
@@ -1172,16 +1172,17 @@ export default class AppController extends BaseController<IApp, AppService> {
 		console.log("AppController > addEnvironmentDomain() > updatedApp.deployEnvironment[env] :>> ", updatedApp.deployEnvironment[env]);
 
 		// generate deployment files and apply new config
-		const { BUILD_TAG } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+		const { BUILD_TAG, IMAGE_NAME } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
 		console.log("AppController > addEnvironmentDomain() > BUILD_TAG :>> ", BUILD_TAG);
 		console.log("AppController > addEnvironmentDomain() > this.user :>> ", this.user);
 
-		let deployment: GenerateDeploymentResult = await generateDeployment({
+		let deployment = await generateDeploymentV2({
 			appSlug: app.slug,
 			env,
 			username: this.user.slug,
 			workspace: this.workspace,
 			buildTag: BUILD_TAG,
+			buildImage: IMAGE_NAME,
 		});
 
 		const { endpoint, deploymentContent } = deployment;

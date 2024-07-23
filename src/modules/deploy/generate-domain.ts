@@ -31,6 +31,10 @@ export interface GenerateDomainOptions {
 	 * the primary IP address of the cluster will be used as the A RECORD value
 	 */
 	clusterSlug?: string;
+	/**
+	 * Debugging mode
+	 */
+	isDebugging?: boolean;
 }
 
 interface GenerateDomainResult {
@@ -42,6 +46,8 @@ interface GenerateDomainResult {
 
 export const generateDomains = async (params: GenerateDomainOptions) => {
 	const { DB } = await import("../api/DB");
+
+	if (params.isDebugging) console.log("generateDomains() > params :>> ", params);
 
 	// Manage domains in database to avoid duplication
 	const dxKey = params.workspace.dx_key;

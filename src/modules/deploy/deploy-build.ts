@@ -16,7 +16,8 @@ import { updateReleaseStatusById } from "../build/update-release-status";
 import ClusterManager from "../k8s";
 import type { FetchDeploymentResult } from "./fetch-deployment";
 import type { GenerateDeploymentResult } from "./generate-deployment";
-import { generateDeployment } from "./generate-deployment";
+import type { GenerateDeploymentV2Result } from "./generate-deployment-v2";
+import { generateDeploymentV2 } from "./generate-deployment-v2";
 
 export type DeployBuildOptions = {
 	/**
@@ -354,10 +355,10 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 	 * Generate deployment data (YAML) & save the YAML deployment to "app.environment[env]"
 	 * So it can be used to create release from build
 	 */
-	let deployment: GenerateDeploymentResult;
+	let deployment: GenerateDeploymentV2Result;
 	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generating the deployment files on server...` });
 	try {
-		deployment = await generateDeployment({
+		deployment = await generateDeploymentV2({
 			appSlug,
 			env,
 			username,

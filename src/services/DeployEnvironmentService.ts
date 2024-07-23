@@ -15,8 +15,8 @@ import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import type { GenerateDeploymentResult } from "@/modules/deploy";
-import { generateDeployment } from "@/modules/deploy";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
+import { generateDeploymentV2 } from "@/modules/deploy/generate-deployment-v2";
 import { dxCreateDomain, dxUpdateDomain } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
@@ -186,7 +186,7 @@ export class DeployEnvironmentService {
 		// const appConfig = await getAppConfigFromApp(updatedApp);
 		// console.log("buildTag :>> ", buildTag);
 
-		let deployment = await generateDeployment({
+		let deployment = await generateDeploymentV2({
 			env,
 			skipPrerelease: true, // skip overwrite "prerelease" domain origin
 			appSlug: app.slug,
@@ -686,7 +686,7 @@ export class DeployEnvironmentService {
 				const { buildTag } = deployEnvironment;
 
 				// generate new deployment YAML
-				let deployment: GenerateDeploymentResult = await generateDeployment({
+				let deployment: GenerateDeploymentResult = await generateDeploymentV2({
 					env,
 					skipPrerelease: true, // skip overwrite "prerelease" domain origin
 					appSlug,
@@ -752,7 +752,7 @@ export class DeployEnvironmentService {
 		);
 
 		// add {PersistentVolumeClaim} to Kubernetes deployment
-		const deployment = await await generateDeployment({
+		const deployment = await await generateDeploymentV2({
 			env,
 			skipPrerelease: true, // skip overwrite "prerelease" domain origin
 			appSlug: app.slug,
@@ -868,7 +868,7 @@ export class DeployEnvironmentService {
 		app = await appSvc.updateOne({ _id: app._id }, { [`deployEnvironment.${env}.volumes`]: updatedVolumes });
 
 		// unattach volume from the K8S deployment
-		const deployment = await await generateDeployment({
+		const deployment = await await generateDeploymentV2({
 			env,
 			skipPrerelease: true, // skip overwrite "prerelease" domain origin
 			appSlug: app.slug,
