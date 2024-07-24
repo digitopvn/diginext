@@ -15,6 +15,7 @@ import { socketIO } from "@/server";
 
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
 import builder from "../builder";
+import { createBuildSlug } from "../deploy/create-build-slug";
 import type { GenerateDeploymentV2Result } from "../deploy/generate-deployment-v2";
 import { generateDeploymentV2 } from "../deploy/generate-deployment-v2";
 import { verifySSH } from "../git";
@@ -79,7 +80,7 @@ export async function startBuildV1(
 	const workspace = app.workspace as IWorkspace;
 
 	// socket & logs
-	const SOCKET_ROOM = `${projectSlug}_${appSlug}_${buildTag}`;
+	const SOCKET_ROOM = createBuildSlug({ projectSlug, appSlug, buildTag });
 	const logger = new Logger(SOCKET_ROOM);
 	options.SOCKET_ROOM = SOCKET_ROOM;
 

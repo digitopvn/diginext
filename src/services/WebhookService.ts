@@ -6,6 +6,7 @@ import type { IDataReferences, IWebhook } from "@/entities/Webhook";
 import { webhookSchema } from "@/entities/Webhook";
 import type { IQueryOptions } from "@/interfaces";
 import type { Ownership, SystemEvent, WebhookChannel, WebhookEventStatus } from "@/interfaces/SystemTypes";
+import { createBuildSlug } from "@/modules/deploy/create-build-slug";
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
@@ -84,22 +85,24 @@ export class WebhookService extends BaseService<IWebhook> {
 					case "build_status":
 						if (webhook.status === "failed" || webhook.status === "success") {
 							return DB.findOne("build", { _id: webhook.build }, { populate: ["workspace", "owner", "project", "app"] })
-								.then((ref) => {
-									const BUILD_LOG_ROOM = `${ref?.appSlug}-${ref?.tag}`;
-									const logURL = `${Config.BASE_URL}/build/logs?build_slug=${BUILD_LOG_ROOM}`;
-									const duration = humanizeDuration(ref.duration);
-									const owner = ref.owner as IUser;
+								.then((build) => {
+									if (!build) throw new Error(`Build not found.`);
+									const { projectSlug, appSlug, tag: buildTag } = build;
+									const SOCKET_ROOM = createBuildSlug({ projectSlug, appSlug, buildTag });
+									const logURL = `${Config.BASE_URL}/build/logs?build_slug=${SOCKET_ROOM}`;
+									const duration = humanizeDuration(build.duration);
+									const owner = build.owner as IUser;
 									return this.notiSvc.webhookSend(webhook, {
-										references: { build: MongoDB.toString(ref._id) },
+										references: { build: MongoDB.toString(build._id) },
 										url: logURL,
 										from: MongoDB.toString(webhook.owner),
 										to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
-										title: webhook.status === "failed" ? `Build failed: ${ref?.name}` : `Build success: ${ref?.name}`,
+										title: webhook.status === "failed" ? `Build failed: ${build?.name}` : `Build success: ${build?.name}`,
 										message: `- Workspace: ${this.ownership.workspace.name}<br/>- Project: ${
-											(ref?.project as IProject).name
-										}<br/>- App: ${(ref?.app as IApp).name}<br/>- User: ${owner.name} (${
+											(build?.project as IProject).name
+										}<br/>- App: ${(build?.app as IApp).name}<br/>- User: ${owner.name} (${
 											owner.slug
-										})<br/>- Duration: ${duration}<br/>- View logs: <a href="${logURL}">CLICK HERE</a><br/>- Container image: ${ref?.image}`,
+										})<br/>- Duration: ${duration}<br/>- View logs: <a href="${logURL}">CLICK HERE</a><br/>- Container image: ${build?.image}`,
 									});
 								})
 								.catch((e) => {
@@ -111,29 +114,31 @@ export class WebhookService extends BaseService<IWebhook> {
 					case "deploy_status":
 						if (webhook.status === "failed" || webhook.status === "success") {
 							return DB.findOne("release", { _id: webhook.release }, { populate: ["workspace", "owner", "project", "app", "build"] })
-								.then((ref) => {
-									const build = ref?.build as IBuild;
-									const BUILD_LOG_ROOM = `${build.appSlug}-${build.tag}`;
+								.then((release) => {
+									if (!release) throw new Error(`Release not found.`);
+									const { build } = release;
+									const { projectSlug, appSlug, tag: buildTag, duration: buildDuration } = build as IBuild;
+									const SOCKET_ROOM = createBuildSlug({ projectSlug, appSlug, buildTag });
 									const buildListPageUrl = `${Config.BASE_URL}/build`;
-									const logURL = `${Config.BASE_URL}/build/logs?build_slug=${BUILD_LOG_ROOM}`;
-									const duration = humanizeDuration(build.duration);
-									const owner = ref.owner as IUser;
+									const logURL = `${Config.BASE_URL}/build/logs?build_slug=${SOCKET_ROOM}`;
+									const duration = humanizeDuration(buildDuration);
+									const owner = release.owner as IUser;
 									return this.notiSvc.webhookSend(webhook, {
-										references: { release: MongoDB.toString(ref._id) },
+										references: { release: MongoDB.toString(release._id) },
 										url: logURL,
 										from: MongoDB.toString(webhook.owner),
 										to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
-										title: webhook.status === "failed" ? `Deploy failed: ${ref?.name}` : `Deploy success: ${ref?.name}`,
+										title: webhook.status === "failed" ? `Deploy failed: ${release?.name}` : `Deploy success: ${release?.name}`,
 										message:
 											(webhook.status === "failed"
-												? `Failed to deploy "${ref?.appSlug}" app of "${ref?.projectSlug}" project to "${ref?.env.toUpperCase()}" environment.<br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}`
-												: `<strong>App has been deployed to "${ref?.env.toUpperCase()}" environment successfully.</strong><br/><br/>- Workspace: ${
-														(ref?.workspace as IWorkspace).name
+												? `Failed to deploy "${release?.appSlug}" app of "${release?.projectSlug}" project to "${release?.env.toUpperCase()}" environment.<br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}`
+												: `<strong>App has been deployed to "${release?.env.toUpperCase()}" environment successfully.</strong><br/><br/>- Workspace: ${
+														(release?.workspace as IWorkspace).name
 												  }<br/>- User: ${owner.name} (${
 														owner.slug
-												  })<br/>- App: ${ref?.appSlug}<br/>- Project: ${ref?.projectSlug}<br/>- URL: <a href="https://${
-														ref?.env === "production" ? ref?.prereleaseUrl : ref?.productionUrl
-												  }">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${ref?.image}`) +
+												  })<br/>- App: ${release?.appSlug}<br/>- Project: ${release?.projectSlug}<br/>- URL: <a href="https://${
+														release?.env === "production" ? release?.prereleaseUrl : release?.productionUrl
+												  }">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${release?.image}`) +
 											`<br/><br/>Go to <a href="${buildListPageUrl}">DXUP Dashboard</a>.<br/><br/>Best regards, <a href="https://dxup.dev">DXUP</a> Team.`,
 									});
 								})

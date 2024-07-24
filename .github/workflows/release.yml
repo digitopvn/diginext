@@ -168,7 +168,7 @@ jobs:
       # - name: Display structure of downloaded files
       #   run: ls -R
 
-      - name: Checkout latest release tag
+      - name: Get a latest release tag
         run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
       - run: echo $LATEST_TAG
       - run: echo ${{env.LATEST_TAG}}
@@ -211,7 +211,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.CI_GITHUB_TOKEN }}
 
-      - name: Checkout latest release tag
+      - name: Get a latest release tag
         run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
       - run: echo ${LATEST_TAG}
       - run: echo ${{env.LATEST_TAG}}
@@ -271,9 +271,13 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.CI_GITHUB_TOKEN }}
       
-      - name: Checkout latest release tag
+      - name: Get a latest release tag
         run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
       - run: echo $LATEST_TAG
+      - name: Get list of commits
+        run: |
+          COMMIT_TITLES=$(git log --format=%s ${GITHUB_BASE_REF}..${GITHUB_SHA})
+          echo "$COMMIT_TITLES" >> $GITHUB_ENV
 
       - run: echo "${{ github.ref }}"
       - run: echo "${{ github.ref_name }}"
@@ -313,6 +317,13 @@ jobs:
       # DEPRECATED
       # - name: Set image to [hobby.dxup.dev] deployment
       #   run: kubectl --context=topgroup-k3s -n diginext-hobby set image deployment/diginext-hobby diginext-hobby=digitop/diginext:$LATEST_TAG
+
+      - uses: sarisia/actions-status-discord@v1
+        if: always()
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          title: "New version ${{ env.LATEST_TAG }} has been deployed!"
+          description: ${{ env.COMMIT_TITLES }}
 
   deploy-diginext-staging:
     name: Deploy to [staging.app.dxup.dev]

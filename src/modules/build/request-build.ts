@@ -10,6 +10,7 @@ import { getCurrentGitRepoData, resolveDockerfilePath } from "@/plugins";
 
 import { askForProjectAndApp } from "../apps/ask-project-and-app";
 import { updateAppGitInfo } from "../apps/update-git-config";
+import { createBuildSlug } from "../deploy/create-build-slug";
 import { stageCommitAndPushAll } from "../git/git-utils";
 import { askForRegistry } from "../registry/ask-for-registry";
 import { generateBuildTagBySourceDir } from "./generate-build-tag";
@@ -94,7 +95,7 @@ export async function requestBuild(options: InputOptions) {
 
 	if (options.isDebugging) console.log("options.buildTag :>> ", options.buildTag);
 
-	const SOCKET_ROOM = `${project.slug}_${app.slug}_${options.buildTag}`;
+	const SOCKET_ROOM = createBuildSlug({ projectSlug: project.slug, appSlug: app.slug, buildTag: options.buildTag });
 
 	/**
 	 * Stage, commit & push configuration files (dx.json) to GIT repository:

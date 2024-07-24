@@ -19,6 +19,7 @@ import { WebhookService } from "@/services";
 
 import builder from "../builder";
 import { BuildContainerError } from "../builder/docker";
+import { createBuildSlug } from "../deploy/create-build-slug";
 import { pullOrCloneGitRepoHTTP, repoSshToRepoURL } from "../git/git-utils";
 import { connectRegistry } from "../registry/connect-registry";
 import { sendLog } from "./send-log-message";
@@ -244,7 +245,7 @@ export async function startBuild(
 	const workspace = activeWorkspace as IWorkspace;
 
 	// socket & logs
-	const SOCKET_ROOM = `${projectSlug}_${appSlug}_${buildTag}`;
+	const SOCKET_ROOM = createBuildSlug({ projectSlug, appSlug, buildTag });
 	const logger = new Logger(SOCKET_ROOM);
 
 	// Emit socket message to request the BUILD SERVER to start building...
@@ -320,13 +321,13 @@ export async function startBuild(
 		deployStatus: "pending",
 		startTime: startTime.toDate(),
 		createdBy: username,
-		projectSlug,
-		appSlug,
 		branch: gitBranch,
 		logs: logger?.content,
 		registry: registry._id,
 		app: app._id,
+		appSlug,
 		project: project._id,
+		projectSlug,
 		owner: owner._id,
 		ownerSlug: owner.slug,
 		workspace: workspace._id,
