@@ -6,7 +6,7 @@ import type { IRoutePermission } from "@/interfaces";
 import * as interfaces from "@/interfaces";
 import type { DBCollection } from "@/modules/api/DB";
 import { MongoDB } from "@/plugins/mongodb";
-import { RouteService } from "@/services";
+import { RouteService } from "@/services/RouteService";
 
 import BaseController from "./BaseController";
 

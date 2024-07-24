@@ -13,7 +13,8 @@ import {
 	filterUsersByWorkspaceRole,
 	getActiveRole,
 } from "@/plugins/user-utils";
-import { UserService, WorkspaceService } from "@/services";
+import { UserService } from "@/services/UserService";
+import { WorkspaceService } from "@/services/WorkspaceService";
 
 interface JoinWorkspaceBody {
 	/**

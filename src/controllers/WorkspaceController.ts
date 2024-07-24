@@ -3,7 +3,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 import BaseController from "@/controllers/BaseController";
 import type { IApiKeyAccount, IServiceAccount, IWorkspace } from "@/entities";
 import * as interfaces from "@/interfaces";
-import { AddUserToWorkspaceParams, InviteMemberData, WorkspaceInputData, WorkspaceService } from "@/services";
+import { AddUserToWorkspaceParams, InviteMemberData, WorkspaceInputData, WorkspaceService } from "@/services/WorkspaceService";
 
 @Tags("Workspace")
 @Route("workspace")

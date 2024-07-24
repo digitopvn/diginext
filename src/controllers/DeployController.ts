@@ -16,7 +16,6 @@ import type { DeployBuildOptions } from "@/modules/deploy/deploy-build";
 import { PromoteDeployEnvironmentOptions } from "@/modules/deploy/promote-deploy-environment";
 import { parseGitRepoDataFromRepoSSH } from "@/modules/git/git-utils";
 import { MongoDB } from "@/plugins/mongodb";
-import { AppService, ClusterService, ContainerRegistryService, GitProviderService } from "@/services";
 import DeployService from "@/services/DeployService";
 
 export type DeployBuildParams = {
@@ -81,14 +80,6 @@ export default class DeployController {
 	options: IQueryOptions;
 
 	pagination: IResponsePagination;
-
-	appSvc = new AppService();
-
-	regSvc = new ContainerRegistryService();
-
-	clusterSvc = new ClusterService();
-
-	gitSvc = new GitProviderService();
 
 	/**
 	 * ### [DEPRECATED]
@@ -202,7 +193,9 @@ export default class DeployController {
 		if (!body.deployParams) return respondFailure(`Data of "deployParams" is required.`);
 		if (!body.deployParams.env) return respondFailure(`Data of "deployParams.env" is required.`);
 
-		const app = await this.appSvc.findOne({ slug: body.appSlug });
+		const { AppService } = await import("@/services");
+		const appSvc = new AppService(this.ownership);
+		const app = await appSvc.findOne({ slug: body.appSlug });
 		if (!app) return respondFailure(`App not found.`);
 
 		const { env } = body.deployParams;
@@ -270,20 +263,23 @@ export default class DeployController {
 		const { env } = body.deployParams;
 
 		// inherit the ownership
-		this.appSvc.ownership = this.ownership;
-
-		let app = await this.appSvc.findOne({ "git.repoSSH": body.sshUrl });
+		const { AppService } = await import("@/services");
+		const appSvc = new AppService(this.ownership);
+		let app = await appSvc.findOne({ "git.repoSSH": body.sshUrl });
 
 		// generate new app
 		if (!app) {
 			// try to get default git provider
 			const gitData = parseGitRepoDataFromRepoSSH(body.sshUrl);
-			const gitProvider = await this.gitSvc.findOne({ type: gitData.providerType, public: true, workspace: this.workspace._id });
+
+			const { GitProviderService } = await import("@/services");
+			const gitSvc = new GitProviderService(this.ownership);
+			const gitProvider = await gitSvc.findOne({ type: gitData.providerType, public: true, workspace: this.workspace._id });
 			if (!gitProvider) throw new Error(`Unable to deploy: no git providers (${gitData.providerType.toUpperCase()}) in this workspace.`);
 
 			// create a new app
 			try {
-				app = await this.appSvc.createWithGitURL(
+				app = await appSvc.createWithGitURL(
 					body.sshUrl,
 					MongoDB.toString(gitProvider._id),
 					{ workspace: this.workspace, owner: this.user },
@@ -295,19 +291,23 @@ export default class DeployController {
 		}
 
 		// get random registry in this workspace
-		const defaultRegistry = await this.regSvc.findOne({ workspace: this.workspace._id });
+		const { ContainerRegistryService } = await import("@/services");
+		const regSvc = new ContainerRegistryService(this.ownership);
+		const defaultRegistry = await regSvc.findOne({ workspace: this.workspace._id });
 		if (!defaultRegistry) throw new Error(`Unable to deploy: no container registries in this workspace.`);
 
 		// find default cluster
-		let cluster = body.clusterSlug ? await this.clusterSvc.findOne({ slug: body.clusterSlug, workspace: this.workspace._id }) : undefined;
+		const { ClusterService } = await import("@/services");
+		const clusterSvc = new ClusterService(this.ownership);
+		let cluster = body.clusterSlug ? await clusterSvc.findOne({ slug: body.clusterSlug, workspace: this.workspace._id }) : undefined;
 		// get default cluster
 		if (!cluster) {
-			const defaultCluster = await this.clusterSvc.findOne({ isDefault: true, workspace: this.workspace._id });
+			const defaultCluster = await clusterSvc.findOne({ isDefault: true, workspace: this.workspace._id });
 			if (defaultCluster) cluster = defaultCluster;
 		}
 		// get random cluster
 		if (!cluster) {
-			const randomCluster = await this.clusterSvc.findOne({ workspace: this.workspace._id });
+			const randomCluster = await clusterSvc.findOne({ workspace: this.workspace._id });
 			if (randomCluster) cluster = randomCluster;
 		}
 		if (!cluster) throw new Error(`Unable to deploy: no clusters in this workspace.`);

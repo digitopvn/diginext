@@ -8,7 +8,7 @@ import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import type { BuildStatus, DeployStatus } from "@/interfaces/SystemTypes";
 import * as buildModule from "@/modules/build";
 import { Logger } from "@/plugins";
-import { BuildService } from "@/services";
+import { BuildService } from "@/services/BuildService";
 
 import BaseController from "./BaseController";
 

@@ -7,7 +7,8 @@ import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import ClusterManager from "@/modules/k8s";
 import { ContainerRegistrySecretOptions } from "@/modules/registry/ContainerRegistrySecretOptions";
-import { CloudProviderService, ClusterService } from "@/services";
+import { CloudProviderService } from "@/services/CloudProviderService";
+import { ClusterService } from "@/services/ClusterService";
 
 import BaseController from "./BaseController";
 
