@@ -1,3 +1,11 @@
+## [3.34.16](https://github.com/digitopvn/diginext/compare/v3.34.15...v3.34.16) (2024-07-24)
+
+
+### Bug Fixes
+
+* **github action:** send status to discord channel ([58e359e](https://github.com/digitopvn/diginext/commit/58e359ec7091f17794db5a77525332ab052413bd))
+* **github action:** send status to discord channel ([#532](https://github.com/digitopvn/diginext/issues/532)) ([0c5cdaf](https://github.com/digitopvn/diginext/commit/0c5cdaf939653209f58b43be938bd57d5cb798a9))
+
 ## [3.34.15](https://github.com/digitopvn/diginext/compare/v3.34.14...v3.34.15) (2024-07-24)
 
 
