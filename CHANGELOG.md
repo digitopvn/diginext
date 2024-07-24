@@ -1,3 +1,11 @@
+## [3.34.15](https://github.com/digitopvn/diginext/compare/v3.34.14...v3.34.15) (2024-07-24)
+
+
+### Bug Fixes
+
+* **server,cli:** split specific services importing ([76c8e44](https://github.com/digitopvn/diginext/commit/76c8e4414202c1f9f523a4bef802b56f3c2e27c3))
+* **server,cli:** split specific services importing ([#531](https://github.com/digitopvn/diginext/issues/531)) ([3b42165](https://github.com/digitopvn/diginext/commit/3b421654bbd9ac69b7bf3ac64cca3fe3d2119874))
+
 ## [3.34.14](https://github.com/digitopvn/diginext/compare/v3.34.13...v3.34.14) (2024-07-23)
 
 
