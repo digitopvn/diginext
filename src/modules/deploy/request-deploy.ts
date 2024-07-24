@@ -16,6 +16,7 @@ import { getServerInfo } from "../cli/get-server-info";
 import { isUnstagedFiles } from "../git/git-utils";
 import { askAiGenerateDockerfile } from "./ask-ai-generate-dockerfile";
 import { askForDeployEnvironmentInfo } from "./ask-deploy-environment-info";
+import { createBuildSlug } from "./create-build-slug";
 import { parseOptionsToAppConfig } from "./parse-options-to-app-config";
 
 /**
@@ -111,7 +112,7 @@ export async function requestDeploy(options: InputOptions) {
 	if (options.isDebugging) console.log("requestDeploy() > generateBuildTagBySourceDir() :>> ", tagInfo);
 	options.buildTag = tagInfo.tag;
 	options.buildImage = `${imageURL}:${options.buildTag}`;
-	options.SOCKET_ROOM = `${appConfig.project}_${appConfig.slug}_${options.buildTag}`;
+	options.SOCKET_ROOM = createBuildSlug({ projectSlug: appConfig.project, appSlug: appConfig.slug, buildTag: options.buildTag });
 	const { SOCKET_ROOM } = options;
 
 	/**

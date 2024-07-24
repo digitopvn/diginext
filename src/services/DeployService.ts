@@ -4,6 +4,7 @@ import type { IBuild, IRelease, IUser, IWorkspace } from "@/entities";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import type { StartBuildParams } from "@/modules/build";
 import { buildAndDeploy } from "@/modules/build/build-and-deploy";
+import { createBuildSlug } from "@/modules/deploy/create-build-slug";
 import { type DeployBuildOptions, deployBuild } from "@/modules/deploy/deploy-build";
 import { deployBuildV2 } from "@/modules/deploy/deploy-build-v2";
 import { deployRelease } from "@/modules/deploy/deploy-release";
@@ -85,7 +86,7 @@ export default class DeployService {
 
 		const { appSlug, buildTag } = buildParams;
 		const buildServerUrl = Config.BASE_URL;
-		const SOCKET_ROOM = `${app.projectSlug}_${appSlug}_${buildTag}`;
+		const SOCKET_ROOM = createBuildSlug({ projectSlug: app.projectSlug, appSlug, buildTag });
 		const logURL = `${buildServerUrl}/build/logs?build_slug=${SOCKET_ROOM}&env=${deployParams.env}`;
 
 		return { logURL };
