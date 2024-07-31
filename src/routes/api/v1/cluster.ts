@@ -14,6 +14,7 @@ router
 	.use(authenticate, authorize)
 	.use(registerController(controller))
 	.get("/", processApiRequest(controller.read.bind(controller)))
+	.get("/all", processApiRequest(controller.readAll.bind(controller)))
 	.get("/credentials", processApiRequestWithoutMasking(controller.read.bind(controller)))
 	.get("/connect", processApiRequest(controller.connect.bind(controller)))
 	.get("/verify", processApiRequest(controller.verify.bind(controller)))

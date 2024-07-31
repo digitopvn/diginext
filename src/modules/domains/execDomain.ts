@@ -8,7 +8,7 @@ import { dxCreateDomain } from "../diginext/dx-domain";
 const logTitle = `[EXEC_DOMAIN]`;
 
 export const execDomain = async (options?: InputOptions) => {
-	const { secondAction, name, input } = options;
+	const { secondAction, name, input, author } = options;
 
 	switch (secondAction) {
 		case "new":
@@ -26,7 +26,7 @@ export const execDomain = async (options?: InputOptions) => {
 				logError(`Missing "DX Key" in this workspace.`);
 				return;
 			}
-			const { status, messages, data } = await dxCreateDomain({ name, data: input }, options.workspace.dx_key);
+			const { status, messages, data } = await dxCreateDomain({ name, data: input, userId: author.dxUserId }, options.workspace.dx_key);
 			if (status === 0) {
 				logError(logTitle, messages.join(". "));
 				return;

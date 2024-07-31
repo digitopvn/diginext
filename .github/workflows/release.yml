@@ -322,7 +322,7 @@ jobs:
         if: always()
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          title: "New version ${{ env.LATEST_TAG }} has been deployed!"
+          title: "[APP.DXUP.DEV] Deploy version ${{ env.LATEST_TAG }}"
           description: ${{ env.COMMIT_TITLES }}
 
   deploy-diginext-staging:

@@ -14,7 +14,7 @@ import { formatEnvVars } from "@/plugins/env-var";
 import { makeSlug } from "@/plugins/slug";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
-import { generateDiginextDomain } from "../build";
+import { diginextDomainName } from "../build";
 import ClusterManager from "../k8s";
 import { createImagePullSecretsInNamespace } from "../k8s/image-pull-secret";
 import getDeploymentName from "./generate-deployment-name";
@@ -141,12 +141,14 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 
 	// if no domains, generate a default DIGINEXT domain:
 	if (!domains) {
-		const { subdomain } = await generateDiginextDomain(env, projectSlug, appSlug);
+		const user = await DB.findOne("user", { slug: username });
+		const { subdomain } = await diginextDomainName(env, projectSlug, appSlug);
 		const {
 			status,
 			domain: generatedDomain,
 			messages,
 		} = await generateDomains({
+			user,
 			workspace,
 			subdomainName: subdomain,
 			clusterSlug: clusterSlug,

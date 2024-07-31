@@ -32,7 +32,7 @@ export const execCluster = async (options?: InputOptions) => {
 
 		case "list":
 		case "ls":
-			const clusters = await DB.find("cluster");
+			const clusters = await DB.find("cluster", {}, { subpath: "/all" });
 			if (!clusters || clusters.length === 0) throw new Error(`This workspace has no clusters.`);
 			console.log(clusters.map((item, index) => `[${index + 1}] ${item.name} (${item.slug})`).join("\n"));
 			break;

@@ -130,6 +130,11 @@ export async function startupScripts() {
 	// await migrateAllClusters();
 
 	/**
+	 * Seed or update initial data
+	 */
+	// await seedInitialClusters();
+
+	/**
 	 * Mark "healthz" return true & server is ready to receive connections:
 	 */
 	setServerStatus(true);

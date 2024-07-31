@@ -117,6 +117,7 @@ export default class BaseService<T = any> {
 				"serviceAccount",
 				"apiAccessToken",
 				"metadata",
+				"dx_key",
 			];
 			for (const [key, value] of Object.entries(data)) {
 				if (!metadataExcludes.includes(key) && !isValidObjectId(value) && value)

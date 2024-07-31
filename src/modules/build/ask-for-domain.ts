@@ -4,12 +4,12 @@ import { logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import inquirer from "inquirer";
 
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { IWorkspace } from "@/entities";
+import type { IUser, IWorkspace } from "@/entities";
 import type { ClientDeployEnvironmentConfig } from "@/interfaces";
 
 import { generateDomains } from "../deploy/generate-domain";
 
-export function generateDiginextDomain(env: string, projectSlug: string, appSlug: string) {
+export function diginextDomainName(env: string, projectSlug: string, appSlug: string) {
 	let subdomainName = `${projectSlug}-${appSlug}.${env}`;
 	let generatedDomain = `${subdomainName}.${DIGINEXT_DOMAIN}`;
 
@@ -27,13 +27,15 @@ export const askForDomain = async (
 	projectSlug: string,
 	appSlug: string,
 	deployEnvironment: ClientDeployEnvironmentConfig,
-	options: { shouldGenerate?: boolean } = { shouldGenerate: true }
+	options: { user?: IUser; shouldGenerate?: boolean } = { shouldGenerate: true }
 ) => {
 	const { DB } = await import("../api/DB");
 
+	const { user } = options;
+
 	let domains: string[] = [];
 
-	let { subdomain, domain } = generateDiginextDomain(env, projectSlug, appSlug);
+	let { subdomain, domain } = diginextDomainName(env, projectSlug, appSlug);
 
 	const clusterSlug = deployEnvironment.cluster;
 
@@ -71,6 +73,7 @@ export const askForDomain = async (
 				domain: generatedDomain,
 				messages,
 			} = await generateDomains({
+				user,
 				workspace,
 				subdomainName: subdomain,
 				clusterSlug: clusterSlug,

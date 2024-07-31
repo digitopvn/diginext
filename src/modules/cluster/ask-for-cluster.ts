@@ -6,7 +6,7 @@ import type { ICluster } from "@/entities";
 
 export const askForCluster = async () => {
 	const { DB } = await import("@/modules/api/DB");
-	const clusters = await DB.find("cluster", {});
+	const clusters = await DB.find("cluster", {}, { subpath: "/all" });
 
 	if (isEmpty(clusters)) {
 		logError(`This workspace doesn't have any clusters.`);

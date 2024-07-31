@@ -147,7 +147,7 @@ export class DeployEnvironmentService {
 				status,
 				messages,
 				data: { domain },
-			} = await dxCreateDomain({ name: subdomain, data: cluster.primaryIP }, ownership.workspace.dx_key);
+			} = await dxCreateDomain({ name: subdomain, data: cluster.primaryIP, userId: this.user.dxUserId }, ownership.workspace.dx_key);
 			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
 			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
 		}
@@ -596,7 +596,7 @@ export class DeployEnvironmentService {
 		delete newReleaseData.updatedAt;
 		delete newReleaseData.owner;
 		delete newReleaseData.ownerSlug;
-		console.log("newReleaseData :>> ", newReleaseData);
+
 		const newRelease = await releaseSvc.create(newReleaseData);
 		if (!newRelease) throw new Error(`Unable to create new release.`);
 
@@ -609,7 +609,7 @@ export class DeployEnvironmentService {
 			if (this.workspace && this.workspace.dx_key) {
 				for (const domain of deployEnvironment.domains.filter((_domain) => _domain.indexOf(".diginext.site") > -1)) {
 					const subdomain = domain.replace(".diginext.site", "");
-					dxUpdateDomain({ subdomain, data: cluster.primaryIP }, this.workspace.dx_key).catch(console.error);
+					dxUpdateDomain({ subdomain, data: cluster.primaryIP, userId: this.user.dxUserId }, this.workspace.dx_key).catch(console.error);
 				}
 			} else {
 				console.error("DeployEnvironmentService > changeCluster() > Update domain A record data > No WORKSPACE or DX_KEY found.");
