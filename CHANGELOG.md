@@ -1,3 +1,11 @@
+## [3.34.17](https://github.com/digitopvn/diginext/compare/v3.34.16...v3.34.17) (2024-07-31)
+
+
+### Bug Fixes
+
+* **admin:** show all clusters include default ones ([ec8fe82](https://github.com/digitopvn/diginext/commit/ec8fe8229877335f40653af3aecbef655e9d9076))
+* **server:** improve api speed ([296be6d](https://github.com/digitopvn/diginext/commit/296be6db2006ba7f7d930b9a37300e1d2784a91b))
+
 ## [3.34.16](https://github.com/digitopvn/diginext/compare/v3.34.15...v3.34.16) (2024-07-24)
 
 
