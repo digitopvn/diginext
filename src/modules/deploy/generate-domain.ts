@@ -3,13 +3,17 @@ import { logError } from "diginext-utils/dist/xconsole/log";
 
 import { isServerMode } from "@/app.config";
 import { DIGINEXT_DOMAIN } from "@/config/const";
-import type { IWorkspace } from "@/entities";
+import type { IUser, IWorkspace } from "@/entities";
 
 import { fetchApi } from "../api";
 import type { CreateDiginextDomainParams } from "../diginext/dx-domain";
 import { dxCreateDomain } from "../diginext/dx-domain";
 
 export interface GenerateDomainOptions {
+	/**
+	 * User data
+	 */
+	user: IUser;
 	/**
 	 * Workspace data
 	 */
@@ -52,7 +56,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	// Manage domains in database to avoid duplication
 	const dxKey = params.workspace.dx_key;
 
-	let { subdomainName, clusterSlug, ipAddress, primaryDomain = DIGINEXT_DOMAIN } = params;
+	let { subdomainName, clusterSlug, ipAddress, primaryDomain = DIGINEXT_DOMAIN, user } = params;
 	let domain = `${subdomainName}.${primaryDomain}`;
 	let targetIP: string;
 
@@ -75,7 +79,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	}
 
 	// create new subdomain:
-	const domainData: CreateDiginextDomainParams = { name: subdomainName, data: targetIP };
+	const domainData: CreateDiginextDomainParams = { name: subdomainName, data: targetIP, userId: user.dxUserId };
 	let res = isServerMode ? await dxCreateDomain(domainData, dxKey) : await fetchApi({ url: `/api/v1/domain`, method: "POST", data: domainData });
 
 	// console.log("generateDomain > res :>> ", res);
@@ -89,7 +93,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 			domain = `${subdomainName}.${primaryDomain}`;
 
 			// create new domain again if domain was existed
-			res = await dxCreateDomain({ name: subdomainName, data: targetIP }, dxKey);
+			res = await dxCreateDomain({ name: subdomainName, data: targetIP, userId: user.dxUserId }, dxKey);
 
 			messages = res.messages;
 			status = res.status;

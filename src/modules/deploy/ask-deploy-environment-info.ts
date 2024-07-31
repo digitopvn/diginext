@@ -43,7 +43,7 @@ export const askForCertIssuer = async (options: { question?: string; defaultValu
 };
 
 export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequestOptions) => {
-	const { env, targetDirectory: appDirectory = process.cwd() } = options;
+	const { env, targetDirectory: appDirectory = process.cwd(), author } = options;
 
 	// ask for project & app information
 	let { project, app } = await askForProjectAndApp(options.targetDirectory, options);
@@ -112,7 +112,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 
 	// request cluster
 	if (!serverDeployEnvironment.cluster) {
-		const clusters = await DB.find("cluster", {}, { populate: ["provider"] }, { limit: 20 });
+		const clusters = await DB.find("cluster", {}, { subpath: "/all", populate: ["provider"] }, { limit: 20 });
 		if (isEmpty(clusters)) {
 			logError(`No clusters found in this workspace. Please add one to deploy on.`);
 			return;
@@ -145,7 +145,10 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 	// console.log("deployEnvironment.domains :>> ", deployEnvironment.domains);
 	if (isEmpty(environmentDomains)) {
 		try {
-			const domains = await askForDomain(env, project.slug, app.slug, serverDeployEnvironment, { shouldGenerate: options.domain == true });
+			const domains = await askForDomain(env, project.slug, app.slug, serverDeployEnvironment, {
+				user: author,
+				shouldGenerate: options.domain == true,
+			});
 			serverDeployEnvironment.domains = isEmpty(domains) ? [] : domains;
 		} catch (e) {
 			logError(`[ASK_DEPLOY_INFO] ${e}`);

@@ -1,5 +1,4 @@
 import type { Types } from "mongoose";
-import { isUndefined } from "util";
 
 import { Config, IsTest } from "@/app.config";
 import type { IRole } from "@/entities";
@@ -35,9 +34,13 @@ export interface WorkspaceInputData {
 	 */
 	public?: boolean;
 	/**
-	 * Diginext API Key
+	 * DXUP API Key
 	 */
-	dx_key: string;
+	dx_key?: string;
+	/**
+	 * DXUP Workspace ID
+	 */
+	dx_id?: string;
 }
 
 export interface InviteMemberData {
@@ -67,7 +70,7 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 		if (!ownerUser) throw new Error("Workspace's owner not found.");
 
 		// Assign some default values if it's missing
-		if (isUndefined(data.public)) data.public = true;
+		if (typeof data.public === "undefined") data.public = true;
 
 		// ----- VERIFY DX KEY -----
 
@@ -83,7 +86,7 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 						password: ownerUser.password,
 						isActive: true,
 					});
-					if (dxUserRes.status) throw new Error(dxUserRes.messages.join("\n"));
+					if (!dxUserRes.status) throw new Error(dxUserRes.messages.join("\n"));
 
 					const userSvc = new UserService(this.ownership);
 					ownerUser = await userSvc.updateOne({ _id: ownerUser._id }, { dxUserId: dxUserRes.data.id });
@@ -92,13 +95,22 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 				}
 			}
 
-			const dataCreateWorkSpace: CreateWorkspaceParams = {
-				name: name,
-				public: data.public,
-				userId: ownerUser.dxUserId,
-			};
-			const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace);
-			if (!createWsRes.status) throw new Error(`Unable to create Diginext workspace: ${createWsRes.messages.join(".")}`);
+			// create workspace on "dxup.dev" via "dxApi"
+			try {
+				const dataCreateWorkSpace: CreateWorkspaceParams = {
+					name: name,
+					public: data.public,
+					userId: ownerUser.dxUserId,
+				};
+				const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace);
+				if (!createWsRes.status) throw new Error(createWsRes.messages.join("."));
+
+				// assign DXSITE workspace ID and key to the workspace
+				data.dx_key = createWsRes.data.subscriptionKey;
+				data.dx_id = createWsRes.data.id;
+			} catch (e) {
+				console.log(`[WorkspaceService] create > dxCreateWorkspace :>>`, e);
+			}
 		}
 		// console.log("Config.SERVER_TYPE :>> ", Config.SERVER_TYPE);
 
@@ -258,5 +270,7 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 		const workspaces = [...user.workspaces, wsId].filter((_wsId) => typeof _wsId !== "undefined").map((_wsId) => MongoDB.toString(_wsId));
 
 		const updatedUser = await userSvc.update({ id: uid }, { workspaces });
+
+		return workspace;
 	}
 }

@@ -1,5 +1,6 @@
 import type { AxiosRequestConfig } from "axios";
 import axios from "axios";
+import chalk from "chalk";
 import { isEmpty } from "lodash";
 
 import { Config } from "@/app.config";
@@ -24,11 +25,12 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 	}
 
 	// if (options.data) options.data = new URLSearchParams(options.data);
-	if (options.isDebugging) console.log(`dxApi: ${Config.DX_API_URL}${options.url} > options.headers :>>`, options.headers);
+	if (options.isDebugging) console.log(chalk.yellow("dxApi() >"), `${Config.DX_API_URL}${options.url} > options.headers :>>`, options.headers);
 
 	try {
 		const res = await axios(options);
 		const { data: responseData } = res;
+		if (options.isDebugging) console.log(chalk.yellow("dxApi() >"), `${Config.DX_API_URL}${options.url} > response :>>`, responseData);
 		return responseData as T;
 	} catch (e) {
 		console.log("[DX_API] Error :>> ", e);

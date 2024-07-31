@@ -117,6 +117,7 @@ export default class BaseService<T = any> {
 				"serviceAccount",
 				"apiAccessToken",
 				"metadata",
+				"dx_key",
 			];
 			for (const [key, value] of Object.entries(data)) {
 				if (!metadataExcludes.includes(key) && !isValidObjectId(value) && value)
@@ -248,16 +249,20 @@ export default class BaseService<T = any> {
 
 		// select
 		if (options?.select && options.select.length > 0) {
-			const project: any = {};
+			const $project: any = {};
 			options.select.forEach((field) => {
 				let shouldInclude = 1;
 				if (field.startsWith("-")) {
 					field = field.substring(1);
 					shouldInclude = 0;
 				}
-				project[field] = shouldInclude;
+				$project[field] = shouldInclude;
 			});
-			pipelines.push({ $project: project });
+			// exclude metadata on query result
+			$project.metadata = 0;
+			pipelines.push({ $project });
+		} else {
+			pipelines.push({ $project: { metadata: 0 } });
 		}
 
 		// skip & limit (take)

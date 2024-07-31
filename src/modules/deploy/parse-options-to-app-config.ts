@@ -15,6 +15,7 @@ import { askForCertIssuer } from "./ask-deploy-environment-info";
 
 export const parseOptionsToAppConfig = async (options: InputOptions) => {
 	const {
+		author,
 		env,
 		targetDirectory,
 		slug,
@@ -99,7 +100,10 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 			if (typeof deployEnvironment.ssl === "undefined" || deployEnvironment.ssl === "none") {
 				if (isEmpty(deployEnvironment.domains)) {
 					// generate one or ask to generate one!
-					const domains = await askForDomain(env, project.slug, app.slug, deployEnvironment, { shouldGenerate: domain == true });
+					const domains = await askForDomain(env, project.slug, app.slug, deployEnvironment, {
+						user: author,
+						shouldGenerate: domain == true,
+					});
 					if (isEmpty(domains)) {
 						logError(`No domains to issue SSL certificate.`);
 						return;

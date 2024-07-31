@@ -1,7 +1,6 @@
 import type { IUser, IWorkspace } from "@/entities";
 
 import { seedApiKeys } from "./seed-api-key";
-import { seedClusters } from "./seed-clusters";
 import { seedFrameworks } from "./seed-frameworks";
 import { seedDefaultProjects } from "./seed-projects";
 import { seedDefaultRoles } from "./seed-roles";
@@ -23,7 +22,7 @@ const seedWorkspaceInitialData = async (workspace: IWorkspace, owner: IUser) => 
 		seedApiKeys(workspace, owner),
 		seedDefaultProjects(workspace, owner),
 		seedFrameworks(workspace, owner),
-		seedClusters(workspace, owner),
+		// seedClusters(workspace, owner),
 	]);
 
 	return [roles, ...results];

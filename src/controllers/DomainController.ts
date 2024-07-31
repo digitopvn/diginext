@@ -20,6 +20,8 @@ export default class DomainController extends BaseController {
 		if (!body.data) return interfaces.respondFailure({ msg: `Value of A RECORD is required (usually the IP address).` });
 
 		const dxKey = this.workspace.dx_key;
+		if (!body.userId) body.userId = this.user.dxUserId;
+
 		// process
 		const res = await dxDomain.dxCreateDomain(body, dxKey);
 		return res;

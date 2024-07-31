@@ -676,7 +676,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 				status,
 				messages,
 				data: { domain },
-			} = await dxCreateDomain({ name: subdomain, data: cluster.primaryIP }, this.workspace.dx_key);
+			} = await dxCreateDomain({ name: subdomain, data: cluster.primaryIP, userId: this.user.dxUserId }, this.workspace.dx_key);
 
 			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
 			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;

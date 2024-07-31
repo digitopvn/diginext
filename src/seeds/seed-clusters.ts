@@ -5,19 +5,11 @@ import type { ICluster, IUser, IWorkspace } from "@/entities";
 import type { KubeConfig } from "@/interfaces";
 import ClusterManager from "@/modules/k8s";
 
-export const addInitialBareMetalCluster = async (kubeConfig: string, workspace: IWorkspace, owner: IUser) => {
+export const addInitialBareMetalCluster = async (kubeConfig: string, workspace?: IWorkspace, owner?: IUser) => {
 	const initialClusterKubeConfig = kubeConfig;
 	if (!initialClusterKubeConfig) return;
 
 	const { DB } = await import("@/modules/api/DB");
-
-	// skip if it's existed
-	let initialCluster = await DB.findOne(
-		"cluster",
-		{ kubeConfig: initialClusterKubeConfig, workspace: workspace._id },
-		{ ownership: { owner, workspace } }
-	);
-	if (initialCluster) return;
 
 	// validate YAML
 	const kubeConfigObject = yaml.load(initialClusterKubeConfig) as KubeConfig;
@@ -29,6 +21,22 @@ export const addInitialBareMetalCluster = async (kubeConfig: string, workspace: 
 	const clusterIP = clusterServerURL?.hostname;
 	if (!clusterIP) return;
 
+	// skip if it's existed
+	let initialCluster = await DB.findOne(
+		"cluster",
+		{
+			$and: [
+				{
+					kubeConfig: { $regex: kubeConfigObject.clusters[0].cluster["certificate-authority-data"] },
+				},
+			],
+			primaryIP: clusterIP,
+			workspace: workspace?._id,
+		},
+		{ ownership: { owner, workspace } }
+	);
+	if (initialCluster) return;
+
 	// console.log("kubeConfigObject :>> ", kubeConfigObject);
 	// console.log("clusterIP :>> ", clusterIP);
 
@@ -38,15 +46,16 @@ export const addInitialBareMetalCluster = async (kubeConfig: string, workspace: 
 
 	// insert new cluster
 	const initialClusterDto: ICluster = {
-		name: Config.grab("INITIAL_CLUSTER_NAME") || "Default Cluster",
+		name: Config.grab("INITIAL_CLUSTER_NAME") || "DXUP Cluster (SG)",
 		providerShortName: "custom",
 		provider: customCloudProvider._id,
 		isDefault: true,
 		active: true,
 		kubeConfig: initialClusterKubeConfig,
 		primaryIP: clusterIP,
-		owner: owner._id,
-		workspace: workspace._id,
+		region: Config.grab("INITIAL_CLUSTER_REGION") || "southeast-asia",
+		owner: owner?._id,
+		workspace: workspace?._id,
 	};
 	initialCluster = await DB.create("cluster", initialClusterDto, { ownership: { owner, workspace } });
 	// console.log("initialCluster.slug :>> ", initialCluster.slug);

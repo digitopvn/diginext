@@ -21,7 +21,7 @@ import { startBuildV1 } from "./start-build";
 export async function execBuild(options: InputOptions) {
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = process.cwd();
 
-	const { env = "dev", targetDirectory } = options;
+	const { env = "dev", targetDirectory, author } = options;
 
 	let { app } = await askForProjectAndApp(options.targetDirectory, options);
 
@@ -39,7 +39,7 @@ export async function execBuild(options: InputOptions) {
 
 	// ask for generated domains:
 	try {
-		domains = await askForDomain(env, project, slug, deployEnvironment);
+		domains = await askForDomain(env, project, slug, deployEnvironment, { user: author });
 	} catch (e) {
 		logError(`[EXEC_BUILD] ${e}`);
 		return;

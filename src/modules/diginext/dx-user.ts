@@ -27,5 +27,5 @@ export async function dxCreateUser(params: IBodyCreateUser) {
 	console.log("CREATE USER PARAMS POST TO DX SITE", params);
 	if (IsTest()) return { status: 1, data: {} } as CreateUserResponse;
 
-	return dxApi<CreateUserResponse>({ url: "/dx/user", data: params, method: "POST" });
+	return dxApi<CreateUserResponse>({ url: "/dx/user", data: params, method: "POST", isDebugging: true });
 }

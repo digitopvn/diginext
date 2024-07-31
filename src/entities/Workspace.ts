@@ -28,10 +28,15 @@ export interface IWorkspace extends IBase {
 	 * Workspace domain name
 	 */
 	domain?: string;
+
 	/**
-	 * Diginext API Key
+	 * DXSITE API Key
 	 */
 	dx_key?: string;
+	/**
+	 * DXSITE Workspace ID
+	 */
+	dx_id?: string;
 
 	/**
 	 * Workspace Settings
@@ -85,6 +90,7 @@ export const workspaceSchema = new Schema(
 		image: { type: String },
 		domain: { type: String },
 		dx_key: { type: String },
+		dx_id: { type: String },
 		owner: { type: Schema.Types.ObjectId, ref: "users" },
 		settings: {
 			activity: {

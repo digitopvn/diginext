@@ -75,15 +75,6 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 	let filePath: string;
 	let context: KubeConfigContext;
 
-	// Check if Kubernetes context of the cluster is existed in KUBE_CONFIG -> skip cluster authentication
-	// context = await getKubeContextByCluster(cluster);
-	// if (context && cluster.isVerified) {
-	// 	if (shouldSwitchContextToThisCluster) await switchContext(context.name);
-	// 	logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterSlug}" cluster.`);
-	// 	return cluster;
-	// }
-	// const { isVerified } = cluster;
-
 	switch (providerShortName) {
 		case "gcloud":
 			// Only support Google Service Account authentication
@@ -118,7 +109,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			}
 
 			// switch context (if needed)
-			if (shouldSwitchContextToThisCluster) await switchContext(context.name);
+			// if (shouldSwitchContextToThisCluster) await switchContext(context.name);
 
 			// mark this cluster verified
 			cluster = await DB.updateOne("cluster", { slug: clusterSlug }, { isVerified: true }, { ownership: options.ownership });
@@ -151,7 +142,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			}
 
 			// switch context (if needed)
-			if (shouldSwitchContextToThisCluster) await switchContext(context.name);
+			// if (shouldSwitchContextToThisCluster) await switchContext(context.name);
 
 			// mark this cluster verified
 			cluster = await DB.updateOne("cluster", { slug: clusterSlug }, { isVerified: true });
@@ -180,7 +171,7 @@ export const authCluster = async (cluster: ICluster, options: ClusterAuthOptions
 			unlink(filePath, (err) => err && logError(`[CLUSTER AUTH] Remove tmp file:`, err));
 
 			// switch context (if needed)
-			if (shouldSwitchContextToThisCluster) await switchContext(contextName);
+			// if (shouldSwitchContextToThisCluster) await switchContext(contextName);
 
 			logSuccess(`[CLUSTER MANAGER] ✓ Connected to "${clusterSlug}" cluster.`);
 

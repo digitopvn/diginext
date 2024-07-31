@@ -6,7 +6,7 @@ import _, { isEmpty, isObject, toNumber } from "lodash";
 
 import { getContainerResourceBySize } from "@/config/config";
 import { DIGINEXT_DOMAIN, FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
-import type { IContainerRegistry, IWorkspace } from "@/entities";
+import type { IContainerRegistry, IUser, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
 import type { KubeIngress } from "@/interfaces/KubeIngress";
 import { objectToDeploymentYaml } from "@/plugins";
@@ -23,6 +23,7 @@ export type GenerateDeploymentParams = {
 	appSlug: string;
 	env: string;
 	username: string;
+	user: IUser;
 	workspace: IWorkspace;
 	/**
 	 * Skip replacing origin domain of "prerelease" environment.
@@ -66,7 +67,7 @@ export type GenerateDeploymentResult = {
 const nginxBlockedPaths = "location ~ /.git { deny all; return 403; }";
 
 export const generateDeployment = async (params: GenerateDeploymentParams) => {
-	const { appSlug, buildTag, env = "dev", skipPrerelease = false, username, workspace, appConfig } = params;
+	const { appSlug, buildTag, env = "dev", skipPrerelease = false, username, user, workspace, appConfig } = params;
 
 	// validate inputs
 	if (!appSlug) throw new Error(`Unable to generate YAML, app's slug is required.`);
@@ -138,6 +139,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 	// Setup a domain for prerelease
 	if (env == "prod") {
 		const { status, domain, messages } = await generateDomains({
+			user,
 			workspace,
 			primaryDomain: DIGINEXT_DOMAIN,
 			subdomainName: prereleaseSubdomainName,

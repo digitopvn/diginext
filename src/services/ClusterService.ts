@@ -19,10 +19,41 @@ export class ClusterService extends BaseService<ICluster> {
 	}
 
 	find(filter?: IQueryFilter<ICluster>, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<ICluster[]> {
-		// check access permissions
-		if (this.user?.allowAccess?.clusters?.length) filter = { $or: [filter, { _id: { $in: this.user?.allowAccess?.clusters } }] };
+		let includePublicFilter: any = { $or: [] };
 
-		return super.find(filter, options, pagination);
+		// include all public clusters
+		// if (!filter.workspace) {
+		includePublicFilter.$or.push(filter);
+		// includePublicFilter.$or.push({ ...filter, workspace: { $exists: false } }, { ...filter, workspace: null });
+		// }
+
+		// check access permissions
+		if (this.user?.allowAccess?.clusters?.length) includePublicFilter.$or.push({ _id: { $in: this.user?.allowAccess?.clusters } });
+
+		// if none of the above conditions -> filter normally
+		if (includePublicFilter.$or.length === 0) includePublicFilter = filter;
+
+		// console.log("includePublicFilter :>> ", includePublicFilter);
+		return super.find(includePublicFilter, options, pagination);
+	}
+
+	findAll(filter?: IQueryFilter<ICluster>, options?: IQueryOptions & IQueryPagination, pagination?: IQueryPagination): Promise<ICluster[]> {
+		let includePublicFilter: any = { $or: [] };
+
+		// include all public clusters
+		// if (!filter.workspace) {
+		includePublicFilter.$or.push(filter);
+		includePublicFilter.$or.push({ ...filter, workspace: { $exists: false } }, { ...filter, workspace: null });
+		// }
+
+		// check access permissions
+		if (this.user?.allowAccess?.clusters?.length) includePublicFilter.$or.push({ _id: { $in: this.user?.allowAccess?.clusters } });
+
+		// if none of the above conditions -> filter normally
+		if (includePublicFilter.$or.length === 0) includePublicFilter = filter;
+
+		// console.log("includePublicFilter :>> ", includePublicFilter);
+		return super.find(includePublicFilter, options, pagination);
 	}
 
 	async update(filter: IQueryFilter<ICluster>, data: any, options?: IQueryOptions): Promise<ICluster[]> {

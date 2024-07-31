@@ -118,7 +118,7 @@ export class Config {
 	}
 
 	static get DX_API_URL() {
-		return trimNull(process.env.DX_API_URL) ? trimNull(process.env.DX_API_URL) : "https://dxup.dev/api";
+		return this.DX_SITE_URL + "/api";
 	}
 
 	static get BUILDER() {

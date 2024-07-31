@@ -330,7 +330,8 @@ export function testFlow1() {
 		const curUser = await getCurrentUser();
 
 		// seed cluster: Bare-metal
-		const cluster = await addInitialBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG, currentWorkspace, curUser);
+		// const cluster = await addInitialBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG, currentWorkspace, curUser);
+		const cluster = await addInitialBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG);
 
 		// verify cluster connection
 		expect(cluster).toBeDefined();

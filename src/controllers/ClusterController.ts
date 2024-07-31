@@ -20,13 +20,28 @@ export default class ClusterController extends BaseController<ICluster, ClusterS
 	}
 
 	/**
-	 * List of K8S clusters
+	 * List of K8S clusters of a workspace
 	 */
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/")
 	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		return super.read();
+	}
+
+	/**
+	 * List of K8S clusters (include system default clusters)
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/all")
+	async readAll(@Queries() queryParams?: interfaces.IGetQueryParams) {
+		try {
+			const data = await this.service.findAll(this.filter, this.options, this.pagination);
+			return respondSuccess({ data });
+		} catch (e) {
+			return respondFailure(`Unable to get clusters: ${e}`);
+		}
 	}
 
 	@Security("api_key")

@@ -18,5 +18,5 @@ export type SendDiginextEmailResponse = ResponseData & {
 
 export async function dxSendEmail(params: SendEmailOptions, dxKey: string) {
 	if (IsTest()) return { status: 1, data: { succeed: 1, failure: 0 } } as SendDiginextEmailResponse;
-	return dxApi<SendDiginextEmailResponse>({ url: "/email/send", data: params, method: "POST", dxKey });
+	return dxApi<SendDiginextEmailResponse>({ url: "/email/send", data: params, method: "POST", dxKey, isDebugging: true });
 }
