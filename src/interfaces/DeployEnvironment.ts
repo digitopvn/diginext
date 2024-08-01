@@ -204,8 +204,14 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	lastUpdatedBy?: string;
 
 	/**
+	 * Owner
+	 */
+	owner?: string;
+	ownerSlug?: string;
+
+	/**
 	 * ID of the creator
-	 * ! DO NOT REMOVE THIS, OTHERWISE "TSOA" (Swagger) WILL BE BROKEN
+	 * ! DO NOT REMOVE THIS, OTHERWISE "TSOA" (Swagger) WILL BE BROKEN (I DON'T KNOW WHY...)
 	 */
 	creator?: ObjectId | IUser;
 

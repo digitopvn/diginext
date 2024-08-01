@@ -18,6 +18,7 @@ import { makeSlug } from "@/plugins/slug";
 import { WebhookService } from "@/services";
 
 import getDeploymentName from "./generate-deployment-name";
+import { markReleaseAsActive } from "./mark-release-as-active";
 
 export interface RolloutOptions {
 	isDebugging?: boolean;
@@ -519,23 +520,16 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 	if (onUpdate) onUpdate(successMsg);
 
-	// Mark previous releases as "inactive":
-	await DB.update("release", { appSlug, env, active: true }, { active: false }, { select: ["_id", "active", "appSlug"] });
-
 	// Mark this latest release as "active":
-	const latestRelease = await DB.updateOne(
-		"release",
-		{ _id: releaseId },
-		{ active: true, status: "success" },
-		{ select: ["_id", "active", "appSlug"] }
-	);
-
-	if (!latestRelease) {
-		const error = `[ERROR] Unable to mark the latest release (${releaseId}) status as "active".`;
+	try {
+		const latestRelease = await markReleaseAsActive({ id: releaseId, appSlug, env });
+		if (!latestRelease) throw new Error(`Release "${releaseId}" not found.`);
+	} catch (e) {
+		const error = `[ERROR] Unable to mark the latest release (${releaseId}) status as "active": ${e.message}`;
 		if (onUpdate) onUpdate(error);
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
-		// Update "deployStatus" of a build to success
+		// Update "deployStatus" of a build to "failed"
 		await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] });
 		throw new Error(error);
 	}
@@ -550,7 +544,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		"app",
 		{ slug: appSlug },
 		{
-			[`deployEnvironment.${env}.latestRelease`]: latestRelease._id,
+			[`deployEnvironment.${env}.latestRelease`]: releaseId,
 			[`deployEnvironment.${env}.appVersion`]: appVersion,
 			[`deployEnvironment.${env}.buildId`]: buildId,
 		},

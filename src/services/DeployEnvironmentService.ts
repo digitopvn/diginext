@@ -204,6 +204,8 @@ export class DeployEnvironmentService {
 		// serverDeployEnvironment.prereleaseDeploymentYaml = prereleaseDeploymentContent;
 		serverDeployEnvironment.updatedAt = new Date();
 		serverDeployEnvironment.lastUpdatedBy = ownership.owner.username;
+		serverDeployEnvironment.owner = MongoDB.toString(this.user._id);
+		serverDeployEnvironment.ownerSlug = this.user.slug;
 
 		// Update {user}, {project}, {environment} to database before rolling out
 		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as QuerySelector<IApp> & IApp;

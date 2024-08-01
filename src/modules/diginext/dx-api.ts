@@ -33,8 +33,18 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 		if (options.isDebugging) console.log(chalk.yellow("dxApi() >"), `${Config.DX_API_URL}${options.url} > response :>>`, responseData);
 		return responseData as T;
 	} catch (e) {
-		console.log("[DX_API] Error :>> ", e);
-		const err: string = e.response || e.data?.message === "UNAUTHORIZED" || e.data?.status === 401 ? "Invalid DX Key." : e.message;
-		return { status: 0, messages: [`${err}`] } as T;
+		console.log(chalk.yellow("[BACKUP] dxApi() > Error :>>"), e);
+		// retry with backup url
+		options.baseURL = Config.DX_SITE_BACKUP_URL;
+		try {
+			const res = await axios(options);
+			const { data: responseData } = res;
+			if (options.isDebugging)
+				console.log(chalk.yellow("[BACKUP] dxApi() >"), `${Config.DX_SITE_BACKUP_URL}${options.url} > response :>>`, responseData);
+		} catch (e2) {
+			// throw official error
+			const err: string = e.response || e.data?.message === "UNAUTHORIZED" || e.data?.status === 401 ? "Invalid DX Key." : e.message;
+			return { status: 0, messages: [`${err}`] } as T;
+		}
 	}
 }
