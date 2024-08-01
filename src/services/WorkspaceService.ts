@@ -81,15 +81,17 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 				try {
 					const dxUserRes = await dxCreateUser({
 						name: ownerUser.name,
-						username: ownerUser.username,
+						username: ownerUser.username || ownerUser.slug,
 						email: ownerUser.email,
 						password: ownerUser.password,
 						isActive: true,
 					});
 					if (!dxUserRes.status) throw new Error(dxUserRes.messages.join("\n"));
 
-					const userSvc = new UserService(this.ownership);
-					ownerUser = await userSvc.updateOne({ _id: ownerUser._id }, { dxUserId: dxUserRes.data.id });
+					if (dxUserRes.data.id) {
+						const userSvc = new UserService(this.ownership);
+						ownerUser = await userSvc.updateOne({ _id: ownerUser._id }, { dxUserId: dxUserRes.data.id });
+					}
 				} catch (e) {
 					console.log(`[WorkspaceService] create > dxCreateUser :>>`, e);
 				}
