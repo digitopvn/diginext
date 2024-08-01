@@ -1,3 +1,11 @@
+## [3.34.18](https://github.com/digitopvn/diginext/compare/v3.34.17...v3.34.18) (2024-08-01)
+
+
+### Bug Fixes
+
+* **dashboard:** issue deploy environment not displayed ([fef9035](https://github.com/digitopvn/diginext/commit/fef9035fe3cd17af71ae5c7f3058f41ee8534eb7))
+* **dashboard:** issue deploy environment not displayed ([#534](https://github.com/digitopvn/diginext/issues/534)) ([7696835](https://github.com/digitopvn/diginext/commit/7696835907abe2ab3b6a7dc2fc6cf9d7d245c070))
+
 ## [3.34.17](https://github.com/digitopvn/diginext/compare/v3.34.16...v3.34.17) (2024-07-31)
 
 
