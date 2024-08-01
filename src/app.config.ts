@@ -117,6 +117,10 @@ export class Config {
 		return trimNull(process.env.DX_SITE_URL) ? trimNull(process.env.DX_SITE_URL) : "https://dxup.dev";
 	}
 
+	static get DX_SITE_BACKUP_URL() {
+		return trimNull(process.env.DX_SITE_BACKUP_URL) ? trimNull(process.env.DX_SITE_BACKUP_URL) : "https://diginext.site";
+	}
+
 	static get DX_API_URL() {
 		return this.DX_SITE_URL + "/api";
 	}

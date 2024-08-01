@@ -22,6 +22,7 @@ import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
 import { formatEnvVars } from "@/plugins/env-var";
+import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
 import { ProjectService } from "@/services";
 
@@ -737,6 +738,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 		serverDeployEnvironment.updatedAt = new Date();
 		serverDeployEnvironment.lastUpdatedBy = this.user.username;
 		serverDeployEnvironment.deploymentName = deployment.deploymentName;
+		if (serverDeployEnvironment.owner) serverDeployEnvironment.owner = MongoDB.toString(this.user._id);
+		if (serverDeployEnvironment.ownerSlug) serverDeployEnvironment.ownerSlug = this.user.slug;
 
 		// Update {user}, {project}, {environment} to database before rolling out
 		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
@@ -1478,7 +1481,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 	}
 
 	/**
-	 * Add new volume to app's deploy environment.
+	 * Remove the volume of an app's deploy environment.
 	 */
 	@Security("api_key")
 	@Security("jwt")
