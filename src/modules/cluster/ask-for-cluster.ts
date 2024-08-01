@@ -6,7 +6,7 @@ import type { ICluster } from "@/entities";
 
 export const askForCluster = async () => {
 	const { DB } = await import("@/modules/api/DB");
-	const clusters = await DB.find("cluster", {}, { subpath: "/all" });
+	const clusters = await DB.find("cluster", {}, { subpath: "/all", order: { isDefault: -1 } });
 
 	if (isEmpty(clusters)) {
 		logError(`This workspace doesn't have any clusters.`);
@@ -19,7 +19,12 @@ export const askForCluster = async () => {
 		message: `Select cluster:`,
 		default: clusters[0],
 		choices: clusters.map((c, i) => {
-			return { name: `[${i + 1}] ${c.name} (${c.slug} / ${c.providerShortName})`, value: c };
+			return {
+				name: `[${i + 1}] ${c.isDefault ? "DXUP" : "WORKSPACE"} - ${c.name} (${c.slug} / ${c.providerShortName}${
+					c.region ? ` / ${c.region}` : ""
+				})`,
+				value: c,
+			};
 		}),
 	});
 
