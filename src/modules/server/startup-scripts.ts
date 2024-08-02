@@ -134,6 +134,7 @@ export async function startupScripts() {
 	 * Seed or update initial data
 	 */
 	// await seedInitialClusters();
+	// await seedInitialRegistries();
 
 	/**
 	 * Mark "healthz" return true & server is ready to receive connections:

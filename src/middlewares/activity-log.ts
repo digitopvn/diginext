@@ -1,5 +1,6 @@
 import { isJSON } from "class-validator";
 import type { NextFunction } from "express";
+import { isEmpty } from "lodash";
 
 import type { IWorkspace } from "@/entities";
 import type { IActivity } from "@/entities/Activity";
@@ -20,7 +21,9 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 		// parse & create activity dto:
 		const activityDto = {} as IActivity;
 		activityDto.owner = user._id;
-		activityDto.workspace = workspace || (user.activeWorkspace as IWorkspace);
+		activityDto.workspace = !isEmpty(workspace) ? workspace : (user.activeWorkspace as IWorkspace);
+		if (isEmpty(activityDto.workspace)) delete activityDto.workspace;
+
 		activityDto.name = user.name;
 		activityDto.query = req.query;
 		activityDto.method = req.method;
