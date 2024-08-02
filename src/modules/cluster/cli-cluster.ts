@@ -32,9 +32,18 @@ export const execCluster = async (options?: InputOptions) => {
 
 		case "list":
 		case "ls":
-			const clusters = await DB.find("cluster", {}, { subpath: "/all" });
+			const clusters = await DB.find("cluster", {}, { subpath: "/all", order: { isDefault: -1 } });
 			if (!clusters || clusters.length === 0) throw new Error(`This workspace has no clusters.`);
-			console.log(clusters.map((item, index) => `[${index + 1}] ${item.name} (${item.slug})`).join("\n"));
+			console.log(
+				clusters
+					.map(
+						(c, i) =>
+							`[${i + 1}] ${c.isDefault ? "DXUP" : "WORKSPACE"} - ${c.name} (${c.slug} / ${c.providerShortName}${
+								c.region ? ` / ${c.region}` : ""
+							})`
+					)
+					.join("\n")
+			);
 			break;
 
 		case "get":

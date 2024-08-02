@@ -128,6 +128,7 @@ export async function startupScripts() {
 	// await migrateServiceAccountAndApiKey();
 	// await migrateDefaultServiceAccountAndApiKeyUser();
 	// await migrateAllClusters();
+	// await migrateAllReleases();
 
 	/**
 	 * Seed or update initial data

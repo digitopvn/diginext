@@ -44,13 +44,15 @@ export class UserService extends BaseService<IUser> {
 		try {
 			const dxUserRes = await dxCreateUser({
 				name: newUser.name,
-				username: newUser.username,
+				username: newUser.username || newUser.slug,
 				email: newUser.email,
 				password: newUser.password,
 				isActive: true,
 			});
 			if (dxUserRes.status) throw new Error(dxUserRes.messages.join("\n"));
-			newUser = await this.updateOne({ _id: newUser._id }, { dxUserId: dxUserRes.data.id });
+			if (dxUserRes.data.id) {
+				newUser = await this.updateOne({ _id: newUser._id }, { dxUserId: dxUserRes.data.id });
+			}
 		} catch (e) {
 			console.log(`[UserService] create > dxCreateUser :>>`, e);
 		}
@@ -180,15 +182,16 @@ export class UserService extends BaseService<IUser> {
 			try {
 				const dxUserRes = await dxCreateUser({
 					name: user.name,
-					username: user.username,
+					username: user.username || user.slug,
 					email: user.email,
 					password: user.password,
 					isActive: true,
 				});
 				if (!dxUserRes.status) throw new Error(dxUserRes.messages.join("\n"));
-
-				const userSvc = new UserService(this.ownership);
-				user = await userSvc.updateOne({ _id: user._id }, { dxUserId: dxUserRes.data.id });
+				if (dxUserRes.data.id) {
+					const userSvc = new UserService(this.ownership);
+					user = await userSvc.updateOne({ _id: user._id }, { dxUserId: dxUserRes.data.id });
+				}
 			} catch (e) {
 				console.log(`[WorkspaceService] create > dxCreateUser :>>`, e);
 			}
