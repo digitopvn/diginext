@@ -129,7 +129,7 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		serverDeployEnvironment.cluster = cluster.slug;
 		serverDeployEnvironment.provider = (cluster.provider as ICloudProvider).shortName;
 	} else {
-		let cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster });
+		let cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster }, { subpath: "/all" });
 		if (!cluster) {
 			logWarn(`Cluster "${serverDeployEnvironment.cluster}" not found or might be modified, please select target cluster.`);
 			cluster = await askForCluster();

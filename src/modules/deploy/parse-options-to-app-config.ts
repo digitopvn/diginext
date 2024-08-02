@@ -117,7 +117,10 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 				// if current ssl is "letsencrypt" or "custom"...
 				if (isEmpty(deployEnvironment.domains)) {
 					if (domain == true) {
-						deployEnvironment.domains = await askForDomain(env, project.slug, app.slug, deployEnvironment, { shouldGenerate: true });
+						deployEnvironment.domains = await askForDomain(env, project.slug, app.slug, deployEnvironment, {
+							user: author,
+							shouldGenerate: true,
+						});
 						deployEnvironment.ssl = "letsencrypt";
 					} else {
 						logError(

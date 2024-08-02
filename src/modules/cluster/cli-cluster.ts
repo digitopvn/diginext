@@ -16,7 +16,7 @@ export const execCluster = async (options?: InputOptions) => {
 		case "connect":
 			if (options.isDebugging) console.log("[CLUSTER] options.cluster :>> ", options.cluster);
 			let cluster = options?.cluster
-				? await DB.findOne("cluster", { slug: options.cluster }, { isDebugging: options.isDebugging })
+				? await DB.findOne("cluster", { slug: options.cluster }, { isDebugging: options.isDebugging, subpath: "/all" })
 				: await askForCluster();
 			// if (options.isDebugging) console.log("[COMMAND] cluster > connect > cluster :>> ", cluster);
 			if (!cluster) throw new Error(`Unable to connect cluster, cluster "${options?.cluster}" not found.`);

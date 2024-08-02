@@ -41,13 +41,13 @@ export default class DeployService {
 
 		// change cluster (if needed)
 		if (deployParams.cluster) {
-			const cluster = await DB.findOne("cluster", { slug: deployParams.cluster, workspace: ownership.workspace._id });
+			const cluster = await DB.findOne("cluster", { slug: deployParams.cluster }, { subpath: "/all" });
 			if (cluster) app = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${deployParams.env}.cluster`]: cluster.slug });
 		}
 		// change container registry (if needed)
 		if (buildParams.registrySlug) deployParams.registry = buildParams.registrySlug;
 		if (deployParams.registry) {
-			const registry = await DB.findOne("registry", { slug: deployParams.registry, workspace: ownership.workspace._id });
+			const registry = await DB.findOne("registry", { slug: deployParams.registry }, { subpath: "/all" });
 			if (registry) app = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${deployParams.env}.registry`]: registry.slug });
 		}
 

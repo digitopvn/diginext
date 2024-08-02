@@ -101,7 +101,7 @@ export class ProjectService extends BaseService<IProject> {
 				for (const [env, deployEnvironment] of Object.entries(app.deployEnvironment)) {
 					if (!isEmpty(deployEnvironment)) {
 						const { cluster: clusterSlug, namespace } = deployEnvironment;
-						const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+						const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
 
 						if (cluster) {
 							const { contextName: context } = cluster;

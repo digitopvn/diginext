@@ -194,7 +194,7 @@
 		"generate-password": "^1.7.0",
 		"gitignore": "^0.6.0",
 		"glob": "^8.1.0",
-		"globby": "14.0.2",
+		"globby": "11.1.0",
 		"google-auth-library": "^9.7.0",
 		"humanize-duration": "^3.25.1",
 		"husky": "^8.0.0",

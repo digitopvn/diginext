@@ -61,7 +61,7 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	let targetIP: string;
 
 	if (clusterSlug) {
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
 		if (!cluster) {
 			logError(`Cluster "${clusterSlug}" not found.`);
 			return { status: 0, domain, ip: null, messages: [`Cluster "${clusterSlug}" not found.`] } as GenerateDomainResult;

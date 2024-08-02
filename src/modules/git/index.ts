@@ -293,7 +293,7 @@ export const generateSSH = async (options?: InputOptions) => {
 
 	let publicIdRsaFile: string, privateIdRsaFile: string;
 	if (existsSync(idRsaDir)) {
-		const { globby } = await import("globby");
+		const globby = require("globby");
 		const files = await globby(idRsaDir + "/id_*");
 		// log(`existed "id_rsa" files >>`, files);
 
@@ -355,7 +355,7 @@ export const sshKeysExisted = async (options?: { publicIdRsaFile: string; privat
 	}
 
 	if (!publicIdRsaFile || !privateIdRsaFile) {
-		const { globby } = await import("globby");
+		const globby = require("globby");
 		const files = await globby(SSH_DIR + "/id_*");
 		if (files.length > 0) {
 			publicIdRsaFile = files.find((f) => f.indexOf(".pub") > -1);

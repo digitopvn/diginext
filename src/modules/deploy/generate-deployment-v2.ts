@@ -174,7 +174,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	// console.log("registry :>> ", registry);
 
 	// get destination cluster
-	let cluster = await DB.findOne("cluster", { slug: clusterSlug });
+	let cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
 	if (!cluster) {
 		throw new Error(`Cannot find any clusters with short name as "${clusterSlug}", please contact your admin or create a new one.`);
 	}

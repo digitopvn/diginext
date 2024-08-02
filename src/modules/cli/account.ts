@@ -193,7 +193,6 @@ export async function cliAuthenticate(options: InputOptions) {
 		logWarn(`Your current build server url is: ${buildServerUrl}`);
 		logWarn(`If you want to deploy on DXUP platform, update it to: "https://app.dxup.dev"`);
 		logWarn(`You can do that by running:`, chalk.cyan(`dx login app.dxup.dev`));
-		return;
 	}
 
 	const continueToLoginStep = async (url: string) => {

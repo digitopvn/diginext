@@ -90,6 +90,7 @@ export async function requestDeploy(options: InputOptions) {
 	 * [2] Compare LOCAL & SERVER App Config,
 	 *     then upload local app config to server.
 	 */
+	console.log("requestDeploy() > options.author :>> ", options.author);
 	const deployInfo = await askForDeployEnvironmentInfo(options);
 	if (options.isDebugging) console.log("requestDeploy() > askForDeployEnvironmentInfo() :>> ", deployInfo);
 	if (!deployInfo.appConfig || !deployInfo.deployEnvironment) return;

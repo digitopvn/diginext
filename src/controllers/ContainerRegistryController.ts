@@ -36,6 +36,21 @@ export default class ContainerRegistryController extends BaseController {
 		return super.read();
 	}
 
+	/**
+	 * List of K8S clusters (include system default clusters)
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/all")
+	async readAll(@Queries() queryParams?: interfaces.IGetQueryParams) {
+		try {
+			const data = await this.service.findAll(this.filter, this.options, this.pagination);
+			return interfaces.respondSuccess({ data });
+		} catch (e) {
+			return interfaces.respondFailure(`Unable to get container registries: ${e}`);
+		}
+	}
+
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/")

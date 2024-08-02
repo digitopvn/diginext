@@ -22,7 +22,7 @@ export async function getFolderStructure(dir: string = process.cwd()) {
 		`!${path.join(dir, "Dockerfile*")}`,
 		`!${path.join(dir, "docker-compose*")}`,
 	];
-	const { globby } = await import("globby");
+	const globby = require("globby");
 	const files = await globby(patterns, {
 		expandDirectories: true,
 		gitignore: true,

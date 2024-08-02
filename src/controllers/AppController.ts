@@ -634,7 +634,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// cluster
 		let cluster: ICluster | undefined;
 		if (deployEnvironmentData.cluster) {
-			cluster = await DB.findOne("cluster", { slug: deployEnvironmentData.cluster });
+			cluster = await DB.findOne("cluster", { slug: deployEnvironmentData.cluster }, { subpath: "/all" });
 
 			// check if change cluster:
 			if (deployEnvironmentData.cluster !== currentDeployEnvData.cluster) {
@@ -648,7 +648,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 			}
 		}
 		// no cluster changed -> get current cluster
-		if (!cluster && currentDeployEnvData.cluster) cluster = await DB.findOne("cluster", { slug: currentDeployEnvData.cluster });
+		if (!cluster && currentDeployEnvData.cluster)
+			cluster = await DB.findOne("cluster", { slug: currentDeployEnvData.cluster }, { subpath: "/all" });
 
 		// namespace
 		const namespace = deployEnvironmentData.namespace;
@@ -924,7 +925,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
 
 		const { namespace, cluster: clusterSlug } = deployEnvironment;
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
 
 		const newEnvVars = isJSON(envVars)
@@ -1070,7 +1071,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		const { namespace, cluster: clusterSlug } = deployEnvironment;
 
 		const { DB } = await import("@/modules/api/DB");
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
 
 		// check if deployment is existed in the cluster / namespace
@@ -1145,7 +1146,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
 
 		const clusterSlug = app.deployEnvironment[env].cluster;
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
 
 		const mainAppName = await getDeploymentName(app);

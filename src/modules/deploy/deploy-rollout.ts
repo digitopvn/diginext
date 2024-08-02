@@ -202,7 +202,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	// log(`Rolling out > mainAppName:`, mainAppName);
 
 	// authenticate cluster's provider & switch kubectl to that cluster:
-	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+	const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
 	if (!cluster) {
 		logError(`Cluster "${clusterSlug}" not found.`);
 		// dispatch/trigger webhook

@@ -20,7 +20,7 @@ type DotenvUtilsOptions = {
 
 export const checkGitignoreContainsDotenvFiles = async (options: DotenvUtilsOptions = {}) => {
 	const { targetDir = process.cwd() } = options;
-	const { globby } = await import("globby");
+	const globby = require("globby");
 	const allDotenvFiles = await globby(targetDir + "/.env*");
 	const fileNames = allDotenvFiles.map((filePath) => last(filePath.split("/")));
 

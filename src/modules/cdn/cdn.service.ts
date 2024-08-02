@@ -174,7 +174,7 @@ export async function startUpload(options: InputOptions, onComplete?: UploadComp
 
 	// log(`Uploading "${uploadPathPattern}" to "${DIGITOP_CDN_URL}/${projectName}/${env}"`);
 
-	const { globby } = await import("globby");
+	const globby = require("globby");
 	const files = await globby(uploadPathPattern);
 
 	uploadedCount = 0;

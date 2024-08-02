@@ -1,6 +1,4 @@
 import axios from "axios";
-import { randomStringByLength } from "diginext-utils/dist/string/random";
-import { upperCase } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IRole } from "@/entities";
@@ -12,7 +10,6 @@ import type { GitProviderDomain, GitProviderType } from "@/interfaces/SystemType
 import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
 import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
-import { makeSlug } from "@/plugins/slug";
 import { GitProviderService } from "@/services/GitProviderService";
 
 import BaseController from "./BaseController";
@@ -149,52 +146,12 @@ export default class GitProviderController extends BaseController {
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
-		let provider = await this.service.findOne(this.filter, this.options);
-		if (!provider) return respondFailure(`Git provider not found.`);
-
-		if (provider.type === "github" && provider.host !== "github.com") body.host = "github.com";
-		if (provider.type === "bitbucket" && provider.host !== "bitbucket.org") body.host = "bitbucket.org";
-
-		if (body.org && provider.type === "github") {
-			if (!provider.name) body.name = `${upperCase(body.org)} Github`;
+		try {
+			const data = await this.service.update(body, this.options);
+			return respondSuccess({ data });
+		} catch (e) {
+			return respondFailure(e);
 		}
-
-		if (body.org && provider.type === "bitbucket") {
-			if (!provider.name) body.name = `${upperCase(body.org)} Bitbucket`;
-		}
-
-		body.repo = {
-			url: `https://${provider.host}/${body.org}`,
-			sshPrefix: `git@${provider.host}:${body.org}`,
-		};
-
-		// regenerate slug
-		if (body.name) {
-			const scope = this;
-			const slugRange = "zxcvbnmasdfghjklqwertyuiop1234567890";
-			async function generateUniqueSlug(input, attempt = 1) {
-				let slug = makeSlug(input);
-
-				let count = await scope.service.count({ slug });
-				if (count > 0) slug = slug + "-" + randomStringByLength(attempt, slugRange).toLowerCase();
-
-				// check unique again
-				count = await scope.service.count({ slug });
-				if (count > 0) return generateUniqueSlug(input, attempt + 1);
-
-				return slug;
-			}
-
-			body.slug = await generateUniqueSlug(body.name, 1);
-		}
-
-		// update to db
-		provider = await this.service.updateOne(this.filter, body, this.options);
-
-		// verify
-		provider = await this.service.verify(provider);
-
-		return respondSuccess({ data: provider });
 	}
 
 	@Security("api_key")

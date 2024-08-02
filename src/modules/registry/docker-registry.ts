@@ -87,7 +87,7 @@ const DockerRegistry = {
 		if (!clusterSlug) throw new Error(`Cluster's short name is required.`);
 
 		// Get "context" by "cluster" -> to create "imagePullSecrets" of "registry" in cluster's namespace
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { populate: ["owner", "workspace"] });
+		const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { populate: ["owner", "workspace"], subpath: "/all" });
 		if (!cluster) throw new Error(`Can't create "imagePullSecrets" in "${namespace}" namespace of "${clusterSlug}" cluster.`);
 
 		// authenticate cluster & switch to that cluster's context

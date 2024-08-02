@@ -420,7 +420,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 
 	// find cluster
 	const { cluster: clusterSlug } = serverDeployEnvironment;
-	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+	const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
 
 	// find registry
 	const registry = registryId ? await DB.findOne("registry", { _id: registryId }) : undefined;
