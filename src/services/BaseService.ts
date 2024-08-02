@@ -258,12 +258,10 @@ export default class BaseService<T = any> {
 				}
 				$project[field] = shouldInclude;
 			});
-			// exclude metadata on query result
-			$project.metadata = 0;
 			pipelines.push({ $project });
-		} else {
-			pipelines.push({ $project: { metadata: 0 } });
 		}
+		// exclude metadata on query result
+		pipelines.push({ $project: { metadata: 0 } });
 
 		// skip & limit (take)
 		if (options?.skip) pipelines.push({ $skip: options.skip });
