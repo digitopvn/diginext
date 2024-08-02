@@ -1,3 +1,13 @@
+## [3.34.19](https://github.com/digitopvn/diginext/compare/v3.34.18...v3.34.19) (2024-08-02)
+
+
+### Bug Fixes
+
+* **cli:** sort dxup cluster on top ([973772b](https://github.com/digitopvn/diginext/commit/973772b41f827eb9ebfd4740b3d946ecc1c310d9))
+* **server:** clean up startup migration script ([6f11fb4](https://github.com/digitopvn/diginext/commit/6f11fb4a3bd3b31bf42ad45dddd33dbfa2f0490b))
+* **server:** do not update dx user id if not found ([085f775](https://github.com/digitopvn/diginext/commit/085f7750e81dbc2ea252c534a3c01560f2bc7083))
+* **server:** mongodb error when exclude metadata ([2016e3d](https://github.com/digitopvn/diginext/commit/2016e3d46b8ded6460ad07f30467a9216e461ec3))
+
 ## [3.34.18](https://github.com/digitopvn/diginext/compare/v3.34.17...v3.34.18) (2024-08-01)
 
 
