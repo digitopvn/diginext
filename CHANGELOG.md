@@ -1,3 +1,13 @@
+## [3.34.20](https://github.com/digitopvn/diginext/compare/v3.34.19...v3.34.20) (2024-08-02)
+
+
+### Bug Fixes
+
+* **server,cli:** add default container registry named dxup ([9f53ec8](https://github.com/digitopvn/diginext/commit/9f53ec8bfe3bcaf11d8208d6a5310c08dbc157ad))
+* **server,cli:** add default container registry named dxup ([#538](https://github.com/digitopvn/diginext/issues/538)) ([b52e54d](https://github.com/digitopvn/diginext/commit/b52e54d501ae9fbddee40f8464551a47f0e1a92f))
+* **server,cli:** bump puppeteer, globby, rimraf ([9861aa7](https://github.com/digitopvn/diginext/commit/9861aa7f6c1ab396bfd27b065d4dfeffae4c476c))
+* **server:** issue saving activity on join workspace ([4bc1c92](https://github.com/digitopvn/diginext/commit/4bc1c92abf25d3ddc3559ff8328b09de158dd829))
+
 ## [3.34.19](https://github.com/digitopvn/diginext/compare/v3.34.18...v3.34.19) (2024-08-02)
 
 
