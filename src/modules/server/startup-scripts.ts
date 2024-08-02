@@ -5,7 +5,6 @@ import cronjob from "node-cron";
 import { isDevMode, IsTest } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IUser } from "@/entities";
-import { migrateAllReleases } from "@/migration/migrate-all-releases";
 import { execCmd } from "@/plugins";
 import { seedDefaultRoles } from "@/seeds";
 import { seedDefaultProjects } from "@/seeds/seed-projects";
@@ -129,7 +128,7 @@ export async function startupScripts() {
 	// await migrateServiceAccountAndApiKey();
 	// await migrateDefaultServiceAccountAndApiKeyUser();
 	// await migrateAllClusters();
-	await migrateAllReleases();
+	// await migrateAllReleases();
 
 	/**
 	 * Seed or update initial data
