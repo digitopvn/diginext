@@ -52,7 +52,7 @@ export const execRegistry = async (options: InputOptions) => {
 
 			let cluster: ICluster;
 			if (options.cluster) {
-				cluster = await DB.findOne("cluster", { slug: options.cluster });
+				cluster = await DB.findOne("cluster", { slug: options.cluster }, { subpath: "/all" });
 				if (!cluster) return logError(`Cluster "${options.cluster}" not found.`);
 			} else {
 				cluster = await askForCluster();

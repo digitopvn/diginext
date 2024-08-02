@@ -346,7 +346,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 
 	// find cluster
 	const { cluster: clusterSlug } = serverDeployEnvironment;
-	const cluster = await DB.findOne("cluster", { slug: clusterSlug });
+	const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
 
 	// get app config to generate deployment data
 	const appConfig = getAppConfigFromApp(app);

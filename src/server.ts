@@ -143,7 +143,7 @@ function initialize(db?: typeof mongoose) {
 		// console.log("a user connected");
 
 		socket.on("ping", (callback) => {
-			callback();
+			callback(Config.LOCATION);
 		});
 
 		socket.on("join", (data) => {

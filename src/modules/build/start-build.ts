@@ -207,7 +207,7 @@ export async function startBuildV1(
 	 * Create namespace & imagePullScrets here!
 	 * Because it will generate the name of secret to put into deployment yaml
 	 */
-	const cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster });
+	const cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster }, { subpath: "/all" });
 
 	if (!cluster) {
 		sendLog({ SOCKET_ROOM, type: "error", message: `Cluster "${serverDeployEnvironment.cluster}" not found` });

@@ -1,5 +1,4 @@
 import { existsSync, readdirSync, statSync } from "fs";
-import globby from "globby";
 import path from "path";
 
 export function getDirectoriesInDirectory(directoryPath: string): string[] {
@@ -23,6 +22,7 @@ export async function getFolderStructure(dir: string = process.cwd()) {
 		`!${path.join(dir, "Dockerfile*")}`,
 		`!${path.join(dir, "docker-compose*")}`,
 	];
+	const globby = require("globby");
 	const files = await globby(patterns, {
 		expandDirectories: true,
 		gitignore: true,

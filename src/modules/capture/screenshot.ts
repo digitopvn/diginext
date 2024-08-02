@@ -88,7 +88,7 @@ const screenshot = async (url: string, options: ScreenshotOptions = defaultExpor
 	screenshotOptions.path = filePath;
 
 	const browser = await puppeteer.launch({
-		headless: "new",
+		headless: true,
 		defaultViewport: viewport,
 		executablePath: process.env.CHROMIUM_PATH,
 		args: [
@@ -101,6 +101,7 @@ const screenshot = async (url: string, options: ScreenshotOptions = defaultExpor
 	try {
 		// disable cache...
 		await page.setCacheEnabled(false);
+		await page.setDefaultNavigationTimeout(60000);
 
 		await page.goto(url, {
 			waitUntil: "networkidle0",

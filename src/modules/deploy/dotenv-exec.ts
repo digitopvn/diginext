@@ -1,7 +1,6 @@
 import chalk from "chalk";
 import { logError, logWarn } from "diginext-utils/dist/xconsole/log";
 import { existsSync, readFileSync } from "fs";
-import globby from "globby";
 import { last } from "lodash";
 import path from "path";
 import yargs from "yargs";
@@ -21,6 +20,7 @@ type DotenvUtilsOptions = {
 
 export const checkGitignoreContainsDotenvFiles = async (options: DotenvUtilsOptions = {}) => {
 	const { targetDir = process.cwd() } = options;
+	const globby = require("globby");
 	const allDotenvFiles = await globby(targetDir + "/.env*");
 	const fileNames = allDotenvFiles.map((filePath) => last(filePath.split("/")));
 

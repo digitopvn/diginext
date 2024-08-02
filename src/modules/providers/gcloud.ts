@@ -266,7 +266,7 @@ export const execGoogleCloud = async (options?: InputOptions) => {
 			break;
 
 		case "create-image-pull-secret":
-			const registries = await DB.find("registry", {});
+			const registries = await DB.find("registry", {}, { subpath: "/all" });
 			if (isEmpty(registries)) {
 				logError(`This workspace doesn't have any registered Container Registries.`);
 				return;

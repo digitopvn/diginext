@@ -92,7 +92,7 @@ const exportPdf = async (url: string, options: ExportPDFOptions = defaultExportP
 	_options.path = filePath;
 
 	const browser = await puppeteer.launch({
-		headless: "new",
+		headless: true,
 		defaultViewport: _options.viewport,
 		executablePath: process.env.CHROMIUM_PATH,
 		args: [
@@ -105,6 +105,7 @@ const exportPdf = async (url: string, options: ExportPDFOptions = defaultExportP
 	try {
 		// disable cache...
 		await page.setCacheEnabled(false);
+		await page.setDefaultNavigationTimeout(60000);
 
 		await page.goto(url, {
 			waitUntil: "networkidle0",

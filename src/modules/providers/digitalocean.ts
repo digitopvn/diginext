@@ -217,7 +217,7 @@ export const execDigitalOcean = async (options?: InputOptions) => {
 			break;
 
 		case "create-image-pull-secret":
-			const registries = await DB.find("registry", {});
+			const registries = await DB.find("registry", {}, { subpath: "/all" });
 			if (isEmpty(registries)) {
 				logError(`[DIGITAL_OCEAN] This workspace doesn't have any registered Container Registries.`);
 				return;

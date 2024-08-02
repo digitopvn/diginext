@@ -27,12 +27,12 @@ export const askForDomain = async (
 	projectSlug: string,
 	appSlug: string,
 	deployEnvironment: ClientDeployEnvironmentConfig,
-	options: { user?: IUser; shouldGenerate?: boolean } = { shouldGenerate: true }
+	options: { user: IUser; shouldGenerate?: boolean }
 ) => {
 	const { DB } = await import("../api/DB");
 
-	const { user } = options;
-
+	const { user, shouldGenerate = true } = options;
+	console.log("askForDomain() > user :>> ", user);
 	let domains: string[] = [];
 
 	let { subdomain, domain } = diginextDomainName(env, projectSlug, appSlug);

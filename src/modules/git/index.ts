@@ -2,7 +2,6 @@ import chalk from "chalk";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
 import { execa, execaCommand, execaSync } from "execa";
 import { createWriteStream, existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
-import globby from "globby";
 import capitalize from "lodash/capitalize";
 import open from "open";
 import path from "path";
@@ -294,6 +293,7 @@ export const generateSSH = async (options?: InputOptions) => {
 
 	let publicIdRsaFile: string, privateIdRsaFile: string;
 	if (existsSync(idRsaDir)) {
+		const globby = require("globby");
 		const files = await globby(idRsaDir + "/id_*");
 		// log(`existed "id_rsa" files >>`, files);
 
@@ -355,6 +355,7 @@ export const sshKeysExisted = async (options?: { publicIdRsaFile: string; privat
 	}
 
 	if (!publicIdRsaFile || !privateIdRsaFile) {
+		const globby = require("globby");
 		const files = await globby(SSH_DIR + "/id_*");
 		if (files.length > 0) {
 			publicIdRsaFile = files.find((f) => f.indexOf(".pub") > -1);

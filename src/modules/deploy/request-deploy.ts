@@ -90,6 +90,7 @@ export async function requestDeploy(options: InputOptions) {
 	 * [2] Compare LOCAL & SERVER App Config,
 	 *     then upload local app config to server.
 	 */
+	console.log("requestDeploy() > options.author :>> ", options.author);
 	const deployInfo = await askForDeployEnvironmentInfo(options);
 	if (options.isDebugging) console.log("requestDeploy() > askForDeployEnvironmentInfo() :>> ", deployInfo);
 	if (!deployInfo.appConfig || !deployInfo.deployEnvironment) return;
@@ -208,6 +209,14 @@ export async function requestDeploy(options: InputOptions) {
 		socket.on("error", (e) => logError(e));
 		socket.on("connect_error", (e) => logError(e));
 
+		const ping = () => {
+			const start = Date.now();
+			socket.emit("ping", (location) => {
+				const duration = Date.now() - start;
+				console.log(`[DXUP Websocket] Ping: ${duration}ms (${socketURL}${location ? `/ ${location}` : ""})`);
+			});
+		};
+
 		socket.on("disconnect", () => {
 			log("[DXUP Websocket] Disconnected.");
 			socket.emit("leave", { room: SOCKET_ROOM });
@@ -219,13 +228,8 @@ export async function requestDeploy(options: InputOptions) {
 			socket.emit("join", { room: SOCKET_ROOM });
 
 			clearInterval(pingInt);
-			pingInt = setInterval(() => {
-				const start = Date.now();
-				socket.emit("ping", () => {
-					const duration = Date.now() - start;
-					console.log(`[DXUP Websocket] Ping: ${duration}ms (${socketURL})`);
-				});
-			}, 15 * 1000);
+			pingInt = setInterval(ping, 15 * 1000);
+			ping();
 		});
 
 		return new Promise((resolve, reject) => {
