@@ -2,7 +2,6 @@ import cliProgress from "cli-progress";
 import { firstElement } from "diginext-utils/dist/array";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import fs from "fs";
-import globby from "globby";
 import path from "path";
 
 import type { ICloudStorage } from "@/entities";
@@ -175,6 +174,7 @@ export async function startUpload(options: InputOptions, onComplete?: UploadComp
 
 	// log(`Uploading "${uploadPathPattern}" to "${DIGITOP_CDN_URL}/${projectName}/${env}"`);
 
+	const { globby } = await import("globby");
 	const files = await globby(uploadPathPattern);
 
 	uploadedCount = 0;

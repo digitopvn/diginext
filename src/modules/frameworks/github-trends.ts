@@ -22,7 +22,7 @@ export interface GithubTrendOptions {
 
 export async function fetchTrendingRepos(options?: GithubTrendOptions): Promise<TrendingRepository[]> {
 	const browser = await puppeteer.launch({
-		headless: "new",
+		headless: true,
 		executablePath: process.env.CHROMIUM_PATH,
 		args: [
 			"--no-sandbox",
@@ -30,6 +30,8 @@ export async function fetchTrendingRepos(options?: GithubTrendOptions): Promise<
 		],
 	});
 	const page = await browser.newPage();
+	await page.setDefaultNavigationTimeout(60000);
+
 	const githubTrendUrl = `https://github.com/trending${options?.lang ? `/${options?.lang}` : ""}?since=${options?.time || "daily"}`;
 	console.log("githubTrendUrl :>> ", githubTrendUrl);
 	await page.goto(githubTrendUrl);
