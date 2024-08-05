@@ -22,6 +22,8 @@ import type { IQueryFilter, IQueryOptions, IQueryPagination } from "../interface
  */
 const EMPTY_PASS_PHRASE = "nguyhiemvcl";
 
+export const DEFAULT_PAGE_SIZE = 100;
+
 export default class BaseService<T = any> {
 	readonly model: Model<T>;
 
@@ -271,6 +273,7 @@ export default class BaseService<T = any> {
 		// console.log(`"${this.model.collection.name}" > results >>`, results);
 
 		if (pagination && this.req) {
+			if (typeof pagination.page_size === "undefined") pagination.page_size = DEFAULT_PAGE_SIZE;
 			pagination.total_items = totalItems || results.length;
 			pagination.total_pages = pagination.page_size ? Math.ceil(totalItems / pagination.page_size) : 1;
 

@@ -394,7 +394,7 @@ export class DB {
 			if (options?.isDebugging) console.log("[DB] fetchApi > response :>> ", res);
 			const { data = [], status, messages = [""] } = res;
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] FIND ONE - ${url} :>>`, messages);
-			item = data[0];
+			item = isArray(data) ? data[0] : data;
 		}
 		return item;
 	}

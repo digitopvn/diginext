@@ -102,7 +102,7 @@ export function testFlow1() {
 		expect((loginRes.user.activeRole as IRole).type).toEqual("admin");
 	}, 60000);
 
-	it("Workspace #1: Initial data", async () => {
+	it("Workspace #1: Setup initial data", async () => {
 		// current authenticated user:
 		let fakeUser1 = await getCurrentUser();
 		expect((fakeUser1.activeRole as IRole).type).toEqual("admin");
@@ -330,8 +330,8 @@ export function testFlow1() {
 		const curUser = await getCurrentUser();
 
 		// seed cluster: Bare-metal
-		// const cluster = await addInitialBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG, currentWorkspace, curUser);
-		const cluster = await addInitialBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG);
+		const cluster = await addInitialBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG, currentWorkspace, curUser);
+		// const cluster = await addInitialBareMetalCluster(process.env.TEST_METAL_CLUSTER_KUBECONFIG);
 
 		// verify cluster connection
 		expect(cluster).toBeDefined();

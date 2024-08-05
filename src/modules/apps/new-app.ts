@@ -8,7 +8,6 @@ import { getAppConfigFromApp } from "@/modules/apps/app-helper";
 import { pullingFramework } from "@/modules/framework";
 import { initalizeAndCreateDefaultBranches } from "@/modules/git/initalizeAndCreateDefaultBranches";
 import { printInformation } from "@/modules/project/printInformation";
-import { makeSlug } from "@/plugins/slug";
 
 import { createEmptyAppDirectory } from "./create-empty-app-dir";
 import { createAppByForm } from "./new-app-by-form";
@@ -32,7 +31,7 @@ export default async function createApp(options: InputOptions) {
 	options.projectSlug = options.project.slug;
 
 	// setup git:
-	options.repoSlug = `${options.projectSlug}-${makeSlug(options.name)}`.toLowerCase();
+	options.repoSlug = `${options.projectSlug}-${newApp.slug}`.toLowerCase();
 
 	if (typeof options.targetDirectory == "undefined") options.targetDirectory = path.resolve(process.cwd(), options.repoSlug);
 
@@ -43,7 +42,7 @@ export default async function createApp(options: InputOptions) {
 			if (options.overwrite) {
 				fs.rmSync(options.targetDirectory, { recursive: true, force: true });
 			} else {
-				logError(`App directory with name "${options.slug}" was already existed.`);
+				logError(`App directory with name "${options.repoSlug}" was already existed.`);
 				return;
 			}
 		}

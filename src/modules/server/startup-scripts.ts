@@ -70,29 +70,6 @@ export async function startupScripts() {
 		await Promise.all(workspaces.map((ws) => seedDefaultProjects(ws, ws.owner as IUser)));
 	}
 
-	// FIXME: Why would we need this?
-	// connect container registries
-	// const registrySvc = new ContainerRegistryService();
-	// const registries = await registrySvc.find({});
-	// if (registries.length > 0) {
-	// 	for (const registry of registries) {
-	// 		// console.log("registry.workspace :>> ", registry.workspace);
-	// 		connectRegistry(registry, { workspaceId: registry.workspace }).catch((e) => {
-	// 			// wait for 2 minutes and retry
-	// 			wait(2 * 60 * 2000, connectRegistry(registry).catch(console.error));
-	// 		});
-	// 	}
-	// }
-
-	// connect clusters
-	// const clusterSvc = new ClusterService();
-	// const clusters = await clusterSvc.find({});
-	// if (clusters.length > 0) {
-	// 	for (const cluster of clusters) {
-	// 		await ClusterManager.authCluster(cluster, { shouldSwitchContextToThisCluster: false, isDebugging: true });
-	// 	}
-	// }
-
 	/**
 	 * CRONJOBS
 	 * ---

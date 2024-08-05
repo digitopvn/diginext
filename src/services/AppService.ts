@@ -1,4 +1,4 @@
-import { isString } from "lodash";
+import { isEmpty, isString } from "lodash";
 import path from "path";
 
 import { CLI_CONFIG_DIR } from "@/config/const";
@@ -430,17 +430,22 @@ export class AppService extends BaseService<IApp> {
 		// permissions
 		await checkAppPermissionsByFilter(this, filter, this.user);
 
+		let apps = await this.find(filter, data, options);
+		if (isEmpty(apps)) throw new Error(`Apps not found.`);
+
+		const { ProjectService } = await import("./index");
+		const projectSvc = new ProjectService(this.ownership);
+
+		let project: IProject;
+
 		if (data.project) {
-			const { ProjectService } = await import("./index");
-			const projectSvc = new ProjectService(this.ownership);
-			let project: IProject;
 			// find a project of this app
 			if (MongoDB.isValidObjectId(data.project)) {
 				project = await projectSvc.findOne({ _id: data.project });
 			} else if (isString(data.project)) {
 				project = await projectSvc.findOne({ slug: data.project });
 			} else {
-				throw new Error(`"project" is not a valid ID or slug.`);
+				throw new Error(`Param "project" is not a valid ID or slug.`);
 			}
 
 			if (!project) throw new Error(`Project "${data.project}" not found.`);
@@ -452,58 +457,80 @@ export class AppService extends BaseService<IApp> {
 			if (!project.appSlugs) project.appSlugs = [];
 			if (!project.apps.includes(data._id)) project.apps.push(data._id);
 			if (!project.appSlugs.includes(data.slug)) project.appSlugs.push(data.slug);
-			await projectSvc.updateOne({ _id: project._id }, { apps: project.apps, appSlugs: project.appSlugs });
+
+			// update project
+			apps.forEach(async (app) => {
+				if (app._id && !project.apps.includes(app._id)) project.apps.push(app._id);
+				if (app._id && !project.appSlugs.includes(app.slug)) project.appSlugs.push(app.slug);
+				await projectSvc.updateOne({ _id: project._id }, { apps: project.apps, appSlugs: project.appSlugs });
+			});
 		}
 
-		return super.update(filter, data, options);
+		// delete deploy environment of this app
+		if (data.deployEnvironment) {
+			for (const env of Object.keys(data.deployEnvironment)) {
+				// check dx quota
+				const size = data.deployEnvironment[env].size;
+				if (size) {
+					const quotaRes = await checkQuota(this.workspace, { resourceSize: size });
+					if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
+					if (quotaRes.data && quotaRes.data.isExceed)
+						throw new Error(
+							`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+						);
+				}
+
+				// magic -> not delete other deploy environment & previous configuration
+				for (const key of Object.keys(data.deployEnvironment[env])) {
+					data[`deployEnvironment.${env}.${key}`] = data.deployEnvironment[env][key];
+				}
+
+				delete data.deployEnvironment;
+			}
+		}
+
+		apps = await super.update(filter, data, options);
+		return apps;
 	}
 
 	async updateOne(filter: IQueryFilter<IApp>, data: any, options?: IQueryOptions): Promise<IApp> {
-		// check permissions
-		await checkAppPermissionsByFilter(this, filter, this.user);
-
-		if (data.project) {
-			const { ProjectService } = await import("./index");
-			let project: IProject,
-				projectSvc = new ProjectService(this.ownership);
-			// find a project of this app
-			if (MongoDB.isValidObjectId(data.project)) {
-				project = await projectSvc.findOne({ _id: data.project });
-			} else if (isString(data.project)) {
-				project = await projectSvc.findOne({ slug: data.project });
-			} else {
-				throw new Error(`"project" is not a valid ID or slug.`);
-			}
-
-			if (!project) throw new Error(`Project "${data.project}" not found.`);
-			data.projectSlug = project.slug;
-			data.project = project._id;
-
-			// add this app._id and app.slug to project.apps and project.appSlugs
-			if (!project.apps) project.apps = [];
-			if (!project.appSlugs) project.appSlugs = [];
-			if (!project.apps.includes(data._id)) project.apps.push(data._id);
-			if (!project.appSlugs.includes(data.slug)) project.appSlugs.push(data.slug);
-			await projectSvc.updateOne({ _id: project._id }, { apps: project.apps, appSlugs: project.appSlugs });
-		}
-
-		return super.updateOne(filter, data, options);
+		const [app] = await this.update(filter, data, options);
+		return app;
 	}
 
 	async delete(filter?: IQueryFilter<IApp>, options?: IQueryOptions) {
 		// permissions
 		await checkProjectAndAppPermissions(this, filter, this.user);
 
-		const app = await this.findOne(filter, options);
-		if (!app) throw new Error(`Unable to delete: App not found.`);
+		const app = await this.findOne(filter, { populate: ["project"] });
+		if (!app) throw new Error(`App not found.`);
 
-		// take down all deploy environments of this app
-		try {
-			await this.takeDown(app, options);
-		} catch (e) {
-			// ignore on error
-			console.error(e);
+		const { DeployEnvironmentService } = await import("@/services");
+		const deployEnvSvc = new DeployEnvironmentService();
+
+		if (app.deployEnvironment) {
+			// take down all deploy environments of this app
+			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
+				// take down environment
+				if (!isEmpty(deployEnvironment)) {
+					await deployEnvSvc.takeDownDeployEnvironment(app, env).catch((e) => {
+						console.error(`AppService > delete() > deleteDeployEnvironment() :>>`, e);
+					});
+				}
+			});
 		}
+
+		// remove this app ID from project.apps
+		const { ProjectService } = await import("@/services");
+		const project = await new ProjectService().updateOne(
+			{
+				_id: (app.project as IProject)._id,
+			},
+			{
+				$pull: { apps: app._id, appSlugs: app.slug },
+			},
+			{ raw: true }
+		);
 
 		return super.delete(filter, options);
 	}
