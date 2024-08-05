@@ -38,7 +38,6 @@ export class BuildService extends BaseService<IBuild> {
 		}
 
 		// options.isDebugging = true;
-		console.log("BuildService > filter :>> ", filter);
 		return super.find(filter, options, pagination);
 	}
 

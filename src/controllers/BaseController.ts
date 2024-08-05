@@ -10,13 +10,11 @@ import type { IBase } from "@/entities/Base";
 import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
 import { isObjectId, isValidObjectId, MongoDB, toObjectId } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
-import type { BaseService } from "@/services/BaseService";
+import { type BaseService, DEFAULT_PAGE_SIZE } from "@/services/BaseService";
 
 import type { IQueryFilter, IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
 import type { ResponseData } from "../interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "../interfaces/ResponseData";
-
-const DEFAULT_PAGE_SIZE = 100;
 
 export default class BaseController<T extends IBase = any, S extends BaseService<T> = BaseService> {
 	req: AppRequest;

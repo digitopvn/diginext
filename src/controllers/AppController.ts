@@ -24,7 +24,6 @@ import { currentVersion } from "@/plugins";
 import { formatEnvVars } from "@/plugins/env-var";
 import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
-import { ProjectService } from "@/services";
 
 import { AppService } from "../services/AppService";
 import BaseController from "./BaseController";
@@ -197,85 +196,22 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("jwt")
 	@Patch("/")
 	async update(@Body() body: AppDto, @Queries() queryParams?: IPatchQueryParams) {
-		let project: IProject,
-			projectSvc = new ProjectService();
-
-		if (body.project) {
-			project = await projectSvc.findOne({ _id: body.project });
-			if (!project) return { status: 0, messages: [`Project "${body.project}" not found.`] } as ResponseData;
-			body.projectSlug = project.slug;
-		}
-
-		if (body.deployEnvironment) {
-			for (const env of Object.keys(body.deployEnvironment)) {
-				// check dx quota
-				const size = body.deployEnvironment[env].size;
-				if (size) {
-					const quotaRes = await checkQuota(this.workspace, { resourceSize: size });
-					if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
-					if (quotaRes.data && quotaRes.data.isExceed)
-						return respondFailure(
-							`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
-						);
-				}
-
-				// magic -> not delete other deploy environment & previous configuration
-				for (const key of Object.keys(body.deployEnvironment[env])) {
-					body[`deployEnvironment.${env}.${key}`] = body.deployEnvironment[env][key];
-				}
-
-				delete body.deployEnvironment;
-			}
-		}
-
-		let apps: IApp[];
 		try {
-			apps = await this.service.update(this.filter, body, this.options);
-			if (isEmpty(apps)) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+			const apps = await this.service.update(this.filter, body, this.options);
+			return respondSuccess({ data: apps });
 		} catch (e) {
-			return { status: 0, messages: [e.message] } as ResponseData;
+			console.error(e);
+			return respondFailure(e.message);
 		}
-
-		return respondSuccess({ data: apps });
 	}
 
 	@Security("api_key")
 	@Security("jwt")
 	@Delete("/")
 	async delete(@Queries() queryParams?: IDeleteQueryParams) {
-		const messages: string[] = [];
-		const app = await this.service.findOne(this.filter, { populate: ["project"] });
-
-		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
-
-		const { DeployEnvironmentService } = await import("@/services");
-		const deployEnvSvc = new DeployEnvironmentService();
-
-		if (app.deployEnvironment)
-			Object.entries(app.deployEnvironment).map(async ([env, deployEnvironment]) => {
-				// take down environment
-				if (!isEmpty(deployEnvironment)) {
-					await deployEnvSvc.takeDownDeployEnvironment(app, env).catch((e) => {
-						console.error(`deleteDeployEnvironment() :>>`, e);
-						messages.push(`Unable to take down this deploy environment: ${e}`);
-					});
-				}
-			});
-
-		// remove this app ID from project.apps
-		const project = await new ProjectService().updateOne(
-			{
-				_id: (app.project as IProject)._id,
-			},
-			{
-				$pull: { apps: app._id },
-			},
-			{ raw: true }
-		);
-
 		try {
 			const deleteRes = await this.service.delete(this.filter);
-			return respondSuccess({ data: deleteRes, msg: messages });
+			return respondSuccess({ data: deleteRes });
 		} catch (e) {
 			return respondFailure(`Unable to delete this app: ${e}`);
 		}
@@ -288,10 +224,10 @@ export default class AppController extends BaseController<IApp, AppService> {
 	@Security("jwt")
 	@Get("/participants")
 	async participants(@Queries() queryParams?: IGetQueryParams) {
-		const app = await this.service.findOne(this.filter);
-		if (!app) return respondFailure(`App not found.`);
-
 		try {
+			const app = await this.service.findOne(this.filter);
+			if (!app) throw new Error(`App not found.`);
+
 			const participants = await this.service.getParticipants(app, this.options);
 			return respondSuccess({ data: participants });
 		} catch (e) {
