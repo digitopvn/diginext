@@ -1,3 +1,11 @@
+## [3.34.21](https://github.com/digitopvn/diginext/compare/v3.34.20...v3.34.21) (2024-08-05)
+
+
+### Bug Fixes
+
+* **cli:** issue of create app with none framework ([f59e723](https://github.com/digitopvn/diginext/commit/f59e7236e554024e47a7f7129c4fe9276259262f))
+* **cli:** issue of create app with none framework ([#539](https://github.com/digitopvn/diginext/issues/539)) ([9c54340](https://github.com/digitopvn/diginext/commit/9c5434049999ee5ddfcb42fb62186091ce0a6649))
+
 ## [3.34.20](https://github.com/digitopvn/diginext/compare/v3.34.19...v3.34.20) (2024-08-02)
 
 
