@@ -36,8 +36,8 @@ const userRepoApiPath = (provider: GitProviderType, username?: string, slug?: st
 	provider === "bitbucket"
 		? `/repositories/${username}${slug ? `/${slug}` : ""}`
 		: provider === "github"
-			? `/user${username ? `/${username}` : ""}/repos`
-			: undefined;
+		? `/user${username ? `/${username}` : ""}/repos`
+		: undefined;
 
 const orgRepoApiPath = (provider: GitProviderType, org?: string, slug?: string) =>
 	provider === "bitbucket" ? `/repositories/${org}${slug ? `/${slug}` : ""}` : provider === "github" ? `/orgs/${org}/repos` : undefined;
@@ -163,10 +163,10 @@ const bitbucketRefeshToken = async (provider: IGitProvider) => {
 	};
 };
 
-const api = async (provider: IGitProvider, path: string, options: GitProviderApiOptions = {}) => {
+const api = async (provider: IGitProvider, path: string, options?: GitProviderApiOptions) => {
 	const { DB } = await import("../api/DB");
 
-	const { method = "GET", data, headers = {} } = options;
+	const { method = "GET", data, headers = {} } = options || {};
 
 	const baseURL = provider.type === "github" ? githubApiBaseURL : bitbucketApiBaseURL;
 	const func = `[${provider.type.toUpperCase()}_API_ERROR]`;
@@ -217,9 +217,9 @@ const api = async (provider: IGitProvider, path: string, options: GitProviderApi
 	}
 };
 
-const getProfile = async (provider: IGitProvider) => {
+const getProfile = async (provider: IGitProvider, options?: { isDebugging?: boolean }) => {
 	if (provider.type === "bitbucket") {
-		const profile = (await api(provider, userApiPath(provider.type))) as BitbucketUser;
+		const profile = (await api(provider, userApiPath(provider.type), options)) as BitbucketUser;
 		return {
 			id: profile.uuid,
 			username: profile.username,
@@ -227,10 +227,8 @@ const getProfile = async (provider: IGitProvider) => {
 			url: profile.links.html.href,
 			// no email for bitbucket user?
 		} as GitUser;
-	}
-
-	if (provider.type === "github") {
-		const profile = (await api(provider, userApiPath(provider.type))) as GithubUser;
+	} else if (provider.type === "github") {
+		const profile = (await api(provider, userApiPath(provider.type), options)) as GithubUser;
 		return {
 			id: profile.id.toString(),
 			username: profile.login,
@@ -238,9 +236,9 @@ const getProfile = async (provider: IGitProvider) => {
 			url: profile.html_url,
 			email: profile.email,
 		} as GitUser;
+	} else {
+		throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 	}
-
-	throw new Error(`Git provider "${provider.type}" is not supported yet.`);
 };
 
 const listOrgs = async (provider: IGitProvider) => {

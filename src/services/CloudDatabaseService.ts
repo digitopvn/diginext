@@ -15,7 +15,6 @@ import { respondFailure } from "@/interfaces";
 import type { CloudDatabaseType, Ownership } from "@/interfaces/SystemTypes";
 import { cloudDatabaseList } from "@/interfaces/SystemTypes";
 import { createCronjobRepeat } from "@/modules/cronjob/schedule";
-import MongoShell from "@/modules/db/mongo";
 import MySQL from "@/modules/db/mysql";
 import PostgreSQL from "@/modules/db/pg";
 import { MongoDB } from "@/plugins/mongodb";
@@ -93,6 +92,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 					verified = await MySQL.checkConnection({ host: data.host, port: toString(data.port), user: data.user, pass: data.pass });
 					break;
 				case "mongodb":
+					const MongoShell = await import("@/modules/db/mongo");
 					verified = await MongoShell.checkConnection({
 						url: data.url,
 						host: data.host,
@@ -188,6 +188,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 					verified = await MySQL.checkConnection({ host: db.host, port: toString(db.port), user: db.user, pass: db.pass });
 					break;
 				case "mongodb":
+					const MongoShell = await import("@/modules/db/mongo");
 					verified = await MongoShell.checkConnection({ host: db.host, port: toString(db.port), user: db.user, pass: db.pass });
 					break;
 				case "postgresql":
@@ -264,6 +265,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						});
 					break;
 				case "mongodb":
+					const MongoShell = await import("@/modules/db/mongo");
 					MongoShell.backup({
 						dbName: options?.dbName,
 						authDb: options?.authDb || db.authDb,
@@ -366,6 +368,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 				});
 				break;
 			case "mongodb":
+				const MongoShell = await import("@/modules/db/mongo");
 				res = await MongoShell.backup({
 					dbName: options.dbName,
 					url: toDatabase.url,

@@ -13,7 +13,7 @@ export const seedSystemRoutes = async () => {
 
 	// get all routes of Express
 	const expressRoutes = listEndpoints(app).filter((r) => r.path.indexOf("/empty") === -1 && r.path.indexOf("/auth") === -1);
-	// console.log("expressRoutes >>", expressRoutes.length);
+	console.log("expressRoutes >>", expressRoutes);
 
 	// if (expressRoutes.length > 0) return;
 
@@ -24,6 +24,7 @@ export const seedSystemRoutes = async () => {
 			const generatedName = upperFirst(exr.path.replace("/api/v1/", "").split("/").join(" ").split("-").join(" ").split("_").join("-"));
 			return { name: generatedName, path: exr.path, methods: exr.methods as RequestMethodType[] } as IRoute;
 		});
+	console.log("missingRoutes >>", missingRoutes);
 
 	if (!isEmpty(missingRoutes)) {
 		// log(`[MIGRATION] migrateAllRoutes > Found ${missingRoutes.length} missing routes.`);

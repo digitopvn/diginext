@@ -430,10 +430,16 @@ export class AppService extends BaseService<IApp> {
 		// permissions
 		await checkAppPermissionsByFilter(this, filter, this.user);
 
-		let apps = await this.find(filter, data, options);
-		if (isEmpty(apps)) throw new Error(`Apps not found.`);
+		const allApps = await this.find({});
+		console.log("AppService > allApps :>> ", allApps);
 
-		const { ProjectService } = await import("./index");
+		let apps = await this.find(filter, data, options);
+		if (isEmpty(apps)) {
+			console.error(`AppService > update :>>`, { filter });
+			throw new Error(`Apps not found.`);
+		}
+
+		const { ProjectService, WorkspaceService } = await import("./index");
 		const projectSvc = new ProjectService(this.ownership);
 
 		let project: IProject;
@@ -468,11 +474,19 @@ export class AppService extends BaseService<IApp> {
 
 		// delete deploy environment of this app
 		if (data.deployEnvironment) {
+			const [app] = apps;
+			const wsId = app.workspace ? (MongoDB.isValidObjectId(app.workspace) ? app.workspace : (app.workspace as any)._id) : undefined;
+			if (!wsId) throw new Error(`Workspace ID is not valid.`);
+
+			const wsSvc = new WorkspaceService();
+			const workspace = this.workspace || (await wsSvc.findOne({ _id: wsId }));
+			if (!workspace) throw new Error(`Workspace not found.`);
+
 			for (const env of Object.keys(data.deployEnvironment)) {
 				// check dx quota
 				const size = data.deployEnvironment[env].size;
 				if (size) {
-					const quotaRes = await checkQuota(this.workspace, { resourceSize: size });
+					const quotaRes = await checkQuota(workspace, { resourceSize: size });
 					if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
 					if (quotaRes.data && quotaRes.data.isExceed)
 						throw new Error(

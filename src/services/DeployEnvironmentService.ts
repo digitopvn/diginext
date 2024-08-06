@@ -88,7 +88,7 @@ export class DeployEnvironmentService {
 		if (!env) throw new Error(`Deploy environment name is required.`);
 		if (!deployEnvironmentData) throw new Error(`Deploy environment configuration is required.`);
 
-		const { AppService, ClusterService, ContainerRegistryService } = await import("./index");
+		const { AppService, ClusterService, ContainerRegistryService, WorkspaceService } = await import("./index");
 		const appSvc = new AppService();
 		const clusterSvc = new ClusterService();
 		const regSvc = new ContainerRegistryService();
@@ -103,15 +103,24 @@ export class DeployEnvironmentService {
 		if (!deployEnvironmentData.imageURL) throw new Error(`Build image URL is required.`);
 		if (!deployEnvironmentData.buildTag) throw new Error(`Build number (image's tag) is required.`);
 
-		const mainAppName = await getDeploymentName(app);
-		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+		// workspace
+		const wsId = app.workspace ? (MongoDB.isValidObjectId(app.workspace) ? app.workspace : (app.workspace as any)._id) : undefined;
+		if (!wsId) throw new Error(`Workspace ID is not valid.`);
 
+		const wsSvc = new WorkspaceService();
+		const workspace = this.workspace || ownership.workspace || (await wsSvc.findOne({ _id: wsId }));
+		if (!workspace) throw new Error(`Workspace not found.`);
+
+		// build
 		const { buildTag } = deployEnvironmentData;
 
+		// project
 		const project = app.project as IProject;
 		const { slug: projectSlug } = project;
 
-		// Assign default values to optional params:
+		// DEPLOYMENT: Assign default values to optional params:
+		const mainAppName = await getDeploymentName(app);
+		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
 		if (!deployEnvironmentData.size) deployEnvironmentData.size = "1x";
 		if (!deployEnvironmentData.shouldInherit) deployEnvironmentData.shouldInherit = true;
@@ -119,7 +128,7 @@ export class DeployEnvironmentService {
 		if (!deployEnvironmentData.redirect) deployEnvironmentData.redirect = true;
 
 		// Check DX quota
-		const quotaRes = await checkQuota(ownership?.workspace, { resourceSize: deployEnvironmentData.size });
+		const quotaRes = await checkQuota(workspace, { resourceSize: deployEnvironmentData.size });
 		if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
 		if (quotaRes.data && quotaRes.data.isExceed)
 			throw new Error(`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`);

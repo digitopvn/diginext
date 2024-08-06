@@ -11,10 +11,8 @@ import { CLI_DIR } from "./config/const";
 let appEnv: any = {};
 let isNoEnvFile = false;
 
-const envFilePath =
-	trimNull(process.env.NODE_ENV) === "test" || trimNull(process.env.NODE_ENV) === "test_ci"
-		? path.resolve(CLI_DIR, `.env.test`)
-		: path.resolve(CLI_DIR, `.env.dev`);
+const isTestEnv = trimNull(process.env.NODE_ENV) === "test" || trimNull(process.env.NODE_ENV) === "test_ci";
+const envFilePath = isTestEnv ? path.resolve(CLI_DIR, `.env.test`) : path.resolve(CLI_DIR, `.env.dev`);
 
 if (fs.existsSync(envFilePath)) {
 	dotenv.config({ path: envFilePath });
@@ -46,7 +44,7 @@ if (trimNull(process.env.CLI_MODE) === "server") {
 			}
 		}
 	});
-	// console.log(table.toString());
+	if (isTestEnv) console.log(table.toString());
 }
 
 export enum EnvName {

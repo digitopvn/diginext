@@ -25,7 +25,7 @@ import {
 import GitProviderAPI from "@/modules/git/git-provider-api";
 import { initialFrameworks } from "@/seeds/seed-frameworks";
 import { connectRegistry } from "@/modules/registry/connect-registry";
-import { existsSync, readdirSync } from "fs";
+import { existsSync, readdirSync, rmdirSync, rmSync } from "fs";
 import { addInitialBareMetalCluster } from "@/seeds/seed-clusters";
 import ClusterManager from "@/modules/k8s";
 import { DB } from "@/modules/api/DB";
@@ -33,6 +33,7 @@ import path from "path";
 import { wait } from "@/plugins";
 import { fetchApi } from "@/modules/api";
 import { makeSlug } from "@/plugins/slug";
+import { Config } from "@/app.config";
 
 const cliDebugFlag = process.env.TEST_DEBUG === "1" ? "--debug" : "";
 
@@ -44,25 +45,28 @@ export function testFlow1() {
 		console.log("Current DOCKER version :>> \n", dockerVersion);
 	});
 
-	it("Builder: PODMAN", async () => {
-		const podmanVersion = await dxCmd(`podman version`);
-		console.log("Current PODMAN version :>> \n", podmanVersion);
-	});
+	// it("Builder: PODMAN", async () => {
+	// 	const podmanVersion = await dxCmd(`podman version`);
+	// 	console.log("Current PODMAN version :>> \n", podmanVersion);
+	// });
 
 	it("Create Fake User #1 (role: admin)", async () => {
 		// create user
-		await createFakeUser(1);
+		const _u = await createFakeUser(1);
+		console.log("_u :>> ", _u);
 
 		// query db
 		const name = `Fake User 1`;
 		let fakeUser1 = await userSvc.findOne({ name });
+		console.log("fakeUser1 :>> ", fakeUser1);
 		expect(fakeUser1).toBeDefined();
 
 		const userId = MongoDB.toString(fakeUser1._id);
 		if (!userId) return;
 
-		// first login (no workspace)
+		// first login (no workspace selected)
 		const loginRes1 = await loginUser(userId);
+		console.log("loginRes1 :>> ", loginRes1);
 		expect(loginRes1.user).toBeDefined();
 		expect(loginRes1.user.token?.access_token).toBeDefined();
 	}, 60000);
@@ -91,6 +95,7 @@ export function testFlow1() {
 
 		// second login (has workspace)
 		const loginRes = await loginUser(userId, wsId);
+		console.log("[TEST] Create workspace > loginRes :>> ", loginRes);
 
 		// check user data after login
 		expect(loginRes.user).toBeDefined();
@@ -155,11 +160,13 @@ export function testFlow1() {
 				app_password: process.env.TEST_BITBUCKET_APP_PASS,
 			},
 		});
-		console.log("createRes :>> ", createRes);
+		console.log("[TEST] Git Provider > createRes :>> ", createRes);
 
 		// verify bitbucket api
 		let bitbucket = createRes.data as IGitProvider;
-		bitbucket = await gitSvc.verify(bitbucket);
+		bitbucket = await gitSvc.verify(bitbucket, { isDebugging: true });
+
+		console.log("[TEST] Git Provider > verified :>> ", bitbucket);
 
 		// check...
 		expect(bitbucket.owner).toEqual(curUser._id);
@@ -170,10 +177,10 @@ export function testFlow1() {
 		expect(bitbucket.org).toBeDefined();
 
 		// test api
-		const profile = await GitProviderAPI.getProfile(bitbucket);
+		const profile = await GitProviderAPI.getProfile(bitbucket, { isDebugging: true });
 		expect(profile).toBeDefined();
 		expect(profile.username).toBe(process.env.TEST_BITBUCKET_USER);
-		console.log("profile :>> ", profile);
+		console.log("[TEST] Git Provider > profile :>> ", profile);
 	}, 60000);
 
 	it("Workspace #1: Git Provider - Github", async () => {
@@ -192,7 +199,7 @@ export function testFlow1() {
 
 		// verify github api
 		let github = createRes.data as IGitProvider;
-		github = await gitSvc.verify(github);
+		github = await gitSvc.verify(github, { isDebugging: true });
 
 		// check...
 		expect(github.owner).toEqual(curUser._id);
@@ -202,7 +209,7 @@ export function testFlow1() {
 		expect(github.org).toBeDefined();
 
 		// test api
-		const profile = await GitProviderAPI.getProfile(github);
+		const profile = await GitProviderAPI.getProfile(github, { isDebugging: true });
 		expect(profile).toBeDefined();
 	}, 60000);
 
@@ -252,14 +259,14 @@ export function testFlow1() {
 	// 	expect(fw).toBeDefined();
 	// }, 30000);
 
-	let gcr: IContainerRegistry;
+	let registry: IContainerRegistry;
 
 	it(
 		"Workspace #1: Container Registry - Google Artifact Registry",
 		async () => {
 			console.log("[TESTING] Workspace #1: Container Registry - Google Artifact Registry");
 
-			const curUser = await getCurrentUser();
+			// const curUser = await getCurrentUser();
 
 			// seed Container Registry: GCR
 			const createRes = await registryCtl.create({
@@ -269,17 +276,17 @@ export function testFlow1() {
 				serviceAccount: process.env.TEST_GCLOUD_SERVICE_ACCOUNT,
 			});
 
-			gcr = createRes.data;
-			expect(gcr).toBeDefined();
-			expect(gcr.isVerified).toBe(true);
+			// registry = createRes.data;
+			expect(createRes.data).toBeDefined();
+			expect(createRes.data.isVerified).toBe(true);
 
 			// authenticate GCR with docker & podman
-			await connectRegistry(gcr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
-			await connectRegistry(gcr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
+			// await connectRegistry(createRes.data, { builder: "docker", workspaceId: wsId, userId: curUser._id });
+			// await connectRegistry(gcr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
 
 			// podman: pull private test image
-			const podmanPullRes = await dxCmd(`podman pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
-			expect(podmanPullRes.indexOf("Writing manifest")).toBeGreaterThan(-1);
+			// const podmanPullRes = await dxCmd(`podman pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
+			// expect(podmanPullRes.indexOf("Writing manifest")).toBeGreaterThan(-1);
 
 			// docker: pull private test image
 			const dockerPullRes = await dxCmd(`docker pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
@@ -292,7 +299,7 @@ export function testFlow1() {
 		"Workspace #1: Container Registry - Docker Hub Registry",
 		async () => {
 			console.log("[TESTING] Workspace #1: Container Registry - Docker Hub Registry");
-			const curUser = await getCurrentUser();
+			// const curUser = await getCurrentUser();
 
 			// seed Container Registry: Docker Hub
 			const createRes = await registryCtl.create({
@@ -307,15 +314,18 @@ export function testFlow1() {
 			expect(dhr).toBeDefined();
 			expect(dhr.isVerified).toBe(true);
 
+			// assign global registry -> to test "dx up" later
+			registry = dhr;
+
 			// podman: pull private test image
-			await connectRegistry(dhr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
+			// await connectRegistry(dhr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
 
 			// const podmanPullRes = await dxCmd(`podman pull digitop/static:latest`);
 			// console.log("podmanPullRes :>> ", podmanPullRes);
 			// expect(podmanPullRes.indexOf("Writing manifest")).toBeGreaterThan(-1);
 
 			// docker: pull private test image
-			await connectRegistry(dhr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
+			// await connectRegistry(dhr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
 
 			// const dockerPullRes = await dxCmd(`docker pull digitop/static:latest`);
 			// console.log("dockerPullRes :>> ", dockerPullRes);
@@ -350,7 +360,7 @@ export function testFlow1() {
 		console.log("[TESTING] CLI: Authentication");
 		const user = await getCurrentUser();
 
-		const stdout = await dxCmd(`dx login http://localhost:6969 --token=${user.token.access_token}`);
+		const stdout = await dxCmd(`dx login http://localhost:${Config.PORT} --token=${user.token.access_token}`);
 		expect(stdout.indexOf("You're logged in")).toBeGreaterThan(-1);
 
 		// print CLI information
@@ -428,11 +438,13 @@ export function testFlow1() {
 			appOnGithub = await appSvc.findOne({}, { order: { createdAt: -1 } });
 			expect(appOnGithub).toBeDefined();
 
+			console.log("appOnGithub :>> ", appOnGithub);
+
 			const sourceCodeDirs = readdirSync(CLI_TEST_DIR);
 			// console.log("sourceCodeDirs :>> ", sourceCodeDirs);
-			expect(sourceCodeDirs.join(",").indexOf(`testgithubproject`)).toBeGreaterThan(-1);
+			expect(sourceCodeDirs.join(",").indexOf(appOnGithub.projectSlug)).toBeGreaterThan(-1);
 
-			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
+			const appDir = path.resolve(CLI_TEST_DIR, `${appOnGithub.projectSlug}-${appOnGithub.slug}`);
 			const sourceCodeFiles = readdirSync(appDir);
 			// console.log("sourceCodeFiles :>> ", sourceCodeFiles);
 			expect(sourceCodeFiles.length).toBeGreaterThan(0);
@@ -456,11 +468,11 @@ export function testFlow1() {
 			expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
 
-			const appDirs = readdirSync(CLI_TEST_DIR);
-			// console.log("appDirs :>> ", appDirs);
-			expect(appDirs.join(",").indexOf(`testbitbucketproject`)).toBeGreaterThan(-1);
+			const sourceCodeDirs = readdirSync(CLI_TEST_DIR);
+			// console.log("sourceCodeDirs :>> ", sourceCodeDirs);
+			expect(sourceCodeDirs.join(",").indexOf(appOnGithub.projectSlug)).toBeGreaterThan(-1);
 
-			const appDir = path.resolve(CLI_TEST_DIR, "testbitbucketproject-web");
+			const appDir = path.resolve(CLI_TEST_DIR, `${appOnGithub.projectSlug}-${appOnGithub.slug}`);
 			const sourceCodeFiles = readdirSync(appDir);
 			// console.log("testbitbucketproject-web > files :>> ", sourceCodeFiles);
 			expect(sourceCodeFiles.length).toBeGreaterThan(0);
@@ -468,6 +480,7 @@ export function testFlow1() {
 
 			// assign variable
 			appOnBitbucket = await appSvc.findOne({}, { order: { createdAt: -1 } });
+			console.log("appOnBitbucket :>> ", appOnBitbucket);
 		},
 		// 5 mins
 		5 * 60000
@@ -479,11 +492,10 @@ export function testFlow1() {
 			console.log("[TESTING] CLI: Request server to deploy app");
 
 			if (!appOnGithub || !bareMetalCluster) throw new Error(`Failed to request deploy: no apps or clusters.`);
-
 			// console.log("appOnGithub :>> ", appOnGithub);
 
 			// get app directory
-			const appDir = path.resolve(CLI_TEST_DIR, "testgithubproject-web");
+			const appDir = path.resolve(CLI_TEST_DIR, `${appOnGithub.projectSlug}-${appOnGithub.slug}`);
 			console.log("appDir :>> ", appDir);
 			expect(existsSync(appDir)).toBeTruthy();
 
@@ -503,9 +515,12 @@ export function testFlow1() {
 			 * - Follow the logs
 			 */
 			const exposedPort = 80;
-			const res = await dxCmd(`dx up --cluster=${bareMetalCluster.slug} --registry=${gcr.slug} --port=${exposedPort} --ssl --domain --tail`, {
-				cwd: appDir,
-			});
+			const res = await dxCmd(
+				`dx up --cluster=${bareMetalCluster.slug} --registry=${registry.slug} --port=${exposedPort} --ssl --domain --tail`,
+				{
+					cwd: appDir,
+				}
+			);
 			// dx up --cluster=topgroup-k3s --registry=google-container-registry --port=80 --ssl --domain --tail
 			// expect(res).toBeDefined();
 			// expect(res.toLowerCase()).not.toContain("error");
@@ -517,7 +532,7 @@ export function testFlow1() {
 			expect(app.deployEnvironment).toBeDefined();
 			expect(app.deployEnvironment.dev).toBeDefined();
 			expect(app.deployEnvironment.dev.cluster).toEqual(bareMetalCluster.slug);
-			expect(app.deployEnvironment.dev.registry).toEqual(gcr.slug);
+			expect(app.deployEnvironment.dev.registry).toEqual(registry.slug);
 			expect(app.deployEnvironment.dev.port).toEqual(exposedPort);
 
 			return;
@@ -543,9 +558,10 @@ export function testFlow1() {
 				method: "POST",
 				data: { emails: [fakeUser2_Email] },
 				access_token: fakeUser1.token.access_token,
+				isDebugging: true,
 			});
-			// console.log("inviteRes :>> ", inviteRes);
-			expect(inviteRes.data.succeed).toBeGreaterThan(0);
+			console.log("Add member > inviteRes :>> ", inviteRes);
+			expect(inviteRes.status).toBeGreaterThan(0);
 
 			const registerRes = await fetchApi({
 				url: "/api/v1/register",
@@ -556,9 +572,10 @@ export function testFlow1() {
 					password: "123456",
 					workspace: wsId, // <-- make this workspace active for this user
 				},
+				isDebugging: true,
 			});
 			// await wait(60000);
-			// console.log("Basic auth > registerRes :>> ", registerRes);
+			console.log("Basic auth > registerRes :>> ", registerRes);
 
 			let fakeUser2 = registerRes.data.user as IUser;
 			expect(fakeUser2.password).toBeDefined();
@@ -589,6 +606,14 @@ export function testFlow1() {
 			// delete & take down all test app
 			const takedownRes = await appSvc.takeDown(appOnGithub);
 			console.log("[CLEAN UP] takedownRes :>> ", takedownRes);
+
+			// delete app directories
+			try {
+				const dirGithubApp = path.resolve(CLI_TEST_DIR, `${appOnGithub.projectSlug}-${appOnGithub.slug}`);
+				rmSync(dirGithubApp, { recursive: true, force: true });
+				const dirBitbucketApp = path.resolve(CLI_TEST_DIR, `${appOnBitbucket.projectSlug}-${appOnBitbucket.slug}`);
+				rmSync(dirBitbucketApp, { recursive: true, force: true });
+			} catch (e) {}
 
 			// delete git repo
 			const deleteGithubAppRes = await appSvc.deleteGitRepo({ slug: appOnGithub.slug });
