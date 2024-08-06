@@ -7,7 +7,7 @@ import type { ResourceQuotaSize } from "@/interfaces/SystemTypes";
 import type { CheckQuotaParams, CheckQuotaResponse } from "../diginext/dx-subscription";
 import { dxCheckQuota } from "../diginext/dx-subscription";
 
-export async function checkQuota(workspace: IWorkspace, options: { resourceSize?: ResourceQuotaSize } = {}) {
+export async function checkQuota(workspace: IWorkspace, options: { resourceSize?: ResourceQuotaSize; isDebugging?: boolean } = {}) {
 	const { DB } = await import("../api/DB");
 
 	// SKIP on development and test environment
@@ -24,10 +24,10 @@ export async function checkQuota(workspace: IWorkspace, options: { resourceSize?
 	if (resourceSize) containerSize = resourceSize === "none" ? 0 : toNumber(resourceSize.substring(0, resourceSize.length - 1));
 
 	const checkQuotaParams: CheckQuotaParams = { projects, apps, concurrentBuilds, containerSize };
-	console.log("checkQuota > checkQuotaParams :>> ", checkQuotaParams);
+	if (options?.isDebugging) console.log("checkQuota > checkQuotaParams :>> ", checkQuotaParams);
 
 	const res = await dxCheckQuota(checkQuotaParams, dx_key);
-	console.log("checkQuota > res :>> ", res);
+	if (options?.isDebugging) console.log("checkQuota > res :>> ", res);
 	return res;
 }
 

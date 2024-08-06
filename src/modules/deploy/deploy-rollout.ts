@@ -52,7 +52,7 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 		isDebugging,
 	});
 	if (!pods || pods.length == 0) {
-		const msg = `Unable to check "${appName}" deployment, selected pods not found: ${filterLabel}.`;
+		const msg = `Unable to check "${appName}" deployment:\n- Namespace: ${namespace}\n- Context: ${context}\n- Reason: Selected pods not found: ${filterLabel}.`;
 		if (onUpdate) onUpdate(msg);
 		throw new Error(msg);
 	}
