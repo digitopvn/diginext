@@ -1,3 +1,11 @@
+## [3.34.23](https://github.com/digitopvn/diginext/compare/v3.34.22...v3.34.23) (2024-08-06)
+
+
+### Bug Fixes
+
+* **server:** issue of incorrect update app data when deploy ([d56f4a9](https://github.com/digitopvn/diginext/commit/d56f4a9c56f44d1e49c2d0e3d0d11d807b3c1583))
+* **server:** issue of incorrect update app data when deploy ([#541](https://github.com/digitopvn/diginext/issues/541)) ([278212c](https://github.com/digitopvn/diginext/commit/278212c22ec4df9750b56c0e27a8a1b98a97f32f))
+
 ## [3.34.22](https://github.com/digitopvn/diginext/compare/v3.34.21...v3.34.22) (2024-08-06)
 
 
