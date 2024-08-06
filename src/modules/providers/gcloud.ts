@@ -100,7 +100,7 @@ export const connectDockerToRegistry = async (options?: InputOptions & { builder
 		return;
 	}
 
-	const existingRegistry = await DB.findOne("registry", { slug: registrySlug });
+	const existingRegistry = await DB.findOne("registry", { slug: registrySlug }, { ignorable: true });
 	if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { existingRegistry });
 	if (existingRegistry) return existingRegistry;
 

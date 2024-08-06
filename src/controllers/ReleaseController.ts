@@ -82,7 +82,7 @@ export default class ReleaseController extends BaseController<IRelease> {
 
 		const { app: appSlug, buildTag } = body;
 
-		const app = await DB.findOne("app", { slug: appSlug });
+		const app = await DB.findOne("app", { slug: appSlug }, { ignorable: true });
 		if (!app) return respondFailure(`App "${appSlug}" not found.`);
 
 		const newRelease = await createReleaseFromApp(app, body.env, buildTag, { author: this.user, workspace: this.workspace });

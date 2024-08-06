@@ -200,13 +200,13 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 		if (activeRole.type !== "admin" && activeRole.type !== "moderator")
 			throw new Error(`You don't have permissions to invite users, please contact administrator.`);
 
-		const assignedRole = await DB.findOne("role", { type: roleType, workspace: wsId });
+		const assignedRole = await DB.findOne("role", { type: roleType, workspace: wsId }, { ownership: this.ownership });
 		// console.log("assignedRole :>> ", assignedRole);
 
 		// create temporary users of invited members:
 		const invitedMembers = await Promise.all(
 			emails.map(async (email) => {
-				let existingUser = await DB.findOne("user", { email });
+				let existingUser = await DB.findOne("user", { email }, { ignorable: true });
 				if (!existingUser) {
 					const username = email.split("@")[0] || "New User";
 					const invitedMember = await userSvc.create({
@@ -222,7 +222,6 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 					const joinWorkspaceRes = await dxJoinWorkspace(email, workspace.slug, workspace.dx_key);
 
 					// FIXME: check API error
-
 					const workspaces = existingUser.workspaces || [];
 					workspaces.push(wsId);
 					existingUser = await DB.updateOne("user", { _id: existingUser._id }, { workspaces: filterUniqueItems(workspaces) });

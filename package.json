@@ -78,10 +78,10 @@
 		"lint": "eslint \"src/**/*.ts\" --fix && pnpm check-types",
 		"clean": "rimraf .yarn/cache node_modules yarn.lock pnpm-lock.yaml dist",
 		"test": "run-script-os",
-		"test:win32": "set CLI_MODE=server && set NODE_ENV=test && jest --runInBand --detectOpenHandles --watchAll=false",
-		"test:darwin:linux": "CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false",
-		"test:default": "CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false",
-		"test:build": "pnpm build && CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false",
+		"test:win32": "set CLI_MODE=server && set NODE_ENV=test && jest --runInBand --detectOpenHandles --watchAll=false --forceExit",
+		"test:darwin:linux": "CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false --forceExit",
+		"test:default": "CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false --forceExit",
+		"test:build": "pnpm build && CLI_MODE=server NODE_ENV=test jest --runInBand --detectOpenHandles --watchAll=false --forceExit",
 		"coverage": "pnpm lint && pnpm build && jest --coverage",
 		"format": "prettier 'src/**/*.{js,ts,tsx,json,yaml}' --write && pnpm lint",
 		"commit": "git add . && cz && git merge origin/prerelease -m \"chore(PR): Merged from origin/prerelease\" --no-ff && git merge origin/main -m \"chore(PR): Merged from origin/main\" --no-ff && git push origin && exit 0",
@@ -132,7 +132,33 @@
 			}
 		],
 		"plugins": [
-			"@semantic-release/commit-analyzer",
+			[
+				"@semantic-release/commit-analyzer",
+				{
+					"preset": "angular",
+					"releaseRules": [
+						{
+							"type": "docs",
+							"scope": "README",
+							"release": "patch"
+						},
+						{
+							"type": "refactor",
+							"release": "minor"
+						},
+						{
+							"type": "style",
+							"release": "patch"
+						}
+					],
+					"parserOpts": {
+						"noteKeywords": [
+							"BREAKING CHANGE",
+							"BREAKING CHANGES"
+						]
+					}
+				}
+			],
 			"@semantic-release/release-notes-generator",
 			"@semantic-release/changelog",
 			"@semantic-release/git",

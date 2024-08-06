@@ -26,9 +26,10 @@ export class FrameworkService extends BaseService<IFramework> {
 		if (!data.mainBranch) requiredFields.push("mainBranch");
 		if (requiredFields.length > 0) throw new Error(`Required params: ${requiredFields.join(", ")}.`);
 
-		let workspace = this.req?.workspace;
+		let workspace = this.req?.workspace || this.workspace || this.ownership?.workspace;
 		if (!workspace && (data as any).workspace) workspace = await DB.findOne("workspace", { _id: (data as any).workspace });
 		if (!workspace) throw new Error(`Workspace not found.`);
+		(data as any).workspace = workspace._id;
 
 		// create
 		const item = await super.create(data, options);

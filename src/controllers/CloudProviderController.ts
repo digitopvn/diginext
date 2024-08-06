@@ -19,6 +19,7 @@ export default class CloudProviderController extends BaseController {
 	read(@Queries() queryParams?: interfaces.IGetQueryParams) {
 		if (this.filter && this.filter.owner) delete this.filter.owner;
 		if (this.filter && this.filter.workspace) delete this.filter.workspace;
+		// console.log("this.filter :>> ", this.filter);
 		return super.read();
 	}
 

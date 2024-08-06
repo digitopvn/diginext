@@ -46,7 +46,9 @@ export async function execInitApp(options: InputOptions) {
 					return;
 				}
 				// git provider
-				options.git = selectedApp.gitProvider ? await DB.findOne("git", { _id: selectedApp.gitProvider }) : await askForGitProvider();
+				options.git = selectedApp.gitProvider
+					? await DB.findOne("git", { _id: selectedApp.gitProvider }, { ignorable: true })
+					: await askForGitProvider();
 				if (!selectedApp.gitProvider && options.git) {
 					await DB.updateOne("app", { _id: selectedApp._id }, { gitProvider: options.git._id });
 				}

@@ -1,13 +1,11 @@
-import axios from "axios";
+import { isEmpty } from "lodash";
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
-import type { IRole } from "@/entities";
 import { GitProviderDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPostQueryParams } from "@/interfaces";
 import type { ResponseData } from "@/interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "@/interfaces/ResponseData";
 import type { GitProviderDomain, GitProviderType } from "@/interfaces/SystemTypes";
-import { gitProviderDomain } from "@/interfaces/SystemTypes";
 import { generateSSH, getPublicKey, sshKeysExisted, verifySSH, writeCustomSSHKeys } from "@/modules/git";
 import GitProviderAPI, { GitRepositoryDto } from "@/modules/git/git-provider-api";
 import { GitProviderService } from "@/services/GitProviderService";
@@ -34,6 +32,7 @@ export default class GitProviderController extends BaseController {
 
 		try {
 			const data = await this.service.find(this.filter, this.options, this.pagination);
+			if (isEmpty(data)) throw new Error("No data found");
 			return respondSuccess({ data });
 		} catch (e) {
 			return respondFailure(e.toString());
@@ -44,98 +43,9 @@ export default class GitProviderController extends BaseController {
 	@Security("jwt")
 	@Post("/")
 	async create(@Body() body: GitProviderDto, @Queries() queryParams?: IPostQueryParams) {
-		// validation
-		const { type, name, bitbucket_oauth, github_oauth } = body;
-
-		// if (!name) return respondFailure(`Git provider name is required.`);
-		if (!type) return respondFailure(`Git provider type is required.`);
-
-		let access_token: string, refresh_token: string, method: "bearer" | "basic";
-
-		if (type === "bitbucket") {
-			if (!bitbucket_oauth) return respondFailure(`Bitbucket OAuth information is required.`);
-
-			if (!bitbucket_oauth.consumer_key && !bitbucket_oauth.consumer_secret) {
-				// check app passwords
-				if (!bitbucket_oauth.app_password || !bitbucket_oauth.username)
-					return respondFailure(`Bitbucket username & app password are required.`);
-
-				access_token = Buffer.from(`${bitbucket_oauth.username}:${bitbucket_oauth.app_password}`, "utf8").toString("base64");
-				method = "basic";
-			} else if (!bitbucket_oauth.app_password) {
-				// check OAuth consumer
-				if (!bitbucket_oauth.consumer_key || !bitbucket_oauth.consumer_secret)
-					return respondFailure(`Bitbucket OAuth consumer key & secret are required.`);
-
-				// generate access_token & refresh_token
-				try {
-					const digested = Buffer.from(`${bitbucket_oauth.consumer_key}:${bitbucket_oauth.consumer_secret}`, "utf8").toString("base64");
-					const generateResponse = await axios.post(
-						`https://bitbucket.org/site/oauth2/access_token`,
-						{
-							grant_type: "client_credentials",
-						},
-						{ headers: { authorization: `Basic ${digested}` } }
-					);
-					const resData = JSON.parse(generateResponse.data);
-
-					access_token = resData.access_token;
-					refresh_token = resData.refresh_token;
-					method = "bearer";
-				} catch (e) {
-					return respondFailure(e.toString());
-				}
-			} else {
-				return respondFailure(`Bitbucket OAuth information (OAuth consumer or app password) is required.`);
-			}
-			if (!body.name) body.name = "Bitbucket";
-		} else if (type === "github") {
-			if (!github_oauth) return respondFailure(`Github OAuth information is required.`);
-
-			if (!github_oauth.client_id && !github_oauth.client_secret) {
-				// if (!name) return respondFailure(`Git provider name is required.`);
-				// check personal access token
-				if (!github_oauth.personal_access_token) return respondFailure(`Github Personal access token is required.`);
-
-				access_token = github_oauth.personal_access_token;
-				method = "bearer";
-			} else if (!github_oauth.personal_access_token) {
-				// check OAuth app (client_id & client_secret)
-				if (!github_oauth.client_id || !github_oauth.client_secret)
-					return respondFailure(`Github OAuth App's CLIENT_ID & CLIENT_SECRET are required.`);
-
-				// access_token will be processed via client browser and automatically saved after that
-				method = "bearer";
-			} else {
-				return respondFailure(`Github OAuth information (OAuth App or Personal Access Token) is required.`);
-			}
-
-			// auto generated fields
-			if (!body.name) body.name = "Github";
-		} else {
-			return respondFailure(`Git "${type}" type is not supported yet.`);
-		}
-
-		// Fallback support "gitWorkspace" === "org" -> will be removed soon
-		if (body.org) body.gitWorkspace = body.org;
-		if (body.gitWorkspace) body.org = body.gitWorkspace;
-
-		// generate repo info
-		body.host = gitProviderDomain[body.type];
-
-		// grab data to create:
-		body.access_token = access_token;
-		body.refresh_token = refresh_token;
-		body.method = method;
-
-		// mark as organization git provider or not
-		body.public = body.isOrg = (this.user.activeRole as IRole).type === "admin";
-
 		try {
-			// verify
-			await GitProviderAPI.getProfile(body);
-			// save
-			return await super.create(body);
+			const data = await this.service.create(body, this.options);
+			return respondSuccess({ data });
 		} catch (e) {
 			// error
 			return respondFailure(e.toString());
@@ -176,8 +86,8 @@ export default class GitProviderController extends BaseController {
 
 		// process
 		try {
-			provider = await this.service.verify(provider);
-			return respondSuccess({ data: { provider } });
+			const isVerified = await this.service.verify(provider);
+			return respondSuccess({ data: { isVerified } });
 		} catch (e) {
 			return respondFailure(e.toString());
 		}
@@ -186,7 +96,7 @@ export default class GitProviderController extends BaseController {
 	@Security("api_key")
 	@Security("jwt")
 	@Get("/profile")
-	async getProfile(@Queries() queryParams?: IPostQueryParams) {
+	async getProfile(@Queries() queryParams?: { _id?: string; slug?: string }) {
 		// validation
 		const { _id, slug } = this.filter;
 		if (!_id && !slug) return respondFailure(`Git provider ID or slug is required.`);
@@ -197,7 +107,6 @@ export default class GitProviderController extends BaseController {
 		// process
 		try {
 			const profile = await GitProviderAPI.getProfile(provider);
-
 			return respondSuccess({ data: profile });
 		} catch (e) {
 			return respondFailure(e.toString());

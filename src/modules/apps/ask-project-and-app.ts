@@ -32,9 +32,9 @@ export const askForProjectAndApp = async (dir: string, options?: InputOptions) =
 		// try to find apps with deprecated "dx.json" file:
 		const oldAppConfig = getAppConfig();
 		if (oldAppConfig) {
-			app = await DB.findOne("app", { slug: oldAppConfig.slug }, { populate: ["project", "owner", "workspace"] });
+			app = await DB.findOne("app", { slug: oldAppConfig.slug }, { populate: ["project", "owner", "workspace"], ignorable: true });
 			if (app) {
-				project = await DB.findOne("project", { slug: oldAppConfig.project });
+				project = await DB.findOne("project", { slug: oldAppConfig.project }, { ignorable: true });
 				if (!isEmpty(project)) return { project, app };
 			}
 		}

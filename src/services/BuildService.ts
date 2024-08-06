@@ -44,6 +44,12 @@ export class BuildService extends BaseService<IBuild> {
 		return super.find(filter, options, pagination);
 	}
 
+	async findOne(filter?: IQueryFilter<IBuild>, options?: IQueryOptions): Promise<IBuild> {
+		const [item] = await this.find(filter, options, { limit: 1 });
+		if (!item) throw new Error(`Item not found.`);
+		return item;
+	}
+
 	async startBuild(data: StartBuildParams, ownership: Ownership) {
 		// validates
 		const { appSlug, user, userId, gitBranch, registrySlug } = data;

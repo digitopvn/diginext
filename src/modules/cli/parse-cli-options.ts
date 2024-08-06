@@ -584,7 +584,7 @@ export async function parseCliOptions() {
 	const { DB } = await import("@/modules/api/DB");
 
 	if (typeof argv.git !== "undefined") {
-		options.git = await DB.findOne("git", { slug: argv.git });
+		options.git = await DB.findOne("git", { slug: argv.git }, { ignorable: true, isDebugging: true });
 		if (!options.git) throw new Error(`Git provider "${argv.git}" not found.`);
 	}
 
@@ -592,7 +592,7 @@ export async function parseCliOptions() {
 		if (argv.framework === "none") {
 			options.framework = { name: "None/unknown", slug: "none", isPrivate: false } as IFramework;
 		} else {
-			options.framework = await DB.findOne("framework", { slug: argv.framework });
+			options.framework = await DB.findOne("framework", { slug: argv.framework }, { ignorable: true, isDebugging: true });
 			if (!options.framework) throw new Error(`Framework "${argv.framework}" not found.`);
 			options.frameworkVersion = options.framework.mainBranch || "main";
 		}

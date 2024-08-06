@@ -257,6 +257,8 @@ export const loginUser = async (userId: string, workspaceId?: string) => {
 		ctl.workspace = workspace;
 		ctl.ownership = { owner: user, workspace };
 		ctl.service.ownership = ctl.ownership;
+		ctl.service.user = user;
+		ctl.service.workspace = workspace;
 		ctl.service.req = { user, workspace } as AppRequest;
 		// special case (service that has no controllers)
 		deployEnvSvc.ownership = ctl.ownership;
