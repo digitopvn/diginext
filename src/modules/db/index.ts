@@ -5,7 +5,6 @@ import type { ICloudDatabase } from "@/entities";
 
 import type { InputOptions } from "../../interfaces/InputOptions";
 import { askForDatabase } from "./ask-databases";
-import MongoShell from "./mongo";
 import MySQL from "./mysql";
 import PostgreSQL from "./pg";
 
@@ -35,6 +34,7 @@ export async function execDatabase(options: InputOptions, env) {
 					}
 					break;
 				case "mongodb":
+					const MongoShell = await import("./mongo");
 					isHealthy = await MongoShell.checkConnection({
 						url: db.url,
 						host: db.host,
@@ -82,6 +82,7 @@ export async function execDatabase(options: InputOptions, env) {
 					break;
 				case "mongodb":
 					try {
+						const MongoShell = await import("./mongo");
 						await MongoShell.backup({
 							dbName: options.name,
 							outDir: options.targetDirectory,

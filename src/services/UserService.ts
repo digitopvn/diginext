@@ -49,7 +49,7 @@ export class UserService extends BaseService<IUser> {
 				password: newUser.password,
 				isActive: true,
 			});
-			if (dxUserRes.status) throw new Error(dxUserRes.messages.join("\n"));
+			if (!dxUserRes.status) throw new Error(dxUserRes.messages?.join("\n"));
 			if (dxUserRes.data.id) {
 				newUser = await this.updateOne({ _id: newUser._id }, { dxUserId: dxUserRes.data.id });
 			}

@@ -6,7 +6,7 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, ICluster, IProject, IRelease, IUser, IWebhook, IWorkspace } from "@/entities";
 import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
-import { WebhookService } from "@/services";
+import { AppService, WebhookService } from "@/services";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
@@ -98,10 +98,16 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 	const { env, owner, shouldUseFreshDeploy = false, skipReadyCheck = false, forceRollOut = false } = options;
 	const { appSlug, projectSlug, tag: buildTag } = build;
 	const { slug: username } = owner;
+
 	const SOCKET_ROOM = createBuildSlug({ projectSlug, appSlug, buildTag });
 	const releaseId = MongoDB.toString(release._id);
+
+	// workspace
 	const { DB } = await import("@/modules/api/DB");
 	const workspace = await DB.findOne("workspace", { _id: build.workspace });
+
+	// app
+	const appSvc = new AppService({ owner, workspace });
 
 	// webhook
 	const webhookSvc = new WebhookService();

@@ -86,7 +86,7 @@ export async function kubectlApplyContent(yamlContent: string, options: KubeComm
 	const tmpDir = path.resolve(CLI_DIR, `storage/kubectl_tmp`);
 	if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
 
-	const filePath = path.resolve(tmpDir, `ingress.${makeDaySlug({ divider: "" })}.yaml`);
+	const filePath = path.resolve(tmpDir, `deployment.${makeDaySlug({ divider: "" })}.yaml`);
 	if (existsSync(filePath)) unlinkSync(filePath);
 	writeFileSync(filePath, yamlContent, "utf8");
 
@@ -95,7 +95,7 @@ export async function kubectlApplyContent(yamlContent: string, options: KubeComm
 		`kubectl ${context ? `--context=${context} ` : ""}apply -f ${filePath} ${filterLabel ? `-l ${filterLabel} ` : ""}`
 	);
 
-	if (stdout) logSuccess(stdout);
+	if (stdout) logSuccess(`Applied deployment YAML in "${context}" context:\n${stdout}`);
 	return stdout;
 }
 

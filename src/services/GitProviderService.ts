@@ -99,22 +99,22 @@ export class GitProviderService extends BaseService<IGitProvider> {
 		return super.softDelete(filter, options);
 	}
 
-	async verify(provider: IGitProvider) {
+	async verify(provider: IGitProvider, options?: { isDebugging?: boolean }) {
 		// process
 		// console.log("GitProviderService > provider :>> ", provider);
-		const profile = await GitProviderAPI.getProfile(provider);
-		// console.log("profile :>> ", profile);
+		const profile = await GitProviderAPI.getProfile(provider, options);
+		console.log("GitProviderService > profile :>> ", profile);
 
-		if (profile.username) {
-			// mark this git provider as verified
-			const updateDto: GitProviderDto = { verified: true };
-			if (provider.type === "bitbucket") updateDto.bitbucket_oauth = { verified: true };
-			if (provider.type === "github") updateDto.github_oauth = { verified: true };
+		if (!profile || !profile.username) throw new Error(`Unable to verify "${provider.name}" git provider.`);
 
-			return this.updateOne({ _id: provider._id }, updateDto);
-		}
+		// mark this git provider as verified
+		const updateDto: GitProviderDto = { verified: true };
+		if (provider.type === "bitbucket") updateDto.bitbucket_oauth = { verified: true };
+		if (provider.type === "github") updateDto.github_oauth = { verified: true };
 
-		throw new Error(`Unable to verify "${provider.name}" git provider.`);
+		const updatedProvider = await this.updateOne({ _id: provider._id }, updateDto, options);
+		if (!updatedProvider) throw new Error(`Unable to update "${provider.name}" git provider.`);
+		return updatedProvider;
 	}
 
 	async listGitRepository(provider: IGitProvider, options?: IQueryOptions) {

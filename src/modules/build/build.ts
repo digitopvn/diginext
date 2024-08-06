@@ -501,7 +501,7 @@ export async function startBuild(
 	const updatedAppData = { lastUpdatedBy: username } as IApp;
 	let updatedApp: IApp;
 	try {
-		updatedApp = await DB.updateOne("app", { slug: appSlug, image: imageURL }, updatedAppData);
+		updatedApp = await DB.updateOne("app", { slug: appSlug }, updatedAppData, { ownership: { owner, workspace } });
 	} catch (e) {
 		if (options?.onError) options?.onError(`Server network error, unable to perform data updating.`);
 		sendLog({

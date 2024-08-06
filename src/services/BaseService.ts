@@ -133,7 +133,7 @@ export default class BaseService<T = any> {
 				data.owner = userId;
 				data.ownerSlug = user?.slug;
 
-				if (options.isDebugging) console.log(`${this.model.collection.name} :>> `, user.activeWorkspace);
+				if (options.isDebugging) console.log(`BaseService > "${this.model.collection.name}" > activeWorkspace :>> `, user.activeWorkspace);
 
 				if (this.model.collection.name !== "workspaces" && user.activeWorkspace) {
 					const workspace = await this.getActiveWorkspace(user);

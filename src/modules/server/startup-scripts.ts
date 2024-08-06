@@ -27,6 +27,7 @@ import { markLongRunningBuildAndReleaseAsFailed } from "../deploy/mark-long-buil
 export async function startupScripts() {
 	console.log(`---------------------------------`);
 	console.log(chalk.green(`[SYSTEM]`), `Server is initializing...`);
+	console.log(chalk.green(`[SYSTEM]`), `Is testing:`, IsTest());
 
 	// config dir
 	if (!fs.existsSync(CLI_CONFIG_DIR)) fs.mkdirSync(CLI_CONFIG_DIR);

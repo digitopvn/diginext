@@ -50,6 +50,7 @@ export async function fetchApi<T = any>(options: FetchApiOptions<T>) {
 
 	if (options.isDebugging) {
 		console.log("=====================================");
+		console.log("   fetchApi() > buildServerUrl :>> ", buildServerUrl);
 		console.log("   fetchApi() > cachedAccessToken :>> ", cachedAccessToken);
 		console.log("   fetchApi() > cachedRefreshToken :>> ", cachedRefreshToken);
 		console.log("   fetchApi() > cachedApiKey :>> ", cachedApiKey);
