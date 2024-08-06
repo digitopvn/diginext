@@ -1,3 +1,11 @@
+## [3.34.22](https://github.com/digitopvn/diginext/compare/v3.34.21...v3.34.22) (2024-08-06)
+
+
+### Bug Fixes
+
+* **server:** issue of unable to update app when roll out ([82b4653](https://github.com/digitopvn/diginext/commit/82b465338828a5ca413708df2cb45c74362fad13))
+* **server:** issue of unable to update app when roll out ([#540](https://github.com/digitopvn/diginext/issues/540)) ([84a66ca](https://github.com/digitopvn/diginext/commit/84a66cad95d6639c6549bdee3e40fc4c826f0960))
+
 ## [3.34.21](https://github.com/digitopvn/diginext/compare/v3.34.20...v3.34.21) (2024-08-05)
 
 
