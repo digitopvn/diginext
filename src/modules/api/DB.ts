@@ -468,7 +468,7 @@ export class DB {
 			try {
 				items = (await svc.update(filter, data, options)) || [];
 			} catch (e) {
-				if (!options?.ignorable) logError(`[DB] UPDATE > Service "${collection}" :>>`, e);
+				if (!options?.ignorable) logError(`[DB] UPDATE > Service "${collection}" :>>`, e.stack);
 				items = [];
 			}
 			if (options.isDebugging) console.log("[DB] items :>> ", items);

@@ -482,6 +482,8 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
 	const updatedApp = await DB.updateOne("app", { slug: appSlug }, updatedAppData);
+	// console.log("deployBuildV2() > updatedApp :>> ");
+	// console.dir(updatedApp, { depth: 10 });
 	// console.log("updatedApp.deployEnvironment[env].envVars :>> ", updatedApp.deployEnvironment[env].envVars);
 
 	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generated the deployment files successfully!` });

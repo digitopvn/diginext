@@ -430,14 +430,16 @@ export class AppService extends BaseService<IApp> {
 		// permissions
 		await checkAppPermissionsByFilter(this, filter, this.user);
 
-		const allApps = await this.find({});
-		console.log("AppService > allApps :>> ", allApps);
+		// const allApps = await this.find({});
+		// console.log("AppService > allApps :>> ", allApps);
 
+		// if (options?.isDebugging) console.log("AppService > update > filter :>>", filter);
 		let apps = await this.find(filter, data, options);
 		if (isEmpty(apps)) {
 			console.error(`AppService > update :>>`, { filter });
 			throw new Error(`Apps not found.`);
 		}
+		// console.log("AppService > update > apps :>>", apps);
 
 		const { ProjectService, WorkspaceService } = await import("./index");
 		const projectSvc = new ProjectService(this.ownership);
@@ -483,27 +485,31 @@ export class AppService extends BaseService<IApp> {
 			if (!workspace) throw new Error(`Workspace not found.`);
 
 			for (const env of Object.keys(data.deployEnvironment)) {
-				// check dx quota
-				const size = data.deployEnvironment[env].size;
-				if (size) {
-					const quotaRes = await checkQuota(workspace, { resourceSize: size });
-					if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
-					if (quotaRes.data && quotaRes.data.isExceed)
-						throw new Error(
-							`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
-						);
-				}
+				const deployEnvironment = data.deployEnvironment[env];
+				if (deployEnvironment) {
+					// check dx quota
+					const { size } = deployEnvironment;
+					if (size) {
+						const quotaRes = await checkQuota(workspace, { resourceSize: size });
+						if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
+						if (quotaRes.data && quotaRes.data.isExceed)
+							throw new Error(
+								`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+							);
+					}
 
-				// magic -> not delete other deploy environment & previous configuration
-				for (const key of Object.keys(data.deployEnvironment[env])) {
-					data[`deployEnvironment.${env}.${key}`] = data.deployEnvironment[env][key];
+					// IMPORTANT: Only update specific paths
+					for (const key of Object.keys(deployEnvironment)) {
+						data[`deployEnvironment.${env}.${key}`] = deployEnvironment[key];
+					}
 				}
-
-				delete data.deployEnvironment;
 			}
+			delete data.deployEnvironment;
 		}
 
+		// if (options?.isDebugging) console.log("AppService > update > data :>>", data);
 		apps = await super.update(filter, data, options);
+		// if (options?.isDebugging) console.log("AppService > update > [UPDATED] apps :>>", apps);
 		return apps;
 	}
 
