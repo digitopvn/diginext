@@ -222,7 +222,7 @@ export async function parseCliOptions() {
 		.alias("v", "version")
 		.global(["D", "s", "local", "h"])
 		// command: TEST
-		.command("test", "")
+		.command("test", "", (_yargs) => _yargs.options(argvOptions))
 		// command: CLI management
 		.command("info", "Show CLI & SERVER information")
 		.command("profile", "Show current login user information")

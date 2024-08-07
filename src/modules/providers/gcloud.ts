@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { log, logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";
-import fs, { readFileSync } from "fs";
+import fs, { createReadStream, readFileSync } from "fs";
 import inquirer from "inquirer";
 import { isEmpty } from "lodash";
 import yargs from "yargs";
@@ -83,11 +83,15 @@ export const connectDockerToRegistry = async (options?: InputOptions & { builder
 		let connectRes;
 		if (builder === "docker") {
 			// connect DOCKER to CONTAINER REGISTRY
-			if (host) {
-				connectRes = await execaCommand(`gcloud auth configure-docker ${host} --quiet`);
-			} else {
-				connectRes = await execaCommand(`gcloud auth configure-docker --quiet`);
-			}
+			const subprocess = execa("docker", ["login", "-u", "_json_key", "--password-stdin", host || "https://asia-docker.pkg.dev"]);
+			createReadStream(filePath).pipe(subprocess.stdin);
+			const { stdout } = await subprocess;
+			connectRes = stdout;
+			// if (host) {
+			// 	connectRes = await execaCommand(`gcloud auth configure-docker ${host} --quiet`);
+			// } else {
+			// 	connectRes = await execaCommand(`gcloud auth configure-docker --quiet`);
+			// }
 		} else {
 			// connect PODMAN to CONTAINER REGISTRY
 			connectRes = await execaCommand(`gcloud auth print-access-token | podman login -u oauth2accesstoken --password-stdin ${host || ""}`, {
