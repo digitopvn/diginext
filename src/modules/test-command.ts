@@ -1,6 +1,7 @@
-import type { InputOptions } from "@/interfaces";
+import { execa } from "execa";
+import { createReadStream } from "fs";
 
-import { isValidRepoURL, parseGitRepoDataFromRepoSSH, repoSshToRepoURL, repoUrlToRepoSSH } from "./git/git-utils";
+import type { InputOptions } from "@/interfaces";
 
 export const testCommand = async (options?: InputOptions) => {
 	// ----- PULL or CLONE GIT REPO -----
@@ -36,19 +37,23 @@ export const testCommand = async (options?: InputOptions) => {
 	// 		},
 	// 	}
 	// );
-
 	// const aiSvc = new AIService();
 	// await aiSvc.generateDockerfile(options.targetDirectory, options);
+	// console.log("options.env :>> ", options.env);
+	// console.log("options.envs :>> ", options.envs);
+	// const repoSshOrUrl = "https://github.com/digitopvn/diginext-docs";
+	// const repoSSH = isValidRepoURL(repoSshOrUrl) ? repoUrlToRepoSSH(repoSshOrUrl) : repoSshOrUrl;
+	// const repoURL = isValidRepoURL(repoSshOrUrl) ? repoSshOrUrl : repoSshToRepoURL(repoSshOrUrl);
+	// console.log("repoSSH :>> ", repoSSH);
+	// console.log("repoURL :>> ", repoURL);
+	// const gitData = parseGitRepoDataFromRepoSSH(repoSSH);
+	// console.log("gitData :>> ", gitData);
 
-	console.log("options.env :>> ", options.env);
-	console.log("options.envs :>> ", options.envs);
-
-	const repoSshOrUrl = "https://github.com/digitopvn/diginext-docs";
-	const repoSSH = isValidRepoURL(repoSshOrUrl) ? repoUrlToRepoSSH(repoSshOrUrl) : repoSshOrUrl;
-	const repoURL = isValidRepoURL(repoSshOrUrl) ? repoSshOrUrl : repoSshToRepoURL(repoSshOrUrl);
-	console.log("repoSSH :>> ", repoSSH);
-	console.log("repoURL :>> ", repoURL);
-
-	const gitData = parseGitRepoDataFromRepoSSH(repoSSH);
-	console.log("gitData :>> ", gitData);
+	console.log("options.filePath :>> ", options.filePath);
+	// const res = await execa("cat", [options.filePath]);
+	// console.log("res.stdout :>> ", res.stdout);
+	const subprocess = execa("docker", ["login", "-u", "_json_key", "--password-stdin", "https://asia-docker.pkg.dev"]);
+	createReadStream(options.filePath).pipe(subprocess.stdin);
+	const { stdout } = await subprocess;
+	console.log("stdout :>> ", stdout);
 };

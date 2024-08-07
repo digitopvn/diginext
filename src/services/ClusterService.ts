@@ -56,6 +56,12 @@ export class ClusterService extends BaseService<ICluster> {
 		return super.find(includePublicFilter, options, pagination);
 	}
 
+	async findOne(filter?: IQueryFilter<ICluster>, options?: IQueryOptions): Promise<ICluster> {
+		const [item] = await this.find(filter, options, { limit: 1 });
+		if (!item) throw new Error(`Item not found.`);
+		return item;
+	}
+
 	async update(filter: IQueryFilter<ICluster>, data: any, options?: IQueryOptions): Promise<ICluster[]> {
 		// check permissions
 		await checkPermissionsByFilter("clusters", this, filter, this.user);

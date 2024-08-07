@@ -20,7 +20,7 @@ export const deployRelease = async (release: IRelease, options: DeployBuildOptio
 	const build = (release.build as any)._id
 		? (release.build as IBuild)
 		: MongoDB.isValidObjectId(release.build)
-		? await DB.findOne("build", { _id: release.build })
+		? await DB.findOne("build", { _id: release.build }, { ignorable: true })
 		: undefined;
 
 	if (!build) throw new Error(`[DEPLOY RELEASE] Build not found.`);

@@ -534,11 +534,11 @@ export default class AppController extends BaseController<IApp, AppService> {
 			const releaseFilter = { appSlug: app.slug, buildStatus: "success", env, active: true };
 			console.log("updateDeployEnvironment() > releaseFilter :>> ", releaseFilter);
 
-			let latestRelease = await DB.findOne("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
+			let latestRelease = await DB.findOne("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 }, ignorable: true });
 			// "sometime" there are no "active" release, so just get the "success" release instead :)
 			if (!latestRelease) {
 				delete releaseFilter.active;
-				latestRelease = await DB.findOne("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 } });
+				latestRelease = await DB.findOne("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 }, ignorable: true });
 			}
 			if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Release not found (app: "${app.slug}" - env: "${env}")`);
 

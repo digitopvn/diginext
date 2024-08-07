@@ -595,8 +595,6 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 
 	deploymentContent = objectToDeploymentYaml(deploymentCfg);
 
-	console.log("deploymentContent :>> ", deploymentContent);
-
 	/**
 	 * PRE-RELEASE DEPLOYMENT:
 	 */

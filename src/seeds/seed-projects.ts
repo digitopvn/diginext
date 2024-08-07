@@ -12,7 +12,7 @@ export const seedDefaultProjects = async (workspace: IWorkspace, owner: IUser) =
 	const results = (
 		await Promise.all(
 			initialProjects.map(async (proj) => {
-				const project = await DB.findOne("project", { isDefault: true, workspace: workspace._id });
+				const project = await DB.findOne("project", { isDefault: true, workspace: workspace._id }, { ignorable: true });
 				if (!project) {
 					const seedProj = await DB.create("project", { ...proj, owner: owner._id, workspace: workspace._id });
 					return seedProj;

@@ -47,7 +47,7 @@ export default class RouteController extends BaseController<IRoute> {
 		let item;
 		if (itemId && route.indexOf("/api/v1/") > -1) {
 			const collection = route.replace("/api/v1/", "") as DBCollection;
-			item = await DB.findOne(collection, { _id: itemId });
+			item = await DB.findOne(collection, { _id: itemId }, { ignorable: true });
 		}
 		// console.log("item :>> ", item);
 

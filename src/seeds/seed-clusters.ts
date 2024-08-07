@@ -33,7 +33,7 @@ export const addInitialBareMetalCluster = async (kubeConfig: string, workspace?:
 			primaryIP: clusterIP,
 			workspace: workspace?._id,
 		},
-		{ ownership: { owner, workspace } }
+		{ ownership: { owner, workspace }, ignorable: true }
 	);
 	if (initialCluster) return;
 

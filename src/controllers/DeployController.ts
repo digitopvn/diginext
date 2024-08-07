@@ -379,7 +379,7 @@ export default class DeployController {
 		const { buildSlug } = body;
 		if (!buildSlug) return respondFailure(`Build "slug" is required`);
 
-		const build = await DB.findOne("build", { slug: buildSlug });
+		const build = await DB.findOne("build", { slug: buildSlug }, { ignorable: true });
 		if (!build) return respondFailure(`Build not found.`);
 
 		const deployBuildOptions: DeployBuildOptions = {
@@ -425,7 +425,7 @@ export default class DeployController {
 		const { releaseSlug } = body;
 		if (!releaseSlug) return respondFailure(`Build "slug" is required`);
 
-		const release = await DB.findOne("release", { slug: releaseSlug }, { populate: ["build"] });
+		const release = await DB.findOne("release", { slug: releaseSlug }, { populate: ["build"], ignorable: true });
 		if (!release) return respondFailure(`Release not found.`);
 
 		const build = release.build as IBuild;

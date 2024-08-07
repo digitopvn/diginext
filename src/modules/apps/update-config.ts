@@ -46,7 +46,7 @@ export const updateAppConfig = async (
 	// update to database
 	const updatedApp = await DB.updateOne("app", { slug: app.slug }, updateAppData, {
 		populate: ["owner", "workspace"],
-		// isDebugging: true,
+		isDebugging: options?.isDebugging,
 	});
 
 	if (!updatedApp) {

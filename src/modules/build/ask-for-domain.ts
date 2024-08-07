@@ -32,7 +32,7 @@ export const askForDomain = async (
 	const { DB } = await import("../api/DB");
 
 	const { user, shouldGenerate = true } = options;
-	console.log("askForDomain() > user :>> ", user);
+	// console.log("askForDomain() > user :>> ", user);
 	let domains: string[] = [];
 
 	let { subdomain, domain } = diginextDomainName(env, projectSlug, appSlug);

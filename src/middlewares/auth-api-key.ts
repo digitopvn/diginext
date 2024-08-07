@@ -14,7 +14,10 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: ExpressRespons
 	let apiKeyAccount = await DB.findOne(
 		"api_key_user",
 		{ "token.access_token": access_token },
-		{ populate: ["workspaces", "activeWorkspace", "roles", "activeRole"] }
+		{
+			populate: ["workspaces", "activeWorkspace", "roles", "activeRole"],
+			ignorable: true,
+		}
 	);
 
 	if (apiKeyAccount) {

@@ -11,6 +11,10 @@ export interface MaskOptions {
 
 export const basicUserFields = ["_id", "id", "name", "slug", "verified", "image", "createdAt", "updatedAt"];
 
+export function isMasked(value: string) {
+	return value === "***";
+}
+
 export const mask = (str: string, leftUnmaskLength = 0, rightUnmaskLength?: number, options: MaskOptions = { char: "*" }) => {
 	const { char } = options;
 

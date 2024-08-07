@@ -29,32 +29,37 @@ export class CloudStorageService extends BaseService<ICloudStorage> {
 		// generate origin
 		data.origin = getStorageBucketOrigin(data);
 
+		// verify
+		data.verified = await this.verify(data).catch((e) => {
+			console.warn(`Unable to verify this cloud storage due to incorrect authentication info: ${e}`);
+			return false;
+		});
+
 		// save to db
 		let newItem = await super.create(data, options);
-
-		// verify
-		try {
-			newItem = await this.verify(newItem);
-		} catch (e) {
-			console.warn(`Unable to verify this cloud storage due to incorrect authentication info: ${e}`);
-		}
 
 		return newItem;
 	}
 
 	async update(filter: IQueryFilter<ICloudStorage>, data: any, options?: IQueryOptions): Promise<ICloudStorage[]> {
-		let items = await super.update(filter, data, options);
-
 		// only re-verify if authentication data changed
 		if (data.auth) {
 			try {
-				items = await Promise.all(items.map((item) => this.verify(item)));
+				let items = await this.find(filter, options);
+				items = await Promise.all(
+					items.map(async (item) => {
+						const verified = await this.verify(item);
+						const [_item] = await super.update(filter, { ...data, verified }, options);
+						return _item;
+					})
+				);
 			} catch (e) {
 				console.warn(`Unable to verify this cloud storage due to incorrect authentication info: ${e}`);
 			}
+		} else {
+			let items = await super.update(filter, data, options);
+			return items;
 		}
-
-		return items;
 	}
 
 	async verify(item: ICloudStorage) {
@@ -67,9 +72,9 @@ export class CloudStorageService extends BaseService<ICloudStorage> {
 		try {
 			const buckets = item.provider === "gcloud" ? await GoogleStorage.listBuckets(item) : await AWSStorage.listBuckets(item);
 			// update db
-			const _item = await this.updateOne({ _id: item._id }, { verified: true });
+			// const _item = await this.updateOne({ _id: item._id }, { verified: true });
 			// result: updated item
-			return _item;
+			return true;
 		} catch (e) {
 			// error
 			throw new Error(`Unable to verify storage: ${e}`);

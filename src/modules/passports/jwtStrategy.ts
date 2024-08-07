@@ -172,7 +172,7 @@ export const jwtStrategy = new Strategy(
 
 		// 2. Check if this access token is from a {User} or a {ServiceAccount}
 
-		let user = await DB.findOne("user", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
+		let user = await DB.findOne("user", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"], ignorable: true });
 		// console.log("jwtStrategy > user :>> ", user);
 		if (user) {
 			const isAccessTokenExisted = await DB.count("user", { _id: payload.id, "token.access_token": tokenInfo.token.access_token });
@@ -191,7 +191,11 @@ export const jwtStrategy = new Strategy(
 		}
 
 		// Maybe it's not a normal user, try looking for {ServiceAccount} user:
-		let serviceAccount = await DB.findOne("service_account", { _id: payload.id }, { populate: ["roles", "workspaces", "activeWorkspace"] });
+		let serviceAccount = await DB.findOne(
+			"service_account",
+			{ _id: payload.id },
+			{ populate: ["roles", "workspaces", "activeWorkspace"], ignorable: true }
+		);
 
 		if (!serviceAccount) return done(JSON.stringify({ status: 0, messages: ["Invalid service account (probably deleted?)."] }), null);
 

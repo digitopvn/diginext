@@ -54,7 +54,7 @@ const DockerRegistry = {
 				throw new Error(`[${Config.BUILDER.toUpperCase()}] Unable to connect to Docker Registry (${registrySlug}): Authentication failure.`);
 		}
 
-		const existingRegistry = await DB.findOne("registry", { slug: registrySlug });
+		const existingRegistry = await DB.findOne("registry", { slug: registrySlug }, { ignorable: true });
 		if (options.isDebugging) log(`[DOCKER] connectDockerRegistry >`, { existingRegistry });
 
 		const workspace = await DB.findOne("workspace", { _id: workspaceId || existingRegistry.workspace });

@@ -441,7 +441,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	 */
 	let deployment: GenerateDeploymentV2Result;
 	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generating the deployment files on server...` });
-	console.log("deployBuildV2() > generateDeploymentV2() > build.image :>> ", build.image);
+
 	try {
 		deployment = await generateDeploymentV2({
 			appSlug,

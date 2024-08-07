@@ -58,12 +58,12 @@ export type UpdateDiginextDomainResponse = ResponseData & {
 	};
 };
 
-export async function dxCreateDomain(params: CreateDiginextDomainParams, dxKey: string) {
+export async function dxCreateDomain(params: CreateDiginextDomainParams, dxKey: string, options?: { isDebugging?: boolean }) {
 	if (IsTest()) return { status: 1, data: { domain: `${params.name}.${DIGINEXT_DOMAIN}`, domain_record: "" } } as CreateDiginextDomainResponse;
-	return dxApi<CreateDiginextDomainResponse>({ url: "/domains/create", data: params, method: "POST", dxKey, isDebugging: true });
+	return dxApi<CreateDiginextDomainResponse>({ url: "/domains/create", data: params, method: "POST", dxKey, isDebugging: options?.isDebugging });
 }
 
-export async function dxUpdateDomain(params: UpdateDiginextDomainParams, dxKey: string) {
+export async function dxUpdateDomain(params: UpdateDiginextDomainParams, dxKey: string, options?: { isDebugging?: boolean }) {
 	if (IsTest()) return { status: 1, data: { domain: `${params.subdomain}.${DIGINEXT_DOMAIN}`, domain_record: "" } } as CreateDiginextDomainResponse;
-	return dxApi<UpdateDiginextDomainResponse>({ url: "/domains", data: params, method: "PATCH", dxKey, isDebugging: true });
+	return dxApi<UpdateDiginextDomainResponse>({ url: "/domains", data: params, method: "PATCH", dxKey, isDebugging: options?.isDebugging });
 }

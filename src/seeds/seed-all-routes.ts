@@ -28,10 +28,14 @@ export const seedSystemRoutes = async () => {
 
 	if (!isEmpty(missingRoutes)) {
 		// log(`[MIGRATION] migrateAllRoutes > Found ${missingRoutes.length} missing routes.`);
-
-		const results = (await Promise.all(missingRoutes.map(async (route) => DB.create("route", route)))).filter(
-			(item) => typeof item !== "undefined"
-		);
+		const results: IRoute[] = [];
+		for (const route of missingRoutes) {
+			const item = await DB.create("route", route).catch((e) => undefined);
+			if (typeof item !== "undefined") results.push(item);
+		}
+		// const results = (await Promise.all(missingRoutes.map(async (route) => DB.create("route", route)))).filter(
+		// 	(item) => typeof item !== "undefined"
+		// );
 
 		// log(`[MIGRATION] migrateAllRoutes > FINISH MIGRATION >> Created ${results.length} missing routes.`);
 	}

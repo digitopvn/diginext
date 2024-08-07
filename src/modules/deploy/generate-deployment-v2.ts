@@ -152,7 +152,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 			workspace,
 			subdomainName: subdomain,
 			clusterSlug: clusterSlug,
-			isDebugging: true,
+			// isDebugging: true,
 		});
 		if (!status) throw new Error(messages.join("\n"));
 		deployEnvironmentConfig.domains = domains = [generatedDomain];
@@ -526,8 +526,6 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	}
 
 	deploymentContent = objectToDeploymentYaml(deploymentCfg);
-
-	console.log("deploymentContent :>> ", deploymentContent);
 
 	// End point của ứng dụng:
 	let endpoint = `https://${domains[0]}/${basePath}`;
