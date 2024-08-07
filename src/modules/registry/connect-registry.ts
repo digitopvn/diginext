@@ -10,11 +10,18 @@ import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
 import DockerRegistry from "./docker-registry";
 
-export const connectRegistry = async (
-	registry: IContainerRegistry,
-	options?: { userId?: any; workspaceId?: any; insertDatabase?: boolean; builder?: "docker" | "podman" }
-) => {
+export type ConnectRegistryOptions = {
+	userId?: any;
+	workspaceId?: any;
+	insertDatabase?: boolean;
+	builder?: "docker" | "podman";
+	filePath?: string;
+	token?: string;
+};
+
+export const connectRegistry = async (registry: IContainerRegistry, options?: ConnectRegistryOptions) => {
 	const { slug, provider, host } = registry;
+	const { filePath, token } = options || {};
 
 	let connectedRegistry: IContainerRegistry;
 	const builderName = options?.builder?.toUpperCase() || Config.BUILDER.toUpperCase();
@@ -23,12 +30,8 @@ export const connectRegistry = async (
 		case "gcloud":
 			const { serviceAccount } = registry;
 
-			if (!serviceAccount || isMasked(serviceAccount)) throw new Error(`Service account content is required.`);
-
-			const serviceAccountFile = createTmpFile("gsa.json", serviceAccount);
-
-			// const authResult = await gcloud.authenticate({ ...options, filePath: serviceAccountFile });
-			// if (!authResult) throw new Error(`Can't authenticate with Google Cloud using this service account.`);
+			const serviceAccountFile = serviceAccount && !isMasked(serviceAccount) ? createTmpFile("gsa.json", serviceAccount) : filePath;
+			if (!serviceAccountFile) throw new Error(`Service account file is required.`);
 
 			connectedRegistry = await gcloud.connectDockerRegistry({ ...options, filePath: serviceAccountFile, registry: slug, host });
 
@@ -45,12 +48,14 @@ export const connectRegistry = async (
 
 		case "digitalocean":
 			const { apiAccessToken } = registry;
-			if (!apiAccessToken || isMasked(apiAccessToken)) throw new Error(`API Access Token is required.`);
 
-			const doAuthResult = await digitalocean.authenticate({ ...options, key: apiAccessToken });
-			if (!doAuthResult) throw new Error(`Can't authenticate with Digital Ocean using this API access token.`);
+			const key = apiAccessToken && !isMasked(apiAccessToken) ? apiAccessToken : token;
+			if (!key) throw new Error(`API Access Token is required.`);
 
-			connectedRegistry = await digitalocean.connectDockerRegistry({ ...options, key: apiAccessToken, registry: slug });
+			// const doAuthResult = await digitalocean.authenticate({ ...options, key });
+			// if (!doAuthResult) throw new Error(`Can't authenticate with Digital Ocean using this API access token.`);
+
+			connectedRegistry = await digitalocean.connectDockerRegistry({ ...options, key, registry: slug });
 
 			if (connectedRegistry) {
 				logSuccess(`[CONTAINER REGISTRY] ✓ ${builderName}: Connected to Container Registry "${registry.name}".`);
@@ -62,7 +67,12 @@ export const connectRegistry = async (
 
 		case "dockerhub":
 			const { dockerUsername, dockerPassword } = registry;
-			if (!dockerPassword || isMasked(dockerPassword)) throw new Error(`Docker access token is required.`);
+
+			const password = dockerPassword && !isMasked(dockerPassword) ? dockerPassword : token;
+			if (!password)
+				throw new Error(
+					`Docker access token is required. Try again with:\n  $ PASSWORD=<your_docker_password>\n  $ dx registry connect --token=$PASSWORD`
+				);
 
 			connectedRegistry = await DockerRegistry.connectDockerToRegistry(
 				{ username: dockerUsername, password: dockerPassword },

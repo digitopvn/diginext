@@ -22,7 +22,7 @@ import GCloud, { execGoogleCloud } from "@/modules/providers/gcloud";
 import { execRegistry } from "@/modules/registry";
 import { execServer } from "@/modules/server";
 import generateSnippet from "@/modules/snippets/generateSnippet";
-import { currentVersion, freeUp } from "@/plugins";
+import { currentVersion } from "@/plugins";
 
 import { execAI } from "./modules/ai/exec-ai";
 import { execInitApp } from "./modules/apps/init-app";
@@ -33,7 +33,6 @@ import { showClientInfo } from "./modules/cli/show-cli-info";
 import { updateCli } from "./modules/cli/update-cli";
 import { execCluster } from "./modules/cluster/cli-cluster";
 import { execDotenvCommand } from "./modules/deploy/dotenv-exec";
-import { execRollOut } from "./modules/deploy/exec-rollout";
 import { parseOptionsToAppConfig } from "./modules/deploy/parse-options-to-app-config";
 import { requestDeploy } from "./modules/deploy/request-deploy";
 import { execKubectl } from "./modules/k8s/kubectl-cli";
@@ -232,9 +231,7 @@ export async function processCLI(options?: InputOptions) {
 			return;
 
 		case "rollout":
-			await cliAuthenticate(options);
-			await execRollOut(options);
-			return;
+			return logWarn(`This command is deprecated.`);
 
 		case "down":
 			await cliAuthenticate(options);
@@ -247,9 +244,7 @@ export async function processCLI(options?: InputOptions) {
 			return;
 
 		case "free":
-			await cliAuthenticate(options);
-			await freeUp();
-			return;
+			return logWarn(`This command is deprecated.`);
 
 		case "tf":
 		case "transfer":
