@@ -192,7 +192,7 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 
 		const workspace = this.user.activeWorkspace as IWorkspace;
 		const wsId = workspace._id;
-		console.log(`[WS_Controller] Invite Member > Workspace :>>`, workspace);
+		// console.log(`[WS_Controller] Invite Member > Workspace :>>`, workspace);
 		const userId = this.user._id;
 
 		// check if this user is admin of the workspace:

@@ -290,7 +290,6 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						port: toString(db.port),
 						user: db.user,
 						pass: db.pass,
-						isDebugging: true,
 					});
 					PostgreSQL.backup({
 						dbName: options?.dbName,

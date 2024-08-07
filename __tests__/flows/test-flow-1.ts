@@ -482,44 +482,38 @@ export function testFlow1() {
 
 			// get app directory
 			const appDir = path.resolve(CLI_TEST_DIR, `${appOnGithub.projectSlug}-${appOnGithub.slug}`);
-			console.log("appDir :>> ", appDir);
 			expect(existsSync(appDir)).toBeTruthy();
 
 			const sourceCodeFiles = readdirSync(appDir);
-			console.log("sourceCodeFiles :>> ", sourceCodeFiles);
 			expect(sourceCodeFiles.length).toBeGreaterThan(0);
 
 			/**
 			 * Deploy app to dev environment:
 			 * - App directory: "app created on github"
 			 * - Cluster: Bare-metal Cluster
-			 * - Container registry: Google Artifact Registry
+			 * - Container registry: My Docker Registry
+			 * - Deploy environment: DEV
 			 * - Exposed port: 80
 			 * - Use SSL: true
 			 * - SSL Provider: Let's Encrypt
 			 * - Use genereted domain: true
 			 * - Follow the logs
+			 * @example
+			 * dx up --cluster=<cluster_slug> --registry=<registry_slug> --port=<number> --ssl --domain --tail
 			 */
-			const exposedPort = 80;
-			const res = await dxCmd(
-				`dx up --cluster=${bareMetalCluster.slug} --registry=${registry.slug} --port=${exposedPort} --ssl --domain --tail`,
-				{
-					cwd: appDir,
-				}
-			);
-			// dx up --cluster=topgroup-k3s --registry=google-container-registry --port=80 --ssl --domain --tail
-			// expect(res).toBeDefined();
-			// expect(res.toLowerCase()).not.toContain("error");
+			await dxCmd(`dx up --cluster=${bareMetalCluster.slug} --registry=${registry.slug} --port=80 --ssl --domain --tail`, {
+				cwd: appDir,
+			});
 
 			// get app info
 			const app = await appSvc.findOne({ _id: appOnGithub._id });
-			// console.log("Request deploy > app :>> ", app);
+
 			expect(app.buildNumber).toBeDefined();
 			expect(app.deployEnvironment).toBeDefined();
 			expect(app.deployEnvironment.dev).toBeDefined();
 			expect(app.deployEnvironment.dev.cluster).toEqual(bareMetalCluster.slug);
 			expect(app.deployEnvironment.dev.registry).toEqual(registry.slug);
-			expect(app.deployEnvironment.dev.port).toEqual(exposedPort);
+			expect(app.deployEnvironment.dev.port).toEqual(80);
 
 			return;
 		},
@@ -592,7 +586,6 @@ export function testFlow1() {
 			// delete & take down all test app
 			try {
 				const takedownRes = await appSvc.takeDown(appOnGithub);
-				console.log("[CLEAN UP] takedownRes :>> ", takedownRes);
 
 				// delete app directories
 				const dirGithubApp = path.resolve(CLI_TEST_DIR, `${appOnGithub.projectSlug}-${appOnGithub.slug}`);

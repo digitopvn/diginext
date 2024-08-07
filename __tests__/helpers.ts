@@ -181,7 +181,7 @@ export const getCurrentUser = async () => {
 	return currentUser as IUser & { activeWorkspace: IWorkspace & { _id: string } };
 };
 
-export const createWorkspace = async (ownerId: string, name: string, isPublic = true) => {
+export const createWorkspace = async (ownerId: string, name: string, isPublic = true, options?: { isDebugging?: boolean }) => {
 	workspaceCtl.user = workspaceSvc.user = currentUser;
 
 	const workspace = await workspaceSvc.create(
@@ -194,7 +194,7 @@ export const createWorkspace = async (ownerId: string, name: string, isPublic = 
 			dx_key: "0e84fbcad09d9a4b7e0ec3af75607c4a9a400e84b1f4004dcc8d8807032a0320",
 			public: isPublic,
 		},
-		{ isDebugging: true }
+		options
 	);
 	console.log("[TEST] createWorkspace() workspace :>> ", workspace);
 	// const workspace = workspaceRes.data as IWorkspace;
