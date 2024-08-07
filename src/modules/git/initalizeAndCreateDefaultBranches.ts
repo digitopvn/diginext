@@ -73,6 +73,7 @@ export const initalizeAndCreateDefaultBranches = async (options: InputOptions) =
 
 		return options;
 	} catch (error) {
+		console.error(`Unable to initialize default branches:\n${options.repoSSH}\n${options.repoURL}\n${options.targetDirectory}`);
 		throw new Error(`[GIT] Unable to initialize default branches: ${error}`);
 	}
 };

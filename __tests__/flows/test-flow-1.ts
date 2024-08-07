@@ -272,6 +272,40 @@ export function testFlow1() {
 
 	let registry: IContainerRegistry;
 
+	// it(
+	// 	"Workspace #1: Container Registry - Google Artifact Registry",
+	// 	async () => {
+	// 		console.log("[TESTING] Workspace #1: Container Registry - Google Artifact Registry");
+
+	// 		// const curUser = await getCurrentUser();
+
+	// 		// seed Container Registry: GCR
+	// 		const createRes = await registryCtl.create({
+	// 			name: "Google Container Registry",
+	// 			provider: "gcloud",
+	// 			host: "asia.gcr.io",
+	// 			serviceAccount: process.env.TEST_GCLOUD_SERVICE_ACCOUNT,
+	// 		});
+
+	// 		// registry = createRes.data;
+	// 		expect(createRes.data).toBeDefined();
+	// 		expect(createRes.data.isVerified).toBe(true);
+
+	// 		// authenticate GCR with docker & podman
+	// 		// await connectRegistry(createRes.data, { builder: "docker", workspaceId: wsId, userId: curUser._id });
+	// 		// await connectRegistry(gcr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
+
+	// 		// podman: pull private test image
+	// 		// const podmanPullRes = await dxCmd(`podman pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
+	// 		// expect(podmanPullRes.indexOf("Writing manifest")).toBeGreaterThan(-1);
+
+	// 		// docker: pull private test image
+	// 		const dockerPullRes = await dxCmd(`docker pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
+	// 		expect(dockerPullRes.indexOf("asia.gcr.io/top-group-k8s/staticsite-web")).toBeGreaterThan(-1);
+	// 	}, // timeout: 4 mins
+	// 	4 * 60000
+	// );
+
 	it(
 		"Workspace #1: Container Registry - Docker Hub Registry",
 		async () => {
