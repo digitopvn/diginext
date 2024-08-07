@@ -4,6 +4,7 @@ import { existsSync, unlink } from "fs";
 import { Config } from "@/app.config";
 import type { IContainerRegistry } from "@/entities";
 import { createTmpFile } from "@/plugins";
+import { isMasked } from "@/plugins/mask-sensitive-info";
 
 import digitalocean from "../providers/digitalocean";
 import gcloud from "../providers/gcloud";
@@ -22,14 +23,14 @@ export const connectRegistry = async (
 		case "gcloud":
 			const { serviceAccount } = registry;
 
-			if (!serviceAccount) throw new Error(`This container registry doesn't have any service account data.`);
+			if (!serviceAccount || isMasked(serviceAccount)) throw new Error(`Service account content is required.`);
 
 			const serviceAccountFile = createTmpFile("gsa.json", serviceAccount);
 
-			const authResult = await gcloud.authenticate({ ...options, filePath: serviceAccountFile });
-			if (!authResult) throw new Error(`Can't authenticate with Google Cloud using this service account.`);
+			// const authResult = await gcloud.authenticate({ ...options, filePath: serviceAccountFile });
+			// if (!authResult) throw new Error(`Can't authenticate with Google Cloud using this service account.`);
 
-			connectedRegistry = await gcloud.connectDockerRegistry({ ...options, registry: slug, host });
+			connectedRegistry = await gcloud.connectDockerRegistry({ ...options, filePath: serviceAccountFile, registry: slug, host });
 
 			if (connectedRegistry) {
 				logSuccess(`[CONTAINER REGISTRY] ✓ ${builderName}: Connected to Container Registry "${registry.name}".`);
@@ -44,6 +45,7 @@ export const connectRegistry = async (
 
 		case "digitalocean":
 			const { apiAccessToken } = registry;
+			if (!apiAccessToken || isMasked(apiAccessToken)) throw new Error(`API Access Token is required.`);
 
 			const doAuthResult = await digitalocean.authenticate({ ...options, key: apiAccessToken });
 			if (!doAuthResult) throw new Error(`Can't authenticate with Digital Ocean using this API access token.`);
@@ -60,6 +62,7 @@ export const connectRegistry = async (
 
 		case "dockerhub":
 			const { dockerUsername, dockerPassword } = registry;
+			if (!dockerPassword || isMasked(dockerPassword)) throw new Error(`Docker access token is required.`);
 
 			connectedRegistry = await DockerRegistry.connectDockerToRegistry(
 				{ username: dockerUsername, password: dockerPassword },

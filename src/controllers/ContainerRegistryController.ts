@@ -81,7 +81,7 @@ export default class ContainerRegistryController extends BaseController {
 		if (errors.length > 0) return { status: 0, messages: errors } as ResponseData;
 
 		if (providerShortName === "gcloud") {
-			if (!host) host = "gcr.io";
+			if (!host) host = "asia-docker.pkg.dev";
 			if (!serviceAccount)
 				return interfaces.respondFailure({ msg: `Service Account (JSON) is required to authenticate Google Container Registry.` });
 			organization = JSON.parse(serviceAccount).project_id;

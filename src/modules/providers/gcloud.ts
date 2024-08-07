@@ -53,7 +53,7 @@ export const connectDockerToRegistry = async (options?: InputOptions & { builder
 	const { execa, execaCommand, execaSync } = await import("execa");
 	const { DB } = await import("@/modules/api/DB");
 
-	const { host, filePath, userId, workspaceId, registry: registrySlug, builder = Config.BUILDER } = options;
+	const { host = "https://asia-docker.pkg.dev", filePath, userId, workspaceId, registry: registrySlug, builder = Config.BUILDER } = options;
 
 	// Validation
 	if (!host) {
@@ -83,7 +83,7 @@ export const connectDockerToRegistry = async (options?: InputOptions & { builder
 		let connectRes;
 		if (builder === "docker") {
 			// connect DOCKER to CONTAINER REGISTRY
-			const subprocess = execa("docker", ["login", "-u", "_json_key", "--password-stdin", host || "https://asia-docker.pkg.dev"]);
+			const subprocess = execa("docker", ["login", "-u", "_json_key", "--password-stdin", host]);
 			createReadStream(filePath).pipe(subprocess.stdin);
 			const { stdout } = await subprocess;
 			connectRes = stdout;

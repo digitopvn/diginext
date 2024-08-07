@@ -272,39 +272,25 @@ export function testFlow1() {
 
 	let registry: IContainerRegistry;
 
-	// it(
-	// 	"Workspace #1: Container Registry - Google Artifact Registry",
-	// 	async () => {
-	// 		console.log("[TESTING] Workspace #1: Container Registry - Google Artifact Registry");
+	it(
+		"Workspace #1: Container Registry - Google Artifact Registry",
+		async () => {
+			console.log("[TESTING] Workspace #1: Container Registry - Google Artifact Registry");
 
-	// 		// const curUser = await getCurrentUser();
+			// seed Container Registry: GCR
+			const createRes = await registryCtl.create({
+				name: "My Google Artifact Registry",
+				provider: "gcloud",
+				host: "asia-docker.pkg.dev",
+				serviceAccount: process.env.TEST_GCLOUD_SERVICE_ACCOUNT,
+			});
 
-	// 		// seed Container Registry: GCR
-	// 		const createRes = await registryCtl.create({
-	// 			name: "Google Container Registry",
-	// 			provider: "gcloud",
-	// 			host: "asia.gcr.io",
-	// 			serviceAccount: process.env.TEST_GCLOUD_SERVICE_ACCOUNT,
-	// 		});
-
-	// 		// registry = createRes.data;
-	// 		expect(createRes.data).toBeDefined();
-	// 		expect(createRes.data.isVerified).toBe(true);
-
-	// 		// authenticate GCR with docker & podman
-	// 		// await connectRegistry(createRes.data, { builder: "docker", workspaceId: wsId, userId: curUser._id });
-	// 		// await connectRegistry(gcr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
-
-	// 		// podman: pull private test image
-	// 		// const podmanPullRes = await dxCmd(`podman pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
-	// 		// expect(podmanPullRes.indexOf("Writing manifest")).toBeGreaterThan(-1);
-
-	// 		// docker: pull private test image
-	// 		const dockerPullRes = await dxCmd(`docker pull asia.gcr.io/top-group-k8s/staticsite-web:20230616142326`);
-	// 		expect(dockerPullRes.indexOf("asia.gcr.io/top-group-k8s/staticsite-web")).toBeGreaterThan(-1);
-	// 	}, // timeout: 4 mins
-	// 	4 * 60000
-	// );
+			// registry = createRes.data;
+			expect(createRes.data).toBeDefined();
+			expect(createRes.data.isVerified).toBe(true);
+		}, // timeout: 4 mins
+		4 * 60000
+	);
 
 	it(
 		"Workspace #1: Container Registry - Docker Hub Registry",
@@ -314,7 +300,7 @@ export function testFlow1() {
 
 			// seed Container Registry: Docker Hub
 			const createRes = await registryCtl.create({
-				name: "Docker Hub Registry",
+				name: "My Docker Hub Registry",
 				provider: "dockerhub",
 				dockerUsername: process.env.TEST_DOCKERHUB_USER,
 				dockerPassword: process.env.TEST_DOCKERHUB_PASS,
@@ -327,20 +313,6 @@ export function testFlow1() {
 
 			// assign global registry -> to test "dx up" later
 			registry = dhr;
-
-			// podman: pull private test image
-			// await connectRegistry(dhr, { builder: "podman", workspaceId: wsId, userId: curUser._id });
-
-			// const podmanPullRes = await dxCmd(`podman pull digitop/static:latest`);
-			// console.log("podmanPullRes :>> ", podmanPullRes);
-			// expect(podmanPullRes.indexOf("Writing manifest")).toBeGreaterThan(-1);
-
-			// docker: pull private test image
-			// await connectRegistry(dhr, { builder: "docker", workspaceId: wsId, userId: curUser._id });
-
-			// const dockerPullRes = await dxCmd(`docker pull digitop/static:latest`);
-			// console.log("dockerPullRes :>> ", dockerPullRes);
-			// expect(dockerPullRes.indexOf("Downloaded")).toBeGreaterThan(-1);
 		},
 		// timeout: 4 mins
 		4 * 60000
