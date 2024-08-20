@@ -219,7 +219,7 @@ export const pullOrCloneGitRepoHTTP = async (repoURL: string, dir: string, branc
 	// if (options?.isDebugging) console.log("pullOrCloneGitRepoHTTP() > options :>> ", options);
 
 	const onProgress = (event: SimpleGitProgressEvent) => {
-		console.log("pullOrCloneGitRepoHTTP > event :>> ", event);
+		if (options?.isDebugging) console.log("pullOrCloneGitRepoHTTP > event :>> ", event);
 		const { method, stage, progress } = event || {};
 		const message = `git.${method} ${stage} stage ${progress}% complete`;
 		if (options?.onUpdate) options?.onUpdate(message, progress);

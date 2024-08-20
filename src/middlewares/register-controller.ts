@@ -20,7 +20,7 @@ export const registerController = (controller: any) => {
 				controller.workspace =
 					typeof (controller.user?.activeWorkspace as any)._id === "undefined"
 						? (controller.user?.activeWorkspace as IWorkspace)
-						: await DB.findOne("workspace", { _id: wsId });
+						: await DB.findOne("workspace", { _id: wsId }, { ignorable: true });
 			}
 			req.workspace = controller.workspace;
 

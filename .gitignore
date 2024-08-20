@@ -96,8 +96,8 @@ deployment-*.yaml
 deployment.*.yaml
 
 00-namespace.yaml
-01-cert-secret.yaml
-02-cert-issuer.yaml
+01-cert-secret*.yaml
+02-cert-issuer*.yaml
 03-certificate.yaml
 04-ingress.yaml
 05-podman-fuse-device-plugin.yaml

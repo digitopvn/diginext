@@ -259,7 +259,7 @@ export async function startBuild(
 	}
 
 	// the container registry to store this build image
-	const registry = await DB.findOne("registry", { slug: registrySlug });
+	const registry = await DB.findOne("registry", { slug: registrySlug }, { ignorable: true });
 	if (isEmpty(registry)) {
 		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
 		if (options?.onError) options?.onError(`[START BUILD] Container registry "${registrySlug}" not found.`);
@@ -279,7 +279,7 @@ export async function startBuild(
 	}
 
 	// get latest build of this app to utilize the cache for this build process
-	const latestBuild = await DB.findOne("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 } });
+	const latestBuild = await DB.findOne("build", { appSlug, projectSlug, status: "success" }, { order: { createdAt: -1 }, ignorable: true });
 
 	// get app's repository data:
 	const {

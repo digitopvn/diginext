@@ -17,7 +17,7 @@ describe("Diginext E2E", () => {
 	testFlow1();
 
 	// End
-	afterAll(async () => await setupEndTestEnvironment());
+	afterAll(async () => await setupEndTestEnvironment(), 5000);
 });
 
 // nothing, just because Jest will not work without exporting something

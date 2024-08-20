@@ -71,92 +71,92 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      # - uses: webfactory/ssh-agent@v0.8.0
-      #   with:
-      #     ssh-private-key: |
-      #       ${{ secrets.ID_RSA }}
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.ID_RSA }}
 
-      # - name: Write custom ID_RSA
-      #   run: ./scripts/custom_rsa.sh
+      - name: Write custom ID_RSA
+        run: ./scripts/custom_rsa.sh
 
-      # - name: Setup Node.js
-      #   uses: actions/setup-node@v3
-      #   with:
-      #     node-version: "lts/*"
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
       
-      # - name: Start MongoDB
-      #   uses: supercharge/mongodb-github-action@1.8.0
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.8.0
 
-      # # - name: Install MicroK8S
-      # #   uses: balchua/microk8s-actions@v0.3.2
-      # #   with:
-      # #     channel: 'latest/stable'
-      # #     addons: '["dns", "rbac", "registry", "dashboard", "dns", "ingress", "metrics-server", "helm", "helm3", "cert-manager", "hostpath-storage", "prometheus"]'
-      
-      # # - run: sudo usermod -a -G microk8s runner
-      # # - run: sudo chown -R runner ~/.kube
-      # # - run: newgrp microk8s
-      # # - run: mkdir -p ~/.kube
-      # # - run: microk8s config
-      # # - run: microk8s config > ~/kubeconfig
-      # # # - run: microk8s config > ~/.kube/config
-      # # # - run: cat ~/.kube/config
-      
-      # - name: Setup Kubernetes Tools
-      #   uses: yokawasa/action-setup-kube-tools@v0.9.3
+      # - name: Install MicroK8S
+      #   uses: balchua/microk8s-actions@v0.3.2
       #   with:
-      #     kubectl: '1.24.10'
+      #     channel: 'latest/stable'
+      #     addons: '["dns", "rbac", "registry", "dashboard", "dns", "ingress", "metrics-server", "helm", "helm3", "cert-manager", "hostpath-storage", "prometheus"]'
+      
+      # - run: sudo usermod -a -G microk8s runner
+      # - run: sudo chown -R runner ~/.kube
+      # - run: newgrp microk8s
+      # - run: mkdir -p ~/.kube
+      # - run: microk8s config
+      # - run: microk8s config > ~/kubeconfig
+      # # - run: microk8s config > ~/.kube/config
+      # # - run: cat ~/.kube/config
+      
+      - name: Setup Kubernetes Tools
+        uses: yokawasa/action-setup-kube-tools@v0.9.3
+        with:
+          kubectl: '1.24.10'
         
-      # # - run: kubectl get namespace
+      # - run: kubectl get namespace
 
-      # # - name: 'Set up Google Cloud SDK'
-      # #   uses: 'google-github-actions/setup-gcloud@v1'
-      # #   with:
-      # #     version: '>= 363.0.0'
-
-      # - name: Install doctl
-      #   uses: digitalocean/action-doctl@v2
+      # - name: 'Set up Google Cloud SDK'
+      #   uses: 'google-github-actions/setup-gcloud@v1'
       #   with:
-      #     token: ${{ secrets.TEST_DO_API_TOKEN }}
+      #     version: '>= 363.0.0'
 
-      # - name: Docker login to Docker Hub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.TEST_DO_API_TOKEN }}
 
-      # - name: Podman log in to Docker Hub
-      #   uses: redhat-actions/podman-login@v1
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
-      #     registry: docker.io
+      - name: Docker login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # - name: Install pnpm
-      #   uses: pnpm/action-setup@v2
-      #   id: pnpm-install
-      #   with:
-      #     version: 8
-      #     run_install: false
+      - name: Podman log in to Docker Hub
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: docker.io
 
-      # - name: Get pnpm store directory
-      #   id: pnpm-cache
-      #   shell: bash
-      #   run: |
-      #     echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        id: pnpm-install
+        with:
+          version: 8
+          run_install: false
 
-      # - name: Setup pnpm cache
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-      #     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pnpm-store-
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
-      # - name: Install package dependencies
-      #   run: pnpm install --no-frozen-lockfile
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
-      # - name: Run tests
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: pnpm test:build
+      - name: Install package dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Run tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm test:build

@@ -48,7 +48,6 @@ export const execRegistry = async (options: InputOptions) => {
 				registry = await askForRegistry();
 				registrySlug = registry.slug;
 			}
-			const { provider } = registry;
 
 			let cluster: ICluster;
 			if (options.cluster) {

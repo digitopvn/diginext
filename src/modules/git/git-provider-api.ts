@@ -164,6 +164,7 @@ const bitbucketRefeshToken = async (provider: IGitProvider) => {
 };
 
 const api = async (provider: IGitProvider, path: string, options?: GitProviderApiOptions) => {
+	if (options?.isDebugging) console.log("Git Provider API > provider :>> ", provider);
 	const { DB } = await import("../api/DB");
 
 	const { method = "GET", data, headers = {} } = options || {};
@@ -195,7 +196,7 @@ const api = async (provider: IGitProvider, path: string, options?: GitProviderAp
 			const tokens = await bitbucketRefeshToken(provider);
 
 			// save new tokens to database
-			const updatedProvider = await DB.updateOne("git", { _id: provider._id }, tokens);
+			const updatedProvider = await DB.updateOne("git", { _id: provider._id }, tokens, options);
 
 			if (!updatedProvider)
 				throw new Error(`[${provider.type.toUpperCase()}_API_ERROR] "${path}" > Can't update tokens to "${provider.name}" git provider.`);

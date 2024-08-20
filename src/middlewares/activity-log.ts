@@ -2,6 +2,7 @@ import { isJSON } from "class-validator";
 import type { NextFunction } from "express";
 import { isEmpty } from "lodash";
 
+import { Config } from "@/app.config";
 import type { IWorkspace } from "@/entities";
 import type { IActivity } from "@/entities/Activity";
 import type { AppRequest, AppResponse } from "@/interfaces/SystemTypes";
@@ -31,10 +32,15 @@ export const saveActivityLog = async (req: AppRequest, res: AppResponse, next: N
 		activityDto.httpStatus = req.statusCode;
 		// activityDto.response = res.body;
 
-		const route = await DB.findOne("route", { path: req.originalUrl });
-		activityDto.url = req.originalUrl;
-		activityDto.route = req.path;
-		activityDto.routeName = route?.name;
+		try {
+			const url = new URL(`${Config.BASE_URL}${req.originalUrl}`);
+			const route = await DB.findOne("route", { path: url.pathname }, { ignorable: true });
+			activityDto.url = req.originalUrl;
+			activityDto.route = req.path;
+			activityDto.routeName = route?.name;
+		} catch (e) {
+			console.error(e);
+		}
 
 		// write activity log to database:
 		const activitySvc = new ActivityService(ownership);

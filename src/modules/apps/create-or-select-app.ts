@@ -40,7 +40,9 @@ export async function createOrSelectApp(projectSlug: string, options: InputOptio
 			});
 
 			// [backward compatible <3.15.X] apps have no git provider id -> update one!
-			options.git = selectedApp.gitProvider ? await DB.findOne("git", { _id: selectedApp.gitProvider }) : await askForGitProvider();
+			options.git = selectedApp.gitProvider
+				? await DB.findOne("git", { _id: selectedApp.gitProvider }, { ignorable: true })
+				: await askForGitProvider();
 			if (!selectedApp.gitProvider && options.git) await DB.updateOne("app", { _id: selectedApp._id }, { gitProvider: options.git._id });
 
 			// [backward compatible <3.15.X] apps have no "public" field -> update them follows their gitProvider's "public" field

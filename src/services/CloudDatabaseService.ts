@@ -290,7 +290,6 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 						port: toString(db.port),
 						user: db.user,
 						pass: db.pass,
-						isDebugging: true,
 					});
 					PostgreSQL.backup({
 						dbName: options?.dbName,
@@ -409,7 +408,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 		const db = await this.findOne({ _id: id });
 		if (!db) throw new Error(`Database not found.`);
 
-		const apiKey = await DB.findOne("api_key_user", { workspaces: db.workspace });
+		const apiKeyAccount = await DB.findOne("api_key_user", { workspaces: db.workspace });
 
 		// create new cronjob
 		const request: CronjobRequest = {
@@ -417,7 +416,7 @@ export class CloudDatabaseService extends BaseService<ICloudDatabase> {
 			method: "POST",
 			params: { id: MongoDB.toString(db._id) },
 			headers: {
-				"X-API-Key": apiKey.token.access_token,
+				"X-API-Key": apiKeyAccount.token.access_token,
 			},
 		};
 		const cronjob = await createCronjobRepeat(`[SYSTEM] Backup database "${db.name}"`, request, repeat, condition, ownership);

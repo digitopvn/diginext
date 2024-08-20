@@ -129,7 +129,9 @@ export const askForDeployEnvironmentInfo = async (options: DeployEnvironmentRequ
 		serverDeployEnvironment.cluster = cluster.slug;
 		serverDeployEnvironment.provider = (cluster.provider as ICloudProvider).shortName;
 	} else {
-		let cluster = await DB.findOne("cluster", { slug: serverDeployEnvironment.cluster }, { subpath: "/all" });
+		if (options.isDebugging) console.log("askForDeployEnvironment() > serverDeployEnvironment.cluster :>> ", serverDeployEnvironment.cluster);
+		let [cluster] = await DB.find("cluster", { slug: serverDeployEnvironment.cluster }, { subpath: "/all", ignorable: true });
+		if (options.isDebugging) console.log("askForDeployEnvironment() > cluster :>> ", cluster);
 		if (!cluster) {
 			logWarn(`Cluster "${serverDeployEnvironment.cluster}" not found or might be modified, please select target cluster.`);
 			cluster = await askForCluster();
@@ -170,7 +172,7 @@ To expose this app to the internet later, you can add your own domain to deploy 
 	// request container registry
 	let registry: IContainerRegistry;
 	if (serverDeployEnvironment.registry) {
-		registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry });
+		registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry }, { ignorable: true });
 		serverDeployEnvironment.registry = registry?.slug;
 	}
 	if (!serverDeployEnvironment.registry) {

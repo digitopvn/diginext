@@ -272,7 +272,7 @@ export default class BaseService<T = any> {
 		let [results, totalItems] = await Promise.all([this.model.aggregate(pipelines).exec(), this.model.countDocuments(where).exec()]);
 		// console.log(`"${this.model.collection.name}" > results >>`, results);
 
-		if (pagination && this.req) {
+		if (pagination && this.req && this.req.get) {
 			if (typeof pagination.page_size === "undefined") pagination.page_size = DEFAULT_PAGE_SIZE;
 			pagination.total_items = totalItems || results.length;
 			pagination.total_pages = pagination.page_size ? Math.ceil(totalItems / pagination.page_size) : 1;
@@ -312,8 +312,9 @@ export default class BaseService<T = any> {
 	}
 
 	async findOne(filter?: IQueryFilter<T>, options: IQueryOptions = {}) {
-		const result = await this.find(filter, { ...options, limit: 1 });
-		return result[0] as T;
+		const [result] = await this.find(filter, { ...options, limit: 1 });
+		if (!result) throw new Error("No data found.");
+		return result as T;
 	}
 
 	/**

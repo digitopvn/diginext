@@ -106,14 +106,18 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 			id?: string;
 		}
 	) {
-		const { DB } = await import("@/modules/api/DB");
-		const workspaceID = this.ownership.workspace._id;
+		try {
+			const { DB } = await import("@/modules/api/DB");
+			const workspaceID = this.ownership.workspace._id;
 
-		let data: IServiceAccount | IServiceAccount[] = this.filter.id
-			? await DB.findOne("service_account", { _id: this.filter.id, workspaces: { $in: [workspaceID] } })
-			: await DB.find("service_account", { workspaces: { $in: [workspaceID] } });
+			let data: IServiceAccount | IServiceAccount[] = this.filter.id
+				? await DB.findOne("service_account", { _id: this.filter.id, workspaces: { $in: [workspaceID] } })
+				: await DB.find("service_account", { workspaces: { $in: [workspaceID] } });
 
-		return interfaces.respondSuccess({ data });
+			return interfaces.respondSuccess({ data });
+		} catch (e) {
+			return interfaces.respondFailure(`Unable to get service account: ${e}`);
+		}
 	}
 
 	/**
@@ -135,14 +139,18 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 			id?: string;
 		}
 	) {
-		const { DB } = await import("@/modules/api/DB");
-		const workspaceID = this.ownership.workspace._id;
+		try {
+			const { DB } = await import("@/modules/api/DB");
+			const workspaceID = this.ownership.workspace._id;
 
-		let data: IApiKeyAccount | IApiKeyAccount[] = this.filter.id
-			? await DB.findOne("api_key_user", { _id: this.filter.id, workspaces: { $in: [workspaceID] } })
-			: await DB.find("api_key_user", { workspaces: { $in: [workspaceID] } });
+			let data: IApiKeyAccount | IApiKeyAccount[] = this.filter.id
+				? await DB.findOne("api_key_user", { _id: this.filter.id, workspaces: { $in: [workspaceID] } })
+				: await DB.find("api_key_user", { workspaces: { $in: [workspaceID] } });
 
-		return interfaces.respondSuccess({ data });
+			return interfaces.respondSuccess({ data });
+		} catch (e) {
+			return interfaces.respondFailure(`Unable to get api key user: ${e}`);
+		}
 	}
 
 	@Security("api_key")

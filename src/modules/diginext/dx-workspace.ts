@@ -19,11 +19,11 @@ export type JoinWorkspaceResponse = ResponseData & {
 	data: { name: string; createdAt: string; updatedAt: string };
 };
 
-export async function dxCreateWorkspace(params: CreateWorkspaceParams) {
-	return dxApi<CreateWorkspaceResponse>({ url: "/workspaces", data: params, method: "POST", isDebugging: true });
+export async function dxCreateWorkspace(params: CreateWorkspaceParams, options?: { isDebugging?: boolean }) {
+	return dxApi<CreateWorkspaceResponse>({ url: "/workspaces", data: params, method: "POST", isDebugging: options?.isDebugging });
 }
 
-export async function dxJoinWorkspace(email: string, slug: string, dxKey: string) {
+export async function dxJoinWorkspace(email: string, slug: string, dxKey: string, options?: { isDebugging?: boolean }) {
 	console.log("JOIN WORKSPACE", dxKey);
 	if (IsTest())
 		return {
@@ -37,7 +37,7 @@ export async function dxJoinWorkspace(email: string, slug: string, dxKey: string
 			},
 			messages: ["Ok"],
 		} as CreateWorkspaceResponse;
-	return dxApi<JoinWorkspaceResponse>({ url: "/join-workspace", data: { email, slug }, method: "POST", dxKey, isDebugging: true });
+	return dxApi<JoinWorkspaceResponse>({ url: "/join-workspace", data: { email, slug }, method: "POST", dxKey, isDebugging: options?.isDebugging });
 }
 
 // export async function dxIsOnwerWorkspace(userId: string, workspaceId: string) {

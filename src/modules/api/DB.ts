@@ -68,8 +68,23 @@ export function queryFilterToUrlFilter(filter: any = {}) {
 export function queryOptionsToUrlOptions(options: IQueryOptions & IQueryPagination = {}) {
 	let optionsStr = "";
 
-	const { $or, order, populate, select, total, total_items, total_pages, current_page, page_size, next_page, prev_page, filter, func, ...rest } =
-		options;
+	const {
+		$or,
+		order,
+		populate,
+		select,
+		total,
+		total_items,
+		total_pages,
+		current_page,
+		page_size,
+		next_page,
+		prev_page,
+		filter,
+		func,
+		ignorable,
+		...rest
+	} = options;
 
 	if (!isEmpty(order)) {
 		const orderStr = Object.entries(options.order)
@@ -391,7 +406,7 @@ export class DB {
 			const url = `/api/v1/${path}${subpath}?${filterStr}${optionStr === "&" ? "" : optionStr}`;
 
 			const res = await fetchApi<T>({ url });
-			if (options?.isDebugging) console.log("[DB] fetchApi > response :>> ", res);
+			if (options?.isDebugging) console.log("[DB] FIND ONE > " + url + " > response :>> ", res);
 			const { data = [], status, messages = [""] } = res;
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] FIND ONE - ${url} :>>`, messages);
 			item = isArray(data) ? data[0] : data;
@@ -495,7 +510,7 @@ export class DB {
 				data: updateData,
 			});
 
-			if (options.isDebugging) console.log("[DB] UPDATE > result :>> ", status, "-", result, "-", messages);
+			if (options.isDebugging) console.log("[DB] UPDATE > " + url + " > result :>> ", status, "-", result, "-", messages);
 			if (!status && messages[0] && !options?.ignorable) logError(`[DB] UPDATE - ${url} :>>`, messages);
 
 			items = isArray(result) ? result : [result];

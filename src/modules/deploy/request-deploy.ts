@@ -37,21 +37,24 @@ export async function requestDeploy(options: InputOptions) {
 	if (options.isDebugging) console.log("requestDeploy() > options.targetDirectory :>> ", options.targetDirectory);
 
 	const { buildServerUrl } = getCliConfig();
-	const { env, targetDirectory } = options;
+	const { env, targetDirectory, projectSlug, appSlug } = options;
 
 	// check Dockerfile -> no dockerfile, no build -> failed
-	let dockerFile = resolveDockerfilePath({ targetDirectory, env });
+	let dockerFile = resolveDockerfilePath({ targetDirectory, env, ignoreIfNotExisted: true });
 	if (options.isDebugging) console.log("requestDeploy() > dockerFile :>> ", dockerFile);
 	if (!dockerFile) {
 		// ask to use AI for generating "Dockerfile"
 		await askAiGenerateDockerfile(options);
 		dockerFile = resolveDockerfilePath({ targetDirectory, env });
 
-		logSuccess(
-			`Double check your ${chalk.yellow(`"Dockerfile.${env}"`)}, test building container locally, for example:\n  ${chalk.cyan(
-				`$ docker build -t <project-name>/<app-name> -f Dockerfile.${env} .`
-			)}\nIf everything is good, commit & push the changes to the remote git, then deploy again: \n  ${chalk.cyan(`$ dx up --${env}`)}`
-		);
+		let successMsg = `Double check your ${chalk.yellow(`"Dockerfile.${env}"`)}, test building container locally, for example:`;
+		successMsg += `\n  ${chalk.cyan(`$ docker build -t ${projectSlug}/${appSlug} -f Dockerfile.${env} .`)}`;
+		successMsg += `\n  ${chalk.cyan(`$ docker run -p <host_port>:<container_port> ${projectSlug}/${appSlug}`)}`;
+		successMsg += `\n  ${chalk.gray(`# access: http://localhost:<host_port>`)}`;
+		successMsg += `\nIf everything is good, commit & push the changes to the git remote origin, then deploy again:`;
+		successMsg += `\n  ${chalk.cyan(`$ dx up --${env}`)}`;
+		successMsg += `\nHave fun!`;
+		logSuccess(successMsg);
 		return;
 	}
 
@@ -213,7 +216,7 @@ export async function requestDeploy(options: InputOptions) {
 			const start = Date.now();
 			socket.emit("ping", (location) => {
 				const duration = Date.now() - start;
-				console.log(`[DXUP Websocket] Ping: ${duration}ms (${socketURL}${location ? `/ ${location}` : ""})`);
+				console.log(`[DXUP Websocket] Ping: ${duration}ms - ${socketURL}${location ? ` (${location})` : ""}`);
 			});
 		};
 
