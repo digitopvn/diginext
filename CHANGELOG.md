@@ -1,3 +1,11 @@
+## [3.35.1](https://github.com/digitopvn/diginext/compare/v3.35.0...v3.35.1) (2024-08-20)
+
+
+### Bug Fixes
+
+* **admin:** select workspace - input disapeared ([#543](https://github.com/digitopvn/diginext/issues/543)) ([e88b0ce](https://github.com/digitopvn/diginext/commit/e88b0cecf4354c82b54eef4f4eec16149f94fc6e))
+* **admin:** select workspace - input disapeared when typing workspace name ([79bbf50](https://github.com/digitopvn/diginext/commit/79bbf509ae2a776af56b9710e311946dc7a971f2))
+
 # [3.35.0](https://github.com/digitopvn/diginext/compare/v3.34.23...v3.35.0) (2024-08-20)
 
 
