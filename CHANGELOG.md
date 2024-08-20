@@ -1,3 +1,13 @@
+# [3.35.0](https://github.com/digitopvn/diginext/compare/v3.34.23...v3.35.0) (2024-08-20)
+
+
+### Bug Fixes
+
+* **cli:** connect docker to google artifact registry ([f35c060](https://github.com/digitopvn/diginext/commit/f35c060d44ece314b3961a5e7f09af7617c5d8a6))
+* **cli:** deprecate free and rollout command ([f2f6d7b](https://github.com/digitopvn/diginext/commit/f2f6d7bed7a6101440a8960924bc4db9ac12a21d))
+* **cli:** improve websocket ping log ([f502498](https://github.com/digitopvn/diginext/commit/f5024988e7ad495473e975f575553808cb3832d3))
+* **cli:** use ai to generate dockerfile ([59d1918](https://github.com/digitopvn/diginext/commit/59d191836754570f1ed116f2176f65d3fd747f6f))
+
 ## [3.34.23](https://github.com/digitopvn/diginext/compare/v3.34.22...v3.34.23) (2024-08-06)
 
 
