@@ -1,6 +1,7 @@
 import Table from "cli-table";
 
 import { getCliConfig } from "@/config/config";
+import type { IRole, IWorkspace } from "@/entities";
 import type { InputOptions } from "@/interfaces";
 import { getOS } from "@/plugins";
 
@@ -32,7 +33,13 @@ export const showClientInfo = async (options: InputOptions) => {
 	// table.push(["CLI Dir", CLI_DIR]);
 	// table.push(["CLI Config", CLI_CONFIG_FILE]);
 	table.push(["CLI User", currentUser ? `${currentUser.name} (${currentUser.slug})` : "N/A"]);
-	table.push(["CLI UserID", currentUser ? `${currentUser._id}` : "N/A"]);
+	table.push(["CLI User ID", currentUser ? `${currentUser._id}` : "N/A"]);
+	table.push(["CLI User Role", currentUser ? `${(currentUser.activeRole as IRole).name}` : "N/A"]);
+	table.push([
+		"CLI Workspace",
+		currentUser ? `${(currentUser.activeWorkspace as IWorkspace).name} (${(currentUser.activeWorkspace as IWorkspace).slug})` : "N/A",
+	]);
+	table.push(["CLI Workspace ID", currentUser ? `${(currentUser.activeWorkspace as IWorkspace)._id}` : "N/A"]);
 
 	const serverInfo = await getServerInfo();
 	table.push(["Server URL", `${buildServerUrl}`]);

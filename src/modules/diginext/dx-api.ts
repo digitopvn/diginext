@@ -24,7 +24,10 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 		if (isEmpty(options.headers["content-type"])) options.headers["content-type"] = "application/json";
 	}
 
-	// if (options.data) options.data = new URLSearchParams(options.data);
+	if (options.isDebugging && options.data) {
+		console.log(chalk.yellow("dxApi() >"), `${Config.DX_API_URL}${options.url} > options.data :>>`);
+		console.dir(options.data, { depth: 10 });
+	}
 	if (options.isDebugging) console.log(chalk.yellow("dxApi() >"), `${Config.DX_API_URL}${options.url} > options.headers :>>`, options.headers);
 
 	try {

@@ -267,6 +267,7 @@
 		"spdx-license-list": "^5.0.0",
 		"strip-ansi": "^6.0.1",
 		"swagger-ui-express": "^4.6.1",
+		"tree-node-cli": "^1.6.0",
 		"tslib": "^2.5.0",
 		"tsoa": "^5.1.1",
 		"tsup": "^7.2.0",
