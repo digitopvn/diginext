@@ -216,7 +216,7 @@ export async function requestDeploy(options: InputOptions) {
 			const start = Date.now();
 			socket.emit("ping", (location) => {
 				const duration = Date.now() - start;
-				console.log(`[DXUP Websocket] Ping: ${duration}ms (${socketURL}${location ? `/ ${location}` : ""})`);
+				console.log(`[DXUP Websocket] Ping: ${duration}ms - ${socketURL}${location ? ` (${location})` : ""}`);
 			});
 		};
 
