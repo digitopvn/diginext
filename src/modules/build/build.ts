@@ -3,13 +3,13 @@ import dayjs from "dayjs";
 import { log, logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import humanizeDuration from "humanize-duration";
 import { isEmpty, upperFirst } from "lodash";
-import { Types } from "mongoose";
+import { model, Types } from "mongoose";
 import PQueue from "p-queue";
 import path from "path";
 
 import { Config, isServerMode } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
-import type { IApp, IBuild, IUser, IWebhook, IWorkspace } from "@/entities";
+import { type IApp, type IBuild, type IUser, type IWebhook, type IWorkspace, containerRegistrySchema } from "@/entities";
 import type { BuildPlatform, BuildStatus, DeployStatus } from "@/interfaces/SystemTypes";
 import { currentVersion, getGitProviderFromRepoSSH, Logger, resolveDockerfilePath } from "@/plugins";
 import { filterUniqueItems } from "@/plugins/array";
@@ -259,7 +259,8 @@ export async function startBuild(
 	}
 
 	// the container registry to store this build image
-	const registry = await DB.findOne("registry", { slug: registrySlug }, { ignorable: true });
+	const regModel = model("container_registries", containerRegistrySchema, "container_registries");
+	const registry = await regModel.findOne({ slug: registrySlug });
 	if (isEmpty(registry)) {
 		sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `[START BUILD] Container registry "${registrySlug}" not found.` });
 		if (options?.onError) options?.onError(`[START BUILD] Container registry "${registrySlug}" not found.`);
