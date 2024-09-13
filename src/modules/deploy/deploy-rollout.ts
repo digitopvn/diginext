@@ -50,11 +50,16 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 		filterLabel,
 		metrics: false,
 		isDebugging,
+		skipOnError: true,
+	}).catch((e) => {
+		logError(`[CHECK DEPLOYMENT READY] Error: ${e}`);
+		return [];
 	});
+
 	if (!pods || pods.length == 0) {
 		const msg = `Unable to check "${appName}" deployment:\n- Namespace: ${namespace}\n- Context: ${context}\n- Reason: Selected pods not found: ${filterLabel}.`;
 		if (onUpdate) onUpdate(msg);
-		throw new Error(msg);
+		return false;
 	}
 
 	let isReady = false;
@@ -77,7 +82,7 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 		});
 	} catch (e) {
 		if (onUpdate) onUpdate(e.message);
-		throw new Error(e.message);
+		return false;
 	}
 
 	if (countReady >= replicas) isReady = true;
@@ -471,7 +476,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 				appVersion,
 				namespace,
 				onUpdate,
-				// isDebugging: true,
+				isDebugging: true,
 			}),
 		5,
 		10 * 60
