@@ -1,3 +1,12 @@
+## [3.35.2](https://github.com/digitopvn/diginext/compare/v3.35.1...v3.35.2) (2024-09-13)
+
+
+### Bug Fixes
+
+* **rollout:** catch error of checking new deployment ready ([6720916](https://github.com/digitopvn/diginext/commit/6720916964260b517ea33b0ec7b7ed460aaaee73))
+* **server:** get raw container registry during build to extract token ([44ce8dc](https://github.com/digitopvn/diginext/commit/44ce8dce155f0dc437ee18e9d0f748f729023d73))
+* **server:** get raw container registry during build to extract token ([#544](https://github.com/digitopvn/diginext/issues/544)) ([e10c1a5](https://github.com/digitopvn/diginext/commit/e10c1a5cfecc968e5787b5925890f97e4cfedc3c))
+
 ## [3.35.1](https://github.com/digitopvn/diginext/compare/v3.35.0...v3.35.1) (2024-08-20)
 
 
