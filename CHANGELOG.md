@@ -1,3 +1,11 @@
+## [3.35.4](https://github.com/digitopvn/diginext/compare/v3.35.3...v3.35.4) (2024-10-17)
+
+
+### Bug Fixes
+
+* **rollout:** if new pods are crashed, throw error, improve deploy speed ([be92b58](https://github.com/digitopvn/diginext/commit/be92b58f66607165accc98b1effd36667eb55896))
+* **rollout:** if new pods are crashed, throw error, improve deploy speed ([#546](https://github.com/digitopvn/diginext/issues/546)) ([a6d0d9e](https://github.com/digitopvn/diginext/commit/a6d0d9e1db150a443256e6f46230dad68dd07444))
+
 ## [3.35.3](https://github.com/digitopvn/diginext/compare/v3.35.2...v3.35.3) (2024-10-17)
 
 
