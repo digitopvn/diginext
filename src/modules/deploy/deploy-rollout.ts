@@ -59,10 +59,11 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 
 	// Skip crashed pods
 	if (options.skipCrashedPods) {
+		console.log("deploy-rollout.ts > checkDeploymentReady() > pods before :>>", pods);
 		pods = pods.filter(
-			(pod) =>
-				pod.status.containerStatuses.find((containerStatus) => containerStatus.state.waiting?.reason !== "CrashLoopBackOff") === undefined
+			(pod) => !pod.status.containerStatuses.some((containerStatus) => containerStatus.state.waiting?.reason === "CrashLoopBackOff")
 		);
+		console.log("deploy-rollout.ts > checkDeploymentReady() > pods after :>>", pods);
 	}
 
 	if (!pods || pods.length == 0) {
