@@ -1,3 +1,11 @@
+## [3.35.5](https://github.com/digitopvn/diginext/compare/v3.35.4...v3.35.5) (2024-10-17)
+
+
+### Bug Fixes
+
+* **rollout:** skip scale current deploy when there are running pods ([390a70e](https://github.com/digitopvn/diginext/commit/390a70ea18b89e563d10ee95e714a921c700fa11))
+* **rollout:** skip scale current deploy when there are running pods ([#547](https://github.com/digitopvn/diginext/issues/547)) ([f96c0ad](https://github.com/digitopvn/diginext/commit/f96c0adcdf5c453f05f70d1711cea6d8358da3cf))
+
 ## [3.35.4](https://github.com/digitopvn/diginext/compare/v3.35.3...v3.35.4) (2024-10-17)
 
 
