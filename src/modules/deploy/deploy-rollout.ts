@@ -35,6 +35,7 @@ export interface CheckDeploymentReadyOptions {
 	appVersion?: string;
 	replicas?: number;
 	onUpdate?: (msg?: string) => void;
+	skipCrashedPods?: boolean;
 	isDebugging?: boolean;
 }
 
@@ -45,7 +46,7 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 	if (isDebugging) log(`checkDeploymentReady() :>>`, options);
 
 	const filterLabel = `main-app=${appName}${appVersion ? `,app-version=${appVersion}` : ""}`;
-	const pods = await ClusterManager.getPods(namespace, {
+	let pods = await ClusterManager.getPods(namespace, {
 		context,
 		filterLabel,
 		metrics: false,
@@ -55,6 +56,15 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 		logError(`[CHECK DEPLOYMENT READY] Error: ${e}`);
 		return [];
 	});
+
+	// Skip crashed pods
+	if (options.skipCrashedPods) {
+		console.log("deploy-rollout.ts > checkDeploymentReady() > pods before :>>", pods);
+		pods = pods.filter(
+			(pod) => !pod.status.containerStatuses.some((containerStatus) => containerStatus.state.waiting?.reason === "CrashLoopBackOff")
+		);
+		console.log("deploy-rollout.ts > checkDeploymentReady() > pods after :>>", pods);
+	}
 
 	if (!pods || pods.length == 0) {
 		const msg = `Unable to check "${appName}" deployment:\n- Namespace: ${namespace}\n- Context: ${context}\n- Reason: Selected pods not found: ${filterLabel}.`;
@@ -336,6 +346,10 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	currentReplicas = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.spec.replicas : 1;
 	currentDeploymentName = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.metadata.name : "";
 	currentAppVersion = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.metadata.labels["app-version"] : undefined;
+	const currentPods = await ClusterManager.getPods(namespace, { context, filterLabel: `main-app=${mainAppName}`, metrics: false });
+	const countCrashedPods = currentPods.filter(
+		(pod) => pod.status.containerStatuses.find((containerStatus) => containerStatus.state.waiting?.reason === "CrashLoopBackOff") !== undefined
+	).length;
 
 	// check ingress domain has been used yet or not:
 	let isDomainUsed = false,
@@ -384,8 +398,9 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 	/**
 	 * Scale current deployment up to many replicas before apply new deployment YAML
+	 * But if there are many crashed pods -> skip scaling up
 	 */
-	if (newReplicas === 1 || currentReplicas <= 1) {
+	if (newReplicas === 1 && countCrashedPods === 0) {
 		if (currentDeploymentName) {
 			if (onUpdate) onUpdate(`Scaling "${currentDeploymentName}" deployment to ${deployReplicas} & prepare for rolling out new deployment.`);
 			await ClusterManager.scaleDeploy(currentDeploymentName, deployReplicas, namespace, { context });
@@ -464,7 +479,10 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		return { error };
 	}
 
-	// Wait until the deployment is ready!
+	/**
+	 * Wait until the deployment is ready!
+	 * Ignore crashed pods
+	 */
 
 	// check interval: 10 secs
 	// max wait time: 10 mins
@@ -476,7 +494,8 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 				appVersion,
 				namespace,
 				onUpdate,
-				isDebugging: true,
+				// isDebugging: true,
+				skipCrashedPods: true,
 			}),
 		5,
 		10 * 60
