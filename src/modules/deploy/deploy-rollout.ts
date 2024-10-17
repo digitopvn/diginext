@@ -350,6 +350,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	const countCrashedPods = currentPods.filter(
 		(pod) => pod.status.containerStatuses.find((containerStatus) => containerStatus.state.waiting?.reason === "CrashLoopBackOff") !== undefined
 	).length;
+	const countRunningPods = currentPods.filter((pod) => pod.status.phase === "Running").length;
 
 	// check ingress domain has been used yet or not:
 	let isDomainUsed = false,
@@ -400,7 +401,7 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	 * Scale current deployment up to many replicas before apply new deployment YAML
 	 * But if there are many crashed pods -> skip scaling up
 	 */
-	if (newReplicas === 1 && countCrashedPods === 0) {
+	if (newReplicas === 1 && countCrashedPods === 0 && countRunningPods === 1) {
 		if (currentDeploymentName) {
 			if (onUpdate) onUpdate(`Scaling "${currentDeploymentName}" deployment to ${deployReplicas} & prepare for rolling out new deployment.`);
 			await ClusterManager.scaleDeploy(currentDeploymentName, deployReplicas, namespace, { context });
