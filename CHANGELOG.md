@@ -1,3 +1,12 @@
+## [3.35.3](https://github.com/digitopvn/diginext/compare/v3.35.2...v3.35.3) (2024-10-17)
+
+
+### Bug Fixes
+
+* **rollout:** correct skip crashed pods ([28b7cdc](https://github.com/digitopvn/diginext/commit/28b7cdc2acb349c86b1762f2d7f97c0516439263))
+* **rollout:** skip crashed pods when checking new deployment status ([585d86f](https://github.com/digitopvn/diginext/commit/585d86f4c2fa08442720899d40f9e4f0c5a26bf4))
+* **rollout:** skip crashed pods when checking new deployment status ([#545](https://github.com/digitopvn/diginext/issues/545)) ([6f380db](https://github.com/digitopvn/diginext/commit/6f380dbc0c451d00cc03027afab936d10034a2b6))
+
 ## [3.35.2](https://github.com/digitopvn/diginext/compare/v3.35.1...v3.35.2) (2024-09-13)
 
 
