@@ -1,3 +1,11 @@
+## [3.35.6](https://github.com/digitopvn/diginext/compare/v3.35.5...v3.35.6) (2024-10-18)
+
+
+### Bug Fixes
+
+* **volume:** set default type is pvc ([9b49256](https://github.com/digitopvn/diginext/commit/9b492561f86c431fdc127d5c41987c1208394767))
+* **volume:** set default type is pvc ([#548](https://github.com/digitopvn/diginext/issues/548)) ([85f49aa](https://github.com/digitopvn/diginext/commit/85f49aaf4e2125d8b4618f953eb89af7ad000a60))
+
 ## [3.35.5](https://github.com/digitopvn/diginext/compare/v3.35.4...v3.35.5) (2024-10-17)
 
 
