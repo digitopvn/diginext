@@ -40,9 +40,17 @@ export async function initStorage(storage: ICloudStorage) {
 export async function listBuckets(storage: ICloudStorage) {
 	const s3 = await initStorage(storage);
 
-	const response = await s3.send(new ListBucketsCommand({}));
+	try {
+		const command = new ListBucketsCommand({});
+		const response = await s3.send(command);
 
-	return response.Buckets;
+		console.log("storage-upload > listBuckets() > response :>>", response);
+
+		return response.Buckets;
+	} catch (error) {
+		console.error("storage-upload > listBuckets() > error :>>", error);
+		throw new Error(`Failed to list buckets: ${error instanceof Error ? error.message : String(error)}`);
+	}
 }
 
 export async function uploadFileBuffer(
