@@ -2,8 +2,8 @@
 	"compilerOptions": {
 		"strict": false,
 		"outDir": "dist",
-		"lib": ["ES6"],
-		"target": "ES6",
+		"target": "es2017",
+		"lib": ["es2017", "dom"],
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"noImplicitReturns": false,
