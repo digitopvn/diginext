@@ -12,8 +12,8 @@ importers:
         specifier: ^3.675.0
         version: 3.675.0
       '@aws-sdk/lib-storage':
-        specifier: ^3.445.0
-        version: 3.445.0(@aws-sdk/client-s3@3.675.0)
+        specifier: ^3.675.0
+        version: 3.675.0(@aws-sdk/client-s3@3.675.0)
       '@aws-sdk/types':
         specifier: ^3.664.0
         version: 3.664.0
@@ -691,11 +691,11 @@ packages:
     resolution: {integrity: sha512-ZcNX197W9c7NRhNF7Do+2hHq8BjTqYSpzVzmAb1FVi/kTifCj7j3Y8r2jJoYwER1bT+bH9T+O4vGVoCaMabNDw==}
     engines: {node: '>=14.0.0'}
 
-  '@aws-sdk/lib-storage@3.445.0':
-    resolution: {integrity: sha512-sCP3lh71oMkx/B3+tSOGr81cff1Z1Yy5ejh5xa/YuH6OefQUFBM7/EC0CJiNfVXemh3D6O+biKETL+t2rAiZoQ==}
-    engines: {node: '>=14.0.0'}
+  '@aws-sdk/lib-storage@3.675.0':
+    resolution: {integrity: sha512-rFmvKR72bl0+lmi7cYOmNxw8S9AkLX9HYfyLpeCVOiQW3oWrs+uPbDRjx537cc80Y6mqGhrgX7NddQUwOA3fwg==}
+    engines: {node: '>=16.0.0'}
     peerDependencies:
-      '@aws-sdk/client-s3': ^3.0.0
+      '@aws-sdk/client-s3': ^3.675.0
 
   '@aws-sdk/middleware-bucket-endpoint@3.667.0':
     resolution: {integrity: sha512-XGz4jMAkDoTyFdtLz7ZF+C05IAhCTC1PllpvTBaj821z/L0ilhbqVhrT/f2Buw8Id/K5A390csGXgusXyrFFjA==}
@@ -2179,10 +2179,6 @@ packages:
 
   '@sinonjs/fake-timers@10.3.0':
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
-
-  '@smithy/abort-controller@2.0.11':
-    resolution: {integrity: sha512-MSzE1qR2JNyb7ot3blIOT3O3H0Jn06iNDEgHRaqZUwBgx5EG+VIx24Y21tlKofzYryIOcWpIohLrIIyocD6LMA==}
-    engines: {node: '>=14.0.0'}
 
   '@smithy/abort-controller@2.0.12':
     resolution: {integrity: sha512-YIJyefe1mi3GxKdZxEBEuzYOeQ9xpYfqnFmWzojCssRAuR7ycxwpoRQgp965vuW426xUAQhCV5rCaWElQ7XsaA==}
@@ -9740,12 +9736,12 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/lib-storage@3.445.0(@aws-sdk/client-s3@3.675.0)':
+  '@aws-sdk/lib-storage@3.675.0(@aws-sdk/client-s3@3.675.0)':
     dependencies:
       '@aws-sdk/client-s3': 3.675.0
-      '@smithy/abort-controller': 2.0.11
-      '@smithy/middleware-endpoint': 2.1.3
-      '@smithy/smithy-client': 2.1.12
+      '@smithy/abort-controller': 3.1.5
+      '@smithy/middleware-endpoint': 3.1.4
+      '@smithy/smithy-client': 3.4.0
       buffer: 5.6.0
       events: 3.3.0
       stream-browserify: 3.0.0
@@ -11807,15 +11803,11 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.0
 
-  '@smithy/abort-controller@2.0.11':
-    dependencies:
-      '@smithy/types': 2.4.0
-      tslib: 2.6.2
-
   '@smithy/abort-controller@2.0.12':
     dependencies:
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/abort-controller@3.1.5':
     dependencies:
@@ -11923,6 +11915,7 @@ snapshots:
       '@smithy/types': 2.4.0
       '@smithy/util-base64': 2.0.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/fetch-http-handler@3.2.9':
     dependencies:
@@ -12007,6 +12000,7 @@ snapshots:
       '@smithy/url-parser': 2.0.12
       '@smithy/util-middleware': 2.0.5
       tslib: 2.6.2
+    optional: true
 
   '@smithy/middleware-endpoint@3.1.4':
     dependencies:
@@ -12046,6 +12040,7 @@ snapshots:
     dependencies:
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/middleware-serde@3.0.7':
     dependencies:
@@ -12056,6 +12051,7 @@ snapshots:
     dependencies:
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/middleware-stack@3.0.7':
     dependencies:
@@ -12068,6 +12064,7 @@ snapshots:
       '@smithy/shared-ini-file-loader': 2.2.2
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/node-config-provider@3.1.8':
     dependencies:
@@ -12083,6 +12080,7 @@ snapshots:
       '@smithy/querystring-builder': 2.0.12
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/node-http-handler@3.2.4':
     dependencies:
@@ -12096,6 +12094,7 @@ snapshots:
     dependencies:
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/property-provider@3.1.7':
     dependencies:
@@ -12106,6 +12105,7 @@ snapshots:
     dependencies:
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/protocol-http@4.1.4':
     dependencies:
@@ -12117,6 +12117,7 @@ snapshots:
       '@smithy/types': 2.4.0
       '@smithy/util-uri-escape': 2.0.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/querystring-builder@3.0.7':
     dependencies:
@@ -12128,6 +12129,7 @@ snapshots:
     dependencies:
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/querystring-parser@3.0.7':
     dependencies:
@@ -12147,6 +12149,7 @@ snapshots:
     dependencies:
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/shared-ini-file-loader@3.1.8':
     dependencies:
@@ -12182,6 +12185,7 @@ snapshots:
       '@smithy/types': 2.4.0
       '@smithy/util-stream': 2.0.17
       tslib: 2.6.2
+    optional: true
 
   '@smithy/smithy-client@3.4.0':
     dependencies:
@@ -12195,6 +12199,7 @@ snapshots:
   '@smithy/types@2.4.0':
     dependencies:
       tslib: 2.6.2
+    optional: true
 
   '@smithy/types@3.5.0':
     dependencies:
@@ -12205,6 +12210,7 @@ snapshots:
       '@smithy/querystring-parser': 2.0.12
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/url-parser@3.0.7':
     dependencies:
@@ -12216,6 +12222,7 @@ snapshots:
     dependencies:
       '@smithy/util-buffer-from': 2.0.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/util-base64@3.0.0':
     dependencies:
@@ -12307,6 +12314,7 @@ snapshots:
   '@smithy/util-hex-encoding@2.0.0':
     dependencies:
       tslib: 2.6.2
+    optional: true
 
   '@smithy/util-hex-encoding@3.0.0':
     dependencies:
@@ -12322,6 +12330,7 @@ snapshots:
     dependencies:
       '@smithy/types': 2.4.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/util-middleware@3.0.7':
     dependencies:
@@ -12351,6 +12360,7 @@ snapshots:
       '@smithy/util-hex-encoding': 2.0.0
       '@smithy/util-utf8': 2.0.0
       tslib: 2.6.2
+    optional: true
 
   '@smithy/util-stream@3.1.9':
     dependencies:
@@ -12366,6 +12376,7 @@ snapshots:
   '@smithy/util-uri-escape@2.0.0':
     dependencies:
       tslib: 2.6.2
+    optional: true
 
   '@smithy/util-uri-escape@3.0.0':
     dependencies:
