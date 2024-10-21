@@ -1,3 +1,20 @@
+# [3.36.0](https://github.com/digitopvn/diginext/compare/v3.35.6...v3.36.0) (2024-10-21)
+
+
+### Bug Fixes
+
+* **aws sdk:** version mismatch ([315bcbe](https://github.com/digitopvn/diginext/commit/315bcbe20085ca2df51364d6dfbcf10724bc0bb0))
+* **aws:** please work ([4e794bc](https://github.com/digitopvn/diginext/commit/4e794bc1833f22e42da17e54a15f1c7261961381))
+* **storage upload:** pump @aws/s3-client ([93040a3](https://github.com/digitopvn/diginext/commit/93040a3439239f1b0ccd72591fa965eaca812d8c))
+* **tests:** add aws sdk types dependency ([0e00516](https://github.com/digitopvn/diginext/commit/0e0051655cdf0bc03cbe7ba98e01469f238f0fce))
+* **tsconfig:** es2017 ([f202377](https://github.com/digitopvn/diginext/commit/f202377472c257d1111635e7c15ff2dc8cd219bc))
+
+
+### Features
+
+* **admin:** new page: deploy environment list ([de92227](https://github.com/digitopvn/diginext/commit/de92227e83c48ab98af1e71c1a2af216bcc968e6))
+* **admin:** settings - cloud storage for screenshots and backups ([a1ea7c5](https://github.com/digitopvn/diginext/commit/a1ea7c5f73a04d2b477826ade5b9de81b8b8ebe0))
+
 ## [3.35.6](https://github.com/digitopvn/diginext/compare/v3.35.5...v3.35.6) (2024-10-18)
 
 
