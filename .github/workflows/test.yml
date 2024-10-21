@@ -155,8 +155,10 @@ jobs:
 
       - name: Install package dependencies
         run: |
-          pnpm add @aws-sdk/client-s3@latest
           pnpm install --no-frozen-lockfile
+      
+      - name: Update AWS SDK
+        run: pnpm add @aws-sdk/client-s3@latest @aws-sdk/types@latest
 
       - name: Run tests
         env:

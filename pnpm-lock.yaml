@@ -14,6 +14,9 @@ importers:
       '@aws-sdk/lib-storage':
         specifier: ^3.445.0
         version: 3.445.0(@aws-sdk/client-s3@3.675.0)
+      '@aws-sdk/types':
+        specifier: ^3.664.0
+        version: 3.664.0
       '@babel/runtime':
         specifier: ^7.15.4
         version: 7.23.2
@@ -784,9 +787,9 @@ packages:
     resolution: {integrity: sha512-4T0Ps2spjg3qbWE6ZK13Vd3FnzpfliaiotqjxUK5YhjDrKXeT36HJp46JhDupElQuHtTkpdiJOSYk2lvY2H4IA==}
     engines: {node: '>=14.0.0'}
 
-  '@aws-sdk/types@3.433.0':
-    resolution: {integrity: sha512-0jEE2mSrNDd8VGFjTc1otYrwYPIkzZJEIK90ZxisKvQ/EURGBhNzWn7ejWB9XCMFT6XumYLBR0V9qq5UPisWtA==}
-    engines: {node: '>=14.0.0'}
+  '@aws-sdk/types@3.664.0':
+    resolution: {integrity: sha512-+GtXktvVgpreM2b+NJL9OqZGsOzHwlCUrO8jgQUvH/yA6Kd8QO2YFhQCp0C9sSzTteZJVqGBu8E0CQurxJHPbw==}
+    engines: {node: '>=16.0.0'}
 
   '@aws-sdk/types@3.667.0':
     resolution: {integrity: sha512-gYq0xCsqFfQaSL/yT1Gl1vIUjtsg7d7RhnUfsXaHt8xTxOKRTdH9GjbesBjXOzgOvB0W0vfssfreSNGFlOOMJg==}
@@ -2394,10 +2397,6 @@ packages:
   '@smithy/smithy-client@3.4.0':
     resolution: {integrity: sha512-nOfJ1nVQsxiP6srKt43r2My0Gp5PLWCW2ASqUioxIiGmu6d32v4Nekidiv5qOmmtzIrmaD+ADX5SKHUuhReeBQ==}
     engines: {node: '>=16.0.0'}
-
-  '@smithy/types@2.3.5':
-    resolution: {integrity: sha512-ehyDt8M9hehyxrLQGoA1BGPou8Js1Ocoh5M0ngDhJMqbFmNK5N6Xhr9/ZExWkyIW8XcGkiMPq3ZUEE0ScrhbuQ==}
-    engines: {node: '>=14.0.0'}
 
   '@smithy/types@2.4.0':
     resolution: {integrity: sha512-iH1Xz68FWlmBJ9vvYeHifVMWJf82ONx+OybPW8ZGf5wnEv2S0UXcU4zwlwJkRXuLKpcSLHrraHbn2ucdVXLb4g==}
@@ -9111,20 +9110,20 @@ snapshots:
   '@aws-crypto/crc32@3.0.0':
     dependencies:
       '@aws-crypto/util': 3.0.0
-      '@aws-sdk/types': 3.428.0
+      '@aws-sdk/types': 3.664.0
       tslib: 1.14.1
     optional: true
 
   '@aws-crypto/crc32@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.667.0
+      '@aws-sdk/types': 3.664.0
       tslib: 2.6.2
 
   '@aws-crypto/crc32c@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.667.0
+      '@aws-sdk/types': 3.664.0
       tslib: 2.6.2
 
   '@aws-crypto/ie11-detection@3.0.0':
@@ -9136,7 +9135,7 @@ snapshots:
     dependencies:
       '@aws-crypto/supports-web-crypto': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.667.0
+      '@aws-sdk/types': 3.664.0
       '@aws-sdk/util-locate-window': 3.310.0
       '@smithy/util-utf8': 2.0.0
       tslib: 2.6.2
@@ -9147,7 +9146,7 @@ snapshots:
       '@aws-crypto/sha256-js': 3.0.0
       '@aws-crypto/supports-web-crypto': 3.0.0
       '@aws-crypto/util': 3.0.0
-      '@aws-sdk/types': 3.433.0
+      '@aws-sdk/types': 3.664.0
       '@aws-sdk/util-locate-window': 3.310.0
       '@aws-sdk/util-utf8-browser': 3.259.0
       tslib: 1.14.1
@@ -9158,7 +9157,7 @@ snapshots:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-crypto/supports-web-crypto': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.667.0
+      '@aws-sdk/types': 3.664.0
       '@aws-sdk/util-locate-window': 3.310.0
       '@smithy/util-utf8': 2.0.0
       tslib: 2.6.2
@@ -9166,14 +9165,14 @@ snapshots:
   '@aws-crypto/sha256-js@3.0.0':
     dependencies:
       '@aws-crypto/util': 3.0.0
-      '@aws-sdk/types': 3.433.0
+      '@aws-sdk/types': 3.664.0
       tslib: 1.14.1
     optional: true
 
   '@aws-crypto/sha256-js@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.667.0
+      '@aws-sdk/types': 3.664.0
       tslib: 2.6.2
 
   '@aws-crypto/supports-web-crypto@3.0.0':
@@ -9187,14 +9186,14 @@ snapshots:
 
   '@aws-crypto/util@3.0.0':
     dependencies:
-      '@aws-sdk/types': 3.428.0
+      '@aws-sdk/types': 3.664.0
       '@aws-sdk/util-utf8-browser': 3.259.0
       tslib: 1.14.1
     optional: true
 
   '@aws-crypto/util@5.2.0':
     dependencies:
-      '@aws-sdk/types': 3.667.0
+      '@aws-sdk/types': 3.664.0
       '@smithy/util-utf8': 2.0.0
       tslib: 2.6.2
 
@@ -9976,11 +9975,10 @@ snapshots:
       tslib: 2.6.2
     optional: true
 
-  '@aws-sdk/types@3.433.0':
+  '@aws-sdk/types@3.664.0':
     dependencies:
-      '@smithy/types': 2.4.0
+      '@smithy/types': 3.5.0
       tslib: 2.6.2
-    optional: true
 
   '@aws-sdk/types@3.667.0':
     dependencies:
@@ -11609,7 +11607,7 @@ snapshots:
 
   '@pm2/pm2-version-check@1.0.4':
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
@@ -11811,7 +11809,7 @@ snapshots:
 
   '@smithy/abort-controller@2.0.11':
     dependencies:
-      '@smithy/types': 2.3.5
+      '@smithy/types': 2.4.0
       tslib: 2.6.2
 
   '@smithy/abort-controller@2.0.12':
@@ -12159,7 +12157,7 @@ snapshots:
     dependencies:
       '@smithy/eventstream-codec': 2.0.11
       '@smithy/is-array-buffer': 2.0.0
-      '@smithy/types': 2.3.5
+      '@smithy/types': 2.4.0
       '@smithy/util-hex-encoding': 2.0.0
       '@smithy/util-middleware': 2.0.4
       '@smithy/util-uri-escape': 2.0.0
@@ -12192,10 +12190,6 @@ snapshots:
       '@smithy/protocol-http': 4.1.4
       '@smithy/types': 3.5.0
       '@smithy/util-stream': 3.1.9
-      tslib: 2.6.2
-
-  '@smithy/types@2.3.5':
-    dependencies:
       tslib: 2.6.2
 
   '@smithy/types@2.4.0':
@@ -12890,13 +12884,13 @@ snapshots:
 
   agent-base@6.0.2:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
   agent-base@7.1.0:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
@@ -15546,7 +15540,7 @@ snapshots:
     dependencies:
       basic-ftp: 5.0.3
       data-uri-to-buffer: 6.0.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
       fs-extra: 8.1.0
     transitivePeerDependencies:
       - supports-color
@@ -15896,21 +15890,21 @@ snapshots:
     dependencies:
       '@tootallnate/once': 2.0.0
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
   http-proxy-agent@7.0.0:
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
   http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
@@ -15923,21 +15917,21 @@ snapshots:
   https-proxy-agent@5.0.1:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
   https-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
   https-proxy-agent@7.0.5:
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
@@ -16279,7 +16273,7 @@ snapshots:
 
   istanbul-lib-source-maps@4.0.1:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
       istanbul-lib-coverage: 3.2.0
       source-map: 0.6.1
     transitivePeerDependencies:
@@ -17701,7 +17695,7 @@ snapshots:
     dependencies:
       '@tootallnate/quickjs-emscripten': 0.23.0
       agent-base: 7.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
       get-uri: 6.0.2
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.5
@@ -18083,7 +18077,7 @@ snapshots:
   proxy-agent@6.3.1:
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
       http-proxy-agent: 7.0.0
       https-proxy-agent: 7.0.2
       lru-cache: 7.18.3
@@ -18096,7 +18090,7 @@ snapshots:
   proxy-agent@6.4.0:
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.5
       lru-cache: 7.18.3
@@ -18414,7 +18408,7 @@ snapshots:
 
   require-in-the-middle@5.2.0:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
       module-details-from-path: 1.0.3
       resolve: 1.22.8
     transitivePeerDependencies:
@@ -18804,7 +18798,7 @@ snapshots:
   socks-proxy-agent@8.0.2:
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
       socks: 2.7.1
     transitivePeerDependencies:
       - supports-color
