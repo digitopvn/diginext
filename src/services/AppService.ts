@@ -315,10 +315,6 @@ export class AppService extends BaseService<IApp> {
 					for (const env of Object.keys(app.deployEnvironment)) {
 						if (app.deployEnvironment[env] && app.deployEnvironment[env].envVars) {
 							app.deployEnvironment[env].envVars = formatEnvVars(app.deployEnvironment[env].envVars);
-
-							// default values
-							// app.deployEnvironment[env].readyCount = 0;
-							// app.deployEnvironment[env].status = "unknown";
 						}
 					}
 				}
