@@ -174,4 +174,16 @@ export default class WorkspaceController extends BaseController<IWorkspace> {
 
 		return interfaces.respondSuccess({ data: { result } });
 	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/test-cloud-storage")
+	async testCloudStorage() {
+		try {
+			const result = await this.service.testCloudStorage();
+			return interfaces.respondSuccess({ data: result });
+		} catch (e) {
+			return interfaces.respondFailure(e);
+		}
+	}
 }

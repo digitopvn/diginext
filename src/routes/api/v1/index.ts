@@ -14,6 +14,7 @@ import deployRouter from "./deploy";
 import domainRouter from "./domain";
 import frameworkRouter from "./framework";
 import gitRouter from "./git";
+import mediaRouter from "./media";
 import monitorRouter from "./monitor";
 import notificationRouter from "./notification";
 import projectRouter from "./project";
@@ -68,6 +69,7 @@ router.use("/cronjob", cronjobRouter);
 router.use("/stats", statsRouter);
 router.use("/webhook", webhookRouter);
 router.use("/notification", notificationRouter);
+router.use("/media", mediaRouter);
 router.use("/ask-ai", askAiRouter);
 
 export default router;

@@ -11,6 +11,7 @@ import { dxCreateUser } from "@/modules/diginext/dx-user";
 import type { CreateWorkspaceParams } from "@/modules/diginext/dx-workspace";
 import { dxCreateWorkspace, dxJoinWorkspace } from "@/modules/diginext/dx-workspace";
 import { filterUniqueItems } from "@/plugins/array";
+import { uploadFileBuffer } from "@/plugins/cloud-storage";
 import { MongoDB } from "@/plugins/mongodb";
 import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
@@ -273,5 +274,12 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 		const updatedUser = await userSvc.update({ id: uid }, { workspaces });
 
 		return workspace;
+	}
+
+	async testCloudStorage() {
+		const cloudStorage = this.workspace.settings.cloud_storage;
+		const uploaded = await uploadFileBuffer(Buffer.from("Hello, world!"), "test.txt", { storage: cloudStorage });
+		console.log("uploaded :>> ", uploaded);
+		return uploaded;
 	}
 }
