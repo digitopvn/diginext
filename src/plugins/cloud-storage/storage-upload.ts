@@ -1,6 +1,5 @@
 import type { PutObjectCommandInput } from "@aws-sdk/client-s3";
-import { S3Client } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
+import { S3 } from "@aws-sdk/client-s3";
 import { env } from "process";
 
 import { getImageBufferFromUrl, readFileToBuffer } from "../image";
@@ -25,7 +24,7 @@ export function getCurrentStorage(): ICloudStorage {
 }
 
 export async function initStorage(storage: ICloudStorage) {
-	const s3 = new S3Client({
+	const s3 = new S3({
 		region: storage.region || "auto",
 		endpoint: storage.endpoint,
 		credentials: {
@@ -38,21 +37,20 @@ export async function initStorage(storage: ICloudStorage) {
 	return s3;
 }
 
-// export async function listBuckets(storage: ICloudStorage) {
-// 	const s3 = await initStorage(storage);
+export async function listBuckets(storage: ICloudStorage) {
+	const s3 = await initStorage(storage);
 
-// 	try {
-// 		const command = new ListBucketsCommand({});
-// 		const response = await s3.send(command);
+	try {
+		const response = await s3.listBuckets({});
 
-// 		console.log("storage-upload > listBuckets() > response :>>", response);
+		console.log("storage-upload > listBuckets() > response :>>", response);
 
-// 		return response.Buckets;
-// 	} catch (error) {
-// 		console.error("storage-upload > listBuckets() > error :>>", error);
-// 		throw new Error(`Failed to list buckets: ${error instanceof Error ? error.message : String(error)}`);
-// 	}
-// }
+		return response.Buckets;
+	} catch (error) {
+		console.error("storage-upload > listBuckets() > error :>>", error);
+		throw new Error(`Failed to list buckets: ${error instanceof Error ? error.message : String(error)}`);
+	}
+}
 
 export async function uploadFileBuffer(
 	buffer: Buffer,
@@ -97,12 +95,18 @@ export async function uploadFileBuffer(
 
 	// process upload
 	try {
+		// New SDK:
 		// const command = new PutObjectCommand(uploadParams);
 		// const data = await s3.send(command);
-		const data = await new Upload({
-			client: s3,
-			params: uploadParams,
-		}).done();
+
+		// Old SDK:
+		const data = await s3.putObject(uploadParams);
+
+		// Even older SDK:
+		// const data = await new Upload({
+		// 	client: s3,
+		// 	params: uploadParams,
+		// }).done();
 
 		if (options?.debug) console.log("uploadFileBuffer :>>", { data });
 
