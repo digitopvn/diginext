@@ -96,8 +96,8 @@ export async function uploadFileBuffer(
 
 	// process upload
 	try {
-		// await new Upload({ client: s3, params: uploadParams }).done();
-		const data = await s3.send(new PutObjectCommand(uploadParams));
+		const command = new PutObjectCommand(uploadParams);
+		const data = await s3.send(command);
 		if (options?.debug) console.log("uploadFileBuffer :>>", { data });
 
 		return {
