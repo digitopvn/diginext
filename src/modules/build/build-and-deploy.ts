@@ -4,6 +4,7 @@ import humanizeDuration from "humanize-duration";
 
 import { IsTest } from "@/app.config";
 import { wait } from "@/plugins";
+import { uploadFileBuffer } from "@/plugins/cloud-storage";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
 import MediaService from "@/services/MediaService";
@@ -79,15 +80,32 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	// console.log("process.env.NODE_ENV :>> ", process.env.NODE_ENV);
 	if (!IsTest()) {
 		try {
-			// let's this job run in background
-			wait(30 * 1000, () => {
+			// let's this job run in background after 60 seconds
+			wait(60 * 1000, () => {
 				screenshot(endpoint, { fullPage: false })
 					.then(async (result) => {
 						if (result) {
+							// upload to cloud storage (if any)
+							const { workspace } = deployParams;
+							let cloudUploadedUrl: string | undefined;
+							if (workspace && workspace.settings.cloud_storage) {
+								const uploaded = await uploadFileBuffer(result.buffer, result.name, {
+									storage: workspace.settings.cloud_storage,
+								}).catch((e) => {
+									console.error(`[BUILD_AND_DEPLOY] Unable to upload screenshot to cloud storage (${endpoint}): ${e}`);
+									return null;
+								});
+								if (uploaded) cloudUploadedUrl = uploaded.publicUrl;
+							}
 							// success -> write to db
 							delete result.buffer;
-							const mediaSvc = new MediaService();
-							const media = await mediaSvc.create({ ...result, owner: deployParams.owner._id, workspace: deployParams.workspace._id });
+							const mediaSvc = new MediaService({ owner: deployParams.owner, workspace: deployParams.workspace });
+							const media = await mediaSvc.create({
+								...result,
+								screenshotUrl: cloudUploadedUrl || result.url,
+								owner: deployParams.owner._id,
+								workspace: deployParams.workspace._id,
+							});
 							if (media) {
 								// update screenshot to release
 								const updatedRelease = await DB.updateOne("release", { _id: releaseId }, { screenshot: media.url });

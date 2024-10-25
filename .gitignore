@@ -13,7 +13,7 @@ yarn-error.log*
 .yarnrc
 .yarnrc.yaml
 .yarnrc.yml
-pnpm-lock.yaml
+# pnpm-lock.yaml
 .pnpm-store/
 /.pnpm-store
 

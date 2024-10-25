@@ -740,6 +740,9 @@ export class DeployEnvironmentService {
 		if (!app.deployEnvironment[env]) throw new Error(`This app doesn't have "${env}" deploy environment.`);
 		if (app.deployEnvironment[env].volumes?.find((vol) => vol.name === data.name)) throw new Error(`Volume name is existed, choose another one.`);
 
+		// default volume type is "pvc"
+		if (!data.type) data.type = "pvc";
+
 		const { buildTag, cluster: clusterSlug } = app.deployEnvironment[env];
 
 		// get cluster
@@ -763,7 +766,7 @@ export class DeployEnvironmentService {
 		);
 
 		// add {PersistentVolumeClaim} to Kubernetes deployment
-		const deployment = await await generateDeploymentV2({
+		const deployment = await generateDeploymentV2({
 			env,
 			skipPrerelease: true, // skip overwrite "prerelease" domain origin
 			appSlug: app.slug,

@@ -35,6 +35,7 @@ export interface CheckDeploymentReadyOptions {
 	appVersion?: string;
 	replicas?: number;
 	onUpdate?: (msg?: string) => void;
+	skipCrashedPods?: boolean;
 	isDebugging?: boolean;
 }
 
@@ -45,7 +46,7 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 	if (isDebugging) log(`checkDeploymentReady() :>>`, options);
 
 	const filterLabel = `main-app=${appName}${appVersion ? `,app-version=${appVersion}` : ""}`;
-	const pods = await ClusterManager.getPods(namespace, {
+	let pods = await ClusterManager.getPods(namespace, {
 		context,
 		filterLabel,
 		metrics: false,
@@ -55,6 +56,15 @@ const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
 		logError(`[CHECK DEPLOYMENT READY] Error: ${e}`);
 		return [];
 	});
+
+	// Skip crashed pods
+	if (options.skipCrashedPods) {
+		console.log("deploy-rollout.ts > checkDeploymentReady() > pods before :>>", pods);
+		pods = pods.filter(
+			(pod) => !pod.status.containerStatuses.some((containerStatus) => containerStatus.state.waiting?.reason === "CrashLoopBackOff")
+		);
+		console.log("deploy-rollout.ts > checkDeploymentReady() > pods after :>>", pods);
+	}
 
 	if (!pods || pods.length == 0) {
 		const msg = `Unable to check "${appName}" deployment:\n- Namespace: ${namespace}\n- Context: ${context}\n- Reason: Selected pods not found: ${filterLabel}.`;
@@ -336,6 +346,11 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 	currentReplicas = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.spec.replicas : 1;
 	currentDeploymentName = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.metadata.name : "";
 	currentAppVersion = currentDeployment && typeof currentDeployment !== "string" ? currentDeployment.metadata.labels["app-version"] : undefined;
+	const currentPods = await ClusterManager.getPods(namespace, { context, filterLabel: `main-app=${mainAppName}`, metrics: false });
+	const countCrashedPods = currentPods.filter(
+		(pod) => pod.status.containerStatuses.find((containerStatus) => containerStatus.state.waiting?.reason === "CrashLoopBackOff") !== undefined
+	).length;
+	const countRunningPods = currentPods.filter((pod) => pod.status.phase === "Running").length;
 
 	// check ingress domain has been used yet or not:
 	let isDomainUsed = false,
@@ -384,8 +399,9 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 
 	/**
 	 * Scale current deployment up to many replicas before apply new deployment YAML
+	 * But if there are many crashed pods -> skip scaling up
 	 */
-	if (newReplicas === 1 || currentReplicas <= 1) {
+	if (newReplicas === 1 && countCrashedPods === 0 && countRunningPods === 1) {
 		if (currentDeploymentName) {
 			if (onUpdate) onUpdate(`Scaling "${currentDeploymentName}" deployment to ${deployReplicas} & prepare for rolling out new deployment.`);
 			await ClusterManager.scaleDeploy(currentDeploymentName, deployReplicas, namespace, { context });
@@ -464,23 +480,55 @@ export async function rolloutV2(releaseId: string, options: RolloutOptions = {})
 		return { error };
 	}
 
-	// Wait until the deployment is ready!
-
-	// check interval: 10 secs
-	// max wait time: 10 mins
+	/**
+	 * Wait until the deployment is ready!
+	 * (Ignore crashed pods)
+	 */
 	const isNewDeploymentReady = await waitUntil(
-		() =>
-			checkDeploymentReady({
+		async () => {
+			const isReady = checkDeploymentReady({
 				context,
 				appName: mainAppName,
 				appVersion,
 				namespace,
 				onUpdate,
-				isDebugging: true,
-			}),
+				skipCrashedPods: true,
+			});
+			if (!isReady) {
+				// Check if all new pods are crashed
+				const newPods = await ClusterManager.getPods(namespace, { context, filterLabel: `app-version=${appVersion}`, metrics: false });
+				const countNewCrashedPods = newPods.filter(
+					(pod) =>
+						pod.status.containerStatuses.find((containerStatus) => containerStatus.state.waiting?.reason === "CrashLoopBackOff") !==
+						undefined
+				).length;
+				const isAllNewPodsCrashed = countNewCrashedPods === newPods.length;
+				if (isAllNewPodsCrashed) {
+					const error = `All new pods are crashed.`;
+					if (onUpdate) onUpdate(error);
+
+					// Dispatch/trigger webhook
+					if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+
+					// Update release as "failed"
+					await DB.update("release", { _id: releaseId }, { status: "failed" }, { select: ["_id", "status"] }).catch(console.error);
+					// Update "deployStatus" of a build to "failed"
+					await DB.update("build", { _id: buildId }, { deployStatus: "failed" }, { select: ["_id", "deployStatus"] }).catch(console.error);
+
+					throw new Error(error);
+				}
+			}
+			return isReady;
+		},
+		// check interval: 5 secs
 		5,
+		// max wait time: 10 mins
 		10 * 60
-	).catch((e) => false);
+	).catch((e) => {
+		logError(`[ROLL OUT V2] Error:`, e);
+		return false;
+	});
+
 	if (options?.isDebugging) log(`[ROLL OUT V2] Checking new deployment's status -> Is Fully Ready:`, isNewDeploymentReady);
 
 	// Try to get the container logs and print to the web ui

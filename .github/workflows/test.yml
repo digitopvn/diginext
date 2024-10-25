@@ -154,7 +154,11 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install package dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: |
+          pnpm install --no-frozen-lockfile
+      
+      # - name: Update AWS SDK
+      #   run: pnpm add @aws-sdk/client-s3@latest @aws-sdk/types@latest
 
       - name: Run tests
         env:

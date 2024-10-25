@@ -444,6 +444,7 @@ export default class BaseService<T = any> {
 		// convert all valid "ObjectId" string to ObjectId()
 		const convertedData = cloneDeepWith(data, function (val) {
 			if (isValidObjectId(val)) return MongoDB.toObjectId(val);
+			if (val === "undefined" || val === "null") return null;
 		});
 
 		// set updated date

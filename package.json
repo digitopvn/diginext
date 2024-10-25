@@ -1,6 +1,6 @@
 {
 	"name": "@topgroup/diginext",
-	"version": "3.35.2",
+	"version": "3.36.0",
 	"description": "A BUILD SERVER & CLI to deploy apps to any Kubernetes clusters.",
 	"exports": "./index.js",
 	"bin": {
@@ -173,8 +173,9 @@
 		]
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.445.0",
-		"@aws-sdk/lib-storage": "^3.445.0",
+		"@aws-sdk/client-s3": "^3.188.0",
+		"@aws-sdk/lib-storage": "^3.675.0",
+		"@aws-sdk/types": "^3.188.0",
 		"@babel/runtime": "^7.15.4",
 		"@google-analytics/admin": "^1.2.3",
 		"@google-cloud/storage": "^5.5.0",

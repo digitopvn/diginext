@@ -2,8 +2,8 @@
 	"compilerOptions": {
 		"strict": false,
 		"outDir": "dist",
-		"lib": ["ES6"],
-		"target": "ES6",
+		"target": "ES2018",
+		"lib": ["ES2018", "DOM"],
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"noImplicitReturns": false,

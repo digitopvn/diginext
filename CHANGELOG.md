@@ -1,3 +1,53 @@
+# [3.36.0](https://github.com/digitopvn/diginext/compare/v3.35.6...v3.36.0) (2024-10-21)
+
+
+### Bug Fixes
+
+* **aws sdk:** version mismatch ([315bcbe](https://github.com/digitopvn/diginext/commit/315bcbe20085ca2df51364d6dfbcf10724bc0bb0))
+* **aws:** please work ([4e794bc](https://github.com/digitopvn/diginext/commit/4e794bc1833f22e42da17e54a15f1c7261961381))
+* **storage upload:** pump @aws/s3-client ([93040a3](https://github.com/digitopvn/diginext/commit/93040a3439239f1b0ccd72591fa965eaca812d8c))
+* **tests:** add aws sdk types dependency ([0e00516](https://github.com/digitopvn/diginext/commit/0e0051655cdf0bc03cbe7ba98e01469f238f0fce))
+* **tsconfig:** es2017 ([f202377](https://github.com/digitopvn/diginext/commit/f202377472c257d1111635e7c15ff2dc8cd219bc))
+
+
+### Features
+
+* **admin:** new page: deploy environment list ([de92227](https://github.com/digitopvn/diginext/commit/de92227e83c48ab98af1e71c1a2af216bcc968e6))
+* **admin:** settings - cloud storage for screenshots and backups ([a1ea7c5](https://github.com/digitopvn/diginext/commit/a1ea7c5f73a04d2b477826ade5b9de81b8b8ebe0))
+
+## [3.35.6](https://github.com/digitopvn/diginext/compare/v3.35.5...v3.35.6) (2024-10-18)
+
+
+### Bug Fixes
+
+* **volume:** set default type is pvc ([9b49256](https://github.com/digitopvn/diginext/commit/9b492561f86c431fdc127d5c41987c1208394767))
+* **volume:** set default type is pvc ([#548](https://github.com/digitopvn/diginext/issues/548)) ([85f49aa](https://github.com/digitopvn/diginext/commit/85f49aaf4e2125d8b4618f953eb89af7ad000a60))
+
+## [3.35.5](https://github.com/digitopvn/diginext/compare/v3.35.4...v3.35.5) (2024-10-17)
+
+
+### Bug Fixes
+
+* **rollout:** skip scale current deploy when there are running pods ([390a70e](https://github.com/digitopvn/diginext/commit/390a70ea18b89e563d10ee95e714a921c700fa11))
+* **rollout:** skip scale current deploy when there are running pods ([#547](https://github.com/digitopvn/diginext/issues/547)) ([f96c0ad](https://github.com/digitopvn/diginext/commit/f96c0adcdf5c453f05f70d1711cea6d8358da3cf))
+
+## [3.35.4](https://github.com/digitopvn/diginext/compare/v3.35.3...v3.35.4) (2024-10-17)
+
+
+### Bug Fixes
+
+* **rollout:** if new pods are crashed, throw error, improve deploy speed ([be92b58](https://github.com/digitopvn/diginext/commit/be92b58f66607165accc98b1effd36667eb55896))
+* **rollout:** if new pods are crashed, throw error, improve deploy speed ([#546](https://github.com/digitopvn/diginext/issues/546)) ([a6d0d9e](https://github.com/digitopvn/diginext/commit/a6d0d9e1db150a443256e6f46230dad68dd07444))
+
+## [3.35.3](https://github.com/digitopvn/diginext/compare/v3.35.2...v3.35.3) (2024-10-17)
+
+
+### Bug Fixes
+
+* **rollout:** correct skip crashed pods ([28b7cdc](https://github.com/digitopvn/diginext/commit/28b7cdc2acb349c86b1762f2d7f97c0516439263))
+* **rollout:** skip crashed pods when checking new deployment status ([585d86f](https://github.com/digitopvn/diginext/commit/585d86f4c2fa08442720899d40f9e4f0c5a26bf4))
+* **rollout:** skip crashed pods when checking new deployment status ([#545](https://github.com/digitopvn/diginext/issues/545)) ([6f380db](https://github.com/digitopvn/diginext/commit/6f380dbc0c451d00cc03027afab936d10034a2b6))
+
 ## [3.35.2](https://github.com/digitopvn/diginext/compare/v3.35.1...v3.35.2) (2024-09-13)
 
 

@@ -2,6 +2,7 @@ import { Schema } from "mongoose";
 
 import type { HiddenBodyKeys } from "@/interfaces";
 import type { RetentionType } from "@/interfaces/SystemTypes";
+import type { CloudStorageProvider } from "@/plugins/cloud-storage";
 
 import type { IBase } from "./Base";
 import { baseSchemaDefinitions } from "./Base";
@@ -76,6 +77,16 @@ export interface IWorkspace extends IBase {
 				value: number;
 			};
 		};
+		cloud_storage?: {
+			provider: CloudStorageProvider;
+			region: string;
+			bucket: string;
+			accessKey: string;
+			secretKey: string;
+			endpoint: string;
+			baseUrl: string;
+			basePath: string;
+		};
 	};
 }
 
@@ -111,6 +122,16 @@ export const workspaceSchema = new Schema(
 					type: { type: String },
 					value: { type: Number },
 				},
+			},
+			cloud_storage: {
+				provider: { type: String },
+				region: { type: String },
+				bucket: { type: String },
+				accessKey: { type: String },
+				secretKey: { type: String },
+				endpoint: { type: String },
+				baseUrl: { type: String },
+				basePath: { type: String },
 			},
 		},
 	},
