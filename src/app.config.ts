@@ -120,7 +120,7 @@ export class Config {
 	}
 
 	static get DX_API_URL() {
-		return this.DX_SITE_URL + "/api";
+		return this.DX_SITE_URL + "/api/v1/admin";
 	}
 
 	static get BUILDER() {

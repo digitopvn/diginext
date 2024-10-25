@@ -54,6 +54,7 @@ export default class BaseService<T = any> {
 
 	async getActiveWorkspace(user: IUser) {
 		let workspace = (user.activeWorkspace as any)._id ? (user.activeWorkspace as IWorkspace) : undefined;
+		console.log("getActiveWorkspace");
 		if (!workspace && MongoDB.isValidObjectId(user.activeWorkspace)) {
 			const wsModel = model("workspaces", workspaceSchema, "workspaces");
 			workspace = await wsModel.findOne({ _id: user.activeWorkspace });
@@ -62,6 +63,8 @@ export default class BaseService<T = any> {
 	}
 
 	async getActiveRole(user: IUser) {
+		console.log("getActiveRole");
+
 		let role = (user.activeRole as any)._id ? (user.activeRole as IRole) : undefined;
 		if (!role && MongoDB.isValidObjectId(user.activeRole)) {
 			const Model = model("roles", roleSchema, "roles");
@@ -237,7 +240,7 @@ export default class BaseService<T = any> {
 												else: null,
 											},
 										},
-								  },
+									},
 						},
 					},
 				});
@@ -286,15 +289,15 @@ export default class BaseService<T = any> {
 			pagination.prev_page =
 				pagination.current_page != prevPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 
 			pagination.next_page =
 				pagination.current_page != nextPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 		}
 
@@ -313,7 +316,8 @@ export default class BaseService<T = any> {
 
 	async findOne(filter?: IQueryFilter<T>, options: IQueryOptions = {}) {
 		const [result] = await this.find(filter, { ...options, limit: 1 });
-		if (!result) throw new Error("No data found.");
+
+		// if (!result) throw new Error("No data found.");
 		return result as T;
 	}
 
@@ -371,7 +375,7 @@ export default class BaseService<T = any> {
 												else: null,
 											},
 										},
-								  },
+									},
 						},
 					},
 				});
@@ -408,15 +412,15 @@ export default class BaseService<T = any> {
 			pagination.prev_page =
 				pagination.current_page != prevPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 
 			pagination.next_page =
 				pagination.current_page != nextPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-					  "?" +
-					  new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
+						"?" +
+						new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 		}
 

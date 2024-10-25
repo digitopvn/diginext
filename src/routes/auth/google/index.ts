@@ -14,7 +14,6 @@ const router = express.Router();
 export const signAndRedirect = (res: Response, data: { userId: string; workspaceId?: string }, redirectUrl: string) => {
 	const { userId, workspaceId } = data;
 	// console.log("[2] signAndRedirect > data :>> ", data);
-
 	const { accessToken: access_token, refreshToken: refresh_token } = generateJWT(userId, {
 		expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
 		workspaceId,

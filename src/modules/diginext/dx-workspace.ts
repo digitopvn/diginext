@@ -9,6 +9,7 @@ export type CreateWorkspaceParams = {
 	userId: string;
 	name: string;
 	public: boolean;
+	email?: string;
 	subscriptionId?: string;
 };
 

@@ -39,16 +39,20 @@ export class UserService extends BaseService<IUser> {
 	async create(data, options: IQueryOptions = {}) {
 		let newUser = await super.create(data, options);
 		if (!newUser.username) newUser = await this.updateOne({ _id: newUser._id }, { username: newUser.slug });
-
 		// create user on "dxup.dev" via "dxApi"
 		try {
 			const dxUserRes = await dxCreateUser({
 				name: newUser.name,
-				username: newUser.username || newUser.slug,
+				username: newUser.username,
+				image: newUser.image || "",
+				providers: newUser.providers[0],
 				email: newUser.email,
 				password: newUser.password,
 				isActive: true,
 			});
+
+			console.log("More data:", newUser);
+
 			if (!dxUserRes.status) throw new Error(dxUserRes.messages?.join("\n"));
 			if (dxUserRes.data.id) {
 				newUser = await this.updateOne({ _id: newUser._id }, { dxUserId: dxUserRes.data.id });
@@ -167,8 +171,9 @@ export class UserService extends BaseService<IUser> {
 		const workspaceSvc = new WorkspaceService(this.ownership);
 		const workspace = await workspaceSvc.findOne(wsFilter);
 		if (!workspace) throw new Error(`Workspace not found.`);
-		if (!workspace.dx_key) throw new Error(`Workspace is invalid (missing "dx_key").`);
-		if (!workspace.dx_id) throw new Error(`Workspace is invalid (missing "dx_id").`);
+		console.log("workspace", workspace);
+		// if (!workspace.dx_key) throw new Error(`Workspace is invalid (missing "dx_key").`);
+		// if (!workspace.dx_id) throw new Error(`Workspace is invalid (missing "dx_id").`);
 
 		workspaceId = MongoDB.toString(workspace._id);
 

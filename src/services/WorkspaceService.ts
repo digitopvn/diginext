@@ -102,14 +102,18 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 				const dataCreateWorkSpace: CreateWorkspaceParams = {
 					name: name,
 					public: data.public,
+					email: ownerUser.email,
 					userId: ownerUser.dxUserId,
 				};
 				const createWsRes = await dxCreateWorkspace(dataCreateWorkSpace);
+
+				console.log("createWsRes:", createWsRes);
+
 				if (!createWsRes.status) throw new Error(createWsRes.messages.join("."));
 
 				// assign DXSITE workspace ID and key to the workspace
 				data.dx_key = createWsRes.data.subscriptionKey;
-				data.dx_id = createWsRes.data.id;
+				data.dx_id = createWsRes.data._id;
 			} catch (e) {
 				console.log(`[WorkspaceService] create > dxCreateWorkspace :>>`, e);
 			}
