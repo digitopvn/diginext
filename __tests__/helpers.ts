@@ -217,7 +217,7 @@ export const createWorkspace = async (ownerId: string, name: string, isPublic = 
 };
 
 export const loginUser = async (userId: string, workspaceId?: string) => {
-	const { accessToken: access_token, refreshToken: refresh_token } = generateJWT(userId, {
+	const { accessToken: access_token, refreshToken: refresh_token } = await generateJWT(userId, {
 		expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
 		workspaceId: workspaceId,
 	});
