@@ -41,6 +41,7 @@ export class UserService extends BaseService<IUser> {
 		if (!newUser.username) newUser = await this.updateOne({ _id: newUser._id }, { username: newUser.slug });
 		// create user on "dxup.dev" via "dxApi"
 		try {
+			console.log(newUser.providers[0]);
 			const dxUserRes = await dxCreateUser({
 				name: newUser.name,
 				username: newUser.username,
@@ -172,8 +173,8 @@ export class UserService extends BaseService<IUser> {
 		const workspace = await workspaceSvc.findOne(wsFilter);
 		if (!workspace) throw new Error(`Workspace not found.`);
 		console.log("workspace", workspace);
-		// if (!workspace.dx_key) throw new Error(`Workspace is invalid (missing "dx_key").`);
-		// if (!workspace.dx_id) throw new Error(`Workspace is invalid (missing "dx_id").`);
+		if (!workspace.dx_key) throw new Error(`Workspace is invalid (missing "dx_key").`);
+		if (!workspace.dx_id) throw new Error(`Workspace is invalid (missing "dx_id").`);
 
 		workspaceId = MongoDB.toString(workspace._id);
 
@@ -181,9 +182,8 @@ export class UserService extends BaseService<IUser> {
 		let user = await this.findOne({ _id: userId }, { populate: ["roles"] });
 		if (!user) throw new Error(`User not found.`);
 		// console.dir(user, { depth: 10 });
-
 		// create user on "dxup.dev" via "dxApi"
-		if (!user.dxUserId) {
+		if (user.dxUserId) {
 			try {
 				const dxUserRes = await dxCreateUser({
 					name: user.name,

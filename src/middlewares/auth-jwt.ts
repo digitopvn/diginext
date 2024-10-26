@@ -50,7 +50,7 @@ const jwt_auth = (req: AppRequest, res, next) =>
 
 					// refresh token is valid -> generate new access token
 					// console.log("jwt_auth > refresh token is valid > generate new access token");
-					const { accessToken, refreshToken } = generateJWT(refreshTokenDetails.id, {
+					const { accessToken, refreshToken } = await generateJWT(refreshTokenDetails.id, {
 						expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
 						workspaceId: refreshTokenDetails.workspaceId,
 					});
@@ -93,7 +93,7 @@ const jwt_auth = (req: AppRequest, res, next) =>
 				? undefined
 				: (roles.find(
 						(role) => MongoDB.toString((role as IRole).workspace) === MongoDB.toString((user.activeWorkspace as IWorkspace)?._id)
-				  ) as IRole);
+					) as IRole);
 
 			if (activeRole && user.activeRole !== activeRole._id) {
 				user = await DB.updateOne(

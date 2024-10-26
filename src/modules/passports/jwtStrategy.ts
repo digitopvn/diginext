@@ -7,7 +7,8 @@ import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { Config } from "@/app.config";
-import type { AccessTokenInfo } from "@/entities";
+import type { AccessTokenInfo, IUser } from "@/entities";
+import { UserService } from "@/services";
 
 dayjs.extend(relativeTime);
 
@@ -24,13 +25,16 @@ var cookieExtractor = function (req) {
 	return token;
 };
 
-export const generateJWT = (userId: string, options?: JWTOptions) => {
+export const generateJWT = async (userId: string, options?: JWTOptions) => {
 	if (!options.expiresIn) options.expiresIn = process.env.JWT_EXPIRE_TIME || "2d";
+	const userSvc = new UserService();
+
+	let user: IUser = await userSvc.findOne({ _id: userId }, { select: ["email"] });
 
 	const { expiresIn } = options;
 	const secret = Config.grab("JWT_SECRET", "123");
 	const refreshSecret = Config.grab("JWT_REFRESH_SECRET", secret);
-	const payload = { id: userId, ...options };
+	const payload = { id: userId, email: user.email, ...options };
 
 	const accessToken = jwt.sign(payload, secret, {
 		algorithm: "HS512",
@@ -115,7 +119,7 @@ export async function extractAccessTokenInfo(
 
 		if (accessTokenExpHourLeft < 4) {
 			const userId = payload.id;
-			const { accessToken, refreshToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+			const { accessToken, refreshToken } = await generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
 			access_token = accessToken;
 			refresh_token = refreshToken;
 

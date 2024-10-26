@@ -134,11 +134,11 @@ export class WebhookService extends BaseService<IWebhook> {
 												? `Failed to deploy "${release?.appSlug}" app of "${release?.projectSlug}" project to "${release?.env.toUpperCase()}" environment.<br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}`
 												: `<strong>App has been deployed to "${release?.env.toUpperCase()}" environment successfully.</strong><br/><br/>- Workspace: ${
 														(release?.workspace as IWorkspace).name
-												  }<br/>- User: ${owner.name} (${
+													}<br/>- User: ${owner.name} (${
 														owner.slug
-												  })<br/>- App: ${release?.appSlug}<br/>- Project: ${release?.projectSlug}<br/>- URL: <a href="https://${
+													})<br/>- App: ${release?.appSlug}<br/>- Project: ${release?.projectSlug}<br/>- URL: <a href="https://${
 														release?.env === "production" ? release?.prereleaseUrl : release?.productionUrl
-												  }">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${release?.image}`) +
+													}">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${release?.image}`) +
 											`<br/><br/>Go to <a href="${buildListPageUrl}">DXUP Dashboard</a>.<br/><br/>Best regards, <a href="https://dxup.dev">DXUP</a> Team.`,
 									});
 								})
