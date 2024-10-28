@@ -1,3 +1,11 @@
+## [3.36.1](https://github.com/digitopvn/diginext/compare/v3.36.0...v3.36.1) (2024-10-28)
+
+
+### Bug Fixes
+
+* **admin:** deploy env list - filter by cluster ([1ffc55d](https://github.com/digitopvn/diginext/commit/1ffc55d01c9b38a2830d9a59d286d59a73c9e921))
+* **storage:** use correct put object when upload aws ([a604c31](https://github.com/digitopvn/diginext/commit/a604c310e159c5fe7009392a4e360e4bdada59a3))
+
 # [3.36.0](https://github.com/digitopvn/diginext/compare/v3.35.6...v3.36.0) (2024-10-21)
 
 
