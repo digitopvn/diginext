@@ -25,6 +25,6 @@ export type CreateUserResponse = ResponseData & {
 
 export async function dxCreateUser(params: IBodyCreateUser, options?: { isDebugging?: boolean }) {
 	if (IsTest()) return { status: 1, data: {} } as CreateUserResponse;
-
-	return dxApi<CreateUserResponse>({ url: "/dx/user", data: params, method: "POST", isDebugging: options?.isDebugging });
+	console.log(params);
+	return dxApi<CreateUserResponse>({ url: "/auth/register", data: params, method: "POST", isDebugging: options?.isDebugging });
 }

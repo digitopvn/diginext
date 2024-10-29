@@ -96,7 +96,7 @@ router.post("/register", async (req, res) => {
 			const activeRoleId = (newUser.roles[0] as IRole)._id;
 
 			// sign JWT
-			const { accessToken, refreshToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+			const { accessToken, refreshToken } = await generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
 			const tokenInfo = await extractAccessTokenInfo(
 				{ access_token: accessToken, refresh_token: refreshToken },
 				{ id: userId, workspaceId, exp: Date.now() + 172800000 }
@@ -124,7 +124,7 @@ router.post("/register", async (req, res) => {
 		console.warn("this user has no workspaces or multiple workspaces -> select one!");
 
 		// sign JWT (without "workspaceId")
-		const { accessToken, refreshToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
+		const { accessToken, refreshToken } = await await generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
 		const tokenInfo = await extractAccessTokenInfo(
 			{ access_token: accessToken, refresh_token: refreshToken },
 			{ id: userId, exp: Date.now() + 172800000 }
@@ -192,7 +192,7 @@ router.post(
 				const activeRoleId = (user.roles[0] as IRole)._id;
 
 				// sign JWT
-				const { accessToken, refreshToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
+				const { accessToken, refreshToken } = await generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d", workspaceId });
 				const tokenInfo = await extractAccessTokenInfo(
 					{ access_token: accessToken, refresh_token: refreshToken },
 					{ id: userId, exp: Date.now() + 172800000 }
@@ -216,7 +216,7 @@ router.post(
 			// if this user has no workspaces or multiple workspaces -> select one!
 			console.log("this user has no workspaces or multiple workspaces -> select one!");
 
-			const { accessToken, refreshToken } = generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
+			const { accessToken, refreshToken } = await generateJWT(userId, { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
 			const tokenInfo = await extractAccessTokenInfo(
 				{ access_token: accessToken, refresh_token: refreshToken },
 				{ id: userId, exp: Date.now() + 172800000 }
@@ -289,7 +289,7 @@ router.post("/login/google", async (req, res) => {
 				const activeRoleId = (newUser.roles[0] as IRole)._id;
 
 				// sign JWT
-				const { accessToken, refreshToken } = generateJWT(newUser._id.toString(), {
+				const { accessToken, refreshToken } = await generateJWT(newUser._id.toString(), {
 					expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
 					workspaceId,
 				});
@@ -314,7 +314,7 @@ router.post("/login/google", async (req, res) => {
 			// if this user has no workspaces or multiple workspaces -> select one!
 			console.warn("this user has no workspaces or multiple workspaces -> select one!");
 
-			const { accessToken, refreshToken } = generateJWT(newUser._id.toString(), { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
+			const { accessToken, refreshToken } = await generateJWT(newUser._id.toString(), { expiresIn: process.env.JWT_EXPIRE_TIME || "2d" });
 			const tokenInfo = await extractAccessTokenInfo(
 				{ access_token: accessToken, refresh_token: refreshToken },
 				{ id: newUser._id.toString(), exp: Date.now() + 172800000 }
@@ -340,7 +340,7 @@ router.post("/login/google", async (req, res) => {
 router.post("/generate-access-token", async (req, res) => {
 	const { workspaceId, userId } = req.body;
 	try {
-		const { accessToken: access_token, refreshToken: refresh_token } = generateJWT(userId, {
+		const { accessToken: access_token, refreshToken: refresh_token } = await generateJWT(userId, {
 			expiresIn: process.env.JWT_EXPIRE_TIME || "2d",
 			workspaceId,
 		});
