@@ -1,3 +1,12 @@
+## [3.36.2](https://github.com/digitopvn/diginext/compare/v3.36.1...v3.36.2) (2024-10-29)
+
+
+### Bug Fixes
+
+* **api:** token with email ([711455e](https://github.com/digitopvn/diginext/commit/711455e1ad5be5e8484c297fcca125484fcb593d))
+* **api:** token with email ([db9dc3c](https://github.com/digitopvn/diginext/commit/db9dc3c99cbe0507a1755290b15319e5b4036c31))
+* **server:** api call to dxsite ([ba34541](https://github.com/digitopvn/diginext/commit/ba345414028cddb685fab582572bc903ce40b8bc))
+
 ## [3.36.1](https://github.com/digitopvn/diginext/compare/v3.36.0...v3.36.1) (2024-10-28)
 
 
