@@ -63,10 +63,10 @@ export default class ProjectController extends BaseController {
 		// check dx quota
 		const quotaRes = await checkQuota(this.workspace);
 		if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
-		if (quotaRes.data && quotaRes.data.isExceed)
-			return respondFailure(
-				`You've exceeded the limit amount of projects (${quotaRes.data.type} / Max. ${quotaRes.data.limits.projects} projects).`
-			);
+		if (quotaRes.data && quotaRes.data.isExceed) return respondFailure(`You've exceeded the limit amount of projects.`);
+		// return respondFailure(
+		// 	`You've exceeded the limit amount of projects (${quotaRes.data.type} / Max. ${quotaRes.data.limits.projects} projects).`
+		// );
 
 		return super.create(body);
 	}

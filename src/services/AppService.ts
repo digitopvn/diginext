@@ -488,10 +488,12 @@ export class AppService extends BaseService<IApp> {
 					if (size) {
 						const quotaRes = await checkQuota(workspace, { resourceSize: size });
 						if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
-						if (quotaRes.data && quotaRes.data.isExceed)
-							throw new Error(
-								`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
-							);
+						if (quotaRes.data && quotaRes.data.isExceed) {
+							throw new Error(`You've exceeded the limit amount of container size.`);
+							// throw new Error(
+							// 	`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+							// );
+						}
 					}
 
 					// IMPORTANT: Only update specific paths
