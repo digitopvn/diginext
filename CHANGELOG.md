@@ -1,3 +1,11 @@
+## [3.36.3](https://github.com/digitopvn/diginext/compare/v3.36.2...v3.36.3) (2024-11-06)
+
+
+### Bug Fixes
+
+* **cli:** skip check ready ([f4a9d99](https://github.com/digitopvn/diginext/commit/f4a9d99a88293c0c46272f094c9e09b64d6bba95))
+* **cli:** skip check ready ([#553](https://github.com/digitopvn/diginext/issues/553)) ([3ad3fac](https://github.com/digitopvn/diginext/commit/3ad3fac324abb244a3c6953c2735fdc9a25f1319))
+
 ## [3.36.2](https://github.com/digitopvn/diginext/compare/v3.36.1...v3.36.2) (2024-10-29)
 
 
