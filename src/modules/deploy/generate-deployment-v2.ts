@@ -163,7 +163,10 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 
 	// get container registry & create "imagePullSecret" in the target cluster
 	let registry: IContainerRegistry =
-		inputRegistry || (deployEnvironmentConfig.registry ? await DB.findOne("registry", { slug: deployEnvironmentConfig.registry }) : undefined);
+		inputRegistry ||
+		(deployEnvironmentConfig.registry
+			? await DB.findOne("registry", { slug: deployEnvironmentConfig.registry }, { subpath: "/all" })
+			: undefined);
 	if (!registry) throw new Error(`Container registries not found, please contact your admin or create a new one.`);
 	deployEnvironmentConfig.registry = registry.slug;
 

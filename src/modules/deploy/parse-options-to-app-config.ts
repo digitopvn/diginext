@@ -81,7 +81,8 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 	if (typeof zone !== "undefined") deployEnvironment.zone = zone;
 
 	// Container Registry
-	if (typeof registry !== "undefined") deployEnvironment.registry = typeof registry !== "boolean" ? registry : (await askForRegistry()).slug;
+	if (typeof registry !== "undefined") deployEnvironment.registry = typeof registry !== "boolean" ? registry : deployEnvironment.registry;
+	if (typeof deployEnvironment.registry === "undefined") deployEnvironment.registry = (await askForRegistry()).slug;
 
 	// Domains
 	if (typeof domain !== "undefined" && typeof domain !== "boolean") deployEnvironment.domains = [domain];

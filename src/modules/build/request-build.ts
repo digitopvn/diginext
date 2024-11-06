@@ -66,7 +66,7 @@ export async function requestBuild(options: InputOptions) {
 		registry = await askForRegistry();
 		options.registry = registry.slug;
 	} else {
-		registry = await DB.findOne("registry", { slug: options.registry });
+		registry = await DB.findOne("registry", { slug: options.registry }, { subpath: "/all" });
 	}
 
 	if (!registry) {

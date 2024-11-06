@@ -600,7 +600,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		// container registry
 		if (deployEnvironmentData.registry) {
-			const registry = await DB.findOne("registry", { slug: deployEnvironmentData.registry });
+			const registry = await DB.findOne("registry", { slug: deployEnvironmentData.registry }, { subpath: "/all" });
 			if (!registry) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
 		}
 

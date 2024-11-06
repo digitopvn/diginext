@@ -43,7 +43,7 @@ export const execRegistry = async (options: InputOptions) => {
 		case "create-secret":
 			let registry: IContainerRegistry;
 			if (registrySlug && typeof registrySlug !== "boolean") {
-				registry = await DB.findOne("registry", { slug: registrySlug });
+				registry = await DB.findOne("registry", { slug: registrySlug }, { subpath: "/all" });
 			} else {
 				registry = await askForRegistry();
 				registrySlug = registry.slug;
