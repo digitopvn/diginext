@@ -163,6 +163,7 @@ export type WebhookEventStatus = (typeof webhookEventStatusList)[number];
  */
 export const credentialFields: string[] = [
 	// account
+	"access_token",
 	"token.access_token",
 	"owner.password",
 	"owner.token.access_token",
@@ -177,7 +178,6 @@ export const credentialFields: string[] = [
 	"registry.serviceAccount",
 	"registry.imagePullSecret.value",
 	// git
-	"access_token",
 	"bitbucket_oauth.consumer_secret",
 	"bitbucket_oauth.app_password",
 	"github_oauth.client_secret",

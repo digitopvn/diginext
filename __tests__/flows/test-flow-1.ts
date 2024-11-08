@@ -163,7 +163,7 @@ export function testFlow1() {
 				app_password: process.env.TEST_BITBUCKET_APP_PASS,
 			},
 		});
-		console.log("[TEST] Git Provider > Bitbucket > createRes :>> ", createRes);
+		// console.log("[TEST] Git Provider > Bitbucket > createRes :>> ", createRes);
 		expect(createRes.status).toEqual(1);
 		expect(createRes.data).toBeDefined();
 
@@ -200,7 +200,7 @@ export function testFlow1() {
 				personal_access_token: process.env.TEST_GITHUB_PAT,
 			},
 		});
-		console.log("[TEST] Git Provider > Github > createRes :>> ", createRes);
+		// console.log("[TEST] Git Provider > Github > createRes :>> ", createRes);
 		expect(createRes.status).toEqual(1);
 		expect(createRes.data).toBeDefined();
 
@@ -238,7 +238,7 @@ export function testFlow1() {
 			workspace: curUser.activeWorkspace._id,
 		} as any);
 
-		console.log("FRAMEWORK > PUBLIC > createRes :>> ", createRes);
+		// console.log("FRAMEWORK > PUBLIC > createRes :>> ", createRes);
 		// if (!createRes.status) throw new Error(createRes.messages.join("."));
 		expect(createRes.status).toBe(1);
 
@@ -260,7 +260,7 @@ export function testFlow1() {
 			gitProvider: "github",
 			mainBranch: "main",
 		});
-		console.log("FRAMEWORK > PRIVATE > createRes :>> ", createRes);
+		// console.log("FRAMEWORK > PRIVATE > createRes :>> ", createRes);
 		// if (!createRes.status) console.log("FRAMEWORK > createRes :>> ", createRes);
 		expect(createRes.status).toBe(1);
 
