@@ -130,6 +130,16 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	if (typeof deployEnvironmentConfig.port === "undefined") throw new Error(`Unable to generate deployment YAML, port is required.`);
 
 	const clusterSlug = deployEnvironmentConfig.cluster;
+	// get destination cluster
+	let cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all", populate: ["owner"] });
+	if (!cluster) {
+		throw new Error(`Cannot find any clusters with short name as "${clusterSlug}", please contact your admin or create a new one.`);
+	}
+
+	// Authenticate with the cluster
+	await ClusterManager.authCluster(cluster, { ownership: { owner: cluster.owner as IUser, workspace } });
+
+	const { contextName: context } = cluster;
 
 	// Prepare for building docker image
 	let IMAGE_NAME = buildImage ? `${buildImage}:${buildTag}` : undefined;
@@ -176,13 +186,6 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 		[registry] = await DB.update("registry", { _id: registry._id }, { imagePullSecret });
 	}
 	// console.log("registry :>> ", registry);
-
-	// get destination cluster
-	let cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
-	if (!cluster) {
-		throw new Error(`Cannot find any clusters with short name as "${clusterSlug}", please contact your admin or create a new one.`);
-	}
-	const { contextName: context } = cluster;
 
 	// get registry secret as image pulling secret:
 	const { imagePullSecret } = registry;
