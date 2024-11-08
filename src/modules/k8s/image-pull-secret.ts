@@ -17,7 +17,7 @@ export async function createImagePullSecrets(options: ContainerRegistrySecretOpt
 
 	let message = "";
 
-	let registry = await DB.findOne("registry", { slug: registrySlug });
+	let registry = await DB.findOne("registry", { slug: registrySlug }, { subpath: "/all" });
 	if (!registry) throw new Error(`Container Registry "${registrySlug}" not found.`);
 
 	try {

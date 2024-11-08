@@ -20,7 +20,7 @@ https://dxup.dev
 - One-click deploy to any Kubernetes clusters of any cloud providers
     - ✅ GCP
     - ✅ DigitalOcean
-    - ✅ Metal K8S cluster
+    - ✅ Bare Metal K8S cluster
     - 🔜 AWS
     - 🔜 Azure
 - Simple deploy of any public or private Docker image
@@ -250,3 +250,15 @@ If you enjoyed this project — or just feeling generous, consider buying me som
 - CTO at [TOP GROUP](https://wearetopgroup.com)
 
 Thank you!
+
+## My other products
+
+- [DigiCord AI](https://digicord.site) - The Most Useful AI Chatbot on Discord
+- [IndieBacklink.com](https://indiebacklink.com) - Indie Makers Unite: Feature, Support, Succeed
+- [TopRanking.ai](https://topranking.ai) - AI Directory, listing AI products
+- [ZII.ONE](https://zii.one) - Personalized Link Shortener
+- [VidCap.xyz](https://vidcap.xyz) - Extract Youtube caption, download videos, capture screenshot, summarize,…
+- [ReadTube.me](https://readtube.me) - Write blog articles based on Youtube videos
+- [BoostTogether.com](https://boosttogether.com) - The Power of WE in Advertising
+- [AIVN.Site](https://aivn.site) - Face Swap, Remove BG, Photo Editor,…
+- [GetViral.Now](https://getviral.now) - KOL booking better together!

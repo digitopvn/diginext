@@ -118,6 +118,17 @@ export interface ClientDeployEnvironmentConfig {
 	ssl?: SslType;
 
 	/**
+	 * Healthz path
+	 * @example "/", "/healthz"
+	 */
+	healthzPath?: string | null;
+	/**
+	 * Healthz port
+	 * @default `port`
+	 */
+	healthzPort?: number | null;
+
+	/**
 	 * Secret name to hold the key of SSL, will be automatically generated.
 	 * Only need to specify when using "custom" SSL (which is the SSL from third-party issuer)
 	 */
@@ -254,4 +265,16 @@ export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
 	 * Persistent Volume
 	 */
 	volumes?: DeployEnvironmentVolume[];
+
+	/**
+	 * Health check path
+	 * @default "/"
+	 */
+	healthzPath?: string | null;
+
+	/**
+	 * Healthz port
+	 * @default `port`
+	 */
+	healthzPort?: number | null;
 }

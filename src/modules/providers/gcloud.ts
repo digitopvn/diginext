@@ -104,7 +104,7 @@ export const connectDockerToRegistry = async (options?: InputOptions & { builder
 		return;
 	}
 
-	const existingRegistry = await DB.findOne("registry", { slug: registrySlug }, { ignorable: true });
+	const existingRegistry = await DB.findOne("registry", { slug: registrySlug }, { subpath: "/all", ignorable: true });
 	if (options.isDebugging) log(`[GCLOUD] connectDockerRegistry >`, { existingRegistry });
 	if (existingRegistry) return existingRegistry;
 
@@ -140,7 +140,7 @@ export const createImagePullingSecret = async (options?: ContainerRegistrySecret
 	}
 
 	// get Container Registry data:
-	const registry = await DB.findOne("registry", { slug: registrySlug });
+	const registry = await DB.findOne("registry", { slug: registrySlug }, { subpath: "/all" });
 
 	if (!registry) {
 		logError(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);

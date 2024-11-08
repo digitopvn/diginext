@@ -172,7 +172,7 @@ To expose this app to the internet later, you can add your own domain to deploy 
 	// request container registry
 	let registry: IContainerRegistry;
 	if (serverDeployEnvironment.registry) {
-		registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry }, { ignorable: true });
+		registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry }, { subpath: "/all", ignorable: true });
 		serverDeployEnvironment.registry = registry?.slug;
 	}
 	if (!serverDeployEnvironment.registry) {
@@ -237,9 +237,8 @@ To expose this app to the internet later, you can add your own domain to deploy 
 	options.size = serverDeployEnvironment.size;
 
 	// request SSL config
-	// TODO: Each domain should has its own tls secret
 	if (serverDeployEnvironment.domains.length > 0) {
-		if (typeof serverDeployEnvironment.ssl === "undefined" || serverDeployEnvironment.ssl === "none") {
+		if (typeof serverDeployEnvironment.ssl === "undefined") {
 			serverDeployEnvironment.ssl = await askForCertIssuer();
 		}
 

@@ -90,6 +90,7 @@ const argvOptions = {
 	template: { describe: "Should replace current deployment with the templates or not", alias: "tpl" },
 	fresh: { describe: "Should do a fresh deploy [WARN - this will wipe out the current namespace]", alias: "fr" },
 	rollout: { describe: "Should skip PRE-RELEASE environment and roll out PROD release immediately", alias: "ro" },
+	healthz: { describe: "Specify health check path", alias: "hz" },
 };
 
 const globalOptions = {
@@ -167,6 +168,7 @@ const deployOptions = {
 	fresh: argvOptions.fresh,
 	rollout: argvOptions.rollout,
 	message: argvOptions.message,
+	healthz: argvOptions.healthz,
 };
 
 const kubectlDeploymentOptions = {
@@ -577,6 +579,8 @@ export async function parseCliOptions() {
 		namespace: argv.namespace as string,
 		redirect: argv.redirect as boolean,
 		ssl: argv.ssl as boolean, // [FLAG] --no-ssl
+		// [FLAG] --no-healthz, --healthz=/custom/path
+		healthz: argv.healthz === undefined || argv.healthz === true ? "/" : argv.healthz === false ? null : (argv.healthz as string),
 		imageURL: argv.image as string,
 		message: argv.message as string,
 	};

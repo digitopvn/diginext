@@ -294,7 +294,7 @@ export async function startBuildV1(
 		sendLog({ SOCKET_ROOM, message: `Start building the Docker image...` });
 
 		// authenticate registry before building & pushing image
-		const registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry });
+		const registry = await DB.findOne("registry", { slug: serverDeployEnvironment.registry }, { subpath: "/all" });
 		await connectRegistry(registry, { userId: author._id, workspaceId: workspace._id });
 
 		const buildEngine = process.env.BUILDER === "docker" ? builder.Docker : builder.Podman;

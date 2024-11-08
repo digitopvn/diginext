@@ -123,6 +123,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	let buildNumber = app.buildNumber ?? 1;
 	let appVersion = deploymentName + "-" + buildNumber;
 	let basePath = deployEnvironmentConfig.basePath ?? "";
+	const healthzPath = deployEnvironmentConfig.healthzPath;
 
 	// Overwrite exposed port
 	if (typeof port !== "undefined") deployEnvironmentConfig.port = port;
@@ -163,7 +164,10 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 
 	// get container registry & create "imagePullSecret" in the target cluster
 	let registry: IContainerRegistry =
-		inputRegistry || (deployEnvironmentConfig.registry ? await DB.findOne("registry", { slug: deployEnvironmentConfig.registry }) : undefined);
+		inputRegistry ||
+		(deployEnvironmentConfig.registry
+			? await DB.findOne("registry", { slug: deployEnvironmentConfig.registry }, { subpath: "/all" })
+			: undefined);
 	if (!registry) throw new Error(`Container registries not found, please contact your admin or create a new one.`);
 	deployEnvironmentConfig.registry = registry.slug;
 
@@ -421,30 +425,32 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 				doc.spec.template.spec.containers[0].ports = [{ containerPort: toNumber(deployEnvironmentConfig.port) }];
 
 				// readinginessProbe & livenessProbe
-				// RUNNING: Sometimes, applications are temporarily unable to serve traffic
-				doc.spec.template.spec.containers[0].readinessProbe = {
-					httpGet: {
-						path: "/",
-						port: toNumber(deployEnvironmentConfig.port),
-					},
-					initialDelaySeconds: 30,
-					timeoutSeconds: 2,
-					periodSeconds: 15,
-					successThreshold: 1,
-					failureThreshold: 3,
-				};
-				// STARTUP: The application is considered unhealthy after a certain number of consecutive failures
-				doc.spec.template.spec.containers[0].livenessProbe = {
-					httpGet: {
-						path: "/",
-						port: toNumber(deployEnvironmentConfig.port),
-					},
-					initialDelaySeconds: 30, // chờ 30s rồi mới bắt đầu check
-					timeoutSeconds: 2,
-					periodSeconds: 10, // check lại mỗi 10s
-					successThreshold: 1, // chỉ cần 1 lần success -> app is ready
-					failureThreshold: 30, // check 30 lần fail x 10s = 300s (5 phút)
-				};
+				if (healthzPath) {
+					// RUNNING: Sometimes, applications are temporarily unable to serve traffic
+					doc.spec.template.spec.containers[0].readinessProbe = {
+						httpGet: {
+							path: healthzPath,
+							port: deployEnvironmentConfig.healthzPort || toNumber(deployEnvironmentConfig.port),
+						},
+						initialDelaySeconds: 30,
+						timeoutSeconds: 2,
+						periodSeconds: 15,
+						successThreshold: 1,
+						failureThreshold: 3,
+					};
+					// STARTUP: The application is considered unhealthy after a certain number of consecutive failures
+					doc.spec.template.spec.containers[0].livenessProbe = {
+						httpGet: {
+							path: healthzPath,
+							port: deployEnvironmentConfig.healthzPort || toNumber(deployEnvironmentConfig.port),
+						},
+						initialDelaySeconds: 30, // chờ 30s rồi mới bắt đầu check
+						timeoutSeconds: 2,
+						periodSeconds: 10, // check lại mỗi 10s
+						successThreshold: 1, // chỉ cần 1 lần success -> app is ready
+						failureThreshold: 30, // check 30 lần fail x 10s = 300s (5 phút)
+					};
+				}
 
 				// add persistent volumes (IF ANY)
 				if (app.deployEnvironment[env].volumes && app.deployEnvironment[env].volumes.length > 0) {

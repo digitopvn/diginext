@@ -54,7 +54,7 @@ const DockerRegistry = {
 				throw new Error(`[${Config.BUILDER.toUpperCase()}] Unable to connect to Docker Registry (${registrySlug}): Authentication failure.`);
 		}
 
-		const existingRegistry = await DB.findOne("registry", { slug: registrySlug }, { ignorable: true });
+		const existingRegistry = await DB.findOne("registry", { slug: registrySlug }, { subpath: "/all", ignorable: true });
 		if (options.isDebugging) log(`[DOCKER] connectDockerRegistry >`, { existingRegistry });
 
 		const workspace = await DB.findOne("workspace", { _id: workspaceId || existingRegistry.workspace });
@@ -101,7 +101,7 @@ const DockerRegistry = {
 		const { name: context } = await getKubeContextByCluster(cluster);
 
 		// get Container Registry data:
-		const registry = await DB.findOne("registry", { slug: registrySlug });
+		const registry = await DB.findOne("registry", { slug: registrySlug }, { subpath: "/all" });
 
 		if (!registry) {
 			throw new Error(`Container Registry (${registrySlug}) not found. Please contact your admin or create a new one.`);

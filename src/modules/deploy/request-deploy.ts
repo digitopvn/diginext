@@ -152,6 +152,7 @@ export async function requestDeploy(options: InputOptions) {
 			forceRollOut: options.shouldRollOut,
 			skipReadyCheck: false,
 			shouldUseFreshDeploy: options.shouldUseFreshDeploy,
+			healthzPath: options.healthz,
 		},
 	};
 

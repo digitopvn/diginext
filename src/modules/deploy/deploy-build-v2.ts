@@ -73,6 +73,11 @@ export type DeployBuildV2Options = {
 	 * @default true
 	 */
 	deployInBackground?: boolean;
+	/**
+	 * Health check path
+	 * @default "/"
+	 */
+	healthzPath?: string | null;
 };
 
 export type DeployBuildV2Result = {
@@ -363,8 +368,17 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
 	const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
 
+	// update server deploy environment data
 	// app info
-	let app = await DB.updateOne("app", { slug: appSlug }, { updatedBy: owner._id }, { populate: ["project", "owner"] });
+	let app = await DB.updateOne(
+		"app",
+		{ slug: appSlug },
+		{
+			[`deployEnvironment.${env}.healthzPath`]: options.healthzPath || "/",
+			updatedBy: owner._id,
+		},
+		{ populate: ["project", "owner"] }
+	);
 	if (!app) {
 		sendLog({
 			SOCKET_ROOM,

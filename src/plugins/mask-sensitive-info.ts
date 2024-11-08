@@ -31,23 +31,22 @@ export const mask = (str: string, leftUnmaskLength = 0, rightUnmaskLength?: numb
 	return `${unmaskedFirst}${maskedStr}${unmaskedLast}`;
 };
 
-export const maskSensitiveInfo = (data: any, user: IUser, role?: IRole, route?: string) => {
+export const maskSensitiveInfo = (data: any, user?: IUser, role?: IRole, route?: string) => {
 	// console.log("[mask-sensitive-info] typeof data :>> ", typeof data);
 	// console.log("[mask-sensitive-info] route :>> ", route);
 
-	if (route.indexOf("/api_key") > -1) return data; // <-- exclude masking data for some specific routes
+	// exclude masking data for some specific routes
+	const skipMaskingRoutes = ["/api_key"];
+	if (skipMaskingRoutes.some((skipRoute) => route?.indexOf(skipRoute) > -1)) return data;
+
+	// skip and return data as is if it's a boolean, number, or string
 	if (typeof data === "boolean" || typeof data === "number" || typeof data === "string") return data;
 
 	// console.log("[mask-sensitive-info] user :>> ", user);
 	// console.log("[mask-sensitive-info] user.name :>> ", user.name);
-
-	// parse role
 	// console.log("[mask-sensitive-info] user.activeRole :>> ", user.activeRole);
-
-	if ((user.activeRole as IRole)?._id) role = user.activeRole as IRole;
-
+	if ((user?.activeRole as IRole)?._id) role = user.activeRole as IRole;
 	// console.log("[mask-sensitive-info] role :>> ", role);
-
 	if (!role) return;
 
 	const maskedFields = role?.maskedFields || [];
@@ -87,6 +86,31 @@ export const maskSensitiveInfo = (data: any, user: IUser, role?: IRole, route?: 
 		 */
 		maskedFields.map((maskedField) => {
 			if (_.has(data, maskedField)) data = _.set(data, maskedField, "");
+		});
+	}
+
+	return data;
+};
+
+/**
+ * Mask fields of an object
+ * @param data - The object to mask
+ * @param options - The options
+ * @returns The masked object
+ */
+export const maskObject = (data: any, options: { fields: string[]; char?: string }) => {
+	const { fields, char = "***" } = options;
+
+	if (isArray(data)) {
+		data = data.map((item) => {
+			fields.map((maskedField) => {
+				if (_.has(item, maskedField)) item = _.set(item, maskedField, char);
+			});
+			return item;
+		});
+	} else {
+		fields.map((maskedField) => {
+			if (_.has(data, maskedField)) data = _.set(data, maskedField, char);
 		});
 	}
 

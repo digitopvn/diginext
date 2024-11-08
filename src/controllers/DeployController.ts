@@ -62,6 +62,11 @@ export type DeployBuildParams = {
 	 * @default true
 	 */
 	deployInBackground?: boolean;
+	/**
+	 * Health check path
+	 * @default "/"
+	 */
+	healthzPath?: string | null;
 };
 
 @Tags("Deploy")
