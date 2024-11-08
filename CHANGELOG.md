@@ -1,3 +1,14 @@
+## [3.36.4](https://github.com/digitopvn/diginext/compare/v3.36.3...v3.36.4) (2024-11-08)
+
+
+### Bug Fixes
+
+* **cli:** healthz optional ([b3890a7](https://github.com/digitopvn/diginext/commit/b3890a7e2e34e80d81300a2eac645d8e8a114231))
+* **cli:** issue registry & ssl selection ([8b16079](https://github.com/digitopvn/diginext/commit/8b1607915952817ce699169462e2114691bf2d08))
+* **project,app:** fix check quota error ([f4961f7](https://github.com/digitopvn/diginext/commit/f4961f7c6b4971246e0b9bc1f2b791f7e24ddd17))
+* **project,app:** fix check quota error ([#552](https://github.com/digitopvn/diginext/issues/552)) ([e34c5e9](https://github.com/digitopvn/diginext/commit/e34c5e93a43e412bc4e87d5dadb19838f22c0487))
+* **server:** turn off preprocess data for base service ([0bb2002](https://github.com/digitopvn/diginext/commit/0bb2002251398d0783c7521409234f518b7fa108))
+
 ## [3.36.3](https://github.com/digitopvn/diginext/compare/v3.36.2...v3.36.3) (2024-11-06)
 
 
