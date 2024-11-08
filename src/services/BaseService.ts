@@ -1,13 +1,13 @@
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { logError } from "diginext-utils/dist/xconsole/log";
-import { cloneDeepWith } from "lodash";
 import type { Model, PipelineStage, Schema } from "mongoose";
 import { model } from "mongoose";
 
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import { roleSchema, workspaceSchema } from "@/entities";
 import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
+import { preprocessInputData } from "@/plugins";
 import { isValidObjectId, MongoDB } from "@/plugins/mongodb";
 import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import { makeSlug } from "@/plugins/slug";
@@ -155,10 +155,10 @@ export default class BaseService<T = any> {
 				}
 			}
 
-			// convert all valid "ObjectId" string to ObjectId()
-			data = cloneDeepWith(data, function (val) {
-				if (isValidObjectId(val)) return MongoDB.toObjectId(val);
-			});
+			/**
+			 * Preprocess data before create
+			 */
+			data = preprocessInputData(data);
 
 			// set created/updated date:
 			data.createdAt = data.updatedAt = new Date();
@@ -240,7 +240,7 @@ export default class BaseService<T = any> {
 												else: null,
 											},
 										},
-									},
+								  },
 						},
 					},
 				});
@@ -289,15 +289,15 @@ export default class BaseService<T = any> {
 			pagination.prev_page =
 				pagination.current_page != prevPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-						"?" +
-						new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
+					  "?" +
+					  new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 
 			pagination.next_page =
 				pagination.current_page != nextPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-						"?" +
-						new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
+					  "?" +
+					  new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 		}
 
@@ -375,7 +375,7 @@ export default class BaseService<T = any> {
 												else: null,
 											},
 										},
-									},
+								  },
 						},
 					},
 				});
@@ -412,15 +412,15 @@ export default class BaseService<T = any> {
 			pagination.prev_page =
 				pagination.current_page != prevPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-						"?" +
-						new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
+					  "?" +
+					  new URLSearchParams({ ...this.req.query, page: prevPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 
 			pagination.next_page =
 				pagination.current_page != nextPage
 					? `${this.req.protocol}://${this.req.get("host")}${this.req.baseUrl}${this.req.path}` +
-						"?" +
-						new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
+					  "?" +
+					  new URLSearchParams({ ...this.req.query, page: nextPage.toString(), size: pagination.page_size.toString() }).toString()
 					: null;
 		}
 
@@ -441,11 +441,10 @@ export default class BaseService<T = any> {
 		const updateFilter = { ...filter };
 		if (!options?.deleted) updateFilter.$or = [{ deletedAt: null }, { deletedAt: { $exists: false } }];
 
-		// convert all valid "ObjectId" string to ObjectId()
-		const convertedData = cloneDeepWith(data, function (val) {
-			if (isValidObjectId(val)) return MongoDB.toObjectId(val);
-			if (val === "undefined" || val === "null") return null;
-		});
+		/**
+		 * Preprocess data before update
+		 */
+		const convertedData = preprocessInputData(data);
 
 		// set updated date
 		if (convertedData.$set) {

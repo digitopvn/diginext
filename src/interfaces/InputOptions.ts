@@ -288,6 +288,12 @@ export type InputOptions = {
 	ssl?: boolean;
 
 	/**
+	 * - Flags: `--healthz` (default "/"), `--no-healthz`, `--healthz=/custom/path`
+	 * @default "/"
+	 */
+	healthz?: string | null;
+
+	/**
 	 * Should skip creating new directory while creating project
 	 * @default false
 	 */

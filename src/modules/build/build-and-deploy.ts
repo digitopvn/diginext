@@ -11,14 +11,13 @@ import MediaService from "@/services/MediaService";
 
 import screenshot from "../capture/screenshot";
 import { createBuildSlug } from "../deploy/create-build-slug";
-import type { DeployBuildOptions } from "../deploy/deploy-build";
-import type { DeployBuildV2Result } from "../deploy/deploy-build-v2";
+import type { DeployBuildV2Options, DeployBuildV2Result } from "../deploy/deploy-build-v2";
 import { deployBuildV2 } from "../deploy/deploy-build-v2";
 import type { StartBuildParams, StartBuildResult } from "./build";
 import { startBuild, stopBuild } from "./build";
 import { sendLog } from "./send-log-message";
 
-export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildOptions) => {
+export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildV2Options) => {
 	const { DB } = await import("@/modules/api/DB");
 
 	// [1] Build container image

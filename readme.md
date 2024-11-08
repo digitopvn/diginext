@@ -20,7 +20,7 @@ https://dxup.dev
 - One-click deploy to any Kubernetes clusters of any cloud providers
     - ✅ GCP
     - ✅ DigitalOcean
-    - ✅ Metal K8S cluster
+    - ✅ Bare Metal K8S cluster
     - 🔜 AWS
     - 🔜 Azure
 - Simple deploy of any public or private Docker image

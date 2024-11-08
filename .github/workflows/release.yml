@@ -76,17 +76,17 @@ jobs:
           commit_message: "chore(package.json): update version [skip ci]"
           commit_options: '--allow-empty --no-verify --signoff'
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dist-artifact
           path: dist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: swagger-artifact
           path: public/swagger.json
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: packagejson-artifact
           path: package.json
@@ -149,19 +149,19 @@ jobs:
           token: ${{ secrets.CI_GITHUB_TOKEN }}
 
       - name: Download dist artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist-artifact
           path: dist
 
       - name: Download swagger.json
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: swagger-artifact
           path: public
 
       - name: Download package.json
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packagejson-artifact
 
@@ -217,19 +217,19 @@ jobs:
       - run: echo ${{env.LATEST_TAG}}
           
       - name: Download dist artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist-artifact
           path: dist
 
       - name: Download swagger.json
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: swagger-artifact
           path: public
 
       - name: Download package.json
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packagejson-artifact
 
