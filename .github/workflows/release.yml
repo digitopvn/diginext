@@ -303,8 +303,14 @@ jobs:
       #   run: kubectl --context=topgroup-dev -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
         
       # Deploy to LONGVAN PROD cluster
-      # - name: Set image to [app.dxup.dev / Long Van PROD] deployment
-      #   run: kubectl --context=longvan-cluster -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
+      - name: Set image to [app.dxup.dev / Long Van PROD] deployment
+        continue-on-error: true
+        run: kubectl --context=longvan-cluster -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
+
+      # Deploy to DXUP FPT cluster
+      - name: Set image to [app.dxup.dev / DXUP FPT] deployment
+        continue-on-error: true
+        run: kubectl --context=dxup-vn -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
 
       # Deploy to DXUP OVH cluster
       - name: Set image to [app.dxup.dev / DXUP OVH] deployment
