@@ -1,3 +1,11 @@
+## [3.36.5](https://github.com/digitopvn/diginext/compare/v3.36.4...v3.36.5) (2024-11-08)
+
+
+### Bug Fixes
+
+* **server:** auth cluster before generate deployment yaml ([038c41c](https://github.com/digitopvn/diginext/commit/038c41c213aa62044590d65fd7326dfbfd358324))
+* **server:** auth cluster before generate deployment yaml ([#556](https://github.com/digitopvn/diginext/issues/556)) ([07e1c50](https://github.com/digitopvn/diginext/commit/07e1c50d0f8be57ad7b4f0481db0903a0c32462f))
+
 ## [3.36.4](https://github.com/digitopvn/diginext/compare/v3.36.3...v3.36.4) (2024-11-08)
 
 
