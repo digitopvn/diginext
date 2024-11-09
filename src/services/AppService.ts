@@ -1,6 +1,7 @@
 import { isEmpty, isString } from "lodash";
 import path from "path";
 
+import { Config } from "@/app.config";
 import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IFramework, IGitProvider, IProject } from "@/entities";
 import type { IApp } from "@/entities/App";
@@ -483,16 +484,18 @@ export class AppService extends BaseService<IApp> {
 			for (const env of Object.keys(data.deployEnvironment)) {
 				const deployEnvironment = data.deployEnvironment[env];
 				if (deployEnvironment) {
-					// check dx quota
-					const { size } = deployEnvironment;
-					if (size) {
-						const quotaRes = await checkQuota(workspace, { resourceSize: size });
-						if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
-						if (quotaRes.data && quotaRes.data.isExceed) {
-							throw new Error(`You've exceeded the limit amount of container size.`);
-							// throw new Error(
-							// 	`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
-							// );
+					// check dx quota (only in production mode)
+					if (Config.NODE_ENV === "production") {
+						const { size } = deployEnvironment;
+						if (size) {
+							const quotaRes = await checkQuota(workspace, { resourceSize: size });
+							if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
+							if (quotaRes.data && quotaRes.data.isExceed) {
+								throw new Error(`You've exceeded the limit amount of container size.`);
+								// throw new Error(
+								// 	`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+								// );
+							}
 						}
 					}
 

@@ -92,21 +92,25 @@ export class WebhookService extends BaseService<IWebhook> {
 									const logURL = `${Config.BASE_URL}/build/logs?build_slug=${SOCKET_ROOM}`;
 									const duration = humanizeDuration(build.duration);
 									const owner = build.owner as IUser;
-									return this.notiSvc.webhookSend(webhook, {
-										references: { build: MongoDB.toString(build._id) },
-										url: logURL,
-										from: MongoDB.toString(webhook.owner),
-										to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
-										title: webhook.status === "failed" ? `Build failed: ${build?.name}` : `Build success: ${build?.name}`,
-										message: `- Workspace: ${this.ownership.workspace.name}<br/>- Project: ${
-											(build?.project as IProject).name
-										}<br/>- App: ${(build?.app as IApp).name}<br/>- User: ${owner.name} (${
-											owner.slug
-										})<br/>- Duration: ${duration}<br/>- View logs: <a href="${logURL}">CLICK HERE</a><br/>- Container image: ${build?.image}`,
-									});
+									return this.notiSvc
+										.webhookSend(webhook, {
+											references: { build: MongoDB.toString(build._id) },
+											url: logURL,
+											from: MongoDB.toString(webhook.owner),
+											to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
+											title: webhook.status === "failed" ? `Build failed: ${build?.name}` : `Build success: ${build?.name}`,
+											message: `- Workspace: ${this.ownership.workspace.name}<br/>- Project: ${
+												(build?.project as IProject).name
+											}<br/>- App: ${(build?.app as IApp).name}<br/>- User: ${owner.name} (${
+												owner.slug
+											})<br/>- Duration: ${duration}<br/>- View logs: <a href="${logURL}">CLICK HERE</a><br/>- Container image: ${build?.image}`,
+										})
+										.catch((e) => {
+											console.error(`Unable to trigger webhook:`, e);
+										});
 								})
 								.catch((e) => {
-									console.error(`Unable to trigger webhook:`, e);
+									console.error(`Build not found:`, e);
 								});
 						}
 						break;
@@ -123,27 +127,32 @@ export class WebhookService extends BaseService<IWebhook> {
 									const logURL = `${Config.BASE_URL}/build/logs?build_slug=${SOCKET_ROOM}`;
 									const duration = humanizeDuration(buildDuration);
 									const owner = release.owner as IUser;
-									return this.notiSvc.webhookSend(webhook, {
-										references: { release: MongoDB.toString(release._id) },
-										url: logURL,
-										from: MongoDB.toString(webhook.owner),
-										to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
-										title: webhook.status === "failed" ? `Deploy failed: ${release?.name}` : `Deploy success: ${release?.name}`,
-										message:
-											(webhook.status === "failed"
-												? `Failed to deploy "${release?.appSlug}" app of "${release?.projectSlug}" project to "${release?.env.toUpperCase()}" environment.<br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}`
-												: `<strong>App has been deployed to "${release?.env.toUpperCase()}" environment successfully.</strong><br/><br/>- Workspace: ${
-														(release?.workspace as IWorkspace).name
-													}<br/>- User: ${owner.name} (${
-														owner.slug
-													})<br/>- App: ${release?.appSlug}<br/>- Project: ${release?.projectSlug}<br/>- URL: <a href="https://${
-														release?.env === "production" ? release?.prereleaseUrl : release?.productionUrl
-													}">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${release?.image}`) +
-											`<br/><br/>Go to <a href="${buildListPageUrl}">DXUP Dashboard</a>.<br/><br/>Best regards, <a href="https://dxup.dev">DXUP</a> Team.`,
-									});
+									return this.notiSvc
+										.webhookSend(webhook, {
+											references: { release: MongoDB.toString(release._id) },
+											url: logURL,
+											from: MongoDB.toString(webhook.owner),
+											to: webhook.consumers.map((recipientId) => MongoDB.toString(recipientId)),
+											title:
+												webhook.status === "failed" ? `Deploy failed: ${release?.name}` : `Deploy success: ${release?.name}`,
+											message:
+												(webhook.status === "failed"
+													? `Failed to deploy "${release?.appSlug}" app of "${release?.projectSlug}" project to "${release?.env.toUpperCase()}" environment.<br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}`
+													: `<strong>App has been deployed to "${release?.env.toUpperCase()}" environment successfully.</strong><br/><br/>- Workspace: ${
+															(release?.workspace as IWorkspace).name
+													  }<br/>- User: ${owner.name} (${
+															owner.slug
+													  })<br/>- App: ${release?.appSlug}<br/>- Project: ${release?.projectSlug}<br/>- URL: <a href="https://${
+															release?.env === "production" ? release?.prereleaseUrl : release?.productionUrl
+													  }">CLICK TO VIEW</a><br/>- View build logs: <a href="${logURL}">CLICK HERE</a><br/>- Duration: ${duration}<br/>- Container Image: ${release?.image}`) +
+												`<br/><br/>Go to <a href="${buildListPageUrl}">DXUP Dashboard</a>.<br/><br/>Best regards, <a href="https://dxup.dev">DXUP</a> Team.`,
+										})
+										.catch((e) => {
+											console.error(`Unable to trigger webhook:`, e);
+										});
 								})
 								.catch((e) => {
-									console.error(`Unable to trigger webhook:`, e);
+									console.error(`Release not found:`, e);
 								});
 						}
 						break;

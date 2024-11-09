@@ -131,6 +131,9 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	// [5] Send success message to the CLI client:
 	sendLog({ SOCKET_ROOM, message: chalk.bold(chalk.yellow(`✓ Check out your release at: ${endpoint}`)), type: "success" });
 
+	// wait for 3 seconds before disconnecting the CLI client
+	await wait(3000);
+
 	// disconnect CLI client:
 	socketIO?.to(SOCKET_ROOM).emit("message", { action: "end" });
 
