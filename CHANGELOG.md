@@ -1,3 +1,10 @@
+## [3.37.1](https://github.com/digitopvn/diginext/compare/v3.37.0...v3.37.1) (2024-11-09)
+
+
+### Bug Fixes
+
+* **server,admin:** fix update deploy environment, update container quota sizes ([f304498](https://github.com/digitopvn/diginext/commit/f304498f0a1a52e21104a8aada768638da52c160))
+
 # [3.37.0](https://github.com/digitopvn/diginext/compare/v3.36.5...v3.37.0) (2024-11-09)
 
 
