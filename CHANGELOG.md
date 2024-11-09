@@ -1,3 +1,11 @@
+# [3.37.0](https://github.com/digitopvn/diginext/compare/v3.36.5...v3.37.0) (2024-11-09)
+
+
+### Bug Fixes
+
+* **server:** re-enable rollout status checking ([738eb84](https://github.com/digitopvn/diginext/commit/738eb84d55854eb2eb70a3edba3595e6c050178e))
+* **server:** re-enable rollout status checking ([#557](https://github.com/digitopvn/diginext/issues/557)) ([82b2779](https://github.com/digitopvn/diginext/commit/82b27797a1d3f1b1ac8305c42dc8b62d79c8d0d6))
+
 ## [3.36.5](https://github.com/digitopvn/diginext/compare/v3.36.4...v3.36.5) (2024-11-08)
 
 
