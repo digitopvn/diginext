@@ -24,6 +24,7 @@ import { currentVersion } from "@/plugins";
 import { formatEnvVars } from "@/plugins/env-var";
 import { MongoDB } from "@/plugins/mongodb";
 import { makeSlug } from "@/plugins/slug";
+import { ClusterService, ContainerRegistryService, ReleaseService } from "@/services";
 
 import { AppService } from "../services/AppService";
 import BaseController from "./BaseController";
@@ -512,212 +513,217 @@ export default class AppController extends BaseController<IApp, AppService> {
 		},
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		//
-		const { DB } = await import("@/modules/api/DB");
-		const { appSlug, env, deployEnvironmentData } = body;
-		if (!appSlug) return respondFailure({ msg: `App slug is required.` });
-		if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
-		if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
-
-		// get app data:
-		const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
-		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
-		if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
-		if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
-
-		const currentDeployEnvData = app.deployEnvironment[env];
-
-		// build number
-		if (!deployEnvironmentData.buildTag) deployEnvironmentData.buildTag = app.deployEnvironment[env].buildTag;
-
-		if (!deployEnvironmentData.buildTag) {
-			const releaseFilter = { appSlug: app.slug, buildStatus: "success", env, active: true };
-			console.log("updateDeployEnvironment() > releaseFilter :>> ", releaseFilter);
-
-			let latestRelease = await DB.findOne("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 }, ignorable: true });
-			// "sometime" there are no "active" release, so just get the "success" release instead :)
-			if (!latestRelease) {
-				delete releaseFilter.active;
-				latestRelease = await DB.findOne("release", releaseFilter, { populate: ["build"], order: { createdAt: -1 }, ignorable: true });
-			}
-			if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Release not found (app: "${app.slug}" - env: "${env}")`);
-
-			const latestBuild = latestRelease.build as IBuild;
-			if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Latest build not found (app: "${app.slug}" - env: "${env}")`);
-			deployEnvironmentData.buildTag = latestBuild.tag;
-		}
-
-		if (!deployEnvironmentData.buildTag) return respondFailure({ msg: `Build number (image's tag) is required.` });
-
-		// finish checking build number
-		const { buildTag } = deployEnvironmentData;
-
-		const project = app.project as IProject;
-		const { slug: projectSlug } = project;
-
-		// Check DX quota
-		if (deployEnvironmentData.size) {
-			const quotaRes = await checkQuota(this.workspace, { resourceSize: deployEnvironmentData.size });
-			if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
-			if (quotaRes.data && quotaRes.data.isExceed)
-				return respondFailure(
-					`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
-				);
-		}
-
-		// Validate deploy environment data:
-
-		// cluster
-		let cluster: ICluster | undefined;
-		if (deployEnvironmentData.cluster) {
-			cluster = await DB.findOne("cluster", { slug: deployEnvironmentData.cluster }, { subpath: "/all" });
-
-			// check if change cluster:
-			if (deployEnvironmentData.cluster !== currentDeployEnvData.cluster) {
-				const { DeployEnvironmentService } = await import("@/services");
-				const deployEnvSvc = new DeployEnvironmentService();
-				try {
-					await deployEnvSvc.changeCluster(app, env, cluster, { user: this.ownership.owner, workspace: this.ownership.workspace });
-				} catch (e) {
-					return respondFailure(`Unable to change cluster: ${e.message}`);
-				}
-			}
-		}
-		// no cluster changed -> get current cluster
-		if (!cluster && currentDeployEnvData.cluster)
-			cluster = await DB.findOne("cluster", { slug: currentDeployEnvData.cluster }, { subpath: "/all" });
-
-		// namespace
-		const namespace = deployEnvironmentData.namespace;
-		if (cluster && namespace) {
-			// Check if namespace is existed...
-			const isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context: cluster.contextName });
-			if (isNamespaceExisted)
-				return respondFailure({
-					msg: `Namespace "${namespace}" was existed in "${cluster.name}" cluster, please choose different name or leave empty to use generated namespace name.`,
-				});
-		}
-
-		// container registry
-		if (deployEnvironmentData.registry) {
-			const registry = await DB.findOne("registry", { slug: deployEnvironmentData.registry }, { subpath: "/all" });
-			if (!registry) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
-		}
-
-		// Domains & SSL certificate...
-		// if (!deployEnvironmentData.domains) deployEnvironmentData.domains = [];
-		if (deployEnvironmentData.useGeneratedDomain) {
-			if (!cluster) return respondFailure(`Param "cluster" must be specified if you want to use "useGeneratedDomain".`);
-
-			const subdomain = `${projectSlug}-${appSlug}.${env}`;
-			const {
-				status,
-				messages,
-				data: { domain },
-			} = await dxCreateDomain({ name: subdomain, data: cluster.primaryIP, userId: this.user.dxUserId }, this.workspace.dx_key);
-
-			if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
-			deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
-		}
-
-		// Exposing ports, enable/disable CDN, and select Ingress type
-		if (!isUndefined(deployEnvironmentData.port)) {
-			if (!isNumber(deployEnvironmentData.port)) return respondFailure({ msg: `Param "port" must be a number.` });
-		}
-		if (!isUndefined(deployEnvironmentData.cdn) && !isBoolean(deployEnvironmentData.cdn)) {
-			return respondFailure({ msg: `Param "cdn" must be a boolean.` });
-		}
-		// deployEnvironmentData.ingress = "nginx";
-
-		deployEnvironmentData.lastUpdatedBy = this.user.slug;
-
-		// create deploy environment in the app:
-		let updateDeployEnvData: any = {};
-		Object.keys(deployEnvironmentData).map((key) => (updateDeployEnvData[`deployEnvironment.${env}.${key}`] = deployEnvironmentData[key]));
-
-		let updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
-		// console.log("updatedApp :>> ", updatedApp);
-		if (!updatedApp) return respondFailure({ msg: `Failed to create "${env}" deploy environment.` });
-
-		const appConfig = await getAppConfigFromApp(updatedApp);
-
-		if (!deployEnvironmentData.tlsSecret) {
-			if (appConfig.deployEnvironment[env].domains?.length > 0 && !appConfig.deployEnvironment[env].tlsSecret) {
-				if (deployEnvironmentData.ssl === "letsencrypt") {
-					deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
-				} else if (deployEnvironmentData.ssl === "custom") {
-					if (!deployEnvironmentData.tlsSecret) deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
-				} else {
-					deployEnvironmentData.tlsSecret = "";
-				}
-			}
-
-			// update app again
-			updateDeployEnvData = {};
-			Object.keys(deployEnvironmentData).map((key) => (updateDeployEnvData[`deployEnvironment.${env}.${key}`] = deployEnvironmentData[key]));
-			updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
-		}
-
-		// generate deployment files and apply new config
-		let deployment = await generateDeploymentV2({
-			appSlug: app.slug,
-			env,
-			username: this.user.slug,
-			workspace: this.workspace,
-			buildTag: buildTag,
-		});
-
-		const { deploymentContent } = deployment;
-
-		// update data to deploy environment:
-		let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
-		serverDeployEnvironment.deploymentYaml = deploymentContent;
-		serverDeployEnvironment.updatedAt = new Date();
-		serverDeployEnvironment.lastUpdatedBy = this.user.username;
-		serverDeployEnvironment.deploymentName = deployment.deploymentName;
-		if (serverDeployEnvironment.owner) serverDeployEnvironment.owner = MongoDB.toString(this.user._id);
-		if (serverDeployEnvironment.ownerSlug) serverDeployEnvironment.ownerSlug = this.user.slug;
-
-		// Update {user}, {project}, {environment} to database before rolling out
-		const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
-		updatedAppData.lastUpdatedBy = this.user.username;
-		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
-
-		updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
-		if (!updatedApp) return respondFailure("Unable to update " + env + " environment of " + app.slug + "app.");
-
-		if (!cluster) return respondSuccess({ data: updatedApp.deployEnvironment[env] });
-
-		// get workloads on cluster
-		const mainAppName = await getDeploymentName(app);
-		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
-		let workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
-			context: cluster.contextName,
-			filterLabel: `main-app=${mainAppName}`,
-		});
-
-		// Fallback support for deprecated mainAppName
-		const deprecatedWorkloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
-			context: cluster.contextName,
-			filterLabel: `main-app=${deprecatedMainAppName}`,
-		});
-		if (deprecatedWorkloads?.length > 0) workloads.push(...deprecatedWorkloads);
-
-		console.log("AppController > updateDeployEnvironment() > workloads :>> ", workloads);
-		console.log("AppController > updateDeployEnvironment() > workloads.length :>> ", workloads?.length);
-
-		// if (workloads && workloads.length > 0) {
-		console.log(`AppController > updateDeployEnvironment() > Applying new deployment yaml...`);
-
-		// create new release and roll out
-		const release = await createReleaseFromApp(updatedApp, env, buildTag, {
-			author: this.user,
-			cliVersion: currentVersion(),
-			workspace: this.workspace,
-		});
-
-		// apply deployment YAML
 		try {
+			const clusterSvc = new ClusterService(this.ownership);
+			const releaseSvc = new ReleaseService(this.ownership);
+			const registrySvc = new ContainerRegistryService(this.ownership);
+
+			const { appSlug, env, deployEnvironmentData } = body;
+			if (!appSlug) return respondFailure({ msg: `App slug is required.` });
+			if (!env) return respondFailure({ msg: `Deploy environment name is required.` });
+			if (!deployEnvironmentData) return respondFailure({ msg: `Deploy environment configuration is required.` });
+
+			// get app data:
+			const app = await this.service.findOne({ slug: appSlug }, { populate: ["project"] });
+			if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+			if (!app.project) return respondFailure({ msg: `This app is orphan, apps should belong to a project.` });
+			if (!deployEnvironmentData.imageURL) respondFailure({ msg: `Build image URL is required.` });
+
+			const currentDeployEnvData = app.deployEnvironment[env];
+
+			// build number
+			if (!deployEnvironmentData.buildTag) deployEnvironmentData.buildTag = app.deployEnvironment[env].buildTag;
+
+			if (!deployEnvironmentData.buildTag) {
+				const releaseFilter = { appSlug: app.slug, buildStatus: "success", env, active: true };
+				console.log("updateDeployEnvironment() > releaseFilter :>> ", releaseFilter);
+
+				let latestRelease = await releaseSvc.findOne(releaseFilter, { populate: ["build"], order: { createdAt: -1 }, ignorable: true });
+				// "sometime" there are no "active" release, so just get the "success" release instead :)
+				if (!latestRelease) {
+					delete releaseFilter.active;
+					latestRelease = await releaseSvc.findOne(releaseFilter, { populate: ["build"], order: { createdAt: -1 }, ignorable: true });
+				}
+				if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Release not found (app: "${app.slug}" - env: "${env}")`);
+
+				const latestBuild = latestRelease.build as IBuild;
+				if (!latestRelease) return respondFailure(`updateDeployEnvironment() > Latest build not found (app: "${app.slug}" - env: "${env}")`);
+				deployEnvironmentData.buildTag = latestBuild.tag;
+			}
+
+			if (!deployEnvironmentData.buildTag) return respondFailure({ msg: `Build number (image's tag) is required.` });
+
+			// finish checking build number
+			const { buildTag } = deployEnvironmentData;
+
+			const project = app.project as IProject;
+			const { slug: projectSlug } = project;
+
+			// Check DX quota
+			if (deployEnvironmentData.size) {
+				const quotaRes = await checkQuota(this.workspace, { resourceSize: deployEnvironmentData.size });
+				if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+				if (quotaRes.data && quotaRes.data.isExceed)
+					return respondFailure(
+						`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+					);
+			}
+
+			// Validate deploy environment data:
+
+			// cluster
+			let cluster: ICluster | undefined;
+			if (deployEnvironmentData.cluster) {
+				cluster = await clusterSvc.findOne({ slug: deployEnvironmentData.cluster }, { subpath: "/all" });
+
+				// check if change cluster:
+				if (deployEnvironmentData.cluster !== currentDeployEnvData.cluster) {
+					const { DeployEnvironmentService } = await import("@/services");
+					const deployEnvSvc = new DeployEnvironmentService();
+					try {
+						await deployEnvSvc.changeCluster(app, env, cluster, { user: this.ownership.owner, workspace: this.ownership.workspace });
+					} catch (e) {
+						return respondFailure(`Unable to change cluster: ${e.message}`);
+					}
+				}
+			}
+			// no cluster changed -> get current cluster
+			if (!cluster && currentDeployEnvData.cluster)
+				cluster = await clusterSvc.findOne({ slug: currentDeployEnvData.cluster }, { subpath: "/all" });
+
+			// namespace
+			const namespace = deployEnvironmentData.namespace;
+			if (cluster && namespace) {
+				// Check if namespace is existed...
+				const isNamespaceExisted = await ClusterManager.isNamespaceExisted(namespace, { context: cluster.contextName });
+				if (isNamespaceExisted)
+					return respondFailure({
+						msg: `Namespace "${namespace}" was existed in "${cluster.name}" cluster, please choose different name or leave empty to use generated namespace name.`,
+					});
+			}
+
+			// container registry
+			if (deployEnvironmentData.registry) {
+				const registry = await registrySvc.findOne({ slug: deployEnvironmentData.registry }, { subpath: "/all" });
+				if (!registry) return respondFailure({ msg: `Container Registry "${deployEnvironmentData.registry}" is not existed.` });
+			}
+
+			// Domains & SSL certificate...
+			// if (!deployEnvironmentData.domains) deployEnvironmentData.domains = [];
+			if (deployEnvironmentData.useGeneratedDomain) {
+				if (!cluster) return respondFailure(`Param "cluster" must be specified if you want to use "useGeneratedDomain".`);
+
+				const subdomain = `${projectSlug}-${appSlug}.${env}`;
+				const {
+					status,
+					messages,
+					data: { domain },
+				} = await dxCreateDomain({ name: subdomain, data: cluster.primaryIP, userId: this.user.dxUserId }, this.workspace.dx_key);
+
+				if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
+				deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
+			}
+
+			// Exposing ports, enable/disable CDN, and select Ingress type
+			if (!isUndefined(deployEnvironmentData.port)) {
+				if (!isNumber(deployEnvironmentData.port)) return respondFailure({ msg: `Param "port" must be a number.` });
+			}
+			if (!isUndefined(deployEnvironmentData.cdn) && !isBoolean(deployEnvironmentData.cdn)) {
+				return respondFailure({ msg: `Param "cdn" must be a boolean.` });
+			}
+			// deployEnvironmentData.ingress = "nginx";
+
+			deployEnvironmentData.lastUpdatedBy = this.user.slug;
+
+			// create deploy environment in the app:
+			let updateDeployEnvData: any = {};
+			Object.keys(deployEnvironmentData).map((key) => (updateDeployEnvData[`deployEnvironment.${env}.${key}`] = deployEnvironmentData[key]));
+
+			let updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
+			// console.log("updatedApp :>> ", updatedApp);
+			if (!updatedApp) return respondFailure({ msg: `Failed to create "${env}" deploy environment.` });
+
+			const appConfig = await getAppConfigFromApp(updatedApp);
+
+			if (!deployEnvironmentData.tlsSecret) {
+				if (appConfig.deployEnvironment[env].domains?.length > 0 && !appConfig.deployEnvironment[env].tlsSecret) {
+					if (deployEnvironmentData.ssl === "letsencrypt") {
+						deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
+					} else if (deployEnvironmentData.ssl === "custom") {
+						if (!deployEnvironmentData.tlsSecret) deployEnvironmentData.tlsSecret = makeSlug(deployEnvironmentData.domains[0]);
+					} else {
+						deployEnvironmentData.tlsSecret = "";
+					}
+				}
+
+				// update app again
+				updateDeployEnvData = {};
+				Object.keys(deployEnvironmentData).map(
+					(key) => (updateDeployEnvData[`deployEnvironment.${env}.${key}`] = deployEnvironmentData[key])
+				);
+				updatedApp = await this.service.updateOne({ slug: appSlug }, updateDeployEnvData);
+			}
+
+			// generate deployment files and apply new config
+			let deployment = await generateDeploymentV2({
+				appSlug: app.slug,
+				env,
+				username: this.user.slug,
+				workspace: this.workspace,
+				buildTag: buildTag,
+			});
+
+			const { deploymentContent } = deployment;
+
+			// update data to deploy environment:
+			let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
+			serverDeployEnvironment.deploymentYaml = deploymentContent;
+			serverDeployEnvironment.updatedAt = new Date();
+			serverDeployEnvironment.lastUpdatedBy = this.user.username;
+			serverDeployEnvironment.deploymentName = deployment.deploymentName;
+			if (serverDeployEnvironment.owner) serverDeployEnvironment.owner = MongoDB.toString(this.user._id);
+			if (serverDeployEnvironment.ownerSlug) serverDeployEnvironment.ownerSlug = this.user.slug;
+
+			// Update {user}, {project}, {environment} to database before rolling out
+			const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
+			updatedAppData.lastUpdatedBy = this.user.username;
+			updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
+
+			updatedApp = await this.service.updateOne({ slug: app.slug }, updatedAppData);
+			if (!updatedApp) return respondFailure("Unable to update " + env + " environment of " + app.slug + "app.");
+
+			if (!cluster) return respondSuccess({ data: updatedApp.deployEnvironment[env] });
+
+			// get workloads on cluster
+			const mainAppName = await getDeploymentName(app);
+			const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+			let workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${mainAppName}`,
+			});
+
+			// Fallback support for deprecated mainAppName
+			const deprecatedWorkloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${deprecatedMainAppName}`,
+			});
+			if (deprecatedWorkloads?.length > 0) workloads.push(...deprecatedWorkloads);
+
+			console.log("AppController > updateDeployEnvironment() > workloads :>> ", workloads);
+			console.log("AppController > updateDeployEnvironment() > workloads.length :>> ", workloads?.length);
+
+			// if (workloads && workloads.length > 0) {
+			console.log(`AppController > updateDeployEnvironment() > Applying new deployment yaml...`);
+
+			// create new release and roll out
+			const release = await createReleaseFromApp(updatedApp, env, buildTag, {
+				author: this.user,
+				cliVersion: currentVersion(),
+				workspace: this.workspace,
+			});
+
+			// apply deployment YAML
+
 			console.log("AppController > updateDeployEnvironment() > cluster :>> ", cluster.slug);
 			console.log("AppController > updateDeployEnvironment() > namespace :>> ", namespace);
 			console.log("AppController > updateDeployEnvironment() > deploymentContent :>> ", deploymentContent);
@@ -739,6 +745,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 				msg: `Updated "${env.toUpperCase()}" deploy environment successfully.`,
 			});
 		} catch (e) {
+			console.error(`AppController > updateDeployEnvironment() :>>`, e);
 			return respondFailure(`Unable to update this deploy environment: ${e}`);
 		}
 	}
@@ -841,101 +848,101 @@ export default class AppController extends BaseController<IApp, AppService> {
 		body: CreateEnvVarsDto,
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		const { DB } = await import("@/modules/api/DB");
+		try {
+			let { slug, env, envVars } = body;
+			if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
+			if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
+			if (!envVars) return { status: 0, messages: [`Array of environment variables (envVars) is required.`] };
 
-		let { slug, env, envVars } = body;
-		if (!slug) return { status: 0, messages: [`App slug (slug) is required.`] };
-		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
-		if (!envVars) return { status: 0, messages: [`Array of environment variables (envVars) is required.`] };
-		// if (!isJSON(envVars)) return { status: 0, messages: [`Array of variables (envVars) is not a valid JSON.`] };
+			const clusterSvc = new ClusterService(this.ownership);
+			const appSvc = new AppService(this.ownership);
 
-		const app = await this.service.findOne({ ...this.filter, slug }, { populate: ["project"] });
-		if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
+			const app = await appSvc.findOne({ ...this.filter, slug }, { populate: ["project"] });
+			if (!app) return this.filter.owner ? respondFailure({ msg: `Unauthorized.` }) : respondFailure({ msg: `App not found.` });
 
-		const mainAppName = await getDeploymentName(app);
-		const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
+			const mainAppName = await getDeploymentName(app);
+			const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 
-		const deployEnvironment = app.deployEnvironment[env];
-		if (!deployEnvironment) return respondFailure(`Deploy environment "${env}" is not existed in "${slug}" app.`);
-		if (!deployEnvironment.namespace) return respondFailure(`Namespace not existed in deploy environment "${env}" of "${slug}" app.`);
-		if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
+			const deployEnvironment = app.deployEnvironment[env];
+			if (!deployEnvironment) return respondFailure(`Deploy environment "${env}" is not existed in "${slug}" app.`);
+			if (!deployEnvironment.namespace) return respondFailure(`Namespace not existed in deploy environment "${env}" of "${slug}" app.`);
+			if (!deployEnvironment.cluster) return respondFailure(`Cluster not existed in deploy environment "${env}" of "${slug}" app.`);
 
-		const { namespace, cluster: clusterSlug } = deployEnvironment;
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
-		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
+			const { namespace, cluster: clusterSlug } = deployEnvironment;
+			const cluster = await clusterSvc.findOne({ slug: clusterSlug }, { subpath: "/all" });
+			if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
 
-		const newEnvVars = isJSON(envVars)
-			? (JSON.parse(envVars) as KubeEnvironmentVariable[])
-			: isArray(envVars)
-			? (envVars as unknown as KubeEnvironmentVariable[])
-			: [];
+			const newEnvVars = isJSON(envVars)
+				? (JSON.parse(envVars) as KubeEnvironmentVariable[])
+				: isArray(envVars)
+				? (envVars as unknown as KubeEnvironmentVariable[])
+				: [];
 
-		// console.log("updateEnvVars :>> ", updateEnvVars);
-		let [updatedApp] = await this.service.update(
-			{ slug },
-			{
-				[`deployEnvironment.${env}.envVars`]: formatEnvVars(newEnvVars),
-			}
-		);
-		if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
+			// console.log("updateEnvVars :>> ", updateEnvVars);
+			let [updatedApp] = await appSvc.update({ slug }, { [`deployEnvironment.${env}.envVars`]: formatEnvVars(newEnvVars) });
+			if (!updatedApp) return { status: 0, messages: [`Failed to create "${env}" deploy environment.`] };
 
-		// generate deployment files and apply new config
-		if (updatedApp.deployEnvironment && updatedApp.deployEnvironment[env] && updatedApp.deployEnvironment[env].deploymentYaml) {
-			const { BUILD_TAG, IMAGE_NAME } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
+			// generate deployment files and apply new config
+			if (updatedApp.deployEnvironment && updatedApp.deployEnvironment[env] && updatedApp.deployEnvironment[env].deploymentYaml) {
+				const { BUILD_TAG, IMAGE_NAME } = fetchDeploymentFromContent(updatedApp.deployEnvironment[env].deploymentYaml);
 
-			let deployment = await generateDeploymentV2({
-				appSlug: app.slug,
-				env,
-				username: this.user.slug,
-				workspace: this.workspace,
-				buildTag: BUILD_TAG,
-				buildImage: IMAGE_NAME,
-			});
-
-			const { endpoint, deploymentContent } = deployment;
-
-			// update data to deploy environment:
-			let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
-			serverDeployEnvironment.deploymentYaml = deploymentContent;
-			serverDeployEnvironment.updatedAt = new Date();
-			serverDeployEnvironment.lastUpdatedBy = this.user.username;
-
-			// Update {user}, {project}, {environment} to database before rolling out
-			const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
-			updatedAppData.lastUpdatedBy = this.user.username;
-			updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
-
-			updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
-			if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
-		}
-
-		// Set environment variables to deployment in the cluster
-		// if the workload has been deployed before -> update the environment variables
-		let workloads = await ClusterManager.getDeploysByFilter(namespace, {
-			context: cluster.contextName,
-			filterLabel: `main-app=${mainAppName}`,
-		});
-		// Fallback support for deprecated mainAppName
-		if (!workloads || workloads.length === 0) {
-			workloads = await ClusterManager.getDeploysByFilter(namespace, {
-				context: cluster.contextName,
-				filterLabel: `main-app=${deprecatedMainAppName}`,
-			});
-		}
-
-		if (workloads && workloads.length > 0) {
-			try {
-				const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
-					context: cluster.contextName,
-					filterLabel: `main-app=${mainAppName}`,
+				let deployment = await generateDeploymentV2({
+					appSlug: app.slug,
+					env,
+					username: this.user.slug,
+					workspace: this.workspace,
+					buildTag: BUILD_TAG,
+					buildImage: IMAGE_NAME,
 				});
-				console.log("setEnvVarsRes :>> ", setEnvVarsRes);
-			} catch (e) {
-				return respondFailure(e.toString());
-			}
-		}
 
-		return respondSuccess({ data: updatedApp.deployEnvironment[env].envVars });
+				const { endpoint, deploymentContent } = deployment;
+
+				// update data to deploy environment:
+				let serverDeployEnvironment = await getDeployEvironmentByApp(updatedApp, env);
+				serverDeployEnvironment.deploymentYaml = deploymentContent;
+				serverDeployEnvironment.updatedAt = new Date();
+				serverDeployEnvironment.lastUpdatedBy = this.user.username;
+
+				// Update {user}, {project}, {environment} to database before rolling out
+				const updatedAppData = { deployEnvironment: updatedApp.deployEnvironment || {} } as IApp;
+				updatedAppData.lastUpdatedBy = this.user.username;
+				updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
+
+				updatedApp = await appSvc.updateOne({ slug: app.slug }, updatedAppData);
+				if (!updatedApp)
+					return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
+			}
+
+			// Set environment variables to deployment in the cluster
+			// if the workload has been deployed before -> update the environment variables
+			let workloads = await ClusterManager.getDeploysByFilter(namespace, {
+				context: cluster.contextName,
+				filterLabel: `main-app=${mainAppName}`,
+			});
+			// Fallback support for deprecated mainAppName
+			if (!workloads || workloads.length === 0) {
+				workloads = await ClusterManager.getDeploysByFilter(namespace, {
+					context: cluster.contextName,
+					filterLabel: `main-app=${deprecatedMainAppName}`,
+				});
+			}
+
+			if (workloads && workloads.length > 0) {
+				try {
+					const setEnvVarsRes = await ClusterManager.setEnvVarByFilter(newEnvVars, namespace, {
+						context: cluster.contextName,
+						filterLabel: `main-app=${mainAppName}`,
+					});
+					console.log("setEnvVarsRes :>> ", setEnvVarsRes);
+				} catch (e) {
+					return respondFailure(e.toString());
+				}
+			}
+
+			return respondSuccess({ data: updatedApp.deployEnvironment[env].envVars });
+		} catch (e) {
+			return respondFailure(e.toString());
+		}
 	}
 
 	/**
@@ -1006,8 +1013,8 @@ export default class AppController extends BaseController<IApp, AppService> {
 
 		const { namespace, cluster: clusterSlug } = deployEnvironment;
 
-		const { DB } = await import("@/modules/api/DB");
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
+		const clusterSvc = new ClusterService(this.ownership);
+		const cluster = await clusterSvc.findOne({ slug: clusterSlug }, { subpath: "/all" });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
 
 		// check if deployment is existed in the cluster / namespace
@@ -1069,7 +1076,6 @@ export default class AppController extends BaseController<IApp, AppService> {
 		},
 		@Queries() queryParams?: IPostQueryParams
 	) {
-		const { DB } = await import("@/modules/api/DB");
 		// validate
 		let { env, domains } = body;
 		if (!env) return { status: 0, messages: [`Deploy environment name (env) is required.`] };
@@ -1081,8 +1087,9 @@ export default class AppController extends BaseController<IApp, AppService> {
 		if (!app.deployEnvironment) return respondFailure(`App "${app.slug}" doesn't have any deploy environments.`);
 		if (!app.deployEnvironment[env]) return { status: 0, messages: [`App "${app.slug}" doesn't have any deploy environment named "${env}".`] };
 
+		const clusterSvc = new ClusterService(this.ownership);
 		const clusterSlug = app.deployEnvironment[env].cluster;
-		const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
+		const cluster = await clusterSvc.findOne({ slug: clusterSlug }, { subpath: "/all" });
 		if (!cluster) return respondFailure(`Cluster not found: "${clusterSlug}"`);
 
 		const mainAppName = await getDeploymentName(app);
@@ -1138,7 +1145,7 @@ export default class AppController extends BaseController<IApp, AppService> {
 		updatedAppData.lastUpdatedBy = this.user.username;
 		updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-		updatedApp = await DB.updateOne("app", { slug: app.slug }, updatedAppData);
+		updatedApp = await this.service.updateOne({ slug: app.slug }, updatedAppData);
 		if (!updatedApp) return respondFailure("Unable to apply new domain configuration for " + env + " environment of " + app.slug + "app.");
 
 		let workloads = await ClusterManager.getDeploysByFilter(serverDeployEnvironment.namespace, {
