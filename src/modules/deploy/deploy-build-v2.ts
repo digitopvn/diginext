@@ -6,7 +6,7 @@ import { CLI_CONFIG_DIR } from "@/config/const";
 import type { IApp, IBuild, ICluster, IProject, IRelease, IUser, IWebhook, IWorkspace } from "@/entities";
 import { filterUniqueItems } from "@/plugins/array";
 import { MongoDB } from "@/plugins/mongodb";
-import { AppService, WebhookService } from "@/services";
+import { AppService, ClusterService, ContainerRegistryService, ProjectService, UserService, WebhookService } from "@/services";
 
 import { getAppConfigFromApp } from "../apps/app-helper";
 import { getDeployEvironmentByApp } from "../apps/get-app-environment";
@@ -15,6 +15,7 @@ import { createReleaseFromBuild, sendLog } from "../build";
 import { updateReleaseStatusById } from "../build/update-release-status";
 import ClusterManager from "../k8s";
 import { createBuildSlug } from "./create-build-slug";
+import { rolloutV3 } from "./deploy-rollout-v3";
 import type { GenerateDeploymentResult } from "./generate-deployment";
 import getDeploymentName from "./generate-deployment-name";
 import type { GenerateDeploymentV2Result } from "./generate-deployment-v2";
@@ -308,7 +309,8 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		});
 
 		try {
-			ClusterManager.rolloutV2(releaseId, { onUpdate: onRolloutUpdate });
+			// ClusterManager.rolloutV2(releaseId, { onUpdate: onRolloutUpdate });
+			rolloutV3(releaseId, { onUpdate: onRolloutUpdate });
 		} catch (e) {
 			const errMsg = `Failed to roll out the release :>> ${e.message}:`;
 			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: errMsg });
@@ -326,7 +328,8 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 			});
 
 			try {
-				const result = await ClusterManager.rolloutV2(releaseId, { onUpdate: onRolloutUpdate });
+				// const result = await ClusterManager.rolloutV2(releaseId, { onUpdate: onRolloutUpdate });
+				const result = await rolloutV3(releaseId, { onUpdate: onRolloutUpdate });
 
 				if (result.error) {
 					const errMsg = `Failed to roll out the release :>> ${result.error}.`;
@@ -341,7 +344,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 				// dispatch/trigger webhook
 				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
 			} catch (e) {
-				const errMsg = `Failed to roll out the release :>> ${e.message}`;
+				const errMsg = `${e.message}`;
 				sendLog({ SOCKET_ROOM, type: "error", action: "end", message: errMsg });
 
 				// dispatch/trigger webhook
@@ -356,8 +359,6 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 };
 
 export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options): Promise<DeployBuildV2Result> => {
-	const { DB } = await import("@/modules/api/DB");
-
 	// parse options
 	const { env, port, owner, workspace, clusterSlug: targetClusterSlug, deployInBackground = true, cliVersion } = options;
 	const { appSlug, projectSlug, tag: buildTag, num: buildNumber, registry: registryId } = build;
@@ -368,10 +369,16 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	const SOURCE_CODE_DIR = `cache/${build.projectSlug}/${build.appSlug}/${build.branch}`;
 	const buildDirectory = path.resolve(CLI_CONFIG_DIR, SOURCE_CODE_DIR);
 
+	// services
+	const userSvc = new UserService();
+	const appSvc = new AppService({ owner, workspace });
+	const projectSvc = new ProjectService({ owner, workspace });
+	const clusterSvc = new ClusterService({ owner, workspace });
+	const registrySvc = new ContainerRegistryService({ owner, workspace });
+
 	// update server deploy environment data
 	// app info
-	let app = await DB.updateOne(
-		"app",
+	let app = await appSvc.updateOne(
 		{ slug: appSlug },
 		{
 			[`deployEnvironment.${env}.healthzPath`]: options.healthzPath || "/",
@@ -390,7 +397,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 
 	// project info
 	const project = app.project as IProject;
-	const projectOwner = await DB.findOne("user", { _id: project.owner });
+	const projectOwner = await userSvc.findOne({ _id: project.owner });
 	const appOwner = app.owner as IUser;
 
 	// app version
@@ -408,7 +415,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 		await updateAppConfig(app, env, { namespace });
 		// reload app & deploy environment data...
 		serverDeployEnvironment.namespace = namespace;
-		app = await DB.findOne("app", { slug: appSlug }, { populate: ["project"] });
+		app = await appSvc.findOne({ slug: appSlug }, { populate: ["project"] });
 	}
 
 	// validate deploy environment data...
@@ -440,10 +447,10 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 
 	// find cluster
 	const { cluster: clusterSlug } = serverDeployEnvironment;
-	const cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all" });
+	const cluster = await clusterSvc.findOne({ slug: clusterSlug }, { subpath: "/all" });
 
 	// find registry
-	const registry = registryId ? await DB.findOne("registry", { _id: registryId }) : undefined;
+	const registry = registryId ? await registrySvc.findOne({ _id: registryId }) : undefined;
 
 	// get app config to generate deployment data
 	const appConfig = getAppConfigFromApp(app);
@@ -495,10 +502,12 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	updatedAppData.lastUpdatedBy = username;
 	updatedAppData.deployEnvironment[env] = serverDeployEnvironment;
 
-	const updatedApp = await DB.updateOne("app", { slug: appSlug }, updatedAppData);
+	const updatedApp = await appSvc.updateOne({ slug: appSlug }, updatedAppData);
 	// console.log("deployBuildV2() > updatedApp :>> ");
 	// console.dir(updatedApp, { depth: 10 });
 	// console.log("updatedApp.deployEnvironment[env].envVars :>> ", updatedApp.deployEnvironment[env].envVars);
+	// console.log(`deploymentContent :>> `, deploymentContent);
+	// console.log(`updatedApp.deployEnvironment[env].deploymentYaml :>> `, updatedApp.deployEnvironment[env].deploymentYaml);
 
 	sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Generated the deployment files successfully!` });
 	// log(`[BUILD] App's last updated by "${updatedApp.lastUpdatedBy}".`);
@@ -540,14 +549,15 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	}
 
 	// update project "lastUpdatedBy"
-	await DB.updateOne(
-		"project",
-		{ _id: project._id },
-		{
-			lastUpdatedBy: username,
-			latestBuild: build._id,
-		}
-	).catch(console.error);
+	await projectSvc
+		.updateOne(
+			{ _id: project._id },
+			{
+				lastUpdatedBy: username,
+				latestBuild: build._id,
+			}
+		)
+		.catch(console.error);
 
 	// process deploy build to cluster
 	if (deployInBackground) {

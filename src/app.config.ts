@@ -70,6 +70,10 @@ export class Config {
 		return EnvName[this.grab("NODE_ENV", "development").toUpperCase()] ?? EnvName.DEVELOPMENT;
 	}
 
+	static get NODE_ENV() {
+		return this.ENV;
+	}
+
 	static get BASE_PATH() {
 		return trimNull(process.env.BASE_PATH) || "";
 	}
