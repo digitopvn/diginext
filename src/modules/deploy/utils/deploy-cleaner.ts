@@ -11,19 +11,34 @@ export class DeploymentCleaner {
 
 	async cleanupOldDeployments(appName: string, currentVersion: string): Promise<void> {
 		const cleanupTasks = [
-			this.cleanupIngress(appName, currentVersion),
-			this.cleanupServices(appName, currentVersion),
-			this.cleanupDeployments(appName, currentVersion),
+			this.cleanupIngress(appName, currentVersion).catch((e) => {
+				logWarn(`Cleanup task failed for "ingress" of "${appName}": ${e}`);
+				this.onUpdate?.(`Cleanup task failed for "ingress" of "${appName}": ${e}`);
+			}),
+			this.cleanupServices(appName, currentVersion).catch((e) => {
+				logWarn(`Cleanup task failed for "service" of "${appName}": ${e}`);
+				this.onUpdate?.(`Cleanup task failed for "service" of "${appName}": ${e}`);
+			}),
+			this.cleanupDeployments(appName, currentVersion).catch((e) => {
+				logWarn(`Cleanup task failed for "deployment" of "${appName}": ${e}`);
+				this.onUpdate?.(`Cleanup task failed for "deployment" of "${appName}": ${e}`);
+			}),
 		];
 		const cleanupTaskNames = ["ingress", "service", "deployment"];
 
-		await Promise.allSettled(cleanupTasks).then((results) => {
-			results.forEach((result, index) => {
-				if (result.status === "rejected") {
-					logWarn(`Cleanup task failed for "${cleanupTaskNames[index]}" of "${appName}": ${result.reason}`);
-				}
+		await Promise.allSettled(cleanupTasks)
+			.then((results) => {
+				results.forEach((result, index) => {
+					if (result.status === "rejected") {
+						logWarn(`Cleanup task failed for "${cleanupTaskNames[index]}" of "${appName}": ${result.reason}`);
+						this.onUpdate?.(`Cleanup task failed for "${cleanupTaskNames[index]}" of "${appName}": ${result.reason}`);
+					}
+				});
+			})
+			.catch((e) => {
+				logWarn(`Cleanup tasks failed for "${appName}": ${e}`);
+				this.onUpdate?.(`Cleanup tasks failed for "${appName}": ${e}`);
 			});
-		});
 	}
 
 	private async cleanupIngress(appName: string, currentVersion: string) {

@@ -42,67 +42,66 @@ export interface CheckDeploymentReadyOptions {
 const deployReplicas = 2;
 
 const checkDeploymentReady = async (options: CheckDeploymentReadyOptions) => {
-	// const { namespace, appName, appVersion, replicas = 1, onUpdate, isDebugging = false, context } = options;
-	// if (isDebugging) log(`checkDeploymentReady() :>>`, options);
+	const { namespace, appName, appVersion, replicas = 1, onUpdate, isDebugging = false, context } = options;
+	if (isDebugging) log(`checkDeploymentReady() :>>`, options);
 
-	// const filterLabel = `main-app=${appName}${appVersion ? `,app-version=${appVersion}` : ""}`;
-	// let pods = await ClusterManager.getPods(namespace, {
-	// 	context,
-	// 	filterLabel,
-	// 	metrics: false,
-	// 	isDebugging,
-	// 	skipOnError: true,
-	// }).catch((e) => {
-	// 	logError(`[CHECK DEPLOYMENT READY] Error: ${e}`);
-	// 	return [];
-	// });
+	const filterLabel = `main-app=${appName}${appVersion ? `,app-version=${appVersion}` : ""}`;
+	let pods = await ClusterManager.getPods(namespace, {
+		context,
+		filterLabel,
+		metrics: false,
+		isDebugging,
+		skipOnError: true,
+	}).catch((e) => {
+		logError(`[CHECK DEPLOYMENT READY] Error: ${e}`);
+		return [];
+	});
 
-	// // Skip crashed pods
-	// if (options.skipCrashedPods) {
-	// 	console.log("deploy-rollout.ts > checkDeploymentReady() > pods before :>>", pods);
-	// 	pods = pods.filter(
-	// 		(pod) => !pod.status.containerStatuses.some((containerStatus) => containerStatus.state.waiting?.reason === "CrashLoopBackOff")
-	// 	);
-	// 	console.log("deploy-rollout.ts > checkDeploymentReady() > pods after :>>", pods);
-	// }
+	// Skip crashed pods
+	if (options.skipCrashedPods) {
+		console.log("deploy-rollout.ts > checkDeploymentReady() > pods before :>>", pods);
+		pods = pods.filter(
+			(pod) => !pod.status.containerStatuses.some((containerStatus) => containerStatus.state.waiting?.reason === "CrashLoopBackOff")
+		);
+		console.log("deploy-rollout.ts > checkDeploymentReady() > pods after :>>", pods);
+	}
 
-	// if (!pods || pods.length == 0) {
-	// 	const msg = `Unable to check "${appName}" deployment:\n- Namespace: ${namespace}\n- Context: ${context}\n- Reason: Selected pods not found: ${filterLabel}.`;
-	// 	if (onUpdate) onUpdate(msg);
-	// 	return false;
-	// }
+	if (!pods || pods.length == 0) {
+		const msg = `Unable to check "${appName}" deployment:\n- Namespace: ${namespace}\n- Context: ${context}\n- Reason: Selected pods not found: ${filterLabel}.`;
+		if (onUpdate) onUpdate(msg);
+		return false;
+	}
 
-	// let isReady = false;
-	// let countReady = 0;
+	let isReady = false;
+	let countReady = 0;
 
-	// // if (isDebugging) log(`[ROLL OUT V2] "${appVersion}" > checking ${pods.length} pods > pod.status.conditions:`);
-	// try {
-	// 	pods.forEach((pod) => {
-	// 		if (isDebugging) log(pod.status?.conditions?.map((c) => `- ${c.type}: ${c.status} (Reason: "${c.reason}")`).join("\n"));
+	// if (isDebugging) log(`[ROLL OUT V2] "${appVersion}" > checking ${pods.length} pods > pod.status.conditions:`);
+	try {
+		pods.forEach((pod) => {
+			if (isDebugging) log(pod.status?.conditions?.map((c) => `- ${c.type}: ${c.status} (Reason: "${c.reason}")`).join("\n"));
 
-	// 		pod.status?.conditions
-	// 			?.filter((condition) => condition.type === "Ready")
-	// 			.map((condition) => {
-	// 				if (condition.status === "True") countReady++;
-	// 			});
+			pod.status?.conditions
+				?.filter((condition) => condition.type === "Ready")
+				.map((condition) => {
+					if (condition.status === "True") countReady++;
+				});
 
-	// 		pod.status?.containerStatuses?.map((containerStatus) => {
-	// 			if (containerStatus.restartCount > 0) throw new Error(`App is unable to start up due to some unexpected errors.`);
-	// 		});
-	// 	});
-	// } catch (e) {
-	// 	if (onUpdate) onUpdate(e.message);
-	// 	return false;
-	// }
+			pod.status?.containerStatuses?.map((containerStatus) => {
+				if (containerStatus.restartCount > 0) throw new Error(`App is unable to start up due to some unexpected errors.`);
+			});
+		});
+	} catch (e) {
+		if (onUpdate) onUpdate(e.message);
+		return false;
+	}
 
-	// if (countReady >= replicas) isReady = true;
+	if (countReady >= replicas) isReady = true;
 
-	// // notify to the dashboard:
-	// const msg = `Checking is "${appName}" deployment ready (${countReady}/${replicas}): ${isReady}`;
-	// log(msg);
-	// if (onUpdate) onUpdate(msg);
-	// return isReady;
-	return true;
+	// notify to the dashboard:
+	const msg = `Checking is "${appName}" deployment ready (${countReady}/${replicas}): ${isReady}`;
+	log(msg);
+	if (onUpdate) onUpdate(msg);
+	return isReady;
 };
 
 /**
