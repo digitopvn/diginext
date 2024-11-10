@@ -23,10 +23,12 @@ export const cliOpts: execa.Options = {};
 const originalCPU = 50;
 const originalMemory = 128;
 
-export const containerResources: Record<
-	ResourceQuotaSize,
-	{ requests: { cpu: string | null; memory: string | null }; limits: { cpu: string | null; memory: string | null } }
-> = {
+export type ResourceQuota = {
+	requests: { cpu: string | null; memory: string | null };
+	limits: { cpu: string | null; memory: string | null };
+};
+
+export const containerResources: Record<ResourceQuotaSize, ResourceQuota> = {
 	none: {
 		requests: { cpu: null, memory: null },
 		limits: { cpu: null, memory: null },
@@ -48,28 +50,28 @@ export const containerResources: Record<
 		limits: { cpu: "400m", memory: "1024Mi" },
 	},
 	"5x": {
-		requests: { cpu: "800m", memory: "2048Mi" },
-		limits: { cpu: "800m", memory: "2048Mi" },
+		requests: { cpu: "600m", memory: "2048Mi" },
+		limits: { cpu: "600m", memory: "2048Mi" },
 	},
 	"6x": {
-		requests: { cpu: "1500m", memory: "4096Mi" },
-		limits: { cpu: "1500m", memory: "4096Mi" },
+		requests: { cpu: "1000m", memory: "4096Mi" },
+		limits: { cpu: "1000m", memory: "4096Mi" },
 	},
 	"7x": {
-		requests: { cpu: "3000m", memory: "8192Mi" },
-		limits: { cpu: "3000m", memory: "8192Mi" },
+		requests: { cpu: "2000m", memory: "8192Mi" },
+		limits: { cpu: "2000m", memory: "8192Mi" },
 	},
 	"8x": {
-		requests: { cpu: "6000m", memory: "16384Mi" },
-		limits: { cpu: "6000m", memory: "16384Mi" },
+		requests: { cpu: "4000m", memory: "16384Mi" },
+		limits: { cpu: "4000m", memory: "16384Mi" },
 	},
 	"9x": {
-		requests: { cpu: "12000m", memory: "32768Mi" },
-		limits: { cpu: "12000m", memory: "32768Mi" },
+		requests: { cpu: "8000m", memory: "32768Mi" },
+		limits: { cpu: "8000m", memory: "32768Mi" },
 	},
 	"10x": {
-		requests: { cpu: "24000m", memory: "65536Mi" },
-		limits: { cpu: "24000m", memory: "65536Mi" },
+		requests: { cpu: "16000m", memory: "65536Mi" },
+		limits: { cpu: "16000m", memory: "65536Mi" },
 	},
 };
 
