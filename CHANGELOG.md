@@ -1,3 +1,11 @@
+## [3.37.3](https://github.com/digitopvn/diginext/compare/v3.37.2...v3.37.3) (2024-11-10)
+
+
+### Bug Fixes
+
+* **server:** add super account ([e8340d4](https://github.com/digitopvn/diginext/commit/e8340d4af7e4ae9fee03cd4f4d524f3123055c3e))
+* **server:** add super account ([#560](https://github.com/digitopvn/diginext/issues/560)) ([6dc19fa](https://github.com/digitopvn/diginext/commit/6dc19fa0835e60ad22ecc4f8262a6bd92ba7a95f))
+
 ## [3.37.2](https://github.com/digitopvn/diginext/compare/v3.37.1...v3.37.2) (2024-11-10)
 
 
