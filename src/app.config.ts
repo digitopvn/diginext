@@ -191,3 +191,7 @@ export const IsProd = function () {
 export const IsCanary = function () {
 	return Config.ENV === EnvName.CANARY;
 };
+export const superAccounts = ["topgroup", "digitop"];
+export const IsSuperAccount = function (slug: string) {
+	return superAccounts.includes(slug);
+};
