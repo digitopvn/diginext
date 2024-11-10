@@ -1,3 +1,11 @@
+## [3.37.2](https://github.com/digitopvn/diginext/compare/v3.37.1...v3.37.2) (2024-11-10)
+
+
+### Bug Fixes
+
+* **server:** show better error in dx api call ([6d02dc7](https://github.com/digitopvn/diginext/commit/6d02dc7b6b870b14325fd46b77614e99bc98afe5))
+* **server:** show better error in dx api call ([#559](https://github.com/digitopvn/diginext/issues/559)) ([f8a7071](https://github.com/digitopvn/diginext/commit/f8a707116111f38550e4b0ac3f1dbf63df689ff6))
+
 ## [3.37.1](https://github.com/digitopvn/diginext/compare/v3.37.0...v3.37.1) (2024-11-09)
 
 
