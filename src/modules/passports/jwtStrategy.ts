@@ -5,12 +5,22 @@ import type * as express from "express";
 import jwt from "jsonwebtoken";
 import type { VerifiedCallback } from "passport-jwt";
 import { ExtractJwt, Strategy } from "passport-jwt";
+import { z } from "zod";
 
 import { Config } from "@/app.config";
-import type { AccessTokenInfo, IUser } from "@/entities";
-import { UserService } from "@/services";
+import type { AccessTokenInfo } from "@/entities";
 
 dayjs.extend(relativeTime);
+
+// Zod schema for token validation
+const TokenSchema = z.object({
+	id: z.string().min(1, "User ID is required"),
+	workspaceId: z.string().optional(),
+	exp: z.number().optional(),
+});
+
+// Supported algorithms
+const SUPPORTED_ALGORITHMS = ["HS256", "HS512"];
 
 export type JWTOptions = {
 	workspaceId?: string;
@@ -25,31 +35,6 @@ var cookieExtractor = function (req) {
 	return token;
 };
 
-export const generateJWT = async (userId: string, options?: JWTOptions) => {
-	if (!options.expiresIn) options.expiresIn = process.env.JWT_EXPIRE_TIME || "2d";
-	const userSvc = new UserService();
-
-	let user: IUser = await userSvc.findOne({ _id: userId }, { select: ["email"] });
-
-	const { expiresIn } = options;
-	const secret = Config.grab("JWT_SECRET", "123");
-	const refreshSecret = Config.grab("JWT_REFRESH_SECRET", secret);
-	const payload = { id: userId, email: user.email, ...options };
-
-	const accessToken = jwt.sign(payload, secret, {
-		algorithm: "HS512",
-		expiresIn,
-	});
-	const refreshToken = jwt.sign(payload, refreshSecret, {
-		algorithm: "HS512",
-		expiresIn: "7d",
-	});
-
-	return { accessToken, refreshToken, expiresIn };
-};
-
-export const refreshAccessToken = () => {};
-
 export interface TokenDetails {
 	id: string;
 	workspaceId: string;
@@ -62,34 +47,127 @@ export interface TokenDetails {
 	expiredDateGTM7: string;
 }
 
-export const verifyRefreshToken = (refreshToken: string): Promise<{ error: boolean; tokenDetails?: TokenDetails; message: string }> => {
-	const secret = Config.grab("JWT_REFRESH_SECRET") || Config.grab("JWT_SECRET", "123");
+export const verifyRefreshToken = async (refreshToken: string) => {
+	try {
+		console.log("passports > verifyRefreshToken > Verifying token :>>", refreshToken);
 
-	return new Promise(async (resolve, reject) => {
-		// const userTokenSvc = new UserTokenService();
-		// const userToken = await userTokenSvc.findOne({ token: refreshToken });
-		// if (!userToken) return reject({ error: true, message: "Invalid refresh token" });
+		// Check if token exists
+		if (!refreshToken) {
+			return {
+				error: true,
+				message: "Refresh token is required",
+			};
+		}
 
-		jwt.verify(refreshToken, secret, (err, tokenDetails) => {
-			if (err) return reject({ error: true, message: "Invalid refresh token" });
+		// Verify token's secret and decode
+		const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || "your_refresh_secret") as any;
 
-			const { exp } = tokenDetails;
-			let expiredDate = dayjs(new Date(exp * 1000));
-			let expiredTimestamp = dayjs(new Date(exp * 1000)).diff(dayjs());
-			let isExpired = expiredTimestamp <= 0;
-			let expToNow = dayjs(new Date(exp * 1000)).fromNow();
-			tokenDetails.expiredDate = expiredDate;
-			tokenDetails.expiredTimestamp = expiredTimestamp;
-			tokenDetails.isExpired = isExpired;
-			tokenDetails.expToNow = expToNow;
-
-			resolve({
-				tokenDetails,
-				error: false,
-				message: "Valid refresh token",
-			});
+		// Validate decoded token structure
+		const validatedToken = TokenSchema.parse({
+			id: decoded.id,
+			workspaceId: decoded.workspaceId,
+			exp: decoded.exp,
 		});
-	});
+
+		// Check token expiration
+		const currentTime = Math.floor(Date.now() / 1000);
+		const isExpired = decoded.exp ? decoded.exp < currentTime : true;
+
+		if (isExpired) {
+			return {
+				error: true,
+				message: "Refresh token has expired",
+			};
+		}
+
+		return {
+			error: false,
+			tokenDetails: {
+				id: validatedToken.id,
+				workspaceId: validatedToken.workspaceId,
+				isExpired: false,
+			},
+		};
+	} catch (error) {
+		console.error("passports > verifyRefreshToken > Error :>>", error);
+
+		// Specific error handling
+		if (error instanceof jwt.TokenExpiredError) {
+			return {
+				error: true,
+				message: "Refresh token has expired",
+			};
+		}
+
+		if (error instanceof jwt.JsonWebTokenError) {
+			return {
+				error: true,
+				message: "Invalid refresh token signature",
+			};
+		}
+
+		if (error instanceof z.ZodError) {
+			return {
+				error: true,
+				message: "Invalid token structure",
+			};
+		}
+
+		return {
+			error: true,
+			message: "Invalid refresh token",
+		};
+	}
+};
+
+// Companion function for generating refresh tokens
+export const generateRefreshToken = (
+	userId: string,
+	options: {
+		workspaceId?: string;
+		expiresIn?: string;
+	} = {}
+) => {
+	const { workspaceId, expiresIn = "7d" } = options;
+
+	return jwt.sign(
+		{
+			id: userId,
+			workspaceId,
+		},
+		process.env.JWT_REFRESH_SECRET || "your_refresh_secret",
+		{
+			expiresIn,
+		}
+	);
+};
+
+export const generateJWT = async (
+	userId: string,
+	options: {
+		expiresIn?: string;
+		workspaceId?: string;
+	} = {}
+) => {
+	const { expiresIn = "2d", workspaceId } = options;
+
+	const accessToken = jwt.sign(
+		{
+			id: userId,
+			workspaceId,
+		},
+		process.env.JWT_SECRET || "your_secret",
+		{
+			expiresIn,
+		}
+	);
+
+	const refreshToken = generateRefreshToken(userId, { workspaceId });
+
+	return {
+		accessToken,
+		refreshToken,
+	};
 };
 
 export async function extractAccessTokenInfo(
@@ -152,8 +230,8 @@ export const jwtStrategy = new Strategy(
 			ExtractJwt.fromUrlQueryParameter("access_token"),
 			cookieExtractor,
 		]),
+		algorithms: SUPPORTED_ALGORITHMS,
 		passReqToCallback: true,
-		algorithms: ["HS512"],
 	},
 	async function (req: express.Request, payload: any, done: VerifiedCallback) {
 		// console.log(`[1] AUTHENTICATE: jwtStrategy > payload...`, payload);
