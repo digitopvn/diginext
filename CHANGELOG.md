@@ -1,3 +1,12 @@
+# [3.38.0](https://github.com/digitopvn/diginext/compare/v3.37.3...v3.38.0) (2024-11-13)
+
+
+### Bug Fixes
+
+* **admin:** view app logs, modify healthz, redirect domain ([a92689c](https://github.com/digitopvn/diginext/commit/a92689cd42b6b6dd39e1539eb41633e6cb8ddd9e))
+* **server:** add env var for dxup api base url ([917a073](https://github.com/digitopvn/diginext/commit/917a073885e3e75f5bf5fe27f8ef2fb76e3afa52))
+* **server:** update domain on change cluster, delete app, delete deploy env ([1722fc5](https://github.com/digitopvn/diginext/commit/1722fc5349cbd7db20e01d1e12af74ba77b6faa8))
+
 ## [3.37.3](https://github.com/digitopvn/diginext/compare/v3.37.2...v3.37.3) (2024-11-10)
 
 
