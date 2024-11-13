@@ -3,6 +3,7 @@ import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { isEmpty } from "lodash";
 import passport from "passport";
 
+import { IsDev } from "@/app.config";
 import type { IRole, IUser, IWorkspace } from "@/entities";
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { generateJWT, verifyRefreshToken } from "@/modules/passports";
@@ -29,11 +30,13 @@ const jwt_auth = (req: AppRequest, res, next) =>
 	passport.authenticate("jwt", { session: false }, async function (err, user: IUser, info) {
 		try {
 			// Detailed logging for development
-			console.log("auth-jwt > authentication details :>>", {
-				hasError: !!err,
-				userExists: !!user,
-				info: info?.toString(),
-			});
+			if (IsDev()) {
+				console.log("auth-jwt > authentication details :>>", {
+					hasError: !!err,
+					userExists: !!user,
+					info: info?.toString(),
+				});
+			}
 
 			const { UserService } = await import("@/services");
 			const userSvc = new UserService();

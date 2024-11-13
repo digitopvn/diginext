@@ -261,8 +261,9 @@ export class DeployEnvironmentService {
 		const clusterSvc = new ClusterService();
 
 		const clusterSlug = deployEnvironment.cluster;
-		const cluster = await clusterSvc.findOne({ slug: clusterSlug, workspace: app.workspace });
-		if (!cluster) return;
+		if (!clusterSlug) throw new Error(`Cluster slug not found.`);
+		const [cluster] = await clusterSvc.findAll({ slug: clusterSlug, workspace: app.workspace });
+		if (!cluster) throw new Error(`Cluster "${clusterSlug}" not found.`);
 
 		const { contextName: context } = cluster;
 		const mainAppName = await getDeploymentName(app);
