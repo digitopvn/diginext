@@ -124,8 +124,8 @@ export class Config {
 	}
 
 	static get DX_API_BASE_URL() {
-		return "http://localhost:4000";
-		// return "https://api.dxup.dev";
+		// return "http://localhost:4000";
+		return trimNull(process.env.DX_API_BASE_URL) || "https://api.dxup.dev";
 	}
 
 	static get DX_API_BASE_PATH() {
