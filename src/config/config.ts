@@ -28,6 +28,17 @@ export type ResourceQuota = {
 	limits: { cpu: string | null; memory: string | null };
 };
 
+export const containerCpus = ["50m", "100m", "200m", "400m", "600m", "1000m", "2000m", "4000m", "8000m", "16000m"];
+export const containerMemories = ["128Mi", "256Mi", "512Mi", "1024Mi", "2048Mi", "4096Mi", "8192Mi", "16384Mi", "32768Mi", "65536Mi"];
+
+export function getContainerResource(cpu: string | null, memory: string | null) {
+	const resource: ResourceQuota = {
+		requests: { cpu, memory },
+		limits: { cpu, memory },
+	};
+	return resource;
+}
+
 export const containerResources: Record<ResourceQuotaSize, ResourceQuota> = {
 	none: {
 		requests: { cpu: null, memory: null },

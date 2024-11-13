@@ -4,7 +4,7 @@ import * as fs from "fs";
 import yaml from "js-yaml";
 import { isObject, toNumber } from "lodash";
 
-import { getContainerResourceBySize } from "@/config/config";
+import { getContainerResource } from "@/config/config";
 import { FULL_DEPLOYMENT_TEMPLATE_PATH, NAMESPACE_TEMPLATE_PATH } from "@/config/const";
 import type { IContainerRegistry, IUser, IWorkspace } from "@/entities";
 import type { AppConfig, DeployEnvironment, KubeDeployment, KubeNamespace } from "@/interfaces";
@@ -379,13 +379,14 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 			}
 
 			if (doc && doc.kind == "Deployment") {
-				if (env == "dev") {
-					// development environment
-					doc.spec.template.spec.containers[0].resources = {};
-				} else {
-					// canary, production, staging,...
-					doc.spec.template.spec.containers[0].resources = getContainerResourceBySize(deployEnvironmentConfig.size || "1x");
-				}
+				// if (env == "dev") {
+				// 	// development environment
+				// 	doc.spec.template.spec.containers[0].resources = {};
+				// } else {
+				// 	// canary, production, staging,...
+				// 	doc.spec.template.spec.containers[0].resources = getContainerResourceBySize(deployEnvironmentConfig.size || "1x");
+				// }
+				doc.spec.template.spec.containers[0].resources = getContainerResource(deployEnvironmentConfig.cpu, deployEnvironmentConfig.memory);
 
 				// minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing
 				doc.spec.minReadySeconds = 10;
@@ -536,8 +537,9 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 
 	deploymentContent = objectToDeploymentYaml(deploymentCfg);
 
-	// End point của ứng dụng:
-	let endpoint = `https://${domains[0]}/${basePath}`;
+	// Get endpoint of the application (last domain, if any):
+	const lastDomain = domains ? domains[domains.length - 1] : undefined;
+	let endpoint = lastDomain ? `https://${lastDomain}/${basePath}` : undefined;
 
 	// update deploy environment
 	// const updatedApp = await DB.updateOne("app", { _id: app._id }, { [`deployEnvironment.${env}`]: deployEnvironmentConfig });

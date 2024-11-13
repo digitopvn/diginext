@@ -580,7 +580,7 @@ export async function parseCliOptions() {
 		redirect: argv.redirect as boolean,
 		ssl: argv.ssl as boolean, // [FLAG] --no-ssl
 		// [FLAG] --no-healthz, --healthz=/custom/path
-		healthz: argv.healthz === undefined || argv.healthz === true ? "/" : argv.healthz === false ? null : (argv.healthz as string),
+		healthz: argv.healthz === true ? "/" : argv.healthz === false || argv.healthz === undefined ? null : (argv.healthz as string),
 		imageURL: argv.image as string,
 		message: argv.message as string,
 	};

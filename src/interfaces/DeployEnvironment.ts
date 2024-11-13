@@ -70,6 +70,16 @@ export interface ClientDeployEnvironmentConfig {
 	size?: ResourceQuotaSize;
 
 	/**
+	 * Container's CPU
+	 */
+	cpu?: string;
+
+	/**
+	 * Container's memory
+	 */
+	memory?: string;
+
+	/**
 	 * Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment
 	 * @default true
 	 */

@@ -1,8 +1,7 @@
 import { isEmpty, isString } from "lodash";
 import path from "path";
 
-import { Config } from "@/app.config";
-import { CLI_CONFIG_DIR } from "@/config/const";
+import { CLI_CONFIG_DIR, DIGINEXT_DOMAIN } from "@/config/const";
 import type { IFramework, IGitProvider, IProject } from "@/entities";
 import type { IApp } from "@/entities/App";
 import { appSchema } from "@/entities/App";
@@ -10,6 +9,7 @@ import { type IQueryFilter, type IQueryOptions, type IQueryPagination } from "@/
 import type { AppInputSchema } from "@/interfaces/AppInterfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
+import { dxDeleteDomainRecord } from "@/modules/diginext/dx-domain";
 import { getRepoURLFromRepoSSH } from "@/modules/git";
 import GitProviderAPI from "@/modules/git/git-provider-api";
 import { parseGitRepoDataFromRepoSSH, pullOrCloneGitRepoHTTP, repoSshToRepoURL } from "@/modules/git/git-utils";
@@ -484,20 +484,17 @@ export class AppService extends BaseService<IApp> {
 			for (const env of Object.keys(data.deployEnvironment)) {
 				const deployEnvironment = data.deployEnvironment[env];
 				if (deployEnvironment) {
-					// check dx quota (only in production mode)
-					if (Config.NODE_ENV === "production") {
-						const { size } = deployEnvironment;
-						if (size) {
-							const quotaRes = await checkQuota(workspace, { resourceSize: size });
-							if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
-							if (quotaRes.data && quotaRes.data.isExceed) {
-								throw new Error(`You've exceeded the limit amount of container size.`);
-								// throw new Error(
-								// 	`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
-								// );
-							}
-						}
-					}
+					// TODO: Check quota based on CPU & memory (NEW)
+					// if (Config.NODE_ENV === "production") {
+					// 	const { size } = deployEnvironment;
+					// 	if (size) {
+					// 		const quotaRes = await checkQuota(workspace, { resourceSize: size });
+					// 		if (!quotaRes.status) throw new Error(quotaRes.messages.join(". "));
+					// 		if (quotaRes.data && quotaRes.data.isExceed) {
+					// 			throw new Error(`You've exceeded the limit amount of container size.`);
+					// 		}
+					// 	}
+					// }
 
 					// IMPORTANT: Only update specific paths
 					for (const key of Object.keys(deployEnvironment)) {
@@ -505,6 +502,7 @@ export class AppService extends BaseService<IApp> {
 					}
 				}
 			}
+			// ! CAUTION: Delete deployEnvironment before updating
 			delete data.deployEnvironment;
 		}
 
@@ -535,8 +533,19 @@ export class AppService extends BaseService<IApp> {
 				// take down environment
 				if (!isEmpty(deployEnvironment)) {
 					await deployEnvSvc.takeDownDeployEnvironment(app, env).catch((e) => {
-						console.error(`AppService > delete() > deleteDeployEnvironment() :>>`, e);
+						console.error(`AppService > delete() > takeDownDeployEnvironment() :>>`, e);
 					});
+				}
+				// delete diginext domain record (if any)
+				if (deployEnvironment.domains && deployEnvironment.domains.filter((domain) => domain.indexOf(DIGINEXT_DOMAIN) > -1).length > 0) {
+					if (this.workspace && this.workspace.dx_key) {
+						for (const domain of deployEnvironment.domains.filter((_domain) => _domain.indexOf(DIGINEXT_DOMAIN) > -1)) {
+							const recordName = domain.replace(DIGINEXT_DOMAIN, "");
+							dxDeleteDomainRecord({ name: recordName, type: "A" }, this.workspace.dx_key).catch(console.error);
+						}
+					} else {
+						console.error("AppService > delete() > Delete domain A record > No WORKSPACE or DX_KEY found.");
+					}
 				}
 			});
 		}

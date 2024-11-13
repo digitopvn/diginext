@@ -123,8 +123,17 @@ export class Config {
 		return trimNull(process.env.DX_SITE_BACKUP_URL) ? trimNull(process.env.DX_SITE_BACKUP_URL) : "https://diginext.site";
 	}
 
+	static get DX_API_BASE_URL() {
+		return "http://localhost:4000";
+		// return "https://api.dxup.dev";
+	}
+
+	static get DX_API_BASE_PATH() {
+		return "/api/v1/admin";
+	}
+
 	static get DX_API_URL() {
-		return this.DX_SITE_URL + "/api/v1/admin";
+		return `${this.DX_API_BASE_URL}${this.DX_API_BASE_PATH}`;
 	}
 
 	static get BUILDER() {

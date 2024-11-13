@@ -59,12 +59,10 @@ export class ProjectService extends BaseService<IProject> {
 				try {
 					const apps = await appSvc.find(appFilter);
 					if (apps.length > 0) {
-						for (const app of apps) {
-							await appSvc.takeDown(app).then((_app) => appSvc.delete({ _id: _app._id }));
-						}
+						await Promise.all(apps.map((app) => appSvc.delete({ _id: app._id })));
 					}
 				} catch (e) {
-					await appSvc.delete(appFilter).catch((err) => logWarn(`ProjectService > delete > delete apps :>>`, err));
+					logWarn(`ProjectService > delete > delete apps :>>`, e);
 				}
 			}
 		}

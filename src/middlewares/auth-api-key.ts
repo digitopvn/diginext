@@ -7,12 +7,12 @@ import type { AppRequest } from "@/interfaces/SystemTypes";
 import { MongoDB } from "@/plugins/mongodb";
 
 export const apiAccessTokenHandler = async (req: AppRequest, res: ExpressResponse, next: NextFunction) => {
-	const { DB } = await import("@/modules/api/DB");
+	const { ApiKeyUserService } = await import("@/services");
+	const apiKeyUserSvc = new ApiKeyUserService();
+
 	// extract API key from headers
 	const access_token = req.headers["x-api-key"].toString();
-
-	let apiKeyAccount = await DB.findOne(
-		"api_key_user",
+	let apiKeyAccount = await apiKeyUserSvc.findOne(
 		{ "token.access_token": access_token },
 		{
 			populate: ["workspaces", "activeWorkspace", "roles", "activeRole"],
@@ -25,8 +25,7 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: ExpressRespons
 		if (!apiKeyAccount.activeWorkspace) {
 			const workspaces = apiKeyAccount.workspaces as IWorkspace[];
 			if (workspaces.length === 1) {
-				apiKeyAccount = await DB.updateOne(
-					"api_key_user",
+				apiKeyAccount = await apiKeyUserSvc.updateOne(
 					{ _id: apiKeyAccount._id },
 					{ activeWorkspace: workspaces[0]._id, "token.refresh_token": access_token },
 					{ populate: ["roles", "workspaces", "activeWorkspace"] }
@@ -44,8 +43,7 @@ export const apiAccessTokenHandler = async (req: AppRequest, res: ExpressRespons
 		) as IRole;
 
 		if (activeRole && apiKeyAccount.activeRole !== activeRole._id)
-			apiKeyAccount = await DB.updateOne(
-				"api_key_user",
+			apiKeyAccount = await apiKeyUserSvc.updateOne(
 				{ _id: apiKeyAccount._id },
 				{ activeRole: activeRole._id },
 				{ populate: ["roles", "workspaces", "activeWorkspace", "activeRole"] }

@@ -4,6 +4,7 @@ import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { isArray, isBoolean, isEmpty, isUndefined } from "lodash";
 import type { QuerySelector } from "mongoose";
 
+import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IBuild, ICluster, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
 import type { DeployEnvironment, IQueryOptions, KubeDeployment } from "@/interfaces";
@@ -17,7 +18,7 @@ import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import type { GenerateDeploymentResult } from "@/modules/deploy";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
 import { generateDeploymentV2 } from "@/modules/deploy/generate-deployment-v2";
-import { dxCreateDomain, dxUpdateDomain } from "@/modules/diginext/dx-domain";
+import { dxCreateDomain, dxDeleteDomainRecord, dxUpdateDomainRecord } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
 import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
@@ -541,6 +542,19 @@ export class DeployEnvironmentService {
 		// take down deploy environment on clusters
 		await this.takeDownDeployEnvironment(app, env);
 
+		// delete DXUP domain record (if any)
+		const deployEnvironment = app.deployEnvironment[env];
+		if (deployEnvironment.domains && deployEnvironment.domains.filter((domain) => domain.indexOf(DIGINEXT_DOMAIN) > -1).length > 0) {
+			if (this.workspace && this.workspace.dx_key) {
+				for (const domain of deployEnvironment.domains.filter((_domain) => _domain.indexOf(DIGINEXT_DOMAIN) > -1)) {
+					const recordName = domain.replace(DIGINEXT_DOMAIN, "");
+					dxDeleteDomainRecord({ name: recordName, type: "A" }, this.workspace.dx_key).catch(console.error);
+				}
+			} else {
+				console.error("DeployEnvironmentService > deleteDeployEnvironment() > Delete domain A record > No WORKSPACE or DX_KEY found.");
+			}
+		}
+
 		// delete deploy environment in database
 		const updatedApp = await appSvc.updateOne(
 			{
@@ -619,8 +633,12 @@ export class DeployEnvironmentService {
 		if (deployEnvironment.domains && deployEnvironment.domains.filter((domain) => domain.indexOf(".diginext.site") > -1).length > 0) {
 			if (this.workspace && this.workspace.dx_key) {
 				for (const domain of deployEnvironment.domains.filter((_domain) => _domain.indexOf(".diginext.site") > -1)) {
-					const subdomain = domain.replace(".diginext.site", "");
-					dxUpdateDomain({ subdomain, data: cluster.primaryIP, userId: this.user.dxUserId }, this.workspace.dx_key).catch(console.error);
+					const recordName = domain.replace(".diginext.site", "");
+					dxUpdateDomainRecord(
+						{ name: recordName, type: "A" },
+						{ data: cluster.primaryIP, userId: this.user.dxUserId },
+						this.workspace.dx_key
+					).catch(console.error);
 				}
 			} else {
 				console.error("DeployEnvironmentService > changeCluster() > Update domain A record data > No WORKSPACE or DX_KEY found.");
