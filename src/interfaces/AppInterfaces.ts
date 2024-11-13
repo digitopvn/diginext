@@ -147,10 +147,12 @@ export interface DeployEnvironmentData {
 	namespace?: string;
 
 	/**
-	 * OPTIONAL
+	 * OPTIONAL [DEPRECATED SOON]
 	 * ---
+	 * ### [DEPRECATED SOON] Use `cpu` and `memory` instead.
 	 * Container quota resources
 	 * @default 1x
+	 * @deprecated
 	 * @example
 	 * "none" - {}
 	 * "1x" - { requests: { cpu: "20m", memory: "128Mi" }, limits: { cpu: "20m", memory: 128Mi" } }
@@ -165,6 +167,20 @@ export interface DeployEnvironmentData {
 	 * "10x" - { requests: { cpu: "10024m", memory: "32464Mi" }, limits: { cpu: "10024m", memory: "32464Mi" } }
 	 */
 	size?: ResourceQuotaSize;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Container's CPU
+	 */
+	cpu?: string;
+
+	/**
+	 * OPTIONAL
+	 * ---
+	 * Container's memory
+	 */
+	memory?: string;
 
 	/**
 	 * OPTIONAL

@@ -325,6 +325,12 @@ function initialize(db?: typeof mongoose) {
 }
 
 if (CLI_MODE === "server") {
+	// In your main server file or entry point
+	process.on("unhandledRejection", (reason, promise) => {
+		console.error("Unhandled Rejection at:", promise, "reason:", reason);
+		// Optional: Add logging or monitoring service
+	});
+
 	// log(`Connecting to database. Please wait...`);
 	AppDatabase.connect(initialize);
 

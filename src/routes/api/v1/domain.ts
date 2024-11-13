@@ -17,6 +17,11 @@ router
 	.use(authenticate, authorize)
 	.use(registerController(controller))
 	// create new domain
-	.post("/", processApiRequest(controller.createDiginextDomain.bind(controller)));
+	.post("/", processApiRequest(controller.createDiginextDomain.bind(controller)))
+	.get("/", processApiRequest(controller.getDiginextDomains.bind(controller)))
+	.get("/records", processApiRequest(controller.getDiginextDomainRecords.bind(controller)))
+	.get("/records/:recordName", processApiRequest(controller.getDiginextDomainRecordByName.bind(controller)))
+	.patch("/records/:recordName", processApiRequest(controller.updateDiginextDomainRecord.bind(controller)))
+	.delete("/records/:recordName", processApiRequest(controller.deleteDiginextDomainRecord.bind(controller)));
 
 export default router;

@@ -36,7 +36,7 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 		if (options.isDebugging) console.log(chalk.yellow("dxApi() >"), `${Config.DX_API_URL}${options.url} > response :>>`, responseData);
 		return responseData as T;
 	} catch (e) {
-		console.log(chalk.yellow("[BACKUP] dxApi() > Error :>>"), e);
+		console.log(chalk.yellow("dxApi() > Error :>>"), e);
 		const err: string = e.data?.message === "UNAUTHORIZED" || e.data?.status === 401 ? "UNAUTHORIZED." : e.message;
 		return { status: 0, messages: [`${err}`] } as T;
 		// retry with backup url

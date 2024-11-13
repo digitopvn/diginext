@@ -18,7 +18,11 @@ import { startBuild, stopBuild } from "./build";
 import { sendLog } from "./send-log-message";
 
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildV2Options) => {
-	const { DB } = await import("@/modules/api/DB");
+	// import services
+	const { AppService } = await import("@/services");
+	const appSvc = new AppService();
+	const { ReleaseService } = await import("@/services");
+	const releaseSvc = new ReleaseService();
 
 	// [1] Build container image
 	if (typeof buildParams.buildWatch === "undefined") buildParams.buildWatch = true;
@@ -30,7 +34,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 		buildInfo = await startBuild(buildParams);
 		if (!buildInfo) throw new Error(`[BUILD_AND_DEPLOY] Unable to build.`);
 	} catch (e) {
-		const app = await DB.findOne("app", { slug: buildParams.appSlug });
+		const app = await appSvc.findOne({ slug: buildParams.appSlug });
 		const SOCKET_ROOM = createBuildSlug({ projectSlug: app.projectSlug, appSlug: buildParams.appSlug, buildTag: buildParams.buildTag });
 		stopBuild(app.projectSlug, app.slug, SOCKET_ROOM, "failed");
 		sendLog({ SOCKET_ROOM, type: "error", message: `Build error: ${e.stack}` });
@@ -79,46 +83,38 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 	// console.log("process.env.NODE_ENV :>> ", process.env.NODE_ENV);
 	if (!IsTest()) {
 		try {
-			// let's this job run in background after 60 seconds
-			wait(60 * 1000, () => {
-				screenshot(endpoint, { fullPage: false })
-					.then(async (result) => {
-						if (result) {
-							// upload to cloud storage (if any)
-							const { workspace } = deployParams;
-							let cloudUploadedUrl: string | undefined;
-							if (workspace && workspace.settings.cloud_storage) {
-								const uploaded = await uploadFileBuffer(result.buffer, result.name, {
-									storage: workspace.settings.cloud_storage,
-								}).catch((e) => {
-									console.error(`[BUILD_AND_DEPLOY] Unable to upload screenshot to cloud storage (${endpoint}): ${e}`);
-									return null;
-								});
-								if (uploaded) cloudUploadedUrl = uploaded.publicUrl;
-							}
-							// success -> write to db
-							delete result.buffer;
-							const mediaSvc = new MediaService({ owner: deployParams.owner, workspace: deployParams.workspace });
-							const media = await mediaSvc.create({
-								...result,
-								screenshotUrl: cloudUploadedUrl || result.url,
-								owner: deployParams.owner._id,
-								workspace: deployParams.workspace._id,
-							});
-							if (media) {
-								// update screenshot to release
-								const updatedRelease = await DB.updateOne("release", { _id: releaseId }, { screenshot: media.url });
-								// if (updatedRelease) sendLog({ SOCKET_ROOM, message: `Screenshot: ${media.url}` });
-
-								// update screenshot to app's deploy environment
-								const app = await DB.updateOne("app", { slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
-								// if (!app) sendLog({ SOCKET_ROOM, message: `Unable to update screenshot to app's deploy environment (${env})` });
-							}
-						}
-					})
-					.catch((e) => {
-						console.error(e);
+			// let's this job run in background after 2 minutes
+			wait(2 * 60 * 1000, async () => {
+				const result = await screenshot(endpoint, { fullPage: false });
+				if (result) {
+					// upload to cloud storage (if any)
+					const { workspace } = deployParams;
+					let cloudUploadedUrl: string | undefined;
+					if (workspace && workspace.settings.cloud_storage) {
+						const uploaded = await uploadFileBuffer(result.buffer, result.name, {
+							storage: workspace.settings.cloud_storage,
+						}).catch((e) => {
+							console.error(`[BUILD_AND_DEPLOY] Unable to upload screenshot to cloud storage (${endpoint}): ${e}`);
+							return null;
+						});
+						if (uploaded) cloudUploadedUrl = uploaded.publicUrl;
+					}
+					// success -> write to db
+					delete result.buffer;
+					const mediaSvc = new MediaService({ owner: deployParams.owner, workspace: deployParams.workspace });
+					const media = await mediaSvc.create({
+						...result,
+						screenshotUrl: cloudUploadedUrl || result.url,
+						owner: deployParams.owner._id,
+						workspace: deployParams.workspace._id,
 					});
+					if (media) {
+						// update screenshot to release
+						releaseSvc.updateOne({ _id: releaseId }, { screenshot: media.url });
+						// update screenshot to app's deploy environment
+						appSvc.updateOne({ slug: appSlug }, { [`deployEnvironment.${env}.screenshot`]: media.url });
+					}
+				}
 			});
 		} catch (e) {
 			sendLog({

@@ -6,6 +6,7 @@ import type { IWorkspace } from "@/entities/Workspace";
 import { workspaceSchema } from "@/entities/Workspace";
 import type { IQueryFilter, IQueryOptions } from "@/interfaces";
 import type { Ownership } from "@/interfaces/SystemTypes";
+import { DB } from "@/modules/api/DB";
 import { dxSendEmail } from "@/modules/diginext/dx-email";
 import { dxCreateUser } from "@/modules/diginext/dx-user";
 import type { CreateWorkspaceParams } from "@/modules/diginext/dx-workspace";
@@ -17,8 +18,6 @@ import { addUserToWorkspace, makeWorkspaceActive } from "@/plugins/user-utils";
 import seedWorkspaceInitialData from "@/seeds";
 
 import BaseService from "./BaseService";
-import { RoleService } from "./RoleService";
-import { UserService } from "./UserService";
 
 export interface WorkspaceInputData {
 	/**
@@ -90,6 +89,7 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 					if (!dxUserRes.status) throw new Error(dxUserRes.messages.join("\n"));
 
 					if (dxUserRes.data.id) {
+						const { UserService } = await import("./UserService");
 						const userSvc = new UserService(this.ownership);
 						ownerUser = await userSvc.updateOne({ _id: ownerUser._id }, { dxUserId: dxUserRes.data.id });
 					}
@@ -157,7 +157,37 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 	}
 
 	async delete(filter?: IQueryFilter<IWorkspace>, options?: IQueryOptions): Promise<{ ok: boolean; affected: number }> {
-		const { DB } = await import("@/modules/api/DB");
+		const { ApiKeyUserService } = await import("./ApiKeyUserService");
+		const { AppService } = await import("./AppService");
+		const { CloudDatabaseService } = await import("./CloudDatabaseService");
+		const { ClusterService } = await import("./ClusterService");
+		const { ContainerRegistryService } = await import("./ContainerRegistryService");
+		const { DeployEnvironmentService } = await import("./DeployEnvironmentService");
+		const { FrameworkService } = await import("./FrameworkService");
+		const { GitProviderService } = await import("./GitProviderService");
+		const { ProjectService } = await import("./ProjectService");
+		const { ReleaseService } = await import("./ReleaseService");
+		const { RoleService } = await import("./RoleService");
+		const { RouteService } = await import("./RouteService");
+		const { ServiceAccountService } = await import("./ServiceAccountService");
+		const { TeamService } = await import("./TeamService");
+		const { UserService } = await import("./UserService");
+
+		const userSvc = new UserService(this.ownership);
+		const appSvc = new AppService(this.ownership);
+		const projectSvc = new ProjectService(this.ownership);
+		const deployEnvSvc = new DeployEnvironmentService(this.ownership);
+		const roleSvc = new RoleService(this.ownership);
+		const registrySvc = new ContainerRegistryService(this.ownership);
+		const releaseSvc = new ReleaseService(this.ownership);
+		const teamSvc = new TeamService(this.ownership);
+		const routeSvc = new RouteService(this.ownership);
+		const serviceAccountSvc = new ServiceAccountService(this.ownership);
+		const apiKeySvc = new ApiKeyUserService(this.ownership);
+		const gitSvc = new GitProviderService(this.ownership);
+		const frameworkSvc = new FrameworkService(this.ownership);
+		const clusterSvc = new ClusterService(this.ownership);
+		const databaseSvc = new CloudDatabaseService(this.ownership);
 
 		// delete workspace in user:
 		const _user = await DB.findOne("user", { workspaces: this.workspace._id });
@@ -166,20 +196,19 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 		console.log("[WorkspaceService] delete > updatedUser :>> ", updatedUser);
 
 		// delete related data:
-		await DB.delete("project", { workspace: this.workspace._id });
-		await DB.delete("app", { workspace: this.workspace._id });
-		await DB.delete("build", { workspace: this.workspace._id });
-		await DB.delete("cluster", { workspace: this.workspace._id });
-		await DB.delete("framework", { workspace: this.workspace._id });
-		await DB.delete("git", { workspace: this.workspace._id });
-		await DB.delete("database", { workspace: this.workspace._id });
-		await DB.delete("api_key_user", { workspace: this.workspace._id });
-		await DB.delete("service_account", { workspace: this.workspace._id });
-		await DB.delete("registry", { workspace: this.workspace._id });
-		await DB.delete("release", { workspace: this.workspace._id });
-		await DB.delete("role", { workspace: this.workspace._id });
-		await DB.delete("route", { workspace: this.workspace._id });
-		await DB.delete("team", { workspace: this.workspace._id });
+		await projectSvc.delete({ workspace: this.workspace._id });
+		await appSvc.delete({ workspace: this.workspace._id });
+		await releaseSvc.delete({ workspace: this.workspace._id });
+		await clusterSvc.delete({ workspace: this.workspace._id });
+		await frameworkSvc.delete({ workspace: this.workspace._id });
+		await gitSvc.delete({ workspace: this.workspace._id });
+		await databaseSvc.delete({ workspace: this.workspace._id });
+		await apiKeySvc.delete({ workspace: this.workspace._id });
+		await serviceAccountSvc.delete({ workspace: this.workspace._id });
+		await registrySvc.delete({ workspace: this.workspace._id });
+		await roleSvc.delete({ workspace: this.workspace._id });
+		await routeSvc.delete({ workspace: this.workspace._id });
+		await teamSvc.delete({ workspace: this.workspace._id });
 
 		const deletedWorkspace = await super.delete(filter, options);
 		return deletedWorkspace;
@@ -189,7 +218,8 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 		if (!data.emails || data.emails.length === 0) throw new Error(`List of email is required.`);
 		if (!this.user) throw new Error(`Unauthenticated.`);
 
-		const { DB } = await import("@/modules/api/DB");
+		const { UserService } = await import("./UserService");
+
 		const userSvc = new UserService();
 		const WcSvc = new WorkspaceService();
 
@@ -260,6 +290,10 @@ export class WorkspaceService extends BaseService<IWorkspace> {
 		const { userId, workspaceId, roleId } = data;
 		const uid = userId;
 		const wsId = workspaceId;
+
+		const { UserService } = await import("./UserService");
+		const { RoleService } = await import("./RoleService");
+
 		const userSvc = new UserService(this.ownership);
 		const roleSvc = new RoleService(this.ownership);
 

@@ -1,8 +1,9 @@
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isJSON } from "class-validator";
 import { log, logWarn } from "diginext-utils/dist/xconsole/log";
-import { isArray, isBoolean, isEmpty, isNumber, isUndefined } from "lodash";
+import { isArray, isBoolean, isEmpty, isNumber, isUndefined, trim } from "lodash";
 
+import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IApp, IBuild, ICluster, IProject } from "@/entities";
 import { AppDto } from "@/entities";
 import { IDeleteQueryParams, IGetQueryParams, IPatchQueryParams, IPostQueryParams } from "@/interfaces";
@@ -17,9 +18,8 @@ import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
 import { fetchDeploymentFromContent } from "@/modules/deploy";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
 import { generateDeploymentV2 } from "@/modules/deploy/generate-deployment-v2";
-import { dxCreateDomain } from "@/modules/diginext/dx-domain";
+import { dxCreateDomain, dxDeleteDomainRecord, dxGetDomainRecordByName, dxUpdateDomainRecord } from "@/modules/diginext/dx-domain";
 import ClusterManager from "@/modules/k8s";
-import { checkQuota } from "@/modules/workspace/check-quota";
 import { currentVersion } from "@/plugins";
 import { formatEnvVars } from "@/plugins/env-var";
 import { MongoDB } from "@/plugins/mongodb";
@@ -560,14 +560,15 @@ export default class AppController extends BaseController<IApp, AppService> {
 			const { slug: projectSlug } = project;
 
 			// Check DX quota
-			if (deployEnvironmentData.size) {
-				const quotaRes = await checkQuota(this.workspace, { resourceSize: deployEnvironmentData.size });
-				if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
-				if (quotaRes.data && quotaRes.data.isExceed)
-					return respondFailure(
-						`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
-					);
-			}
+			// TODO: Check quota based on CPU & memory (NEW)
+			// if (deployEnvironmentData.size) {
+			// 	const quotaRes = await checkQuota(this.workspace, { resourceSize: deployEnvironmentData.size });
+			// 	if (!quotaRes.status) return respondFailure(quotaRes.messages.join(". "));
+			// 	if (quotaRes.data && quotaRes.data.isExceed)
+			// 		return respondFailure(
+			// 			`You've exceeded the limit amount of container size (${quotaRes.data.type} / Max size: ${quotaRes.data.limits.size}x).`
+			// 		);
+			// }
 
 			// Validate deploy environment data:
 
@@ -613,15 +614,29 @@ export default class AppController extends BaseController<IApp, AppService> {
 			if (deployEnvironmentData.useGeneratedDomain) {
 				if (!cluster) return respondFailure(`Param "cluster" must be specified if you want to use "useGeneratedDomain".`);
 
-				const subdomain = `${projectSlug}-${appSlug}.${env}`;
-				const {
-					status,
-					messages,
-					data: { domain },
-				} = await dxCreateDomain({ name: subdomain, data: cluster.primaryIP, userId: this.user.dxUserId }, this.workspace.dx_key);
+				const recordName = `${projectSlug}-${appSlug}.${env}`;
+				// check if the domain is existed:
+				const existedRecord = await dxGetDomainRecordByName({ name: recordName, type: "A" }, this.workspace.dx_key).catch(console.error);
+				if (existedRecord) {
+					// update the domain record
+					await dxUpdateDomainRecord(
+						{ name: recordName, type: "A" },
+						{ name: recordName, data: cluster.primaryIP, userId: this.user.dxUserId },
+						this.workspace.dx_key
+					).catch(console.error);
 
-				if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
-				deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
+					const domain = `${recordName}.${DIGINEXT_DOMAIN}`;
+					deployEnvironmentData.domains = [domain, ...deployEnvironmentData.domains];
+				} else {
+					// create the domain record
+					const {
+						status,
+						messages,
+						data: { domain },
+					} = await dxCreateDomain({ name: recordName, data: cluster.primaryIP, userId: this.user.dxUserId }, this.workspace.dx_key);
+					if (!status) logWarn(`[APP_CONTROLLER] ${messages.join(". ")}`);
+					deployEnvironmentData.domains = status ? [domain, ...deployEnvironmentData.domains] : deployEnvironmentData.domains;
+				}
 			}
 
 			// Exposing ports, enable/disable CDN, and select Ingress type
@@ -801,6 +816,19 @@ export default class AppController extends BaseController<IApp, AppService> {
 			console.error(`deleteDeployEnvironment() :>>`, e);
 			messages.push(`Unable to take down before deleting this deploy environment: ${e}`);
 		});
+
+		// delete diginext domain record (if any)
+		const deployEnvironment = app.deployEnvironment[env];
+		if (deployEnvironment.domains && deployEnvironment.domains.filter((domain) => domain.indexOf(DIGINEXT_DOMAIN) > -1).length > 0) {
+			if (this.workspace && this.workspace.dx_key) {
+				for (const domain of deployEnvironment.domains.filter((_domain) => _domain.indexOf(DIGINEXT_DOMAIN) > -1)) {
+					const recordName = domain.replace(DIGINEXT_DOMAIN, "");
+					dxDeleteDomainRecord({ name: recordName, type: "A" }, this.workspace.dx_key).catch(console.error);
+				}
+			} else {
+				console.error("AppService > delete() > Delete domain A record > No WORKSPACE or DX_KEY found.");
+			}
+		}
 
 		// update the app (delete the deploy environment)
 		const updatedApp = await this.service.updateOne(
@@ -1112,6 +1140,29 @@ export default class AppController extends BaseController<IApp, AppService> {
 		// add new domains
 		const updateData: AppDto = {};
 		updateData[`deployEnvironment.${env}.domains`] = [...(app.deployEnvironment[env].domains || []), ...domains];
+
+		// update diginext domain record (if any)
+		domains
+			.filter((domain) => domain.indexOf(DIGINEXT_DOMAIN) > -1)
+			.forEach(async (domain) => {
+				const recordName = trim(domain.replace(DIGINEXT_DOMAIN, ""), ".");
+				// check existed
+				const existedRecord = await dxGetDomainRecordByName({ name: recordName, type: "A" }, this.workspace.dx_key).catch(console.error);
+				if (existedRecord && existedRecord.data.domain_records?.length > 0) {
+					// if existed, update it
+					dxUpdateDomainRecord(
+						{ name: recordName, type: "A" },
+						{ data: cluster.primaryIP, userId: this.user.dxUserId },
+						this.workspace.dx_key,
+						{ isDebugging: this.options.isDebugging }
+					).catch(console.error);
+				} else {
+					// if not existed, create it
+					dxCreateDomain({ name: recordName, data: cluster.primaryIP, userId: this.user.dxUserId }, this.workspace.dx_key, {
+						isDebugging: this.options.isDebugging,
+					}).catch(console.error);
+				}
+			});
 
 		let updatedApp = await this.service.updateOne({ slug: app.slug }, updateData);
 		if (!updatedApp) return respondFailure("Failed to update new domains to " + app.slug + "app.");
