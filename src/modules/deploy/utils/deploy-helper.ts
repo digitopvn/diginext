@@ -209,7 +209,7 @@ export async function checkDomainConflict(
 	return false;
 }
 
-export async function updateProjectAndAppMetadata(releaseData: IRelease, buildId: string, owner: IUser): Promise<void> {
+export async function updateProjectAndAppMetadata(releaseData: IRelease, buildId: string, owner: IUser) {
 	const { projectSlug, appSlug, env, _id: releaseId } = releaseData;
 
 	const buildSvc = new BuildService();
@@ -220,7 +220,7 @@ export async function updateProjectAndAppMetadata(releaseData: IRelease, buildId
 	const build = await buildSvc.updateOne({ _id: buildId }, { deployStatus: "success" }, { select: ["_id", "deployStatus"] });
 
 	// Update project to sort by latest release
-	await projectSvc.updateOne(
+	const project = await projectSvc.updateOne(
 		{ slug: projectSlug },
 		{
 			lastUpdatedBy: owner.username,
@@ -230,7 +230,7 @@ export async function updateProjectAndAppMetadata(releaseData: IRelease, buildId
 	);
 
 	// Assign this release as "latestRelease" of this app's deploy environment
-	await appSvc.updateOne(
+	const app = await appSvc.updateOne(
 		{ slug: appSlug },
 		{
 			[`deployEnvironment.${env}.latestRelease`]: releaseId,
@@ -239,4 +239,6 @@ export async function updateProjectAndAppMetadata(releaseData: IRelease, buildId
 		},
 		{ select: ["_id"] }
 	);
+
+	return { project, app, build };
 }

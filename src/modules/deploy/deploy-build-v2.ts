@@ -381,7 +381,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 	let app = await appSvc.updateOne(
 		{ slug: appSlug },
 		{
-			[`deployEnvironment.${env}.healthzPath`]: options.healthzPath || "/",
+			[`deployEnvironment.${env}.healthzPath`]: options.healthzPath,
 			updatedBy: owner._id,
 		},
 		{ populate: ["project", "owner"] }
