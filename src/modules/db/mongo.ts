@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess } from "diginext-utils/dist/xconsole/log";
 import { existsSync, mkdirSync, rmSync } from "fs";

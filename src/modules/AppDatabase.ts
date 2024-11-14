@@ -12,7 +12,16 @@ export async function connect(onConnected?: (_db?: typeof mongoose, connection?:
 	// console.log("Config.DB_URI :>> ", Config.DB_URI);
 	// console.log("Config.DB_NAME :>> ", Config.DB_NAME);
 	try {
-		const mongoDB = await mongoose.connect(Config.DB_URI, { dbName });
+		const mongoDB = await mongoose.connect(Config.DB_URI, {
+			dbName,
+			serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+			retryWrites: true,
+			retryReads: true,
+			connectTimeoutMS: 10000, // Give more time to connect
+			socketTimeoutMS: 45000, // Socket timeout
+			maxPoolSize: 10, // Limit connection pool size
+			minPoolSize: 5, // Minimum connections to maintain
+		});
 
 		db = mongoDB;
 
@@ -21,6 +30,8 @@ export async function connect(onConnected?: (_db?: typeof mongoose, connection?:
 		return db;
 	} catch (e) {
 		console.error(e);
+		// Retry connection after a delay
+		setTimeout(() => connect(onConnected), 5000);
 		process.exit(1); // passing 1 - will exit the proccess with error
 	}
 }

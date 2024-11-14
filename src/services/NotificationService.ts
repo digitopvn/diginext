@@ -91,11 +91,7 @@ const embedSchema = z.object({
 	fields: z.array(embedFieldSchema).optional(),
 });
 
-const componentSchema = z
-	.object({
-		// Add component schema details if needed
-	})
-	.optional();
+const componentSchema = z.any().optional();
 
 export const jojoWebhookSchema = z.object({
 	channelId: z.string().optional(),

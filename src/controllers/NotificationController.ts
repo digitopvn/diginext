@@ -2,7 +2,7 @@ import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "
 
 import { INotification } from "@/entities/Notification";
 import * as interfaces from "@/interfaces";
-import { NotificationService, SendJojoNotificationData } from "@/services/NotificationService";
+import { NotificationService } from "@/services/NotificationService";
 
 import BaseController from "./BaseController";
 
@@ -66,7 +66,7 @@ export default class NotificationController extends BaseController<INotification
 	@Security("api_key")
 	@Security("jwt")
 	@Post("/jojo")
-	async sendToJojo(@Body() body: SendJojoNotificationData, @Queries() queryParams?: interfaces.IPostQueryParams) {
+	async sendToJojo(@Body() body: any, @Queries() queryParams?: interfaces.IPostQueryParams) {
 		try {
 			const data = await this.service.sendToJojo(body, this.options);
 			return interfaces.respondSuccess({ data });
