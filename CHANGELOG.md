@@ -1,3 +1,13 @@
+## [3.38.2](https://github.com/digitopvn/diginext/compare/v3.38.1...v3.38.2) (2024-11-14)
+
+
+### Bug Fixes
+
+* **server,cli:** correct no healthz option ([e766094](https://github.com/digitopvn/diginext/commit/e766094ba7a78e5adf76672ccd3859854b59b2b5))
+* **server,cli:** correct no healthz option ([#564](https://github.com/digitopvn/diginext/issues/564)) ([0352e42](https://github.com/digitopvn/diginext/commit/0352e424d13b4d39f4db1bcd62385e6db7f3cfbf))
+* **server:** check image pull secret when generating deployment ([bdd58c4](https://github.com/digitopvn/diginext/commit/bdd58c45a0ba4c34cfc3b3c41806c71ced77fa3e))
+* **server:** update healthz path after cli parse options ([8297634](https://github.com/digitopvn/diginext/commit/82976344e2060e318f419f703c37e4aacfffc5ad))
+
 ## [3.38.1](https://github.com/digitopvn/diginext/compare/v3.38.0...v3.38.1) (2024-11-14)
 
 
