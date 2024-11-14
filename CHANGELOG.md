@@ -1,3 +1,11 @@
+## [3.38.1](https://github.com/digitopvn/diginext/compare/v3.38.0...v3.38.1) (2024-11-14)
+
+
+### Bug Fixes
+
+* **server:** turn off cleanup old deployments ([b41ef04](https://github.com/digitopvn/diginext/commit/b41ef049ce715af3dbb4c3df50d7b1e0c1db3a8b))
+* **server:** turn off cleanup old deployments ([#563](https://github.com/digitopvn/diginext/issues/563)) ([a6695ee](https://github.com/digitopvn/diginext/commit/a6695ee77a2d40d56e2b9208ae92932542b2f484))
+
 # [3.38.0](https://github.com/digitopvn/diginext/compare/v3.37.3...v3.38.0) (2024-11-13)
 
 
