@@ -95,15 +95,24 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	if (!appSlug) throw new Error(`Unable to generate YAML, app's slug is required.`);
 	if (!buildTag) throw new Error(`Unable to generate YAML, build number is required.`);
 
-	const { DB } = await import("@/modules/api/DB");
-	const app = await DB.findOne("app", { slug: appSlug }, { populate: ["project", "workspace", "owner"] });
+	// const { DB } = await import("@/modules/api/DB");
+	const { AppService } = await import("@/services");
+	const { ClusterService } = await import("@/services");
+	const { UserService } = await import("@/services");
+	const { ContainerRegistryService } = await import("@/services");
+	const appSvc = new AppService();
+	const clusterSvc = new ClusterService();
+	const userSvc = new UserService();
+	const containerRegistrySvc = new ContainerRegistryService();
+
+	const app = await appSvc.findOne({ slug: appSlug }, { populate: ["project", "workspace", "owner"] });
 	const currentAppConfig = appConfig || getAppConfigFromApp(app);
 	let appOwner = app.ownerSlug;
 	if (!appOwner) {
 		appOwner = (app.owner as IUser).slug;
-		await DB.updateOne("app", { slug: appSlug }, { ownerSlug: appOwner }).catch((e) =>
-			console.error(`Unable to update "appOwner" to "${appSlug}" app.`)
-		);
+		await appSvc
+			.updateOne({ slug: appSlug }, { ownerSlug: appOwner })
+			.catch((e) => console.error(`Unable to update "appOwner" to "${appSlug}" app.`));
 	}
 
 	let projectSlug = currentAppConfig.project;
@@ -129,9 +138,9 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	if (typeof port !== "undefined") deployEnvironmentConfig.port = port;
 	if (typeof deployEnvironmentConfig.port === "undefined") throw new Error(`Unable to generate deployment YAML, port is required.`);
 
-	const clusterSlug = deployEnvironmentConfig.cluster;
 	// get destination cluster
-	let cluster = await DB.findOne("cluster", { slug: clusterSlug }, { subpath: "/all", populate: ["owner"] });
+	const clusterSlug = deployEnvironmentConfig.cluster;
+	let cluster = await clusterSvc.findOne({ slug: clusterSlug }, { subpath: "/all", populate: ["owner"] });
 	if (!cluster) {
 		throw new Error(`Cannot find any clusters with short name as "${clusterSlug}", please contact your admin or create a new one.`);
 	}
@@ -152,7 +161,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 
 	// if no domains, generate a default DIGINEXT domain:
 	if (!domains) {
-		const user = await DB.findOne("user", { slug: username });
+		const user = await userSvc.findOne({ slug: username });
 		const { subdomain } = await diginextDomainName(env, projectSlug, appSlug);
 		const {
 			status,
@@ -176,14 +185,14 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 	let registry: IContainerRegistry =
 		inputRegistry ||
 		(deployEnvironmentConfig.registry
-			? await DB.findOne("registry", { slug: deployEnvironmentConfig.registry }, { subpath: "/all" })
+			? await containerRegistrySvc.findOne({ slug: deployEnvironmentConfig.registry }, { subpath: "/all" })
 			: undefined);
 	if (!registry) throw new Error(`Container registries not found, please contact your admin or create a new one.`);
 	deployEnvironmentConfig.registry = registry.slug;
 
 	if (!registry.imagePullSecret) {
 		const imagePullSecret = await createImagePullSecretsInNamespace(appSlug, env, clusterSlug, nsName);
-		[registry] = await DB.update("registry", { _id: registry._id }, { imagePullSecret });
+		await containerRegistrySvc.updateOne({ _id: registry._id }, { imagePullSecret });
 	}
 	// console.log("registry :>> ", registry);
 
@@ -416,7 +425,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 				doc.spec.selector.matchLabels.app = mainAppName;
 
 				// Inject "imagePullSecrets" to pull image from the container registry
-				doc.spec.template.spec.imagePullSecrets = [{ name: imagePullSecret.name }];
+				if (imagePullSecret) doc.spec.template.spec.imagePullSecrets = [{ name: imagePullSecret.name }];
 
 				// container
 				// doc.spec.template.spec.containers[0].name = appName;

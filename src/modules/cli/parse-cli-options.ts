@@ -624,7 +624,7 @@ export async function parseCliOptions() {
 		options.isDev = options.isProd = false;
 	}
 
-	if (options.shouldShowInputOptions) log(options);
+	if (options.shouldShowInputOptions || options.isDebugging) log(options);
 	// console.log("options :>> ", options);
 	return options;
 }

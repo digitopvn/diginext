@@ -28,6 +28,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 		shouldInherit,
 		redirect,
 		replicas,
+		healthz,
 		size,
 		ssl,
 		providerProject,
@@ -96,6 +97,7 @@ export const parseOptionsToAppConfig = async (options: InputOptions) => {
 	if (typeof redirect !== "undefined") deployEnvironment.redirect = redirect;
 	if (typeof replicas !== "undefined") deployEnvironment.replicas = replicas;
 	if (typeof size !== "undefined") deployEnvironment.size = size;
+	if (typeof healthz !== "undefined" && healthz !== null) deployEnvironment.healthzPath = healthz;
 	if (typeof ssl !== "undefined") {
 		if (ssl) {
 			if (typeof deployEnvironment.ssl === "undefined" || deployEnvironment.ssl === "none") {

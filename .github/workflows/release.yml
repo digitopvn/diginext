@@ -294,18 +294,20 @@ jobs:
       - run: kubectl config current-context
       # - run: kubectl config use-context topgroup-dev
 
-      # Deploy to TOPGROUP DEV cluster (DIGINEXT.SITE - DEPRECATED)
+      # Deploy to TOPGROUP DEV cluster (APP.DIGINEXT.SITE - DEPRECATED)
       # - name: Set image to [app.diginext.site / OLD] deployment
+      #   continue-on-error: true
       #   run: kubectl --context=topgroup-dev -n diginext-cli set image deployment/diginext-cli diginext-cli=digitop/diginext:$LATEST_TAG
 
       # Deploy to TOPGROUP DEV cluster (APP.DXUP.DEV)
-      # - name: Set image to [app.dxup.dev / TOP Group] deployment
-      #   run: kubectl --context=topgroup-dev -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
-        
-      # Deploy to LONGVAN PROD cluster
-      - name: Set image to [app.dxup.dev / Long Van PROD] deployment
+      - name: Set image to [app.dxup.dev / TOP Group Local] deployment
         continue-on-error: true
-        run: kubectl --context=longvan-cluster -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
+        run: kubectl --context=topgroup-dev -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
+        
+      # Deploy to LONGVAN PROD cluster (DEPRECATED)
+      # - name: Set image to [app.dxup.dev / Long Van PROD] deployment
+      #   continue-on-error: true
+      #   run: kubectl --context=longvan-cluster -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
 
       # Deploy to DXUP FPT cluster
       - name: Set image to [app.dxup.dev / DXUP FPT] deployment
