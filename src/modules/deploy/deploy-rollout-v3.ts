@@ -1,14 +1,11 @@
 import chalk from "chalk";
 import { logSuccess } from "diginext-utils/dist/xconsole/log";
 
-import { isServerMode, IsTest } from "@/app.config";
-
 import { DB } from "../api/DB";
 import {
 	authenticateCluster,
 	checkContainerLogsForErrors,
 	checkDomainConflict,
-	DeploymentCleaner,
 	DeploymentPreparator,
 	DeploymentReadinessChecker,
 	DeploymentScaler,
@@ -118,10 +115,10 @@ export async function rolloutV3(releaseId: string, options: RolloutOptions = {})
 	await scaler.scaleDeployment(deploymentName, newReplicas);
 
 	// 8. Cleanup old resources
-	if (!IsTest() && isServerMode) {
-		const cleaner = new DeploymentCleaner(cluster.contextName, namespace, onUpdate);
-		await cleaner.cleanupOldDeployments(deploymentDetails.mainAppName, appVersion);
-	}
+	// if (!IsTest() && isServerMode) {
+	// 	const cleaner = new DeploymentCleaner(cluster.contextName, namespace, onUpdate);
+	// 	await cleaner.cleanupOldDeployments(deploymentDetails.mainAppName, appVersion);
+	// }
 
 	// 9. Finalize release and build status
 	await finalizeReleaseAndBuild(releaseId, buildId, projectSlug, appSlug, env, owner);
