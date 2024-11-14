@@ -425,7 +425,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 				doc.spec.selector.matchLabels.app = mainAppName;
 
 				// Inject "imagePullSecrets" to pull image from the container registry
-				doc.spec.template.spec.imagePullSecrets = [{ name: imagePullSecret.name }];
+				if (imagePullSecret) doc.spec.template.spec.imagePullSecrets = [{ name: imagePullSecret.name }];
 
 				// container
 				// doc.spec.template.spec.containers[0].name = appName;
