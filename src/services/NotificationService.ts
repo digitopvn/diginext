@@ -1,53 +1,125 @@
+import axios from "axios";
 import { isArray } from "lodash";
+import { z } from "zod";
 
 import type { INotification } from "@/entities/Notification";
 import { notificationSchema } from "@/entities/Notification";
-import type { IDataReferences, IWebhook } from "@/entities/Webhook";
+import type { IWebhook } from "@/entities/Webhook";
 import type { IQueryFilter, IQueryOptions } from "@/interfaces";
-import type { Ownership, SystemEvent, WebhookChannel } from "@/interfaces/SystemTypes";
+import { type Ownership, systemEventList, webhookChannelList } from "@/interfaces/SystemTypes";
 import { dxSendEmail } from "@/modules/diginext/dx-email";
 import { MongoDB } from "@/plugins/mongodb";
 
 import BaseService from "./BaseService";
 
-export interface SendNotificationData {
+export const sendNotificationDataSchema = z.object({
 	/**
 	 * User ID of the sender
 	 */
-	from: string;
+	from: z.string(),
 	/**
-	 * User ID of the recicient
+	 * User ID of the recipient
 	 */
-	to: string | string[];
+	to: z.union([z.string(), z.array(z.string())]),
 	/**
 	 * Notification's title
 	 */
-	title: string;
+	title: z.string(),
 	/**
 	 * Notification's content
 	 */
-	message?: string;
+	message: z.string().optional(),
 	/**
 	 * The system event that triggered the notification
 	 */
-	events?: SystemEvent[];
+	events: z.array(z.enum(systemEventList)).optional(),
 	/**
 	 * Target channels
 	 */
-	channels?: WebhookChannel[];
+	channels: z.array(z.enum(webhookChannelList)).optional(),
 	/**
 	 * Referenced data of a notification
 	 */
-	references?: IDataReferences;
+	references: z.record(z.any()).optional(),
 	/**
 	 * Callback URL of a notification
 	 */
-	url?: string;
-}
+	url: z.string().url().optional(),
+});
 
-export type SendNotificationWebhookData = Pick<SendNotificationData, "to" | "from" | "title" | "message" | "references" | "url">;
+export type SendNotificationData = z.infer<typeof sendNotificationDataSchema>;
+
+export const sendNotificationWebhookDataSchema = sendNotificationDataSchema.pick({
+	to: true,
+	from: true,
+	title: true,
+	message: true,
+	references: true,
+	url: true,
+});
+
+export type SendNotificationWebhookData = z.infer<typeof sendNotificationWebhookDataSchema>;
+
+const embedFieldSchema = z.object({
+	name: z.string().optional(),
+	value: z.string().optional(),
+	inline: z.boolean().optional().default(false),
+});
+
+const embedImageSchema = z.object({
+	url: z.string().url().optional(),
+});
+
+const embedAuthorSchema = z.object({
+	name: z.string().optional(),
+	icon_url: z.string().url().optional(),
+});
+
+const embedFooterSchema = z.object({
+	text: z.string().optional(),
+	icon_url: z.string().url().optional(),
+});
+
+const embedSchema = z.object({
+	title: z.string().optional(),
+	description: z.string().optional(),
+	url: z.string().url().optional(),
+	color: z.number().nullable().optional(),
+	image: embedImageSchema.optional(),
+	author: embedAuthorSchema.optional(),
+	footer: embedFooterSchema.optional(),
+	fields: z.array(embedFieldSchema).optional(),
+});
+
+const componentSchema = z
+	.object({
+		// Add component schema details if needed
+	})
+	.optional();
+
+export const jojoWebhookSchema = z.object({
+	channelId: z.string().optional(),
+	content: z.string().optional(),
+	embeds: z.array(embedSchema).optional(),
+	components: z.array(componentSchema).optional(),
+});
+
+export type JojoWebhookData = z.infer<typeof jojoWebhookSchema>;
+
+export const sendJojoNotificationDataSchema = jojoWebhookSchema.pick({
+	channelId: true,
+	content: true,
+	embeds: true,
+	components: true,
+});
+
+export type SendJojoNotificationData = z.infer<typeof sendJojoNotificationDataSchema>;
 
 export class NotificationService extends BaseService<INotification> {
+	private readonly JOJO_API_KEY = process.env.JOJO_API_KEY;
+
+	private readonly JOJO_API_URL = "https://app.digicord.site/api/v1/send-data";
+
 	constructor(ownership?: Ownership) {
 		super(notificationSchema, ownership);
 	}
@@ -165,5 +237,18 @@ export class NotificationService extends BaseService<INotification> {
 	async markAsRead(filter: IQueryFilter<INotification> = {}, options?: IQueryOptions) {
 		// process
 		return this.updateOne(filter, { readAt: new Date() }, options);
+	}
+
+	/**
+	 * Send the notification to Jojo
+	 */
+	async sendToJojo(data: SendJojoNotificationData, options?: IQueryOptions) {
+		if (!this.JOJO_API_KEY) throw new Error(`Jojo API key is not set.`);
+		// process
+		if (options?.isDebugging) console.log("[NOTIFICATION] SEND TO JOJO > data :>> ", data);
+		const jojoData = jojoWebhookSchema.parse(data);
+		const response = await axios.post(this.JOJO_API_URL, jojoData, { headers: { Authorization: `Bearer ${this.JOJO_API_KEY}` } });
+		if (options?.isDebugging) console.log("[NOTIFICATION] SEND TO JOJO > response :>> ", response);
+		return response.data;
 	}
 }

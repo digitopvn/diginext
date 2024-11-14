@@ -43,6 +43,12 @@ export interface IWorkspace extends IBase {
 	 * Workspace Settings
 	 */
 	settings?: {
+		ai?: {
+			enabled: boolean;
+			apiBaseUrl: string;
+			model: string;
+			apiKey: string;
+		};
 		database?: any;
 		activity?: {
 			/**
@@ -87,6 +93,18 @@ export interface IWorkspace extends IBase {
 			baseUrl: string;
 			basePath: string;
 		};
+		notification?: {
+			jojo?: {
+				enabled: boolean;
+				apiKey: string;
+				events: string[];
+			};
+			elasticEmail?: {
+				enabled: boolean;
+				apiKey: string;
+				events: string[];
+			};
+		};
 	};
 }
 
@@ -110,6 +128,12 @@ export const workspaceSchema = new Schema(
 					value: { type: Number },
 				},
 			},
+			ai: {
+				enabled: { type: Boolean },
+				apiBaseUrl: { type: String },
+				model: { type: String },
+				apiKey: { type: String },
+			},
 			database: Schema.Types.Mixed,
 			database_backup: {
 				retention: {
@@ -132,6 +156,18 @@ export const workspaceSchema = new Schema(
 				endpoint: { type: String },
 				baseUrl: { type: String },
 				basePath: { type: String },
+			},
+			notification: {
+				jojo: {
+					enabled: { type: Boolean },
+					apiKey: { type: String },
+					events: { type: [String] },
+				},
+				elasticEmail: {
+					enabled: { type: Boolean },
+					apiKey: { type: String },
+					events: { type: [String] },
+				},
 			},
 		},
 	},

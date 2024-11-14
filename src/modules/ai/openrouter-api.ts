@@ -20,6 +20,7 @@ export const aiModels = [
 	"anthropic/claude-instant-v1",
 	"meta-llama/llama-2-13b-chat",
 	"meta-llama/llama-2-70b-chat",
+	"qwen/qwen-2.5-coder-32b-instruct", // 2024-11-14
 ] as const;
 export type AIModel = (typeof aiModels)[number];
 
@@ -33,12 +34,14 @@ export interface OpenRouterResponseData {
 	choices: { message: { role: string; content: string } }[];
 }
 
-export async function aiApi<T = OpenRouterResponseData>(options: AxiosRequestConfig & { data?: AIDto; apiKey?: string; isDebugging?: boolean }) {
+export async function aiApi<T = OpenRouterResponseData>(
+	options: AxiosRequestConfig & { baseUrl?: string; apiKey?: string; data?: AIDto; isDebugging?: boolean }
+) {
 	if (!options.method) options.method = "POST";
 
-	const { method, apiKey } = options;
+	const { method } = options;
 
-	options.baseURL = OPENROUTER_BASE_API_URL;
+	options.baseURL = options.baseUrl || OPENROUTER_BASE_API_URL;
 	if (!options.url) options.url = "/chat/completions";
 
 	// default headers
@@ -49,7 +52,7 @@ export async function aiApi<T = OpenRouterResponseData>(options: AxiosRequestCon
 	if (!isEmpty(options.headers)) headers = { ...headers, ...options.headers };
 
 	// Authentication
-	if (Config.grab("OPENROUTER_KEY")) headers.Authorization = `Bearer ${Config.grab("OPENROUTER_KEY")}`;
+	const apiKey = options.apiKey || Config.grab("OPENROUTER_KEY");
 	if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
 
 	if (["POST", "PATCH", "DELETE"].includes(method?.toUpperCase())) {
