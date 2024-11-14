@@ -1,3 +1,11 @@
+## [3.38.3](https://github.com/digitopvn/diginext/compare/v3.38.2...v3.38.3) (2024-11-14)
+
+
+### Bug Fixes
+
+* **server,cli:** correct no healthz (tested) ([8cbca3d](https://github.com/digitopvn/diginext/commit/8cbca3dfeef9f5551dbb3b3561fdff8fa25dd23a))
+* **server,cli:** correct no healthz (tested) ([#565](https://github.com/digitopvn/diginext/issues/565)) ([b62290a](https://github.com/digitopvn/diginext/commit/b62290a6dd583bedf3f5aab2a40a3fa141ec0f2b))
+
 ## [3.38.2](https://github.com/digitopvn/diginext/compare/v3.38.1...v3.38.2) (2024-11-14)
 
 
