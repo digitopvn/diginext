@@ -47,7 +47,7 @@ export class AIService {
 
 		const dto: AIDto = {
 			// model: "openai/gpt-3.5-turbo",
-			model: "deepseek/deepseek-coder",
+			model: "qwen/qwen-2.5-coder-32b-instruct",
 			messages: [
 				{
 					role: "system",
@@ -60,7 +60,11 @@ export class AIService {
 			],
 		};
 
-		const response = await aiApi({ data: dto });
+		const response = await aiApi({
+			baseUrl: this.workspace?.settings?.ai?.apiBaseUrl,
+			apiKey: this.workspace?.settings?.ai?.apiKey,
+			data: dto,
+		});
 		// console.log("response :>> ", response);
 
 		// write it down into a file:
@@ -84,5 +88,35 @@ export class AIService {
 		writeFileSync(path.resolve(dir, `Dockerfile.generated`), dockerfileContent, "utf8");
 
 		return dockerfileContent;
+	}
+
+	async analyzeErrorLog(log: string, options?: Pick<InputOptions, "isDebugging"> & { context?: string }) {
+		if (!log) throw new Error(`Error log (string) is required.`);
+
+		// ask AI to analyze:
+		let askMessage = `Act as a code analyzer tool, analyze the error log and provide a detailed explanation of the root cause of the error based on this context:`;
+		if (options?.context) askMessage += `\n## Context:`;
+		if (options?.context) askMessage += `\n${options?.context}`;
+		askMessage += `\n## Instructions:`;
+		askMessage += `\nAnalyze the error log and provide a detailed explanation of the root cause of the error.`;
+		askMessage += `\nDo not include any explanations or markdown in your response`;
+		askMessage += `\n## Content of the container log:`;
+		askMessage += `\n\`\`\`\n${log}\n\`\`\``;
+
+		const dto: AIDto = {
+			model: "qwen/qwen-2.5-coder-32b-instruct",
+			messages: [
+				{ role: "system", content: "You are a helpful code analyzer tool." },
+				{ role: "user", content: askMessage },
+			],
+		};
+
+		const response = await aiApi({
+			baseUrl: this.workspace?.settings?.ai?.apiBaseUrl,
+			apiKey: this.workspace?.settings?.ai?.apiKey,
+			data: dto,
+		});
+		const { content } = response.choices[0].message;
+		return content;
 	}
 }

@@ -1,7 +1,8 @@
 import chalk from "chalk";
 import { logSuccess } from "diginext-utils/dist/xconsole/log";
 
-import { DB } from "../api/DB";
+import type { IUser, IWorkspace } from "@/entities";
+
 import {
 	authenticateCluster,
 	checkContainerLogsForErrors,
@@ -27,24 +28,14 @@ export async function rolloutV3(releaseId: string, options: RolloutOptions = {})
 	const { onUpdate } = options;
 
 	// 1. Validate and prepare release data
-	const releaseData = await prepareReleaseData(releaseId, DB, onUpdate);
+	const releaseData = await prepareReleaseData(releaseId, onUpdate);
 	if (!releaseData) return { error: "Release preparation failed" };
 
-	const {
-		slug: releaseSlug,
-		projectSlug,
-		cluster: clusterSlug,
-		appSlug,
-		build: buildId,
-		buildNumber,
-		deploymentYaml,
-		endpoint: endpointUrl,
-		namespace,
-		env,
-		message,
-		owner,
-		workspace,
-	} = releaseData;
+	const { projectSlug, cluster: clusterSlug, appSlug, deploymentYaml, endpoint: endpointUrl, namespace, env, message } = releaseData;
+
+	const buildId = releaseData.build as string;
+	const owner = releaseData.owner as IUser;
+	const workspace = releaseData.workspace as IWorkspace;
 
 	// 2. Setup webhook and services
 	const { webhookSvc } = await setupWebhookService(owner, workspace, releaseId);
@@ -104,7 +95,24 @@ export async function rolloutV3(releaseId: string, options: RolloutOptions = {})
 	}
 
 	if (checkContainerLogsForErrors(containerLogs)) {
-		return handleRolloutFailure(releaseId, buildId, webhookSvc, "Application startup failed. Check logs for details.");
+		// get latest 100 lines of container logs
+		const latestLogs = containerLogs.split("\n").slice(-100).join("\n");
+		let aiAnalysis = "";
+		if (workspace.settings?.ai?.enabled) {
+			const { AIService } = await import("@/services/AIService");
+			const aiService = new AIService({ owner, workspace });
+			aiAnalysis += "\n\n---- AI ANALYSIS ----\n";
+			aiAnalysis += await aiService.analyzeErrorLog(latestLogs).catch((e) => {
+				console.error(e);
+				return `AI service is currently unavailable: ${e.message}`;
+			});
+		}
+		return handleRolloutFailure(
+			releaseId,
+			buildId,
+			webhookSvc,
+			`Application startup failed. Check logs for details. \n\n${containerLogs}${aiAnalysis}`
+		);
 	}
 
 	// Update project and app metadata

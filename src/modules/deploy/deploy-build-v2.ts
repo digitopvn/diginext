@@ -337,7 +337,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 					throw new DeployBuildError({ build, release, cluster }, errMsg);
 				}
 
-				release = result.data;
+				release = result.data as IRelease;
 
 				sendLog({ SOCKET_ROOM, message: `✅ App has been deployed successfully!`, type: "success", action: "end" });
 

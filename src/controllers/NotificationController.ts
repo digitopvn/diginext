@@ -62,4 +62,16 @@ export default class NotificationController extends BaseController<INotification
 			return interfaces.respondFailure(e.toString());
 		}
 	}
+
+	@Security("api_key")
+	@Security("jwt")
+	@Post("/jojo")
+	async sendToJojo(@Body() body: any, @Queries() queryParams?: interfaces.IPostQueryParams) {
+		try {
+			const data = await this.service.sendToJojo(body, this.options);
+			return interfaces.respondSuccess({ data });
+		} catch (e) {
+			return interfaces.respondFailure(e.toString());
+		}
+	}
 }

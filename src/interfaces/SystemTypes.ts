@@ -159,7 +159,7 @@ export const webhookEventStatusList = filterUniqueItems([...buildStatusList, ...
 export type WebhookEventStatus = (typeof webhookEventStatusList)[number];
 
 /**
- * Credential fields
+ * Credential fields / maskFields / sensitive fields
  */
 export const credentialFields: string[] = [
 	// account
@@ -167,6 +167,7 @@ export const credentialFields: string[] = [
 	"token.access_token",
 	"owner.password",
 	"owner.token.access_token",
+	"settings.ai.apiKey",
 	// clusters & registries
 	"apiAccessToken",
 	"serviceAccount",

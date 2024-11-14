@@ -11,7 +11,9 @@ import { markReleaseAsActive } from "../mark-release-as-active";
 import type { DeploymentReadinessChecker } from "./deploy-checker";
 
 // Helper functions would be implemented similarly, extracting logic from the original function
-export async function prepareReleaseData(releaseId: string, DB: any, onUpdate?: (msg?: string) => void) {
+export async function prepareReleaseData(releaseId: string, onUpdate?: (msg?: string) => void) {
+	const releaseSvc = new ReleaseService();
+
 	// Step 1: Validate input
 	if (!releaseId) {
 		const error = "Release ID is required";
@@ -20,7 +22,7 @@ export async function prepareReleaseData(releaseId: string, DB: any, onUpdate?: 
 	}
 
 	// Step 2: Update release status to in_progress
-	const releaseData = await DB.updateOne("release", { _id: releaseId }, { status: "in_progress" }, { populate: ["owner", "workspace", "build"] });
+	const releaseData = await releaseSvc.updateOne({ _id: releaseId }, { status: "in_progress" }, { populate: ["owner", "workspace", "build"] });
 
 	// Step 3: Validate release data
 	if (!releaseData) {
