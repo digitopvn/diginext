@@ -1,3 +1,17 @@
+# [3.39.0](https://github.com/digitopvn/diginext/compare/v3.38.3...v3.39.0) (2024-11-14)
+
+
+### Bug Fixes
+
+* **server:** ai analysis on deploy error ([8c40ed9](https://github.com/digitopvn/diginext/commit/8c40ed99ec5dd14e9a6dccd748aafe8c2f572be4))
+* **server:** notification swagger tsoa issue ([0cc0e6a](https://github.com/digitopvn/diginext/commit/0cc0e6aaa1c7a08d99d5c2c453d48b1ce6bc7e20))
+
+
+### Features
+
+* **admin:** ai settings, new code editor, ai analysis on deploy error ([170a48f](https://github.com/digitopvn/diginext/commit/170a48f0f99e6d22b9924c8944b81dcd18f44a72))
+* ai settings, new code editor, ai analysis on deploy error ([#566](https://github.com/digitopvn/diginext/issues/566)) ([33c78a3](https://github.com/digitopvn/diginext/commit/33c78a32632f0c0953e92d6081bfc9c424918f1f))
+
 ## [3.38.3](https://github.com/digitopvn/diginext/compare/v3.38.2...v3.38.3) (2024-11-14)
 
 
