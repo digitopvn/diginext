@@ -3,10 +3,9 @@ import { Get, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IUser, IWorkspace } from "@/entities";
 import { type IQueryFilter, type IQueryOptions, type IResponsePagination, respondFailure, respondSuccess } from "@/interfaces";
-import type { AppRequest } from "@/interfaces/SystemTypes";
-import { Ownership } from "@/interfaces/SystemTypes";
+import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
 import { parseFilterAndOptions } from "@/plugins/controller-parser";
-import { DeployEnvironmentService } from "@/services/DeployEnvironmentService";
+// import { DeployEnvironmentService } from "@/services/DeployEnvironmentService";
 
 @Tags("DeployEnvironment")
 @Route("deploy-environment")
@@ -19,20 +18,13 @@ export default class DeployEnvironmentController {
 
 	ownership: Ownership;
 
-	service: DeployEnvironmentService;
+	// service: DeployEnvironmentService;
 
 	filter: IQueryFilter;
 
 	options: IQueryOptions;
 
 	pagination: IResponsePagination;
-
-	constructor(ownership?: Ownership) {
-		// Ensure ownership is passed to the service constructor
-		this.ownership = ownership;
-
-		this.service = new DeployEnvironmentService(this.ownership);
-	}
 
 	/**
 	 * Parse the filter & option from the URL
@@ -62,7 +54,10 @@ export default class DeployEnvironmentController {
 		}
 	) {
 		try {
-			const { data, pagination } = await this.service.listDeployEnvironments(this.filter, this.options);
+			const { DeployEnvironmentService } = await import("@/services/DeployEnvironmentService");
+			const svc = new DeployEnvironmentService(this.ownership);
+
+			const { data, pagination } = await svc.listDeployEnvironments(this.filter, this.options);
 			return respondSuccess({
 				data,
 				current_page: pagination.page,
