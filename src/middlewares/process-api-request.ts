@@ -17,10 +17,10 @@ export const processApiRequest =
 
 			// save activity log here...
 			saveActivityLog(req, res, next);
-
 			// respond data...
 			res.status(200).json(result);
 		} catch (e) {
+			console.error(e);
 			// forward the error to Express.js Error Handling Route
 			next(e);
 		}

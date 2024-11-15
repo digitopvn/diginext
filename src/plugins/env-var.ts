@@ -1,8 +1,21 @@
-import { isBoolean, isDate, isNumber, isString } from "lodash";
+import { isArray, isBoolean, isDate, isNumber, isString } from "lodash";
 
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
 
 export const formatEnvVars = (envVars: KubeEnvironmentVariable[]) => {
+	/**
+	 * {Object} envVars
+	 * @example
+	 * {
+	 * 		"0": { name: "NAME", value: "VALUE" },
+	 * 		"1": { name: "NAME", value: "VALUE" },
+	 * 		...
+	 * }
+	 */
+	// check if envVars is an object
+	if (!isArray(envVars)) envVars = Object.values(envVars);
+
+	// convert envVars to array of { name, value }
 	return envVars.map(({ name, value }) => {
 		if (isString(name) && isString(value)) return { name, value };
 		if (isNumber(value) || isBoolean(value) || isDate(value)) return { name, value: value.toString() };

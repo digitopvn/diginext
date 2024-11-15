@@ -1,5 +1,4 @@
 import type { NextFunction } from "express-serve-static-core";
-import { isEmpty } from "lodash";
 import { Body, Delete, Get, Post, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IUser, IWorkspace } from "@/entities";
@@ -10,8 +9,8 @@ import type { MonitoringQueryFilter } from "@/interfaces/MonitoringQuery";
 import { MonitoringNamespaceQueryFilter, MonitoringQueryOptions, MonitoringQueryParams } from "@/interfaces/MonitoringQuery";
 import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
 import ClusterManager from "@/modules/k8s";
+import { parseFilterAndOptions } from "@/plugins/controller-parser";
 import { MongoDB } from "@/plugins/mongodb";
-import { parseRequestFilter } from "@/plugins/parse-request-filter";
 import { ClusterService } from "@/services";
 import { MonitorNamespaceCreateData, MonitorService } from "@/services/MonitorService";
 
@@ -35,49 +34,12 @@ export default class MonitorController {
 	/**
 	 * Parse the filter & option from the URL
 	 */
-	parseFilter(req: AppRequest, res?, next?: NextFunction) {
-		const {
-			sort, // @example: -updatedAt,-createdAt
-			order, // @example: -updatedAt,-createdAt
-			search = false,
-			output,
-			full = false,
-			isDebugging = false,
-			access_token,
-			...filter
-		} = req.query as any;
-
-		const options: MonitoringQueryOptions = {
-			isDebugging,
-			output: "json",
-			full,
-		};
-
-		// parse "sort" (or "order") from the query url:
-		let _sortOptions: string[];
-		if (sort) _sortOptions = sort.indexOf(",") > -1 ? sort.split(",") : [sort];
-		if (order) _sortOptions = order.indexOf(",") > -1 ? order.split(",") : [order];
-		const sortOptions: Record<string, 1 | -1> = {};
-		if (_sortOptions)
-			_sortOptions.forEach((s) => {
-				const isDesc = s.charAt(0) === "-";
-				const key = isDesc ? s.substring(1) : s;
-				const sortValue: 1 | -1 = isDesc ? -1 : 1;
-				sortOptions[key] = sortValue;
-			});
-		if (!isEmpty(sortOptions)) options.order = sortOptions;
-
-		// parse "pagination"
-		// if (this.pagination && this.pagination.page_size) {
-		// 	options.skip = ((this.pagination.current_page ?? 1) - 1) * this.pagination.page_size;
-		// 	options.limit = this.pagination.page_size;
-		// }
-		// if (limit > 0) options.limit = limit;
-		// if (skip) options.skip = skip;
+	parseFilter(req: AppRequest, res?: Response, next?: NextFunction) {
+		const parsed = parseFilterAndOptions(req);
 
 		// assign to controller:
-		this.options = options;
-		this.filter = parseRequestFilter({ ...filter }) as MonitoringQueryFilter;
+		this.options = parsed.options;
+		this.filter = parsed.filter as MonitoringQueryFilter;
 
 		if (next) next();
 	}

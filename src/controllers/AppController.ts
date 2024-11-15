@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Body, Delete, Get, Patch, Post, Queries, Route, Security, Tags } from "@tsoa/runtime";
 import { isJSON } from "class-validator";
 import { log, logWarn } from "diginext-utils/dist/xconsole/log";
@@ -46,34 +47,6 @@ export default class AppController extends BaseController<IApp, AppService> {
 		let apps = await this.service.find(this.filter, this.options, this.pagination);
 		// console.log("apps :>> ", apps);
 		if (isEmpty(apps)) return respondSuccess({ data: [] });
-
-		// TODO: remove this code after all "deployEnvironment.envVars" of apps are {Array}
-		// convert "envVars" Object to Array (if needed)
-		apps = apps
-			.map((app) => {
-				if (app && app.deployEnvironment)
-					Object.entries(app.deployEnvironment).map(([env, deployEnvironment]) => {
-						if (deployEnvironment) {
-							const envVars = deployEnvironment.envVars;
-							if (envVars && !isArray(envVars)) {
-								/**
-								 * {Object} envVars
-								 * @example
-								 * {
-								 * 		"0": { name: "NAME", value: "VALUE" },
-								 * 		"1": { name: "NAME", value: "VALUE" },
-								 * 		...
-								 * }
-								 */
-								const convertedEnvVars = [];
-								Object.values(envVars).map((envVar) => convertedEnvVars.push(envVar));
-								app.deployEnvironment[env].envVars = formatEnvVars(convertedEnvVars);
-							}
-						}
-					});
-				return app;
-			})
-			.filter((app) => app !== null && app !== undefined);
 
 		return respondSuccess({ data: apps });
 	}

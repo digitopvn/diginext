@@ -191,7 +191,7 @@ export class AppService extends BaseService<IApp> {
 		const { repoSlug } = repoData;
 
 		// default project
-		const { WorkspaceService, ProjectService, GitProviderService } = await import("./index");
+		const { ProjectService, GitProviderService } = await import("./index");
 		const projectSvc = new ProjectService();
 		projectSvc.ownership = this.ownership;
 		let project = await projectSvc.findOne({ isDefault: true, workspace: workspace._id }, options);
@@ -338,9 +338,10 @@ export class AppService extends BaseService<IApp> {
 						for (const env of Object.keys(app.deployEnvironment)) {
 							if (!app.deployEnvironment[env]) app.deployEnvironment[env] = { buildTag: "" };
 
-							// environment variables
-							if (app.deployEnvironment[env] && app.deployEnvironment[env].envVars)
+							// format environment variables (if any)
+							if (app.deployEnvironment[env] && app.deployEnvironment[env].envVars) {
 								app.deployEnvironment[env].envVars = formatEnvVars(app.deployEnvironment[env].envVars);
+							}
 
 							// default values
 							app.deployEnvironment[env].readyCount = 0;
@@ -361,24 +362,32 @@ export class AppService extends BaseService<IApp> {
 
 							// find workloads base on "main-app" label
 							const mainAppName = await getDeploymentName(app);
-							const deprecatedMainAppName = makeSlug(app?.name).toLowerCase();
 							let [deployOnCluster] = await ClusterManager.getDeploys(namespace, {
 								filterLabel: `main-app=${mainAppName}`,
 								context,
+								metrics: true,
 							});
-							if (!deployOnCluster)
-								[deployOnCluster] = await ClusterManager.getDeploys(namespace, {
-									filterLabel: `main-app=${deprecatedMainAppName}`,
-									context,
-								});
 
-							// console.log(`----- ${app.name} -----`);
+							console.log(`----- ${app.name} -----`);
 							// console.log("- mainAppName :>> ", mainAppName);
 							// console.log("- deployOnCluster.metadata.name :>> ", deployOnCluster?.metadata?.name);
-							// console.log("- deployOnCluster.status.replicas :>> ", deployOnCluster?.status?.replicas);
+							console.log("- deployOnCluster.status.replicas :>> ", deployOnCluster?.status?.replicas);
+							console.log(
+								"- deployOnCluster.resources.limits :>> ",
+								deployOnCluster?.spec?.template?.spec?.containers?.[0]?.resources.limits
+							);
+							console.log("- deployOnCluster.cpuAvg :>> ", deployOnCluster?.cpuAvg);
+							console.log("- deployOnCluster.memoryAvg :>> ", deployOnCluster?.memoryAvg);
 							// console.log("- deployOnCluster.status.readyReplicas :>> ", deployOnCluster?.status?.readyReplicas);
 							// console.log("- deployOnCluster.status.availableReplicas :>> ", deployOnCluster?.status?.availableReplicas);
 							// console.log("- deployOnCluster.status.unavailableReplicas :>> ", deployOnCluster?.status?.unavailableReplicas);
+
+							app.deployEnvironment[env].resources = {};
+							app.deployEnvironment[env].resources.limits = deployOnCluster?.spec?.template?.spec?.containers?.[0]?.resources.limits;
+							app.deployEnvironment[env].resources.usage = {
+								cpu: deployOnCluster?.cpuAvg,
+								memory: deployOnCluster?.memoryAvg,
+							};
 
 							if (!deployOnCluster) {
 								app.deployEnvironment[env].status = "undeployed";

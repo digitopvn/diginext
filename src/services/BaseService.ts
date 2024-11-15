@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { clearUnicodeCharacters } from "diginext-utils/dist/string/index";
 import { randomStringByLength } from "diginext-utils/dist/string/random";
 import { logError } from "diginext-utils/dist/xconsole/log";

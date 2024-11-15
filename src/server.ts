@@ -98,6 +98,7 @@ const corsOptions: cors.CorsOptionsDelegate = (req, callback) => {
 let app: Express;
 let server: Server;
 let socketIO: SocketServer;
+export let redis: Redis;
 export let isServerReady = false;
 
 export function setServerStatus(status: boolean) {
@@ -120,6 +121,7 @@ function initialize(db?: typeof mongoose) {
 		keyPrefix: `dxup:`,
 	});
 	const subClient = pubClient.duplicate();
+	redis = pubClient;
 
 	pubClient.on("error", (error) => {
 		console.error("Redis PubClient Error:", error);
