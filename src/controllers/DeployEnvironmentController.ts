@@ -6,7 +6,7 @@ import { type IQueryFilter, type IQueryOptions, type IResponsePagination, respon
 import type { AppRequest } from "@/interfaces/SystemTypes";
 import { Ownership } from "@/interfaces/SystemTypes";
 import { parseFilterAndOptions } from "@/plugins/controller-parser";
-import { DeployEnvironmentService } from "@/services";
+import { DeployEnvironmentService } from "@/services/DeployEnvironmentService";
 
 @Tags("DeployEnvironment")
 @Route("deploy-environment")
