@@ -3,7 +3,8 @@ import { Get, Queries, Route, Security, Tags } from "tsoa/dist";
 
 import type { IUser, IWorkspace } from "@/entities";
 import { type IQueryFilter, type IQueryOptions, type IResponsePagination, respondFailure, respondSuccess } from "@/interfaces";
-import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
+import type { AppRequest } from "@/interfaces/SystemTypes";
+import { Ownership } from "@/interfaces/SystemTypes";
 import { parseFilterAndOptions } from "@/plugins/controller-parser";
 import { DeployEnvironmentService } from "@/services";
 
@@ -26,7 +27,9 @@ export default class DeployEnvironmentController {
 
 	pagination: IResponsePagination;
 
-	constructor() {
+	constructor(ownership?: Ownership) {
+		// Ensure ownership is passed to the service constructor
+		this.ownership = ownership;
 		this.service = new DeployEnvironmentService(this.ownership);
 	}
 
