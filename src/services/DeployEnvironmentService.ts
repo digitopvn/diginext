@@ -433,7 +433,7 @@ export class DeployEnvironmentService {
 						page: Math.ceil(deployEnvironments.length / options?.limit),
 						size: options?.limit,
 					};
-					return { data: deployEnvironments.slice(options.skip, options.skip + options.limit), pagination };
+					return { data: deployEnvironments, pagination };
 				}
 			} catch (e) {
 				logWarn(`[DEPLOY_ENVIRONMENT_SERVICE] Unable to get listDeployEnvironments from redis: ${e}`);

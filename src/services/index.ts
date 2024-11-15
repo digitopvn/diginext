@@ -12,7 +12,7 @@ export * from "./CloudStorageService";
 export * from "./ClusterService";
 export * from "./ContainerRegistryService";
 export * from "./CronjobService";
-export * from "./DeployEnvironmentService";
+export { DeployEnvironmentService } from "./DeployEnvironmentService";
 export * from "./FrameworkService";
 export * from "./GitProviderService";
 export * from "./MonitorDeploymentService";

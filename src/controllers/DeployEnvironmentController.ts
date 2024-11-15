@@ -30,6 +30,7 @@ export default class DeployEnvironmentController {
 	constructor(ownership?: Ownership) {
 		// Ensure ownership is passed to the service constructor
 		this.ownership = ownership;
+
 		this.service = new DeployEnvironmentService(this.ownership);
 	}
 
