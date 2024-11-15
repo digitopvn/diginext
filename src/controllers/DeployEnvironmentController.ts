@@ -18,13 +18,17 @@ export default class DeployEnvironmentController {
 
 	ownership: Ownership;
 
-	service: DeployEnvironmentService = new DeployEnvironmentService();
+	service: DeployEnvironmentService;
 
 	filter: IQueryFilter;
 
 	options: IQueryOptions;
 
 	pagination: IResponsePagination;
+
+	constructor() {
+		this.service = new DeployEnvironmentService(this.ownership);
+	}
 
 	/**
 	 * Parse the filter & option from the URL
