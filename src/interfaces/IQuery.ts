@@ -112,6 +112,10 @@ export interface IQueryOptions extends IQueryGeneral {
 	 */
 	deleted?: boolean;
 	/**
+	 * Cache
+	 */
+	cache?: boolean;
+	/**
 	 * Debug
 	 * @default false
 	 */

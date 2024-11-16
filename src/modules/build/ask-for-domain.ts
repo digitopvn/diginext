@@ -75,7 +75,7 @@ export const askForDomain = async (
 			} = await generateDomains({
 				user,
 				workspace,
-				subdomainName: subdomain,
+				recordName: subdomain,
 				clusterSlug: clusterSlug,
 			});
 
@@ -83,6 +83,7 @@ export const askForDomain = async (
 
 			// in case the domain was existed, it will automatically generate a new one
 			domain = generatedDomain;
+			if (messages.length > 0) logWarn(messages.join("."));
 
 			// save app config:
 			if (!deployEnvironment.domains) deployEnvironment.domains = [];

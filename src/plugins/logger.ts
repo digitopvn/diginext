@@ -33,7 +33,7 @@ export class Logger {
 		return instances[name] as Logger;
 	}
 
-	static getLogs(slug: string) {
+	static getLogs(slug: string): string | undefined {
 		const dir = process.env.LOG_DIR ?? path.resolve(CLI_DIR, "public/logs");
 		if (!fs.existsSync(dir)) return;
 

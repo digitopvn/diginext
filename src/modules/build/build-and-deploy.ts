@@ -3,7 +3,8 @@ import dayjs from "dayjs";
 import humanizeDuration from "humanize-duration";
 
 import { IsTest } from "@/app.config";
-import { wait } from "@/plugins";
+import type { IWorkspace } from "@/entities";
+import { Logger, wait } from "@/plugins";
 import { uploadFileBuffer } from "@/plugins/cloud-storage";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
@@ -20,8 +21,8 @@ import { sendLog } from "./send-log-message";
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildV2Options) => {
 	// import services
 	const { AppService } = await import("@/services");
-	const appSvc = new AppService();
 	const { ReleaseService } = await import("@/services");
+	const appSvc = new AppService();
 	const releaseSvc = new ReleaseService();
 
 	// [1] Build container image
@@ -34,10 +35,29 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 		buildInfo = await startBuild(buildParams);
 		if (!buildInfo) throw new Error(`[BUILD_AND_DEPLOY] Unable to build.`);
 	} catch (e) {
-		const app = await appSvc.findOne({ slug: buildParams.appSlug });
+		// build failed -> stop build
+		const app = await appSvc.findOne({ slug: buildParams.appSlug }, { populate: ["workspace"] });
 		const SOCKET_ROOM = createBuildSlug({ projectSlug: app.projectSlug, appSlug: buildParams.appSlug, buildTag: buildParams.buildTag });
 		stopBuild(app.projectSlug, app.slug, SOCKET_ROOM, "failed");
 		sendLog({ SOCKET_ROOM, type: "error", message: `Build error: ${e.stack}` });
+
+		// AI analysis: get latest 100 lines of container logs
+		const fullLogs = Logger.getLogs(SOCKET_ROOM);
+		const latestLogs = fullLogs ? fullLogs.split("\n").slice(-100).join("\n") : undefined;
+		const workspace = app.workspace as IWorkspace;
+		const owner = buildParams.user;
+		let aiAnalysis = "";
+		if (workspace.settings?.ai?.enabled && latestLogs) {
+			const { AIService } = await import("@/services/AIService");
+			const aiService = new AIService({ owner, workspace });
+			aiAnalysis += "\n\n---- AI ANALYSIS ----\n";
+			aiAnalysis += await aiService.analyzeErrorLog(latestLogs).catch((error) => {
+				console.error(error);
+				return `AI service is currently unavailable: ${error.message}`;
+			});
+			sendLog({ SOCKET_ROOM, type: "log", message: aiAnalysis });
+		}
+
 		return;
 	}
 

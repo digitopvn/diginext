@@ -44,6 +44,7 @@ export const registerController = (controller: any) => {
 
 			next();
 		} catch (e) {
+			console.error(e);
 			// forward the error to Express.js Error Handling Route
 			next(e);
 		}

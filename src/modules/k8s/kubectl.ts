@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import type { V1PersistentVolume, V1PersistentVolumeClaim, V1StorageClass } from "@kubernetes/client-node";
 import { makeDaySlug } from "diginext-utils/dist/string/makeDaySlug";
 import { logError, logSuccess, logWarn } from "diginext-utils/dist/xconsole/log";

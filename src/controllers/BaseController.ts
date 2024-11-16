@@ -1,19 +1,16 @@
-import { isBooleanString, isNumberString } from "class-validator";
-import { toInt } from "diginext-utils/dist/object";
 // import { Response as ApiResponse } from "diginext-utils/dist/response";
 import type { NextFunction, Response } from "express";
-import { isBoolean, isDate, isEmpty, isNumber, isString, trim } from "lodash";
+import { isEmpty } from "lodash";
 
 import { Config } from "@/app.config";
 import type { IUser, IWorkspace } from "@/entities";
 import type { IBase } from "@/entities/Base";
 import type { AppRequest, Ownership } from "@/interfaces/SystemTypes";
 import { preprocessInputData } from "@/plugins";
-import { isValidObjectId } from "@/plugins/mongodb";
-import { parseRequestFilter } from "@/plugins/parse-request-filter";
-import { type BaseService, DEFAULT_PAGE_SIZE } from "@/services/BaseService";
+import { parseFilterAndOptions, parsePagination } from "@/plugins/controller-parser";
+import { type BaseService } from "@/services/BaseService";
 
-import type { IQueryFilter, IQueryOptions, IQueryPagination, IResponsePagination } from "../interfaces/IQuery";
+import type { IQueryFilter, IQueryOptions, IResponsePagination } from "../interfaces/IQuery";
 import type { ResponseData } from "../interfaces/ResponseData";
 import { respondFailure, respondSuccess } from "../interfaces/ResponseData";
 
@@ -123,81 +120,11 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 	 * - Search (by username that contains "john"): `https://example.com/api/v1/user?page=1&size=10&username=john&search=true`
 	 */
 	parseFilter(req: AppRequest, res?: Response, next?: NextFunction) {
-		const {
-			download = false,
-			skip,
-			limit = 0,
-			page = 1,
-			size = 0,
-			populate,
-			select,
-			status,
-			sort, // @example: -updatedAt,-createdAt
-			order, // @example: -updatedAt,-createdAt
-			search = false,
-			raw = false,
-			full = false,
-			where = {},
-			access_token,
-			refresh_token,
-			isDebugging = false,
-			...filter
-		} = req.query as any;
-
-		// parse "populate" & "select"
-		const _populate = populate ? trim(populate.toString(), ",") : "";
-		const _select = select ? trim(select.toString(), ",") : "";
-		const options: IQueryOptions & IQueryPagination = {
-			isDebugging,
-			download,
-			full,
-			populate: _populate == "" ? [] : _populate.indexOf(",") > -1 ? _populate.split(",") : [_populate],
-			select: _select == "" ? [] : _select.indexOf(",") > -1 ? _select.split(",") : [_select],
-		};
-
-		// parse "search"
-		if (search === true) {
-			Object.entries(filter).forEach(([key, val]) => {
-				filter[key] =
-					isString(val) &&
-					!isValidObjectId(val) &&
-					!isBoolean(val) &&
-					!isDate(val) &&
-					!isNumber(val) &&
-					!isBooleanString(val) &&
-					!isNumberString(val)
-						? { $regex: trim(val), $options: "i" }
-						: val;
-			});
-		}
-
-		// parse "sort" (or "order") from the query url:
-		let _sortOptions: string[];
-		if (sort) _sortOptions = sort.indexOf(",") > -1 ? sort.split(",") : [sort];
-		if (order) _sortOptions = order.indexOf(",") > -1 ? order.split(",") : [order];
-		const sortOptions: { [key: string]: 1 | -1 } = {};
-		if (_sortOptions)
-			_sortOptions.forEach((s) => {
-				const isDesc = s.charAt(0) === "-";
-				const key = isDesc ? s.substring(1) : s;
-				const sortValue: 1 | -1 = isDesc ? -1 : 1;
-				sortOptions[key] = sortValue;
-			});
-		if (!isEmpty(sortOptions)) options.order = sortOptions;
-		if (raw === "true" || raw === true) options.raw = true;
-
-		// parse "pagination"
-		if (this.pagination && this.pagination.page_size) {
-			options.skip = ((this.pagination.current_page ?? 1) - 1) * this.pagination.page_size;
-			options.limit = this.pagination.page_size;
-		}
-
-		if (limit > 0) options.limit = limit;
-		if (skip) options.skip = skip;
+		const parsed = parseFilterAndOptions(req);
 
 		// assign to controller:
-		this.options = options;
-		this.filter = parseRequestFilter({ ...filter });
+		this.options = parsed.options;
+		this.filter = parsed.filter;
 
 		if (next) next();
 	}
@@ -205,52 +132,8 @@ export default class BaseController<T extends IBase = any, S extends BaseService
 	async parsePagination(req: AppRequest, res?: Response, next?: NextFunction) {
 		if (!this.service) return;
 
-		let total_items = 0,
-			total_pages = 0,
-			current_page = 1,
-			page_size = 0;
-
-		const {
-			id,
-			download,
-			skip,
-			limit = 0,
-			page = 1,
-			size = DEFAULT_PAGE_SIZE,
-			populate,
-			select,
-			status,
-			sort = "createdAt",
-			search = false,
-			full = false,
-			isDebugging = false,
-			access_token,
-			refresh_token,
-			...filter
-		} = req.query;
-
-		const pageOptions = { skip: toInt(skip), limit: toInt(limit), page: toInt(page), size: toInt(size) };
-		// log(`pageOptions >>`, pageOptions);
-
-		total_items = await this.service.count(filter);
-		total_pages = limit == 0 ? 1 : Math.ceil(total_items / pageOptions.limit);
-
-		if (pageOptions.size > 0) page_size = pageOptions.size;
-		if (pageOptions.page > 0) current_page = pageOptions.page;
-
-		// const totalSkip = skip > 0 ? pageOptions.skip : current_page > 0 ? (current_page - 1) * page_size : undefined;
-		const totalLimit = pageOptions.limit > 0 ? pageOptions.limit : page_size > 0 ? page_size : undefined;
-
-		if (totalLimit) total_pages = Math.ceil(total_items / totalLimit);
-		// if (totalSkip) page_size = totalSkip;
-		// log(`totalSkip >>`, totalSkip);
-
-		this.pagination = {
-			total_items,
-			total_pages,
-			current_page,
-			page_size,
-		};
+		const pagination = await parsePagination(this.service, req);
+		this.pagination = pagination;
 		// log(`this.pagination >>`, this.pagination);
 
 		if (next) next();

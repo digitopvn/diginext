@@ -21,7 +21,7 @@ export interface GenerateDomainOptions {
 	/**
 	 * Subdomain name
 	 */
-	subdomainName: string;
+	recordName: string;
 	/**
 	 * @default "diginext.site"
 	 */
@@ -56,8 +56,8 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	// Manage domains in database to avoid duplication
 	const dxKey = params.workspace.dx_key;
 
-	let { subdomainName, clusterSlug, ipAddress, primaryDomain = DIGINEXT_DOMAIN, user } = params;
-	let domain = `${subdomainName}.${primaryDomain}`;
+	let { recordName, clusterSlug, ipAddress, primaryDomain = DIGINEXT_DOMAIN, user } = params;
+	let domain = `${recordName}.${primaryDomain}`;
 	let targetIP: string;
 
 	if (clusterSlug) {
@@ -79,31 +79,31 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 	}
 
 	// create new subdomain:
-	const domainData: CreateDiginextDomainParams = { name: subdomainName, data: targetIP, userId: user.dxUserId };
+	const domainData: CreateDiginextDomainParams = { name: recordName, data: targetIP, userId: user.dxUserId };
 	let res = isServerMode ? await dxCreateDomain(domainData, dxKey) : await fetchApi({ url: `/api/v1/domain`, method: "POST", data: domainData });
 
-	// console.log("generateDomain > res :>> ", res);
+	if (params.isDebugging) console.log("generateDomains() > res :>> ", res);
 	let { status, messages } = res;
 
 	if (status === 0) {
 		const [msg = ""] = messages;
 		if (msg.indexOf("domain name is existed")) {
 			const randomStr = randomStringByLength(6, "zxcvbnmasdfghjklqwertyuiop1234567890");
-			subdomainName = `${randomStr}-${subdomainName}`;
-			domain = `${subdomainName}.${primaryDomain}`;
+			recordName = `${randomStr}-${recordName}`;
+			domain = `${recordName}.${primaryDomain}`;
 
 			// create new domain again if domain was existed
-			res = await dxCreateDomain({ name: subdomainName, data: targetIP, userId: user.dxUserId }, dxKey);
+			res = await dxCreateDomain({ name: recordName, data: targetIP, userId: user.dxUserId }, dxKey);
 
-			messages = res.messages;
+			messages = [`Domain was existed, so a new one was generated: ${domain}`];
 			status = res.status;
 
-			if (status === 1) return { status: 1, domain, ip: targetIP } as GenerateDomainResult;
+			if (status === 1) return { status: 1, domain, ip: targetIP, messages } as GenerateDomainResult;
 		}
 
 		if (msg) logError(`[DOMAIN] ${msg}`);
 		return { status: 0, domain, ip: null, messages } as GenerateDomainResult;
 	}
 
-	return { status: 1, domain, ip: targetIP } as GenerateDomainResult;
+	return { status: 1, domain, ip: targetIP, messages: [] } as GenerateDomainResult;
 };

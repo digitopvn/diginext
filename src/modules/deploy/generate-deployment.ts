@@ -142,7 +142,7 @@ export const generateDeployment = async (params: GenerateDeploymentParams) => {
 			user,
 			workspace,
 			primaryDomain: DIGINEXT_DOMAIN,
-			subdomainName: prereleaseSubdomainName,
+			recordName: prereleaseSubdomainName,
 			clusterSlug: deployEnvironmentConfig.cluster,
 		});
 		if (status === 0) throw new Error(`Unable to create PRE-RELEASE domain "${domain}" due to "${messages.join(". ")}"`);

@@ -7,7 +7,7 @@ import type { QuerySelector } from "mongoose";
 import { DIGINEXT_DOMAIN } from "@/config/const";
 import type { IBuild, ICluster, IProject, IUser, IWorkspace } from "@/entities";
 import type { IApp } from "@/entities/App";
-import type { DeployEnvironment, IQueryOptions, KubeDeployment } from "@/interfaces";
+import type { DeployEnvironment, IQueryFilter, IQueryOptions, IQueryPagination, KubeDeployment } from "@/interfaces";
 import type { DeployEnvironmentData } from "@/interfaces/AppInterfaces";
 import type { DeployEnvironmentVolume } from "@/interfaces/DeployEnvironmentVolume";
 import type { KubeEnvironmentVariable } from "@/interfaces/EnvironmentVariable";
@@ -15,7 +15,7 @@ import type { Ownership } from "@/interfaces/SystemTypes";
 import { sslIssuerList } from "@/interfaces/SystemTypes";
 import { getDeployEvironmentByApp } from "@/modules/apps/get-app-environment";
 import { createReleaseFromApp } from "@/modules/build/create-release-from-app";
-import type { GenerateDeploymentResult } from "@/modules/deploy";
+import { type GenerateDeploymentResult, fetchDeploymentFromContent } from "@/modules/deploy";
 import getDeploymentName from "@/modules/deploy/generate-deployment-name";
 import { generateDeploymentV2 } from "@/modules/deploy/generate-deployment-v2";
 import { dxCreateDomain, dxDeleteDomainRecord, dxUpdateDomainRecord } from "@/modules/diginext/dx-domain";
@@ -27,6 +27,7 @@ import { formatEnvVars } from "@/plugins/env-var";
 import { isValidKubernetesMemoryFormat } from "@/plugins/k8s-helper";
 import { MongoDB } from "@/plugins/mongodb";
 import { containsSpecialCharacters } from "@/plugins/string";
+import { redis } from "@/server";
 
 export type DeployEnvironmentApp = DeployEnvironment & {
 	app: IApp;
@@ -252,6 +253,244 @@ export class DeployEnvironmentService {
 		}
 
 		return updatedApp;
+	}
+
+	async getDeployEnvironmentStatus(deployEnvironment: DeployEnvironment) {
+		const { ClusterService } = await import("./index");
+		const clusterSvc = new ClusterService();
+
+		const { app, name: env } = deployEnvironment;
+		if (!app) throw new Error(`App not found.`);
+
+		if (!deployEnvironment.buildTag) deployEnvironment.buildTag = "";
+
+		// format environment variables (if any)
+		if (deployEnvironment.envVars) {
+			deployEnvironment.envVars = formatEnvVars(deployEnvironment.envVars);
+		}
+
+		// default values
+		deployEnvironment.readyCount = 0;
+		deployEnvironment.status = "undeployed";
+
+		// if no cluster -> not deployed -> skip
+		if (!deployEnvironment.cluster) return deployEnvironment;
+
+		// find cluster
+		const clusterSlug = deployEnvironment.cluster;
+		const cluster = await clusterSvc.findOne({ slug: clusterSlug }, { subpath: "/all" }).catch(() => null);
+		if (!cluster) return deployEnvironment;
+
+		// find context & namespace
+		const { contextName: context } = cluster;
+		if (!context) return deployEnvironment;
+		const { namespace } = deployEnvironment;
+		if (!namespace) return deployEnvironment;
+
+		// find workloads base on "main-app" label
+		const mainAppName = await getDeploymentName(app);
+		let [deployOnCluster] = await ClusterManager.getDeploys(namespace, {
+			filterLabel: `main-app=${mainAppName}`,
+			context,
+			metrics: true,
+		});
+
+		console.log(`----- ${app.name} -----`);
+		// console.log("- mainAppName :>> ", mainAppName);
+		// console.log("- deployOnCluster.metadata.name :>> ", deployOnCluster?.metadata?.name);
+		console.log("- deployOnCluster.status.replicas :>> ", deployOnCluster?.status?.replicas);
+		console.log("- deployOnCluster.resources.limits :>> ", deployOnCluster?.spec?.template?.spec?.containers?.[0]?.resources.limits);
+		console.log("- deployOnCluster.cpuAvg :>> ", deployOnCluster?.cpuAvg);
+		console.log("- deployOnCluster.memoryAvg :>> ", deployOnCluster?.memoryAvg);
+		// console.log("- deployOnCluster.status.readyReplicas :>> ", deployOnCluster?.status?.readyReplicas);
+		// console.log("- deployOnCluster.status.availableReplicas :>> ", deployOnCluster?.status?.availableReplicas);
+		// console.log("- deployOnCluster.status.unavailableReplicas :>> ", deployOnCluster?.status?.unavailableReplicas);
+
+		deployEnvironment.resources = {
+			limits: deployOnCluster?.spec?.template?.spec?.containers?.[0]?.resources.limits,
+			usage: {
+				cpu: deployOnCluster?.cpuAvg,
+				memory: deployOnCluster?.memoryAvg,
+			},
+		};
+
+		if (!deployOnCluster) {
+			deployEnvironment.status = "undeployed";
+			return deployEnvironment;
+		}
+
+		deployEnvironment.readyCount = deployOnCluster.status.readyReplicas ?? deployOnCluster.status.availableReplicas ?? 0;
+
+		if (
+			deployOnCluster.status.replicas === deployOnCluster.status.availableReplicas ||
+			deployOnCluster.status.replicas === deployOnCluster.status.readyReplicas
+		) {
+			deployEnvironment.status = "healthy";
+			return deployEnvironment;
+		}
+
+		if (deployOnCluster.status.unavailableReplicas && deployOnCluster.status.unavailableReplicas > 0) {
+			deployEnvironment.status = "partial_healthy";
+			return deployEnvironment;
+		}
+
+		if (
+			deployOnCluster.status.availableReplicas === 0 ||
+			deployOnCluster.status.unavailableReplicas === deployOnCluster.status.replicas ||
+			deployOnCluster.status.readyReplicas === 0
+		) {
+			deployEnvironment.status = "failed";
+			return deployEnvironment;
+		}
+
+		deployEnvironment.status = "unknown";
+
+		return deployEnvironment;
+	}
+
+	async getAllDeployEnvironments(workspaceId: string, options?: IQueryOptions) {
+		if (!workspaceId) throw new Error(`Workspace ID is required.`);
+
+		// try to get from redis
+		const redisKey = `listDeployEnvironments:${workspaceId}`;
+		if (typeof options?.cache === "undefined" || options.cache) {
+			try {
+				const redisRes = await redis.get(redisKey);
+				if (redisRes) return JSON.parse(redisRes);
+			} catch (e) {
+				logWarn(`[DEPLOY_ENVIRONMENT_SERVICE] Unable to get getAllDeployEnvironments from redis: ${e}`);
+			}
+		}
+
+		try {
+			const { AppService } = await import("./index");
+			const appSvc = new AppService();
+			const apps = await appSvc.find({ workspace: this.workspace._id }, { populate: ["project"] });
+
+			let deployEnvironments: DeployEnvironment[] = [];
+			apps.forEach((app) => {
+				if (app.deployEnvironment) {
+					Object.entries(app.deployEnvironment).forEach(([env, deployEnvironment]) => {
+						if (deployEnvironment) {
+							// Create a new object to avoid circular references
+							const safeDeployEnvironment = {
+								...deployEnvironment,
+								env,
+								deploymentName:
+									deployEnvironment.deploymentName ||
+									(deployEnvironment.deploymentYaml
+										? fetchDeploymentFromContent(deployEnvironment.deploymentYaml).APP_NAME
+										: undefined),
+								appSlug: app.slug,
+								appName: app.name,
+								projectName: app.project ? (app.project as IProject).name : undefined,
+								projectSlug: app.project ? (app.project as IProject).slug : undefined,
+								app: {
+									id: app._id,
+									slug: app.slug,
+									name: app.name,
+									owner: app.owner,
+									workspace: app.workspace,
+									project: app.project,
+								},
+							};
+
+							// Remove circular references
+							// delete safeDeployEnvironment.app;
+
+							deployEnvironments.push(safeDeployEnvironment);
+						}
+					});
+				}
+			});
+
+			// save to redis (expire in 1 day)
+			await redis.set(redisKey, JSON.stringify(deployEnvironments), "EX", 60 * 60 * 24);
+
+			return deployEnvironments;
+		} catch (e) {
+			logWarn(`[DEPLOY_ENVIRONMENT_SERVICE] Unable to get getAllDeployEnvironments from redis: ${e}`);
+			return [] as DeployEnvironment[];
+		}
+	}
+
+	async listDeployEnvironments(filter?: IQueryFilter<DeployEnvironment>, options?: IQueryOptions & IQueryPagination) {
+		if (typeof options?.cache === "undefined") options.cache = true;
+
+		// options.cache = false;
+
+		const redisKey = `listDeployEnvironments:${JSON.stringify(filter)}:${JSON.stringify(options)}`;
+		if (options.cache) {
+			try {
+				const redisRes = await redis.get(redisKey);
+				if (redisRes) {
+					const deployEnvironments = redisRes ? JSON.parse(redisRes) : [];
+					// pagination (optional)
+					const pagination = {
+						skip: options?.skip || 0,
+						limit: options?.limit || 50,
+						total: deployEnvironments.length,
+						page: Math.ceil(deployEnvironments.length / options?.limit),
+						size: options?.limit,
+					};
+					return { data: deployEnvironments, pagination };
+				}
+			} catch (e) {
+				logWarn(`[DEPLOY_ENVIRONMENT_SERVICE] Unable to get listDeployEnvironments from redis: ${e}`);
+			}
+		}
+
+		// extract deploy environments from apps
+		let deployEnvironments: DeployEnvironment[] = await this.getAllDeployEnvironments(this.workspace._id.toString(), { cache: options.cache });
+
+		if (filter?.workspace) delete filter.workspace;
+
+		console.log(`filter :>> `, filter);
+		// filter deploy environments
+		if (filter) {
+			deployEnvironments = deployEnvironments.filter((deployEnvironment) => {
+				// Dynamically filter based on the provided filter object
+				return Object.entries(filter).every(([key, value]) => {
+					// Check if the key exists in the deployEnvironment and matches the filter value
+					return value ? deployEnvironment[key as keyof DeployEnvironment] === value : true;
+				});
+			});
+		}
+		console.log(`[2] deployEnvironments :>> `, deployEnvironments.length);
+
+		// pagination (optional)
+		const pagination = {
+			skip: options?.skip || 0,
+			limit: options?.limit || 50,
+			total: deployEnvironments.length,
+			page: Math.ceil(deployEnvironments.length / options?.limit),
+			size: options?.limit,
+		};
+		deployEnvironments = deployEnvironments.slice(options.skip, options.skip + options.limit);
+
+		console.log(`[3] deployEnvironments :>> `, deployEnvironments.length);
+
+		// get status of each deploy environment
+		if (options?.status) {
+			deployEnvironments = await Promise.all(
+				deployEnvironments.map(async (deployEnvironment) => {
+					// Find the original app to pass to getDeployEnvironmentStatus
+					// const originalApp = apps.find((app) => app.slug === deployEnvironment.appSlug);
+					return this.getDeployEnvironmentStatus({
+						...deployEnvironment,
+						// app: originalApp,
+					});
+				})
+			);
+		}
+		console.log(`[4] deployEnvironments :>> `, deployEnvironments.length);
+
+		// save to redis (expire in 1 hour)
+		await redis.set(redisKey, JSON.stringify(deployEnvironments), "EX", 60 * 60).catch((e) => {
+			logWarn(`[DEPLOY_ENVIRONMENT_SERVICE] Unable to save listDeployEnvironments to redis: ${e}`);
+		});
+
+		return { data: deployEnvironments, pagination };
 	}
 
 	async viewDeployEnvironmentLogs(app: IApp, env: string) {

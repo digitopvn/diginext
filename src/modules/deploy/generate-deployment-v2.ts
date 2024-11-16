@@ -170,7 +170,7 @@ export const generateDeploymentV2 = async (params: GenerateDeploymentV2Params) =
 		} = await generateDomains({
 			user,
 			workspace,
-			subdomainName: subdomain,
+			recordName: subdomain,
 			clusterSlug: clusterSlug,
 			// isDebugging: true,
 		});

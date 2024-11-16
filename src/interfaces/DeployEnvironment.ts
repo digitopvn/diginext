@@ -1,6 +1,6 @@
 import type { ObjectId } from "mongodb";
 
-import type { IUser } from "@/entities";
+import type { IApp, IUser } from "@/entities";
 
 import type { DeployEnvironmentVolume } from "./DeployEnvironmentVolume";
 import type { KubeEnvironmentVariable } from "./EnvironmentVariable";
@@ -80,6 +80,20 @@ export interface ClientDeployEnvironmentConfig {
 	memory?: string;
 
 	/**
+	 * Container's resources
+	 */
+	resources?: {
+		usage?: {
+			cpu?: string;
+			memory?: string;
+		};
+		limits?: {
+			cpu?: string;
+			memory?: string;
+		};
+	};
+
+	/**
 	 * Set to `false` if you DON'T want to inherit the Ingress YAML config from the previous deployment
 	 * @default true
 	 */
@@ -155,6 +169,18 @@ export interface ClientDeployEnvironmentConfig {
  * A deployment's environment of the application.
  */
 export interface DeployEnvironment extends ClientDeployEnvironmentConfig {
+	/**
+	 * Name of the deploy environment
+	 * @example "dev" | "prod" | "staging"
+	 */
+	name?: string;
+	/**
+	 * App
+	 */
+	app?: IApp;
+	appSlug?: string;
+	appName?: string;
+	projectSlug?: string;
 	/**
 	 * ObjectID of the build associated with this deploy environment.
 	 */
