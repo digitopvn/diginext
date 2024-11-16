@@ -95,15 +95,15 @@ export const generateDomains = async (params: GenerateDomainOptions) => {
 			// create new domain again if domain was existed
 			res = await dxCreateDomain({ name: recordName, data: targetIP, userId: user.dxUserId }, dxKey);
 
-			messages = res.messages;
+			messages = [`Domain was existed, so a new one was generated: ${domain}`];
 			status = res.status;
 
-			if (status === 1) return { status: 1, domain, ip: targetIP } as GenerateDomainResult;
+			if (status === 1) return { status: 1, domain, ip: targetIP, messages } as GenerateDomainResult;
 		}
 
 		if (msg) logError(`[DOMAIN] ${msg}`);
 		return { status: 0, domain, ip: null, messages } as GenerateDomainResult;
 	}
 
-	return { status: 1, domain, ip: targetIP } as GenerateDomainResult;
+	return { status: 1, domain, ip: targetIP, messages: [] } as GenerateDomainResult;
 };

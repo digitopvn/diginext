@@ -34,7 +34,7 @@ export async function dxApi<T = ResponseData>(options: AxiosRequestConfig & { dx
 		const res = await axios(options);
 		const { data } = res;
 		if (options.isDebugging) console.log(chalk.yellow("dxApi() >"), `${Config.DX_API_URL}${options.url} > response :>>`, data);
-		return { status: 1, data } as T;
+		return { status: 1, data, messages: [] } as T;
 	} catch (e) {
 		console.log(chalk.yellow("dxApi() > Error :>>"), e);
 		const err: string = e.data?.message === "UNAUTHORIZED" || e.data?.status === 401 ? "UNAUTHORIZED." : e.message;
