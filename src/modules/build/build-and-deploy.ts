@@ -46,16 +46,23 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 		const latestLogs = fullLogs ? fullLogs.split("\n").slice(-100).join("\n") : undefined;
 		const workspace = app.workspace as IWorkspace;
 		const owner = buildParams.user;
-		let aiAnalysis = "";
+		console.log("buildAndDeploy() > latestLogs :>> ", latestLogs);
+		console.log("buildAndDeploy() > workspace :>> ", workspace);
+		console.log("buildAndDeploy() > owner :>> ", owner);
+		let aiAnalysis = "\n---- AI ANALYSIS ----\n";
 		if (workspace.settings?.ai?.enabled && latestLogs) {
 			const { AIService } = await import("@/services/AIService");
 			const aiService = new AIService({ owner, workspace });
-			aiAnalysis += "\n\n---- AI ANALYSIS ----\n";
-			aiAnalysis += await aiService.analyzeErrorLog(latestLogs).catch((error) => {
+			try {
+				const analysis = await aiService.analyzeErrorLog(latestLogs, { isDebugging: buildParams.isDebugging });
+				aiAnalysis += analysis;
+			} catch (error) {
 				console.error(error);
-				return `AI service is currently unavailable: ${error.message}`;
-			});
+				aiAnalysis += `AI service is currently unavailable: ${error.message}`;
+			}
 			sendLog({ SOCKET_ROOM, type: "log", message: aiAnalysis });
+		} else {
+			sendLog({ SOCKET_ROOM, type: "log", message: "AI analysis is disabled. If you need it, please enable it in your workspace settings." });
 		}
 
 		return;
