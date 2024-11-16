@@ -75,7 +75,7 @@ export const askForDomain = async (
 			} = await generateDomains({
 				user,
 				workspace,
-				subdomainName: subdomain,
+				recordName: subdomain,
 				clusterSlug: clusterSlug,
 			});
 
