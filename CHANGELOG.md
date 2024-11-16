@@ -1,3 +1,25 @@
+# [3.40.0](https://github.com/digitopvn/diginext/compare/v3.39.0...v3.40.0) (2024-11-16)
+
+
+### Bug Fixes
+
+* **admin:** enhance deploy environment list ([e2840cd](https://github.com/digitopvn/diginext/commit/e2840cdc6248d8e1736adca5c259ff1ea16877f8))
+* **admin:** enhance deploy environment list ([#567](https://github.com/digitopvn/diginext/issues/567)) ([fd1247c](https://github.com/digitopvn/diginext/commit/fd1247ca1be1ca7cdaf48e6350a1a1ed4a5293cc))
+* **build:** error test ([82cddc3](https://github.com/digitopvn/diginext/commit/82cddc35d842e9abe780f74694fbc0b1c84e384d))
+* **cli:** display warning of duplicated domain generated ([e2ba428](https://github.com/digitopvn/diginext/commit/e2ba428824b9f80441d9cb68c65306b1c14fffa6))
+* **deploy environment:** list with filter and cpu,memory ([769c12b](https://github.com/digitopvn/diginext/commit/769c12b5f65d25555c357c1a02c0691c1a537024))
+* **server,cli:** issue create existing diginext domain ([3ee486f](https://github.com/digitopvn/diginext/commit/3ee486f9651f9a7b2638d8cc5bbe1f7946796c63))
+* **server:** add ownership to deploy env service ([9001157](https://github.com/digitopvn/diginext/commit/9001157da2e812faab521cddcbc0c2e642bb4b7d))
+* **server:** deployment service constructor ([4bf4ad9](https://github.com/digitopvn/diginext/commit/4bf4ad986197f3090513938cf2d53b33d6657ef9))
+* **server:** direct import deploy env service ([3409599](https://github.com/digitopvn/diginext/commit/34095994b26719c493dcc1f927ada38be1a42168))
+* **server:** still that fucking import issue ([3d54f88](https://github.com/digitopvn/diginext/commit/3d54f88eca0a0aab99d28cd2fb9aafca19a629c1))
+
+
+### Features
+
+* **env var:** create entity, service ([b12a3b5](https://github.com/digitopvn/diginext/commit/b12a3b52a30fa72fdc531be84f0e9019c787a426))
+* **server:** ai analysis on build failed ([57bde05](https://github.com/digitopvn/diginext/commit/57bde0588fa218bf82c37a3821ee972e59abc1b5))
+
 # [3.39.0](https://github.com/digitopvn/diginext/compare/v3.38.3...v3.39.0) (2024-11-14)
 
 
