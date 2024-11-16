@@ -28,18 +28,21 @@ export interface IBase {
 	 * @remarks This can be populated to {IUser} data
 	 */
 	owner?: Types.ObjectId | IUser | string;
+	ownerId?: Types.ObjectId | string;
 	/**
 	 * ID of the project
 	 *
 	 * @remarks This can be populated to {IProject} data
 	 */
 	project?: Types.ObjectId | IProject | string;
+	projectId?: Types.ObjectId | string;
 	/**
 	 * ID of the workspace
 	 *
 	 * @remarks This can be populated to {IWorkspace} data
 	 */
 	workspace?: Types.ObjectId | IWorkspace | string;
+	workspaceId?: Types.ObjectId | string;
 	/**
 	 * SLUG of the workspace
 	 *
@@ -63,7 +66,9 @@ export interface IBase {
 	 */
 	migratedAt?: Date;
 	updatedBy?: Types.ObjectId | IUser | string;
+	updatedById?: Types.ObjectId | string;
 	deletedBy?: Types.ObjectId | IUser | string;
+	deletedById?: Types.ObjectId | string;
 }
 
 export interface EntityConstructor {
@@ -80,23 +85,28 @@ export const baseSchemaDefinitions = {
 		type: Schema.Types.ObjectId,
 		ref: "users",
 	},
+	ownerId: { type: Schema.Types.ObjectId, ref: "users" },
 	project: {
 		type: Schema.Types.ObjectId,
 		ref: "projects",
 	},
+	projectId: { type: Schema.Types.ObjectId, ref: "projects" },
 	workspace: {
 		type: Schema.Types.ObjectId,
 		ref: "workspaces",
 	},
+	workspaceId: { type: Schema.Types.ObjectId, ref: "workspaces" },
 	workspaceSlug: { type: String },
 	updatedBy: {
 		type: Schema.Types.ObjectId,
 		ref: "users",
 	},
+	updatedById: { type: Schema.Types.ObjectId, ref: "users" },
 	deletedBy: {
 		type: Schema.Types.ObjectId,
 		ref: "users",
 	},
+	deletedById: { type: Schema.Types.ObjectId, ref: "users" },
 	createdAt: { type: Date, default: Date.now },
 	updatedAt: { type: Date, default: Date.now },
 	deletedAt: { type: Date },

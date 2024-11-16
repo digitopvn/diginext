@@ -13,6 +13,7 @@ export * from "./ClusterService";
 export * from "./ContainerRegistryService";
 export * from "./CronjobService";
 export { DeployEnvironmentService } from "./DeployEnvironmentService";
+export * from "./EnvVarService";
 export * from "./FrameworkService";
 export * from "./GitProviderService";
 export * from "./MonitorDeploymentService";

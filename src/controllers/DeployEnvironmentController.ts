@@ -44,7 +44,7 @@ export default class DeployEnvironmentController {
 	 */
 	@Security("api_key")
 	@Security("jwt")
-	@Get("/deploy-environment")
+	@Get("/")
 	async getDeployEnvironments(
 		@Queries()
 		queryParams: {
@@ -65,6 +65,32 @@ export default class DeployEnvironmentController {
 				total_items: pagination.total,
 				page_size: pagination.size,
 			});
+		} catch (e) {
+			console.error(e);
+			return respondFailure(`Unable to get deploy environments: ${e}`);
+		}
+	}
+
+	/**
+	 * Get list of deploy environments
+	 */
+	@Security("api_key")
+	@Security("jwt")
+	@Get("/all")
+	async getAllDeployEnvironments(
+		@Queries()
+		queryParams: {
+			env?: string;
+			appSlug?: string;
+			projectSlug?: string;
+		}
+	) {
+		try {
+			const { DeployEnvironmentService } = await import("@/services/DeployEnvironmentService");
+			const svc = new DeployEnvironmentService(this.ownership);
+
+			const data = await svc.getAllDeployEnvironments(this.workspace._id.toString(), this.options);
+			return respondSuccess({ data });
 		} catch (e) {
 			console.error(e);
 			return respondFailure(`Unable to get deploy environments: ${e}`);
