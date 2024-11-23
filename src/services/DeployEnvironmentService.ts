@@ -411,8 +411,8 @@ export class DeployEnvironmentService {
 			// sort by updatedAt (descending)
 			deployEnvironments.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
-			// save to redis (expire in 1 day)
-			await redis.set(redisKey, JSON.stringify(deployEnvironments), "EX", 60 * 60 * 24);
+			// save to redis (expire in 1 hour)
+			await redis.set(redisKey, JSON.stringify(deployEnvironments), "EX", 60 * 60);
 
 			return deployEnvironments;
 		} catch (e) {
