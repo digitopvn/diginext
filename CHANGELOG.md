@@ -1,3 +1,11 @@
+## [3.40.2](https://github.com/digitopvn/diginext/compare/v3.40.1...v3.40.2) (2024-11-23)
+
+
+### Bug Fixes
+
+* **server:** cache deploy environments in 1 hour ([2690357](https://github.com/digitopvn/diginext/commit/269035743d193258e95633aa85ed9da4cfd8405a))
+* **server:** sort deploy environments by updated date desc ([042e08b](https://github.com/digitopvn/diginext/commit/042e08b306168b08b67f3fc496d6de6fe52b6828))
+
 ## [3.40.1](https://github.com/digitopvn/diginext/compare/v3.40.0...v3.40.1) (2024-11-23)
 
 
