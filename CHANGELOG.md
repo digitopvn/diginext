@@ -1,3 +1,11 @@
+## [3.40.1](https://github.com/digitopvn/diginext/compare/v3.40.0...v3.40.1) (2024-11-23)
+
+
+### Bug Fixes
+
+* **server:** add debug info to AI service ([8142681](https://github.com/digitopvn/diginext/commit/81426811b2daa44153d4cabe5c7a642e89001cb5))
+* **server:** sort deploy environments by date descending ([c1478be](https://github.com/digitopvn/diginext/commit/c1478be84346e1b61d85746dcd9d5789f490e3d3))
+
 # [3.40.0](https://github.com/digitopvn/diginext/compare/v3.39.0...v3.40.0) (2024-11-16)
 
 
