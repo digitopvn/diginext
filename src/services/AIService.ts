@@ -110,12 +110,13 @@ export class AIService {
 				{ role: "user", content: askMessage },
 			],
 		};
-
+		if (options?.isDebugging) console.log("analyzeErrorLog() > dto :>> ", dto);
 		const response = await aiApi({
 			baseUrl: this.workspace?.settings?.ai?.apiBaseUrl,
 			apiKey: this.workspace?.settings?.ai?.apiKey,
 			data: dto,
 		});
+		if (options?.isDebugging) console.log("analyzeErrorLog() > response :>> ", response);
 		const { content } = response.choices[0].message;
 		return content;
 	}

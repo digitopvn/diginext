@@ -49,7 +49,7 @@ export interface TokenDetails {
 
 export const verifyRefreshToken = async (refreshToken: string) => {
 	try {
-		console.log("passports > verifyRefreshToken > Verifying token :>>", refreshToken);
+		// console.log("passports > verifyRefreshToken > Verifying token :>>", refreshToken);
 
 		// Check if token exists
 		if (!refreshToken) {
