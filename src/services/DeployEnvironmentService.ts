@@ -1,4 +1,5 @@
 import { isJSON } from "class-validator";
+import dayjs from "dayjs";
 import { makeSlug } from "diginext-utils/dist/Slug";
 import { logWarn } from "diginext-utils/dist/xconsole/log";
 import { isArray, isBoolean, isEmpty, isUndefined } from "lodash";
@@ -393,6 +394,9 @@ export class DeployEnvironmentService {
 									workspace: app.workspace,
 									project: app.project,
 								},
+								updatedAt: deployEnvironment.updatedAt
+									? dayjs(deployEnvironment.updatedAt).toDate()
+									: dayjs().subtract(1, "year").toDate(),
 							};
 
 							// Remove circular references
@@ -407,8 +411,8 @@ export class DeployEnvironmentService {
 			// sort by updatedAt (descending)
 			deployEnvironments.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
-			// save to redis (expire in 1 day)
-			await redis.set(redisKey, JSON.stringify(deployEnvironments), "EX", 60 * 60 * 24);
+			// save to redis (expire in 1 hour)
+			await redis.set(redisKey, JSON.stringify(deployEnvironments), "EX", 60 * 60);
 
 			return deployEnvironments;
 		} catch (e) {
@@ -420,7 +424,7 @@ export class DeployEnvironmentService {
 	async listDeployEnvironments(filter?: IQueryFilter<DeployEnvironment>, options?: IQueryOptions & IQueryPagination) {
 		if (typeof options?.cache === "undefined") options.cache = true;
 
-		// options.cache = false;
+		options.cache = false;
 
 		const redisKey = `listDeployEnvironments:${JSON.stringify(filter)}:${JSON.stringify(options)}`;
 		if (options.cache) {
@@ -428,6 +432,14 @@ export class DeployEnvironmentService {
 				const redisRes = await redis.get(redisKey);
 				if (redisRes) {
 					const deployEnvironments = redisRes ? JSON.parse(redisRes) : [];
+
+					// sort by updatedAt (descending)
+					deployEnvironments.sort(
+						(a, b) =>
+							(dayjs(b.updatedAt).toDate() || dayjs().subtract(1, "year").toDate()).getTime() -
+							(dayjs(a.updatedAt).toDate() || dayjs().subtract(1, "year").toDate()).getTime()
+					);
+
 					// pagination (optional)
 					const pagination = {
 						skip: options?.skip || 0,
@@ -436,6 +448,7 @@ export class DeployEnvironmentService {
 						page: Math.ceil(deployEnvironments.length / options?.limit),
 						size: options?.limit,
 					};
+
 					return { data: deployEnvironments, pagination };
 				}
 			} catch (e) {
@@ -444,7 +457,7 @@ export class DeployEnvironmentService {
 		}
 
 		// extract deploy environments from apps
-		let deployEnvironments: DeployEnvironment[] = await this.getAllDeployEnvironments(this.workspace._id.toString(), { cache: options.cache });
+		let deployEnvironments: DeployEnvironment[] = await this.getAllDeployEnvironments(this.workspace._id.toString(), { cache: true });
 
 		if (filter?.workspace) delete filter.workspace;
 
