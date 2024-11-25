@@ -4,7 +4,7 @@ import humanizeDuration from "humanize-duration";
 
 import { IsTest } from "@/app.config";
 import type { IWorkspace } from "@/entities";
-import { Logger, wait } from "@/plugins";
+import { wait } from "@/plugins";
 import { uploadFileBuffer } from "@/plugins/cloud-storage";
 import { MongoDB } from "@/plugins/mongodb";
 import { socketIO } from "@/server";
@@ -21,8 +21,10 @@ import { sendLog } from "./send-log-message";
 export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams: DeployBuildV2Options) => {
 	// import services
 	const { AppService } = await import("@/services");
+	const { BuildService } = await import("@/services");
 	const { ReleaseService } = await import("@/services");
 	const appSvc = new AppService();
+	const buildSvc = new BuildService();
 	const releaseSvc = new ReleaseService();
 
 	// [1] Build container image
@@ -42,7 +44,8 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 		sendLog({ SOCKET_ROOM, type: "error", message: `Build error: ${e.stack}` });
 
 		// AI analysis: get latest 100 lines of container logs
-		const fullLogs = Logger.getLogs(SOCKET_ROOM);
+		const build = await buildSvc.findOne({ slug: SOCKET_ROOM });
+		const fullLogs = build?.logs;
 		const latestLogs = fullLogs ? fullLogs.split("\n").slice(-100).join("\n") : undefined;
 		const workspace = app.workspace as IWorkspace;
 		const owner = buildParams.user;
@@ -50,7 +53,7 @@ export const buildAndDeploy = async (buildParams: StartBuildParams, deployParams
 		console.log("buildAndDeploy() > workspace :>> ", workspace);
 		console.log("buildAndDeploy() > owner :>> ", owner);
 		let aiAnalysis = "\n---- AI ANALYSIS ----\n";
-		if (workspace.settings?.ai?.enabled && latestLogs) {
+		if (workspace.settings?.ai?.enabled && latestLogs && build) {
 			const { AIService } = await import("@/services/AIService");
 			const aiService = new AIService({ owner, workspace });
 			try {
