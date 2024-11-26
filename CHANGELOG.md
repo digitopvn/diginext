@@ -1,3 +1,11 @@
+# [3.41.0](https://github.com/digitopvn/diginext/compare/v3.40.2...v3.41.0) (2024-11-26)
+
+
+### Features
+
+* **build:** Update build and deployment process, and improve documen… ([#570](https://github.com/digitopvn/diginext/issues/570)) ([e7a90a5](https://github.com/digitopvn/diginext/commit/e7a90a53b911647ea3f13fce4a23523bf551a30f))
+* **build:** Update build and deployment process, and improve documentation ([7ee4b34](https://github.com/digitopvn/diginext/commit/7ee4b343c35d9acf668c506c5572dee32aaae1cc))
+
 ## [3.40.2](https://github.com/digitopvn/diginext/compare/v3.40.1...v3.40.2) (2024-11-23)
 
 
