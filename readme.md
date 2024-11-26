@@ -261,4 +261,4 @@ Thank you!
 - [ReadTube.me](https://readtube.me) - Write blog articles based on Youtube videos
 - [BoostTogether.com](https://boosttogether.com) - The Power of WE in Advertising
 - [AIVN.Site](https://aivn.site) - Face Swap, Remove BG, Photo Editor,…
-- [GetViral.Now](https://getviral.now) - KOL booking better together!
+- [DxUp.dev](https://dxup.dev) - Developer-focused platform for app deployment & centralized cloud resource management.
