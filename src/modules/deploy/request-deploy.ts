@@ -258,8 +258,8 @@ export async function requestDeploy(options: InputOptions) {
 				}
 			});
 
-			// Max build duration: 30 mins
-			setTimeout(() => reject(`[DXUP Websocket] Request timeout (>30 minutes)`), 30 * 60 * 1000);
+			// Max build duration: 60 mins
+			setTimeout(() => reject(`[DXUP Websocket] Request timeout (>60 minutes)`), 60 * 60 * 1000);
 		});
 	} else {
 		return true;
