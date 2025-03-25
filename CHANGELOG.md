@@ -1,3 +1,11 @@
+## [3.42.1](https://github.com/digitopvn/diginext/compare/v3.42.0...v3.42.1) (2025-03-25)
+
+
+### Bug Fixes
+
+* **preprocess-input-data:** update input data processing logic ([04d43e9](https://github.com/digitopvn/diginext/commit/04d43e9178737555086e9675fb82214dae514b34))
+* **preprocess-input-data:** update input data processing logic ([#573](https://github.com/digitopvn/diginext/issues/573)) ([a2399a3](https://github.com/digitopvn/diginext/commit/a2399a3ad5b545a991f5607e36b41443c91e6cf0))
+
 # [3.42.0](https://github.com/digitopvn/diginext/compare/v3.41.0...v3.42.0) (2025-03-25)
 
 
