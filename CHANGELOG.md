@@ -1,3 +1,10 @@
+# [3.42.0](https://github.com/digitopvn/diginext/compare/v3.41.0...v3.42.0) (2025-03-25)
+
+
+### Features
+
+* **deploy:** Improve deploy request handling ([41f6dd4](https://github.com/digitopvn/diginext/commit/41f6dd4e3536837a7fb46c4181424992437fb478))
+
 # [3.41.0](https://github.com/digitopvn/diginext/compare/v3.40.2...v3.41.0) (2024-11-26)
 
 
