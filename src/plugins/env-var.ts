@@ -17,7 +17,7 @@ export const formatEnvVars = (envVars: KubeEnvironmentVariable[]) => {
 
 	// convert envVars to array of { name, value }
 	return envVars.map(({ name, value }) => {
-		return { name, value: value.toString() };
+		return { name, value: value ? value.toString() : "" };
 		// if (isString(name) && isString(value)) return { name, value };
 		// if (isNumber(value) || isBoolean(value) || isDate(value)) return { name, value: value.toString() };
 
