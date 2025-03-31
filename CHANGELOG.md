@@ -1,3 +1,10 @@
+# [3.43.0](https://github.com/digitopvn/diginext/compare/v3.42.2...v3.43.0) (2025-03-31)
+
+
+### Bug Fixes
+
+* **preprocess-input-data:** Correct data validation logic ([a1462ef](https://github.com/digitopvn/diginext/commit/a1462ef9aaa35070ac59cb57e72fb40a9f3ae9da))
+
 ## [3.42.2](https://github.com/digitopvn/diginext/compare/v3.42.1...v3.42.2) (2025-03-25)
 
 
