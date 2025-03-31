@@ -1,3 +1,10 @@
+## [3.42.2](https://github.com/digitopvn/diginext/compare/v3.42.1...v3.42.2) (2025-03-25)
+
+
+### Bug Fixes
+
+* **src/plugins:** update env-var plugin formatting and linting ([#574](https://github.com/digitopvn/diginext/issues/574)) ([42dea16](https://github.com/digitopvn/diginext/commit/42dea16d97fc763dba90502320cc8cbaf937281e))
+
 ## [3.42.1](https://github.com/digitopvn/diginext/compare/v3.42.0...v3.42.1) (2025-03-25)
 
 
