@@ -87,7 +87,11 @@ export async function rolloutV3(releaseId: string, options: RolloutOptions = {})
 		return handleRolloutFailure(releaseId, buildId, webhookSvc, `Deployment failed to become ready: ${error.message}`);
 	});
 
-	// After deployment readiness check
+	// 7. Scale deployment
+	const scaler = new DeploymentScaler(cluster.contextName, namespace, onUpdate);
+	scaler.scaleDeployment(deploymentName, newReplicas);
+
+	// 8. After deployment readiness check
 	const containerLogs = await retrieveContainerLogs(namespace, appVersion, cluster.contextName, isDeploymentReady);
 
 	if (onUpdate && containerLogs) {
@@ -117,16 +121,6 @@ export async function rolloutV3(releaseId: string, options: RolloutOptions = {})
 
 	// Update project and app metadata
 	await updateProjectAndAppMetadata(releaseData, buildId, owner);
-
-	// 7. Scale deployment
-	const scaler = new DeploymentScaler(cluster.contextName, namespace, onUpdate);
-	await scaler.scaleDeployment(deploymentName, newReplicas);
-
-	// 8. Cleanup old resources
-	// if (!IsTest() && isServerMode) {
-	// 	const cleaner = new DeploymentCleaner(cluster.contextName, namespace, onUpdate);
-	// 	await cleaner.cleanupOldDeployments(deploymentDetails.mainAppName, appVersion);
-	// }
 
 	// 9. Finalize release and build status
 	await finalizeReleaseAndBuild(releaseId, buildId, projectSlug, appSlug, env, owner);
