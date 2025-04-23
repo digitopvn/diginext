@@ -89,9 +89,9 @@ export async function rolloutV3(releaseId: string, options: RolloutOptions = {})
 
 	// 7. Scale deployment
 	const scaler = new DeploymentScaler(cluster.contextName, namespace, onUpdate);
-	await scaler.scaleDeployment(deploymentName, newReplicas);
+	scaler.scaleDeployment(deploymentName, newReplicas);
 
-	// After deployment readiness check
+	// 8. After deployment readiness check
 	const containerLogs = await retrieveContainerLogs(namespace, appVersion, cluster.contextName, isDeploymentReady);
 
 	if (onUpdate && containerLogs) {
@@ -121,12 +121,6 @@ export async function rolloutV3(releaseId: string, options: RolloutOptions = {})
 
 	// Update project and app metadata
 	await updateProjectAndAppMetadata(releaseData, buildId, owner);
-
-	// 8. Cleanup old resources
-	// if (!IsTest() && isServerMode) {
-	// 	const cleaner = new DeploymentCleaner(cluster.contextName, namespace, onUpdate);
-	// 	await cleaner.cleanupOldDeployments(deploymentDetails.mainAppName, appVersion);
-	// }
 
 	// 9. Finalize release and build status
 	await finalizeReleaseAndBuild(releaseId, buildId, projectSlug, appSlug, env, owner);
