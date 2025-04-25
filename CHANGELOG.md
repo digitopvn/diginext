@@ -1,3 +1,12 @@
+## [3.43.1](https://github.com/digitopvn/diginext/compare/v3.43.0...v3.43.1) (2025-04-23)
+
+
+### Bug Fixes
+
+* **rollout:** scale out sooner ([916a4f6](https://github.com/digitopvn/diginext/commit/916a4f68a4706018b9d9f29468b82de5cde4d591))
+* **rollout:** scale out sooner ([#576](https://github.com/digitopvn/diginext/issues/576)) ([3a08dd1](https://github.com/digitopvn/diginext/commit/3a08dd152caae3af6e7d7da93beb4da37405ce5b))
+* **rollout:** skip waiting scale out ([c227963](https://github.com/digitopvn/diginext/commit/c227963a829c9c95557cd3317b1d0714d1c8da9b))
+
 # [3.43.0](https://github.com/digitopvn/diginext/compare/v3.42.2...v3.43.0) (2025-03-31)
 
 
