@@ -198,18 +198,29 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 			message: `Created "${imagePullSecretName}" imagePullSecrets in the "${namespace}" namespace.`,
 		});
 	} catch (e) {
-		// update "deployStatus" in a build & a release
-		await markBuildAndReleaseAsFailed();
+		const errorMsg = `${e}`;
 
-		sendLog({
-			SOCKET_ROOM,
-			type: "error",
-			action: "end",
-			message: `Can't create "imagePullSecrets" in the "${namespace}" namespace: ${e}`,
-		});
-		// dispatch/trigger webhook
-		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
-		throw new DeployBuildError({ build, release, cluster }, `Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
+		if (errorMsg.indexOf("already exists") > -1) {
+			sendLog({
+				SOCKET_ROOM,
+				type: "warn",
+				action: "log",
+				message: `Can't create "imagePullSecrets" in the "${namespace}" namespace: ${e}`,
+			});
+		} else {
+			// update "deployStatus" in a build & a release
+			await markBuildAndReleaseAsFailed();
+
+			sendLog({
+				SOCKET_ROOM,
+				type: "error",
+				action: "end",
+				message: `Can't create "imagePullSecrets" in the "${namespace}" namespace: ${e}`,
+			});
+			// dispatch/trigger webhook
+			if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
+			throw new DeployBuildError({ build, release, cluster }, `Can't create "imagePullSecrets" in the "${namespace}" namespace.`);
+		}
 	}
 
 	/**
