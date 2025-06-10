@@ -1,3 +1,11 @@
+## [3.43.3](https://github.com/digitopvn/diginext/compare/v3.43.2...v3.43.3) (2025-06-10)
+
+
+### Bug Fixes
+
+* **deploy-v2:** improve ingress error ([faa3623](https://github.com/digitopvn/diginext/commit/faa362309960ee9889ce22bdbe3f1a4aa5bfe236))
+* **test:** disable bitbucket ([1fdecb8](https://github.com/digitopvn/diginext/commit/1fdecb879dbc33401e1404881d30d27fef6e7e23))
+
 ## [3.43.2](https://github.com/digitopvn/diginext/compare/v3.43.1...v3.43.2) (2025-04-25)
 
 
