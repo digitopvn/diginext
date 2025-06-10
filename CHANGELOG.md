@@ -1,3 +1,11 @@
+## [3.43.2](https://github.com/digitopvn/diginext/compare/v3.43.1...v3.43.2) (2025-04-25)
+
+
+### Bug Fixes
+
+* **deploy:** log warning if "imagePullSecret" existed ([e082ce6](https://github.com/digitopvn/diginext/commit/e082ce68d13222f316108917fcfe77b3dd585244))
+* **deploy:** log warning if "imagePullSecret" existed ([#577](https://github.com/digitopvn/diginext/issues/577)) ([658c371](https://github.com/digitopvn/diginext/commit/658c3710298bd2ef69a4fbd1c4959173b2aceaf2))
+
 ## [3.43.1](https://github.com/digitopvn/diginext/compare/v3.43.0...v3.43.1) (2025-04-23)
 
 
