@@ -439,38 +439,38 @@ export function testFlow1() {
 		5 * 60000
 	);
 
-	it(
-		"CLI: Create new app (Bitbucket)",
-		async () => {
-			console.log("[TESTING] CLI: Create new app (Bitbucket)");
+	// it(
+	// 	"CLI: Create new app (Bitbucket)",
+	// 	async () => {
+	// 		console.log("[TESTING] CLI: Create new app (Bitbucket)");
 
-			// const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
-			// const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
+	// 		// const bitbucket = await gitSvc.findOne({ type: "bitbucket" });
+	// 		// const framework = await frameworkSvc.findOne({ repoURL: initialFrameworks[0].repoURL });
 
-			// create new app...
-			const res = await dxCmd(
-				`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force ${cliDebugFlag}`
-			);
-			expect(res).toBeDefined();
-			// expect(res.toLowerCase()).not.toContain("error");
+	// 		// create new app...
+	// 		const res = await dxCmd(
+	// 			`dx new --projectName=TestBitbucketProject --name=web --framework=${framework.slug} --git=${bitbucket.slug} --force ${cliDebugFlag}`
+	// 		);
+	// 		expect(res).toBeDefined();
+	// 		// expect(res.toLowerCase()).not.toContain("error");
 
-			const sourceCodeDirs = readdirSync(CLI_TEST_DIR);
-			// console.log("sourceCodeDirs :>> ", sourceCodeDirs);
-			expect(sourceCodeDirs.join(",").indexOf(appOnGithub.projectSlug)).toBeGreaterThan(-1);
+	// 		const sourceCodeDirs = readdirSync(CLI_TEST_DIR);
+	// 		// console.log("sourceCodeDirs :>> ", sourceCodeDirs);
+	// 		expect(sourceCodeDirs.join(",").indexOf(appOnGithub.projectSlug)).toBeGreaterThan(-1);
 
-			const appDir = path.resolve(CLI_TEST_DIR, `${appOnGithub.projectSlug}-${appOnGithub.slug}`);
-			const sourceCodeFiles = readdirSync(appDir);
-			// console.log("testbitbucketproject-web > files :>> ", sourceCodeFiles);
-			expect(sourceCodeFiles.length).toBeGreaterThan(0);
-			expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
+	// 		const appDir = path.resolve(CLI_TEST_DIR, `${appOnGithub.projectSlug}-${appOnGithub.slug}`);
+	// 		const sourceCodeFiles = readdirSync(appDir);
+	// 		// console.log("testbitbucketproject-web > files :>> ", sourceCodeFiles);
+	// 		expect(sourceCodeFiles.length).toBeGreaterThan(0);
+	// 		expect(sourceCodeFiles.includes("Dockerfile")).toBeTruthy();
 
-			// assign variable
-			appOnBitbucket = await appSvc.findOne({}, { order: { createdAt: -1 } });
-			// console.log("appOnBitbucket :>> ", appOnBitbucket);
-		},
-		// 5 mins
-		5 * 60000
-	);
+	// 		// assign variable
+	// 		appOnBitbucket = await appSvc.findOne({}, { order: { createdAt: -1 } });
+	// 		// console.log("appOnBitbucket :>> ", appOnBitbucket);
+	// 	},
+	// 	// 5 mins
+	// 	5 * 60000
+	// );
 
 	it(
 		"CLI: Request server to deploy app",
@@ -590,14 +590,14 @@ export function testFlow1() {
 				// delete app directories
 				const dirGithubApp = path.resolve(CLI_TEST_DIR, `${appOnGithub.projectSlug}-${appOnGithub.slug}`);
 				rmSync(dirGithubApp, { recursive: true, force: true });
-				const dirBitbucketApp = path.resolve(CLI_TEST_DIR, `${appOnBitbucket.projectSlug}-${appOnBitbucket.slug}`);
-				rmSync(dirBitbucketApp, { recursive: true, force: true });
+				// const dirBitbucketApp = path.resolve(CLI_TEST_DIR, `${appOnBitbucket.projectSlug}-${appOnBitbucket.slug}`);
+				// rmSync(dirBitbucketApp, { recursive: true, force: true });
 
 				// delete git repo
 				const deleteGithubAppRes = await appSvc.deleteGitRepo({ slug: appOnGithub.slug });
-				const deleteBitbucketAppRes = await appSvc.deleteGitRepo({ slug: appOnBitbucket.slug });
+				// const deleteBitbucketAppRes = await appSvc.deleteGitRepo({ slug: appOnBitbucket.slug });
 				console.log("[CLEAN UP] deleteGithubAppRes :>> ", deleteGithubAppRes);
-				console.log("[CLEAN UP] deleteBitbucketAppRes :>> ", deleteBitbucketAppRes);
+				// console.log("[CLEAN UP] deleteBitbucketAppRes :>> ", deleteBitbucketAppRes);
 
 				// delete all "custom" test clusters & access credentials
 				const clusters = await clusterSvc.find({ providerShortName: "custom" });

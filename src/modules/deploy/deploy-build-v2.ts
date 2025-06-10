@@ -229,6 +229,8 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 	 */
 	try {
 		const allIngresses = await ClusterManager.getAllIngresses({ context });
+		if (!allIngresses) throw new DeployBuildError({ build, release, cluster }, `Found no ingresses in "${context}" cluster.`);
+
 		let namespaceOfExistingIngress;
 		const ingInAnotherNamespace = allIngresses.find((ing) => {
 			const findCondition =
@@ -236,6 +238,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 			if (findCondition) namespaceOfExistingIngress = ing.metadata.namespace;
 			return findCondition;
 		});
+
 		if (ingInAnotherNamespace) {
 			// update "deployStatus" in a build & a release
 			await markBuildAndReleaseAsFailed();
@@ -250,7 +253,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		// update "deployStatus" in a build & a release
 		await markBuildAndReleaseAsFailed();
 
-		const message = `Unable to fetch ingresses of "${context}" cluster: ${e}`;
+		const message = `${e}`;
 		sendLog({ SOCKET_ROOM, type: "error", action: "end", message });
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
