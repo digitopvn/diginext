@@ -310,9 +310,9 @@ jobs:
       #   run: kubectl --context=longvan-cluster -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
 
       # Deploy to DXUP FPT cluster
-      - name: Set image to [app.dxup.dev / DXUP FPT] deployment
-        continue-on-error: true
-        run: kubectl --context=dxup-vn -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
+      # - name: Set image to [app.dxup.dev / DXUP FPT] deployment
+      #   continue-on-error: true
+      #   run: kubectl --context=dxup-vn -n dxup-dev set image deployment/deploy dxup-dev=digitop/diginext:$LATEST_TAG
 
       # Deploy to DXUP OVH cluster
       - name: Set image to [app.dxup.dev / DXUP OVH] deployment
@@ -333,36 +333,36 @@ jobs:
           title: "[APP.DXUP.DEV] Deploy version ${{ env.LATEST_TAG }}"
           description: ${{ env.COMMIT_TITLES }}
 
-  deploy-diginext-staging:
-    name: Deploy to [staging.app.dxup.dev]
-    runs-on: ubuntu-latest
-    needs: [docker-release-beta]
-    if: always() && !cancelled() && !failure() && contains(github.ref, 'prerelease')
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.CI_GITHUB_TOKEN }}
+  # deploy-diginext-staging:
+  #   name: Deploy to [staging.app.dxup.dev]
+  #   runs-on: ubuntu-latest
+  #   needs: [docker-release-beta]
+  #   if: always() && !cancelled() && !failure() && contains(github.ref, 'prerelease')
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
+  #         token: ${{ secrets.CI_GITHUB_TOKEN }}
       
-      - name: Checkout latest release tag
-        run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
-      - run: echo $LATEST_TAG
+  #     - name: Checkout latest release tag
+  #       run: echo LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`) >> $GITHUB_ENV
+  #     - run: echo $LATEST_TAG
 
-      - run: echo "${{ github.ref }}"
-      - run: echo "${{ github.ref_name }}"
-      - run: mkdir ~/.kube
-      - run: echo "${{ secrets.KUBE_CONFIG }}" >> ~/.kube/config
+  #     - run: echo "${{ github.ref }}"
+  #     - run: echo "${{ github.ref_name }}"
+  #     - run: mkdir ~/.kube
+  #     - run: echo "${{ secrets.KUBE_CONFIG }}" >> ~/.kube/config
 
-      - name: Setup Kubernetes Tools
-        uses: yokawasa/action-setup-kube-tools@v0.9.3
-        with:
-          kubectl: '1.24.10'
+  #     - name: Setup Kubernetes Tools
+  #       uses: yokawasa/action-setup-kube-tools@v0.9.3
+  #       with:
+  #         kubectl: '1.24.10'
       
-      - run: kubectl version --client
-      - run: kubectl config get-contexts
-      - run: kubectl config current-context
+  #     - run: kubectl version --client
+  #     - run: kubectl config get-contexts
+  #     - run: kubectl config current-context
 
-      - run: kubectl config use-context topgroup-k3s
-      - name: Set image to K8S deployment
-        run: kubectl -n diginext-staging set image deployment/diginext diginext=digitop/diginext:$LATEST_TAG
+  #     - run: kubectl config use-context topgroup-k3s
+  #     - name: Set image to K8S deployment
+  #       run: kubectl -n diginext-staging set image deployment/diginext diginext=digitop/diginext:$LATEST_TAG
