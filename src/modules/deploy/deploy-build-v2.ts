@@ -234,7 +234,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		let namespaceOfExistingIngress;
 		const ingInAnotherNamespace = allIngresses.find((ing) => {
 			const findCondition =
-				typeof ing.spec.rules.find((rule) => rule.host === endpoint) !== "undefined" && ing.metadata.namespace !== namespace;
+				typeof ing.spec?.rules?.find((rule) => rule.host === endpoint) !== "undefined" && ing.metadata.namespace !== namespace;
 			if (findCondition) namespaceOfExistingIngress = ing.metadata.namespace;
 			return findCondition;
 		});
