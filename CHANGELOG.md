@@ -1,3 +1,11 @@
+## [3.43.4](https://github.com/digitopvn/diginext/compare/v3.43.3...v3.43.4) (2025-06-12)
+
+
+### Bug Fixes
+
+* **deploy:** improve deploy errors ([156d341](https://github.com/digitopvn/diginext/commit/156d3414aa82af501e1d3907d2ab79a6738c236b))
+* **secret:** improve error message ([45762b6](https://github.com/digitopvn/diginext/commit/45762b6c3396d60ec647381083c00ef2bf204a7f))
+
 ## [3.43.3](https://github.com/digitopvn/diginext/compare/v3.43.2...v3.43.3) (2025-06-10)
 
 
