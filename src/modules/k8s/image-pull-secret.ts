@@ -58,6 +58,7 @@ export async function createImagePullSecrets(options: ContainerRegistrySecretOpt
 
 		return imagePullSecret;
 	} catch (e) {
+		logError(`[ERROR] Creating "imagePullSecret" failed :>>`, e.stack);
 		message = `[ERROR] Creating "imagePullSecret" failed -> ${e.toString()}`;
 		throw new Error(message);
 	}

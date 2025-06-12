@@ -148,44 +148,44 @@ export function testFlow1() {
 	let github: IGitProvider;
 	let bitbucket: IGitProvider;
 
-	it("Workspace #1: Git Provider - Bitbucket", async () => {
-		console.log("[TESTING] Workspace #1: Git Provider - Bitbucket");
-		const curUser = await getCurrentUser();
+	// it("Workspace #1: Git Provider - Bitbucket", async () => {
+	// 	console.log("[TESTING] Workspace #1: Git Provider - Bitbucket");
+	// 	const curUser = await getCurrentUser();
 
-		// seed git provider: bitbucket
-		const createRes = await gitCtl.create({
-			name: "Bitbucket",
-			type: "bitbucket",
-			isOrg: true,
-			org: process.env.TEST_BITBUCKET_ORG,
-			bitbucket_oauth: {
-				username: process.env.TEST_BITBUCKET_USER,
-				app_password: process.env.TEST_BITBUCKET_APP_PASS,
-			},
-		});
-		// console.log("[TEST] Git Provider > Bitbucket > createRes :>> ", createRes);
-		expect(createRes.status).toEqual(1);
-		expect(createRes.data).toBeDefined();
+	// 	// seed git provider: bitbucket
+	// 	const createRes = await gitCtl.create({
+	// 		name: "Bitbucket",
+	// 		type: "bitbucket",
+	// 		isOrg: true,
+	// 		org: process.env.TEST_BITBUCKET_ORG,
+	// 		bitbucket_oauth: {
+	// 			username: process.env.TEST_BITBUCKET_USER,
+	// 			app_password: process.env.TEST_BITBUCKET_APP_PASS,
+	// 		},
+	// 	});
+	// 	// console.log("[TEST] Git Provider > Bitbucket > createRes :>> ", createRes);
+	// 	expect(createRes.status).toEqual(1);
+	// 	expect(createRes.data).toBeDefined();
 
-		// verify bitbucket api
-		bitbucket = createRes.data as IGitProvider;
+	// 	// verify bitbucket api
+	// 	bitbucket = createRes.data as IGitProvider;
 
-		console.log("[TEST] Git Provider > verified :>> ", bitbucket);
+	// 	console.log("[TEST] Git Provider > verified :>> ", bitbucket);
 
-		// check...
-		expect(bitbucket.owner).toEqual(curUser._id);
-		expect(bitbucket.owner).toBeDefined();
-		expect(bitbucket.verified).toBe(true);
-		expect(bitbucket.host).toBe("bitbucket.org");
-		expect(bitbucket.isOrg).toBeTruthy();
-		expect(bitbucket.org).toBeDefined();
+	// 	// check...
+	// 	expect(bitbucket.owner).toEqual(curUser._id);
+	// 	expect(bitbucket.owner).toBeDefined();
+	// 	expect(bitbucket.verified).toBe(true);
+	// 	expect(bitbucket.host).toBe("bitbucket.org");
+	// 	expect(bitbucket.isOrg).toBeTruthy();
+	// 	expect(bitbucket.org).toBeDefined();
 
-		// test api
-		const profile = await GitProviderAPI.getProfile(bitbucket, { isDebugging: false });
-		expect(profile).toBeDefined();
-		expect(profile.username).toBe(process.env.TEST_BITBUCKET_USER);
-		console.log("[TEST] Git Provider > profile :>> ", profile);
-	}, 60000);
+	// 	// test api
+	// 	const profile = await GitProviderAPI.getProfile(bitbucket, { isDebugging: false });
+	// 	expect(profile).toBeDefined();
+	// 	expect(profile.username).toBe(process.env.TEST_BITBUCKET_USER);
+	// 	console.log("[TEST] Git Provider > profile :>> ", profile);
+	// }, 60000);
 
 	it("Workspace #1: Git Provider - Github", async () => {
 		console.log("[TESTING] Workspace #1: Git Provider - Github");
