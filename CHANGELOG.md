@@ -1,3 +1,11 @@
+## [3.43.5](https://github.com/digitopvn/diginext/compare/v3.43.4...v3.43.5) (2025-06-12)
+
+
+### Bug Fixes
+
+* **deploy:** optional check ingress ([102d430](https://github.com/digitopvn/diginext/commit/102d4305e25ee4e1e89192b1145f9f9e37858e80))
+* **deploy:** optional check ingress ([#580](https://github.com/digitopvn/diginext/issues/580)) ([5c8738a](https://github.com/digitopvn/diginext/commit/5c8738af3370a601646741597b87f712995074d2))
+
 ## [3.43.4](https://github.com/digitopvn/diginext/compare/v3.43.3...v3.43.4) (2025-06-12)
 
 
