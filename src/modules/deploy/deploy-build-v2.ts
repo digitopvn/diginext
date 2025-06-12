@@ -253,7 +253,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 		// update "deployStatus" in a build & a release
 		await markBuildAndReleaseAsFailed();
 
-		const message = `${e}`;
+		const message = `[DEPLOY BUILD] Checking ingress > error :>>\n${e.stack}`;
 		sendLog({ SOCKET_ROOM, type: "error", action: "end", message });
 		// dispatch/trigger webhook
 		if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "failed");
@@ -305,7 +305,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 	const onRolloutUpdate = (msg: string) => {
 		// if any errors on rolling out -> stop processing deployment
 		if (msg.indexOf("Error from server") > -1) {
-			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: msg });
+			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `[DEPLOY BUILD] Rollout > Error from server :>\n${msg}` });
 			throw new DeployBuildError({ build, release, cluster }, msg);
 		} else {
 			// if normal log message -> print out to the Web UI
@@ -358,7 +358,7 @@ export const processDeployBuildV2 = async (build: IBuild, release: IRelease, clu
 				// dispatch/trigger webhook
 				if (webhook) webhookSvc.trigger(MongoDB.toString(webhook._id), "success");
 			} catch (e) {
-				const errMsg = `${e.message}`;
+				const errMsg = `[DEPLOY BUILD] Deploy build > Rollout (v3) > error :>>\n${e.stack}`;
 				sendLog({ SOCKET_ROOM, type: "error", action: "end", message: errMsg });
 
 				// dispatch/trigger webhook
@@ -535,7 +535,7 @@ export const deployBuildV2 = async (build: IBuild, options: DeployBuildV2Options
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });
 	} catch (e) {
 		console.error("Deploy build > error :>> ", e);
-		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error", action: "end" });
+		sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Create release from build failed: ${e.message}`, type: "error", action: "end" });
 		throw new Error(e.message);
 	}
 

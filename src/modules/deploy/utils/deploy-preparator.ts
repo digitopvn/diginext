@@ -1,4 +1,4 @@
-import { logWarn } from "diginext-utils/dist/xconsole/log";
+import { logError, logWarn } from "diginext-utils/dist/xconsole/log";
 
 import type { ICluster } from "@/entities";
 import ClusterManager from "@/modules/k8s";
@@ -52,6 +52,13 @@ export class DeploymentPreparator {
 
 			return { name: imagePullSecretName };
 		} catch (error) {
+			if (error.message.indexOf("already exists") > -1) {
+				const message = `ImagePullSecrets "${this.appSlug}" already exists in the "${this.namespace}" namespace`;
+				onUpdate?.(message);
+				return { name: this.appSlug };
+			}
+
+			logError(`[DeploymentPreparator > createImagePullSecrets]`, error);
 			const errorMessage = `Can't create imagePullSecrets: ${error.message}`;
 			onUpdate?.(errorMessage);
 			throw new Error(errorMessage);

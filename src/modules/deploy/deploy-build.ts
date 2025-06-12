@@ -201,7 +201,7 @@ export const processDeployBuild = async (build: IBuild, release: IRelease, clust
 	const onRolloutUpdate = (msg: string) => {
 		// if any errors on rolling out -> stop processing deployment
 		if (msg.indexOf("Error from server") > -1) {
-			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: msg });
+			sendLog({ SOCKET_ROOM, type: "error", action: "end", message: `[DEPLOY BUILD] Rollout > Error from server :>>\n${msg}` });
 			throw new Error(msg);
 		} else {
 			// if normal log message -> print out to the Web UI
@@ -377,7 +377,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 		logSvc.saveError(e, { name: "deploy-build" });
 
 		console.error(errMsg);
-		sendLog({ SOCKET_ROOM, type: "error", message: errMsg, action: "end" });
+		sendLog({ SOCKET_ROOM, type: "error", message: `Generate deployment YAML > error :>>\n${e.stack}`, action: "end" });
 		throw new Error(errMsg);
 	}
 	const { endpoint, deploymentContent } = deployment;
@@ -413,7 +413,7 @@ export const deployBuild = async (build: IBuild, options: DeployBuildOptions): P
 		sendLog({ SOCKET_ROOM, message: `✓ Created new release "${SOCKET_ROOM}" (ID: ${releaseId}) on BUILD SERVER successfully.` });
 	} catch (e) {
 		console.error("Deploy build > error :>> ", e);
-		sendLog({ SOCKET_ROOM, message: `${e.message}`, type: "error", action: "end" });
+		sendLog({ SOCKET_ROOM, message: `[DEPLOY BUILD] Create release from build failed: ${e.message}`, type: "error", action: "end" });
 		throw new Error(e.message);
 	}
 
