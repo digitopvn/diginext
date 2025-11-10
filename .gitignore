@@ -115,3 +115,19 @@ thunder-tests/**
 
 .temp
 dependency-graph.svg
+
+# Claude Code
+# plans/*
+!plans/templates/**/*
+screenshots/**/*
+docs/screenshots/*
+audio-outputs/**/*
+data/**/*
+logs.txt
+tsconfig.tsbuildinfo
+db/backups/*
+.opencode
+.claude
+
+# Repomix output
+repomix-output.xml

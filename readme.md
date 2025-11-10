@@ -2,11 +2,14 @@
 
 ### **A developer-focused platform for app deployment & centralized cloud resource management.**
 
-https://dxup.dev
+[![Version](https://img.shields.io/npm/v/@topgroup/diginext)](https://www.npmjs.com/package/@topgroup/diginext)
+[![License](https://img.shields.io/github/license/digitopvn/diginext)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Discord](https://img.shields.io/discord/YOUR_DISCORD_ID?label=discord)](https://discord.gg/xMuW5pN2Kn)
 
-***Developers should not be frustrated by deploying apps to the infrastructure, or bothering the DevOps engineers to help deploying it, they should fully focus on developing apps, they don't need to understand the servers, the domains, or infrastructure related stuffs.***
+**https://dxup.dev**
 
-> *Focus on building your apps, shipping fast, and shinning, and leave your cloud infrastructure to DXUP.*
+*Focus on building your apps, shipping fast, and shining, and leave your cloud infrastructure to DXUP.*
 
 > `dx` also means **Developer Experience**, and this is my number one goal - create the best experience for developers - let's make coding great again.
 
@@ -14,239 +17,309 @@ https://dxup.dev
   <img src="dx-banner.png?raw=true" alt="DXUP Build Server & CLI">
 </p>
 
-## Features
+## Why DXUP?
 
-- **Overcoming Kubernetes complexity by stripping Kubernetes away**
-- One-click deploy to any Kubernetes clusters of any cloud providers
-    - ✅ GCP
-    - ✅ DigitalOcean
-    - ✅ Metal K8S cluster
-    - 🔜 AWS
-    - 🔜 Azure
-- Simple deploy of any public or private Docker image
-- Application rollback to previously deployed versions
-- Start developing new applications with frameworks or boilerplates
-- Manage, auto-backup & restore databases:
-    - ✅ Postgres
-    - ✅ MySQL
-    - ✅ MongoDB
-- Manage & upload files to:
-    - ✅ Google Storage
-    - ✅ AWS S3 Block Storage
-    - ✅ Digital Ocean Space
-- Zero-downtime deploy and health checks
-- Cronjobs for automation tasks
-- Monitor CPU, RAM, and Network usage per deployment, per node & per cluster
-- Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)
+Developers should not be frustrated by deploying apps to infrastructure, or bothering DevOps engineers for help. They should fully focus on developing apps without needing to understand servers, domains, or infrastructure details.
 
-## Demo Video
+DXUP strips away Kubernetes complexity, providing a **Vercel-like deployment experience** for self-hosted and multi-cloud environments.
 
-[![Watch the video](https://raw.githubusercontent.com/digitopvn/diginext/main/demo.png)](https://www.youtube.com/watch?v=Q2jJ555Mc2k)
+## Key Features
 
-## Benefits
+### 🚀 Simple Deployment
+- **One-command deploy** to any Kubernetes cluster
+- **Zero-downtime** rolling updates with health checks
+- **Instant rollback** to previous versions
+- **Custom domains** with automatic SSL certificates
 
-### For Developers
+### ☁️ Multi-Cloud Support
+- ✅ Google Cloud Platform (GKE)
+- ✅ DigitalOcean Kubernetes (DOKS)
+- ✅ Bare-metal & custom Kubernetes clusters
+- 🔜 AWS (EKS)
+- 🔜 Azure (AKS)
 
-- Fully focus on development
-- Deploy apps to any Kubernetes cluster (without understanding Kubernetes 🤯 ).
-- Enhance your daily basis workflows with additional helpful commands for `k8s`, `git` and `database`
-- Start new project quickly with a set of useful Frameworks.
+### 🗄️ Database Management
+- Auto-provision PostgreSQL, MySQL, MongoDB
+- Automated backups & point-in-time restore
+- Connection string management
 
-### For DevOps
+### 📦 Storage Integration
+- Google Cloud Storage
+- AWS S3
+- DigitalOcean Spaces
+- CDN integration
 
-- If you’re managing multiple cluster, `dx` is definitely for you.
-- Enhance your daily basis tasks with helpful commands to manage clusters, namespaces, secrets, deployments, workloads, etc…
-- Monitoring your infrastructure with ease!
-    - Manage Kubernetes clusters
-    - Manage, backup & restore databases: MongoDB, MariaDB, PostgreSQL,…
-- Automations, CI/CD, cronjobs, notifications, alerts,…
+### 🔧 Developer Tools
+- Framework templates (Next.js, Nest.js, Bun, Express, Static)
+- Git integration (GitHub, Bitbucket)
+- Environment variable management
+- Real-time log streaming
+- AI-assisted troubleshooting
 
-### Tech Leads, Managers, Company & Startups
+### 📊 Monitoring & Management
+- CPU, RAM, Network usage per deployment
+- Node & cluster-wide metrics
+- Deployment history & rollbacks
+- Cron jobs & automation
+- Team collaboration with RBAC
 
-- Manage & monitoring your projects easily.
-- Overview of your teams & cloud resources.
-- Faster diagnose, better logs, fewer stresses.
-- Overview of your organization, your teams, your members, your projects, your apps and your investment in cloud resources.
-- Better understanding about what your team is doing.
-- Especially if you are poor, like us, but still want to adopt the mighty Kubernetes, `dx` is for you.
+## Quick Start
 
-**Still not convinced?**
+### Installation
 
-- [I turn my company’s PC into my own “Vercel-like” platform](https://dev.to/mrgoonie/i-turn-my-companys-pc-into-my-own-vercel-like-platform-351o)
-- [Kubernetes for the poor](https://dev.to/mrgoonie/kubernetes-for-the-poor-2ne)
-- [Speed test building Next.js T3 App with Github Actions, Circle CI, Vercel & DXUP](https://dev.to/mrgoonie/speed-test-building-nextjs-t3-app-with-github-actions-circle-ci-vercel-diginext-473i)
-- [Developer-First Platforms - Overcoming K8S Complexity](https://dev.to/mrgoonie/developer-first-platforms-overcoming-k8s-complexity-1lf9)
-- [“GitDevSecOps”](https://dev.to/mrgoonie/gitdevsecops-49gp)
-
-## Roadmap
-
-- Check out [this link](https://topgroup.notion.site/Roadmap-6a8266c2929c48ad8d4c11c954e9d852?pvs=4).
-
----
-
-## Getting Started
-
-- [DXUP website](https://dxup.dev/?ref=github)
-- [Official Workspace](https://app.dxup.dev/?ref=github)
-- [Documentation](https://docs.dxup.dev/?ref=github)
-
-#### CLI Installation
-
-Install the package globally:
+Install the CLI globally:
 
 ```bash
-npm i @topgroup/diginext --location=global
+npm install -g @topgroup/diginext
 ```
 
-#### CLI Update
-
-- To update your CLI to the latest version: `dx update` or `npm update @topgroup/diginext --location=global`.
-
----
-
-Login to your DXUP workspace:
+### Deploy Your First App
 
 ```bash
-dx login 
-# is similar with:
-# $ dx login https://app.dxup.dev
-# in case you hosted DXUP server yourself:
-# $ dx login https://<your-diginext-workspace-domain>
+# Login to DXUP workspace
+dx login
+
+# Navigate to your project
 cd /path/to/your/app
+
+# Initialize DXUP in your project
 dx init
+
+# Deploy to development
 dx up
 
-# custom deploy
+# Deploy to production
 dx up --prod
-dx up --prod --rollout
-dx up --prod --rollout --replicas=5
-dx up --prod --rollout --replicas=5 --port=3000
-dx up --prod --rollout --replicas=5 --port=3000 --select-cluster
-# deploy to custom environment
-dx up --staging
-# deploy to other cluster
-dx up --cluster=[cluster-name]
-# deploy without SSL
-dx up --no-ssl
-# deploy with custom domain
-dx up --domain=[your-domain]
-# deploy with custom container size
-dx up --size=2x
-# deploy with DX API key
-dx up --api-key=[your-dx-api-key]
-# redirect all other domains to the first domain (for example: no-www -> www)
-dx up --redirect
-# upload local .env to dxup deployment
-dx up --upload-env
-# delete old deployments and deploy new
-dx up --fresh
 ```
 
-That's it!
+That's it! Your app is now live on Kubernetes.
 
----
-
-Start developing a new app from boilerplate frameworks:
+### Create New App from Template
 
 ```bash
 dx new
 ```
 
-Available frameworks:
-✓ Next.js (Page Router)
-✓ Next.js (App Router)
-✓ Nest.js
-✓ Bun.js Starter
-✓ Express.js Starter
-✓ Static website with NGINX
-✓ More to come!
+Choose from available frameworks:
+- Next.js (App Router / Pages Router)
+- Nest.js
+- Bun.js Starter
+- Express.js Starter
+- Static website with NGINX
 
-## Running DXUP platform on your own infrastructure
+## Advanced Usage
 
-**Requirements:**
-- A server: any computers with Ubuntu, Debian or CentOS
+### Multi-Environment Deployment
 
-### 1. With installation script
+```bash
+# Deploy to specific environments
+dx up --dev
+dx up --staging
+dx up --prod
 
-Access into your server (directly or via SSH), then run this script:
+# Custom configuration
+dx up --prod --replicas=3 --size=2x --domain=myapp.com
+```
+
+### Database Operations
+
+```bash
+# Backup database
+dx db backup --prod
+
+# Restore from backup
+dx db restore --staging --backup-id=<id>
+
+# List backups
+dx db backup list
+```
+
+### Cluster Management
+
+```bash
+# Connect to cluster
+dx cluster connect --gke
+
+# List clusters
+dx cluster list
+
+# Monitor cluster
+dx cluster monitor
+```
+
+## Self-Hosting
+
+### Quick Install (Recommended)
+
+SSH into your server and run:
 
 ```bash
 curl -sfL https://dxup.dev/install/microk8s | sh -
 ```
 
-👉 [Detailed instruction](https://dev.to/mrgoonie/i-turn-my-companys-pc-into-my-own-vercel-like-platform-351o)
+[Detailed installation guide →](https://dev.to/mrgoonie/i-turn-my-companys-pc-into-my-own-vercel-like-platform-351o)
 
-### 2. With Docker Engine
+### Docker Compose
 
--   **DXUP** requires a MongoDB database to run the build server.
+1. Clone the repository
+2. Copy `docker-compose.example.yaml` to `docker-compose.yaml`
+3. Set environment variables (Google OAuth credentials)
+4. Run: `docker compose up`
+5. Access admin panel at `http://localhost:6969`
 
-For fastest installation, I recommend to use our `docker-compose.yaml`, you will need to fill in some environment variables:
+See [docs](https://docs.dxup.dev) for detailed setup instructions.
 
-```yaml
-...
-  # Add your credentials so you can use Google Sign-in to authenticate with your workspace later on:
-  - GOOGLE_CLIENT_ID=
-  - GOOGLE_CLIENT_SECRET=
+## Documentation
+
+### For Users
+- 📚 [Official Documentation](https://docs.dxup.dev)
+- 🎥 [Demo Video](https://www.youtube.com/watch?v=Q2jJ555Mc2k)
+- 📖 [Getting Started Guide](https://docs.dxup.dev/getting-started)
+- 💡 [CLI Command Reference](https://docs.dxup.dev/cli)
+
+### For Developers
+- 🏗️ [Project Overview & Product Requirements](docs/project-overview-pdr.md)
+- 📦 [Codebase Summary](docs/codebase-summary.md)
+- 📏 [Code Standards & Best Practices](docs/code-standards.md)
+- 🏛️ [System Architecture](docs/system-architecture.md)
+- 🤝 [Contributing Guide](CONTRIBUTING.md)
+- 📝 [Changelog](CHANGELOG.md)
+
+### Resources
+- [Kubernetes for the poor](https://dev.to/mrgoonie/kubernetes-for-the-poor-2ne)
+- [I turn my company's PC into my own "Vercel-like" platform](https://dev.to/mrgoonie/i-turn-my-companys-pc-into-my-own-vercel-like-platform-351o)
+- [Developer-First Platforms - Overcoming K8S Complexity](https://dev.to/mrgoonie/developer-first-platforms-overcoming-k8s-complexity-1lf9)
+
+## Who Should Use DXUP?
+
+### ✅ For Developers
+- Deploy apps without Kubernetes knowledge
+- Self-service deployment independence
+- Enhanced workflows with helpful commands
+- Quick project starts with framework templates
+
+### ✅ For DevOps Engineers
+- Centralized multi-cluster management
+- Reduced repetitive deployment tasks
+- Team self-service with maintained control
+- Infrastructure monitoring & automation
+
+### ✅ For Tech Leads & Managers
+- Project oversight & visibility
+- Resource allocation tracking
+- Cost monitoring & optimization
+- Better team productivity insights
+
+### ✅ For Startups & Companies
+- "Kubernetes for the poor" - affordable K8S
+- Self-hosted Vercel alternative
+- No vendor lock-in
+- Full infrastructure control
+
+## Architecture
+
+DXUP consists of three main components:
+
+1. **CLI Tool (`dx`)** - Command-line interface for developers
+2. **Build Server** - Orchestrates builds, deployments, and infrastructure
+3. **Admin Web UI** - Next.js dashboard for visual management
+
+[View detailed architecture →](docs/system-architecture.md)
+
+## Technology Stack
+
+- **Backend:** Node.js, TypeScript, Express.js
+- **Database:** MongoDB (Mongoose ORM)
+- **Cache:** Redis (with Socket.IO adapter)
+- **Orchestration:** Kubernetes (via @kubernetes/client-node)
+- **Containers:** Docker, Podman
+- **Authentication:** Passport.js (OAuth2, JWT, API Keys)
+- **API:** TSOA + Swagger documentation
+
+[View complete tech stack →](docs/codebase-summary.md)
+
+## Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. Read our [Contributing Guide](CONTRIBUTING.md)
+2. Check out [Code Standards](docs/code-standards.md)
+3. Review [System Architecture](docs/system-architecture.md)
+4. Fork the repository
+5. Create a feature branch
+6. Submit a pull request
+
+### Development Setup
+
+```bash
+# Clone repository
+git clone https://github.com/digitopvn/diginext.git
+cd diginext
+
+# Install dependencies
+pnpm install
+
+# Setup environment
+cp .env.example .env.dev
+
+# Start development server
+pnpm dev
+
+# Run tests
+pnpm test
+
+# Build
+pnpm build
 ```
 
-Then spin up the build server with: `docker compose up`, it will be available at: `http://localhost:6969`
+See [Code Standards](docs/code-standards.md) for detailed development guidelines.
 
-Access the admin (`http://localhost:6969`) to configure your new workspace.
+## Roadmap
 
-On the client side, use the CLI command `dx login http://your-workspace-domain.com` to login to your workspace and start new app with `dx new` or start deploying with `dx up` (or `dx deploy`).
+- ✅ Core platform with GKE & DOKS support
+- ✅ Zero-downtime deployments
+- ✅ Database backup & restore
+- ✅ Custom domains & SSL
+- 🔄 AWS EKS support (In Progress)
+- 🔄 Azure AKS support (In Progress)
+- 🔜 Multi-region deployments
+- 🔜 Advanced RBAC
+- 🔜 Marketplace for extensions
 
-👉 Read the [docs here](https://docs.dxup.dev/?ref=github).
+[Full roadmap →](https://topgroup.notion.site/Roadmap-6a8266c2929c48ad8d4c11c954e9d852)
 
-### Other installation guides
+## Community & Support
 
-- [Installation guide](https://topgroup.notion.site/Installation-6de7bda045224ed4b4ee5f4cc5681814?pvs=4)
+- 💬 [Discord Community](https://discord.gg/xMuW5pN2Kn)
+- 📝 [GitHub Issues](https://github.com/digitopvn/diginext/issues)
+- 📚 [Documentation](https://docs.dxup.dev)
+- 🌐 [Official Website](https://dxup.dev)
+- 🎮 [Official Workspace](https://app.dxup.dev)
 
----
+## Related Projects
 
-## Changelog
+- **Admin UI:** [diginext-admin](https://github.com/digitopvn/diginext-admin) - Next.js frontend
+- **Documentation:** [docs.dxup.dev](https://docs.dxup.dev)
 
-- Visit our [changelog here](CHANGELOG.md)
+## License
 
-## Admin UI
+GPL-3.0 License - see [LICENSE](LICENSE) for details.
 
-- Official workspace: https://app.dxup.dev
-- Visit our [source code here](https://github.com/digitopvn/diginext-admin)
+Free for self-hosting and commercial use with attribution.
 
-## Contributing [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
+## Credits & Donations
 
-Read our [contributing guide](CONTRIBUTING.md) and let's build a better build platform together.
-
-We welcome all contributions. Please read our [CONTRIBUTING.md](CONTRIBUTING.md) first. You can submit any ideas as [pull requests](https://github.com/digitopvn/diginext/pulls) or as [GitHub issues](https://github.com/digitopvn/diginext/issues). If you'd like to improve code, check out the [Development Instructions](https://github.com/digitopvn/diginext/wiki/Development) and have a good time! :)
-
-If you are a collaborator, please follow our [Pull Request principle](https://github.com/digitopvn/diginext/wiki/PR-principle) to create a Pull Request with [collaborator template](https://github.com/digitopvn/diginext/compare?expand=1&template=collaborator.md).
-
-
-## Community and Support:
-
-Join our community on [Discord](https://discord.gg/xMuW5pN2Kn)!
-
-Suggest improvements and report problems.
-
----
-
-## Credits / Donations
-
-This is a **ONE-MAN** project & I've been spending a lot of time for it, although it's my hobby project, I still need beers to keep the momentum.
-If you enjoyed this project — or just feeling generous, consider buying me some beers. Cheers! 🍻
+This is a **ONE-MAN** project that I've been dedicating my time to. Although it's my hobby project, beers help keep the momentum going! 🍻
 
 <a href="https://www.buymeacoffee.com/duynguyen" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" height=48 ></a>
-
 <a href="https://paypal.me/mrgoonie/" target="_blank"><img src="https://github.com/andreostrovsky/donate-with-paypal/blob/master/PNG/blue.png" height=48></a>
+<a href="https://opencollective.com/diginext/donate" target="_blank"><img src="https://opencollective.com/diginext/donate/button@2x.png?color=blue" height=48 /></a>
+<a href="https://me.momo.vn/mrgoonie" target="_blank"><img src="https://github.com/digitopvn/diginext/blob/main/docs/momo-button.png?raw=true" height=48 /></a>
 
-<a href="https://opencollective.com/diginext/donate" target="_blank">
-  <img src="https://opencollective.com/diginext/donate/button@2x.png?color=blue" height=48 />
-</a>
+**Author:** Duy Nguyen - CTO at [TOP GROUP](https://wearetopgroup.com)
 
-<a href="https://me.momo.vn/mrgoonie" target="_blank">
-  <img src="https://github.com/digitopvn/diginext/blob/main/docs/momo-button.png?raw=true" height=48 />
-</a>
+**Contact:** duynguyen@wearetopgroup.com
 
-- Author: Duy Nguyen <duynguyen@wearetopgroup.com>
-- CTO at [TOP GROUP](https://wearetopgroup.com)
+---
 
-Thank you!
+**Made with ❤️ by developers, for developers.**
